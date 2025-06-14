@@ -17,7 +17,7 @@
       "@controllers/*": ["src/controllers/*"],
       "@repositories/*": ["src/repositories/*"],
       "@entities/*": ["src/entities/*"],
-      "@middlewares/*": ["src/middlewares/*"],
+      "@middleware/*": ["src/middleware/*"],
       "@config/*": ["src/config/*"],
       "@factories/*": ["src/factories/*"],
       "@constants/*": ["src/constants/*"]
