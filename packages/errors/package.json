@@ -1,0 +1,23 @@
+{
+  "name": "@repo/api-errors",
+  "version": "0.0.0",
+  "description": "Errors package",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@smithy/smithy-client": "^4.4.3",
+    "@types/node": "^24.0.1",
+    "pg": "^8.16.0",
+    "zod": "^3.25.64"
+  },
+  "peerDependencies": {
+    "@smithy/smithy-client": "^4.4.3",
+    "pg": "^8.16.0",
+    "zod": "^3.25.64"
+  }
+}
