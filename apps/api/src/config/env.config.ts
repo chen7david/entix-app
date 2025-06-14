@@ -5,4 +5,4 @@ export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']),
 });
 
-export type EnvSchema = z.infer<typeof envSchema>;
+export type EnvResult = z.infer<typeof envSchema>;

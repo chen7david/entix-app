@@ -2,7 +2,7 @@ import { AppEnv, AppEnvFileName } from 'src/constants/app.constant';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
-import { envSchema, EnvSchema } from '@config/env.config';
+import { envSchema, EnvResult } from '@config/env.config';
 
 export class EnvUtil {
   private readonly env: AppEnv;
@@ -51,7 +51,7 @@ export class EnvUtil {
   /**
    * Validate the current process env using the Zod schema.
    */
-  validate(): EnvSchema {
+  validate(): EnvResult {
     const result = envSchema.safeParse(this.processEnv);
 
     if (!result.success) {

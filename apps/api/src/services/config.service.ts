@@ -1,6 +1,8 @@
-import { Injectable } from '@utils/typedi.util';
+import { EnvResult } from '@config/env.config';
+import { EnvToken } from '@factories/env.factory';
+import { Inject, Injectable } from '@utils/typedi.util';
 
 @Injectable()
 export class ConfigService {
-  constructor() {}
+  constructor(@Inject(EnvToken) private readonly env: EnvResult) {}
 }
