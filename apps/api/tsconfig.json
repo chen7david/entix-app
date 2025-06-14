@@ -19,7 +19,8 @@
       "@entities/*": ["src/entities/*"],
       "@middlewares/*": ["src/middlewares/*"],
       "@config/*": ["src/config/*"],
-      "@factories/*": ["src/factories/*"]
+      "@factories/*": ["src/factories/*"],
+      "@constants/*": ["src/constants/*"]
     },
 
     /* Interop */

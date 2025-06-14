@@ -1,9 +1,9 @@
-import { DependencyManager } from '@utils/di.util';
-import { EnvToken } from './factories/env.factory';
+import 'reflect-metadata';
+import { ContainerManager } from '@utils/di.util';
 import { Container } from '@utils/typedi.util';
+import { ConfigService } from './services/config.service';
 
-const dependencyManager = new DependencyManager();
-dependencyManager.bootstrap();
+ContainerManager.bootstrap();
 
-const config = Container.get(EnvToken);
-console.log(config);
+const config = Container.get(ConfigService);
+console.log(config.env.PORT);
