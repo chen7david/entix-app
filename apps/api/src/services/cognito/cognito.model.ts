@@ -43,3 +43,13 @@ export type CognitoLoginResult = {
   refreshToken: string;
   idToken: string;
 };
+
+export type CognitoForgotPasswordParams = {
+  username: string;
+};
+
+export type CognitoForgotPasswordResult = {
+  deliveryMedium: string;
+  method: string;
+  destination: string;
+};

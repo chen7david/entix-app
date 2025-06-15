@@ -8,10 +8,13 @@ import {
   AuthFlowType,
   ResendConfirmationCodeCommand,
   ConfirmSignUpCommand,
+  ForgotPasswordCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import {
   CognitoConfirmSignUpParams,
   CognitoConfirmSignUpResult,
+  CognitoForgotPasswordParams,
+  CognitoForgotPasswordResult,
   CognitoLoginParams,
   CognitoLoginResult,
   CognitoResendConfirmationCodeParams,
@@ -73,5 +76,14 @@ export class CognitoService {
     return {
       isConfirmed: true,
     };
+  }
+
+  async forgotPassword(params: CognitoForgotPasswordParams): Promise<CognitoForgotPasswordResult> {
+    const command = new ForgotPasswordCommand({
+      ClientId: this.configService.env.AWS_COGNITO_USER_POOL_CLIENT_ID,
+      Username: params.username,
+    });
+    const result = await this.cognitoClient.send(command);
+    return codeDeliveryDetailsSchema.parse(result.CodeDeliveryDetails);
   }
 }

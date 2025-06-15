@@ -1,12 +1,19 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
-import { ConfirmSignUpDto, SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
+import {
+  ConfirmSignUpDto,
+  SignUpDto,
+  SignUpResultDto,
+  ForgotPasswordDto,
+  ForgotPasswordResultDto,
+  ResendConfirmationCodeResultDto,
+  ConfirmSignUpResultDto,
+} from '@repo/entix-sdk';
 import {
   LoginDto,
   LoginResultDto,
   ResendConfirmationCodeDto,
 } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
-import { CognitoConfirmSignUpResult, CognitoResendConfirmationCodeResult } from '@services/cognito/cognito.model';
 
 @Injectable()
 export class UserAuthService {
@@ -26,11 +33,15 @@ export class UserAuthService {
     return this.cognitoService.login(params);
   }
 
-  async resendConfirmationCode(params: ResendConfirmationCodeDto): Promise<CognitoResendConfirmationCodeResult> {
+  async resendConfirmationCode(params: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
     return this.cognitoService.resendConfirmationCode(params);
   }
 
-  async confirmSignUp(params: ConfirmSignUpDto): Promise<CognitoConfirmSignUpResult> {
+  async confirmSignUp(params: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
     return this.cognitoService.confirmSignUp(params);
+  }
+
+  async forgotPassword(params: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
+    return this.cognitoService.forgotPassword(params);
   }
 }
