@@ -13,8 +13,9 @@ export type SignUpResultDto = {
 export type LoginDto = z.infer<typeof loginSchema>;
 
 export type LoginResultDto = {
-  id: string;
-  email: string;
-  username: string;
-  sub: string;
+  accessToken: string;
+  expiresIn: number;
+  tokenType: string;
+  refreshToken: string;
+  idToken: string;
 };

@@ -20,7 +20,8 @@
       "@middleware/*": ["src/middleware/*"],
       "@config/*": ["src/config/*"],
       "@factories/*": ["src/factories/*"],
-      "@constants/*": ["src/constants/*"]
+      "@constants/*": ["src/constants/*"],
+      "@modules/*": ["src/modules/*"]
     },
 
     /* Interop */

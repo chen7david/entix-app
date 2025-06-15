@@ -1,6 +1,7 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
 import { SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
+import { LoginDto, LoginResultDto } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
 
 @Injectable()
 export class UserAuthService {
@@ -14,5 +15,9 @@ export class UserAuthService {
       username: result.delivery.destination,
       sub: result.userSub,
     };
+  }
+
+  async login(params: LoginDto): Promise<LoginResultDto> {
+    return this.cognitoService.login(params);
   }
 }

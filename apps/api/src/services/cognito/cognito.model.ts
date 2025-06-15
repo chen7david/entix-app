@@ -14,3 +14,16 @@ export type CognitoSingUpResult = {
   isConfirmed: boolean;
   delivery: CognitoSingUpDelivery;
 };
+
+export type CognitoLoginParams = {
+  username: string;
+  password: string;
+};
+
+export type CognitoLoginResult = {
+  accessToken: string;
+  expiresIn: number;
+  tokenType: string;
+  refreshToken: string;
+  idToken: string;
+};
