@@ -13,10 +13,15 @@ import {
 export type SignUpDto = z.infer<typeof signUpSchema>;
 
 export type SignUpResultDto = {
-  id: string;
+  id: number;
+  sub: string;
   email: string;
   username: string;
-  sub: string;
+  disabledAt: Date | null;
+  verifiedAt: Date | null;
+  deletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type LoginDto = z.infer<typeof loginSchema>;

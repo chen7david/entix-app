@@ -15,9 +15,5 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export type User = typeof users.$inferSelect;
-export type NewUser = typeof users.$inferInsert;
-export type UserUpdate = Partial<Omit<NewUser, 'id'>>;
-
 // Helper function to handle soft deletes in queries
 export const notDeleted = () => sql`${users.deletedAt} IS NULL`;

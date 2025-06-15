@@ -20,19 +20,23 @@ import {
   LoginResultDto,
   ResendConfirmationCodeDto,
 } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
+import { UserService } from '@modules/users/user.service';
 
 @Injectable()
 export class UserAuthService {
-  constructor(private readonly cognitoService: CognitoService) {}
+  constructor(
+    private readonly cognitoService: CognitoService,
+    private readonly userService: UserService,
+  ) {}
 
   async signUp(params: SignUpDto): Promise<SignUpResultDto> {
     const result = await this.cognitoService.signUp(params);
-    return {
-      id: result.userSub,
-      email: result.delivery.destination,
-      username: result.delivery.destination,
+    const user = await this.userService.createUser({
       sub: result.userSub,
-    };
+      email: params.email,
+      username: params.username,
+    });
+    return user;
   }
 
   async login(params: LoginDto): Promise<LoginResultDto> {
