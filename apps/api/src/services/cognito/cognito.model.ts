@@ -20,7 +20,7 @@ export type CognitoConfirmSignUpParams = {
 };
 
 export type CognitoConfirmSignUpResult = {
-  isConfirmed: boolean;
+  success: boolean;
 };
 
 export type CognitoResendConfirmationCodeResult = CognitoSingUpDelivery;
@@ -52,4 +52,14 @@ export type CognitoForgotPasswordResult = {
   deliveryMedium: string;
   method: string;
   destination: string;
+};
+
+export type CognitoConfirmForgotPasswordParams = {
+  username: string;
+  confirmationCode: string;
+  password: string;
+};
+
+export type CognitoConfirmForgotPasswordResult = {
+  success: boolean;
 };

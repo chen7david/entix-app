@@ -8,6 +8,8 @@ import {
   ForgotPasswordResultDto,
   ResendConfirmationCodeResultDto,
   ConfirmSignUpResultDto,
+  ConfirmForgotPasswordDto,
+  ConfirmForgotPasswordResultDto,
 } from '@repo/entix-sdk';
 import {
   LoginDto,
@@ -43,5 +45,9 @@ export class UserAuthService {
 
   async forgotPassword(params: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
     return this.cognitoService.forgotPassword(params);
+  }
+
+  async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
+    return this.cognitoService.confirmForgotPassword(params);
   }
 }

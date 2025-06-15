@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  confirmForgotPasswordSchema,
   confirmSignUpSchema,
   forgotPasswordSchema,
   loginSchema,
@@ -23,7 +24,7 @@ export type ResendConfirmationCodeDto = z.infer<typeof resendConfirmationCodeSch
 export type ConfirmSignUpDto = z.infer<typeof confirmSignUpSchema>;
 
 export type ConfirmSignUpResultDto = {
-  isConfirmed: boolean;
+  success: boolean;
 };
 
 export type LoginResultDto = {
@@ -46,4 +47,10 @@ export type ForgotPasswordResultDto = {
   deliveryMedium: string;
   method: string;
   destination: string;
+};
+
+export type ConfirmForgotPasswordDto = z.infer<typeof confirmForgotPasswordSchema>;
+
+export type ConfirmForgotPasswordResultDto = {
+  success: boolean;
 };

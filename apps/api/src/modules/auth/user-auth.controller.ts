@@ -12,6 +12,9 @@ import {
   ForgotPasswordDto,
   ForgotPasswordResultDto,
   forgotPasswordSchema,
+  ConfirmForgotPasswordDto,
+  ConfirmForgotPasswordResultDto,
+  confirmForgotPasswordSchema,
 } from '@repo/entix-sdk';
 import { UserAuthService } from '@modules/auth/user-auth.service';
 import {
@@ -62,5 +65,12 @@ export class UserAuthController {
   @UseBefore(validateBody(forgotPasswordSchema))
   async forgotPassword(@Body() user: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
     return this.userAuthService.forgotPassword(user);
+  }
+
+  @Post('/confirm-forgot-password')
+  @HttpCode(200)
+  @UseBefore(validateBody(confirmForgotPasswordSchema))
+  async confirmForgotPassword(@Body() user: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
+    return this.userAuthService.confirmForgotPassword(user);
   }
 }

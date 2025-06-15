@@ -24,3 +24,9 @@ export const loginSchema = z.object({
 export const forgotPasswordSchema = z.object({
   username: z.string().min(3),
 });
+
+export const confirmForgotPasswordSchema = z.object({
+  username: z.string().min(3),
+  confirmationCode: z.string().length(6),
+  password: z.string().min(8),
+});
