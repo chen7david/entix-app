@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "NODE_ENV=development nodemon",
     "build": "tsc --project tsconfig.json && tsc-alias -p tsconfig.json",
-    "start": "NODE_ENV=production node -r newrelic dist/server.js"
+    "start": "NODE_ENV=production node -r newrelic dist/server.js",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:check": "drizzle-kit check",
+    "db:migrate": "drizzle-kit migrate"
   },
   "keywords": [],
   "author": "",
