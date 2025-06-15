@@ -2,6 +2,16 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "module": "ESNext",
-    "outDir": "./dist/esm"
-  }
+    "outDir": "./dist/esm",
+    "declaration": true
+  },
+  "include": [
+    "src/index.ts",
+    "src/error.model.ts",
+    "src/error.type.ts",
+    "src/error.constant.ts",
+    "src/helpers/aws.helper.ts",
+    "src/helpers/pg.helper.ts",
+    "src/helpers/zod.helper.ts"
+  ]
 }

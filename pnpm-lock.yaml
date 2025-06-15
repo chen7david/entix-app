@@ -57,6 +57,9 @@ importers:
         specifier: ^3.25.64
         version: 3.25.64
     devDependencies:
+      '@repo/api-errors':
+        specifier: workspace:*
+        version: link:../../packages/errors
       '@repo/entix-sdk':
         specifier: workspace:*
         version: link:../../packages/entix-sdk
@@ -145,6 +148,9 @@ importers:
       '@types/node':
         specifier: ^24.0.1
         version: 24.0.1
+      '@types/pg':
+        specifier: ^8.15.4
+        version: 8.15.4
       pg:
         specifier: ^8.16.0
         version: 8.16.0

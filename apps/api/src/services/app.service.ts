@@ -2,6 +2,7 @@ import express, { Application } from 'express';
 import { useExpressServer } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { notFoundHandler } from '@middleware/not-found.middleware';
+import { ErrorHandlerMiddleware } from '@middleware/global-error.middleware';
 
 @Injectable()
 export class AppService {
@@ -13,6 +14,7 @@ export class AppService {
     useExpressServer(this.app, {
       routePrefix: '/api',
       controllers: [__dirname + '/../modules/**/*.controller.ts'],
+      middlewares: [ErrorHandlerMiddleware],
       defaultErrorHandler: false,
       cors: true,
     });

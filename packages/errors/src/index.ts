@@ -1,3 +1,5 @@
+export * from './error.model';
+export * from './error.type';
 import { ApiError } from './error.model';
 import { ApiErrorOptions } from './error.type';
 
