@@ -22,4 +22,8 @@ export class ConfigService {
   get isTest(): boolean {
     return this.env.NODE_ENV === AppEnv.Test;
   }
+
+  get isNewRelicEnabled(): boolean {
+    return this.env.NEW_RELIC_ENABLED;
+  }
 }
