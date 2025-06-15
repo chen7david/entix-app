@@ -21,6 +21,10 @@ export type ResendConfirmationCodeDto = z.infer<typeof resendConfirmationCodeSch
 
 export type ConfirmSignUpDto = z.infer<typeof confirmSignUpSchema>;
 
+export type ConfirmSignUpResultDto = {
+  isConfirmed: boolean;
+};
+
 export type LoginResultDto = {
   accessToken: string;
   expiresIn: number;

@@ -14,6 +14,15 @@ export type CognitoResendConfirmationCodeParams = {
   username: string;
 };
 
+export type CognitoConfirmSignUpParams = {
+  username: string;
+  confirmationCode: string;
+};
+
+export type CognitoConfirmSignUpResult = {
+  isConfirmed: boolean;
+};
+
 export type CognitoResendConfirmationCodeResult = CognitoSingUpDelivery;
 
 export type CognitoSingUpResult = {

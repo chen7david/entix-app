@@ -1,7 +1,15 @@
 import { JsonController, Post, Body, UseBefore, HttpCode } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { validateBody } from '@middleware/validation.middleware';
-import { signUpSchema, SignUpDto, SignUpResultDto, ResendConfirmationCodeResultDto } from '@repo/entix-sdk';
+import {
+  signUpSchema,
+  SignUpDto,
+  SignUpResultDto,
+  ResendConfirmationCodeResultDto,
+  ConfirmSignUpDto,
+  confirmSignUpSchema,
+  ConfirmSignUpResultDto,
+} from '@repo/entix-sdk';
 import { UserAuthService } from '@modules/auth/user-auth.service';
 import {
   LoginDto,
@@ -37,5 +45,12 @@ export class UserAuthController {
   @UseBefore(validateBody(resendConfirmationCodeSchema))
   async resendConfirmationCode(@Body() user: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
     return this.userAuthService.resendConfirmationCode(user);
+  }
+
+  @Post('/confirm-signup')
+  @HttpCode(200)
+  @UseBefore(validateBody(confirmSignUpSchema))
+  async confirmSignUp(@Body() user: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
+    return this.userAuthService.confirmSignUp(user);
   }
 }

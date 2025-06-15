@@ -7,8 +7,11 @@ import {
   InitiateAuthCommand,
   AuthFlowType,
   ResendConfirmationCodeCommand,
+  ConfirmSignUpCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import {
+  CognitoConfirmSignUpParams,
+  CognitoConfirmSignUpResult,
   CognitoLoginParams,
   CognitoLoginResult,
   CognitoResendConfirmationCodeParams,
@@ -58,5 +61,17 @@ export class CognitoService {
     });
     const result = await this.cognitoClient.send(command);
     return codeDeliveryDetailsSchema.parse(result.CodeDeliveryDetails);
+  }
+
+  async confirmSignUp(params: CognitoConfirmSignUpParams): Promise<CognitoConfirmSignUpResult> {
+    const command = new ConfirmSignUpCommand({
+      ClientId: this.configService.env.AWS_COGNITO_USER_POOL_CLIENT_ID,
+      Username: params.username,
+      ConfirmationCode: params.confirmationCode,
+    });
+    await this.cognitoClient.send(command);
+    return {
+      isConfirmed: true,
+    };
   }
 }
