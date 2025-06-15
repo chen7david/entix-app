@@ -12,9 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.828.0",
+    "@newrelic/pino-enricher": "^1.1.1",
     "@repo/api-errors": "workspace:*",
     "@repo/entix-sdk": "workspace:*",
-    "@newrelic/pino-enricher": "^1.1.1",
     "aws-jwt-verify": "^5.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

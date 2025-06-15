@@ -1,6 +1,6 @@
 import { ConfigService } from '@services/config.service';
 import { enrichWithNewRelic } from '@utils/newrelic-pino.util';
-import { Injectable, Token } from '../utils/typedi.util';
+import { Injectable, Token } from '@utils/typedi.util';
 import pino from 'pino';
 
 export const PinoToken = new Token<pino.Logger>('PinoToken');
