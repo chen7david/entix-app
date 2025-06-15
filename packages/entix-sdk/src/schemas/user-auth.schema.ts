@@ -7,6 +7,15 @@ export const signUpSchema = z.object({
   invitationCode: z.string().length(6),
 });
 
+export const resendConfirmationCodeSchema = z.object({
+  username: z.string().min(1),
+});
+
+export const confirmSignUpSchema = z.object({
+  username: z.string().min(3),
+  confirmationCode: z.string().length(6),
+});
+
 export const loginSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(8),

@@ -5,9 +5,16 @@ export type CognitoSingUpParams = {
 };
 
 export type CognitoSingUpDelivery = {
+  deliveryMedium: string;
   method: string;
   destination: string;
 };
+
+export type CognitoResendConfirmationCodeParams = {
+  username: string;
+};
+
+export type CognitoResendConfirmationCodeResult = CognitoSingUpDelivery;
 
 export type CognitoSingUpResult = {
   userSub: string;

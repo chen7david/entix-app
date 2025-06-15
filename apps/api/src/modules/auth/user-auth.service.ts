@@ -1,7 +1,12 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
 import { SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
-import { LoginDto, LoginResultDto } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
+import {
+  LoginDto,
+  LoginResultDto,
+  ResendConfirmationCodeDto,
+} from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
+import { CognitoResendConfirmationCodeResult } from '@services/cognito/cognito.model';
 
 @Injectable()
 export class UserAuthService {
@@ -19,5 +24,9 @@ export class UserAuthService {
 
   async login(params: LoginDto): Promise<LoginResultDto> {
     return this.cognitoService.login(params);
+  }
+
+  async resendConfirmationCode(params: ResendConfirmationCodeDto): Promise<CognitoResendConfirmationCodeResult> {
+    return this.cognitoService.resendConfirmationCode(params);
   }
 }

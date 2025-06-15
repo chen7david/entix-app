@@ -28,6 +28,11 @@ export function fromCognitoError(error: ServiceException): ApiError {
       return new RateLimitError('Attempt limit exceeded, please try again later.');
     case 'UserNotConfirmedException':
       return new ForbiddenError('User account is not confirmed.');
+    case 'InvalidParameterException':
+      if (error.message?.includes('already confirmed')) {
+        return new BadRequestError('User is already confirmed.');
+      }
+      return new BadRequestError(error.message || 'Invalid parameter.');
     default:
       return new InternalError({
         message: 'An unexpected Cognito error occurred.',

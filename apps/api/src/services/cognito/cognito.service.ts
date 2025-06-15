@@ -1,14 +1,22 @@
+import { CognitoToken } from '@factories/cognito.factory';
+import { Inject, Injectable } from '@utils/typedi.util';
+import { ConfigService } from '../config.service';
 import {
   CognitoIdentityProviderClient,
   SignUpCommand,
   InitiateAuthCommand,
   AuthFlowType,
+  ResendConfirmationCodeCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
-import { CognitoToken } from '@factories/cognito.factory';
-import { Inject, Injectable } from '@utils/typedi.util';
-import { ConfigService } from '../config.service';
-import { cognitoLoginResultSchema, cognitoSingUpResultSchema } from './cognito.transformer';
-import { CognitoLoginParams, CognitoLoginResult, CognitoSingUpParams, CognitoSingUpResult } from './cognito.model';
+import {
+  CognitoLoginParams,
+  CognitoLoginResult,
+  CognitoResendConfirmationCodeParams,
+  CognitoResendConfirmationCodeResult,
+  CognitoSingUpParams,
+  CognitoSingUpResult,
+} from './cognito.model';
+import { codeDeliveryDetailsSchema, cognitoLoginResultSchema, cognitoSingUpResultSchema } from './cognito.transformer';
 
 @Injectable()
 export class CognitoService {
@@ -38,7 +46,17 @@ export class CognitoService {
       },
     });
     const result = await this.cognitoClient.send(command);
-    console.log(result);
     return cognitoLoginResultSchema.parse(result);
+  }
+
+  async resendConfirmationCode(
+    params: CognitoResendConfirmationCodeParams,
+  ): Promise<CognitoResendConfirmationCodeResult> {
+    const command = new ResendConfirmationCodeCommand({
+      ClientId: this.configService.env.AWS_COGNITO_USER_POOL_CLIENT_ID,
+      Username: params.username,
+    });
+    const result = await this.cognitoClient.send(command);
+    return codeDeliveryDetailsSchema.parse(result.CodeDeliveryDetails);
   }
 }
