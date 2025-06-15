@@ -63,6 +63,7 @@
     "@smithy/smithy-client": "^4.4.3",
     "@types/node": "^24.0.1",
     "@types/pg": "^8.15.4",
+    "@types/uuid": "^10.0.0",
     "pg": "^8.16.0",
     "zod": "^3.25.64"
   },
@@ -81,5 +82,8 @@
     "@smithy/smithy-client": {
       "optional": true
     }
+  },
+  "dependencies": {
+    "uuid": "^11.1.0"
   }
 }

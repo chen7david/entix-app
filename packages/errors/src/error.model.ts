@@ -1,6 +1,6 @@
 import { HTTP_ERROR_MESSAGES } from './error.constant';
 import { ApiErrorOptions, ErrorDetail, ErrorResponse } from './error.type';
-import { randomUUID } from 'crypto';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Environment configuration for error handling
@@ -40,7 +40,7 @@ export class ApiError extends Error {
 
     super(message);
     this.status = status;
-    this.errorId = randomUUID();
+    this.errorId = uuidv4();
     this.cause = options.cause;
     this.details = options.details || [];
     this.logContext = options.logContext || {};
