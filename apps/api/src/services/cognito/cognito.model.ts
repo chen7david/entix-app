@@ -63,3 +63,33 @@ export type CognitoConfirmForgotPasswordParams = {
 export type CognitoConfirmForgotPasswordResult = {
   success: boolean;
 };
+
+export type CognitoChangePasswordParams = {
+  cognitoAccessToken: string;
+  previousPassword: string;
+  proposedPassword: string;
+};
+
+export type CognitoChangePasswordResult = {
+  success: boolean;
+};
+
+export type CognitoLogoutParams = {
+  cognitoAccessToken: string;
+};
+
+export type CognitoLogoutResult = {
+  success: boolean;
+};
+
+export type CognitoRefreshTokenParams = {
+  cognitoRefreshToken: string;
+};
+
+export type CognitoRefreshTokenResult = {
+  accessToken: string;
+  expiresIn: number;
+  tokenType: string;
+  refreshToken: string;
+  idToken: string;
+};

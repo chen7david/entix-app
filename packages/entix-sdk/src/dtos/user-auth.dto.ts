@@ -1,9 +1,11 @@
 import { z } from 'zod';
 import {
+  changePasswordSchema,
   confirmForgotPasswordSchema,
   confirmSignUpSchema,
   forgotPasswordSchema,
   loginSchema,
+  logoutSchema,
   resendConfirmationCodeSchema,
   signUpSchema,
 } from '../schemas/user-auth.schema';
@@ -52,5 +54,17 @@ export type ForgotPasswordResultDto = {
 export type ConfirmForgotPasswordDto = z.infer<typeof confirmForgotPasswordSchema>;
 
 export type ConfirmForgotPasswordResultDto = {
+  success: boolean;
+};
+
+export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;
+
+export type ChangePasswordResultDto = {
+  success: boolean;
+};
+
+export type LogoutDto = z.infer<typeof logoutSchema>;
+
+export type LogoutResultDto = {
   success: boolean;
 };

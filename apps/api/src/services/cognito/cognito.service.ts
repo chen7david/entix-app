@@ -10,8 +10,12 @@ import {
   ConfirmSignUpCommand,
   ForgotPasswordCommand,
   ConfirmForgotPasswordCommand,
+  ChangePasswordCommand,
+  GlobalSignOutCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import {
+  CognitoChangePasswordParams,
+  CognitoChangePasswordResult,
   CognitoConfirmForgotPasswordParams,
   CognitoConfirmForgotPasswordResult,
   CognitoConfirmSignUpParams,
@@ -20,6 +24,10 @@ import {
   CognitoForgotPasswordResult,
   CognitoLoginParams,
   CognitoLoginResult,
+  CognitoLogoutParams,
+  CognitoLogoutResult,
+  CognitoRefreshTokenParams,
+  CognitoRefreshTokenResult,
   CognitoResendConfirmationCodeParams,
   CognitoResendConfirmationCodeResult,
   CognitoSingUpParams,
@@ -96,6 +104,40 @@ export class CognitoService {
       Username: params.username,
       ConfirmationCode: params.confirmationCode,
       Password: params.password,
+    });
+    await this.cognitoClient.send(command);
+    return {
+      success: true,
+    };
+  }
+
+  async changePassword(params: CognitoChangePasswordParams): Promise<CognitoChangePasswordResult> {
+    const command = new ChangePasswordCommand({
+      PreviousPassword: params.previousPassword,
+      ProposedPassword: params.proposedPassword,
+      AccessToken: params.cognitoAccessToken,
+    });
+    await this.cognitoClient.send(command);
+    return {
+      success: true,
+    };
+  }
+
+  async refreshToken(params: CognitoRefreshTokenParams): Promise<CognitoRefreshTokenResult> {
+    const command = new InitiateAuthCommand({
+      AuthFlow: AuthFlowType.REFRESH_TOKEN_AUTH,
+      ClientId: this.configService.env.AWS_COGNITO_USER_POOL_CLIENT_ID,
+      AuthParameters: {
+        REFRESH_TOKEN: params.cognitoRefreshToken,
+      },
+    });
+    const result = await this.cognitoClient.send(command);
+    return cognitoLoginResultSchema.parse(result);
+  }
+
+  async logout(params: CognitoLogoutParams): Promise<CognitoLogoutResult> {
+    const command = new GlobalSignOutCommand({
+      AccessToken: params.cognitoAccessToken,
     });
     await this.cognitoClient.send(command);
     return {

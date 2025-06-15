@@ -10,6 +10,10 @@ import {
   ConfirmSignUpResultDto,
   ConfirmForgotPasswordDto,
   ConfirmForgotPasswordResultDto,
+  ChangePasswordDto,
+  ChangePasswordResultDto,
+  LogoutDto,
+  LogoutResultDto,
 } from '@repo/entix-sdk';
 import {
   LoginDto,
@@ -49,5 +53,17 @@ export class UserAuthService {
 
   async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
     return this.cognitoService.confirmForgotPassword(params);
+  }
+
+  async changePassword(params: ChangePasswordDto): Promise<ChangePasswordResultDto> {
+    return this.cognitoService.changePassword({
+      cognitoAccessToken: params.cognitoAccessToken,
+      previousPassword: params.oldPassword,
+      proposedPassword: params.newPassword,
+    });
+  }
+
+  async logout(params: LogoutDto): Promise<LogoutResultDto> {
+    return this.cognitoService.logout(params);
   }
 }

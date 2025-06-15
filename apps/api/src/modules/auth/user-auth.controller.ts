@@ -15,6 +15,12 @@ import {
   ConfirmForgotPasswordDto,
   ConfirmForgotPasswordResultDto,
   confirmForgotPasswordSchema,
+  ChangePasswordDto,
+  ChangePasswordResultDto,
+  changePasswordSchema,
+  LogoutDto,
+  LogoutResultDto,
+  logoutSchema,
 } from '@repo/entix-sdk';
 import { UserAuthService } from '@modules/auth/user-auth.service';
 import {
@@ -35,42 +41,56 @@ export class UserAuthController {
   @Post('/signup')
   @HttpCode(201)
   @UseBefore(validateBody(signUpSchema))
-  async signUp(@Body() user: SignUpDto): Promise<SignUpResultDto> {
-    return this.userAuthService.signUp(user);
+  async signUp(@Body() params: SignUpDto): Promise<SignUpResultDto> {
+    return this.userAuthService.signUp(params);
   }
 
   @Post('/login')
   @HttpCode(200)
   @UseBefore(validateBody(loginSchema))
-  async signIn(@Body() user: LoginDto): Promise<LoginResultDto> {
-    return this.userAuthService.login(user);
+  async signIn(@Body() params: LoginDto): Promise<LoginResultDto> {
+    return this.userAuthService.login(params);
   }
 
   @Post('/resend-confirmation-code')
   @HttpCode(200)
   @UseBefore(validateBody(resendConfirmationCodeSchema))
-  async resendConfirmationCode(@Body() user: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
-    return this.userAuthService.resendConfirmationCode(user);
+  async resendConfirmationCode(@Body() params: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
+    return this.userAuthService.resendConfirmationCode(params);
   }
 
   @Post('/confirm-signup')
   @HttpCode(200)
   @UseBefore(validateBody(confirmSignUpSchema))
-  async confirmSignUp(@Body() user: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
-    return this.userAuthService.confirmSignUp(user);
+  async confirmSignUp(@Body() params: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
+    return this.userAuthService.confirmSignUp(params);
   }
 
   @Post('/forgot-password')
   @HttpCode(200)
   @UseBefore(validateBody(forgotPasswordSchema))
-  async forgotPassword(@Body() user: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
-    return this.userAuthService.forgotPassword(user);
+  async forgotPassword(@Body() params: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
+    return this.userAuthService.forgotPassword(params);
   }
 
   @Post('/confirm-forgot-password')
   @HttpCode(200)
   @UseBefore(validateBody(confirmForgotPasswordSchema))
-  async confirmForgotPassword(@Body() user: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
-    return this.userAuthService.confirmForgotPassword(user);
+  async confirmForgotPassword(@Body() params: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
+    return this.userAuthService.confirmForgotPassword(params);
+  }
+
+  @Post('/change-password')
+  @HttpCode(200)
+  @UseBefore(validateBody(changePasswordSchema))
+  async changePassword(@Body() params: ChangePasswordDto): Promise<ChangePasswordResultDto> {
+    return this.userAuthService.changePassword(params);
+  }
+
+  @Post('/logout')
+  @HttpCode(200)
+  @UseBefore(validateBody(logoutSchema))
+  async logout(@Body() params: LogoutDto): Promise<LogoutResultDto> {
+    return this.userAuthService.logout(params);
   }
 }

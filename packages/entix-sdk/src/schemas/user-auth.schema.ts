@@ -30,3 +30,13 @@ export const confirmForgotPasswordSchema = z.object({
   confirmationCode: z.string().length(6),
   password: z.string().min(8),
 });
+
+export const changePasswordSchema = z.object({
+  cognitoAccessToken: z.string().min(1),
+  oldPassword: z.string().min(8),
+  newPassword: z.string().min(8),
+});
+
+export const logoutSchema = z.object({
+  cognitoAccessToken: z.string().min(1),
+});
