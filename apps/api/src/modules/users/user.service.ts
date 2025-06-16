@@ -14,6 +14,10 @@ export class UserService {
     return this.userRepository.findById(id);
   }
 
+  async findBySub(sub: string): Promise<User | null> {
+    return this.userRepository.findBySub(sub);
+  }
+
   async createUser(params: CreateUserParams): Promise<CreateUserResult> {
     return this.userRepository.createUser(params);
   }

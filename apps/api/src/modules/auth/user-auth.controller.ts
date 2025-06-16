@@ -1,6 +1,17 @@
 import { JsonController, Post, Body, UseBefore, HttpCode } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { validateBody } from '@middleware/validation.middleware';
+import { UserAuthService } from '@modules/auth/user-auth.service';
+import {
+  LoginDto,
+  LoginResultDto,
+  ResendConfirmationCodeDto,
+} from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
+import {
+  loginSchema,
+  resendConfirmationCodeSchema,
+} from 'node_modules/@repo/entix-sdk/dist/esm/schemas/user-auth.schema';
+import { CognitoAuthService } from '@modules/auth/cognito-auth.service';
 import {
   signUpSchema,
   SignUpDto,
@@ -22,21 +33,14 @@ import {
   LogoutResultDto,
   logoutSchema,
 } from '@repo/entix-sdk';
-import { UserAuthService } from '@modules/auth/user-auth.service';
-import {
-  LoginDto,
-  LoginResultDto,
-  ResendConfirmationCodeDto,
-} from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
-import {
-  loginSchema,
-  resendConfirmationCodeSchema,
-} from 'node_modules/@repo/entix-sdk/dist/esm/schemas/user-auth.schema';
 
 @Injectable()
 @JsonController('/v1/auth')
 export class UserAuthController {
-  constructor(private readonly userAuthService: UserAuthService) {}
+  constructor(
+    private readonly userAuthService: UserAuthService,
+    private readonly cognitoAuthService: CognitoAuthService,
+  ) {}
 
   @Post('/signup')
   @HttpCode(201)
@@ -56,35 +60,35 @@ export class UserAuthController {
   @HttpCode(200)
   @UseBefore(validateBody(resendConfirmationCodeSchema))
   async resendConfirmationCode(@Body() params: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
-    return this.userAuthService.resendConfirmationCode(params);
+    return this.cognitoAuthService.resendConfirmationCode(params);
   }
 
   @Post('/confirm-signup')
   @HttpCode(200)
   @UseBefore(validateBody(confirmSignUpSchema))
   async confirmSignUp(@Body() params: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
-    return this.userAuthService.confirmSignUp(params);
+    return this.cognitoAuthService.confirmSignUp(params);
   }
 
   @Post('/forgot-password')
   @HttpCode(200)
   @UseBefore(validateBody(forgotPasswordSchema))
   async forgotPassword(@Body() params: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
-    return this.userAuthService.forgotPassword(params);
+    return this.cognitoAuthService.forgotPassword(params);
   }
 
   @Post('/confirm-forgot-password')
   @HttpCode(200)
   @UseBefore(validateBody(confirmForgotPasswordSchema))
   async confirmForgotPassword(@Body() params: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
-    return this.userAuthService.confirmForgotPassword(params);
+    return this.cognitoAuthService.confirmForgotPassword(params);
   }
 
   @Post('/change-password')
   @HttpCode(200)
   @UseBefore(validateBody(changePasswordSchema))
   async changePassword(@Body() params: ChangePasswordDto): Promise<ChangePasswordResultDto> {
-    return this.userAuthService.changePassword(params);
+    return this.cognitoAuthService.changePassword(params);
   }
 
   @Post('/logout')

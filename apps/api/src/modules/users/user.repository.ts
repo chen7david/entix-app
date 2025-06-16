@@ -22,6 +22,15 @@ export class UserRepository {
     return user[0] ?? null;
   }
 
+  async findBySub(sub: string): Promise<User | null> {
+    const user = await this.dbService.db
+      .select()
+      .from(users)
+      .where(and(eq(users.sub, sub), notDeleted()))
+      .limit(1);
+    return user[0] ?? null;
+  }
+
   async createUser(user: NewUser): Promise<User> {
     const [newUser] = await this.dbService.db.insert(users).values(user).returning();
     if (!newUser) {

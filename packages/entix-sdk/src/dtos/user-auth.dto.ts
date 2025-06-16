@@ -36,10 +36,7 @@ export type ConfirmSignUpResultDto = {
 
 export type LoginResultDto = {
   accessToken: string;
-  expiresIn: number;
-  tokenType: string;
   refreshToken: string;
-  idToken: string;
 };
 
 export type ResendConfirmationCodeResultDto = {

@@ -18,6 +18,12 @@ export const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY: z.string(),
   AWS_COGNITO_USER_POOL_ID: z.string(),
   AWS_COGNITO_USER_POOL_CLIENT_ID: z.string(),
+
+  // JWT
+  JWT_ACCESS_TOKEN_SECRET: z.string(),
+  JWT_REFRESH_TOKEN_SECRET: z.string(),
+  JWT_ACCESS_TOKEN_EXPIRATION_TIME: z.string(),
+  JWT_REFRESH_TOKEN_EXPIRATION_TIME: z.string(),
 });
 
 export type EnvResult = z.infer<typeof envSchema>;
