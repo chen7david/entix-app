@@ -12,6 +12,7 @@
     "src/error.constant.ts",
     "src/helpers/aws.helper.ts",
     "src/helpers/pg.helper.ts",
-    "src/helpers/zod.helper.ts"
+    "src/helpers/zod.helper.ts",
+    "src/helpers/jwt.helper.ts"
   ]
 }

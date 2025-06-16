@@ -14,12 +14,22 @@ export type SignUpDto = z.infer<typeof signUpSchema>;
 
 export type SignUpResultDto = {
   id: string;
+  sub: string;
   email: string;
   username: string;
-  sub: string;
+  disabledAt: Date | null;
+  verifiedAt: Date | null;
+  deletedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type LoginDto = z.infer<typeof loginSchema>;
+
+export type LoginResultDto = {
+  accessToken: string;
+  refreshToken: string;
+};
 
 export type ResendConfirmationCodeDto = z.infer<typeof resendConfirmationCodeSchema>;
 
@@ -27,14 +37,6 @@ export type ConfirmSignUpDto = z.infer<typeof confirmSignUpSchema>;
 
 export type ConfirmSignUpResultDto = {
   success: boolean;
-};
-
-export type LoginResultDto = {
-  accessToken: string;
-  expiresIn: number;
-  tokenType: string;
-  refreshToken: string;
-  idToken: string;
 };
 
 export type ResendConfirmationCodeResultDto = {
@@ -67,4 +69,13 @@ export type LogoutDto = z.infer<typeof logoutSchema>;
 
 export type LogoutResultDto = {
   success: boolean;
+};
+
+export type AccessTokenPayloadResult = {
+  sub: string;
+  roles: string[];
+};
+
+export type RefreshTokenPayloadResult = {
+  sub: string;
 };

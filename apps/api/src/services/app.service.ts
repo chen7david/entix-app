@@ -3,6 +3,8 @@ import { useExpressServer } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { notFoundHandler } from '@middleware/not-found.middleware';
 import { ErrorHandlerMiddleware } from '@middleware/global-error.middleware';
+import { authorizationChecker } from '@middleware/authz-checker.middleware';
+import { currentUserChecker } from '@middleware/current-user-checker.middleware';
 
 @Injectable()
 export class AppService {
@@ -17,6 +19,8 @@ export class AppService {
       middlewares: [ErrorHandlerMiddleware],
       defaultErrorHandler: false,
       cors: true,
+      authorizationChecker,
+      currentUserChecker,
     });
     return this;
   }

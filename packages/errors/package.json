@@ -45,6 +45,16 @@
         "default": "./dist/cjs/helpers/pg.helper.js"
       }
     },
+    "./helpers/jwt": {
+      "import": {
+        "types": "./dist/esm/helpers/jwt.helper.d.ts",
+        "default": "./dist/esm/helpers/jwt.helper.js"
+      },
+      "require": {
+        "types": "./dist/cjs/helpers/jwt.helper.d.ts",
+        "default": "./dist/cjs/helpers/jwt.helper.js"
+      }
+    },
     "./helpers/zod": {
       "import": {
         "types": "./dist/esm/helpers/zod.helper.d.ts",
@@ -65,12 +75,15 @@
     "@types/pg": "^8.15.4",
     "@types/uuid": "^10.0.0",
     "pg": "^8.16.0",
-    "zod": "^3.25.64"
+    "zod": "^3.25.64",
+    "jsonwebtoken": "^9.0.2",
+    "@types/jsonwebtoken": "^9.0.10"
   },
   "peerDependencies": {
     "@smithy/smithy-client": "*",
     "pg": "*",
-    "zod": "*"
+    "zod": "*",
+    "jsonwebtoken": "*"
   },
   "peerDependenciesMeta": {
     "zod": {

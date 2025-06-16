@@ -21,7 +21,8 @@
       "@config/*": ["src/config/*"],
       "@factories/*": ["src/factories/*"],
       "@constants/*": ["src/constants/*"],
-      "@modules/*": ["src/modules/*"]
+      "@modules/*": ["src/modules/*"],
+      "@database/*": ["src/database/*"]
     },
 
     /* Interop */
@@ -46,5 +47,5 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src", "drizzle.config.ts"]
 }
