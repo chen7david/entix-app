@@ -30,7 +30,7 @@ export class UserAuthService {
     const { accessToken } = await this.cognitoService.login(params);
     const { sub } = this.jwtService.decodeToken<CognitoAccessTokenPayload>(accessToken);
 
-    const user = await this.userService.findBySub(sub);
+    const user = await this.userService.findByCognitoSub(sub);
 
     if (!user) {
       throw new InternalError('Cognito user not found in core database');

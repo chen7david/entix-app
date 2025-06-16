@@ -1,8 +1,9 @@
 import express, { Application } from 'express';
-import { useExpressServer } from 'routing-controllers';
-import { Injectable } from '@utils/typedi.util';
+import { Action, useExpressServer } from 'routing-controllers';
+import { Container, Injectable } from '@utils/typedi.util';
 import { notFoundHandler } from '@middleware/not-found.middleware';
 import { ErrorHandlerMiddleware } from '@middleware/global-error.middleware';
+import { JwtService } from './jwt.service';
 
 @Injectable()
 export class AppService {
@@ -17,6 +18,21 @@ export class AppService {
       middlewares: [ErrorHandlerMiddleware],
       defaultErrorHandler: false,
       cors: true,
+      currentUserChecker: async (action: Action) => {
+        const jwtService = Container.get(JwtService);
+
+        const authHeader = action.request.headers['authorization'];
+        const token = authHeader?.split(' ')[1];
+        if (!token) return null;
+        console.log(token);
+        try {
+          const payload = await jwtService.verifyAccessToken(token);
+          return payload;
+        } catch (err) {
+          console.log(err);
+          return null;
+        }
+      },
     });
     return this;
   }

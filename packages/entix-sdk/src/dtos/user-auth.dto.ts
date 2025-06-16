@@ -13,7 +13,7 @@ import {
 export type SignUpDto = z.infer<typeof signUpSchema>;
 
 export type SignUpResultDto = {
-  id: number;
+  id: string;
   sub: string;
   email: string;
   username: string;

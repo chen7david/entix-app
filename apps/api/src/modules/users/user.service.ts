@@ -10,12 +10,12 @@ export class UserService {
     return this.userRepository.findAll();
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     return this.userRepository.findById(id);
   }
 
-  async findBySub(sub: string): Promise<User | null> {
-    return this.userRepository.findBySub(sub);
+  async findByCognitoSub(sub: string): Promise<User | null> {
+    return this.userRepository.findByCognitoSub(sub);
   }
 
   async createUser(params: CreateUserParams): Promise<CreateUserResult> {

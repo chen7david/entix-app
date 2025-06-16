@@ -13,7 +13,7 @@ export class UserRepository {
     return this.dbService.db.select().from(users).where(notDeleted());
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     const user = await this.dbService.db
       .select()
       .from(users)
@@ -22,7 +22,7 @@ export class UserRepository {
     return user[0] ?? null;
   }
 
-  async findBySub(sub: string): Promise<User | null> {
+  async findByCognitoSub(sub: string): Promise<User | null> {
     const user = await this.dbService.db
       .select()
       .from(users)
