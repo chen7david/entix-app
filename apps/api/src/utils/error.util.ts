@@ -1,8 +1,9 @@
-import { fromCognitoError, isCognitoError } from '@repo/api-errors/helpers/aws';
 import { fromPostgresError, isPostgresError, isPostgresUniqueError } from '@repo/api-errors/helpers/pg';
+import { fromCognitoError, isCognitoError } from '@repo/api-errors/helpers/aws';
 import { fromZodError, isZodError } from '@repo/api-errors/helpers/zod';
 import { fromJwtError, isJwtError } from '@repo/api-errors/helpers/jwt';
-import { ApiError, InternalError, isApiError } from '@repo/api-errors';
+import { ApiError, InternalError, isApiError, UnauthorizedError } from '@repo/api-errors';
+import { HttpError } from 'routing-controllers';
 
 export function toAppError(error: unknown): ApiError {
   if (isApiError(error)) {
@@ -23,6 +24,10 @@ export function toAppError(error: unknown): ApiError {
 
   if (isJwtError(error)) {
     return fromJwtError(error);
+  }
+
+  if (error instanceof HttpError) {
+    return new UnauthorizedError(error.message);
   }
 
   if (error instanceof Error) {

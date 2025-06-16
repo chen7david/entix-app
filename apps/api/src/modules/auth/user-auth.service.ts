@@ -46,12 +46,12 @@ export class UserAuthService {
 
     return {
       accessToken: this.jwtService.signAccessToken({
-        sub: user.sub,
-        email: user.email,
+        sub: user.id,
         username: user.username,
+        roles: ['user'], // TODO: add roles
       }),
       refreshToken: this.jwtService.signRefreshToken({
-        sub: user.sub,
+        sub: user.id,
       }),
     };
   }

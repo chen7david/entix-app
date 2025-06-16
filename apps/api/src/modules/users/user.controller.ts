@@ -1,4 +1,4 @@
-import { JsonController, Get, Param, CurrentUser } from 'routing-controllers';
+import { JsonController, Get, Param, CurrentUser, Authorized } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { UserService } from './user.service';
 import { User } from './user.model';
@@ -9,8 +9,9 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('/')
+  @Authorized([])
   async getUsers(@CurrentUser() user: User) {
-    console.log(user);
+    console.log({ user }); // TODO: remove this
     return this.userService.findAll();
   }
 
