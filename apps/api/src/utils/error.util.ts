@@ -1,6 +1,7 @@
 import { fromCognitoError, isCognitoError } from '@repo/api-errors/helpers/aws';
 import { fromPostgresError, isPostgresError, isPostgresUniqueError } from '@repo/api-errors/helpers/pg';
 import { fromZodError, isZodError } from '@repo/api-errors/helpers/zod';
+import { fromJwtError, isJwtError } from '@repo/api-errors/helpers/jwt';
 import { ApiError, InternalError, isApiError } from '@repo/api-errors';
 
 export function toAppError(error: unknown): ApiError {
@@ -18,6 +19,10 @@ export function toAppError(error: unknown): ApiError {
 
   if (isPostgresError(error) && isPostgresUniqueError(error)) {
     return fromPostgresError(error);
+  }
+
+  if (isJwtError(error)) {
+    return fromJwtError(error);
   }
 
   if (error instanceof Error) {

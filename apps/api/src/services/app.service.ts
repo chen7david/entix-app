@@ -18,6 +18,19 @@ export class AppService {
       middlewares: [ErrorHandlerMiddleware],
       defaultErrorHandler: false,
       cors: true,
+      authorizationChecker: async (action: Action) => {
+        const jwtService = Container.get(JwtService);
+        const token = action.request.headers['authorization']?.split(' ')[1];
+        if (!token) return false;
+
+        try {
+          const payload = await jwtService.verifyAccessToken(token);
+          console.log(payload);
+          return !!payload;
+        } catch {
+          return false;
+        }
+      },
       currentUserChecker: async (action: Action) => {
         const jwtService = Container.get(JwtService);
 
