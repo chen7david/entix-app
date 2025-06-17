@@ -9,7 +9,6 @@ export const users = pgTable('users', {
   username: varchar('username', { length: 50 }).notNull().unique(),
 
   disabledAt: timestamp('disabled_at').default(sql`NULL`),
-  verifiedAt: timestamp('verified_at').default(sql`NULL`),
   deletedAt: timestamp('deleted_at').default(sql`NULL`),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),

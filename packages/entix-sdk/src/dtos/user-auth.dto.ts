@@ -10,19 +10,20 @@ import {
   signUpSchema,
 } from '../schemas/user-auth.schema';
 
-export type SignUpDto = z.infer<typeof signUpSchema>;
-
-export type SignUpResultDto = {
+export type UserEntity = {
   id: string;
   sub: string;
   email: string;
   username: string;
   disabledAt: Date | null;
-  verifiedAt: Date | null;
   deletedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
+
+export type SignUpDto = z.infer<typeof signUpSchema>;
+
+export type SignUpResultDto = UserEntity;
 
 export type LoginDto = z.infer<typeof loginSchema>;
 

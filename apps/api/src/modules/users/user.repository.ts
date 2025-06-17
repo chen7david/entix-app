@@ -4,6 +4,8 @@ import { InternalError } from '@repo/api-errors';
 import { users, notDeleted } from '@modules/users/user.schema';
 import { NewUser, User } from '@modules/users/user.model';
 import { eq, and } from 'drizzle-orm';
+import { userRoles } from '@modules/user_roles/user_role.shema';
+import { roles } from '@modules/roles/role.shema';
 
 @Injectable()
 export class UserRepository {
@@ -37,5 +39,13 @@ export class UserRepository {
       throw new InternalError('Failed to create user');
     }
     return newUser;
+  }
+
+  async findRolesByUserId(userId: string) {
+    return this.dbService.db
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.userId, userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id));
   }
 }
