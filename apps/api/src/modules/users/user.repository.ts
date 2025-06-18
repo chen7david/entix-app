@@ -1,11 +1,11 @@
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { InternalError } from '@repo/api-errors';
-import { users, notDeletedUser } from '@modules/users/user.schema';
+import { users, notDeletedUser } from '@database/schemas/user.schema';
 import { NewUser, User } from '@modules/users/user.model';
 import { eq, and } from 'drizzle-orm';
-import { userRoles } from '@modules/user_roles/user_role.shema';
-import { roles } from '@modules/roles/role.schema';
+import { userRoles } from '@database/schemas/user_role.shema';
+import { roles } from '@database/schemas/role.schema';
 
 @Injectable()
 export class UserRepository {

@@ -1,4 +1,4 @@
-import { roles } from './role.schema';
+import { roles } from '../../database/schemas/role.schema';
 import { IdParams } from '@repo/entix-sdk';
 
 export type Role = typeof roles.$inferSelect;

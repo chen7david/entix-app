@@ -1,13 +1,20 @@
 import { fromPostgresError, isPostgresError, isPostgresUniqueError } from '@repo/api-errors/helpers/pg';
+import { ApiError, InternalError, isApiError, UnauthorizedError } from '@repo/api-errors';
+import { fromDrizzleError, isDrizzleError } from '@repo/api-errors/helpers/drizzle';
 import { fromCognitoError, isCognitoError } from '@repo/api-errors/helpers/aws';
 import { fromZodError, isZodError } from '@repo/api-errors/helpers/zod';
 import { fromJwtError, isJwtError } from '@repo/api-errors/helpers/jwt';
-import { ApiError, InternalError, isApiError, UnauthorizedError } from '@repo/api-errors';
 import { HttpError } from 'routing-controllers';
 
 export function toAppError(error: unknown): ApiError {
+  console.log({ rawError: error });
+
   if (isApiError(error)) {
     return error;
+  }
+
+  if (isDrizzleError(error)) {
+    return fromDrizzleError(error);
   }
 
   if (isZodError(error)) {

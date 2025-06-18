@@ -64,6 +64,16 @@
         "types": "./dist/cjs/helpers/zod.helper.d.ts",
         "default": "./dist/cjs/helpers/zod.helper.js"
       }
+    },
+    "./helpers/drizzle": {
+      "import": {
+        "types": "./dist/esm/helpers/drizzle.helper.d.ts",
+        "default": "./dist/esm/helpers/drizzle.helper.js"
+      },
+      "require": {
+        "types": "./dist/cjs/helpers/drizzle.helper.d.ts",
+        "default": "./dist/cjs/helpers/drizzle.helper.js"
+      }
     }
   },
   "keywords": [],
@@ -74,6 +84,7 @@
     "@types/node": "^24.0.1",
     "@types/pg": "^8.15.4",
     "@types/uuid": "^10.0.0",
+    "drizzle-orm": "^0.44.2",
     "pg": "^8.16.0",
     "zod": "^3.25.64",
     "jsonwebtoken": "^9.0.2",
@@ -81,6 +92,7 @@
   },
   "peerDependencies": {
     "@smithy/smithy-client": "*",
+    "drizzle-orm": "*",
     "pg": "*",
     "zod": "*",
     "jsonwebtoken": "*"
@@ -90,6 +102,9 @@
       "optional": true
     },
     "pg": {
+      "optional": true
+    },
+    "drizzle-orm": {
       "optional": true
     },
     "@smithy/smithy-client": {

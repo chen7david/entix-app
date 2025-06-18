@@ -1,11 +1,11 @@
-import { userRoles } from './user_role.shema';
+import { userRoles } from '../../database/schemas/user_role.shema';
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { DeleteUserRoleParams, NewUserRole, UserRole } from './user_role.model';
 import { and, eq, getTableColumns } from 'drizzle-orm';
 import { Role, User } from '@repo/entix-sdk';
-import { roles } from '@modules/roles/role.schema';
-import { users } from '@modules/users/user.schema';
+import { roles } from '@database/schemas/role.schema';
+import { users } from '@database/schemas/user.schema';
 
 @Injectable()
 export class UserRoleRepository {

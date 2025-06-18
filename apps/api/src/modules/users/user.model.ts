@@ -1,5 +1,5 @@
 import { UserRole } from '@modules/user_roles/user_role.model';
-import { users } from './user.schema';
+import { users } from '../../database/schemas/user.schema';
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

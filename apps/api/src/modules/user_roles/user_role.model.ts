@@ -1,4 +1,4 @@
-import { userRoles } from './user_role.shema';
+import { userRoles } from '../../database/schemas/user_role.shema';
 
 export type UserRole = typeof userRoles.$inferSelect;
 export type NewUserRole = typeof userRoles.$inferInsert;

@@ -1,7 +1,7 @@
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { CreateRoleResult, NewRole, Role, RoleUpdate } from './role.model';
-import { notDeletedRole, roles } from './role.schema';
+import { notDeletedRole, roles } from '../../database/schemas/role.schema';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
