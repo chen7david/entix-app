@@ -1,25 +1,25 @@
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { InternalError } from '@repo/api-errors';
-import { users, notDeleted } from '@modules/users/user.schema';
+import { users, notDeletedUser } from '@modules/users/user.schema';
 import { NewUser, User } from '@modules/users/user.model';
 import { eq, and } from 'drizzle-orm';
 import { userRoles } from '@modules/user_roles/user_role.shema';
-import { roles } from '@modules/roles/role.shema';
+import { roles } from '@modules/roles/role.schema';
 
 @Injectable()
 export class UserRepository {
   constructor(private readonly dbService: DbService) {}
 
   async findAll(trx = this.dbService.db): Promise<User[]> {
-    return trx.select().from(users).where(notDeleted());
+    return trx.select().from(users).where(notDeletedUser());
   }
 
   async findById(id: string, trx = this.dbService.db): Promise<User | undefined> {
     const [user] = await trx
       .select()
       .from(users)
-      .where(and(eq(users.id, id), notDeleted()))
+      .where(and(eq(users.id, id), notDeletedUser()))
       .limit(1);
     return user;
   }
@@ -28,7 +28,7 @@ export class UserRepository {
     const [user] = await trx
       .select()
       .from(users)
-      .where(and(eq(users.sub, sub), notDeleted()))
+      .where(and(eq(users.sub, sub), notDeletedUser()))
       .limit(1);
     return user;
   }

@@ -1,5 +1,6 @@
 export * from '@dtos/common.dto';
 export * from '@schemas/common.schema';
+export * from '@models/common.model';
 
 export * from '@schemas/user-auth.schema';
 export * from '@dtos/user-auth.dto';

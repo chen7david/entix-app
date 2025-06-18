@@ -5,6 +5,8 @@ import { z } from 'zod';
 
 export type GetRolesResultDto = Role[];
 
+export type GetRoleResultDto = Role;
+
 export type CreateRoleDto = z.infer<typeof createRoleSchema>;
 
 export type CreateRoleResultDto = Role;

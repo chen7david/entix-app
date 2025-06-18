@@ -15,6 +15,34 @@
       "when": 1750114960576,
       "tag": "0001_great_jack_power",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750259072588,
+      "tag": "0002_perpetual_hitman",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750275266249,
+      "tag": "0003_lowly_mongoose",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1750275882774,
+      "tag": "0004_superb_sinister_six",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1750276992185,
+      "tag": "0005_mushy_roland_deschain",
+      "breakpoints": true
     }
   ]
 }

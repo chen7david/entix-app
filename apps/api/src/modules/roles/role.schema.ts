@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm';
 export const roles = pgTable('roles', {
   id: uuid('id').defaultRandom().primaryKey(),
   name: text('name').notNull().unique(),
-  description: text('description'),
+  description: text('description').default(sql`NULL`),
   deletedAt: timestamp('deleted_at').default(sql`NULL`),
 
   createdAt: timestamp('created_at').defaultNow(),
@@ -14,4 +14,4 @@ export const roles = pgTable('roles', {
     .notNull(),
 });
 
-export const notDeleted = () => sql`${roles.deletedAt} IS NULL`;
+export const notDeletedRole = () => sql`${roles.deletedAt} IS NULL`;

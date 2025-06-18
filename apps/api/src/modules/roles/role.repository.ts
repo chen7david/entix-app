@@ -1,7 +1,7 @@
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { CreateRoleResult, NewRole, Role, RoleUpdate } from './role.model';
-import { notDeleted, roles } from './role.shema';
+import { notDeletedRole, roles } from './role.schema';
 import { eq } from 'drizzle-orm';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class RoleRepository {
   constructor(private readonly dbService: DbService) {}
 
   async findAll(trx = this.dbService.db): Promise<Role[]> {
-    return trx.select().from(roles).where(notDeleted());
+    return trx.select().from(roles).where(notDeletedRole());
   }
 
   async findById(id: string, trx = this.dbService.db): Promise<Role | undefined> {
@@ -23,6 +23,7 @@ export class RoleRepository {
   }
 
   async create(params: NewRole, trx = this.dbService.db): Promise<CreateRoleResult> {
+    console.log('params', params);
     const [role] = await trx.insert(roles).values(params).returning();
     if (!role) {
       throw new Error('Failed to create role');

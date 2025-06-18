@@ -19,4 +19,4 @@ export const users = pgTable('users', {
 });
 
 // Helper function to handle soft deletes in queries
-export const notDeleted = () => sql`${users.deletedAt} IS NULL`;
+export const notDeletedUser = () => sql`${users.deletedAt} IS NULL`;

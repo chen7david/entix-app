@@ -4,7 +4,7 @@ import { DbService } from '@services/db.service';
 import { DeleteUserRoleParams, NewUserRole, UserRole } from './user_role.model';
 import { and, eq, getTableColumns } from 'drizzle-orm';
 import { Role, User } from '@repo/entix-sdk';
-import { roles } from '@modules/roles/role.shema';
+import { roles } from '@modules/roles/role.schema';
 import { users } from '@modules/users/user.schema';
 
 @Injectable()

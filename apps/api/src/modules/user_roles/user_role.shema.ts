@@ -1,5 +1,5 @@
 import { users } from '@modules/users/user.schema';
-import { roles } from '@modules/roles/role.shema';
+import { roles } from '@modules/roles/role.schema';
 import { pgTable, uuid, primaryKey, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
