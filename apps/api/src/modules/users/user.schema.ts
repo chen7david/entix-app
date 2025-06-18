@@ -12,7 +12,10 @@ export const users = pgTable('users', {
   deletedAt: timestamp('deleted_at').default(sql`NULL`),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
 // Helper function to handle soft deletes in queries

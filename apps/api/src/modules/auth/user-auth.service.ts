@@ -1,6 +1,6 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
-import { LogoutDto, LogoutResultDto, SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
+import { LogoutDto, SuccessResultDto, SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
 import { LoginDto, LoginResultDto } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
 import { UserService } from '@modules/users/user.service';
 import { JwtService } from '@services/jwt.service';
@@ -56,7 +56,7 @@ export class UserAuthService {
     };
   }
 
-  async logout(params: LogoutDto): Promise<LogoutResultDto> {
+  async logout(params: LogoutDto): Promise<SuccessResultDto> {
     return this.cognitoService.logout(params);
   }
 }

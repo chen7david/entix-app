@@ -8,7 +8,10 @@ export const roles = pgTable('roles', {
   deletedAt: timestamp('deleted_at').default(sql`NULL`),
 
   createdAt: timestamp('created_at').defaultNow(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at')
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });
 
 export const notDeleted = () => sql`${roles.deletedAt} IS NULL`;

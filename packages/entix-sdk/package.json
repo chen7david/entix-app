@@ -10,8 +10,8 @@
   ],
   "scripts": {
     "build": "pnpm build:cjs && pnpm build:esm",
-    "build:cjs": "tsc --project tsconfig.cjs.json",
-    "build:esm": "tsc --project tsconfig.esm.json",
+    "build:cjs": "tsc --project tsconfig.cjs.json && tsc-alias --project tsconfig.cjs.json",
+    "build:esm": "tsc --project tsconfig.esm.json && tsc-alias --project tsconfig.esm.json",
     "dev": "pnpm build --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -34,6 +34,7 @@
     "zod": "^3.25.64"
   },
   "devDependencies": {
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.5.4"
   }
 }
