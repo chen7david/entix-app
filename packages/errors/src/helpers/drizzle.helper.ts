@@ -1,31 +1,57 @@
-import { ConflictError, InternalError } from '../index';
+import { InternalError, ConflictError } from '../index';
 import { ApiError } from '../error.model';
-import { DatabaseError } from 'pg';
-import { fromPostgresError } from './pg.helper';
 
 /**
- * Checks if the error is a Drizzle ORM query error
+ * Checks if the error is a DrizzleQueryError
  */
 export function isDrizzleError(error: unknown): boolean {
+  // DrizzleQueryError has these specific properties
   return (
     typeof error === 'object' &&
     error !== null &&
-    'query' in error &&
-    'params' in error &&
+    error.constructor?.name === 'DrizzleQueryError' &&
+    'query' in (error as any) &&
+    'params' in (error as any) &&
     typeof (error as any).query === 'string'
   );
 }
 
 /**
- * Checks if the error is a Drizzle ORM query error with a PostgreSQL cause
+ * Checks if the error or its cause is a PostgreSQL unique constraint violation
  */
-export function isDrizzlePostgresError(error: unknown): boolean {
-  return (
-    isDrizzleError(error) &&
-    'cause' in (error as Record<string, unknown>) &&
-    (error as Record<string, unknown>).cause !== null &&
-    typeof (error as Record<string, unknown>).cause === 'object'
-  );
+export function isUniqueConstraintViolation(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  // Check if the error itself has the code
+  if ('code' in error && (error as any).code === '23505') return true;
+
+  // Check if the error has a cause with the code
+  if ('cause' in error && (error as any).cause) {
+    const cause = (error as any).cause;
+    if (typeof cause === 'object' && cause !== null && 'code' in cause && cause.code === '23505') {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Creates a ConflictError from a unique constraint violation
+ */
+export function fromUniqueConstraintViolation(error: unknown): ConflictError {
+  const cause = (error as any).cause || error;
+  let message = 'Resource already exists';
+
+  // Try to extract field name from error detail
+  if (cause.detail && typeof cause.detail === 'string') {
+    const match = cause.detail.match(/\(([^)]+)\)=\(([^)]+)\)/);
+    if (match) {
+      message = `Resource with ${match[1]} "${match[2]}" already exists`;
+    }
+  }
+
+  return new ConflictError(message);
 }
 
 /**
@@ -36,14 +62,9 @@ export function fromDrizzleError(error: unknown): ApiError {
     return new InternalError('Not a Drizzle error');
   }
 
-  // If it has a cause that's a PostgreSQL error
-  if (isDrizzlePostgresError(error)) {
-    const cause = (error as Record<string, unknown>).cause;
-
-    // Check for PostgreSQL unique constraint violation
-    if (cause && typeof cause === 'object' && 'code' in (cause as object) && (cause as any).code === '23505') {
-      return fromPostgresError(cause as DatabaseError);
-    }
+  // If it's a unique constraint violation, convert to a ConflictError
+  if (isUniqueConstraintViolation(error)) {
+    return fromUniqueConstraintViolation(error);
   }
 
   // Default to internal error for other Drizzle errors
