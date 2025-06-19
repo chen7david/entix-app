@@ -5,12 +5,13 @@ import { notFoundHandler } from '@middleware/not-found.middleware';
 import { ErrorHandlerMiddleware } from '@middleware/global-error.middleware';
 import { authorizationChecker } from '@middleware/authz-checker.middleware';
 import { currentUserChecker } from '@middleware/current-user-checker.middleware';
+import { OpenAPIService } from './openapi.service';
 
 @Injectable()
 export class AppService {
   private app: Application = express();
 
-  constructor() {}
+  constructor(private readonly openAPIService: OpenAPIService) {}
 
   registerRoutes(): AppService {
     useExpressServer(this.app, {
@@ -38,6 +39,7 @@ export class AppService {
   }
 
   registerAfterAllMiddlewares(): void {
+    this.openAPIService.setup(this.app);
     this.app.use(notFoundHandler);
   }
 
