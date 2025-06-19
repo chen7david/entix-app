@@ -2,8 +2,9 @@ import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { CreateRoleResult, NewRole, Role, RoleUpdate } from './role.model';
 import { notDeletedRole, roles } from '../../database/schemas/role.schema';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import { isEmptyObject } from '@utils/check.util';
+import { NotFoundError } from '@repo/api-errors';
 
 @Injectable()
 export class RoleRepository {
@@ -42,10 +43,14 @@ export class RoleRepository {
     return role;
   }
 
-  async delete(id: string, trx = this.dbService.db): Promise<void> {
-    const result = await trx.update(roles).set({ deletedAt: new Date() }).where(eq(roles.id, id));
+  async delete(id: string, trx = this.dbService.db): Promise<boolean> {
+    const result = await trx
+      .update(roles)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(roles.id, id), notDeletedRole()));
     if (result.rowCount === 0) {
-      throw new Error('Failed to delete role');
+      throw new NotFoundError('Role not found');
     }
+    return true;
   }
 }

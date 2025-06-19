@@ -2,7 +2,6 @@ import { Body, Delete, Get, JsonController, Params, Patch, Post, UseBefore } fro
 import { RoleService } from './role.service';
 import { Injectable } from '@utils/typedi.util';
 import { validateBody, validateParams } from '@middleware/validation.middleware';
-import { DeleteRoleResult } from './role.model';
 import {
   CreateRoleDto,
   CreateRoleResultDto,
@@ -11,6 +10,7 @@ import {
   GetRolesResultDto,
   IdDto,
   idSchema,
+  SuccessResultDto,
   UpdateRoleDto,
   UpdateRoleResultDto,
   updateRoleSchema,
@@ -47,7 +47,7 @@ export class RoleController {
 
   @Delete('/:id')
   @UseBefore(validateParams(idSchema))
-  async delete(@Params() params: IdDto): Promise<DeleteRoleResult> {
+  async delete(@Params() params: IdDto): Promise<SuccessResultDto> {
     return this.roleService.delete(params);
   }
 }

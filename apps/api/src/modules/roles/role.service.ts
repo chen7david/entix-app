@@ -1,7 +1,7 @@
 import { Injectable } from '@utils/typedi.util';
 import { RoleRepository } from './role.repository';
-import { IdDto, IdParams, Role } from '@repo/entix-sdk';
-import { CreateRoleParams, DeleteRoleResult, UpdateRoleParams } from './role.model';
+import { IdDto, IdParams, Role, SuccessResult } from '@repo/entix-sdk';
+import { CreateRoleParams, UpdateRoleParams } from './role.model';
 import { BadRequestError, NotFoundError } from '@repo/api-errors';
 import { isEmptyObject } from '@utils/check.util';
 
@@ -34,7 +34,8 @@ export class RoleService {
     return this.roleRepository.update(id, params);
   }
 
-  async delete(params: IdParams): Promise<DeleteRoleResult> {
-    return this.roleRepository.delete(params.id);
+  async delete(params: IdParams): Promise<SuccessResult> {
+    const success = await this.roleRepository.delete(params.id);
+    return { success };
   }
 }
