@@ -2,7 +2,8 @@ import { Injectable } from '@utils/typedi.util';
 import { RoleRepository } from './role.repository';
 import { IdDto, IdParams, Role } from '@repo/entix-sdk';
 import { CreateRoleParams, DeleteRoleResult, UpdateRoleParams } from './role.model';
-import { NotFoundError } from 'routing-controllers';
+import { BadRequestError, NotFoundError } from '@repo/api-errors';
+import { isEmptyObject } from '@utils/check.util';
 
 @Injectable()
 export class RoleService {
@@ -28,8 +29,9 @@ export class RoleService {
     return this.roleRepository.create(params);
   }
 
-  async update(id: string, role: UpdateRoleParams): Promise<Role> {
-    return this.roleRepository.update(id, role);
+  async update(id: string, params: UpdateRoleParams): Promise<Role> {
+    if (isEmptyObject(params)) throw new BadRequestError('No fields to update');
+    return this.roleRepository.update(id, params);
   }
 
   async delete(params: IdParams): Promise<DeleteRoleResult> {

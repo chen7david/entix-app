@@ -3,7 +3,7 @@ import { DbService } from '@services/db.service';
 import { CreateRoleResult, NewRole, Role, RoleUpdate } from './role.model';
 import { notDeletedRole, roles } from '../../database/schemas/role.schema';
 import { eq } from 'drizzle-orm';
-import { BadRequestError } from '@repo/api-errors';
+import { isEmptyObject } from '@utils/check.util';
 
 @Injectable()
 export class RoleRepository {
@@ -33,7 +33,7 @@ export class RoleRepository {
   }
 
   async update(id: string, params: RoleUpdate, trx = this.dbService.db): Promise<Role> {
-    if (Object.keys(params).length === 0) throw new BadRequestError('No fields to update');
+    if (isEmptyObject(params)) throw new Error('No fields to update');
 
     const [role] = await trx.update(roles).set(params).where(eq(roles.id, id)).returning();
     if (!role) {

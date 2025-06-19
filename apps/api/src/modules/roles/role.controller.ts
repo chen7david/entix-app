@@ -35,7 +35,6 @@ export class RoleController {
   @Post('/')
   @UseBefore(validateBody(createRoleSchema))
   async create(@Body() params: CreateRoleDto): Promise<CreateRoleResultDto> {
-    console.log('delete', params);
     return this.roleService.create(params);
   }
 
