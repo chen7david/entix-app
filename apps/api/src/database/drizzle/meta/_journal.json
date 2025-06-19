@@ -8,6 +8,90 @@
       "when": 1750094043947,
       "tag": "0000_gray_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750114960576,
+      "tag": "0001_great_jack_power",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750259072588,
+      "tag": "0002_perpetual_hitman",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1750275266249,
+      "tag": "0003_lowly_mongoose",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1750275882774,
+      "tag": "0004_superb_sinister_six",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1750276992185,
+      "tag": "0005_mushy_roland_deschain",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1750277247632,
+      "tag": "0006_fresh_norrin_radd",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1750282491524,
+      "tag": "0007_hot_outlaw_kid",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1750282709563,
+      "tag": "0008_messy_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1750288660428,
+      "tag": "0009_certain_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1750296852388,
+      "tag": "0010_sour_warhawk",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1750297084938,
+      "tag": "0011_calm_centennial",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1750297510548,
+      "tag": "0012_small_chamber",
+      "breakpoints": true
     }
   ]
 }

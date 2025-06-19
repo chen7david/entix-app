@@ -194,6 +194,9 @@ importers:
         specifier: ^3.25.64
         version: 3.25.64
     devDependencies:
+      tsc-alias:
+        specifier: ^1.8.16
+        version: 1.8.16
       typescript:
         specifier: ^5.5.4
         version: 5.8.3

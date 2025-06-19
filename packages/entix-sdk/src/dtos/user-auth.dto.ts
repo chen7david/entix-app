@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { User } from '@models/user.model';
 import {
   changePasswordSchema,
   confirmForgotPasswordSchema,
@@ -8,21 +9,11 @@ import {
   logoutSchema,
   resendConfirmationCodeSchema,
   signUpSchema,
-} from '../schemas/user-auth.schema';
+} from '@schemas/user-auth.schema';
 
 export type SignUpDto = z.infer<typeof signUpSchema>;
 
-export type SignUpResultDto = {
-  id: string;
-  sub: string;
-  email: string;
-  username: string;
-  disabledAt: Date | null;
-  verifiedAt: Date | null;
-  deletedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type SignUpResultDto = User;
 
 export type LoginDto = z.infer<typeof loginSchema>;
 
@@ -34,10 +25,6 @@ export type LoginResultDto = {
 export type ResendConfirmationCodeDto = z.infer<typeof resendConfirmationCodeSchema>;
 
 export type ConfirmSignUpDto = z.infer<typeof confirmSignUpSchema>;
-
-export type ConfirmSignUpResultDto = {
-  success: boolean;
-};
 
 export type ResendConfirmationCodeResultDto = {
   deliveryMedium: string;
@@ -55,27 +42,6 @@ export type ForgotPasswordResultDto = {
 
 export type ConfirmForgotPasswordDto = z.infer<typeof confirmForgotPasswordSchema>;
 
-export type ConfirmForgotPasswordResultDto = {
-  success: boolean;
-};
-
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;
 
-export type ChangePasswordResultDto = {
-  success: boolean;
-};
-
 export type LogoutDto = z.infer<typeof logoutSchema>;
-
-export type LogoutResultDto = {
-  success: boolean;
-};
-
-export type AccessTokenPayloadResult = {
-  sub: string;
-  roles: string[];
-};
-
-export type RefreshTokenPayloadResult = {
-  sub: string;
-};

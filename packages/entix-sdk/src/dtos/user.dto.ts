@@ -1,20 +1,18 @@
+import { createUserSchema, updateUserSchema } from '@schemas/user.schema';
+import { User } from '@models/user.model';
+import { Role } from '@models/role.model';
 import { z } from 'zod';
-import { createUserSchema, updateUserSchema } from '../schemas/user.schema';
+
+export type GetUserResultDto = User;
+
+export type GetUsersResultDto = User[];
 
 export type CreateUserDto = z.infer<typeof createUserSchema>;
 
-export type CreateUserResultDto = {
-  id: string;
-  email: string;
-  username: string;
-  sub: string;
-};
+export type CreateUserResultDto = User;
 
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 
-export type UpdateUserResultDto = {
-  id: string;
-  email: string;
-  username: string;
-  sub: string;
-};
+export type UpdateUserResultDto = User;
+
+export type GetUserRolesResultDto = Role[];

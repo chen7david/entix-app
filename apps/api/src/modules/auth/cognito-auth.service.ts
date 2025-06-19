@@ -6,11 +6,9 @@ import {
   ForgotPasswordDto,
   ForgotPasswordResultDto,
   ResendConfirmationCodeResultDto,
-  ConfirmSignUpResultDto,
+  SuccessResultDto,
   ConfirmForgotPasswordDto,
-  ConfirmForgotPasswordResultDto,
   ChangePasswordDto,
-  ChangePasswordResultDto,
 } from '@repo/entix-sdk';
 
 @Injectable()
@@ -21,7 +19,7 @@ export class CognitoAuthService {
     return this.cognitoService.resendConfirmationCode(params);
   }
 
-  async confirmSignUp(params: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
+  async confirmSignUp(params: ConfirmSignUpDto): Promise<SuccessResultDto> {
     return this.cognitoService.confirmSignUp(params);
   }
 
@@ -29,11 +27,11 @@ export class CognitoAuthService {
     return this.cognitoService.forgotPassword(params);
   }
 
-  async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
+  async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<SuccessResultDto> {
     return this.cognitoService.confirmForgotPassword(params);
   }
 
-  async changePassword(params: ChangePasswordDto): Promise<ChangePasswordResultDto> {
+  async changePassword(params: ChangePasswordDto): Promise<SuccessResultDto> {
     return this.cognitoService.changePassword({
       cognitoAccessToken: params.cognitoAccessToken,
       previousPassword: params.oldPassword,

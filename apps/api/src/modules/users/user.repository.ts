@@ -1,41 +1,51 @@
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { InternalError } from '@repo/api-errors';
-import { users, notDeleted } from '@modules/users/user.schema';
+import { users, notDeletedUser } from '@database/schemas/user.schema';
 import { NewUser, User } from '@modules/users/user.model';
 import { eq, and } from 'drizzle-orm';
+import { userRoles } from '@database/schemas/user_role.shema';
+import { roles } from '@database/schemas/role.schema';
 
 @Injectable()
 export class UserRepository {
   constructor(private readonly dbService: DbService) {}
 
-  async findAll(): Promise<User[]> {
-    return this.dbService.db.select().from(users).where(notDeleted());
+  async findAll(trx = this.dbService.db): Promise<User[]> {
+    return trx.select().from(users).where(notDeletedUser());
   }
 
-  async findById(id: string): Promise<User | null> {
-    const user = await this.dbService.db
+  async findById(id: string, trx = this.dbService.db): Promise<User | undefined> {
+    const [user] = await trx
       .select()
       .from(users)
-      .where(and(eq(users.id, id), notDeleted()))
+      .where(and(eq(users.id, id), notDeletedUser()))
       .limit(1);
-    return user[0] ?? null;
+    return user;
   }
 
-  async findByCognitoSub(sub: string): Promise<User | null> {
-    const user = await this.dbService.db
+  async findByCognitoSub(sub: string, trx = this.dbService.db): Promise<User | undefined> {
+    const [user] = await trx
       .select()
       .from(users)
-      .where(and(eq(users.sub, sub), notDeleted()))
+      .where(and(eq(users.sub, sub), notDeletedUser()))
       .limit(1);
-    return user[0] ?? null;
+    return user;
   }
 
-  async createUser(user: NewUser): Promise<User> {
-    const [newUser] = await this.dbService.db.insert(users).values(user).returning();
+  async createUser(params: NewUser, trx = this.dbService.db): Promise<User> {
+    const [newUser] = await trx.insert(users).values(params).returning();
     if (!newUser) {
       throw new InternalError('Failed to create user');
     }
     return newUser;
+  }
+
+  async findRolesByUserId(userId: string, trx = this.dbService.db) {
+    return trx
+      .select()
+      .from(userRoles)
+      .where(eq(userRoles.userId, userId))
+      .innerJoin(roles, eq(userRoles.roleId, roles.id));
   }
 }

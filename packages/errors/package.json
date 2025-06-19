@@ -64,6 +64,26 @@
         "types": "./dist/cjs/helpers/zod.helper.d.ts",
         "default": "./dist/cjs/helpers/zod.helper.js"
       }
+    },
+    "./helpers/drizzle": {
+      "import": {
+        "types": "./dist/esm/helpers/drizzle.helper.d.ts",
+        "default": "./dist/esm/helpers/drizzle.helper.js"
+      },
+      "require": {
+        "types": "./dist/cjs/helpers/drizzle.helper.d.ts",
+        "default": "./dist/cjs/helpers/drizzle.helper.js"
+      }
+    },
+    "./helpers/routing-controllers": {
+      "import": {
+        "types": "./dist/esm/helpers/routing-controllers.helper.d.ts",
+        "default": "./dist/esm/helpers/routing-controllers.helper.js"
+      },
+      "require": {
+        "types": "./dist/cjs/helpers/routing-controllers.helper.d.ts",
+        "default": "./dist/cjs/helpers/routing-controllers.helper.js"
+      }
     }
   },
   "keywords": [],
@@ -71,25 +91,28 @@
   "license": "ISC",
   "devDependencies": {
     "@smithy/smithy-client": "^4.4.3",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.1",
     "@types/pg": "^8.15.4",
     "@types/uuid": "^10.0.0",
-    "pg": "^8.16.0",
-    "zod": "^3.25.64",
     "jsonwebtoken": "^9.0.2",
-    "@types/jsonwebtoken": "^9.0.10"
+    "pg": "^8.16.0",
+    "zod": "^3.25.64"
   },
   "peerDependencies": {
     "@smithy/smithy-client": "*",
+    "jsonwebtoken": "*",
     "pg": "*",
-    "zod": "*",
-    "jsonwebtoken": "*"
+    "zod": "*"
   },
   "peerDependenciesMeta": {
     "zod": {
       "optional": true
     },
     "pg": {
+      "optional": true
+    },
+    "drizzle-orm": {
       "optional": true
     },
     "@smithy/smithy-client": {

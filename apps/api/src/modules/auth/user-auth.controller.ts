@@ -19,18 +19,15 @@ import {
   ResendConfirmationCodeResultDto,
   ConfirmSignUpDto,
   confirmSignUpSchema,
-  ConfirmSignUpResultDto,
+  SuccessResultDto,
   ForgotPasswordDto,
   ForgotPasswordResultDto,
   forgotPasswordSchema,
   ConfirmForgotPasswordDto,
-  ConfirmForgotPasswordResultDto,
   confirmForgotPasswordSchema,
   ChangePasswordDto,
-  ChangePasswordResultDto,
   changePasswordSchema,
   LogoutDto,
-  LogoutResultDto,
   logoutSchema,
 } from '@repo/entix-sdk';
 
@@ -66,7 +63,7 @@ export class UserAuthController {
   @Post('/confirm-signup')
   @HttpCode(200)
   @UseBefore(validateBody(confirmSignUpSchema))
-  async confirmSignUp(@Body() params: ConfirmSignUpDto): Promise<ConfirmSignUpResultDto> {
+  async confirmSignUp(@Body() params: ConfirmSignUpDto): Promise<SuccessResultDto> {
     return this.cognitoAuthService.confirmSignUp(params);
   }
 
@@ -80,21 +77,21 @@ export class UserAuthController {
   @Post('/confirm-forgot-password')
   @HttpCode(200)
   @UseBefore(validateBody(confirmForgotPasswordSchema))
-  async confirmForgotPassword(@Body() params: ConfirmForgotPasswordDto): Promise<ConfirmForgotPasswordResultDto> {
+  async confirmForgotPassword(@Body() params: ConfirmForgotPasswordDto): Promise<SuccessResultDto> {
     return this.cognitoAuthService.confirmForgotPassword(params);
   }
 
   @Post('/change-password')
   @HttpCode(200)
   @UseBefore(validateBody(changePasswordSchema))
-  async changePassword(@Body() params: ChangePasswordDto): Promise<ChangePasswordResultDto> {
+  async changePassword(@Body() params: ChangePasswordDto): Promise<SuccessResultDto> {
     return this.cognitoAuthService.changePassword(params);
   }
 
   @Post('/logout')
   @HttpCode(200)
   @UseBefore(validateBody(logoutSchema))
-  async logout(@Body() params: LogoutDto): Promise<LogoutResultDto> {
+  async logout(@Body() params: LogoutDto): Promise<SuccessResultDto> {
     return this.userAuthService.logout(params);
   }
 }

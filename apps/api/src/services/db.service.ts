@@ -2,14 +2,14 @@ import { Inject, Injectable } from '@utils/typedi.util';
 import { PgToken } from '@factories/pg.factory';
 import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import * as schema from '@database/schema';
+import * as schema from '@database/schemas';
 
 @Injectable()
 export class DbService {
   readonly db: ReturnType<typeof drizzle>;
 
   constructor(@Inject(PgToken) private readonly pg: Pool) {
-    this.db = drizzle(this.pg, { schema });
+    this.db = drizzle(this.pg, { schema, logger: true });
   }
 
   async testConnection(): Promise<boolean> {

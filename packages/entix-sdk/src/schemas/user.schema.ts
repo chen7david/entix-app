@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+// TODO: Add schema for create user
 export const createUserSchema = z.object({
   username: z.string().min(3),
   email: z.string().email(),
