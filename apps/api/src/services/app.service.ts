@@ -1,16 +1,17 @@
-import express, { Application } from 'express';
+import express, { Application, Request, Response } from 'express';
 import { useExpressServer } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { notFoundHandler } from '@middleware/not-found.middleware';
 import { ErrorHandlerMiddleware } from '@middleware/global-error.middleware';
 import { authorizationChecker } from '@middleware/authz-checker.middleware';
 import { currentUserChecker } from '@middleware/current-user-checker.middleware';
+import { OpenAPIService } from './openapi.service';
 
 @Injectable()
 export class AppService {
   private app: Application = express();
 
-  constructor() {}
+  constructor(private readonly openAPIService: OpenAPIService) {}
 
   registerRoutes(): AppService {
     useExpressServer(this.app, {
@@ -26,6 +27,7 @@ export class AppService {
   }
 
   init(): AppService {
+    this.registerHealthCheck();
     this.registerBeforeAllMiddlewares();
     this.registerRoutes();
     this.registerAfterAllMiddlewares();
@@ -38,7 +40,14 @@ export class AppService {
   }
 
   registerAfterAllMiddlewares(): void {
+    this.openAPIService.setup(this.app);
     this.app.use(notFoundHandler);
+  }
+
+  registerHealthCheck(): void {
+    this.app.get('/health', (_req: Request, res: Response): void => {
+      res.status(200).json({ status: 'ok' });
+    });
   }
 
   getApp(): Application {

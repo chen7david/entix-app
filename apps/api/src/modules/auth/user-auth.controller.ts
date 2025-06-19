@@ -49,7 +49,7 @@ export class UserAuthController {
   @Post('/login')
   @HttpCode(200)
   @UseBefore(validateBody(loginSchema))
-  async signIn(@Body() params: LoginDto): Promise<LoginResultDto> {
+  async login(@Body() params: LoginDto): Promise<LoginResultDto> {
     return this.userAuthService.login(params);
   }
 
