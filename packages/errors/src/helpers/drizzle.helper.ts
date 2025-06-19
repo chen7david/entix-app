@@ -1,50 +1,58 @@
-import { InternalError, ConflictError } from '../index';
+import { InternalError, ConflictError, BadRequestError } from '../index';
 import { ApiError } from '../error.model';
+
+type PgError = {
+  code?: string;
+  detail?: string;
+  cause?: unknown;
+};
 
 /**
  * Checks if the error is a DrizzleQueryError
  */
 export function isDrizzleError(error: unknown): boolean {
-  // DrizzleQueryError has these specific properties
   return (
     typeof error === 'object' &&
     error !== null &&
     error.constructor?.name === 'DrizzleQueryError' &&
-    'query' in (error as any) &&
-    'params' in (error as any) &&
+    'query' in error &&
+    'params' in error &&
     typeof (error as any).query === 'string'
   );
 }
 
 /**
- * Checks if the error or its cause is a PostgreSQL unique constraint violation
+ * Type guard to check if an object has a Postgres-style detail string
  */
-export function isUniqueConstraintViolation(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
+function hasPgDetail(obj: unknown): obj is { detail: string } {
+  return typeof obj === 'object' && obj !== null && 'detail' in obj && typeof (obj as any).detail === 'string';
+}
 
-  // Check if the error itself has the code
-  if ('code' in error && (error as any).code === '23505') return true;
+/**
+ * Extracts the Postgres error code from the error or its cause
+ */
+function getPgErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
 
-  // Check if the error has a cause with the code
-  if ('cause' in error && (error as any).cause) {
-    const cause = (error as any).cause;
-    if (typeof cause === 'object' && cause !== null && 'code' in cause && cause.code === '23505') {
-      return true;
-    }
+  const pgError = error as PgError;
+  if (pgError.code) return pgError.code;
+
+  if (pgError.cause && typeof pgError.cause === 'object') {
+    const cause = pgError.cause as PgError;
+    return cause.code;
   }
 
-  return false;
+  return undefined;
 }
 
 /**
  * Creates a ConflictError from a unique constraint violation
  */
 export function fromUniqueConstraintViolation(error: unknown): ConflictError {
-  const cause = (error as any).cause || error;
+  const cause = (error as PgError).cause || error;
   let message = 'Resource already exists';
 
-  // Try to extract field name from error detail
-  if (cause.detail && typeof cause.detail === 'string') {
+  if (hasPgDetail(cause)) {
     const match = cause.detail.match(/\(([^)]+)\)=\(([^)]+)\)/);
     if (match) {
       message = `Resource with ${match[1]} "${match[2]}" already exists`;
@@ -55,6 +63,23 @@ export function fromUniqueConstraintViolation(error: unknown): ConflictError {
 }
 
 /**
+ * Creates a BadRequestError from a foreign key violation
+ */
+export function fromForeignKeyViolation(error: unknown): BadRequestError {
+  const cause = (error as PgError).cause || error;
+  let message = 'Invalid reference: foreign key constraint failed';
+
+  if (hasPgDetail(cause)) {
+    const match = cause.detail.match(/\(([^)]+)\)=\(([^)]+)\)/);
+    if (match) {
+      message = `Invalid ${match[1]}: "${match[2]}" does not exist`;
+    }
+  }
+
+  return new BadRequestError(message);
+}
+
+/**
  * Converts a Drizzle ORM error to an ApiError
  */
 export function fromDrizzleError(error: unknown): ApiError {
@@ -62,12 +87,15 @@ export function fromDrizzleError(error: unknown): ApiError {
     return new InternalError('Not a Drizzle error');
   }
 
-  // If it's a unique constraint violation, convert to a ConflictError
-  if (isUniqueConstraintViolation(error)) {
-    return fromUniqueConstraintViolation(error);
-  }
+  const code = getPgErrorCode(error);
 
-  // Default to internal error for other Drizzle errors
-  const message = error instanceof Error ? error.message : String(error);
-  return new InternalError({ message, cause: error as Error });
+  switch (code) {
+    case '23505': // Unique constraint violation
+      return fromUniqueConstraintViolation(error);
+    case '23503': // Foreign key violation
+      return fromForeignKeyViolation(error);
+    default:
+      const message = error instanceof Error ? error.message : String(error);
+      return new InternalError({ message, cause: error as Error });
+  }
 }
