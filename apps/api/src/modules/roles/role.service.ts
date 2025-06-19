@@ -4,16 +4,10 @@ import { IdDto, IdParams, Role, SuccessResult } from '@repo/entix-sdk';
 import { CreateRoleParams, UpdateRoleParams } from './role.model';
 import { BadRequestError, NotFoundError } from '@repo/api-errors';
 import { isEmptyObject } from '@utils/check.util';
-import { UserRoleRepository } from '@modules/user_roles/user_role.repository';
-import { CreateUserRoleParams } from '@modules/users/user.model';
-import { DeleteUserRoleParams } from '@modules/user_roles/user_role.model';
 
 @Injectable()
 export class RoleService {
-  constructor(
-    private readonly roleRepository: RoleRepository,
-    private readonly userRoleRepository: UserRoleRepository,
-  ) {}
+  constructor(private readonly roleRepository: RoleRepository) {}
 
   async findAll(): Promise<Role[]> {
     return this.roleRepository.findAll();
@@ -42,16 +36,6 @@ export class RoleService {
 
   async delete(params: IdParams): Promise<SuccessResult> {
     const success = await this.roleRepository.delete(params.id);
-    return { success };
-  }
-
-  async createUserRole(params: CreateUserRoleParams): Promise<SuccessResult> {
-    const success = await this.userRoleRepository.createUserRole(params);
-    return { success };
-  }
-
-  async deleteUserRole(params: DeleteUserRoleParams): Promise<SuccessResult> {
-    const success = await this.userRoleRepository.deleteUserRole(params);
     return { success };
   }
 }
