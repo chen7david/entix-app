@@ -1,5 +1,5 @@
 import { ApiError } from '@repo/api-errors';
-import { createUserSchema, type CreateUserDto } from '@repo/entix-sdk';
+import { createUserSchema, type CreateUserParamsDto } from '@repo/entix-sdk';
 import { createSchemaFieldRule } from 'antd-zod';
 import { Button, Form, Input } from 'antd';
 
@@ -12,7 +12,7 @@ export function App() {
 
   const rules = createSchemaFieldRule(createUserSchema);
 
-  const onSubmit = (values: CreateUserDto) => {
+  const onSubmit = (values: CreateUserParamsDto) => {
     console.log(values);
   };
 

@@ -12,5 +12,11 @@ export const fromZodError = (zodError: ZodError, message = 'Validation failed'):
 };
 
 export function isZodError(error: unknown): error is ZodError {
-  return error instanceof ZodError;
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'errors' in error &&
+    Array.isArray((error as any).errors) &&
+    (error as any).name === 'ZodError'
+  );
 }

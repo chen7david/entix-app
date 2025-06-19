@@ -1,84 +1,133 @@
-# Turborepo starter
+# Entix Application
 
-This Turborepo starter is maintained by the Turborepo core team.
+A modern, scalable application built with a monorepo structure using PNPM workspaces.
 
-## Using this example
+## Project Structure
 
-Run the following command:
-
-```sh
-npx create-turbo@latest
-```
-
-## What's inside?
-
-This Turborepo includes the following packages/apps:
-
-### Apps and Packages
-
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
-
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
-
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
+This project is organized as a monorepo with the following structure:
 
 ```
-cd my-turborepo
-pnpm build
+entix-app/
+├── apps/
+│   ├── api/      # Backend API server
+│   └── web/      # Frontend web application
+└── packages/
+    ├── entix-sdk/ # Shared SDK for API types and client
+    └── errors/    # Shared error handling
 ```
 
-### Develop
+## Architecture
 
-To develop all apps and packages, run the following command:
+The application follows a clean architecture pattern with clear separation of concerns:
 
+### Backend (apps/api)
+
+- **Database Layer**: Uses Drizzle ORM for type-safe database access
+- **Service Layer**: Business logic implementation
+- **Controller Layer**: API endpoints and request handling
+- **Repository Layer**: Data access abstraction
+
+### Frontend (apps/web)
+
+- **React**: UI components and pages
+- **React Query**: Data fetching and state management
+- **Ant Design**: UI component library
+- **Tailwind CSS**: Utility-first CSS framework
+
+### Shared SDK (packages/entix-sdk)
+
+- **Types**: Shared type definitions between frontend and backend
+- **API Client**: Type-safe API client for the frontend
+- **Schemas**: Zod validation schemas
+
+## Type System Conventions
+
+We follow a consistent naming convention across the codebase:
+
+### Database Layer
+
+- `<Entity>` - Direct Drizzle inference type
+- `New<Entity>` - Direct Drizzle insert type
+- `<Entity>Update` - Partial omit of New<Entity>
+
+### Service Layer
+
+- `<Action><Entity>Params` - Input parameters for service methods
+- `<Action><Entity>Result` - Return type for service methods
+
+### Controller Layer
+
+- `<Action><Entity>ParamsDto` - DTO for controller input (validated by Zod)
+- `<Action><Entity>ResultDto` - DTO for controller output
+
+### SDK Layer
+
+- Re-exports controller DTOs for client use
+- Defines Zod schemas for validation
+
+## API Client
+
+The SDK provides a fully typed API client for the frontend:
+
+```typescript
+// Create an API client instance
+const api = new EntixApiClient({
+  baseURL: 'http://localhost:3000',
+  getToken: () => localStorage.getItem('token'),
+  refreshToken: async () => {
+    // Refresh token logic
+    return newToken;
+  },
+  onTokenRefreshed: token => {
+    localStorage.setItem('token', token);
+  },
+  onAuthError: error => {
+    // Handle authentication errors
+  },
+});
+
+// Use the client
+const users = await api.users.getUsers();
+const roles = await api.roles.getRoles();
+await api.auth.login({ email: 'user@example.com', password: 'password' });
 ```
-cd my-turborepo
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+
+- PNPM 9.0.0+
+
+### Setup
+
+```bash
+# Install dependencies
+pnpm install
+
+# Start development servers
 pnpm dev
 ```
 
-### Remote Caching
+### Building
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
-
-Turborepo can use a technique known as [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
+```bash
+# Build all packages and applications
+pnpm build
 ```
 
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
+### Testing
 
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
+```bash
+# Run tests
+pnpm test
 ```
-npx turbo link
-```
 
-## Useful Links
+## Best Practices
 
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.com/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.com/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.com/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.com/docs/reference/configuration)
-- [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+1. **Type Safety**: Always use proper typing and avoid `any`
+2. **Documentation**: Add TSDoc comments to all functions, methods, and types
+3. **DRY Code**: Avoid code duplication by creating reusable components and utilities
+4. **Error Handling**: Use custom error classes with meaningful error codes
+5. **Consistent Naming**: Follow the established naming conventions
+6. **Testing**: Write tests for critical functionality
