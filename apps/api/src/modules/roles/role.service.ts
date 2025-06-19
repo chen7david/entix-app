@@ -1,13 +1,17 @@
 import { Injectable } from '@utils/typedi.util';
 import { RoleRepository } from './role.repository';
-import { IdDto, IdParams, Role, SuccessResult } from '@repo/entix-sdk';
+import { IdDto, IdParams, Role, SuccessResult, User } from '@repo/entix-sdk';
 import { CreateRoleParams, UpdateRoleParams } from './role.model';
 import { BadRequestError, NotFoundError } from '@repo/api-errors';
 import { isEmptyObject } from '@utils/check.util';
+import { UserRoleRepository } from '@modules/user_roles/user_role.repository';
 
 @Injectable()
 export class RoleService {
-  constructor(private readonly roleRepository: RoleRepository) {}
+  constructor(
+    private readonly roleRepository: RoleRepository,
+    private readonly userRoleRepository: UserRoleRepository,
+  ) {}
 
   async findAll(): Promise<Role[]> {
     return this.roleRepository.findAll();
@@ -37,5 +41,9 @@ export class RoleService {
   async delete(params: IdParams): Promise<SuccessResult> {
     const success = await this.roleRepository.delete(params.id);
     return { success };
+  }
+
+  async getRoleUsers(params: IdParams): Promise<User[]> {
+    return this.userRoleRepository.findRoleUsers(params.id);
   }
 }

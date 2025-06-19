@@ -1,4 +1,4 @@
-import { userRoles } from '../../database/schemas/user_role.shema';
+import { notDeletedUserRole, userRoles } from '../../database/schemas/user_role.shema';
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
 import { DeleteUserRoleParams, NewUserRole } from './user_role.model';
@@ -41,7 +41,7 @@ export class UserRoleRepository {
       })
       .from(userRoles)
       .innerJoin(roles, eq(userRoles.roleId, roles.id))
-      .where(eq(userRoles.userId, userId));
+      .where(and(eq(userRoles.userId, userId), notDeletedUserRole()));
 
     return results;
   }
@@ -53,7 +53,7 @@ export class UserRoleRepository {
       })
       .from(userRoles)
       .innerJoin(users, eq(userRoles.userId, users.id))
-      .where(eq(userRoles.roleId, roleId));
+      .where(and(eq(userRoles.roleId, roleId), notDeletedUserRole()));
 
     return results;
   }

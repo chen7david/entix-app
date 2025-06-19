@@ -8,6 +8,7 @@ import {
   createRoleSchema,
   GetRoleResultDto,
   GetRolesResultDto,
+  GetRoleUsersResultDto,
   IdDto,
   idSchema,
   SuccessResultDto,
@@ -49,5 +50,11 @@ export class RoleController {
   @UseBefore(validateParams(idSchema))
   async delete(@Params() params: IdDto): Promise<SuccessResultDto> {
     return this.roleService.delete(params);
+  }
+
+  @Get('/:id/users')
+  @UseBefore(validateParams(idSchema))
+  async getRoleUsers(@Params() params: IdDto): Promise<GetRoleUsersResultDto> {
+    return this.roleService.getRoleUsers(params);
   }
 }

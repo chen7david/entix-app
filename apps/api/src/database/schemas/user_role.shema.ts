@@ -46,3 +46,5 @@ export const userRoleRelations = relations(userRoles, ({ one }) => ({
     references: [roles.id],
   }),
 }));
+
+export const notDeletedUserRole = () => sql`${userRoles.deletedAt} IS NULL`;
