@@ -14,7 +14,7 @@ export class OpenAPIService {
       { routePrefix },
       {
         info: {
-          title: 'My API',
+          title: 'Entix API',
           version: '1.0.0',
         },
       },
