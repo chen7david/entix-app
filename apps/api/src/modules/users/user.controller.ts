@@ -54,14 +54,14 @@ export class UserController {
     return this.userService.findUserRoles(params.id);
   }
 
-  @Post('/:id/roles/:roleId')
+  @Post('/:userId/roles/:roleId')
   @UseBefore(validateParams(createUserRoleSchema))
   async createUserRole(@Params() params: CreateUserRoleDto): Promise<SuccessResultDto> {
     await this.userService.createUserRole(params);
     return { success: true };
   }
 
-  @Delete('/:id/roles/:roleId')
+  @Delete('/:userId/roles/:roleId')
   @UseBefore(validateParams(deleteUserRoleSchema))
   async deleteUserRole(@Params() params: DeleteUserRoleParams): Promise<SuccessResultDto> {
     await this.userService.deleteUserRole(params);

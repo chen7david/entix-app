@@ -14,6 +14,10 @@ import {
   UpdateRoleDto,
   UpdateRoleResultDto,
   updateRoleSchema,
+  createUserRoleSchema,
+  CreateUserRoleDto,
+  DeleteUserRoleDto,
+  deleteUserRoleSchema,
 } from '@repo/entix-sdk';
 
 @Injectable()
@@ -49,5 +53,19 @@ export class RoleController {
   @UseBefore(validateParams(idSchema))
   async delete(@Params() params: IdDto): Promise<SuccessResultDto> {
     return this.roleService.delete(params);
+  }
+
+  @Post('/:roleId/users/:userId')
+  @UseBefore(validateParams(createUserRoleSchema))
+  async createUserRole(@Params() params: CreateUserRoleDto): Promise<SuccessResultDto> {
+    await this.roleService.createUserRole(params);
+    return { success: true };
+  }
+
+  @Delete('/:roleId/users/:userId')
+  @UseBefore(validateParams(deleteUserRoleSchema))
+  async deleteUserRole(@Params() params: DeleteUserRoleDto): Promise<SuccessResultDto> {
+    await this.roleService.deleteUserRole(params);
+    return { success: true };
   }
 }

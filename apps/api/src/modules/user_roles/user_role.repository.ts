@@ -1,32 +1,37 @@
 import { userRoles } from '../../database/schemas/user_role.shema';
 import { Injectable } from '@utils/typedi.util';
 import { DbService } from '@services/db.service';
-import { DeleteUserRoleParams, NewUserRole, UserRole } from './user_role.model';
-import { and, eq, getTableColumns } from 'drizzle-orm';
+import { DeleteUserRoleParams, NewUserRole } from './user_role.model';
+import { and, eq, getTableColumns, isNull } from 'drizzle-orm';
 import { Role, User } from '@repo/entix-sdk';
 import { roles } from '@database/schemas/role.schema';
 import { users } from '@database/schemas/user.schema';
+import { InternalError, NotFoundError } from '@repo/api-errors';
 
 @Injectable()
 export class UserRoleRepository {
   constructor(private readonly dbService: DbService) {}
 
-  async createUserRole(params: NewUserRole, trx = this.dbService.db): Promise<UserRole> {
+  async createUserRole(params: NewUserRole, trx = this.dbService.db): Promise<boolean> {
     const [userRole] = await trx.insert(userRoles).values(params).returning();
     if (!userRole) {
-      throw new Error('Failed to create user role');
+      throw new InternalError('Failed to create user role');
     }
-    return userRole;
+    return true;
   }
 
   async deleteUserRole(params: DeleteUserRoleParams, trx = this.dbService.db): Promise<boolean> {
-    const result = await trx
-      .delete(userRoles)
-      .where(and(eq(userRoles.userId, params.userId), eq(userRoles.roleId, params.roleId)));
-    if (result.rowCount === 0) {
-      throw new Error('Failed to delete user role');
+    const [userRole] = await trx
+      .update(userRoles)
+      .set({
+        deletedAt: new Date(),
+      })
+      .where(and(eq(userRoles.userId, params.userId), eq(userRoles.roleId, params.roleId), isNull(userRoles.deletedAt)))
+      .returning();
+    if (!userRole) {
+      throw new NotFoundError('User role not found');
     }
-    return result.rowCount !== null && result.rowCount > 0;
+    return true;
   }
 
   async findUserRoles(userId: string, trx = this.dbService.db): Promise<Role[]> {
