@@ -4,7 +4,7 @@ import { CreateRoleResult, NewRole, Role, RoleUpdate } from './role.model';
 import { notDeletedRole, roles } from '../../database/schemas/role.schema';
 import { and, eq } from 'drizzle-orm';
 import { isEmptyObject } from '@utils/check.util';
-import { NotFoundError } from '@repo/api-errors';
+import { BadRequestError, InternalError, NotFoundError } from '@repo/api-errors';
 
 @Injectable()
 export class RoleRepository {
@@ -28,17 +28,17 @@ export class RoleRepository {
     console.log('params', params);
     const [role] = await trx.insert(roles).values(params).returning();
     if (!role) {
-      throw new Error('Failed to create role');
+      throw new InternalError('Failed to create role');
     }
     return role;
   }
 
   async update(id: string, params: RoleUpdate, trx = this.dbService.db): Promise<Role> {
-    if (isEmptyObject(params)) throw new Error('No fields to update');
+    if (isEmptyObject(params)) throw new BadRequestError('No fields to update');
 
     const [role] = await trx.update(roles).set(params).where(eq(roles.id, id)).returning();
     if (!role) {
-      throw new Error('Failed to update role');
+      throw new NotFoundError('Role not found');
     }
     return role;
   }

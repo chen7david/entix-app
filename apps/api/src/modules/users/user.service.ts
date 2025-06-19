@@ -1,14 +1,7 @@
 import { Injectable } from '@utils/typedi.util';
 import { UserRepository } from '@modules/users/user.repository';
-import {
-  CreateUserParams,
-  CreateUserResult,
-  CreateUserRoleParams,
-  CreateUserRoleResult,
-  User,
-} from '@modules/users/user.model';
+import { CreateUserParams, CreateUserResult, User } from '@modules/users/user.model';
 import { UserRoleRepository } from '@modules/user_roles/user_role.repository';
-import { DeleteUserRoleParams } from '@modules/user_roles/user_role.model';
 import { Role } from '@repo/entix-sdk';
 
 @Injectable()
@@ -32,14 +25,6 @@ export class UserService {
 
   async createUser(params: CreateUserParams): Promise<CreateUserResult> {
     return this.userRepository.createUser(params);
-  }
-
-  async createUserRole(params: CreateUserRoleParams): Promise<CreateUserRoleResult> {
-    return this.userRoleRepository.createUserRole(params);
-  }
-
-  async deleteUserRole(params: DeleteUserRoleParams): Promise<boolean> {
-    return this.userRoleRepository.deleteUserRole(params);
   }
 
   async findUserRoles(id: string): Promise<Role[]> {
