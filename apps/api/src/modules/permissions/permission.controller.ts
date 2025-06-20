@@ -2,11 +2,13 @@ import { Body, Delete, Get, JsonController, Params, Patch, Post, UseBefore } fro
 import { PermissionService } from './permission.service';
 import { Injectable } from '@utils/typedi.util';
 import { validateBody, validateParams } from '@middleware/validation.middleware';
+import { RolePermissionService } from '@modules/role_permissons/role_permission.service';
 import {
   CreatePermissionParamsDto,
   CreatePermissionResultDto,
   createPermissionSchema,
   GetPermissionResultDto,
+  GetPermissionRolesResultDto,
   GetPermissionsResultDto,
   IdDto,
   idSchema,
@@ -19,7 +21,10 @@ import {
 @Injectable()
 @JsonController('/v1/permissions')
 export class PermissionController {
-  constructor(private readonly permissionService: PermissionService) {}
+  constructor(
+    private readonly permissionService: PermissionService,
+    private readonly rolePermissionService: RolePermissionService,
+  ) {}
 
   @Get('/')
   async findAll(): Promise<GetPermissionsResultDto> {
@@ -49,5 +54,11 @@ export class PermissionController {
   @UseBefore(validateParams(idSchema))
   async delete(@Params() params: IdDto): Promise<SuccessResultDto> {
     return this.permissionService.delete(params);
+  }
+
+  @Get('/:id/roles')
+  @UseBefore(validateParams(idSchema))
+  async getPermissionRoles(@Params() params: IdDto): Promise<GetPermissionRolesResultDto> {
+    return this.rolePermissionService.findPermissionRoles({ permissionId: params.id });
   }
 }

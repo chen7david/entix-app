@@ -31,16 +31,6 @@ export class PermissionService {
   }
 
   async create(params: CreatePermissionParams): Promise<CreatePermissionResult> {
-    const existingByName = await this.permissionRepository.findByName(params.name);
-    if (existingByName) {
-      throw new BadRequestError('Permission with this name already exists');
-    }
-
-    const existingByCode = await this.permissionRepository.findByPermissionCode(params.permissionCode);
-    if (existingByCode) {
-      throw new BadRequestError('Permission with this code already exists');
-    }
-
     return this.permissionRepository.create(params);
   }
 
@@ -48,21 +38,6 @@ export class PermissionService {
     if (isEmptyObject(params)) {
       throw new BadRequestError('No fields to update');
     }
-
-    if (params.name) {
-      const existingByName = await this.permissionRepository.findByName(params.name);
-      if (existingByName && existingByName.id !== id) {
-        throw new BadRequestError('Permission with this name already exists');
-      }
-    }
-
-    if (params.permissionCode) {
-      const existingByCode = await this.permissionRepository.findByPermissionCode(params.permissionCode);
-      if (existingByCode && existingByCode.id !== id) {
-        throw new BadRequestError('Permission with this code already exists');
-      }
-    }
-
     return this.permissionRepository.update(id, params);
   }
 

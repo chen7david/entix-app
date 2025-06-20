@@ -23,17 +23,6 @@ export class RolePermissionService {
   ) {}
 
   async createRolePermission(params: CreateRolePermissionParams): Promise<CreateRolePermissionResult> {
-    // Validate role and permission exist
-    const role = await this.roleRepository.findById(params.roleId);
-    if (!role) {
-      throw new NotFoundError('Role not found');
-    }
-
-    const permission = await this.permissionRepository.findById(params.permissionId);
-    if (!permission) {
-      throw new NotFoundError('Permission not found');
-    }
-
     const success = await this.rolePermissionRepository.createRolePermission(params);
     return { success };
   }
