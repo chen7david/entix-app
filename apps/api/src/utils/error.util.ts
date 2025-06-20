@@ -3,8 +3,8 @@ import { fromDrizzleError, isDrizzleError } from '@repo/api-errors/helpers/drizz
 import { fromCognitoError, isCognitoError } from '@repo/api-errors/helpers/aws';
 import { fromZodError, isZodError } from '@repo/api-errors/helpers/zod';
 import { fromJwtError, isJwtError } from '@repo/api-errors/helpers/jwt';
-import { isRoutingControllersError, fromRoutingControllersError } from '@repo/api-errors/helpers/routing-controllers';
-
+import { fromRoutingControllersError } from '@repo/api-errors/helpers/routing-controllers';
+import { HttpError } from 'routing-controllers';
 /**
  * Converts any error to an ApiError for consistent error handling
  */
@@ -30,4 +30,8 @@ export function toAppError(error: unknown): ApiError {
     message: 'An unknown error occurred',
     cause: error as Error,
   });
+}
+
+function isRoutingControllersError(error: unknown): boolean {
+  return error instanceof HttpError;
 }

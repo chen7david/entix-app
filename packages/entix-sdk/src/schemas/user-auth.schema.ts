@@ -40,3 +40,12 @@ export const changePasswordSchema = z.object({
 export const logoutSchema = z.object({
   cognitoAccessToken: z.string().min(1),
 });
+
+export const accessTokenPayloadSchema = z.object({
+  sub: z.string().min(1),
+  permissions: z.array(z.number()).min(1),
+});
+
+export const refreshTokenPayloadSchema = z.object({
+  sub: z.string().min(1),
+});

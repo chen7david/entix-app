@@ -2,7 +2,7 @@ import { Injectable } from '@utils/typedi.util';
 import { ConfigService } from '@services/config.service';
 import jwt, { SignOptions, VerifyOptions, JwtPayload } from 'jsonwebtoken';
 import { StringValue } from 'ms';
-import { AccessTokenPayloadResult, RefreshTokenPayloadResult } from '@repo/entix-sdk';
+import { AccessTokenPayloadResult, accessTokenPayloadSchema, RefreshTokenPayloadResult } from '@repo/entix-sdk';
 
 @Injectable()
 export class JwtService {
@@ -43,7 +43,9 @@ export class JwtService {
   }
 
   verifyAccessToken(token: string): AccessTokenPayloadResult {
-    return this.verify<AccessTokenPayloadResult>(token, this.configService.env.JWT_ACCESS_TOKEN_SECRET);
+    const payload = this.verify<AccessTokenPayloadResult>(token, this.configService.env.JWT_ACCESS_TOKEN_SECRET);
+    console.log({ payload });
+    return accessTokenPayloadSchema.parse(payload);
   }
 
   verifyRefreshToken(token: string): RefreshTokenPayloadResult {

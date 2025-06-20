@@ -15,7 +15,7 @@ export class UserController {
    * @param user - Current authenticated user
    */
   @Get('/')
-  @Authorized([])
+  @Authorized([5])
   async getUsers(@CurrentUser() user: User): Promise<GetUsersResultDto> {
     console.log({ user }); // TODO: remove this
     return this.userService.findAll();

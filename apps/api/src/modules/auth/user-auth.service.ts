@@ -43,12 +43,12 @@ export class UserAuthService {
      * Our backend then issues its own tokens to the client.
      */
     await this.cognitoService.logout({ cognitoAccessToken: accessToken });
-
+    const permissions = await this.userService.findUserPermissions(user.id);
     return {
       accessToken: this.jwtService.signAccessToken({
         sub: user.id,
         username: user.username,
-        roles: ['user'], // TODO: add roles
+        permissions, // TODO: add roles
       }),
       refreshToken: this.jwtService.signRefreshToken({
         sub: user.id,
