@@ -19,8 +19,7 @@ export class UserController {
 
   @Get('/')
   @Authorized([PermissionCode.GET_USERS])
-  async getUsers(@CurrentUser() user: User): Promise<GetUsersResultDto> {
-    console.log({ user }); // TODO: remove this
+  async getUsers(): Promise<GetUsersResultDto> {
     return this.userService.findAll();
   }
 

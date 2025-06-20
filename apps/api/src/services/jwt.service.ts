@@ -44,7 +44,6 @@ export class JwtService {
 
   verifyAccessToken(token: string): AccessTokenPayloadResult {
     const payload = this.verify<AccessTokenPayloadResult>(token, this.configService.env.JWT_ACCESS_TOKEN_SECRET);
-    console.log({ payload });
     return accessTokenPayloadSchema.parse(payload);
   }
 

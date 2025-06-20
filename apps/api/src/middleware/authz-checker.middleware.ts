@@ -12,6 +12,6 @@ export const authorizationChecker = async (action: Action, required: number[]): 
 
   if (!payload) throw new UnauthorizedError('please login to continue');
   if (required.length === 0) return true;
-  console.log({ required, payload });
+
   return required.some(required => payload.permissions.includes(required));
 };

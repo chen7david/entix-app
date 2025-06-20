@@ -25,7 +25,6 @@ export class RoleRepository {
   }
 
   async create(params: NewRole, trx = this.dbService.db): Promise<CreateRoleResult> {
-    console.log('params', params);
     const [role] = await trx.insert(roles).values(params).returning();
     if (!role) {
       throw new InternalError('Failed to create role');
