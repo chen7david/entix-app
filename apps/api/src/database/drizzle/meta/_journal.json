@@ -99,6 +99,13 @@
       "when": 1750325456955,
       "tag": "0013_demonic_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1750429335501,
+      "tag": "0014_lethal_red_wolf",
+      "breakpoints": true
     }
   ]
 }
