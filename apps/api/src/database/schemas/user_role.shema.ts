@@ -1,6 +1,7 @@
 import { users } from '@database/schemas/user.schema';
 import { roles } from '@database/schemas/role.schema';
-import { pgTable, uuid, timestamp, uniqueIndex } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, uniqueIndex } from 'drizzle-orm/pg-core';
+import { timeStamps } from '@database/helpers/schema.helper';
 import { relations, sql } from 'drizzle-orm';
 
 export const userRoles = pgTable(
@@ -16,7 +17,7 @@ export const userRoles = pgTable(
       .notNull()
       .references(() => roles.id, { onDelete: 'cascade' }),
 
-    deletedAt: timestamp('deleted_at').default(sql`NULL`),
+    ...timeStamps,
   },
   table => [
     // Only one active (userId, roleId) pair allowed
