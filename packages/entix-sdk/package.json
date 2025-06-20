@@ -31,6 +31,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.10.0",
+    "axios-auth-refresh": "^3.3.6",
     "zod": "^3.25.64"
   },
   "devDependencies": {

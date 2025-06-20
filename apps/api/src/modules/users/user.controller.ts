@@ -10,6 +10,10 @@ import { User } from './user.model';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  /**
+   * Retrieves all users
+   * @param user - Current authenticated user
+   */
   @Get('/')
   @Authorized([])
   async getUsers(@CurrentUser() user: User): Promise<GetUsersResultDto> {
@@ -17,6 +21,10 @@ export class UserController {
     return this.userService.findAll();
   }
 
+  /**
+   * Retrieves a user by ID
+   * @param params - Object containing the user ID
+   */
   @Get('/:id')
   @UseBefore(validateParams(idSchema))
   async getUser(@Params() params: IdDto): Promise<GetUserResultDto> {
@@ -27,6 +35,10 @@ export class UserController {
     return user;
   }
 
+  /**
+   * Retrieves all roles assigned to a user
+   * @param params - Object containing the user ID
+   */
   @Get('/:id/roles')
   @UseBefore(validateParams(idSchema))
   async getUserRoles(@Params() params: IdDto): Promise<GetUserRolesResultDto> {

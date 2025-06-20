@@ -199,6 +199,12 @@ importers:
 
   packages/entix-sdk:
     dependencies:
+      axios:
+        specifier: ^1.10.0
+        version: 1.10.0
+      axios-auth-refresh:
+        specifier: ^3.3.6
+        version: 3.3.6(axios@1.10.0)
       zod:
         specifier: ^3.25.64
         version: 3.25.64
