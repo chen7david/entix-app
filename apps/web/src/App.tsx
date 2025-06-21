@@ -1,35 +1,15 @@
-import { ApiError } from '@repo/api-errors';
-import { createUserSchema, type CreateUserParamsDto } from '@repo/entix-sdk';
-import { createSchemaFieldRule } from 'antd-zod';
-import { Button, Form, Input } from 'antd';
+import { Routes, Route } from 'react-router-dom';
+import { HomePage } from './pages/HomePage';
+import { LoginPage } from './pages/LoginPage';
+import { AuthLayout } from './layouts/AuthLayout';
 
-export function App() {
-  const error = new ApiError({
-    message: 'test',
-    cause: new Error('test'),
-  });
-  console.log(error);
-
-  const rules = createSchemaFieldRule(createUserSchema);
-
-  const onSubmit = (values: CreateUserParamsDto) => {
-    console.log(values);
-  };
-
+export const App = () => {
   return (
-    <div>
-      <h1>Hello Worlds</h1>
-      <Form onFinish={onSubmit}>
-        <Form.Item name="email" label="Email" rules={[rules]}>
-          <Input />
-        </Form.Item>
-        <Form.Item name="password" label="Password" rules={[rules]}>
-          <Input />
-        </Form.Item>
-        <Button type="primary" htmlType="submit">
-          Submit
-        </Button>
-      </Form>
-    </div>
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/auth" element={<AuthLayout />}>
+        <Route path="login" element={<LoginPage />} />
+      </Route>
+    </Routes>
   );
-}
+};
