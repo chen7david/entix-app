@@ -1,11 +1,12 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
-import { LogoutDto, SuccessResultDto, SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
-import { LoginDto, LoginResultDto } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
+import { LogoutDto, SuccessResultDto, SignUpDto, SignUpResultDto, LoginDto, LoginResultDto } from '@repo/entix-sdk';
 import { UserService } from '@modules/users/user.service';
 import { JwtService } from '@services/jwt.service';
 import { CognitoAccessTokenPayload } from '@services/cognito/cognito.model';
 import { InternalError } from '@repo/api-errors';
+import { ConfigService } from '@services/config.service';
+import ms, { StringValue } from 'ms';
 
 @Injectable()
 export class UserAuthService {
@@ -13,6 +14,7 @@ export class UserAuthService {
     private readonly cognitoService: CognitoService,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async signUp(params: SignUpDto): Promise<SignUpResultDto> {
@@ -44,19 +46,30 @@ export class UserAuthService {
      */
     await this.cognitoService.logout({ cognitoAccessToken: accessToken });
     const permissions = await this.userService.findUserPermissions(user.id);
+    const expiresIn = ms(this.configService.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME as StringValue);
+
     return {
       accessToken: this.jwtService.signAccessToken({
         sub: user.id,
         username: user.username,
-        permissions, // TODO: add roles
+        permissions,
       }),
       refreshToken: this.jwtService.signRefreshToken({
         sub: user.id,
       }),
+      expiresIn,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
     };
   }
 
   async logout(params: LogoutDto): Promise<SuccessResultDto> {
-    return this.cognitoService.logout(params);
+    // Convert the updated LogoutDto to the format expected by cognito service
+    return this.cognitoService.logout({
+      cognitoAccessToken: params.refreshToken,
+    });
   }
 }

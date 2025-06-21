@@ -12,6 +12,7 @@ import {
   ConfirmForgotPasswordDto,
   ChangePasswordDto,
   LogoutDto,
+  SuccessResultDto,
 } from '../dtos/user-auth.dto';
 
 /**
@@ -52,8 +53,8 @@ export class AuthApi {
    * @param params Confirmation parameters
    * @returns A promise that resolves when the confirmation is complete
    */
-  async confirmSignUp(params: ConfirmSignUpDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/confirm-signup`, params);
+  async confirmSignUp(params: ConfirmSignUpDto): Promise<SuccessResultDto> {
+    return this.client.post<SuccessResultDto>(`${this.basePath}/confirm-signup`, params);
   }
 
   /**
@@ -79,8 +80,8 @@ export class AuthApi {
    * @param params Confirm forgot password parameters
    * @returns A promise that resolves when the confirmation is complete
    */
-  async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/confirm-forgot-password`, params);
+  async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<SuccessResultDto> {
+    return this.client.post<SuccessResultDto>(`${this.basePath}/confirm-forgot-password`, params);
   }
 
   /**
@@ -88,15 +89,24 @@ export class AuthApi {
    * @param params Change password parameters
    * @returns A promise that resolves when the password change is complete
    */
-  async changePassword(params: ChangePasswordDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/change-password`, params);
+  async changePassword(params: ChangePasswordDto): Promise<SuccessResultDto> {
+    return this.client.post<SuccessResultDto>(`${this.basePath}/change-password`, params);
   }
 
   /**
    * Logs out the current user
+   * @param params Logout parameters
    * @returns A promise that resolves when the logout is complete
    */
-  async logout(params: LogoutDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/logout`, params);
+  async logout(params: LogoutDto): Promise<SuccessResultDto> {
+    return this.client.post<SuccessResultDto>(`${this.basePath}/logout`, params);
+  }
+
+  /**
+   * Verifies if the current user session is valid
+   * @returns A promise that resolves to a success result
+   */
+  async verifySession(): Promise<SuccessResultDto> {
+    return this.client.get<SuccessResultDto>(`${this.basePath}/verify-session`);
   }
 }

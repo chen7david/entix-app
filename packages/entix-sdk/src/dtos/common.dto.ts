@@ -5,4 +5,5 @@ export type IdDto = z.infer<typeof idSchema>;
 
 export type SuccessResultDto = {
   success: boolean;
+  message?: string;
 };

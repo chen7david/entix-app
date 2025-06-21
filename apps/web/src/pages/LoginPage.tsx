@@ -1,7 +1,9 @@
-import { Button, Card, Form, Input, Typography } from 'antd';
+import { Button, Card, Form, Input, Typography, Alert } from 'antd';
 import { Link } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
 import { loginSchema, type LoginDto } from '@repo/entix-sdk';
+import { useState } from 'react';
+import { useLogin } from '../lib/auth-hooks';
 
 const { Title, Text } = Typography;
 
@@ -10,10 +12,17 @@ const rules = createSchemaFieldRule(loginSchema);
 
 export const LoginPage = () => {
   const [form] = Form.useForm<LoginDto>();
+  const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (values: LoginDto) => {
-    console.log('Login submitted:', values);
-    // TODO: API call
+  const login = useLogin();
+
+  const onSubmit = async (values: LoginDto) => {
+    try {
+      setError(null);
+      await login.mutateAsync(values);
+    } catch {
+      // Error is already handled by the mutation
+    }
   };
 
   return (
@@ -22,7 +31,26 @@ export const LoginPage = () => {
         Login
       </Title>
 
-      <Form form={form} layout="vertical" onFinish={onSubmit} autoComplete="off" requiredMark={false}>
+      {error && (
+        <Alert
+          message="Login Error"
+          description={error}
+          type="error"
+          showIcon
+          className="mb-4"
+          closable
+          onClose={() => setError(null)}
+        />
+      )}
+
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={onSubmit}
+        autoComplete="off"
+        requiredMark={false}
+        disabled={login.isPending}
+      >
         <Form.Item name="username" label="Username" rules={[rules]}>
           <Input placeholder="Enter your username" />
         </Form.Item>
@@ -32,7 +60,7 @@ export const LoginPage = () => {
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" block>
+          <Button type="primary" htmlType="submit" block loading={login.isPending}>
             Sign In
           </Button>
         </Form.Item>
