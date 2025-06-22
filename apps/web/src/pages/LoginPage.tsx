@@ -20,8 +20,8 @@ export const LoginPage = () => {
     try {
       setError(null);
       await login.mutateAsync(values);
-    } catch {
-      // Error is already handled by the mutation
+    } catch (error) {
+      console.log('error', error);
     }
   };
 

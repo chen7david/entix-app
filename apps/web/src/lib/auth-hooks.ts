@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { message } from 'antd';
 import type { LoginDto, LoginResultDto, LogoutDto } from '@repo/entix-sdk';
-
 import { apiClient, clearTokens, currentUserAtom, isAuthenticatedAtom, storeTokens } from './api-client';
+import { appConfig } from '../config/app.config';
 
 type UserData = {
   id: string;
@@ -43,7 +43,7 @@ export const useLogin = () => {
       navigate('/');
     },
     onError: (error: Error) => {
-      message.error(`Login failed: ${error.message}`);
+      message.error(`Login failed: ${error.message}2222`);
     },
   });
 };
@@ -101,7 +101,7 @@ export const useVerifySession = () => {
       try {
         // This assumes you have a verifySession endpoint
         // If not available, you can use a different endpoint to validate the token
-        const token = localStorage.getItem('entix_auth_token');
+        const token = localStorage.getItem(appConfig.VITE_ACCESS_TOKEN_KEY);
         if (!token) throw new Error('No token found');
 
         // Simple check - in a real app, you would validate the token with your API
@@ -113,7 +113,7 @@ export const useVerifySession = () => {
         throw error;
       }
     },
-    enabled: !!localStorage.getItem('entix_auth_token'),
+    enabled: !!localStorage.getItem(appConfig.VITE_ACCESS_TOKEN_KEY),
     retry: false,
   });
 };
