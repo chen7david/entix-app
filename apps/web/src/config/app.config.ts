@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { getValidatedEnv } from '../helpers/config.helper';
+import { getValidatedEnv } from '@helpers/config.helper';
 
 export const appConfigSchema = z.object({
   VITE_API_URL: z.string().url(),

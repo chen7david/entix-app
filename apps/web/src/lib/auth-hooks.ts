@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
 import { message } from 'antd';
 import type { LoginDto, LoginResultDto, LogoutDto } from '@repo/entix-sdk';
-import { apiClient, clearTokens, currentUserAtom, isAuthenticatedAtom, storeTokens } from './api-client';
-import { appConfig } from '../config/app.config';
+import { apiClient, clearTokens, currentUserAtom, isAuthenticatedAtom, storeTokens } from '@lib/api-client';
+import { appConfig } from '@config/app.config';
 import { AxiosError } from 'axios';
 
 type UserData = {

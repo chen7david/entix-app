@@ -2,7 +2,7 @@ import { Button, Card, Form, Input, Typography } from 'antd';
 import { Link } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
 import { loginSchema, type LoginDto } from '@repo/entix-sdk';
-import { useLogin } from '../lib/auth-hooks';
+import { useLogin } from '@lib/auth-hooks';
 
 const { Title, Text } = Typography;
 

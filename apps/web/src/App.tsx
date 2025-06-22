@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
-import { AuthLayout } from './layouts/AuthLayout';
-import { ProfilePage } from './pages/ProfilePage';
+import { HomePage } from '@pages/HomePage';
+import { LoginPage } from '@pages/LoginPage';
+import { AuthLayout } from '@layouts/AuthLayout';
+import { ProfilePage } from '@pages/ProfilePage';
 
 export const App = () => {
   return (

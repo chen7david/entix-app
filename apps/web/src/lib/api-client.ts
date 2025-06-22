@@ -1,6 +1,6 @@
 import { EntixApiClient } from '@repo/entix-sdk';
 import { atom } from 'jotai';
-import { appConfig } from '../config/app.config';
+import { appConfig } from '@config/app.config';
 import axios from 'axios';
 
 /**
@@ -46,67 +46,19 @@ export const apiClient = new EntixApiClient({
     }
 
     try {
-      const response = await fetch(`${appConfig.VITE_API_URL}/v1/auth/refresh-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken }),
+      const response = await axios.post(`${appConfig.VITE_API_URL}/api/auth/refresh`, {
+        refreshToken,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-
-        // Check for specific error codes
-        if (errorData.code === 'INVALID_REFRESH_TOKEN') {
-          clearTokens();
-          window.location.href = '/auth/login';
-          throw new Error('Invalid refresh token');
-        }
-
-        throw new Error(errorData.message || 'Failed to refresh token');
-      }
-
-      const data = await response.json();
-
-      // If the response includes a new refresh token, store both tokens
-      if (data.refreshToken) {
-        storeTokens(data.accessToken, data.refreshToken);
-      }
-
-      return data.accessToken;
-    } catch (error) {
-      // Only clear tokens for auth-related errors
-      if (
-        error instanceof Error &&
-        (error.message.includes('refresh token') || error.message.includes('token') || error.message.includes('auth'))
-      ) {
-        clearTokens();
-      }
-      throw error;
+      return response.data.accessToken;
+    } catch {
+      throw new Error('Failed to refresh token');
     }
   },
   onTokenRefreshed: (token: string) => {
     localStorage.setItem(appConfig.VITE_ACCESS_TOKEN_KEY, token);
   },
-  onAuthError: error => {
-    // Check if it's an axios error with response data
-    if (axios.isAxiosError(error) && error.response?.data) {
-      const errorData = error.response.data;
-
-      // Only redirect to login for specific error codes
-      if (
-        errorData.code === 'INVALID_CREDENTIALS' ||
-        errorData.code === 'UNAUTHORIZED' ||
-        errorData.code === 'INVALID_ACCESS_TOKEN'
-      ) {
-        clearTokens();
-        window.location.href = '/auth/login';
-      }
-    } else {
-      // For non-specific errors, clear tokens but don't redirect
-      clearTokens();
-    }
+  onAuthError: () => {
+    clearTokens();
   },
 });
 
@@ -114,8 +66,4 @@ export const apiClient = new EntixApiClient({
 export const isAuthenticatedAtom = atom<boolean>(!!getAuthToken());
 
 // Current user atom
-export const currentUserAtom = atom<{
-  id: string;
-  username: string;
-  email: string;
-} | null>(null);
+export const currentUserAtom = atom<{ id: string; username: string; email: string } | null>(null);
