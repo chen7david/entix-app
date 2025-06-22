@@ -5,6 +5,7 @@ import { message } from 'antd';
 import type { LoginDto, LoginResultDto, LogoutDto } from '@repo/entix-sdk';
 import { apiClient, clearTokens, currentUserAtom, isAuthenticatedAtom, storeTokens } from './api-client';
 import { appConfig } from '../config/app.config';
+import { AxiosError } from 'axios';
 
 type UserData = {
   id: string;
@@ -40,15 +41,17 @@ export const useLogin = () => {
       message.success('Login successful');
 
       // Redirect to home page
-      navigate('/');
+      navigate('/auth/profile');
     },
-    onError: (error: Error) => {
-      message.error(`Login failed: ${error.message}2222`);
+    onError: (error: unknown) => {
+      if (error instanceof AxiosError) {
+        message.error(error.response?.data.message);
+      }
     },
   });
 };
 
-/**
+/*
  * Hook for handling user logout
  */
 export const useLogout = () => {
@@ -76,7 +79,7 @@ export const useLogout = () => {
       message.success('Logout successful');
 
       // Redirect to login page
-      navigate('/auth/login');
+      navigate('/auth/profile');
     },
     onError: () => {
       // Even if the API call fails, we still want to clear local state

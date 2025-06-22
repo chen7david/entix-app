@@ -61,7 +61,7 @@ export const apiClient = new EntixApiClient({
       return data.accessToken;
     } catch (error) {
       clearTokens();
-      window.location.href = '/auth/login';
+      // window.location.href = '/auth/login';
       throw error;
     }
   },
@@ -70,7 +70,7 @@ export const apiClient = new EntixApiClient({
   },
   onAuthError: () => {
     clearTokens();
-    window.location.href = '/auth/login';
+    // window.location.href = '/auth/login';
   },
 });
 
