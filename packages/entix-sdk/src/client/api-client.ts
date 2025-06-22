@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import createAuthRefreshInterceptor from 'axios-auth-refresh';
+import createAuthRefreshInterceptor, { AxiosAuthRefreshOptions } from 'axios-auth-refresh';
 
 /**
  * Configuration options for the API client
@@ -96,34 +96,33 @@ export class ApiClient {
 
     // Add refresh token interceptor if refresh function is provided
     if (config.refreshToken) {
-      createAuthRefreshInterceptor(
-        this.client,
-        async (failedRequest: FailedRequest) => {
-          try {
-            const newToken = await this.config.refreshToken!();
+      const refreshAuthLogic = async (failedRequest: any): Promise<void> => {
+        try {
+          const newToken = await this.config.refreshToken!();
 
-            // Update the failed request with the new token
-            const bearerToken = `Bearer ${newToken}`;
-            failedRequest.response.config.headers.Authorization = bearerToken;
+          failedRequest.response.config.headers.Authorization = `Bearer ${newToken}`;
 
-            // Call the callback if provided
-            if (this.config.onTokenRefreshed) {
-              this.config.onTokenRefreshed(newToken);
-            }
-
-            return Promise.resolve();
-          } catch (error: unknown) {
-            // Handle auth error if callback is provided
-            if (this.config.onAuthError) {
-              this.config.onAuthError(error);
-            }
-            return Promise.reject(error);
+          if (this.config.onTokenRefreshed) {
+            this.config.onTokenRefreshed(newToken);
           }
+
+          return Promise.resolve();
+        } catch (error) {
+          if (this.config.onAuthError) {
+            this.config.onAuthError(error);
+          }
+          return Promise.reject(error);
+        }
+      };
+
+      const options: AxiosAuthRefreshOptions = {
+        statusCodes: [401],
+        shouldRefresh: (error: any) => {
+          return error.response?.data?.code === 'INVALID_ACCESS_TOKEN';
         },
-        {
-          statusCodes: [401], // Only refresh on 401 Unauthorized
-        },
-      );
+      };
+
+      createAuthRefreshInterceptor(this.client, refreshAuthLogic, options);
     }
   }
 
