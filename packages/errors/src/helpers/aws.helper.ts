@@ -13,31 +13,58 @@ import {
 export function fromCognitoError(error: ServiceException): ApiError {
   switch (error.name) {
     case 'UsernameExistsException':
-      return new ConflictError('A user with that username already exists.');
+      return new ConflictError({
+        message: 'A user with that username already exists.',
+        code: 'CONFLICT',
+      });
     case 'UserNotFoundException':
-      return new NotFoundError('User not found.');
+      return new NotFoundError({
+        message: 'User not found.',
+        code: 'NOT_FOUND',
+      });
     case 'NotAuthorizedException':
-      return new UnauthorizedError('Incorrect username or password.');
+      return new UnauthorizedError({
+        message: 'Incorrect username or password.',
+        code: 'INVALID_CREDENTIALS',
+      });
     case 'InvalidPasswordException':
-      return new BadRequestError(
-        'Invalid password format. Your password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.',
-      );
+      return new BadRequestError({
+        message:
+          'Invalid password format. Your password must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.',
+        code: 'INVALID_PASSWORD',
+      });
     case 'CodeMismatchException':
-      return new BadRequestError('Invalid verification code.');
+      return new BadRequestError({
+        message: 'Invalid verification code.',
+        code: 'BAD_REQUEST',
+      });
     case 'LimitExceededException':
-      return new RateLimitError('Attempt limit exceeded, please try again later.');
+      return new RateLimitError({
+        message: 'Attempt limit exceeded, please try again later.',
+        code: 'TOO_MANY_REQUESTS',
+      });
     case 'UserNotConfirmedException':
-      return new ForbiddenError('User account is not confirmed.');
+      return new ForbiddenError({
+        message: 'User account is not confirmed.',
+        code: 'FORBIDDEN',
+      });
     case 'InvalidParameterException':
       if (error.message?.includes('already confirmed')) {
-        return new BadRequestError('User is already confirmed.');
+        return new BadRequestError({
+          message: 'User is already confirmed.',
+          code: 'BAD_REQUEST',
+        });
       }
-      return new BadRequestError(error.message || 'Invalid parameter.');
+      return new BadRequestError({
+        message: error.message || 'Invalid parameter.',
+        code: 'BAD_REQUEST',
+      });
     default:
       return new InternalError({
         message: 'An unexpected Cognito error occurred.',
         cause: new Error(error.name),
         logContext: { cognitoErrorName: error.name },
+        code: 'INTERNAL_SERVER_ERROR',
       });
   }
 }

@@ -1,6 +1,7 @@
 import { EntixApiClient } from '@repo/entix-sdk';
 import { atom } from 'jotai';
 import { appConfig } from '../config/app.config';
+import axios from 'axios';
 
 /**
  * Get the stored auth token from localStorage
@@ -54,23 +55,58 @@ export const apiClient = new EntixApiClient({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to refresh token');
+        const errorData = await response.json();
+
+        // Check for specific error codes
+        if (errorData.code === 'INVALID_REFRESH_TOKEN') {
+          clearTokens();
+          window.location.href = '/auth/login';
+          throw new Error('Invalid refresh token');
+        }
+
+        throw new Error(errorData.message || 'Failed to refresh token');
       }
 
       const data = await response.json();
+
+      // If the response includes a new refresh token, store both tokens
+      if (data.refreshToken) {
+        storeTokens(data.accessToken, data.refreshToken);
+      }
+
       return data.accessToken;
     } catch (error) {
-      clearTokens();
-      // window.location.href = '/auth/login';
+      // Only clear tokens for auth-related errors
+      if (
+        error instanceof Error &&
+        (error.message.includes('refresh token') || error.message.includes('token') || error.message.includes('auth'))
+      ) {
+        clearTokens();
+      }
       throw error;
     }
   },
   onTokenRefreshed: (token: string) => {
     localStorage.setItem(appConfig.VITE_ACCESS_TOKEN_KEY, token);
   },
-  onAuthError: () => {
-    clearTokens();
-    // window.location.href = '/auth/login';
+  onAuthError: error => {
+    // Check if it's an axios error with response data
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const errorData = error.response.data;
+
+      // Only redirect to login for specific error codes
+      if (
+        errorData.code === 'INVALID_CREDENTIALS' ||
+        errorData.code === 'UNAUTHORIZED' ||
+        errorData.code === 'INVALID_ACCESS_TOKEN'
+      ) {
+        clearTokens();
+        window.location.href = '/auth/login';
+      }
+    } else {
+      // For non-specific errors, clear tokens but don't redirect
+      clearTokens();
+    }
   },
 });
 

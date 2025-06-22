@@ -1,5 +1,5 @@
 import { HTTP_ERROR_MESSAGES } from './error.constant';
-import { ApiErrorOptions, ErrorDetail, ErrorResponse } from './error.type';
+import { ApiErrorCode, ApiErrorOptions, ErrorDetail, ErrorResponse } from './error.type';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -26,6 +26,7 @@ export class ApiError extends Error {
   readonly logContext: Record<string, unknown>;
   readonly type: string;
   readonly expose: boolean;
+  readonly code: ApiErrorCode;
 
   /**
    * Create a BaseError with a message or options object.
@@ -46,6 +47,7 @@ export class ApiError extends Error {
     this.logContext = options.logContext || {};
     this.expose = options.expose !== undefined ? options.expose : status < 500;
     this.type = this.constructor.name.replace(/Error$/, '').toLowerCase();
+    this.code = options.code || ApiError.getDefaultCodeForStatus(status);
 
     if (typeof Error.captureStackTrace === 'function') {
       Error.captureStackTrace(this, this.constructor);
@@ -65,12 +67,45 @@ export class ApiError extends Error {
   }
 
   /**
+   * Maps HTTP status codes to default error codes
+   */
+  private static getDefaultCodeForStatus(status: number): ApiErrorCode {
+    switch (status) {
+      case 400:
+        return 'BAD_REQUEST';
+      case 401:
+        return 'UNAUTHORIZED';
+      case 403:
+        return 'FORBIDDEN';
+      case 404:
+        return 'NOT_FOUND';
+      case 409:
+        return 'CONFLICT';
+      case 422:
+        return 'UNPROCESSABLE_ENTITY';
+      case 429:
+        return 'TOO_MANY_REQUESTS';
+      case 500:
+        return 'INTERNAL_SERVER_ERROR';
+      case 502:
+        return 'BAD_GATEWAY';
+      case 503:
+        return 'SERVICE_UNAVAILABLE';
+      case 504:
+        return 'GATEWAY_TIMEOUT';
+      default:
+        return status >= 400 && status < 500 ? 'BAD_REQUEST' : 'INTERNAL_SERVER_ERROR';
+    }
+  }
+
+  /**
    * Converts the error to a client-safe response object
    */
   toResponse(): ErrorResponse {
     const errorResponse: ErrorResponse = {
       status: this.status,
       type: this.type,
+      code: this.code,
       message: this.expose ? this.message : HTTP_ERROR_MESSAGES[this.status] || 'Internal Server Error',
     };
 
@@ -101,6 +136,7 @@ export class ApiError extends Error {
       status: this.status,
       errorId: this.errorId,
       type: this.type,
+      code: this.code,
       details: this.details,
     };
 

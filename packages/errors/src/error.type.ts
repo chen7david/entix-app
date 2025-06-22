@@ -18,6 +18,7 @@ export type ErrorResponse = {
   details?: ErrorDetail[];
   stack?: string;
   context?: Record<string, unknown>;
+  code?: ApiErrorCode;
 };
 
 /**
@@ -30,6 +31,7 @@ export type ApiErrorOptions = {
   details?: ErrorDetail[];
   logContext?: Record<string, unknown>;
   expose?: boolean;
+  code?: ApiErrorCode;
 };
 
 export type ApiErrorCode =

@@ -44,7 +44,10 @@ export class UserAuthService {
     const user = await this.userService.findByCognitoSub(sub);
 
     if (!user) {
-      throw new InternalError('Cognito user not found in core database');
+      throw new InternalError({
+        message: 'Cognito user not found in core database',
+        code: 'INVALID_USER',
+      });
     }
 
     /**
@@ -78,12 +81,18 @@ export class UserAuthService {
   async refreshToken(params: RefreshTokenDto): Promise<RefreshTokenResultDto> {
     const isRefreshTokenValid = this.jwtService.verifyRefreshToken(params.refreshToken);
     if (!isRefreshTokenValid) {
-      throw new UnauthorizedError('Invalid refresh token');
+      throw new UnauthorizedError({
+        message: 'Invalid refresh token',
+        code: 'INVALID_REFRESH_TOKEN',
+      });
     }
 
     const user = await this.userService.findByCognitoSub(isRefreshTokenValid.sub);
     if (!user) {
-      throw new UnauthorizedError('invalid refresh token');
+      throw new UnauthorizedError({
+        message: 'Invalid refresh token',
+        code: 'INVALID_REFRESH_TOKEN',
+      });
     }
 
     const permissions = await this.userService.findUserPermissions(user.id);
