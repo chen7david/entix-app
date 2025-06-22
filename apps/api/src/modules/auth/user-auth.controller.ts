@@ -29,6 +29,9 @@ import {
   changePasswordSchema,
   LogoutDto,
   logoutSchema,
+  RefreshTokenDto,
+  RefreshTokenResultDto,
+  refreshTokenSchema,
 } from '@repo/entix-sdk';
 
 @Injectable()
@@ -51,6 +54,13 @@ export class UserAuthController {
   @UseBefore(validateBody(loginSchema))
   async login(@Body() params: LoginDto): Promise<LoginResultDto> {
     return this.userAuthService.login(params);
+  }
+
+  @Post('/refresh-token')
+  @HttpCode(200)
+  @UseBefore(validateBody(refreshTokenSchema))
+  async refreshToken(@Body() params: RefreshTokenDto): Promise<RefreshTokenResultDto> {
+    return this.userAuthService.refreshToken(params);
   }
 
   @Post('/resend-confirmation-code')

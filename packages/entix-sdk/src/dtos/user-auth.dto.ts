@@ -10,6 +10,7 @@ import {
   loginSchema,
   logoutSchema,
   refreshTokenPayloadSchema,
+  refreshTokenSchema,
   resendConfirmationCodeSchema,
   signUpSchema,
 } from '@schemas/user-auth.schema';
@@ -29,6 +30,14 @@ export type LoginResultDto = {
     username: string;
     email: string;
   };
+};
+
+export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
+
+export type RefreshTokenResultDto = {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 };
 
 export type ResendConfirmationCodeDto = z.infer<typeof resendConfirmationCodeSchema>;

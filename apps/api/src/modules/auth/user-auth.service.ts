@@ -1,10 +1,19 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
-import { LogoutDto, SuccessResultDto, SignUpDto, SignUpResultDto, LoginDto, LoginResultDto } from '@repo/entix-sdk';
+import {
+  LogoutDto,
+  SuccessResultDto,
+  SignUpDto,
+  SignUpResultDto,
+  LoginDto,
+  LoginResultDto,
+  RefreshTokenDto,
+  RefreshTokenResultDto,
+} from '@repo/entix-sdk';
 import { UserService } from '@modules/users/user.service';
 import { JwtService } from '@services/jwt.service';
 import { CognitoAccessTokenPayload } from '@services/cognito/cognito.model';
-import { InternalError } from '@repo/api-errors';
+import { InternalError, UnauthorizedError } from '@repo/api-errors';
 import { ConfigService } from '@services/config.service';
 import ms, { StringValue } from 'ms';
 
@@ -63,6 +72,33 @@ export class UserAuthService {
         username: user.username,
         email: user.email,
       },
+    };
+  }
+
+  async refreshToken(params: RefreshTokenDto): Promise<RefreshTokenResultDto> {
+    const isRefreshTokenValid = this.jwtService.verifyRefreshToken(params.refreshToken);
+    if (!isRefreshTokenValid) {
+      throw new UnauthorizedError('Invalid refresh token');
+    }
+
+    const user = await this.userService.findByCognitoSub(isRefreshTokenValid.sub);
+    if (!user) {
+      throw new UnauthorizedError('invalid refresh token');
+    }
+
+    const permissions = await this.userService.findUserPermissions(user.id);
+    const expiresIn = ms(this.configService.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME as StringValue);
+
+    return {
+      accessToken: this.jwtService.signAccessToken({
+        sub: user.id,
+        username: user.username,
+        permissions,
+      }),
+      refreshToken: this.jwtService.signRefreshToken({
+        sub: user.id,
+      }),
+      expiresIn,
     };
   }
 
