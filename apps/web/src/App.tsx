@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from '@pages/HomePage';
 import { LoginPage } from '@pages/LoginPage';
 import { SignUpPage } from '@pages/SignUpPage';
@@ -18,7 +18,7 @@ import PermissionsPage from '@pages/PermissionsPage';
 export const App = () => {
   return (
     <Routes>
-      <Route path="/" element={<HomePage />} />
+      <Route path="/" element={<Navigate to="/auth/login" />} />
 
       {/* Public routes - accessible only to non-authenticated users */}
       <Route path="/auth" element={<PublicLayout />}>
