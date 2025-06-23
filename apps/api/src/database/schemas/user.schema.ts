@@ -10,7 +10,6 @@ export const users = pgTable(
     email: varchar('email', { length: 255 }).notNull(),
     username: varchar('username', { length: 50 }).notNull(),
     disabledAt: timestamp('disabled_at').default(sql`NULL`),
-    adminSince: timestamp('admin_since').default(sql`NULL`),
     ...timeStamps,
   },
   table => [

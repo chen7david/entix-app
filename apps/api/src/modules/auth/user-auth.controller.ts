@@ -1,6 +1,6 @@
 import { JsonController, Post, Body, UseBefore, HttpCode, Get } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
-import { validateBody } from '@middleware/validation.middleware';
+import { validateBody, validateHeaders } from '@middleware/validation.middleware';
 import { UserAuthService } from '@modules/auth/user-auth.service';
 import {
   LoginDto,
@@ -110,7 +110,7 @@ export class UserAuthController {
 
   @Get('/verify-session')
   @HttpCode(200)
-  @UseBefore(validateBody(verifySessionSchema))
+  @UseBefore(validateHeaders(verifySessionSchema))
   async verifySession(@Body() params: VerifySessionDto): Promise<VerifySessionResultDto> {
     return this.userAuthService.verifySession(params);
   }
