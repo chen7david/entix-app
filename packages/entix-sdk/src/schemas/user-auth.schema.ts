@@ -65,8 +65,9 @@ export const logoutSchema = z.object({
 
 export const accessTokenPayloadSchema = z.object({
   sub: z.string().min(1),
+  username: z.string().min(1),
   email: z.string().email(),
-  permissions: z.array(z.number()).min(1),
+  permissionCodes: z.array(z.number()),
   exp: z.number(),
   iat: z.number(),
 });

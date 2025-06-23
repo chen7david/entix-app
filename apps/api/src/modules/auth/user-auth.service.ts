@@ -59,14 +59,15 @@ export class UserAuthService {
      * Our backend then issues its own tokens to the client.
      */
     await this.cognitoService.logout({ cognitoAccessToken: accessToken });
-    const permissions = await this.userService.findUserPermissions(user.id);
+    const permissionCodes = await this.userService.findUserPermissions(user.id);
     const expiresIn = ms(this.configService.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME as StringValue);
 
     return {
       accessToken: this.jwtService.signAccessToken({
         sub: user.id,
         username: user.username,
-        permissions,
+        email: user.email,
+        permissionCodes,
       }),
       refreshToken: this.jwtService.signRefreshToken({
         sub: user.id,
@@ -104,6 +105,7 @@ export class UserAuthService {
       accessToken: this.jwtService.signAccessToken({
         sub: user.id,
         username: user.username,
+        email: user.email,
         permissionCodes,
       }),
       refreshToken: this.jwtService.signRefreshToken({
