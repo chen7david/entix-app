@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, KeyOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 import { createSchemaFieldRule } from 'antd-zod';
 import { signUpSchema, type SignUpDto } from '@repo/entix-sdk';
 import { apiClient } from '@lib/api-client';
+import { App } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -22,6 +23,7 @@ export const SignUpPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<SignUpDto>();
+  const { message } = App.useApp();
 
   // Get invitation code from URL
   const invitationCode = searchParams.get('invitationCode') || '';
@@ -37,10 +39,11 @@ export const SignUpPage = () => {
     mutationFn: async (signUpData: SignUpDto) => {
       return apiClient.auth.signUp(signUpData);
     },
-    onSuccess: result => {
+    onSuccess: () => {
       message.success('Registration successful! Please check your email for confirmation.');
-      // Navigate to confirmation page with email in URL state
-      navigate(`/auth/confirm-signup?email=${encodeURIComponent(result.email)}`);
+      const email = form.getFieldValue('email');
+      // Navigate to confirmation page with email in URL
+      navigate(`/auth/confirm-signup?email=${encodeURIComponent(email)}`);
     },
     onError: (error: unknown) => {
       if (error instanceof AxiosError) {
@@ -107,7 +110,7 @@ export const SignUpPage = () => {
 
         <Form.Item style={{ marginBottom: '16px' }}>
           <Button type="primary" htmlType="submit" block loading={signUpMutation.isPending}>
-            Sign Up
+            Create Account
           </Button>
         </Form.Item>
       </Form>

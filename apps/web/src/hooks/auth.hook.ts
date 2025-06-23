@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useAtom } from 'jotai';
-import { message } from 'antd';
+import { App } from 'antd';
 import type { LoginDto, LoginResultDto, VerifySessionResultDto } from '@repo/entix-sdk';
 import {
   apiClient,
@@ -28,6 +28,7 @@ import { useEffect } from 'react';
  */
 export const useLogin = () => {
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   return useMutation({
     mutationFn: async (loginCredentials: LoginDto) => {
@@ -51,6 +52,7 @@ export const useLogin = () => {
  */
 export const useLogout = () => {
   const navigate = useNavigate();
+  const { message } = App.useApp();
 
   return useMutation({
     mutationFn: async () => {

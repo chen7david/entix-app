@@ -41,11 +41,11 @@ export const LoginPage = () => {
         requiredMark={false}
         disabled={login.isPending}
       >
-        <Form.Item name="username" label="Username" rules={[rules]}>
+        <Form.Item initialValue={'chen7david'} name="username" label="Username" rules={[rules]}>
           <Input prefix={<UserOutlined />} placeholder="Enter your username" autoComplete="username" />
         </Form.Item>
 
-        <Form.Item name="password" label="Password" rules={[rules]}>
+        <Form.Item initialValue={'password'} name="password" label="Password" rules={[rules]}>
           <Input.Password prefix={<LockOutlined />} placeholder="Enter your password" autoComplete="current-password" />
         </Form.Item>
 

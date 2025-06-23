@@ -6,7 +6,7 @@ import { ErrorHandlerMiddleware } from '@middleware/global-error.middleware';
 import { authorizationChecker } from '@middleware/authz-checker.middleware';
 import { currentUserChecker } from '@middleware/current-user-checker.middleware';
 import { OpenAPIService } from './openapi.service';
-
+import morgan from 'morgan';
 @Injectable()
 export class AppService {
   private app: Application = express();
@@ -37,6 +37,7 @@ export class AppService {
   registerBeforeAllMiddlewares(): void {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(morgan('dev'));
   }
 
   registerAfterAllMiddlewares(): void {

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Form, Input, Button, Card, Typography, message, Alert } from 'antd';
+import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -7,6 +7,7 @@ import { AxiosError } from 'axios';
 import { createSchemaFieldRule } from 'antd-zod';
 import { confirmForgotPasswordSchema, type ConfirmForgotPasswordDto } from '@repo/entix-sdk';
 import { apiClient } from '@lib/api-client';
+import { App } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -21,17 +22,11 @@ const confirmForgotPasswordRules = createSchemaFieldRule(confirmForgotPasswordSc
 export const ConfirmPasswordResetPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<ConfirmForgotPasswordDto>();
+  const { message } = App.useApp();
 
   // Get username from URL
   const username = searchParams.get('username') || '';
-
-  // Pre-fill username from URL
-  useEffect(() => {
-    if (username) {
-      form.setFieldValue('username', username);
-    }
-  }, [username, form]);
 
   const confirmPasswordResetMutation = useMutation({
     mutationFn: async (confirmData: ConfirmForgotPasswordDto) => {
@@ -50,11 +45,16 @@ export const ConfirmPasswordResetPage = () => {
     },
   });
 
-  const handleSubmit = (values: ConfirmForgotPasswordDto & { confirmPassword?: string }) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { confirmPassword, ...submitData } = values;
-    confirmPasswordResetMutation.mutate(submitData);
+  const handleSubmit = (values: ConfirmForgotPasswordDto) => {
+    confirmPasswordResetMutation.mutate(values);
   };
+
+  // Auto-fill username if provided in URL
+  useEffect(() => {
+    if (username) {
+      form.setFieldsValue({ username });
+    }
+  }, [username, form]);
 
   return (
     <Card className="w-full shadow-lg">
@@ -106,18 +106,24 @@ export const ConfirmPasswordResetPage = () => {
           <Input.Password prefix={<LockOutlined />} placeholder="Confirm new password" autoComplete="new-password" />
         </Form.Item>
 
-        <Form.Item className="mb-4">
-          <Button type="primary" htmlType="submit" loading={confirmPasswordResetMutation.isPending} block>
+        <Form.Item style={{ marginBottom: '16px' }}>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            loading={confirmPasswordResetMutation.isPending}
+            disabled={confirmPasswordResetMutation.isPending}
+          >
             Reset Password
           </Button>
         </Form.Item>
       </Form>
 
-      <div className="text-center">
+      <div style={{ textAlign: 'center' }}>
         <Text type="secondary">
           Remember your password?{' '}
-          <Link to="/auth/login" className="text-blue-600 hover:text-blue-500">
-            Sign in
+          <Link to="/auth/login" style={{ color: 'var(--ant-color-primary)' }}>
+            Back to Sign In
           </Link>
         </Text>
       </div>

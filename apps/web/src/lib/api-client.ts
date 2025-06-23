@@ -1,7 +1,6 @@
 import { EntixApiClient } from '@repo/entix-sdk';
 import { atom } from 'jotai';
 import { appConfig } from '@config/app.config';
-import axios from 'axios';
 import {
   getAccessToken,
   getRefreshToken,
@@ -73,13 +72,26 @@ export const apiClient = new EntixApiClient({
     }
 
     try {
-      const response = await axios.post(`${appConfig.VITE_API_URL}/api/v1/auth/refresh-token`, {
-        refreshToken,
+      // Use the SDK's auth API instead of direct axios call to avoid double /api path
+      const refreshResponse = await fetch(`${appConfig.VITE_API_URL}/v1/auth/refresh-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          refreshToken,
+        }),
       });
 
+      if (!refreshResponse.ok) {
+        throw new Error('Failed to refresh token');
+      }
+
+      const response = await refreshResponse.json();
+
       // Store the new access token
-      const newAccessToken = response.data.accessToken;
-      const newRefreshToken = response.data.refreshToken;
+      const newAccessToken = response.accessToken;
+      const newRefreshToken = response.refreshToken;
       storeTokens(newAccessToken, newRefreshToken);
 
       return newAccessToken;

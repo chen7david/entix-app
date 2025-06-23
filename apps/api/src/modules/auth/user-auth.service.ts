@@ -89,7 +89,7 @@ export class UserAuthService {
       });
     }
 
-    const user = await this.userService.findByCognitoSub(isRefreshTokenValid.sub);
+    const user = await this.userService.findById(isRefreshTokenValid.sub);
     if (!user) {
       throw new UnauthorizedError({
         message: 'Invalid refresh token',

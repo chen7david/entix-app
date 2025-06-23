@@ -1,4 +1,4 @@
-import { Form, Input, Button, Card, Typography, message, Alert } from 'antd';
+import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -6,10 +6,11 @@ import { AxiosError } from 'axios';
 import { createSchemaFieldRule } from 'antd-zod';
 import { confirmSignUpSchema, type ConfirmSignUpDto, type ResendConfirmationCodeDto } from '@repo/entix-sdk';
 import { apiClient } from '@lib/api-client';
+import { App } from 'antd';
 
 const { Title, Text } = Typography;
 
-// Create rules from Zod schemas
+// Create rules from Zod schema
 const confirmSignUpRules = createSchemaFieldRule(confirmSignUpSchema);
 
 /**
@@ -21,6 +22,7 @@ export const ConfirmSignUpPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<ConfirmSignUpDto>();
+  const { message } = App.useApp();
 
   // Get email from URL
   const email = searchParams.get('email') || '';

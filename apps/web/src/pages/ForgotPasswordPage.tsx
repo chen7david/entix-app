@@ -1,4 +1,4 @@
-import { Form, Input, Button, Card, Typography, message, Space } from 'antd';
+import { Form, Input, Button, Card, Typography, Space } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { AxiosError } from 'axios';
 import { createSchemaFieldRule } from 'antd-zod';
 import { forgotPasswordSchema, type ForgotPasswordDto } from '@repo/entix-sdk';
 import { apiClient } from '@lib/api-client';
+import { App } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -18,6 +19,7 @@ const forgotPasswordRules = createSchemaFieldRule(forgotPasswordSchema);
 export const ForgotPasswordPage = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm<ForgotPasswordDto>();
+  const { message } = App.useApp();
 
   const forgotPasswordMutation = useMutation({
     mutationFn: async (forgotPasswordData: ForgotPasswordDto) => {
@@ -46,9 +48,9 @@ export const ForgotPasswordPage = () => {
     <Card style={{ width: '100%', boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <Title level={2} style={{ marginBottom: '8px' }}>
-          Reset Password
+          Forgot Password
         </Title>
-        <Text type="secondary">Enter your email to receive a reset link</Text>
+        <Text type="secondary">Enter your username to reset your password</Text>
       </div>
 
       <Form
@@ -65,29 +67,25 @@ export const ForgotPasswordPage = () => {
 
         <Form.Item style={{ marginBottom: '16px' }}>
           <Button type="primary" htmlType="submit" block loading={forgotPasswordMutation.isPending}>
-            Send Reset Link
+            Send Reset Code
           </Button>
         </Form.Item>
       </Form>
 
       <div style={{ textAlign: 'center' }}>
         <Space direction="vertical" size="small">
-          <div>
-            <Text type="secondary">
-              Remember your password?{' '}
-              <Link to="/auth/login" style={{ color: 'var(--ant-color-primary)' }}>
-                Sign in
-              </Link>
-            </Text>
-          </div>
-          <div>
-            <Text type="secondary">
-              Need an account?{' '}
-              <Link to="/auth/signup" style={{ color: 'var(--ant-color-primary)' }}>
-                Sign up
-              </Link>
-            </Text>
-          </div>
+          <Text type="secondary">
+            Remember your password?{' '}
+            <Link to="/auth/login" style={{ color: 'var(--ant-color-primary)' }}>
+              Back to Sign In
+            </Link>
+          </Text>
+          <Text type="secondary">
+            Don't have an account?{' '}
+            <Link to="/auth/signup" style={{ color: 'var(--ant-color-primary)' }}>
+              Sign up
+            </Link>
+          </Text>
         </Space>
       </div>
     </Card>
