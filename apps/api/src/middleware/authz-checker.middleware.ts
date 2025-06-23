@@ -23,5 +23,5 @@ export const authorizationChecker = async (action: Action, required: number[]): 
 
   if (required.length === 0) return true;
 
-  return required.some(required => payload.permissions.includes(required));
+  return required.some(required => payload.permissionCodes.includes(required));
 };

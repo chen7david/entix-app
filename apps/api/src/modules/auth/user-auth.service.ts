@@ -97,14 +97,14 @@ export class UserAuthService {
       });
     }
 
-    const permissions = await this.userService.findUserPermissions(user.id);
+    const permissionCodes = await this.userService.findUserPermissions(user.id);
     const expiresIn = ms(this.configService.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME as StringValue);
 
     return {
       accessToken: this.jwtService.signAccessToken({
         sub: user.id,
         username: user.username,
-        permissions,
+        permissionCodes,
       }),
       refreshToken: this.jwtService.signRefreshToken({
         sub: user.id,
