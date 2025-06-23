@@ -1,62 +1,78 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Table,
   Card,
   Button,
-  Space,
   Input,
+  Space,
   Tag,
-  Modal,
-  Form,
-  message,
-  Tooltip,
+  Avatar,
   Typography,
   Row,
   Col,
-  Drawer,
+  Modal,
+  Form,
+  Tooltip,
+  Badge,
   Descriptions,
-  Transfer,
+  Drawer,
   Divider,
-  Avatar,
+  List,
+  Empty,
 } from 'antd';
+import type { Breakpoint } from 'antd';
 import {
   PlusOutlined,
-  SearchOutlined,
   EditOutlined,
-  DeleteOutlined,
-  SafetyOutlined,
   EyeOutlined,
   ReloadOutlined,
-  UserOutlined,
+  SearchOutlined,
   LockOutlined,
-  TeamOutlined,
+  DeleteOutlined,
+  UserOutlined,
+  SafetyOutlined,
 } from '@ant-design/icons';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '@/lib/api-client';
+import { apiClient } from '@lib/api-client';
 import { usePermissions } from '@/hooks/auth.hook';
 import { PermissionCode } from '@repo/entix-sdk';
-import type { Role, CreateRoleParamsDto, UpdateRoleParamsDto } from '@repo/entix-sdk';
+import type { Role, Permission, User, CreateRoleParamsDto, UpdateRoleParamsDto } from '@repo/entix-sdk';
+import { App } from 'antd';
+import { PageLoading } from '@/components/LoadingSpinner';
+import { PageContainer } from '@/components/ResponsiveContainer';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { TextArea } = Input;
 
+type ErrorResponse = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
+
 /**
- * Roles management page with CRUD operations and permission assignment
+ * RolesPage component for managing roles
  */
 export default function RolesPage() {
-  const queryClient = useQueryClient();
-  const { hasPermission } = usePermissions();
-
-  // State management
+  // State
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDetailDrawerVisible, setIsDetailDrawerVisible] = useState(false);
   const [isPermissionsModalVisible, setIsPermissionsModalVisible] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+
+  // Forms
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
+
+  // Hooks
+  const queryClient = useQueryClient();
+  const { hasPermission } = usePermissions();
+  const { message } = App.useApp();
 
   // Queries
   const {
@@ -69,133 +85,129 @@ export default function RolesPage() {
     enabled: hasPermission(PermissionCode.GET_ROLES),
   });
 
-  const { data: permissions = [] } = useQuery({
+  const { data: permissions = [], isLoading: permissionsLoading } = useQuery({
     queryKey: ['permissions'],
     queryFn: () => apiClient.permissions.getPermissions(),
     enabled: hasPermission(PermissionCode.GET_PERMISSIONS),
   });
 
-  const { data: rolePermissions = [], refetch: refetchRolePermissions } = useQuery({
+  const { data: rolePermissions = [], isLoading: rolePermissionsLoading } = useQuery({
     queryKey: ['role-permissions', selectedRole?.id],
-    queryFn: () => (selectedRole ? apiClient.roles.getRolePermissions(selectedRole.id) : Promise.resolve([])),
+    queryFn: () => {
+      console.log('🔍 Fetching role permissions for role:', selectedRole?.id, selectedRole?.name);
+      return apiClient.roles.getRolePermissions(selectedRole!.id.toString());
+    },
     enabled: !!selectedRole && hasPermission(PermissionCode.GET_ROLE_PERMISSIONS),
   });
 
-  const { data: roleUsers = [] } = useQuery({
+  const { data: roleUsers = [], isLoading: roleUsersLoading } = useQuery({
     queryKey: ['role-users', selectedRole?.id],
-    queryFn: () => (selectedRole ? apiClient.roles.getRoleUsers(selectedRole.id) : Promise.resolve([])),
-    enabled: !!selectedRole && hasPermission(PermissionCode.GET_ROLE_USERS),
+    queryFn: () => apiClient.roles.getRoleUsers(selectedRole!.id.toString()),
+    enabled: !!selectedRole,
   });
 
   // Mutations
   const createRoleMutation = useMutation({
-    mutationFn: (roleData: CreateRoleParamsDto) => apiClient.roles.createRole(roleData),
+    mutationFn: async (roleData: CreateRoleParamsDto) => {
+      return apiClient.roles.createRole(roleData);
+    },
     onSuccess: () => {
-      message.success('Role created successfully');
       queryClient.invalidateQueries({ queryKey: ['roles'] });
+      message.success('Role created successfully');
       setIsCreateModalVisible(false);
       createForm.resetFields();
     },
-    onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to create role');
+    onError: (error: ErrorResponse) => {
+      message.error(error.response?.data?.message || 'Failed to create role');
     },
   });
 
   const updateRoleMutation = useMutation({
-    mutationFn: ({ id, roleData }: { id: string; roleData: UpdateRoleParamsDto }) =>
-      apiClient.roles.updateRole(id, roleData),
-    onSuccess: () => {
-      message.success('Role updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
-      setIsEditModalVisible(false);
-      editForm.resetFields();
-      setSelectedRole(null);
+    mutationFn: async ({ id, ...roleData }: UpdateRoleParamsDto & { id: string }) => {
+      return apiClient.roles.updateRole(id, roleData);
     },
-    onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to update role');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      message.success('Role updated successfully');
+      setIsEditModalVisible(false);
+      setSelectedRole(null);
+      editForm.resetFields();
+    },
+    onError: (error: ErrorResponse) => {
+      message.error(error.response?.data?.message || 'Failed to update role');
     },
   });
 
   const deleteRoleMutation = useMutation({
-    mutationFn: (roleId: string) => apiClient.roles.deleteRole(roleId),
-    onSuccess: () => {
-      message.success('Role deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['roles'] });
+    mutationFn: async (roleId: string) => {
+      return apiClient.roles.deleteRole(roleId);
     },
-    onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to delete role');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roles'] });
+      message.success('Role deleted successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      message.error(error.response?.data?.message || 'Failed to delete role');
     },
   });
 
   const assignPermissionMutation = useMutation({
-    mutationFn: ({ roleId, permissionId }: { roleId: string; permissionId: string }) =>
-      apiClient.rolePermissions.createRolePermission({ roleId, permissionId }),
-    onSuccess: () => {
-      message.success('Permission assigned successfully');
-      refetchRolePermissions();
+    mutationFn: async (params: { roleId: string; permissionId: string }) => {
+      return apiClient.rolePermissions.createRolePermission({
+        roleId: params.roleId,
+        permissionId: params.permissionId,
+      });
     },
-    onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to assign permission');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['role-permissions', selectedRole?.id] });
+      message.success('Permission assigned successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      message.error(error.response?.data?.message || 'Failed to assign permission');
     },
   });
 
   const removePermissionMutation = useMutation({
-    mutationFn: ({ roleId, permissionId }: { roleId: string; permissionId: string }) =>
-      apiClient.rolePermissions.deleteRolePermission({ roleId, permissionId }),
-    onSuccess: () => {
-      message.success('Permission removed successfully');
-      refetchRolePermissions();
+    mutationFn: async (params: { roleId: string; permissionId: string }) => {
+      return apiClient.rolePermissions.deleteRolePermission({
+        roleId: params.roleId,
+        permissionId: params.permissionId,
+      });
     },
-    onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to remove permission');
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['role-permissions', selectedRole?.id] });
+      message.success('Permission removed successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      message.error(error.response?.data?.message || 'Failed to remove permission');
     },
   });
 
   // Filter roles based on search
   const filteredRoles = roles.filter(
-    role =>
-      !searchTerm ||
+    (role: Role) =>
       role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.description?.toLowerCase().includes(searchTerm.toLowerCase()),
+      (role.description && role.description.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
-  // Handle role creation
+  // Handlers
   const handleCreateRole = async (values: { name: string; description?: string }) => {
-    try {
-      const roleData: CreateRoleParamsDto = {
-        name: values.name,
-        description: values.description,
-      };
-
-      await createRoleMutation.mutateAsync(roleData);
-    } catch (error) {
-      console.error('Create role error:', error);
-    }
+    createRoleMutation.mutate(values);
   };
 
-  // Handle role update
   const handleUpdateRole = async (values: { name: string; description?: string }) => {
-    if (!selectedRole) return;
-
-    try {
-      const roleData: UpdateRoleParamsDto = {
-        description: values.description,
-      };
-
-      await updateRoleMutation.mutateAsync({
+    if (selectedRole) {
+      updateRoleMutation.mutate({
         id: selectedRole.id,
-        roleData,
+        ...values,
       });
-    } catch (error) {
-      console.error('Update role error:', error);
     }
   };
 
-  // Handle role deletion
   const handleDeleteRole = (role: Role) => {
     Modal.confirm({
       title: 'Delete Role',
-      content: `Are you sure you want to delete "${role.name}"? This action cannot be undone.`,
+      content: `Are you sure you want to delete the role "${role.name}"?`,
       okText: 'Delete',
       okType: 'danger',
       cancelText: 'Cancel',
@@ -203,7 +215,6 @@ export default function RolesPage() {
     });
   };
 
-  // Handle edit role
   const handleEditRole = (role: Role) => {
     setSelectedRole(role);
     editForm.setFieldsValue({
@@ -213,48 +224,56 @@ export default function RolesPage() {
     setIsEditModalVisible(true);
   };
 
-  // Handle view role details
   const handleViewRole = (role: Role) => {
     setSelectedRole(role);
     setIsDetailDrawerVisible(true);
   };
 
-  // Handle manage permissions
   const handleManagePermissions = (role: Role) => {
     setSelectedRole(role);
     setIsPermissionsModalVisible(true);
   };
 
-  // Handle permission transfer change
-  const handlePermissionTransferChange = (targetKeys: string[]) => {
-    if (!selectedRole) return;
-
-    const currentPermissionIds = rolePermissions.map(p => p.id);
-    const toAdd = targetKeys.filter(id => !currentPermissionIds.includes(id));
-    const toRemove = currentPermissionIds.filter(id => !targetKeys.includes(id));
-
-    // Add new permissions
-    toAdd.forEach(permissionId => {
+  const handleAssignPermission = (permissionId: string) => {
+    if (selectedRole) {
       assignPermissionMutation.mutate({
         roleId: selectedRole.id,
         permissionId,
       });
-    });
+    }
+  };
 
-    // Remove permissions
-    toRemove.forEach(permissionId => {
+  const handleRemovePermission = (permissionId: string) => {
+    if (selectedRole) {
       removePermissionMutation.mutate({
         roleId: selectedRole.id,
         permissionId,
       });
-    });
+    }
   };
 
-  // Table columns configuration
+  // Get available permissions for assignment
+  const assignedPermissionIds = (rolePermissions as Permission[]).map((p: Permission) => p.id);
+  const availablePermissions = permissions.filter((p: Permission) => !assignedPermissionIds.includes(p.id));
+
+  // Debug logs
+  console.log('🔧 Debug - selectedRole:', selectedRole);
+  console.log('🔧 Debug - hasPermission(GET_ROLE_PERMISSIONS):', hasPermission(PermissionCode.GET_ROLE_PERMISSIONS));
+  console.log('🔧 Debug - rolePermissions:', rolePermissions);
+  console.log('🔧 Debug - rolePermissionsLoading:', rolePermissionsLoading);
+  console.log(
+    '🔧 Debug - assignedPermissionIds:',
+    (rolePermissions as Permission[]).map((p: Permission) => p.id),
+  );
+  console.log('🔧 Debug - availablePermissions count:', availablePermissions.length);
+
+  // Table columns configuration with mobile responsiveness
   const columns = [
     {
       title: 'Role',
       key: 'role',
+      width: 200,
+      fixed: 'left' as const,
       render: (_: unknown, record: Role) => {
         const name = record.name;
         return (
@@ -262,9 +281,11 @@ export default function RolesPage() {
             <Avatar size="small" style={{ backgroundColor: '#0066ff' }}>
               {name.charAt(0).toUpperCase()}
             </Avatar>
-            <div>
-              <div style={{ fontWeight: 500, color: '#0066ff' }}>{name}</div>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontWeight: 500, color: '#0066ff', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {name}
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {record.description || 'No description'}
               </Text>
             </div>
@@ -276,60 +297,59 @@ export default function RolesPage() {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      render: (description: string) => description || '-',
+      width: 250,
+      render: (description: string) => (
+        <div style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis' }}>{description || '-'}</div>
+      ),
+      responsive: ['lg', 'xl'] as Breakpoint[],
     },
     {
       title: 'Status',
       key: 'status',
+      width: 100,
       render: () => <Tag color="green">Active</Tag>,
-      filters: [{ text: 'Active', value: true }],
-      onFilter: () => true, // All roles are active since there's no isActive field
+      responsive: ['md', 'lg', 'xl'] as Breakpoint[],
     },
     {
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      width: 120,
       render: (date: Date | null) => (date ? new Date(date).toLocaleDateString() : '-'),
       sorter: (a: Role, b: Role) => {
         const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return aTime - bTime;
       },
-    },
-    {
-      title: 'Permissions',
-      key: 'permissions',
-      render: (_: unknown, record: Role) => (
-        <Button type="link" icon={<LockOutlined />} onClick={() => handleManagePermissions(record)}>
-          Manage Permissions
-        </Button>
-      ),
-    },
-    {
-      title: 'Users',
-      key: 'users',
-      render: (_: unknown, record: Role) => (
-        <Button type="link" icon={<TeamOutlined />} onClick={() => handleViewRole(record)}>
-          View Users
-        </Button>
-      ),
+      responsive: ['xl'] as Breakpoint[],
     },
     {
       title: 'Actions',
       key: 'actions',
+      width: 180,
+      fixed: 'right' as const,
       render: (_: unknown, record: Role) => (
-        <Space>
+        <Space size="small" className="responsive-button-group">
           <Tooltip title="View Details">
-            <Button type="text" icon={<EyeOutlined />} onClick={() => handleViewRole(record)} />
+            <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => handleViewRole(record)} />
+          </Tooltip>
+          <Tooltip title="Manage Permissions">
+            <Button type="text" size="small" icon={<LockOutlined />} onClick={() => handleManagePermissions(record)} />
           </Tooltip>
           {hasPermission(PermissionCode.UPDATE_ROLE) && (
             <Tooltip title="Edit Role">
-              <Button type="text" icon={<EditOutlined />} onClick={() => handleEditRole(record)} />
+              <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEditRole(record)} />
             </Tooltip>
           )}
           {hasPermission(PermissionCode.DELETE_ROLE) && (
             <Tooltip title="Delete Role">
-              <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDeleteRole(record)} />
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteRole(record)}
+              />
             </Tooltip>
           )}
         </Space>
@@ -339,36 +359,43 @@ export default function RolesPage() {
 
   if (!hasPermission(PermissionCode.GET_ROLES)) {
     return (
-      <Card style={{ boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <SafetyOutlined style={{ fontSize: '48px', color: '#d4d4d8' }} />
-          <Title level={4} style={{ marginTop: '16px', color: '#71717a' }}>
-            Access Denied
-          </Title>
-          <Text type="secondary">You don't have permission to view roles.</Text>
-        </div>
-      </Card>
+      <PageContainer>
+        <Card style={{ boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <SafetyOutlined style={{ fontSize: '48px', color: '#d4d4d8' }} />
+            <Title level={4} style={{ marginTop: '16px', color: '#71717a' }}>
+              Access Denied
+            </Title>
+            <Text type="secondary">You don't have permission to view roles.</Text>
+          </div>
+        </Card>
+      </PageContainer>
     );
   }
 
+  if (rolesLoading) {
+    return <PageLoading tip="Loading roles..." />;
+  }
+
   return (
-    <div style={{ padding: '24px', backgroundColor: 'var(--ant-color-bg-layout)', minHeight: '100vh' }}>
+    <PageContainer>
       {/* Header */}
-      <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
-        <Col>
+      <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }} className="mobile-stack">
+        <Col xs={24} lg={12}>
           <Title level={2} style={{ margin: 0 }}>
             Roles Management
           </Title>
           <Text type="secondary">Manage roles, permissions, and user assignments</Text>
         </Col>
-        <Col>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => refetchRoles()} loading={rolesLoading}>
-              Refresh
+        <Col xs={24} lg={12} style={{ textAlign: 'right' }}>
+          <Space size="small" className="responsive-button-group">
+            <Button icon={<ReloadOutlined />} onClick={() => refetchRoles()} loading={rolesLoading} size="small">
+              <span className="desktop-only">Refresh</span>
             </Button>
             {hasPermission(PermissionCode.CREATE_ROLE) && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
-                Add Role
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)} size="small">
+                <span className="desktop-only">Add Role</span>
+                <span className="mobile-only">Add</span>
               </Button>
             )}
           </Space>
@@ -387,6 +414,11 @@ export default function RolesPage() {
               prefix={<SearchOutlined />}
             />
           </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Text type="secondary">
+              {filteredRoles.length} of {roles.length} roles
+            </Text>
+          </Col>
         </Row>
       </Card>
 
@@ -402,7 +434,10 @@ export default function RolesPage() {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} roles`,
+            responsive: true,
           }}
+          scroll={{ x: 800, y: 400 }}
+          size="middle"
         />
       </Card>
 
@@ -416,6 +451,7 @@ export default function RolesPage() {
         }}
         footer={null}
         width={600}
+        style={{ maxWidth: 'calc(100vw - 32px)' }}
       >
         <Form form={createForm} layout="vertical" onFinish={handleCreateRole}>
           <Form.Item
@@ -423,33 +459,24 @@ export default function RolesPage() {
             label="Role Name"
             rules={[
               { required: true, message: 'Please enter role name' },
-              { min: 3, message: 'Role name must be at least 3 characters' },
+              { min: 2, message: 'Role name must be at least 2 characters' },
             ]}
           >
             <Input placeholder="Enter role name" />
           </Form.Item>
 
           <Form.Item name="description" label="Description">
-            <TextArea placeholder="Enter role description" rows={3} maxLength={500} showCount />
+            <TextArea placeholder="Enter role description" rows={3} />
           </Form.Item>
 
-          <Row justify="end" gutter={16}>
-            <Col>
-              <Button
-                onClick={() => {
-                  setIsCreateModalVisible(false);
-                  createForm.resetFields();
-                }}
-              >
-                Cancel
-              </Button>
-            </Col>
-            <Col>
+          <Form.Item>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setIsCreateModalVisible(false)}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={createRoleMutation.isPending}>
                 Create Role
               </Button>
-            </Col>
-          </Row>
+            </Space>
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -459,11 +486,12 @@ export default function RolesPage() {
         open={isEditModalVisible}
         onCancel={() => {
           setIsEditModalVisible(false);
-          editForm.resetFields();
           setSelectedRole(null);
+          editForm.resetFields();
         }}
         footer={null}
         width={600}
+        style={{ maxWidth: 'calc(100vw - 32px)' }}
       >
         <Form form={editForm} layout="vertical" onFinish={handleUpdateRole}>
           <Form.Item
@@ -471,73 +499,197 @@ export default function RolesPage() {
             label="Role Name"
             rules={[
               { required: true, message: 'Please enter role name' },
-              { min: 3, message: 'Role name must be at least 3 characters' },
+              { min: 2, message: 'Role name must be at least 2 characters' },
             ]}
           >
             <Input placeholder="Enter role name" />
           </Form.Item>
 
           <Form.Item name="description" label="Description">
-            <TextArea placeholder="Enter role description" rows={3} maxLength={500} showCount />
+            <TextArea placeholder="Enter role description" rows={3} />
           </Form.Item>
 
-          <Row justify="end" gutter={16}>
-            <Col>
-              <Button
-                onClick={() => {
-                  setIsEditModalVisible(false);
-                  editForm.resetFields();
-                  setSelectedRole(null);
-                }}
-              >
-                Cancel
-              </Button>
-            </Col>
-            <Col>
+          <Form.Item>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setIsEditModalVisible(false)}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={updateRoleMutation.isPending}>
                 Update Role
               </Button>
-            </Col>
-          </Row>
+            </Space>
+          </Form.Item>
         </Form>
       </Modal>
 
-      {/* Permissions Management Modal */}
+      {/* Permission Management Modal */}
       <Modal
-        title={`Manage Permissions - ${selectedRole?.name}`}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LockOutlined />
+            <span>Manage Permissions - {selectedRole?.name}</span>
+          </div>
+        }
         open={isPermissionsModalVisible}
         onCancel={() => {
           setIsPermissionsModalVisible(false);
           setSelectedRole(null);
         }}
-        footer={null}
-        width={800}
+        footer={
+          <div style={{ textAlign: 'center' }}>
+            <Button onClick={() => setIsPermissionsModalVisible(false)}>Close</Button>
+          </div>
+        }
+        width={1000}
+        style={{
+          maxWidth: 'calc(100vw - 32px)',
+          top: 20,
+        }}
+        styles={{
+          body: {
+            maxHeight: 'calc(100vh - 200px)',
+            overflowY: 'auto',
+            padding: '24px',
+          },
+        }}
       >
-        {selectedRole && (
-          <Transfer
-            dataSource={permissions.map(p => ({
-              key: p.id,
-              title: p.name,
-              description: p.description || undefined,
-            }))}
-            targetKeys={rolePermissions.map(p => p.id)}
-            onChange={(targetKeys: React.Key[]) => handlePermissionTransferChange(targetKeys as string[])}
-            render={item => (
-              <div>
-                <div style={{ fontWeight: 500 }}>{item.title}</div>
-                {item.description && <div style={{ fontSize: '12px', color: '#71717a' }}>{item.description}</div>}
-              </div>
-            )}
-            titles={['Available Permissions', 'Assigned Permissions']}
-            showSearch
-            filterOption={(inputValue, option) => {
-              const title = option.title?.toLowerCase() || '';
-              const description = option.description?.toLowerCase() || '';
-              return title.includes(inputValue.toLowerCase()) || description.includes(inputValue.toLowerCase());
-            }}
-            style={{ marginBottom: '16px' }}
-          />
-        )}
+        <Row gutter={[24, 24]}>
+          <Col xs={24} lg={12}>
+            <Card
+              title={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Available Permissions</span>
+                  <Badge count={availablePermissions.length} color="#108ee9" />
+                </div>
+              }
+              size="small"
+              style={{ height: '500px' }}
+            >
+              {permissionsLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <Text>Loading permissions...</Text>
+                </div>
+              ) : availablePermissions.length > 0 ? (
+                <List
+                  size="small"
+                  dataSource={availablePermissions}
+                  style={{ height: '420px', overflowY: 'auto' }}
+                  renderItem={(permission: Permission) => (
+                    <List.Item
+                      style={{
+                        padding: '12px',
+                        borderBottom: '1px solid var(--ant-color-border)',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.backgroundColor = 'var(--ant-color-fill-tertiary)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                      actions={[
+                        <Button
+                          type="primary"
+                          size="small"
+                          onClick={() => handleAssignPermission(permission.id)}
+                          loading={assignPermissionMutation.isPending}
+                          icon={<PlusOutlined />}
+                        >
+                          Assign
+                        </Button>,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={<div style={{ fontWeight: 500, color: 'var(--ant-color-text)' }}>{permission.name}</div>}
+                        description={
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              color: 'var(--ant-color-text-secondary)',
+                              marginTop: '4px',
+                            }}
+                          >
+                            {permission.description || 'No description available'}
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty description="All permissions are assigned" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </Card>
+          </Col>
+
+          <Col xs={24} lg={12}>
+            <Card
+              title={
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Assigned Permissions</span>
+                  <Badge count={(rolePermissions as Permission[]).length} color="#52c41a" />
+                </div>
+              }
+              size="small"
+              style={{ height: '500px' }}
+            >
+              {rolePermissionsLoading ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <Text>Loading assigned permissions...</Text>
+                </div>
+              ) : (rolePermissions as Permission[]).length > 0 ? (
+                <List
+                  size="small"
+                  dataSource={rolePermissions as Permission[]}
+                  style={{ height: '420px', overflowY: 'auto' }}
+                  renderItem={(permission: Permission) => (
+                    <List.Item
+                      style={{
+                        padding: '12px',
+                        borderBottom: '1px solid var(--ant-color-border)',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.backgroundColor = 'var(--ant-color-fill-tertiary)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.backgroundColor = 'transparent';
+                      }}
+                      actions={[
+                        <Button
+                          danger
+                          size="small"
+                          onClick={() => handleRemovePermission(permission.id)}
+                          loading={removePermissionMutation.isPending}
+                          icon={<DeleteOutlined />}
+                        >
+                          Remove
+                        </Button>,
+                      ]}
+                    >
+                      <List.Item.Meta
+                        title={<div style={{ fontWeight: 500, color: 'var(--ant-color-text)' }}>{permission.name}</div>}
+                        description={
+                          <div
+                            style={{
+                              fontSize: '12px',
+                              color: 'var(--ant-color-text-secondary)',
+                              marginTop: '4px',
+                            }}
+                          >
+                            {permission.description || 'No description available'}
+                          </div>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty description="No permissions assigned" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </Card>
+          </Col>
+        </Row>
       </Modal>
 
       {/* Role Details Drawer */}
@@ -548,11 +700,11 @@ export default function RolesPage() {
           setIsDetailDrawerVisible(false);
           setSelectedRole(null);
         }}
-        width={600}
+        width={window.innerWidth < 768 ? '100%' : 600}
       >
         {selectedRole && (
           <div>
-            <Descriptions column={1} bordered style={{ marginBottom: '24px' }}>
+            <Descriptions column={1} bordered size="small" style={{ marginBottom: '24px' }}>
               <Descriptions.Item label="Role Name">{selectedRole.name}</Descriptions.Item>
               <Descriptions.Item label="Description">
                 {selectedRole.description || 'No description provided'}
@@ -572,9 +724,11 @@ export default function RolesPage() {
 
             <Title level={5}>Assigned Permissions</Title>
             <div style={{ marginBottom: '24px' }}>
-              {rolePermissions.length > 0 ? (
+              {rolePermissionsLoading ? (
+                <Text>Loading permissions...</Text>
+              ) : (rolePermissions as Permission[]).length > 0 ? (
                 <Space wrap>
-                  {rolePermissions.map(permission => (
+                  {(rolePermissions as Permission[]).map((permission: Permission) => (
                     <Tag key={permission.id} color="blue">
                       {permission.name}
                     </Tag>
@@ -589,9 +743,11 @@ export default function RolesPage() {
 
             <Title level={5}>Users with this Role</Title>
             <div>
-              {roleUsers.length > 0 ? (
+              {roleUsersLoading ? (
+                <Text>Loading users...</Text>
+              ) : roleUsers.length > 0 ? (
                 <Space direction="vertical" style={{ width: '100%' }}>
-                  {roleUsers.map(user => (
+                  {roleUsers.map((user: User) => (
                     <div key={user.id} style={{ padding: '8px', border: '1px solid #e4e4e7', borderRadius: '8px' }}>
                       <Space>
                         <UserOutlined />
@@ -609,9 +765,22 @@ export default function RolesPage() {
                 <Text type="secondary">No users assigned to this role</Text>
               )}
             </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <Space style={{ width: '100%' }} direction="vertical">
+                <Button type="primary" block onClick={() => handleManagePermissions(selectedRole)}>
+                  Manage Permissions
+                </Button>
+                {hasPermission(PermissionCode.UPDATE_ROLE) && (
+                  <Button block onClick={() => handleEditRole(selectedRole)}>
+                    Edit Role
+                  </Button>
+                )}
+              </Space>
+            </div>
           </div>
         )}
       </Drawer>
-    </div>
+    </PageContainer>
   );
 }

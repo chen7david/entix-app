@@ -57,14 +57,102 @@ select {
   background: var(--ant-color-bg-layout) !important;
 }
 
+/* Loading spinner improvements for dark mode */
+.ant-spin-dot {
+  color: var(--ant-color-primary) !important;
+}
+
+.ant-spin-dot-item {
+  background-color: var(--ant-color-primary) !important;
+}
+
+/* Button loading spinner visibility in dark mode */
+.ant-btn .ant-spin-dot {
+  color: currentColor !important;
+}
+
+.ant-btn .ant-spin-dot-item {
+  background-color: currentColor !important;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
+  /* Page padding adjustments */
+  .mobile-page-padding {
+    padding: 16px !important;
+  }
+
+  /* Table responsiveness */
   .ant-table {
     font-size: 14px;
   }
 
+  /* Hide less important table columns on mobile */
+  .ant-table .ant-table-cell.mobile-hidden {
+    display: none !important;
+  }
+
+  /* Make table cards more compact */
   .ant-card {
     margin-bottom: 16px;
+  }
+
+  .ant-card .ant-card-body {
+    padding: 16px !important;
+  }
+
+  /* Stack form items vertically on mobile */
+  .ant-row.mobile-stack {
+    flex-direction: column !important;
+  }
+
+  .ant-row.mobile-stack .ant-col {
+    max-width: 100% !important;
+    flex: 1 1 auto !important;
+    margin-bottom: 12px;
+  }
+
+  /* Compact buttons on mobile */
+  .mobile-button-group .ant-btn {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  /* Full width modals on mobile */
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px !important;
+  }
+
+  /* Adjust drawer width on mobile */
+  .ant-drawer .ant-drawer-content-wrapper {
+    max-width: calc(100vw - 32px) !important;
+  }
+}
+
+@media (max-width: 576px) {
+  /* Extra small screens */
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  /* Stack action buttons vertically on very small screens */
+  .mobile-stack-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  .mobile-stack-actions .ant-btn {
+    width: 100% !important;
+  }
+}
+
+/* Tablet specific adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .tablet-responsive {
+    padding: 20px;
   }
 }
 
@@ -84,4 +172,70 @@ select {
 
 .ant-modal {
   z-index: 1000;
+}
+
+/* Loading state improvements */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--ant-color-bg-mask);
+  z-index: 10;
+}
+
+/* Table loading state */
+.ant-table-wrapper .ant-table-loading .ant-table-content {
+  position: relative;
+}
+
+/* Improve form responsiveness */
+@media (max-width: 768px) {
+  .ant-form-item-label {
+    text-align: left !important;
+  }
+
+  .ant-form-horizontal .ant-form-item-label {
+    text-align: left !important;
+  }
+}
+
+/* Button group responsiveness */
+.responsive-button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 576px) {
+  .responsive-button-group {
+    flex-direction: column;
+  }
+
+  .responsive-button-group .ant-btn {
+    width: 100%;
+  }
+}
+
+/* Utility classes for responsive design */
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none;
+  }
 }

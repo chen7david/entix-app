@@ -1,7 +1,7 @@
 import { type ReactNode } from 'react';
 import { useVerifySession } from '@/hooks/auth.hook';
-import { Spin } from 'antd';
 import { getAccessToken } from '@lib/jwt.utils';
+import { PageLoading } from '@/components/LoadingSpinner';
 
 type AuthProviderProps = {
   children: ReactNode;
@@ -23,11 +23,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Show loading spinner only during initial session verification
   // (when we have a token but haven't verified the session yet)
   if (isVerifying && getAccessToken()) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
-      </div>
-    );
+    return <PageLoading tip="Verifying your session..." />;
   }
 
   return <>{children}</>;

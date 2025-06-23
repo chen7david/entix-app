@@ -61,56 +61,65 @@ export const clearTokens = (): void => {
  * Create API client instance
  * Only refreshes tokens when we get a 401/expired error, not for permission checks
  */
-export const apiClient = new EntixApiClient({
-  baseURL: appConfig.VITE_API_URL,
-  getAuthToken: getAccessToken,
-  refreshAuthToken: async () => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      clearTokens();
-      throw new Error('No refresh token available');
-    }
+let apiClient: EntixApiClient;
 
-    try {
-      // Use the SDK's auth API instead of direct axios call to avoid double /api path
-      const refreshResponse = await fetch(`${appConfig.VITE_API_URL}/v1/auth/refresh-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          refreshToken,
-        }),
-      });
-
-      if (!refreshResponse.ok) {
-        throw new Error('Failed to refresh token');
+try {
+  apiClient = new EntixApiClient({
+    baseURL: appConfig.VITE_API_URL,
+    getAuthToken: getAccessToken,
+    refreshAuthToken: async () => {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        clearTokens();
+        throw new Error('No refresh token available');
       }
 
-      const response = await refreshResponse.json();
+      try {
+        // Use the SDK's auth API instead of direct axios call to avoid double /api path
+        const refreshResponse = await fetch(`${appConfig.VITE_API_URL}/v1/auth/refresh-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            refreshToken,
+          }),
+        });
 
-      // Store the new access token
-      const newAccessToken = response.accessToken;
-      const newRefreshToken = response.refreshToken;
-      storeTokens(newAccessToken, newRefreshToken);
+        if (!refreshResponse.ok) {
+          throw new Error('Failed to refresh token');
+        }
 
-      return newAccessToken;
-    } catch {
-      // If refresh fails, clear tokens
+        const response = await refreshResponse.json();
+
+        // Store the new access token
+        const newAccessToken = response.accessToken;
+        const newRefreshToken = response.refreshToken;
+        storeTokens(newAccessToken, newRefreshToken);
+
+        return newAccessToken;
+      } catch {
+        // If refresh fails, clear tokens
+        clearTokens();
+        throw new Error('Failed to refresh token');
+      }
+    },
+    onTokenRefreshed: (token: string) => {
+      // Token is already stored in refreshAuthToken, but update it here too for safety
+      localStorage.setItem(appConfig.VITE_ACCESS_TOKEN_KEY, token);
+    },
+    onAuthenticationError: () => {
+      // Clear tokens and force re-authentication
       clearTokens();
-      throw new Error('Failed to refresh token');
-    }
-  },
-  onTokenRefreshed: (token: string) => {
-    // Token is already stored in refreshAuthToken, but update it here too for safety
-    localStorage.setItem(appConfig.VITE_ACCESS_TOKEN_KEY, token);
-  },
-  onAuthenticationError: () => {
-    // Clear tokens and force re-authentication
-    clearTokens();
-    window.location.href = '/auth/login';
-  },
-});
+      window.location.href = '/auth/login';
+    },
+  });
+} catch (error) {
+  console.error('❌ API Client: Failed to initialize:', error);
+  throw error;
+}
+
+export { apiClient };
 
 // Get initial values from localStorage safely
 const getInitialAuthState = () => {

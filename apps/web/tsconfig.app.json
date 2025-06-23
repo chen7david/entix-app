@@ -19,20 +19,23 @@
     "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"],
+      "@app/*": ["./app/*"],
+      "@shared/*": ["./shared/*"],
+      "@features/*": ["./features/*"],
       "@components/*": ["./components/*"],
       "@pages/*": ["./pages/*"],
       "@layouts/*": ["./layouts/*"],
       "@assets/*": ["./assets/*"],
       "@lib/*": ["./lib/*"],
       "@helpers/*": ["./helpers/*"],
-      "@config/*": ["./config/*"]
+      "@config/*": ["./config/*"],
+      "@hooks/*": ["./hooks/*"]
     },
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

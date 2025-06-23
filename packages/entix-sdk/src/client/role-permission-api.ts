@@ -23,7 +23,10 @@ export class RolePermissionApi {
    * @returns A promise that resolves to a success result
    */
   async createRolePermission(params: CreateRolePermissionParamsDto): Promise<SuccessResultDto> {
-    return this.client.post<SuccessResultDto>(this.basePath, params);
+    return this.client.post<SuccessResultDto>(
+      `${this.basePath}/roles/${params.roleId}/permissions/${params.permissionId}`,
+      {},
+    );
   }
 
   /**
@@ -32,6 +35,8 @@ export class RolePermissionApi {
    * @returns A promise that resolves to a success result
    */
   async deleteRolePermission(params: RolePermissionIdsDto): Promise<SuccessResultDto> {
-    return this.client.delete<SuccessResultDto>(`${this.basePath}`, { data: params });
+    return this.client.delete<SuccessResultDto>(
+      `${this.basePath}/roles/${params.roleId}/permissions/${params.permissionId}`,
+    );
   }
 }

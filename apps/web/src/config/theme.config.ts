@@ -112,6 +112,7 @@ const lightTheme = {
     colorBgLayout: modernColors.neutral[50],
     colorBgElevated: '#ffffff',
     colorBgSpotlight: modernColors.neutral[100],
+    colorBgMask: 'rgba(0, 0, 0, 0.45)',
 
     // Text colors
     colorText: modernColors.neutral[800],
@@ -209,6 +210,12 @@ const lightTheme = {
       darkItemHoverBg: modernColors.neutral[700],
       darkItemHoverColor: '#ffffff',
     },
+    Spin: {
+      colorPrimary: modernColors.primary[500],
+      dotSizeLG: 24,
+      dotSize: 20,
+      dotSizeSM: 16,
+    },
     Drawer: {
       borderRadius: 0,
       boxShadow: 'none',
@@ -274,6 +281,7 @@ const darkTheme = {
     colorBgLayout: modernColors.neutral[900],
     colorBgElevated: modernColors.neutral[700],
     colorBgSpotlight: modernColors.neutral[700],
+    colorBgMask: 'rgba(0, 0, 0, 0.65)',
 
     // Text colors
     colorText: modernColors.neutral[100],
@@ -337,6 +345,9 @@ const darkTheme = {
       defaultShadow: 'none',
       dangerShadow: 'none',
       ghostShadow: 'none',
+      // Ensure button text is visible in dark mode
+      primaryColor: '#ffffff',
+      defaultColor: modernColors.neutral[100],
     },
     Input: {
       borderRadius: 8,
@@ -344,6 +355,8 @@ const darkTheme = {
       paddingInline: 12,
       boxShadow: 'none',
       activeShadow: 'none',
+      colorText: modernColors.neutral[100],
+      colorTextPlaceholder: modernColors.neutral[400],
     },
     Card: {
       borderRadius: 12,
@@ -355,6 +368,7 @@ const darkTheme = {
       borderRadius: 8,
       headerBg: modernColors.neutral[700],
       headerColor: modernColors.neutral[200],
+      colorText: modernColors.neutral[100],
     },
     Layout: {
       siderBg: modernColors.neutral[900],
@@ -374,37 +388,65 @@ const darkTheme = {
       darkItemHoverBg: modernColors.neutral[700],
       darkItemHoverColor: '#ffffff',
     },
+    Spin: {
+      colorPrimary: modernColors.primary[400],
+      dotSizeLG: 24,
+      dotSize: 20,
+      dotSizeSM: 16,
+      // Ensure spinner is visible in dark mode
+      colorText: modernColors.primary[400],
+    },
     Drawer: {
       borderRadius: 0,
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[800],
     },
     Modal: {
       borderRadius: 12,
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[800],
     },
     Message: {
       borderRadius: 8,
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[700],
+      colorText: modernColors.neutral[100],
     },
     Notification: {
       borderRadius: 8,
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[700],
     },
     Dropdown: {
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[700],
     },
     Popover: {
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[700],
     },
     Tooltip: {
       boxShadow: 'none',
+      colorBgSpotlight: modernColors.neutral[600],
+      colorTextLightSolid: modernColors.neutral[100],
     },
     Select: {
       boxShadow: 'none',
       optionSelectedBg: modernColors.primary[600],
+      colorBgElevated: modernColors.neutral[700],
     },
     DatePicker: {
       boxShadow: 'none',
+      colorBgElevated: modernColors.neutral[700],
+    },
+    Form: {
+      colorText: modernColors.neutral[100],
+      colorTextSecondary: modernColors.neutral[300],
+    },
+    Typography: {
+      colorText: modernColors.neutral[100],
+      colorTextSecondary: modernColors.neutral[300],
+      colorTextTertiary: modernColors.neutral[400],
     },
   },
   algorithm: theme.darkAlgorithm,

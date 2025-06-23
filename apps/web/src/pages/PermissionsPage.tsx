@@ -8,7 +8,6 @@ import {
   Tag,
   Modal,
   Form,
-  message,
   Tooltip,
   Typography,
   Row,
@@ -22,7 +21,6 @@ import {
   SearchOutlined,
   EditOutlined,
   DeleteOutlined,
-  SafetyOutlined,
   EyeOutlined,
   ReloadOutlined,
   LockOutlined,
@@ -32,10 +30,20 @@ import { apiClient } from '@lib/api-client';
 import { usePermissions } from '@/hooks/auth.hook';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { Permission, CreatePermissionParamsDto, UpdatePermissionParamsDto, Role } from '@repo/entix-sdk';
+import { App } from 'antd';
+import { PageLoading } from '@/components/LoadingSpinner';
+import { PageContainer } from '@/components/ResponsiveContainer';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
-const { TextArea } = Input;
+
+type ErrorResponse = {
+  response?: {
+    data?: {
+      message?: string;
+    };
+  };
+};
 
 /**
  * Permissions management page with CRUD operations
@@ -43,6 +51,7 @@ const { TextArea } = Input;
 export default function PermissionsPage() {
   const queryClient = useQueryClient();
   const { hasPermission } = usePermissions();
+  const { message: appMessage } = App.useApp();
 
   // State management
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,50 +82,46 @@ export default function PermissionsPage() {
 
   // Mutations
   const createPermissionMutation = useMutation({
-    mutationFn: (permissionData: CreatePermissionParamsDto) => apiClient.permissions.createPermission(permissionData),
+    mutationFn: async (permissionData: CreatePermissionParamsDto) => {
+      return apiClient.permissions.createPermission(permissionData);
+    },
     onSuccess: () => {
-      message.success('Permission created successfully');
       queryClient.invalidateQueries({ queryKey: ['permissions'] });
+      appMessage.success('Permission created successfully');
       setIsCreateModalVisible(false);
       createForm.resetFields();
     },
-    onError: (error: Error) => {
-      message.error(
-        (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-          'Failed to create permission',
-      );
+    onError: (error: ErrorResponse) => {
+      appMessage.error(error.response?.data?.message || 'Failed to create permission');
     },
   });
 
   const updatePermissionMutation = useMutation({
-    mutationFn: ({ id, permissionData }: { id: string; permissionData: UpdatePermissionParamsDto }) =>
-      apiClient.permissions.updatePermission(id, permissionData),
-    onSuccess: () => {
-      message.success('Permission updated successfully');
-      queryClient.invalidateQueries({ queryKey: ['permissions'] });
-      setIsEditModalVisible(false);
-      editForm.resetFields();
-      setSelectedPermission(null);
+    mutationFn: async ({ id, ...permissionData }: UpdatePermissionParamsDto & { id: string }) => {
+      return apiClient.permissions.updatePermission(id, permissionData);
     },
-    onError: (error: Error) => {
-      message.error(
-        (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-          'Failed to update permission',
-      );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['permissions'] });
+      appMessage.success('Permission updated successfully');
+      setIsEditModalVisible(false);
+      setSelectedPermission(null);
+      editForm.resetFields();
+    },
+    onError: (error: ErrorResponse) => {
+      appMessage.error(error.response?.data?.message || 'Failed to update permission');
     },
   });
 
   const deletePermissionMutation = useMutation({
-    mutationFn: (permissionId: string) => apiClient.permissions.deletePermission(permissionId),
-    onSuccess: () => {
-      message.success('Permission deleted successfully');
-      queryClient.invalidateQueries({ queryKey: ['permissions'] });
+    mutationFn: async (permissionId: string) => {
+      return apiClient.permissions.deletePermission(permissionId);
     },
-    onError: (error: Error) => {
-      message.error(
-        (error as { response?: { data?: { message?: string } } }).response?.data?.message ||
-          'Failed to delete permission',
-      );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['permissions'] });
+      appMessage.success('Permission deleted successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      appMessage.error(error.response?.data?.message || 'Failed to delete permission');
     },
   });
 
@@ -130,37 +135,17 @@ export default function PermissionsPage() {
   );
 
   // Handle permission creation
-  const handleCreatePermission = async (values: { name: string; permissionCode: number; description?: string }) => {
-    try {
-      const permissionData: CreatePermissionParamsDto = {
-        name: values.name,
-        permissionCode: values.permissionCode,
-        description: values.description,
-      };
-
-      await createPermissionMutation.mutateAsync(permissionData);
-    } catch (error) {
-      console.error('Create permission error:', error);
-    }
+  const handleCreatePermission = (values: CreatePermissionParamsDto) => {
+    createPermissionMutation.mutate(values);
   };
 
   // Handle permission update
-  const handleUpdatePermission = async (values: { name: string; permissionCode: number; description?: string }) => {
-    if (!selectedPermission) return;
-
-    try {
-      const permissionData: UpdatePermissionParamsDto = {
-        name: values.name,
-        permissionCode: values.permissionCode,
-        description: values.description,
-      };
-
-      await updatePermissionMutation.mutateAsync({
+  const handleUpdatePermission = (values: UpdatePermissionParamsDto) => {
+    if (selectedPermission) {
+      updatePermissionMutation.mutate({
         id: selectedPermission.id,
-        permissionData,
+        ...values,
       });
-    } catch (error) {
-      console.error('Update permission error:', error);
     }
   };
 
@@ -259,36 +244,40 @@ export default function PermissionsPage() {
 
   if (!hasPermission(PermissionCode.GET_PERMISSIONS)) {
     return (
-      <Card style={{ boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <SafetyOutlined style={{ fontSize: '48px', color: '#d9d9d9' }} />
-          <Title level={4} style={{ marginTop: '16px', color: '#999' }}>
-            Access Denied
-          </Title>
-          <Text type="secondary">You don't have permission to view permissions.</Text>
-        </div>
-      </Card>
+      <PageContainer>
+        <PageLoading tip="Access denied..." />
+      </PageContainer>
     );
   }
 
+  if (permissionsLoading) {
+    return <PageLoading tip="Loading permissions..." />;
+  }
+
   return (
-    <div style={{ padding: '24px', backgroundColor: 'var(--ant-color-bg-layout)', minHeight: '100vh' }}>
+    <PageContainer>
       {/* Header */}
-      <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
-        <Col>
+      <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }} className="mobile-stack">
+        <Col xs={24} lg={12}>
           <Title level={2} style={{ margin: 0 }}>
             Permissions Management
           </Title>
           <Text type="secondary">Manage system permissions and access controls</Text>
         </Col>
-        <Col>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => refetchPermissions()} loading={permissionsLoading}>
-              Refresh
+        <Col xs={24} lg={12} style={{ textAlign: 'right' }}>
+          <Space size="small" className="responsive-button-group">
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => refetchPermissions()}
+              loading={permissionsLoading}
+              size="small"
+            >
+              <span className="desktop-only">Refresh</span>
             </Button>
             {hasPermission(PermissionCode.CREATE_PERMISSION) && (
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
-                Add Permission
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)} size="small">
+                <span className="desktop-only">Add Permission</span>
+                <span className="mobile-only">Add</span>
               </Button>
             )}
           </Space>
@@ -307,6 +296,11 @@ export default function PermissionsPage() {
               prefix={<SearchOutlined />}
             />
           </Col>
+          <Col xs={24} sm={12} md={8}>
+            <Text type="secondary">
+              {filteredPermissions.length} of {permissions.length} permissions
+            </Text>
+          </Col>
         </Row>
       </Card>
 
@@ -322,7 +316,10 @@ export default function PermissionsPage() {
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} permissions`,
+            responsive: true,
           }}
+          scroll={{ x: 'max-content' }}
+          size="middle"
         />
       </Card>
 
@@ -336,29 +333,28 @@ export default function PermissionsPage() {
         }}
         footer={null}
         width={600}
+        style={{ maxWidth: 'calc(100vw - 32px)' }}
       >
-        <Form
-          form={createForm}
-          layout="vertical"
-          onFinish={handleCreatePermission}
-          initialValues={{
-            permissionCode: getNextPermissionCode(),
-          }}
-        >
+        <Form form={createForm} layout="vertical" onFinish={handleCreatePermission}>
           <Form.Item
             name="name"
             label="Permission Name"
             rules={[
               { required: true, message: 'Please enter permission name' },
-              { min: 3, message: 'Permission name must be at least 3 characters' },
+              { min: 2, message: 'Permission name must be at least 2 characters' },
             ]}
           >
-            <Input placeholder="Enter permission name" />
+            <Input placeholder="Enter permission name (e.g., GET_USERS)" />
+          </Form.Item>
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea placeholder="Enter permission description" rows={3} />
           </Form.Item>
 
           <Form.Item
             name="permissionCode"
             label="Permission Code"
+            initialValue={getNextPermissionCode()}
             rules={[
               { required: true, message: 'Please enter permission code' },
               { type: 'number', min: 1, message: 'Permission code must be a positive number' },
@@ -367,27 +363,14 @@ export default function PermissionsPage() {
             <InputNumber placeholder="Enter permission code" style={{ width: '100%' }} min={1} />
           </Form.Item>
 
-          <Form.Item name="description" label="Description">
-            <TextArea placeholder="Enter permission description" rows={3} maxLength={500} showCount />
-          </Form.Item>
-
-          <Row justify="end" gutter={16}>
-            <Col>
-              <Button
-                onClick={() => {
-                  setIsCreateModalVisible(false);
-                  createForm.resetFields();
-                }}
-              >
-                Cancel
-              </Button>
-            </Col>
-            <Col>
+          <Form.Item>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setIsCreateModalVisible(false)}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={createPermissionMutation.isPending}>
                 Create Permission
               </Button>
-            </Col>
-          </Row>
+            </Space>
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -397,11 +380,12 @@ export default function PermissionsPage() {
         open={isEditModalVisible}
         onCancel={() => {
           setIsEditModalVisible(false);
-          editForm.resetFields();
           setSelectedPermission(null);
+          editForm.resetFields();
         }}
         footer={null}
         width={600}
+        style={{ maxWidth: 'calc(100vw - 32px)' }}
       >
         <Form form={editForm} layout="vertical" onFinish={handleUpdatePermission}>
           <Form.Item
@@ -409,10 +393,14 @@ export default function PermissionsPage() {
             label="Permission Name"
             rules={[
               { required: true, message: 'Please enter permission name' },
-              { min: 3, message: 'Permission name must be at least 3 characters' },
+              { min: 2, message: 'Permission name must be at least 2 characters' },
             ]}
           >
             <Input placeholder="Enter permission name" />
+          </Form.Item>
+
+          <Form.Item name="description" label="Description">
+            <Input.TextArea placeholder="Enter permission description" rows={3} />
           </Form.Item>
 
           <Form.Item
@@ -426,28 +414,14 @@ export default function PermissionsPage() {
             <InputNumber placeholder="Enter permission code" style={{ width: '100%' }} min={1} />
           </Form.Item>
 
-          <Form.Item name="description" label="Description">
-            <TextArea placeholder="Enter permission description" rows={3} maxLength={500} showCount />
-          </Form.Item>
-
-          <Row justify="end" gutter={16}>
-            <Col>
-              <Button
-                onClick={() => {
-                  setIsEditModalVisible(false);
-                  editForm.resetFields();
-                  setSelectedPermission(null);
-                }}
-              >
-                Cancel
-              </Button>
-            </Col>
-            <Col>
+          <Form.Item>
+            <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+              <Button onClick={() => setIsEditModalVisible(false)}>Cancel</Button>
               <Button type="primary" htmlType="submit" loading={updatePermissionMutation.isPending}>
                 Update Permission
               </Button>
-            </Col>
-          </Row>
+            </Space>
+          </Form.Item>
         </Form>
       </Modal>
 
@@ -504,6 +478,6 @@ export default function PermissionsPage() {
           </div>
         )}
       </Drawer>
-    </div>
+    </PageContainer>
   );
 }

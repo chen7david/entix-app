@@ -1,17 +1,18 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { App as AntdApp } from 'antd';
-import { LoginPage } from '@pages/LoginPage';
+import { LoginPage } from '@features/auth';
+import { UsersPage } from '@features/users';
 import { SignUpPage } from '@pages/SignUpPage';
 import { ConfirmSignUpPage } from '@pages/ConfirmSignUpPage';
 import { ForgotPasswordPage } from '@pages/ForgotPasswordPage';
 import { ConfirmPasswordResetPage } from '@pages/ConfirmPasswordResetPage';
+import { DebugLoginPage } from '@pages/DebugLoginPage';
 import { PublicLayout } from '@layouts/PublicLayout';
 import { DashboardLayout } from '@layouts/DashboardLayout';
 import { ProfilePage } from '@pages/ProfilePage';
-import { ProtectedRoute } from '@components/ProtectedRoute';
+import { ProtectedRoute } from '@shared/components';
 import { NotFoundPage } from '@pages/error/NotFoundPage';
 import { UnauthorizedPage } from '@pages/error/UnauthorizedPage';
-import UsersPage from '@pages/UsersPage';
 import RolesPage from '@pages/RolesPage';
 import PermissionsPage from '@pages/PermissionsPage';
 
@@ -20,6 +21,9 @@ export const App = () => {
     <AntdApp>
       <Routes>
         <Route path="/" element={<Navigate to="/auth/login" />} />
+
+        {/* Debug route for testing authentication */}
+        <Route path="/debug/login" element={<DebugLoginPage />} />
 
         {/* Public routes - accessible only to non-authenticated users */}
         <Route path="/auth" element={<PublicLayout />}>
