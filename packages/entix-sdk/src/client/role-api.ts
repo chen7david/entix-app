@@ -8,6 +8,7 @@ import {
   UpdateRoleParamsDto,
   UpdateRoleResultDto,
 } from '../dtos/role.dto';
+import { GetRolePermissionsResultDto } from '../dtos/role_permission.dto';
 import { SuccessResultDto } from '../dtos/common.dto';
 
 /**
@@ -49,6 +50,15 @@ export class RoleApi {
    */
   async getRoleUsers(id: string): Promise<GetRoleUsersResultDto> {
     return this.client.get<GetRoleUsersResultDto>(`${this.basePath}/${id}/users`);
+  }
+
+  /**
+   * Retrieves all permissions assigned to a role
+   * @param id The role ID
+   * @returns A promise that resolves to an array of permissions
+   */
+  async getRolePermissions(id: string): Promise<GetRolePermissionsResultDto> {
+    return this.client.get<GetRolePermissionsResultDto>(`${this.basePath}/${id}/permissions`);
   }
 
   /**

@@ -1,0 +1,125 @@
+import { Form, Input, Button, Card, Typography, message, Alert } from 'antd';
+import { MailOutlined } from '@ant-design/icons';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+import { createSchemaFieldRule } from 'antd-zod';
+import { confirmSignUpSchema, type ConfirmSignUpDto, type ResendConfirmationCodeDto } from '@repo/entix-sdk';
+import { apiClient } from '@lib/api-client';
+
+const { Title, Text } = Typography;
+
+// Create rules from Zod schemas
+const confirmSignUpRules = createSchemaFieldRule(confirmSignUpSchema);
+
+/**
+ * ConfirmSignUpPage component for email confirmation
+ * Supports email in URL query parameters
+ * URL: /auth/confirm-signup?email=user@example.com
+ */
+export const ConfirmSignUpPage = () => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const [form] = Form.useForm<ConfirmSignUpDto>();
+
+  // Get email from URL
+  const email = searchParams.get('email') || '';
+
+  const confirmSignUpMutation = useMutation({
+    mutationFn: async (confirmData: ConfirmSignUpDto) => {
+      return apiClient.auth.confirmSignUp(confirmData);
+    },
+    onSuccess: () => {
+      message.success('Email confirmed successfully! You can now sign in.');
+      navigate('/auth/login');
+    },
+    onError: (error: unknown) => {
+      if (error instanceof AxiosError) {
+        message.error(error.response?.data.message || 'Confirmation failed');
+      } else {
+        message.error('An unexpected error occurred');
+      }
+    },
+  });
+
+  const resendCodeMutation = useMutation({
+    mutationFn: async (resendData: ResendConfirmationCodeDto) => {
+      return apiClient.auth.resendConfirmationCode(resendData);
+    },
+    onSuccess: result => {
+      message.success(`Confirmation code sent to ${result.destination}`);
+    },
+    onError: (error: unknown) => {
+      if (error instanceof AxiosError) {
+        message.error(error.response?.data.message || 'Failed to resend code');
+      } else {
+        message.error('An unexpected error occurred');
+      }
+    },
+  });
+
+  const handleConfirm = (values: ConfirmSignUpDto) => {
+    confirmSignUpMutation.mutate(values);
+  };
+
+  const handleResendCode = () => {
+    const username = form.getFieldValue('username');
+    if (!username) {
+      message.error('Please enter your username first');
+      return;
+    }
+
+    resendCodeMutation.mutate({ username });
+  };
+
+  return (
+    <Card className="w-full shadow-lg">
+      <div className="text-center mb-6">
+        <Title level={2} className="mb-2">
+          Confirm Your Email
+        </Title>
+        <Text type="secondary">Enter the confirmation code sent to your email</Text>
+      </div>
+
+      {email && <Alert message={`Confirmation code sent to: ${email}`} type="info" showIcon className="mb-4" />}
+
+      <Form
+        form={form}
+        name="confirm-signup"
+        onFinish={handleConfirm}
+        layout="vertical"
+        size="large"
+        requiredMark={false}
+      >
+        <Form.Item name="username" label="Username" rules={[confirmSignUpRules]}>
+          <Input prefix={<MailOutlined />} placeholder="Enter your username" autoComplete="username" />
+        </Form.Item>
+
+        <Form.Item name="confirmationCode" label="Confirmation Code" rules={[confirmSignUpRules]}>
+          <Input.OTP length={6} style={{ width: '100%' }} />
+        </Form.Item>
+
+        <Form.Item className="mb-4">
+          <Button type="primary" htmlType="submit" loading={confirmSignUpMutation.isPending} block>
+            Confirm Email
+          </Button>
+        </Form.Item>
+
+        <Form.Item className="mb-4">
+          <Button type="default" onClick={handleResendCode} loading={resendCodeMutation.isPending} block>
+            Resend Confirmation Code
+          </Button>
+        </Form.Item>
+      </Form>
+
+      <div className="text-center">
+        <Text type="secondary">
+          Already confirmed?{' '}
+          <Link to="/auth/login" className="text-blue-600 hover:text-blue-500">
+            Sign in
+          </Link>
+        </Text>
+      </div>
+    </Card>
+  );
+};
