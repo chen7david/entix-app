@@ -9,7 +9,6 @@ import {
   LoginResultDto,
   RefreshTokenDto,
   RefreshTokenResultDto,
-  VerifySessionDto,
   VerifySessionResultDto,
 } from '@repo/entix-sdk';
 import { UserService } from '@modules/users/user.service';
@@ -122,8 +121,8 @@ export class UserAuthService {
     });
   }
 
-  async verifySession(params: VerifySessionDto): Promise<VerifySessionResultDto> {
-    const token = this.jwtService.removeBearerPrefix(params.accessToken);
+  async verifySession({ accessToken }: { accessToken: string }): Promise<VerifySessionResultDto> {
+    const token = this.jwtService.removeBearerPrefix(accessToken);
     const payload = this.jwtService.verifyAccessToken(token);
     const expiresAt = new Date(payload.exp * 1000).toISOString();
     const user = await this.userService.findById(payload.sub);

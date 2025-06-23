@@ -10,6 +10,7 @@ import {
   isAuthenticatedAtom,
   storeTokens,
   userPermissionsAtom,
+  registerAtomSetters,
 } from '@lib/api-client';
 import { appConfig } from '@config/app.config';
 import { AxiosError } from 'axios';
@@ -20,6 +21,7 @@ import {
   hasAnyPermission as hasAnyPermissionUtil,
   hasAllPermissions as hasAllPermissionsUtil,
 } from '@lib/jwt.utils';
+import { useEffect } from 'react';
 
 /**
  * Hook for handling user login
@@ -113,9 +115,18 @@ export const useVerifySession = () => {
  * Hook to check authentication status
  */
 export const useAuth = () => {
-  const [isAuthenticated] = useAtom(isAuthenticatedAtom);
-  const [currentUser] = useAtom(currentUserAtom);
-  const [permissions] = useAtom(userPermissionsAtom);
+  const [isAuthenticated, setIsAuthenticated] = useAtom(isAuthenticatedAtom);
+  const [currentUser, setCurrentUser] = useAtom(currentUserAtom);
+  const [permissions, setUserPermissions] = useAtom(userPermissionsAtom);
+
+  // Register setters for manual atom updates
+  useEffect(() => {
+    registerAtomSetters({
+      setIsAuthenticated,
+      setCurrentUser,
+      setUserPermissions,
+    });
+  }, [setIsAuthenticated, setCurrentUser, setUserPermissions]);
 
   return {
     isAuthenticated,

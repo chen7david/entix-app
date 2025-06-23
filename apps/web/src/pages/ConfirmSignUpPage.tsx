@@ -73,15 +73,17 @@ export const ConfirmSignUpPage = () => {
   };
 
   return (
-    <Card className="w-full shadow-lg">
-      <div className="text-center mb-6">
-        <Title level={2} className="mb-2">
-          Confirm Your Email
+    <Card style={{ width: '100%', boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <Title level={2} style={{ marginBottom: '8px' }}>
+          Confirm Account
         </Title>
         <Text type="secondary">Enter the confirmation code sent to your email</Text>
       </div>
 
-      {email && <Alert message={`Confirmation code sent to: ${email}`} type="info" showIcon className="mb-4" />}
+      {email && (
+        <Alert message={`Confirmation code sent to: ${email}`} type="info" showIcon style={{ marginBottom: '16px' }} />
+      )}
 
       <Form
         form={form}
@@ -99,23 +101,23 @@ export const ConfirmSignUpPage = () => {
           <Input.OTP length={6} style={{ width: '100%' }} />
         </Form.Item>
 
-        <Form.Item className="mb-4">
-          <Button type="primary" htmlType="submit" loading={confirmSignUpMutation.isPending} block>
-            Confirm Email
+        <Form.Item style={{ marginBottom: '16px' }}>
+          <Button type="primary" htmlType="submit" block loading={confirmSignUpMutation.isPending}>
+            Confirm Account
           </Button>
         </Form.Item>
 
-        <Form.Item className="mb-4">
-          <Button type="default" onClick={handleResendCode} loading={resendCodeMutation.isPending} block>
-            Resend Confirmation Code
+        <Form.Item style={{ marginBottom: '16px' }}>
+          <Button block onClick={handleResendCode} loading={resendCodeMutation.isPending}>
+            Resend Code
           </Button>
         </Form.Item>
       </Form>
 
-      <div className="text-center">
+      <div style={{ textAlign: 'center' }}>
         <Text type="secondary">
           Already confirmed?{' '}
-          <Link to="/auth/login" className="text-blue-600 hover:text-blue-500">
+          <Link to="/auth/login" style={{ color: 'var(--ant-color-primary)' }}>
             Sign in
           </Link>
         </Text>

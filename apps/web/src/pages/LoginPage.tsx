@@ -1,4 +1,4 @@
-import { Button, Card, Form, Input, Typography } from 'antd';
+import { Button, Card, Form, Input, Typography, Space } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
@@ -24,9 +24,9 @@ export const LoginPage = () => {
   };
 
   return (
-    <Card className="w-full shadow-lg">
-      <div className="text-center mb-6">
-        <Title level={2} className="mb-2">
+    <Card style={{ width: '100%', boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <Title level={2} style={{ marginBottom: '8px' }}>
           Welcome Back
         </Title>
         <Text type="secondary">Sign in to your account</Text>
@@ -49,27 +49,29 @@ export const LoginPage = () => {
           <Input.Password prefix={<LockOutlined />} placeholder="Enter your password" autoComplete="current-password" />
         </Form.Item>
 
-        <Form.Item className="mb-4">
+        <Form.Item style={{ marginBottom: '16px' }}>
           <Button type="primary" htmlType="submit" block loading={login.isPending}>
             Sign In
           </Button>
         </Form.Item>
       </Form>
 
-      <div className="space-y-2 text-center">
-        <div>
-          <Text type="secondary">
-            Don't have an account?{' '}
-            <Link to="/auth/signup" className="text-blue-600 hover:text-blue-500">
-              Sign up
+      <div style={{ textAlign: 'center' }}>
+        <Space direction="vertical" size="small">
+          <div>
+            <Text type="secondary">
+              Don't have an account?{' '}
+              <Link to="/auth/signup" style={{ color: 'var(--ant-color-primary)' }}>
+                Sign up
+              </Link>
+            </Text>
+          </div>
+          <div>
+            <Link to="/auth/forgot-password" style={{ color: 'var(--ant-color-primary)' }}>
+              Forgot your password?
             </Link>
-          </Text>
-        </div>
-        <div>
-          <Link to="/auth/forgot-password" className="text-blue-600 hover:text-blue-500">
-            Forgot your password?
-          </Link>
-        </div>
+          </div>
+        </Space>
       </div>
     </Card>
   );

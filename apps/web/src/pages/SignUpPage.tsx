@@ -56,12 +56,12 @@ export const SignUpPage = () => {
   };
 
   return (
-    <Card className="w-full shadow-lg">
-      <div className="text-center mb-6">
-        <Title level={2} className="mb-2">
+    <Card style={{ width: '100%', boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <Title level={2} style={{ marginBottom: '8px' }}>
           Create Account
         </Title>
-        <Text type="secondary">Join us to get started</Text>
+        <Text type="secondary">Sign up for a new account</Text>
       </div>
 
       <Form form={form} name="signup" onFinish={handleSubmit} layout="vertical" size="large" requiredMark={false}>
@@ -105,21 +105,21 @@ export const SignUpPage = () => {
           />
         </Form.Item>
 
-        <Form.Item className="mb-4">
-          <Button type="primary" htmlType="submit" loading={signUpMutation.isPending} block>
-            Create Account
+        <Form.Item style={{ marginBottom: '16px' }}>
+          <Button type="primary" htmlType="submit" block loading={signUpMutation.isPending}>
+            Sign Up
           </Button>
         </Form.Item>
-
-        <div className="text-center">
-          <Text type="secondary">
-            Already have an account?{' '}
-            <Link to="/auth/login" className="text-blue-600 hover:text-blue-500">
-              Sign in
-            </Link>
-          </Text>
-        </div>
       </Form>
+
+      <div style={{ textAlign: 'center' }}>
+        <Text type="secondary">
+          Already have an account?{' '}
+          <Link to="/auth/login" style={{ color: 'var(--ant-color-primary)' }}>
+            Sign in
+          </Link>
+        </Text>
+      </div>
     </Card>
   );
 };

@@ -10,20 +10,52 @@ import {
   isTokenExpired,
 } from './jwt.utils';
 
+// Store atom setters to trigger updates
+let atomSetters: {
+  setIsAuthenticated?: (value: boolean) => void;
+  setCurrentUser?: (value: ReturnType<typeof getCurrentUserFromToken>) => void;
+  setUserPermissions?: (value: number[]) => void;
+} = {};
+
 /**
- * Store auth tokens in localStorage
+ * Register atom setters for manual updates
+ */
+export const registerAtomSetters = (setters: typeof atomSetters) => {
+  atomSetters = setters;
+};
+
+/**
+ * Update all authentication atoms when auth state changes
+ */
+export const updateAuthState = () => {
+  if (typeof window !== 'undefined') {
+    const token = getAccessToken();
+    const isAuth = !!token && !isTokenExpired(token);
+    const user = getCurrentUserFromToken();
+    const permissions = getUserPermissions();
+
+    atomSetters.setIsAuthenticated?.(isAuth);
+    atomSetters.setCurrentUser?.(user);
+    atomSetters.setUserPermissions?.(permissions);
+  }
+};
+
+/**
+ * Store auth tokens and update atoms
  */
 export const storeTokens = (accessToken: string, refreshToken: string): void => {
   localStorage.setItem(appConfig.VITE_ACCESS_TOKEN_KEY, accessToken);
   localStorage.setItem(appConfig.VITE_REFRESH_TOKEN_KEY, refreshToken);
+  updateAuthState();
 };
 
 /**
- * Clear auth tokens from localStorage
+ * Clear auth tokens and update atoms
  */
 export const clearTokens = (): void => {
   localStorage.removeItem(appConfig.VITE_ACCESS_TOKEN_KEY);
   localStorage.removeItem(appConfig.VITE_REFRESH_TOKEN_KEY);
+  updateAuthState();
 };
 
 /**
@@ -68,21 +100,27 @@ export const apiClient = new EntixApiClient({
   },
 });
 
-// Authentication state atom - derived from token presence and validity
-export const isAuthenticatedAtom = atom<boolean>(() => {
+// Get initial values from localStorage safely
+const getInitialAuthState = () => {
+  if (typeof window === 'undefined') return false;
   const token = getAccessToken();
   return !!token && !isTokenExpired(token);
-});
+};
 
-// Current user atom - derived from JWT token (static until re-authentication)
-export const currentUserAtom = atom(() => {
+const getInitialUser = () => {
+  if (typeof window === 'undefined') return null;
   return getCurrentUserFromToken();
-});
+};
 
-// Permissions atom - derived from JWT token (static until re-authentication)
-export const userPermissionsAtom = atom<number[]>(() => {
+const getInitialPermissions = () => {
+  if (typeof window === 'undefined') return [];
   return getUserPermissions();
-});
+};
+
+// Simple writable atoms that can be updated manually
+export const isAuthenticatedAtom = atom<boolean>(getInitialAuthState());
+export const currentUserAtom = atom<ReturnType<typeof getCurrentUserFromToken>>(getInitialUser());
+export const userPermissionsAtom = atom<number[]>(getInitialPermissions());
 
 // Backward compatibility exports
 export { getAccessToken as getAuthToken, getRefreshToken };

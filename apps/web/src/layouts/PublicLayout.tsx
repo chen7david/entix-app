@@ -1,5 +1,8 @@
 import { Outlet } from 'react-router-dom';
 import { PublicRoute } from '@/components/PublicRoute';
+import { Layout } from 'antd';
+
+const { Content } = Layout;
 
 /**
  * PublicLayout component for pages accessible to non-authenticated users
@@ -8,11 +11,21 @@ import { PublicRoute } from '@/components/PublicRoute';
 export const PublicLayout = () => {
   return (
     <PublicRoute>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div className="w-full max-w-md">
-          <Outlet />
-        </div>
-      </div>
+      <Layout style={{ minHeight: '100vh' }}>
+        <Content
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            backgroundColor: 'var(--ant-color-bg-layout)',
+          }}
+        >
+          <div style={{ width: '100%', maxWidth: '400px' }}>
+            <Outlet />
+          </div>
+        </Content>
+      </Layout>
     </PublicRoute>
   );
 };

@@ -12,7 +12,7 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePermissions } from '@/hooks/auth.hook';
+import { usePermissions, useLogout } from '@/hooks/auth.hook';
 import { useTheme } from '@/providers/ThemeProvider';
 import { PermissionCode } from '@repo/entix-sdk';
 
@@ -32,6 +32,7 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
   const location = useLocation();
   const { hasPermission } = usePermissions();
   const { toggleTheme, themeMode } = useTheme();
+  const logout = useLogout();
   const [isMobile, setIsMobile] = useState(false);
 
   // Check if device is mobile
@@ -183,7 +184,8 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
           <Button
             type="text"
             icon={<LogoutOutlined />}
-            onClick={() => navigate('/auth/logout')}
+            onClick={() => logout.mutate()}
+            loading={logout.isPending}
             style={{ width: '100%', justifyContent: 'flex-start' }}
             danger
           >

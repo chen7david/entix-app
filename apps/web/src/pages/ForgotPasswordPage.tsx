@@ -1,4 +1,4 @@
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import { Form, Input, Button, Card, Typography, message, Space } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
@@ -43,12 +43,12 @@ export const ForgotPasswordPage = () => {
   };
 
   return (
-    <Card className="w-full shadow-lg">
-      <div className="text-center mb-6">
-        <Title level={2} className="mb-2">
+    <Card style={{ width: '100%', boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
+      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <Title level={2} style={{ marginBottom: '8px' }}>
           Reset Password
         </Title>
-        <Text type="secondary">Enter your username to receive a password reset code</Text>
+        <Text type="secondary">Enter your email to receive a reset link</Text>
       </div>
 
       <Form
@@ -63,30 +63,32 @@ export const ForgotPasswordPage = () => {
           <Input prefix={<UserOutlined />} placeholder="Enter your username" autoComplete="username" />
         </Form.Item>
 
-        <Form.Item className="mb-4">
-          <Button type="primary" htmlType="submit" loading={forgotPasswordMutation.isPending} block>
-            Send Reset Code
+        <Form.Item style={{ marginBottom: '16px' }}>
+          <Button type="primary" htmlType="submit" block loading={forgotPasswordMutation.isPending}>
+            Send Reset Link
           </Button>
         </Form.Item>
       </Form>
 
-      <div className="space-y-2 text-center">
-        <div>
-          <Text type="secondary">
-            Remember your password?{' '}
-            <Link to="/auth/login" className="text-blue-600 hover:text-blue-500">
-              Sign in
-            </Link>
-          </Text>
-        </div>
-        <div>
-          <Text type="secondary">
-            Don't have an account?{' '}
-            <Link to="/auth/signup" className="text-blue-600 hover:text-blue-500">
-              Sign up
-            </Link>
-          </Text>
-        </div>
+      <div style={{ textAlign: 'center' }}>
+        <Space direction="vertical" size="small">
+          <div>
+            <Text type="secondary">
+              Remember your password?{' '}
+              <Link to="/auth/login" style={{ color: 'var(--ant-color-primary)' }}>
+                Sign in
+              </Link>
+            </Text>
+          </div>
+          <div>
+            <Text type="secondary">
+              Need an account?{' '}
+              <Link to="/auth/signup" style={{ color: 'var(--ant-color-primary)' }}>
+                Sign up
+              </Link>
+            </Text>
+          </div>
+        </Space>
       </div>
     </Card>
   );
