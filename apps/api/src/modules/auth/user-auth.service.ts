@@ -123,7 +123,8 @@ export class UserAuthService {
   }
 
   async verifySession(params: VerifySessionDto): Promise<VerifySessionResultDto> {
-    const payload = this.jwtService.verifyAccessToken(params.accessToken);
+    const token = this.jwtService.removeBearerPrefix(params.accessToken);
+    const payload = this.jwtService.verifyAccessToken(token);
     const expiresAt = new Date(payload.exp * 1000).toISOString();
     const user = await this.userService.findById(payload.sub);
     if (!user) {

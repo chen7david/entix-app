@@ -32,6 +32,17 @@ export class JwtService {
     return jwt.decode(token, options) as T;
   }
 
+  removeBearerPrefix(token: string): string {
+    const tokenWithoutBearer = token.split(' ')[1];
+    if (!tokenWithoutBearer) {
+      throw new UnauthorizedError({
+        message: 'Invalid access token',
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
+    return tokenWithoutBearer;
+  }
+
   signAccessToken(payload: Record<string, unknown>) {
     return this.sign(
       payload,

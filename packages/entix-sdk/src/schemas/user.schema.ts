@@ -13,12 +13,6 @@ export const updateUserSchema = z.object({
   password: z.string().min(8),
 });
 
-export const verifySessionSchema = z
-  .object({
-    authorization: z.string().startsWith('Bearer '),
-  })
-  .transform(data => {
-    return {
-      accessToken: data.authorization.split(' ')[1],
-    };
-  });
+export const verifySessionSchema = z.object({
+  authorization: z.string().startsWith('Bearer '),
+});

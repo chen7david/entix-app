@@ -14,6 +14,8 @@ import {
   LogoutDto,
   SuccessResultDto,
   VerifySessionResultDto,
+  RefreshTokenDto,
+  RefreshTokenResultDto,
 } from '../dtos/user-auth.dto';
 
 /**
@@ -113,10 +115,19 @@ export class AuthApi {
   }
 
   /**
+   * Refreshes the access token using a refresh token
+   * @param refreshRequest Refresh token parameters
+   * @returns A promise that resolves to the refresh token result
+   */
+  async refreshToken(refreshRequest: RefreshTokenDto): Promise<RefreshTokenResultDto> {
+    return this.httpClient.post<RefreshTokenResultDto>(`${this.authEndpointBase}/refresh-token`, refreshRequest);
+  }
+
+  /**
    * Verifies if the current user session is valid
    * @returns A promise that resolves to a success result
    */
-  async verifySession(): Promise<SuccessResultDto> {
+  async verifySession(): Promise<VerifySessionResultDto> {
     return this.httpClient.get<VerifySessionResultDto>(`${this.authEndpointBase}/verify-session`);
   }
 }

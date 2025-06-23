@@ -5,13 +5,7 @@ import { Container } from 'typedi';
 
 export const authorizationChecker = async (action: Action, required: number[]): Promise<boolean> => {
   const jwtService = Container.get(JwtService);
-  const token = action.request.headers['authorization']?.split(' ')[1];
-
-  if (!token)
-    throw new UnauthorizedError({
-      message: 'please login to continue',
-      code: 'UNAUTHORIZED',
-    });
+  const token = jwtService.removeBearerPrefix(action.request.headers['authorization']);
 
   const payload = jwtService.verifyAccessToken(token);
 
