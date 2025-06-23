@@ -38,8 +38,8 @@ export const clearTokens = (): void => {
  */
 export const apiClient = new EntixApiClient({
   baseURL: appConfig.VITE_API_URL,
-  getToken: getAuthToken,
-  refreshToken: async () => {
+  getAuthToken: getAuthToken,
+  refreshAuthToken: async () => {
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
       throw new Error('No refresh token available');
@@ -57,7 +57,7 @@ export const apiClient = new EntixApiClient({
   onTokenRefreshed: (token: string) => {
     localStorage.setItem(appConfig.VITE_ACCESS_TOKEN_KEY, token);
   },
-  onAuthError: () => {
+  onAuthenticationError: () => {
     clearTokens();
   },
 });

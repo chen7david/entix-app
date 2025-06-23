@@ -15,11 +15,7 @@ export const LoginPage = () => {
   const login = useLogin();
 
   const onSubmit = async (values: LoginDto) => {
-    try {
-      await login.mutateAsync(values);
-    } catch (error) {
-      console.log('error', error);
-    }
+    await login.mutateAsync(values).catch(() => {});
   };
 
   return (

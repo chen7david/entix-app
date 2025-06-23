@@ -9,6 +9,8 @@ import {
   LoginResultDto,
   RefreshTokenDto,
   RefreshTokenResultDto,
+  VerifySessionDto,
+  VerifySessionResultDto,
 } from '@repo/entix-sdk';
 import { UserService } from '@modules/users/user.service';
 import { JwtService } from '@services/jwt.service';
@@ -116,5 +118,22 @@ export class UserAuthService {
     return this.cognitoService.logout({
       cognitoAccessToken: params.refreshToken,
     });
+  }
+
+  async verifySession(params: VerifySessionDto): Promise<VerifySessionResultDto> {
+    const payload = this.jwtService.verifyAccessToken(params.accessToken);
+    const expiresAt = new Date(payload.exp * 1000).toISOString();
+    const user = await this.userService.findById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedError({
+        message: 'Invalid access token',
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
+    return {
+      success: true,
+      expiresAt,
+      user,
+    };
   }
 }

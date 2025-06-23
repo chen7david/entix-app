@@ -1,4 +1,4 @@
-import { JsonController, Post, Body, UseBefore, HttpCode } from 'routing-controllers';
+import { JsonController, Post, Body, UseBefore, HttpCode, Get } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
 import { validateBody } from '@middleware/validation.middleware';
 import { UserAuthService } from '@modules/auth/user-auth.service';
@@ -32,6 +32,9 @@ import {
   RefreshTokenDto,
   RefreshTokenResultDto,
   refreshTokenSchema,
+  verifySessionSchema,
+  VerifySessionDto,
+  VerifySessionResultDto,
 } from '@repo/entix-sdk';
 
 @Injectable()
@@ -103,5 +106,12 @@ export class UserAuthController {
   @UseBefore(validateBody(logoutSchema))
   async logout(@Body() params: LogoutDto): Promise<SuccessResultDto> {
     return this.userAuthService.logout(params);
+  }
+
+  @Get('/verify-session')
+  @HttpCode(200)
+  @UseBefore(validateBody(verifySessionSchema))
+  async verifySession(@Body() params: VerifySessionDto): Promise<VerifySessionResultDto> {
+    return this.userAuthService.verifySession(params);
   }
 }

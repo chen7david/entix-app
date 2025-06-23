@@ -41,12 +41,8 @@ export class EntixApiClient {
     this.auth = new AuthApi(this.client);
   }
 
-  /**
-   * Updates the base URL for API requests
-   * @param baseURL The new base URL
-   */
   setBaseUrl(baseURL: string): void {
-    this.client.setBaseUrl(baseURL);
+    this.client.updateBaseUrl(baseURL);
   }
 
   /**

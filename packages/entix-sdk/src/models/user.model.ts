@@ -3,6 +3,7 @@ export type User = {
   sub: string;
   email: string;
   username: string;
+  adminSince: Date | null;
   disabledAt: Date | null;
   deletedAt: Date | null;
   createdAt: Date;

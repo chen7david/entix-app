@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { User } from '@models/user.model';
 import { SuccessResultDto } from './common.dto';
+import { verifySessionSchema } from '@schemas/user.schema';
 import {
   accessTokenPayloadSchema,
   changePasswordSchema,
@@ -75,4 +76,12 @@ export type AuthErrorDto = {
   code: string;
   message: string;
   status: number;
+};
+
+export type VerifySessionDto = z.infer<typeof verifySessionSchema>;
+
+export type VerifySessionResultDto = {
+  success: boolean;
+  expiresAt: string;
+  user: User;
 };
