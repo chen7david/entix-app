@@ -4,6 +4,8 @@ import { LoginPage } from '@pages/LoginPage';
 import { AuthLayout } from '@layouts/AuthLayout';
 import { ProfilePage } from '@pages/ProfilePage';
 import { ProtectedRoute } from '@components/ProtectedRoute';
+import { NotFoundPage } from '@pages/error/NotFoundPage';
+import { UnauthorizedPage } from '@pages/error/UnauthorizedPage';
 
 export const App = () => {
   return (
@@ -20,6 +22,10 @@ export const App = () => {
           }
         />
       </Route>
+      {/* Error pages */}
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      {/* Catch-all route for 404 Not Found */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 };
