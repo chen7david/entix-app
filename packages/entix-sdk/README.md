@@ -5,6 +5,12 @@ A shared SDK for the Entix application that provides:
 1. Type definitions shared between frontend and backend
 2. API client for making type-safe API requests
 3. Validation schemas for request/response data
+4. Common utility types for consistent development
+
+## 📚 Documentation
+
+- **[Quick Start Guide](./QUICK_START.md)** - Get up and running in 5 minutes
+- **[Architecture Guide](./ARCHITECTURE.md)** - Deep dive into SDK architecture and best practices
 
 ## Installation
 
@@ -12,28 +18,21 @@ A shared SDK for the Entix application that provides:
 pnpm add @repo/entix-sdk
 ```
 
-## Usage
-
-### API Client
-
-The SDK provides a fully typed API client for making API requests:
+## Quick Usage
 
 ```typescript
 import { EntixApiClient } from '@repo/entix-sdk';
 
-// Create an API client instance
+// Create API client
 const api = new EntixApiClient({
   baseURL: 'http://localhost:3000',
-  getToken: () => localStorage.getItem('token'),
-  refreshToken: async () => {
-    // Refresh token logic
+  getAuthToken: () => localStorage.getItem('token'),
+  refreshAuthToken: async () => {
+    // Your refresh logic
     return newToken;
   },
   onTokenRefreshed: token => {
     localStorage.setItem('token', token);
-  },
-  onAuthError: error => {
-    // Handle authentication errors
   },
 });
 
@@ -43,98 +42,54 @@ const roles = await api.roles.getRoles();
 await api.auth.login({ email: 'user@example.com', password: 'password' });
 ```
 
-### Types
+## Available Services
 
-The SDK exports all types used in the API:
+- **Authentication** (`api.auth`) - Login, signup, password reset
+- **Users** (`api.users`) - User management operations
+- **Roles** (`api.roles`) - Role management
+- **Permissions** (`api.permissions`) - Permission management
+- **User Roles** (`api.userRoles`) - User-role assignments
+- **Role Permissions** (`api.rolePermissions`) - Role-permission assignments
 
-```typescript
-import { User, Role, GetUsersResultDto, CreateRoleParamsDto } from '@repo/entix-sdk';
+## Type Safety
 
-// Use the types
-const user: User = {
-  id: '123',
-  email: 'user@example.com',
-  // ...
-};
-```
-
-### Schemas
-
-The SDK exports Zod schemas for validation:
+All API methods are fully typed with TypeScript:
 
 ```typescript
-import { createUserSchema, loginSchema } from '@repo/entix-sdk';
+import { User, createUserSchema } from '@repo/entix-sdk';
 
-// Validate data
-const result = createUserSchema.safeParse({
-  username: 'user',
+// Type-safe API calls
+const user: User = await api.users.createUser({
+  username: 'newuser',
   email: 'user@example.com',
-  password: 'password',
+  password: 'password123',
   invitationCode: '123456',
 });
 
-if (!result.success) {
-  console.error(result.error);
+// Validation with Zod schemas
+const result = createUserSchema.safeParse(userInput);
+if (result.success) {
+  // Data is valid
+  const validData = result.data;
 }
 ```
 
-## Architecture
+## Common Types
 
-The SDK follows a clean architecture pattern with clear separation of concerns:
-
-### Models
-
-Base type definitions that represent core domain entities:
+The SDK provides common utility types:
 
 ```typescript
-export type User = {
-  id: string;
-  email: string;
-  username: string;
-  // ...
+import { BaseEntity, CreateRequest, UpdateRequest, PaginatedResponse } from '@repo/entix-sdk';
+
+// Use in your own types
+type Product = BaseEntity & {
+  name: string;
+  price: number;
 };
+
+type CreateProductRequest = CreateRequest<Product>;
+type UpdateProductRequest = UpdateRequest<Product>;
 ```
-
-### DTOs (Data Transfer Objects)
-
-Types used for API requests and responses:
-
-```typescript
-export type GetUserResultDto = User;
-export type CreateUserParamsDto = z.infer<typeof createUserSchema>;
-```
-
-### Schemas
-
-Zod validation schemas for request data:
-
-```typescript
-export const createUserSchema = z.object({
-  username: z.string().min(3),
-  email: z.string().email(),
-  // ...
-});
-```
-
-### Client
-
-API client classes for making API requests:
-
-```typescript
-export class UserApi {
-  async getUsers(): Promise<GetUsersResultDto> {
-    // ...
-  }
-}
-```
-
-## Type System Conventions
-
-We follow a consistent naming convention:
-
-- `<Entity>` - Core domain entity type
-- `<Action><Entity>ParamsDto` - DTO for API request parameters
-- `<Action><Entity>ResultDto` - DTO for API response data
 
 ## Development
 
@@ -144,4 +99,34 @@ pnpm build
 
 # Watch for changes
 pnpm dev
+
+# Run tests (when available)
+pnpm test
 ```
+
+## Architecture
+
+The SDK follows a clean, layered architecture:
+
+- **Models** - Core domain entities
+- **Schemas** - Zod validation rules
+- **DTOs** - API request/response types
+- **Client** - HTTP API services
+
+See the [Architecture Guide](./ARCHITECTURE.md) for detailed information.
+
+## Contributing
+
+1. Read the [Quick Start Guide](./QUICK_START.md) for new features
+2. Follow the [Architecture Guide](./ARCHITECTURE.md) for best practices
+3. Keep it simple - follow the KISS principle
+4. Use relative imports (no path aliases)
+5. Add tests for new functionality
+
+## Recent Improvements
+
+- ✅ Fixed path alias issues for better build compatibility
+- ✅ Added comprehensive documentation
+- ✅ Added common utility types
+- ✅ Improved type safety and consistency
+- ✅ Standardized naming conventions

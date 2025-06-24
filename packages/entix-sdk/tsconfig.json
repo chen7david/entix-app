@@ -15,7 +15,8 @@
     "paths": {
       "@models/*": ["src/models/*"],
       "@dtos/*": ["src/dtos/*"],
-      "@schemas/*": ["src/schemas/*"]
+      "@schemas/*": ["src/schemas/*"],
+      "@shared/*": ["src/shared/*"]
     }
   },
   "include": ["src/**/*"],
