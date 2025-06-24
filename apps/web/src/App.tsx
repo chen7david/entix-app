@@ -1,19 +1,19 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { App as AntdApp } from 'antd';
-import { LoginPage } from '@pages/LoginPage';
-import { SignUpPage } from '@pages/SignUpPage';
-import { ConfirmSignUpPage } from '@pages/ConfirmSignUpPage';
-import { ForgotPasswordPage } from '@pages/ForgotPasswordPage';
-import { ConfirmPasswordResetPage } from '@pages/ConfirmPasswordResetPage';
-import { PublicLayout } from '@layouts/PublicLayout';
-import { DashboardLayout } from '@layouts/DashboardLayout';
-import { ProfilePage } from '@pages/ProfilePage';
-import { ProtectedRoute } from '@components/ProtectedRoute';
-import { NotFoundPage } from '@pages/error/NotFoundPage';
-import { UnauthorizedPage } from '@pages/error/UnauthorizedPage';
-import UsersPage from '@pages/UsersPage';
-import RolesPage from '@pages/RolesPage';
-import PermissionsPage from '@pages/PermissionsPage';
+import {
+  LoginPage,
+  SignUpPage,
+  ConfirmSignUpPage,
+  ForgotPasswordPage,
+  ConfirmPasswordResetPage,
+} from '@/features/auth';
+import { PublicLayout, DashboardLayout } from '@/shared/components/layout';
+import { ProfilePage } from '@/features/profile';
+import { ProtectedRoute } from '@/features/navigation';
+import { NotFoundPage, UnauthorizedPage } from '@/features/error';
+import { UsersPage } from '@/features/users';
+import { RolesPage } from '@/features/roles';
+import { PermissionsPage } from '@/features/permissions';
 
 export const App = () => {
   return (

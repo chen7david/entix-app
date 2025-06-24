@@ -25,14 +25,15 @@
       "@assets/*": ["./assets/*"],
       "@lib/*": ["./lib/*"],
       "@helpers/*": ["./helpers/*"],
-      "@config/*": ["./config/*"]
+      "@config/*": ["./config/*"],
+      "@features/*": ["./features/*"],
+      "@shared/*": ["./shared/*"]
     },
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
