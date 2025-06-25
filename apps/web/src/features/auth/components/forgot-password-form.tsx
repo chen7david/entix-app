@@ -28,7 +28,15 @@ export const ForgotPasswordForm = () => {
   };
 
   return (
-    <Card style={{ width: '100%', maxWidth: '400px', boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
+    <Card
+      style={{
+        width: '100%',
+        maxWidth: '400px',
+        boxShadow: 'none',
+        border: '1px solid var(--ant-color-border)',
+        backgroundColor: 'transparent',
+      }}
+    >
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
         <Title level={2} style={{ marginBottom: '8px' }}>
           Forgot Password

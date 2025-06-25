@@ -24,8 +24,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // (when we have a token but haven't verified the session yet)
   if (isVerifying && getAccessToken()) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spin size="large" />
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'var(--ant-color-bg-layout)',
+          zIndex: 9999,
+        }}
+      >
+        <Spin
+          size="large"
+          style={{
+            color: 'var(--ant-color-primary)',
+          }}
+        />
       </div>
     );
   }

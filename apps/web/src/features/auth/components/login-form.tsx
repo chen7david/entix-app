@@ -33,6 +33,7 @@ export const LoginForm = () => {
         margin: '0 auto',
         boxShadow: 'none',
         border: '1px solid var(--ant-color-border)',
+        backgroundColor: 'transparent',
       }}
     >
       <div style={{ textAlign: 'center', marginBottom: '24px' }}>
