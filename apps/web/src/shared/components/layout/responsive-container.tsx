@@ -82,7 +82,7 @@ export const PageContainer = ({
   className?: string;
   style?: React.CSSProperties;
 }) => {
-  const { spacing, fontSize } = useResponsiveLayout();
+  const { spacing, fontSize, isMobile } = useResponsiveLayout();
 
   return (
     <div
@@ -90,7 +90,7 @@ export const PageContainer = ({
       style={{
         minHeight: '100vh',
         backgroundColor: 'var(--ant-color-bg-layout)',
-        padding: `${spacing.lg}px 0`,
+        padding: `${spacing.lg}px 0 ${isMobile ? '80px' : spacing.lg}px 0`,
         ...style,
       }}
     >

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Switch, Typography, Divider, Drawer } from 'antd';
+import { Layout, Menu, Button, Switch, Typography, Divider } from 'antd';
 import {
   UserOutlined,
   TeamOutlined,
@@ -15,7 +15,7 @@ import { useTheme } from '@/providers/ThemeProvider';
 import { useResponsiveLayout } from '@/shared/hooks/useResponsive';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { SidebarProps } from '../types/navigation.types';
-import { HamburgerButton } from '@/shared/components/ui/hamburger-button';
+import { MobileBottomNav } from '@/shared/components/ui/mobile-bottom-nav';
 
 const { Sider } = Layout;
 const { Text } = Typography;
@@ -93,11 +93,6 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
 
   // Get current selected key based on location
   const selectedKeys = [location.pathname];
-
-  // Mobile hamburger button
-  const MobileHamburger = () => (
-    <HamburgerButton onClick={() => setMobileDrawerOpen(true)} isVisible={!mobileDrawerOpen} />
-  );
 
   // Sidebar content component
   const SidebarContent = () => (
@@ -231,29 +226,10 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
     );
   }
 
-  // Mobile layout with hamburger and drawer
+  // Mobile layout with bottom navigation
   return (
     <>
-      <MobileHamburger />
-
-      <Drawer
-        placement="left"
-        onClose={() => setMobileDrawerOpen(false)}
-        open={mobileDrawerOpen}
-        width={280}
-        closable={false}
-        styles={{
-          body: {
-            padding: 0,
-            backgroundColor: 'var(--ant-color-bg-container)',
-          },
-          wrapper: {
-            backgroundColor: 'var(--ant-color-bg-container)',
-          },
-        }}
-      >
-        <SidebarContent />
-      </Drawer>
+      <MobileBottomNav isVisible={isMobile} />
     </>
   );
 };
