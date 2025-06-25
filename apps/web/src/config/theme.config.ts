@@ -107,27 +107,27 @@ const lightTheme = {
     colorError: modernColors.error[500],
     colorInfo: modernColors.primary[400],
 
-    // Background colors
-    colorBgContainer: '#ffffff',
-    colorBgLayout: modernColors.neutral[50],
-    colorBgElevated: '#ffffff',
-    colorBgSpotlight: modernColors.neutral[100],
+    // Background colors - better contrast
+    colorBgContainer: '#ffffff', // Pure white for containers
+    colorBgLayout: modernColors.neutral[100], // Light gray background for better contrast
+    colorBgElevated: '#ffffff', // White for elevated elements
+    colorBgSpotlight: modernColors.neutral[200], // Medium light gray for spotlight areas
 
-    // Text colors
-    colorText: modernColors.neutral[800],
-    colorTextSecondary: modernColors.neutral[600],
-    colorTextTertiary: modernColors.neutral[500],
-    colorTextQuaternary: modernColors.neutral[400],
+    // Text colors - better contrast
+    colorText: modernColors.neutral[900], // Very dark text for maximum contrast
+    colorTextSecondary: modernColors.neutral[700], // Dark gray for secondary text
+    colorTextTertiary: modernColors.neutral[600], // Medium dark gray for tertiary text
+    colorTextQuaternary: modernColors.neutral[500], // Medium gray for quaternary text
 
-    // Border colors
-    colorBorder: modernColors.neutral[200],
-    colorBorderSecondary: modernColors.neutral[100],
+    // Border colors - better contrast
+    colorBorder: modernColors.neutral[300], // Medium gray borders for visibility
+    colorBorderSecondary: modernColors.neutral[200], // Light gray for secondary borders
 
-    // Component specific colors
-    colorFillAlter: modernColors.neutral[50],
-    colorFillSecondary: modernColors.neutral[100],
-    colorFillTertiary: modernColors.neutral[200],
-    colorFillQuaternary: modernColors.neutral[300],
+    // Component specific colors - better contrast
+    colorFillAlter: modernColors.neutral[100], // Light gray for alternate fills
+    colorFillSecondary: modernColors.neutral[200], // Medium light gray
+    colorFillTertiary: modernColors.neutral[300], // Medium gray
+    colorFillQuaternary: modernColors.neutral[400], // Darker gray
 
     // Interactive states
     colorPrimaryHover: modernColors.primary[400],
@@ -187,22 +187,22 @@ const lightTheme = {
     },
     Table: {
       borderRadius: 8,
-      headerBg: modernColors.neutral[50],
-      headerColor: modernColors.neutral[700],
+      headerBg: modernColors.neutral[100], // Light gray header background
+      headerColor: modernColors.neutral[800], // Dark gray header text for contrast
     },
     Layout: {
-      siderBg: '#ffffff',
-      headerBg: '#ffffff',
-      bodyBg: modernColors.neutral[50],
+      siderBg: '#ffffff', // White sidebar
+      headerBg: '#ffffff', // White header
+      bodyBg: modernColors.neutral[100], // Light gray body background for contrast
     },
     Menu: {
       itemBg: 'transparent',
       subMenuItemBg: 'transparent',
-      itemSelectedBg: modernColors.primary[50],
-      itemSelectedColor: modernColors.primary[600],
-      itemHoverBg: modernColors.neutral[50],
-      itemHoverColor: modernColors.neutral[800],
-      itemColor: modernColors.neutral[700],
+      itemSelectedBg: modernColors.primary[50], // Very light blue for selected items
+      itemSelectedColor: modernColors.primary[700], // Dark blue for selected text
+      itemHoverBg: modernColors.neutral[100], // Light gray for hover
+      itemHoverColor: modernColors.neutral[900], // Very dark gray for hover text
+      itemColor: modernColors.neutral[800], // Dark gray for menu items
       darkItemBg: 'transparent',
       darkItemSelectedBg: modernColors.primary[600],
       darkItemSelectedColor: '#ffffff',
@@ -236,10 +236,16 @@ const lightTheme = {
     },
     Select: {
       boxShadow: 'none',
-      optionSelectedBg: modernColors.primary[50],
+      optionSelectedBg: modernColors.primary[50], // Very light blue for selected options
     },
     DatePicker: {
       boxShadow: 'none',
+    },
+    Spin: {
+      color: modernColors.primary[500],
+      dotSize: 8,
+      dotSizeSM: 6,
+      dotSizeLG: 12,
     },
     Input: {
       borderRadius: 8,
