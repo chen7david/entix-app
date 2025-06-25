@@ -1,5 +1,5 @@
 import React from 'react';
-import { Table, Button, Space, Tag, Tooltip, Avatar } from 'antd';
+import { Button, Space, Tag, Tooltip, Avatar } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -10,6 +10,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import type { Role } from '@repo/entix-sdk';
+import { ResponsiveTable } from '@/shared/components/ui/responsive-table';
 
 type RolesTableProps = {
   roles: Role[];
@@ -108,11 +109,12 @@ export const RolesTable: React.FC<RolesTableProps> = ({
   ];
 
   return (
-    <Table
+    <ResponsiveTable
       columns={columns}
       dataSource={roles}
       loading={loading}
       rowKey="id"
+      minWidth={1000}
       pagination={{
         showSizeChanger: true,
         showQuickJumper: true,

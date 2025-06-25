@@ -1,25 +1,13 @@
 import React, { useState } from 'react';
-import {
-  Card,
-  Button,
-  Space,
-  Modal,
-  Typography,
-  Row,
-  Col,
-  Drawer,
-  Descriptions,
-  Transfer,
-  Divider,
-  Avatar,
-  Tag,
-} from 'antd';
+import { Card, Button, Space, Modal, Typography, Drawer, Descriptions, Transfer, Divider, Avatar, Tag } from 'antd';
 import { PlusOutlined, UserOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons';
 import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { Role, Permission, User } from '@repo/entix-sdk';
 import { useRoles } from '../hooks/useRoles';
 import { RolesTable, RolesFilters, CreateRoleForm, EditRoleForm } from '../components';
+import { PageContainer } from '@/shared/components/layout';
+import { ErrorResults } from '@/shared/components/ui/error-result';
 
 const { Title, Text } = Typography;
 
@@ -150,24 +138,32 @@ export default function RolesPage() {
     }
   };
 
-  return (
-    <div>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Title level={2}>
-            <TeamOutlined /> Roles Management
-          </Title>
-        </Col>
-        <Col>
-          {hasPermission(PermissionCode.CREATE_ROLE) && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
-              Create Role
-            </Button>
-          )}
-        </Col>
-      </Row>
+  if (!hasPermission(PermissionCode.GET_ROLES)) {
+    return (
+      <PageContainer>
+        <ErrorResults.AccessDenied />
+      </PageContainer>
+    );
+  }
 
-      <Card>
+  return (
+    <PageContainer
+      title="Roles Management"
+      subtitle="Manage user roles and permissions"
+      extra={
+        hasPermission(PermissionCode.CREATE_ROLE) && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+            Create Role
+          </Button>
+        )
+      }
+    >
+      <Card
+        style={{
+          boxShadow: 'none',
+          border: '1px solid var(--ant-color-border)',
+        }}
+      >
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <RolesFilters
             searchTerm={searchTerm}
@@ -311,6 +307,6 @@ export default function RolesPage() {
           filterOption={(inputValue, item) => (item.title || '').toLowerCase().indexOf(inputValue.toLowerCase()) !== -1}
         />
       </Modal>
-    </div>
+    </PageContainer>
   );
 }

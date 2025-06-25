@@ -2,49 +2,44 @@ import { useState, useEffect } from 'react';
 import { Layout } from 'antd';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/features/navigation';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsive';
 
 const { Content } = Layout;
 
 /**
- * DashboardLayout component with responsive sidebar
+ * Modern DashboardLayout with responsive design and mobile support
  */
 export const DashboardLayout = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile, sidebarWidth, sidebarCollapsedWidth } = useResponsiveLayout();
 
-  // Check if device is mobile
+  // Auto-collapse on mobile
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setSidebarCollapsed(true);
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  }, [isMobile]);
 
   const getMarginLeft = () => {
     if (isMobile) return 0;
-    return sidebarCollapsed ? 80 : 256;
+    return sidebarCollapsed ? sidebarCollapsedWidth : sidebarWidth;
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', backgroundColor: 'var(--ant-color-bg-layout)' }}>
       <Sidebar collapsed={sidebarCollapsed} onCollapse={setSidebarCollapsed} />
       <Layout
         style={{
           marginLeft: getMarginLeft(),
-          transition: 'margin-left 0.2s',
+          transition: 'margin-left 0.2s ease-in-out',
+          minHeight: '100vh',
         }}
       >
         <Content
           style={{
             minHeight: '100vh',
             backgroundColor: 'var(--ant-color-bg-layout)',
+            padding: isMobile ? '80px 0 0 0' : '0',
           }}
         >
           <Outlet />

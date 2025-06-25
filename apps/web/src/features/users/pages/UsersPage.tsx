@@ -1,13 +1,15 @@
 import { Card, Space, Typography, Modal, Badge, Descriptions, Drawer, Avatar, Button } from 'antd';
-import { UserOutlined, SafetyOutlined, ReloadOutlined } from '@ant-design/icons';
+import { UserOutlined, ReloadOutlined } from '@ant-design/icons';
 import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 
 // Import feature components
 import { UsersTable, UsersFilters, CreateUserForm, EditUserForm } from '@/features/users/components';
 import { useUsers, useUserRoles } from '@/features/users/hooks';
+import { PageContainer } from '@/shared/components/layout';
+import { ErrorResults } from '@/shared/components/ui/error-result';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 /**
  * UsersPage component for managing users
@@ -48,39 +50,34 @@ export default function UsersPage() {
 
   if (!hasPermission(PermissionCode.GET_USERS)) {
     return (
-      <Card style={{ boxShadow: 'none', border: '1px solid var(--ant-color-border)' }}>
-        <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <SafetyOutlined style={{ fontSize: '48px', color: '#d4d4d8' }} />
-          <Title level={4} style={{ marginTop: '16px', color: '#71717a' }}>
-            Access Denied
-          </Title>
-          <Text type="secondary">You don't have permission to view users.</Text>
-        </div>
-      </Card>
+      <PageContainer>
+        <ErrorResults.AccessDenied />
+      </PageContainer>
     );
   }
 
   return (
-    <div style={{ padding: '24px', backgroundColor: 'var(--ant-color-bg-layout)', minHeight: '100vh' }}>
+    <PageContainer
+      title="Users Management"
+      subtitle="Manage user accounts, permissions, and access"
+      extra={
+        <Space wrap>
+          <Button icon={<ReloadOutlined />} onClick={() => refetchUsers()} loading={usersLoading}>
+            Refresh
+          </Button>
+          {hasPermission(PermissionCode.GET_USER) && (
+            <Button type="primary" onClick={openCreateModal}>
+              Add User
+            </Button>
+          )}
+        </Space>
+      }
+    >
       <Card
-        title="Users Management"
         style={{
-          marginBottom: '24px',
           boxShadow: 'none',
           border: '1px solid var(--ant-color-border)',
         }}
-        extra={
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => refetchUsers()} loading={usersLoading}>
-              Refresh
-            </Button>
-            {hasPermission(PermissionCode.GET_USER) && (
-              <Button type="primary" onClick={openCreateModal}>
-                Add User
-              </Button>
-            )}
-          </Space>
-        }
       >
         {/* Filters Component */}
         <UsersFilters
@@ -161,6 +158,6 @@ export default function UsersPage() {
           </div>
         )}
       </Drawer>
-    </div>
+    </PageContainer>
   );
 }

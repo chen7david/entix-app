@@ -1,8 +1,9 @@
-import { Table, Button, Space, Tag, Avatar, Typography, Tooltip } from 'antd';
+import { Button, Space, Tag, Avatar, Typography, Tooltip } from 'antd';
 import { UserOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { User } from '@repo/entix-sdk';
+import { ResponsiveTable } from '@/shared/components/ui/responsive-table';
 
 const { Text } = Typography;
 
@@ -87,18 +88,18 @@ export const UsersTable = ({ users, loading, onEdit, onView }: UsersTableProps) 
   ];
 
   return (
-    <Table
+    <ResponsiveTable
       columns={columns}
       dataSource={users}
       loading={loading}
       rowKey="id"
+      minWidth={900}
       pagination={{
         pageSize: 20,
         showSizeChanger: true,
         showQuickJumper: true,
         showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} users`,
       }}
-      scroll={{ x: 800 }}
     />
   );
 };

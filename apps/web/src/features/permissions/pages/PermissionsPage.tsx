@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { Card, Button, Space, Modal, Typography, Row, Col, Drawer, Descriptions, Divider, Avatar, Tag } from 'antd';
+import { Card, Button, Space, Modal, Typography, Drawer, Descriptions, Divider, Avatar, Tag } from 'antd';
 import { PlusOutlined, UserOutlined, SafetyOutlined } from '@ant-design/icons';
 import { usePermissions as useAuthPermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { Permission, Role } from '@repo/entix-sdk';
 import { usePermissions } from '../hooks/usePermissions';
 import { PermissionsTable, PermissionsFilters, CreatePermissionForm, EditPermissionForm } from '../components';
+import { PageContainer } from '@/shared/components/layout';
+import { ErrorResults } from '@/shared/components/ui/error-result';
 
 const { Title, Text } = Typography;
 
@@ -98,24 +100,32 @@ export default function PermissionsPage() {
     setIsDetailDrawerVisible(true);
   };
 
-  return (
-    <div>
-      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
-        <Col>
-          <Title level={2}>
-            <SafetyOutlined /> Permissions Management
-          </Title>
-        </Col>
-        <Col>
-          {hasPermission(PermissionCode.CREATE_PERMISSION) && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
-              Create Permission
-            </Button>
-          )}
-        </Col>
-      </Row>
+  if (!hasPermission(PermissionCode.GET_PERMISSIONS)) {
+    return (
+      <PageContainer>
+        <ErrorResults.AccessDenied />
+      </PageContainer>
+    );
+  }
 
-      <Card>
+  return (
+    <PageContainer
+      title="Permissions Management"
+      subtitle="Manage system permissions and access controls"
+      extra={
+        hasPermission(PermissionCode.CREATE_PERMISSION) && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalVisible(true)}>
+            Create Permission
+          </Button>
+        )
+      }
+    >
+      <Card
+        style={{
+          boxShadow: 'none',
+          border: '1px solid var(--ant-color-border)',
+        }}
+      >
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <PermissionsFilters
             searchTerm={searchTerm}
@@ -221,6 +231,6 @@ export default function PermissionsPage() {
           </div>
         )}
       </Drawer>
-    </div>
+    </PageContainer>
   );
 }

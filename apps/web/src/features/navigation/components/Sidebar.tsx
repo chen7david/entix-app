@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Layout, Menu, Button, Switch, Typography, Divider } from 'antd';
+import { Layout, Menu, Button, Switch, Typography, Divider, Drawer } from 'antd';
 import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
   UserOutlined,
-  UsergroupAddOutlined,
-  SafetyOutlined,
+  TeamOutlined,
   KeyOutlined,
-  MoonOutlined,
-  SunOutlined,
   LogoutOutlined,
+  CloseOutlined,
+  SunOutlined,
+  MoonOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermissions, useLogout } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/providers/ThemeProvider';
+import { useResponsiveLayout } from '@/shared/hooks/useResponsive';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { SidebarProps } from '../types/navigation.types';
+import { HamburgerButton } from '@/shared/components/ui/hamburger-button';
 
 const { Sider } = Layout;
 const { Text } = Typography;
 
 /**
- * Responsive Sidebar component with permission-based navigation
+ * Modern responsive sidebar with professional mobile support
  */
 export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
   const navigate = useNavigate();
@@ -29,18 +29,10 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
   const { hasPermission } = usePermissions();
   const { toggleTheme, themeMode } = useTheme();
   const logout = useLogout();
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile, sidebarWidth, sidebarCollapsedWidth } = useResponsiveLayout();
 
-  // Check if device is mobile
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  // Mobile drawer state
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Auto-collapse on mobile
   useEffect(() => {
@@ -48,6 +40,13 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
       onCollapse(true);
     }
   }, [isMobile, collapsed, onCollapse]);
+
+  // Close mobile drawer when navigating
+  useEffect(() => {
+    if (mobileDrawerOpen) {
+      setMobileDrawerOpen(false);
+    }
+  }, [location.pathname]);
 
   // Menu items based on permissions
   const menuItems = [
@@ -62,7 +61,7 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
       ? [
           {
             key: '/dashboard/users',
-            icon: <UsergroupAddOutlined />,
+            icon: <TeamOutlined />,
             label: 'Users',
             onClick: () => navigate('/dashboard/users'),
           },
@@ -73,7 +72,7 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
       ? [
           {
             key: '/dashboard/roles',
-            icon: <SafetyOutlined />,
+            icon: <TeamOutlined />,
             label: 'Roles',
             onClick: () => navigate('/dashboard/roles'),
           },
@@ -95,48 +94,45 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
   // Get current selected key based on location
   const selectedKeys = [location.pathname];
 
-  return (
-    <Sider
-      collapsible
-      collapsed={collapsed}
-      onCollapse={onCollapse}
-      trigger={null}
-      width={256}
-      collapsedWidth={isMobile ? 0 : 80}
-      style={{
-        position: isMobile ? 'fixed' : 'fixed',
-        height: '100vh',
-        left: 0,
-        top: 0,
-        zIndex: 1000,
-        boxShadow: isMobile ? '2px 0 8px rgba(0,0,0,0.1)' : 'none',
-      }}
-      breakpoint="lg"
-      onBreakpoint={broken => {
-        setIsMobile(broken);
-      }}
-    >
-      {/* Header with toggle button */}
+  // Mobile hamburger button
+  const MobileHamburger = () => (
+    <HamburgerButton onClick={() => setMobileDrawerOpen(true)} isVisible={!mobileDrawerOpen} />
+  );
+
+  // Sidebar content component
+  const SidebarContent = () => (
+    <>
+      {/* Header */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px',
+          padding: '20px 16px',
           borderBottom: '1px solid var(--ant-color-border)',
+          minHeight: '64px',
         }}
       >
         {!collapsed && (
-          <Text strong style={{ fontSize: '18px' }}>
+          <Text
+            strong
+            style={{
+              fontSize: '20px',
+              color: 'var(--ant-color-primary)',
+              fontWeight: 600,
+            }}
+          >
             Entix
           </Text>
         )}
-        <Button
-          type="text"
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={() => onCollapse(!collapsed)}
-          style={{ display: isMobile ? 'block' : 'none' }}
-        />
+        {isMobile && (
+          <Button
+            type="text"
+            icon={<CloseOutlined />}
+            onClick={() => setMobileDrawerOpen(false)}
+            style={{ marginLeft: 'auto' }}
+          />
+        )}
       </div>
 
       {/* Navigation Menu */}
@@ -149,62 +145,115 @@ export const Sidebar = ({ collapsed, onCollapse }: SidebarProps) => {
           flex: 1,
           height: 'calc(100vh - 200px)',
           overflowY: 'auto',
+          padding: '8px 0',
         }}
+        theme={themeMode}
       />
 
-      {/* Theme Toggle and Logout at bottom */}
-      <div style={{ borderTop: '1px solid var(--ant-color-border)' }}>
+      {/* Footer with theme toggle and logout */}
+      <div
+        style={{
+          borderTop: '1px solid var(--ant-color-border)',
+          padding: '16px',
+          backgroundColor: 'var(--ant-color-bg-container)',
+        }}
+      >
         {/* Theme Toggle */}
-        <div style={{ padding: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {!collapsed && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <SunOutlined />
-                <Text style={{ fontSize: '14px' }}>Theme</Text>
-              </div>
-            )}
-            <Switch
-              checked={themeMode === 'dark'}
-              onChange={toggleTheme}
-              checkedChildren={<MoonOutlined />}
-              unCheckedChildren={<SunOutlined />}
-              size={collapsed ? 'small' : 'default'}
-            />
-          </div>
-        </div>
-
-        <Divider style={{ margin: 0 }} />
-
-        {/* Logout */}
-        <div style={{ padding: '16px' }}>
-          <Button
-            type="text"
-            icon={<LogoutOutlined />}
-            onClick={() => logout.mutate()}
-            loading={logout.isPending}
-            style={{ width: '100%', justifyContent: 'flex-start' }}
-            danger
-          >
-            {!collapsed && 'Logout'}
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile overlay */}
-      {isMobile && !collapsed && (
         <div
           style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
           }}
-          onClick={() => onCollapse(true)}
-        />
-      )}
-    </Sider>
+        >
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <SunOutlined style={{ color: 'var(--ant-color-text-secondary)' }} />
+              <Text style={{ fontSize: '14px', color: 'var(--ant-color-text-secondary)' }}>Theme</Text>
+            </div>
+          )}
+          <Switch
+            checked={themeMode === 'dark'}
+            onChange={toggleTheme}
+            checkedChildren={<MoonOutlined />}
+            unCheckedChildren={<SunOutlined />}
+            size={collapsed ? 'small' : 'default'}
+          />
+        </div>
+
+        <Divider style={{ margin: '12px 0' }} />
+
+        {/* Logout */}
+        <Button
+          type="text"
+          icon={<LogoutOutlined />}
+          onClick={() => logout.mutate()}
+          loading={logout.isPending}
+          style={{
+            width: '100%',
+            justifyContent: 'flex-start',
+            height: '40px',
+            color: 'var(--ant-color-error)',
+          }}
+          danger
+        >
+          {!collapsed && 'Logout'}
+        </Button>
+      </div>
+    </>
+  );
+
+  // Desktop sidebar
+  if (!isMobile) {
+    return (
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={onCollapse}
+        trigger={null}
+        width={sidebarWidth}
+        collapsedWidth={sidebarCollapsedWidth}
+        style={{
+          position: 'fixed',
+          height: '100vh',
+          left: 0,
+          top: 0,
+          zIndex: 1000,
+          backgroundColor: 'var(--ant-color-bg-container)',
+          borderRight: '1px solid var(--ant-color-border)',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.06)',
+        }}
+        theme={themeMode}
+      >
+        <SidebarContent />
+      </Sider>
+    );
+  }
+
+  // Mobile layout with hamburger and drawer
+  return (
+    <>
+      <MobileHamburger />
+
+      <Drawer
+        placement="left"
+        onClose={() => setMobileDrawerOpen(false)}
+        open={mobileDrawerOpen}
+        width={280}
+        closable={false}
+        styles={{
+          body: {
+            padding: 0,
+            backgroundColor: 'var(--ant-color-bg-container)',
+          },
+          wrapper: {
+            backgroundColor: 'var(--ant-color-bg-container)',
+          },
+        }}
+      >
+        <SidebarContent />
+      </Drawer>
+    </>
   );
 };

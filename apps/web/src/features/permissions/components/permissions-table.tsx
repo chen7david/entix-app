@@ -1,7 +1,8 @@
 import React from 'react';
-import { Table, Button, Space, Tag, Tooltip, Avatar } from 'antd';
+import { Button, Space, Tag, Tooltip, Avatar } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, LockOutlined } from '@ant-design/icons';
 import type { Permission } from '@repo/entix-sdk';
+import { ResponsiveTable } from '@/shared/components/ui/responsive-table';
 
 type PermissionsTableProps = {
   permissions: Permission[];
@@ -77,11 +78,12 @@ export const PermissionsTable: React.FC<PermissionsTableProps> = ({
   ];
 
   return (
-    <Table
+    <ResponsiveTable
       columns={columns}
       dataSource={permissions}
       loading={loading}
       rowKey="id"
+      minWidth={800}
       pagination={{
         showSizeChanger: true,
         showQuickJumper: true,
