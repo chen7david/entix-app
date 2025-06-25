@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { apiClient } from '@lib/api-client';
-import { usePermissions } from '@/features/auth/hooks/use-auth';
+import { userService } from '@/features/users/services';
+import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { User, CreateUserParamsDto, UpdateUserParamsDto } from '@repo/entix-sdk';
 
@@ -28,19 +28,19 @@ export const useUsers = () => {
     refetch: refetchUsers,
   } = useQuery({
     queryKey: ['users'],
-    queryFn: () => apiClient.users.getUsers(),
+    queryFn: () => userService.getUsers(),
     enabled: hasPermission(PermissionCode.GET_USERS),
   });
 
   const { data: userRoles = [] } = useQuery({
     queryKey: ['user-roles', selectedUser?.id],
-    queryFn: () => (selectedUser ? apiClient.users.getUserRoles(selectedUser.id) : Promise.resolve([])),
+    queryFn: () => (selectedUser ? userService.getUserRoles(selectedUser.id) : Promise.resolve([])),
     enabled: !!selectedUser && hasPermission(PermissionCode.GET_USER_ROLES),
   });
 
   // Mutations
   const createUserMutation = useMutation({
-    mutationFn: (userData: CreateUserParamsDto) => apiClient.users.createUser(userData),
+    mutationFn: (userData: CreateUserParamsDto) => userService.createUser(userData),
     onSuccess: () => {
       message.success('User created successfully');
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -53,7 +53,7 @@ export const useUsers = () => {
 
   const updateUserMutation = useMutation({
     mutationFn: ({ id, userData }: { id: string; userData: UpdateUserParamsDto }) =>
-      apiClient.users.updateUser(id, userData),
+      userService.updateUser(id, userData),
     onSuccess: () => {
       message.success('User updated successfully');
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -160,4 +160,17 @@ export const useUsers = () => {
     // Modal controls
     openCreateModal: () => setIsCreateModalVisible(true),
   };
+};
+
+/**
+ * Hook for fetching user roles
+ */
+export const useUserRoles = (userId: string | undefined) => {
+  const { hasPermission } = usePermissions();
+
+  return useQuery({
+    queryKey: ['user-roles', userId],
+    queryFn: () => (userId ? userService.getUserRoles(userId) : Promise.resolve([])),
+    enabled: !!userId && hasPermission(PermissionCode.GET_USER_ROLES),
+  });
 };

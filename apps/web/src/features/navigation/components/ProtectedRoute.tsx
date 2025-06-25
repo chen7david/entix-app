@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth, usePermissions } from '@/features/auth/hooks/use-auth';
+import { useAuth, usePermissions } from '@/features/auth/hooks/useAuth';
 import { UnauthorizedPage } from '@/features/error';
 import type { ProtectedRouteProps } from '../types/navigation.types';
 

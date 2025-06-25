@@ -1,12 +1,9 @@
 import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
-import { confirmSignUpSchema, type ConfirmSignUpDto, type ResendConfirmationCodeDto } from '@repo/entix-sdk';
-import { apiClient } from '@lib/api-client';
-import { App } from 'antd';
+import { confirmSignUpSchema, type ConfirmSignUpDto } from '@repo/entix-sdk';
+import { useConfirmSignUp, useResendConfirmationCode } from '../hooks/useAuth';
 import { ResponsiveContainer } from '@shared/components/layout';
 
 const { Title, Text } = Typography;
@@ -19,46 +16,14 @@ const confirmSignUpRules = createSchemaFieldRule(confirmSignUpSchema);
  * Supports email in URL query parameters
  */
 export const ConfirmSignUpForm = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<ConfirmSignUpDto>();
-  const { message } = App.useApp();
 
   // Get email from URL
   const email = searchParams.get('email') || '';
 
-  const confirmSignUpMutation = useMutation({
-    mutationFn: async (confirmData: ConfirmSignUpDto) => {
-      return apiClient.auth.confirmSignUp(confirmData);
-    },
-    onSuccess: () => {
-      message.success('Email confirmed successfully! You can now sign in.');
-      navigate('/auth/login');
-    },
-    onError: (error: unknown) => {
-      if (error instanceof AxiosError) {
-        message.error(error.response?.data.message || 'Confirmation failed');
-      } else {
-        message.error('An unexpected error occurred');
-      }
-    },
-  });
-
-  const resendCodeMutation = useMutation({
-    mutationFn: async (resendData: ResendConfirmationCodeDto) => {
-      return apiClient.auth.resendConfirmationCode(resendData);
-    },
-    onSuccess: result => {
-      message.success(`Confirmation code sent to ${result.destination}`);
-    },
-    onError: (error: unknown) => {
-      if (error instanceof AxiosError) {
-        message.error(error.response?.data.message || 'Failed to resend code');
-      } else {
-        message.error('An unexpected error occurred');
-      }
-    },
-  });
+  const confirmSignUpMutation = useConfirmSignUp();
+  const resendCodeMutation = useResendConfirmationCode();
 
   const handleConfirm = (values: ConfirmSignUpDto) => {
     confirmSignUpMutation.mutate(values);
@@ -67,7 +32,7 @@ export const ConfirmSignUpForm = () => {
   const handleResendCode = () => {
     const username = form.getFieldValue('username');
     if (!username) {
-      message.error('Please enter your username first');
+      // The hook will handle the error message
       return;
     }
 

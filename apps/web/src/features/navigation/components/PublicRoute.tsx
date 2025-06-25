@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/features/auth/hooks/use-auth';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { PublicRouteProps } from '../types/navigation.types';
 
 /**

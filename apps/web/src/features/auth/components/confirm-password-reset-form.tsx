@@ -1,13 +1,10 @@
 import { useEffect } from 'react';
 import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
 import { confirmForgotPasswordSchema, type ConfirmForgotPasswordDto } from '@repo/entix-sdk';
-import { apiClient } from '@lib/api-client';
-import { App } from 'antd';
+import { useConfirmForgotPassword } from '../hooks/useAuth';
 import { ResponsiveContainer } from '@shared/components/layout';
 
 const { Title, Text } = Typography;
@@ -20,30 +17,13 @@ const confirmForgotPasswordRules = createSchemaFieldRule(confirmForgotPasswordSc
  * Supports username in URL query parameters
  */
 export const ConfirmPasswordResetForm = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<ConfirmForgotPasswordDto>();
-  const { message } = App.useApp();
 
   // Get username from URL
   const username = searchParams.get('username') || '';
 
-  const confirmPasswordResetMutation = useMutation({
-    mutationFn: async (confirmData: ConfirmForgotPasswordDto) => {
-      return apiClient.auth.confirmForgotPassword(confirmData);
-    },
-    onSuccess: () => {
-      message.success('Password reset successfully! You can now sign in with your new password.');
-      navigate('/auth/login');
-    },
-    onError: (error: unknown) => {
-      if (error instanceof AxiosError) {
-        message.error(error.response?.data.message || 'Password reset failed');
-      } else {
-        message.error('An unexpected error occurred');
-      }
-    },
-  });
+  const confirmPasswordResetMutation = useConfirmForgotPassword();
 
   const handleSubmit = (values: ConfirmForgotPasswordDto) => {
     confirmPasswordResetMutation.mutate(values);

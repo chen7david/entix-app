@@ -1,6 +1,6 @@
 import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, useLogout } from '@/features/auth/hooks/use-auth';
+import { useAuth, useLogout } from '@/features/auth/hooks/useAuth';
 
 export const UnauthorizedPage = () => {
   const navigate = useNavigate();

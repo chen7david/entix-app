@@ -1,6 +1,6 @@
 import { Card, Typography, Tag, Divider, Button, Alert, Avatar, Space, Row, Col } from 'antd';
 import { UserOutlined, KeyOutlined, LogoutOutlined } from '@ant-design/icons';
-import { useAuth, usePermissions, useLogout } from '@/features/auth/hooks/use-auth';
+import { useAuth, usePermissions, useLogout } from '@/features/auth/hooks/useAuth';
 import { PermissionGuard } from '@/features/navigation';
 import { PermissionCode } from '@repo/entix-sdk';
 import { useState } from 'react';

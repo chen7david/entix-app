@@ -1,45 +1,29 @@
 import { atom } from 'jotai';
-import { getAccessToken, getCurrentUserFromToken, getUserPermissions } from '@lib/jwt.utils';
-import type { TokenUser } from '../types/auth.types';
+import { getCurrentUserFromToken } from '@lib/jwt.utils';
 
 /**
- * Get initial authentication state from token
+ * Authentication state atoms using Jotai
  */
-const getInitialAuthState = (): boolean => {
-  const token = getAccessToken();
-  return !!token;
+
+// Check if user is authenticated based on token presence
+const getInitialAuthState = () => {
+  const user = getCurrentUserFromToken();
+  return !!user;
 };
 
-/**
- * Get initial user state from token
- */
-const getInitialUser = (): TokenUser | null => {
+// Get initial user state from token
+const getInitialUserState = () => {
   return getCurrentUserFromToken();
 };
 
-/**
- * Get initial permissions from token
- */
-const getInitialPermissions = (): number[] => {
-  return getUserPermissions();
+// Get initial permissions state from token
+const getInitialPermissionsState = () => {
+  const user = getCurrentUserFromToken();
+  return user?.permissionCodes || [];
 };
 
-/**
- * Authentication state atom
- */
+// Authentication state atoms
 export const isAuthenticatedAtom = atom<boolean>(getInitialAuthState());
-
-/**
- * Current user atom (from token)
- */
-export const currentUserAtom = atom<TokenUser | null>(getInitialUser());
-
-/**
- * User permissions atom
- */
-export const userPermissionsAtom = atom<number[]>(getInitialPermissions());
-
-/**
- * Authentication loading state atom
- */
+export const currentUserAtom = atom<ReturnType<typeof getCurrentUserFromToken>>(getInitialUserState());
+export const userPermissionsAtom = atom<number[]>(getInitialPermissionsState());
 export const authLoadingAtom = atom<boolean>(false);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Card, Button, Space, Modal, Typography, Row, Col, Drawer, Descriptions, Divider, Avatar, Tag } from 'antd';
 import { PlusOutlined, UserOutlined, SafetyOutlined } from '@ant-design/icons';
-import { usePermissions as useAuthPermissions } from '@/features/auth/hooks/use-auth';
+import { usePermissions as useAuthPermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { Permission, Role } from '@repo/entix-sdk';
 import { usePermissions } from '../hooks/usePermissions';
@@ -143,7 +143,7 @@ export default function PermissionsPage() {
         open={isCreateModalVisible}
         onCancel={() => setIsCreateModalVisible(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <CreatePermissionForm
           onSubmit={handleCreatePermission}
@@ -159,7 +159,7 @@ export default function PermissionsPage() {
         open={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedPermission && (
           <EditPermissionForm

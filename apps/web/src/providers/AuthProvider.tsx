@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import { useVerifySession } from '@/features/auth/hooks/use-auth';
+import { useVerifySession } from '@/features/auth/hooks/useAuth';
 import { Spin } from 'antd';
 import { getAccessToken } from '@lib/jwt.utils';
 

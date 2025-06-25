@@ -1,13 +1,11 @@
 import { Card, Space, Typography, Modal, Badge, Descriptions, Drawer, Avatar, Button } from 'antd';
 import { UserOutlined, SafetyOutlined, ReloadOutlined } from '@ant-design/icons';
-import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '@lib/api-client';
-import { usePermissions } from '@/features/auth/hooks/use-auth';
+import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 
 // Import feature components
 import { UsersTable, UsersFilters, CreateUserForm, EditUserForm } from '@/features/users/components';
-import { useUsers } from '@/features/users/hooks';
+import { useUsers, useUserRoles } from '@/features/users/hooks';
 
 const { Title, Text } = Typography;
 
@@ -46,11 +44,7 @@ export default function UsersPage() {
   } = useUsers();
 
   // Query for user roles when viewing details
-  const { data: userRoles = [] } = useQuery({
-    queryKey: ['user-roles', selectedUser?.id],
-    queryFn: () => (selectedUser ? apiClient.users.getUserRoles(selectedUser.id) : Promise.resolve([])),
-    enabled: !!selectedUser && hasPermission(PermissionCode.GET_USER_ROLES),
-  });
+  const { data: userRoles = [] } = useUserRoles(selectedUser?.id);
 
   if (!hasPermission(PermissionCode.GET_USERS)) {
     return (

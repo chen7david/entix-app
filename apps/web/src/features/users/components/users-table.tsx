@@ -1,6 +1,6 @@
 import { Table, Button, Space, Tag, Avatar, Typography, Tooltip } from 'antd';
 import { UserOutlined, EditOutlined, EyeOutlined } from '@ant-design/icons';
-import { usePermissions } from '@/features/auth/hooks/use-auth';
+import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { User } from '@repo/entix-sdk';
 

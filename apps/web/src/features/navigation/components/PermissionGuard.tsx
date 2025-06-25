@@ -1,4 +1,4 @@
-import { usePermissions } from '@/features/auth/hooks/use-auth';
+import { usePermissions } from '@/features/auth/hooks/useAuth';
 import type { PermissionGuardProps } from '../types/navigation.types';
 
 /**

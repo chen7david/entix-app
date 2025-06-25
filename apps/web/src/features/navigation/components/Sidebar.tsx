@@ -12,7 +12,7 @@ import {
   LogoutOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { usePermissions, useLogout } from '@/features/auth/hooks/use-auth';
+import { usePermissions, useLogout } from '@/features/auth/hooks/useAuth';
 import { useTheme } from '@/providers/ThemeProvider';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { SidebarProps } from '../types/navigation.types';

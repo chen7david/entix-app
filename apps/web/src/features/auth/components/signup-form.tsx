@@ -1,13 +1,10 @@
 import { useEffect } from 'react';
 import { Form, Input, Button, Card, Typography } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, KeyOutlined } from '@ant-design/icons';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { Link, useSearchParams } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
 import { signUpSchema, type SignUpDto } from '@repo/entix-sdk';
-import { apiClient } from '@lib/api-client';
-import { App } from 'antd';
+import { useSignUp } from '../hooks/useAuth';
 import { ResponsiveContainer } from '@shared/components/layout';
 
 const { Title, Text } = Typography;
@@ -20,10 +17,8 @@ const signUpRules = createSchemaFieldRule(signUpSchema);
  * Supports invitation code in URL query parameters
  */
 export const SignUpForm = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [form] = Form.useForm<SignUpDto>();
-  const { message } = App.useApp();
 
   // Get invitation code from URL
   const invitationCode = searchParams.get('invitationCode') || '';
@@ -35,27 +30,16 @@ export const SignUpForm = () => {
     }
   }, [invitationCode, form]);
 
-  const signUpMutation = useMutation({
-    mutationFn: async (signUpData: SignUpDto) => {
-      return apiClient.auth.signUp(signUpData);
-    },
-    onSuccess: () => {
-      message.success('Registration successful! Please check your email for confirmation.');
-      const email = form.getFieldValue('email');
-      // Navigate to confirmation page with email in URL
-      navigate(`/auth/confirm-signup?email=${encodeURIComponent(email)}`);
-    },
-    onError: (error: unknown) => {
-      if (error instanceof AxiosError) {
-        message.error(error.response?.data.message || 'Registration failed');
-      } else {
-        message.error('An unexpected error occurred');
-      }
-    },
-  });
+  const signUpMutation = useSignUp();
 
   const handleSubmit = (values: SignUpDto) => {
-    signUpMutation.mutate(values);
+    signUpMutation.mutate(values, {
+      onSuccess: () => {
+        const email = form.getFieldValue('email');
+        // Navigate to confirmation page with email in URL
+        window.location.href = `/auth/confirm-signup?email=${encodeURIComponent(email)}`;
+      },
+    });
   };
 
   return (

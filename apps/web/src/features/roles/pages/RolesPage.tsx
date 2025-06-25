@@ -15,7 +15,7 @@ import {
   Tag,
 } from 'antd';
 import { PlusOutlined, UserOutlined, LockOutlined, TeamOutlined } from '@ant-design/icons';
-import { usePermissions } from '@/features/auth/hooks/use-auth';
+import { usePermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { Role, Permission, User } from '@repo/entix-sdk';
 import { useRoles } from '../hooks/useRoles';
@@ -197,7 +197,7 @@ export default function RolesPage() {
         open={isCreateModalVisible}
         onCancel={() => setIsCreateModalVisible(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <CreateRoleForm
           onSubmit={handleCreateRole}
@@ -212,7 +212,7 @@ export default function RolesPage() {
         open={isEditModalVisible}
         onCancel={() => setIsEditModalVisible(false)}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedRole && (
           <EditRoleForm

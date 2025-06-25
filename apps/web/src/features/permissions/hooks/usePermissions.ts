@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
 import { apiClient } from '@/lib/api-client';
-import { usePermissions as useAuthPermissions } from '@/features/auth/hooks/use-auth';
+import { usePermissions as useAuthPermissions } from '@/features/auth/hooks/useAuth';
 import { PermissionCode } from '@repo/entix-sdk';
 import type { Permission, CreatePermissionParamsDto, UpdatePermissionParamsDto } from '@repo/entix-sdk';
 

@@ -1,12 +1,9 @@
 import { Form, Input, Button, Card, Typography, Space } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
+import { Link } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
 import { forgotPasswordSchema, type ForgotPasswordDto } from '@repo/entix-sdk';
-import { apiClient } from '@lib/api-client';
-import { App } from 'antd';
+import { useForgotPassword } from '../hooks/useAuth';
 import { ResponsiveContainer } from '@shared/components/layout';
 
 const { Title, Text } = Typography;
@@ -18,31 +15,17 @@ const forgotPasswordRules = createSchemaFieldRule(forgotPasswordSchema);
  * ForgotPassword form component - handles form logic and UI
  */
 export const ForgotPasswordForm = () => {
-  const navigate = useNavigate();
   const [form] = Form.useForm<ForgotPasswordDto>();
-  const { message } = App.useApp();
-
-  const forgotPasswordMutation = useMutation({
-    mutationFn: async (forgotPasswordData: ForgotPasswordDto) => {
-      return apiClient.auth.forgotPassword(forgotPasswordData);
-    },
-    onSuccess: result => {
-      message.success(`Password reset code sent to ${result.destination}`);
-      const username = form.getFieldValue('username');
-      // Navigate to password reset confirmation with username in URL
-      navigate(`/auth/confirm-password-reset?username=${encodeURIComponent(username)}`);
-    },
-    onError: (error: unknown) => {
-      if (error instanceof AxiosError) {
-        message.error(error.response?.data.message || 'Failed to send password reset code');
-      } else {
-        message.error('An unexpected error occurred');
-      }
-    },
-  });
+  const forgotPasswordMutation = useForgotPassword();
 
   const handleSubmit = (values: ForgotPasswordDto) => {
-    forgotPasswordMutation.mutate(values);
+    forgotPasswordMutation.mutate(values, {
+      onSuccess: () => {
+        const username = form.getFieldValue('username');
+        // Navigate to password reset confirmation with username in URL
+        window.location.href = `/auth/confirm-password-reset?username=${encodeURIComponent(username)}`;
+      },
+    });
   };
 
   return (

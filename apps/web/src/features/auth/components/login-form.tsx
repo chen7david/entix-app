@@ -1,10 +1,9 @@
-import { Card, Form, Input, Typography, Space } from 'antd';
+import { Card, Form, Input, Typography, Space, Button } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import { createSchemaFieldRule } from 'antd-zod';
 import { loginSchema, type LoginDto } from '@repo/entix-sdk';
-import { useLogin } from '../hooks/use-auth';
-import { Button } from '@shared/components/ui';
+import { useLogin } from '../hooks/useAuth';
 import { ResponsiveContainer } from '@shared/components/layout';
 
 const { Title, Text } = Typography;
@@ -59,7 +58,7 @@ export const LoginForm = () => {
           </Form.Item>
 
           <Form.Item style={{ marginBottom: '16px' }}>
-            <Button variant="primary" size="large" loading={login.isPending} block htmlType="submit">
+            <Button type="primary" size="large" loading={login.isPending} block htmlType="submit">
               Sign In
             </Button>
           </Form.Item>
