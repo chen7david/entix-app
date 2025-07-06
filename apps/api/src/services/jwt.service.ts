@@ -2,7 +2,13 @@ import { Injectable } from '@utils/typedi.util';
 import { ConfigService } from '@services/config.service';
 import jwt, { SignOptions, VerifyOptions, JwtPayload } from 'jsonwebtoken';
 import { StringValue } from 'ms';
-import { AccessTokenPayloadResult, RefreshTokenPayloadResult } from '@repo/entix-sdk';
+import {
+  AccessTokenPayloadResult,
+  accessTokenPayloadSchema,
+  RefreshTokenPayloadResult,
+  refreshTokenPayloadSchema,
+} from '@repo/entix-sdk';
+import { UnauthorizedError } from '@repo/api-errors';
 
 @Injectable()
 export class JwtService {
@@ -26,6 +32,17 @@ export class JwtService {
     return jwt.decode(token, options) as T;
   }
 
+  removeBearerPrefix(token: string): string {
+    const tokenWithoutBearer = token.split(' ')[1];
+    if (!tokenWithoutBearer) {
+      throw new UnauthorizedError({
+        message: 'Invalid access token',
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
+    return tokenWithoutBearer;
+  }
+
   signAccessToken(payload: Record<string, unknown>) {
     return this.sign(
       payload,
@@ -43,11 +60,27 @@ export class JwtService {
   }
 
   verifyAccessToken(token: string): AccessTokenPayloadResult {
-    return this.verify<AccessTokenPayloadResult>(token, this.configService.env.JWT_ACCESS_TOKEN_SECRET);
+    try {
+      const payload = this.verify<AccessTokenPayloadResult>(token, this.configService.env.JWT_ACCESS_TOKEN_SECRET);
+      return accessTokenPayloadSchema.parse(payload);
+    } catch (error) {
+      throw new UnauthorizedError({
+        message: 'Invalid access token',
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
   }
 
   verifyRefreshToken(token: string): RefreshTokenPayloadResult {
-    return this.verify<RefreshTokenPayloadResult>(token, this.configService.env.JWT_REFRESH_TOKEN_SECRET);
+    try {
+      const payload = this.verify<RefreshTokenPayloadResult>(token, this.configService.env.JWT_REFRESH_TOKEN_SECRET);
+      return refreshTokenPayloadSchema.parse(payload);
+    } catch (error) {
+      throw new UnauthorizedError({
+        message: 'Invalid refresh token',
+        code: 'INVALID_REFRESH_TOKEN',
+      });
+    }
   }
 
   decodeToken<T = null | string | JwtPayload>(token: string): T {

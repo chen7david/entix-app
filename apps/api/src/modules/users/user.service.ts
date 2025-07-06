@@ -5,6 +5,7 @@ import {
   CreateUserResult,
   FindAllUsersResult,
   FindUserByIdResult,
+  FindUserPermissionsResult,
   FindUserRolesResult,
 } from '@modules/users/user.model';
 import { UserRoleRepository } from '@modules/user_roles/user_role.repository';
@@ -16,42 +17,27 @@ export class UserService {
     private readonly userRoleRepository: UserRoleRepository,
   ) {}
 
-  /**
-   * Retrieves all users from the database
-   */
   async findAll(): Promise<FindAllUsersResult> {
     return this.userRepository.findAll();
   }
 
-  /**
-   * Finds a user by their ID
-   * @param id - User ID
-   */
   async findById(id: string): Promise<FindUserByIdResult> {
     return this.userRepository.findById(id);
   }
 
-  /**
-   * Finds a user by their Cognito sub identifier
-   * @param sub - Cognito sub
-   */
   async findByCognitoSub(sub: string): Promise<FindUserByIdResult> {
     return this.userRepository.findByCognitoSub(sub);
   }
 
-  /**
-   * Creates a new user
-   * @param params - User creation parameters
-   */
   async createUser(params: CreateUserParams): Promise<CreateUserResult> {
     return this.userRepository.createUser(params);
   }
 
-  /**
-   * Finds all roles assigned to a user
-   * @param id - User ID
-   */
-  async findUserRoles(id: string): Promise<FindUserRolesResult> {
-    return this.userRoleRepository.findUserRoles(id);
+  async findUserRoles(userId: string): Promise<FindUserRolesResult> {
+    return this.userRoleRepository.findUserRoles(userId);
+  }
+
+  async findUserPermissions(userId: string): Promise<FindUserPermissionsResult> {
+    return this.userRepository.findUserPermissions(userId);
   }
 }

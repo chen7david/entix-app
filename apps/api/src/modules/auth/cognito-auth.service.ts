@@ -1,7 +1,7 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
-import { ResendConfirmationCodeDto } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
 import {
+  ResendConfirmationCodeDto,
   ConfirmSignUpDto,
   ForgotPasswordDto,
   ForgotPasswordResultDto,
@@ -33,7 +33,7 @@ export class CognitoAuthService {
 
   async changePassword(params: ChangePasswordDto): Promise<SuccessResultDto> {
     return this.cognitoService.changePassword({
-      cognitoAccessToken: params.cognitoAccessToken,
+      cognitoAccessToken: params.accessToken,
       previousPassword: params.oldPassword,
       proposedPassword: params.newPassword,
     });

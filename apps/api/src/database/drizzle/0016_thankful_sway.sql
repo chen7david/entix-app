@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "admin_since" timestamp DEFAULT NULL;

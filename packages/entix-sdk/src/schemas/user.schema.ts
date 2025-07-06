@@ -12,3 +12,7 @@ export const updateUserSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(8),
 });
+
+export const verifySessionSchema = z.object({
+  authorization: z.string().startsWith('Bearer '),
+});

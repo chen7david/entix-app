@@ -1,5 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import createAuthRefreshInterceptor from 'axios-auth-refresh';
+import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig, AxiosError } from 'axios';
+import createAuthRefreshInterceptor, { AxiosAuthRefreshOptions } from 'axios-auth-refresh';
 
 /**
  * Configuration options for the API client
@@ -18,36 +18,36 @@ export interface ApiClientConfig {
   /**
    * Optional timeout in milliseconds
    */
-  timeout?: number;
+  timeoutMs?: number;
 
   /**
    * Optional function to get the authentication token
    */
-  getToken?: () => string | null | undefined;
+  getAuthToken?: () => string | null | undefined;
 
   /**
    * Optional function to refresh the authentication token
    * @returns A promise that resolves to the new token
    */
-  refreshToken?: () => Promise<string>;
+  refreshAuthToken?: () => Promise<string>;
 
   /**
    * Optional function to handle successful token refresh
-   * @param token The new token
+   * @param newToken The new token
    */
-  onTokenRefreshed?: (token: string) => void;
+  onTokenRefreshed?: (newToken: string) => void;
 
   /**
    * Optional function to handle authentication errors
    * @param error The error that occurred
    */
-  onAuthError?: (error: unknown) => void;
+  onAuthenticationError?: (error: unknown) => void;
 }
 
 /**
  * Interface for failed request object in axios-auth-refresh
  */
-interface FailedRequest {
+interface AuthRefreshFailedRequest {
   response: {
     config: {
       headers: {
@@ -61,135 +61,144 @@ interface FailedRequest {
  * A client for making API requests with automatic token refresh
  */
 export class ApiClient {
-  private client: AxiosInstance;
-  private config: ApiClientConfig;
+  private readonly httpClient: AxiosInstance;
+  private readonly clientConfig: ApiClientConfig;
 
   /**
    * Creates a new API client
    * @param config Configuration options for the client
    */
   constructor(config: ApiClientConfig) {
-    this.config = config;
+    this.clientConfig = config;
+    this.httpClient = this.createHttpClient(config);
+    this.setupAuthInterceptors();
+    this.setupRefreshTokenInterceptor();
+  }
 
-    this.client = axios.create({
+  private createHttpClient(config: ApiClientConfig): AxiosInstance {
+    return axios.create({
       baseURL: config.baseURL,
-      timeout: config.timeout || 30000,
+      timeout: config.timeoutMs || 30000,
       headers: {
         'Content-Type': 'application/json',
         ...config.defaultHeaders,
       },
     });
+  }
 
-    // Add request interceptor to include auth token
-    this.client.interceptors.request.use(
-      (config: InternalAxiosRequestConfig) => {
-        if (this.config.getToken) {
-          const token = this.config.getToken();
-          if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-          }
+  private setupAuthInterceptors(): void {
+    this.httpClient.interceptors.request.use(
+      (requestConfig: InternalAxiosRequestConfig) => {
+        const authToken = this.clientConfig.getAuthToken?.();
+        if (authToken) {
+          requestConfig.headers.Authorization = `Bearer ${authToken}`;
         }
-        return config;
+        return requestConfig;
       },
       (error: unknown) => Promise.reject(error),
     );
+  }
 
-    // Add refresh token interceptor if refresh function is provided
-    if (config.refreshToken) {
-      createAuthRefreshInterceptor(
-        this.client,
-        async (failedRequest: FailedRequest) => {
-          try {
-            const newToken = await this.config.refreshToken!();
+  private setupRefreshTokenInterceptor(): void {
+    if (!this.clientConfig.refreshAuthToken) return;
 
-            // Update the failed request with the new token
-            const bearerToken = `Bearer ${newToken}`;
-            failedRequest.response.config.headers.Authorization = bearerToken;
+    const handleTokenRefresh = async (failedRequest: AuthRefreshFailedRequest): Promise<void> => {
+      try {
+        const newToken = await this.clientConfig.refreshAuthToken!();
+        failedRequest.response.config.headers.Authorization = `Bearer ${newToken}`;
+        this.clientConfig.onTokenRefreshed?.(newToken);
+      } catch (refreshError) {
+        this.clientConfig.onAuthenticationError?.(refreshError);
+        throw refreshError;
+      }
+    };
 
-            // Call the callback if provided
-            if (this.config.onTokenRefreshed) {
-              this.config.onTokenRefreshed(newToken);
-            }
+    const refreshOptions: AxiosAuthRefreshOptions = {
+      statusCodes: [401],
+      shouldRefresh: (error: AxiosError) => {
+        const errorData = error.response?.data as { code?: string } | undefined;
+        return errorData?.code === 'INVALID_ACCESS_TOKEN';
+      },
+    };
 
-            return Promise.resolve();
-          } catch (error: unknown) {
-            // Handle auth error if callback is provided
-            if (this.config.onAuthError) {
-              this.config.onAuthError(error);
-            }
-            return Promise.reject(error);
-          }
-        },
-        {
-          statusCodes: [401], // Only refresh on 401 Unauthorized
-        },
-      );
-    }
+    createAuthRefreshInterceptor(this.httpClient, handleTokenRefresh, refreshOptions);
   }
 
   /**
    * Updates the base URL for API requests
-   * @param baseURL The new base URL
+   * @param newBaseURL The new base URL
    */
-  setBaseUrl(baseURL: string): void {
-    this.client.defaults.baseURL = baseURL;
+  updateBaseUrl(newBaseURL: string): void {
+    this.httpClient.defaults.baseURL = newBaseURL;
   }
 
   /**
    * Makes a GET request to the specified endpoint
-   * @param url The endpoint URL
-   * @param config Optional request configuration
+   * @param endpoint The endpoint URL
+   * @param requestConfig Optional request configuration
    * @returns A promise that resolves to the response data
    */
-  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.get<T>(url, config);
+  async get<TResponse>(endpoint: string, requestConfig?: AxiosRequestConfig): Promise<TResponse> {
+    const response = await this.httpClient.get<TResponse>(endpoint, requestConfig);
     return response.data;
   }
 
   /**
    * Makes a POST request to the specified endpoint
-   * @param url The endpoint URL
-   * @param data The data to send
-   * @param config Optional request configuration
+   * @param endpoint The endpoint URL
+   * @param requestBody The data to send
+   * @param requestConfig Optional request configuration
    * @returns A promise that resolves to the response data
    */
-  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.post<T>(url, data, config);
+  async post<TResponse>(
+    endpoint: string,
+    requestBody?: unknown,
+    requestConfig?: AxiosRequestConfig,
+  ): Promise<TResponse> {
+    const response = await this.httpClient.post<TResponse>(endpoint, requestBody, requestConfig);
     return response.data;
   }
 
   /**
    * Makes a PUT request to the specified endpoint
-   * @param url The endpoint URL
-   * @param data The data to send
-   * @param config Optional request configuration
+   * @param endpoint The endpoint URL
+   * @param requestBody The data to send
+   * @param requestConfig Optional request configuration
    * @returns A promise that resolves to the response data
    */
-  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.put<T>(url, data, config);
+  async put<TResponse>(
+    endpoint: string,
+    requestBody?: unknown,
+    requestConfig?: AxiosRequestConfig,
+  ): Promise<TResponse> {
+    const response = await this.httpClient.put<TResponse>(endpoint, requestBody, requestConfig);
     return response.data;
   }
 
   /**
    * Makes a PATCH request to the specified endpoint
-   * @param url The endpoint URL
-   * @param data The data to send
-   * @param config Optional request configuration
+   * @param endpoint The endpoint URL
+   * @param requestBody The data to send
+   * @param requestConfig Optional request configuration
    * @returns A promise that resolves to the response data
    */
-  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.patch<T>(url, data, config);
+  async patch<TResponse>(
+    endpoint: string,
+    requestBody?: unknown,
+    requestConfig?: AxiosRequestConfig,
+  ): Promise<TResponse> {
+    const response = await this.httpClient.patch<TResponse>(endpoint, requestBody, requestConfig);
     return response.data;
   }
 
   /**
    * Makes a DELETE request to the specified endpoint
-   * @param url The endpoint URL
-   * @param config Optional request configuration
+   * @param endpoint The endpoint URL
+   * @param requestConfig Optional request configuration
    * @returns A promise that resolves to the response data
    */
-  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T> {
-    const response = await this.client.delete<T>(url, config);
+  async delete<TResponse>(endpoint: string, requestConfig?: AxiosRequestConfig): Promise<TResponse> {
+    const response = await this.httpClient.delete<TResponse>(endpoint, requestConfig);
     return response.data;
   }
 
@@ -197,7 +206,7 @@ export class ApiClient {
    * Gets the underlying axios instance for advanced usage
    * @returns The axios instance
    */
-  getAxiosInstance(): AxiosInstance {
-    return this.client;
+  getUnderlyingHttpClient(): AxiosInstance {
+    return this.httpClient;
   }
 }

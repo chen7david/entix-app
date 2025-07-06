@@ -43,3 +43,9 @@ export type FindUserRolesParams = {
 };
 
 export type FindUserRolesResult = Role[];
+
+export type FindUserPermissionsParams = {
+  userId: string;
+};
+
+export type FindUserPermissionsResult = number[];
