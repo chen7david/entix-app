@@ -1,17 +1,21 @@
 import { JwtService } from '@services/jwt.service';
-import { Action, UnauthorizedError } from 'routing-controllers';
+import { Action } from 'routing-controllers';
+import { UnauthorizedError } from '@repo/api-errors';
 import { Container } from 'typedi';
 
-export const authorizationChecker = async (action: Action, roles: string[]): Promise<boolean> => {
+export const authorizationChecker = async (action: Action, required: number[]): Promise<boolean> => {
   const jwtService = Container.get(JwtService);
-  const token = action.request.headers['authorization']?.split(' ')[1];
-
-  if (!token) return false;
+  const token = jwtService.removeBearerPrefix(action.request.headers['authorization']);
 
   const payload = jwtService.verifyAccessToken(token);
 
-  if (!payload) throw new UnauthorizedError('Unauthorized');
-  if (roles.length === 0) return true;
+  if (!payload)
+    throw new UnauthorizedError({
+      message: 'please login to continue',
+      code: 'UNAUTHORIZED',
+    });
 
-  return roles.some(role => payload.roles.includes(role));
+  if (required.length === 0) return true;
+
+  return required.some(required => payload.permissionCodes.includes(required));
 };

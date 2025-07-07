@@ -3,9 +3,11 @@ import { DbService } from '@services/db.service';
 import { InternalError } from '@repo/api-errors';
 import { users, notDeletedUser } from '@database/schemas/user.schema';
 import { NewUser, User } from '@modules/users/user.model';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { userRoles } from '@database/schemas/user_role.shema';
 import { roles } from '@database/schemas/role.schema';
+import { permissions } from '@database/schemas/permission.schema';
+import { rolePermissions } from '@database/schemas';
 
 @Injectable()
 export class UserRepository {
@@ -47,5 +49,19 @@ export class UserRepository {
       .from(userRoles)
       .where(eq(userRoles.userId, userId))
       .innerJoin(roles, eq(userRoles.roleId, roles.id));
+  }
+
+  async findUserPermissions(userId: string, trx = this.dbService.db) {
+    const result = await trx
+      .selectDistinct({ permissionCode: permissions.permissionCode })
+      .from(users)
+      .innerJoin(userRoles, eq(userRoles.userId, users.id))
+      .innerJoin(roles, eq(roles.id, userRoles.roleId))
+      .innerJoin(rolePermissions, eq(rolePermissions.roleId, roles.id))
+      .innerJoin(permissions, eq(permissions.id, rolePermissions.permissionId))
+      .where(and(eq(users.id, userId), isNull(roles.deletedAt), isNull(permissions.deletedAt)))
+      .execute();
+
+    return result.map(row => row.permissionCode);
   }
 }

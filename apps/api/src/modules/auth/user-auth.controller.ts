@@ -1,16 +1,9 @@
-import { JsonController, Post, Body, UseBefore, HttpCode } from 'routing-controllers';
+import { JsonController, Post, Body, UseBefore, HttpCode, Get, HeaderParam } from 'routing-controllers';
 import { Injectable } from '@utils/typedi.util';
-import { validateBody } from '@middleware/validation.middleware';
+import { validateBody, validateHeaders } from '@middleware/validation.middleware';
 import { UserAuthService } from '@modules/auth/user-auth.service';
-import {
-  LoginDto,
-  LoginResultDto,
-  ResendConfirmationCodeDto,
-} from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
-import {
-  loginSchema,
-  resendConfirmationCodeSchema,
-} from 'node_modules/@repo/entix-sdk/dist/esm/schemas/user-auth.schema';
+import { LoginDto, LoginResultDto, ResendConfirmationCodeDto } from '@repo/entix-sdk';
+import { loginSchema, resendConfirmationCodeSchema } from '@repo/entix-sdk';
 import { CognitoAuthService } from '@modules/auth/cognito-auth.service';
 import {
   signUpSchema,
@@ -29,6 +22,11 @@ import {
   changePasswordSchema,
   LogoutDto,
   logoutSchema,
+  RefreshTokenDto,
+  RefreshTokenResultDto,
+  refreshTokenSchema,
+  verifySessionSchema,
+  VerifySessionResultDto,
 } from '@repo/entix-sdk';
 
 @Injectable()
@@ -51,6 +49,13 @@ export class UserAuthController {
   @UseBefore(validateBody(loginSchema))
   async login(@Body() params: LoginDto): Promise<LoginResultDto> {
     return this.userAuthService.login(params);
+  }
+
+  @Post('/refresh-token')
+  @HttpCode(200)
+  @UseBefore(validateBody(refreshTokenSchema))
+  async refreshToken(@Body() params: RefreshTokenDto): Promise<RefreshTokenResultDto> {
+    return this.userAuthService.refreshToken(params);
   }
 
   @Post('/resend-confirmation-code')
@@ -93,5 +98,12 @@ export class UserAuthController {
   @UseBefore(validateBody(logoutSchema))
   async logout(@Body() params: LogoutDto): Promise<SuccessResultDto> {
     return this.userAuthService.logout(params);
+  }
+
+  @Get('/verify-session')
+  @HttpCode(200)
+  @UseBefore(validateHeaders(verifySessionSchema))
+  async verifySession(@HeaderParam('Authorization') accessToken: string): Promise<VerifySessionResultDto> {
+    return this.userAuthService.verifySession({ accessToken });
   }
 }

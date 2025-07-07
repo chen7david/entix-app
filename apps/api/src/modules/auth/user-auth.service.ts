@@ -1,11 +1,22 @@
 import { CognitoService } from '@services/cognito/cognito.service';
 import { Injectable } from '@utils/typedi.util';
-import { LogoutDto, SuccessResultDto, SignUpDto, SignUpResultDto } from '@repo/entix-sdk';
-import { LoginDto, LoginResultDto } from 'node_modules/@repo/entix-sdk/dist/esm/dtos/user-auth.dto';
+import {
+  LogoutDto,
+  SuccessResultDto,
+  SignUpDto,
+  SignUpResultDto,
+  LoginDto,
+  LoginResultDto,
+  RefreshTokenDto,
+  RefreshTokenResultDto,
+  VerifySessionResultDto,
+} from '@repo/entix-sdk';
 import { UserService } from '@modules/users/user.service';
 import { JwtService } from '@services/jwt.service';
 import { CognitoAccessTokenPayload } from '@services/cognito/cognito.model';
-import { InternalError } from '@repo/api-errors';
+import { InternalError, UnauthorizedError } from '@repo/api-errors';
+import { ConfigService } from '@services/config.service';
+import ms, { StringValue } from 'ms';
 
 @Injectable()
 export class UserAuthService {
@@ -13,6 +24,7 @@ export class UserAuthService {
     private readonly cognitoService: CognitoService,
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async signUp(params: SignUpDto): Promise<SignUpResultDto> {
@@ -33,7 +45,10 @@ export class UserAuthService {
     const user = await this.userService.findByCognitoSub(sub);
 
     if (!user) {
-      throw new InternalError('Cognito user not found in core database');
+      throw new InternalError({
+        message: 'Cognito user not found in core database',
+        code: 'INVALID_USER',
+      });
     }
 
     /**
@@ -43,20 +58,84 @@ export class UserAuthService {
      * Our backend then issues its own tokens to the client.
      */
     await this.cognitoService.logout({ cognitoAccessToken: accessToken });
+    const permissionCodes = await this.userService.findUserPermissions(user.id);
+    const expiresIn = ms(this.configService.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME as StringValue);
 
     return {
       accessToken: this.jwtService.signAccessToken({
         sub: user.id,
         username: user.username,
-        roles: ['user'], // TODO: add roles
+        email: user.email,
+        permissionCodes,
       }),
       refreshToken: this.jwtService.signRefreshToken({
         sub: user.id,
       }),
+      expiresIn,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+      },
+    };
+  }
+
+  async refreshToken(params: RefreshTokenDto): Promise<RefreshTokenResultDto> {
+    const isRefreshTokenValid = this.jwtService.verifyRefreshToken(params.refreshToken);
+    if (!isRefreshTokenValid) {
+      throw new UnauthorizedError({
+        message: 'Invalid refresh token',
+        code: 'INVALID_REFRESH_TOKEN',
+      });
+    }
+
+    const user = await this.userService.findById(isRefreshTokenValid.sub);
+    if (!user) {
+      throw new UnauthorizedError({
+        message: 'Invalid refresh token',
+        code: 'INVALID_REFRESH_TOKEN',
+      });
+    }
+
+    const permissionCodes = await this.userService.findUserPermissions(user.id);
+    const expiresIn = ms(this.configService.env.JWT_ACCESS_TOKEN_EXPIRATION_TIME as StringValue);
+
+    return {
+      accessToken: this.jwtService.signAccessToken({
+        sub: user.id,
+        username: user.username,
+        email: user.email,
+        permissionCodes,
+      }),
+      refreshToken: this.jwtService.signRefreshToken({
+        sub: user.id,
+      }),
+      expiresIn,
     };
   }
 
   async logout(params: LogoutDto): Promise<SuccessResultDto> {
-    return this.cognitoService.logout(params);
+    // Convert the updated LogoutDto to the format expected by cognito service
+    return this.cognitoService.logout({
+      cognitoAccessToken: params.refreshToken,
+    });
+  }
+
+  async verifySession({ accessToken }: { accessToken: string }): Promise<VerifySessionResultDto> {
+    const token = this.jwtService.removeBearerPrefix(accessToken);
+    const payload = this.jwtService.verifyAccessToken(token);
+    const expiresAt = new Date(payload.exp * 1000).toISOString();
+    const user = await this.userService.findById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedError({
+        message: 'Invalid access token',
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
+    return {
+      success: true,
+      expiresAt,
+      user,
+    };
   }
 }

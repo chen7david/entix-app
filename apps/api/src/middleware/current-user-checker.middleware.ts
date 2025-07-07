@@ -16,7 +16,6 @@ export const currentUserChecker = async (action: Action): Promise<User | undefin
     const user = await userService.findById(payload.sub);
     return user;
   } catch (err) {
-    console.log(err);
     return undefined;
   }
 };

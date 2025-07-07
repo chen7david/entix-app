@@ -99,6 +99,34 @@
       "when": 1750325456955,
       "tag": "0013_demonic_nico_minoru",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1750429335501,
+      "tag": "0014_lethal_red_wolf",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1750453909616,
+      "tag": "0015_needy_sinister_six",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1750640591520,
+      "tag": "0016_thankful_sway",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1750644924485,
+      "tag": "0017_pretty_justin_hammer",
+      "breakpoints": true
     }
   ]
 }

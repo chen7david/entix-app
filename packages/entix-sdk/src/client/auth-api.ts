@@ -12,91 +12,122 @@ import {
   ConfirmForgotPasswordDto,
   ChangePasswordDto,
   LogoutDto,
+  SuccessResultDto,
+  VerifySessionResultDto,
+  RefreshTokenDto,
+  RefreshTokenResultDto,
 } from '../dtos/user-auth.dto';
 
 /**
  * API service for authentication-related operations
  */
 export class AuthApi {
-  private readonly client: ApiClient;
-  private readonly basePath = '/v1/auth';
+  private readonly httpClient: ApiClient;
+  private readonly authEndpointBase = '/v1/auth';
 
   /**
    * Creates a new AuthApi instance
    * @param client The API client to use for requests
    */
   constructor(client: ApiClient) {
-    this.client = client;
+    this.httpClient = client;
   }
 
   /**
    * Logs in a user
-   * @param params Login parameters
+   * @param loginCredentials Login parameters
    * @returns A promise that resolves to the login result
    */
-  async login(params: LoginDto): Promise<LoginResultDto> {
-    return this.client.post<LoginResultDto>(`${this.basePath}/login`, params);
+  async login(loginCredentials: LoginDto): Promise<LoginResultDto> {
+    return this.httpClient.post<LoginResultDto>(`${this.authEndpointBase}/login`, loginCredentials);
   }
 
   /**
    * Registers a new user
-   * @param params Registration parameters
+   * @param registrationData Registration parameters
    * @returns A promise that resolves to the registration result
    */
-  async signUp(params: SignUpDto): Promise<SignUpResultDto> {
-    return this.client.post<SignUpResultDto>(`${this.basePath}/signup`, params);
+  async signUp(registrationData: SignUpDto): Promise<SignUpResultDto> {
+    return this.httpClient.post<SignUpResultDto>(`${this.authEndpointBase}/signup`, registrationData);
   }
 
   /**
    * Confirms a user registration
-   * @param params Confirmation parameters
+   * @param confirmationData Confirmation parameters
    * @returns A promise that resolves when the confirmation is complete
    */
-  async confirmSignUp(params: ConfirmSignUpDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/confirm-signup`, params);
+  async confirmSignUp(confirmationData: ConfirmSignUpDto): Promise<SuccessResultDto> {
+    return this.httpClient.post<SuccessResultDto>(`${this.authEndpointBase}/confirm-signup`, confirmationData);
   }
 
   /**
    * Resends a confirmation code
-   * @param params Resend confirmation code parameters
+   * @param resendRequest Resend confirmation code parameters
    * @returns A promise that resolves to the resend confirmation code result
    */
-  async resendConfirmationCode(params: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
-    return this.client.post<ResendConfirmationCodeResultDto>(`${this.basePath}/resend-confirmation-code`, params);
+  async resendConfirmationCode(resendRequest: ResendConfirmationCodeDto): Promise<ResendConfirmationCodeResultDto> {
+    return this.httpClient.post<ResendConfirmationCodeResultDto>(
+      `${this.authEndpointBase}/resend-confirmation-code`,
+      resendRequest,
+    );
   }
 
   /**
    * Initiates a forgot password flow
-   * @param params Forgot password parameters
+   * @param passwordResetRequest Forgot password parameters
    * @returns A promise that resolves to the forgot password result
    */
-  async forgotPassword(params: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
-    return this.client.post<ForgotPasswordResultDto>(`${this.basePath}/forgot-password`, params);
+  async forgotPassword(passwordResetRequest: ForgotPasswordDto): Promise<ForgotPasswordResultDto> {
+    return this.httpClient.post<ForgotPasswordResultDto>(
+      `${this.authEndpointBase}/forgot-password`,
+      passwordResetRequest,
+    );
   }
 
   /**
    * Confirms a forgot password request
-   * @param params Confirm forgot password parameters
+   * @param passwordResetConfirmation Confirm forgot password parameters
    * @returns A promise that resolves when the confirmation is complete
    */
-  async confirmForgotPassword(params: ConfirmForgotPasswordDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/confirm-forgot-password`, params);
+  async confirmForgotPassword(passwordResetConfirmation: ConfirmForgotPasswordDto): Promise<SuccessResultDto> {
+    return this.httpClient.post<SuccessResultDto>(
+      `${this.authEndpointBase}/confirm-forgot-password`,
+      passwordResetConfirmation,
+    );
   }
 
   /**
    * Changes a user's password
-   * @param params Change password parameters
+   * @param passwordChangeRequest Change password parameters
    * @returns A promise that resolves when the password change is complete
    */
-  async changePassword(params: ChangePasswordDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/change-password`, params);
+  async changePassword(passwordChangeRequest: ChangePasswordDto): Promise<SuccessResultDto> {
+    return this.httpClient.post<SuccessResultDto>(`${this.authEndpointBase}/change-password`, passwordChangeRequest);
   }
 
   /**
    * Logs out the current user
+   * @param logoutRequest Logout parameters
    * @returns A promise that resolves when the logout is complete
    */
-  async logout(params: LogoutDto): Promise<void> {
-    return this.client.post<void>(`${this.basePath}/logout`, params);
+  async logout(logoutRequest: LogoutDto): Promise<SuccessResultDto> {
+    return this.httpClient.post<SuccessResultDto>(`${this.authEndpointBase}/logout`, logoutRequest);
+  }
+
+  /**
+   * Refreshes the access token using a refresh token
+   * @param refreshRequest Refresh token parameters
+   * @returns A promise that resolves to the refresh token result
+   */
+  async refreshToken(refreshRequest: RefreshTokenDto): Promise<RefreshTokenResultDto> {
+    return this.httpClient.post<RefreshTokenResultDto>(`${this.authEndpointBase}/refresh-token`, refreshRequest);
+  }
+
+  /**
+   * Verifies if the current user session is valid
+   * @returns A promise that resolves to a success result
+   */
+  async verifySession(): Promise<VerifySessionResultDto> {
+    return this.httpClient.get<VerifySessionResultDto>(`${this.authEndpointBase}/verify-session`);
   }
 }

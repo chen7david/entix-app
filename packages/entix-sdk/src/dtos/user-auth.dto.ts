@@ -1,12 +1,17 @@
 import { z } from 'zod';
 import { User } from '@models/user.model';
+import { SuccessResultDto } from './common.dto';
+import { verifySessionSchema } from '@schemas/user.schema';
 import {
+  accessTokenPayloadSchema,
   changePasswordSchema,
   confirmForgotPasswordSchema,
   confirmSignUpSchema,
   forgotPasswordSchema,
   loginSchema,
   logoutSchema,
+  refreshTokenPayloadSchema,
+  refreshTokenSchema,
   resendConfirmationCodeSchema,
   signUpSchema,
 } from '@schemas/user-auth.schema';
@@ -20,6 +25,20 @@ export type LoginDto = z.infer<typeof loginSchema>;
 export type LoginResultDto = {
   accessToken: string;
   refreshToken: string;
+  expiresIn: number;
+  user: {
+    id: string;
+    username: string;
+    email: string;
+  };
+};
+
+export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
+
+export type RefreshTokenResultDto = {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
 };
 
 export type ResendConfirmationCodeDto = z.infer<typeof resendConfirmationCodeSchema>;
@@ -45,3 +64,24 @@ export type ConfirmForgotPasswordDto = z.infer<typeof confirmForgotPasswordSchem
 export type ChangePasswordDto = z.infer<typeof changePasswordSchema>;
 
 export type LogoutDto = z.infer<typeof logoutSchema>;
+
+// Re-export SuccessResultDto from common.dto.ts
+export type { SuccessResultDto };
+
+export type AccessTokenPayloadDto = z.infer<typeof accessTokenPayloadSchema>;
+
+export type RefreshTokenPayloadDto = z.infer<typeof refreshTokenPayloadSchema>;
+
+export type AuthErrorDto = {
+  code: string;
+  message: string;
+  status: number;
+};
+
+export type VerifySessionDto = z.infer<typeof verifySessionSchema>;
+
+export type VerifySessionResultDto = {
+  success: boolean;
+  expiresAt: string;
+  user: User;
+};

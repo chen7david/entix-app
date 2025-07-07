@@ -18,40 +18,40 @@ export type ErrorResponse = {
   details?: ErrorDetail[];
   stack?: string;
   context?: Record<string, unknown>;
+  code?: ApiErrorCode;
 };
 
 /**
  * Configuration options for creating an AppError
  */
 export type ApiErrorOptions = {
-  /**
-   * Error message
-   */
   message?: string;
-
-  /**
-   * HTTP status code
-   */
   status?: number;
-
-  /**
-   * Original error that caused this error
-   */
   cause?: Error;
-
-  /**
-   * Detailed information about the error
-   */
   details?: ErrorDetail[];
-
-  /**
-   * Additional context information for logging
-   */
   logContext?: Record<string, unknown>;
-
-  /**
-   * Whether to expose the error message to clients
-   * Defaults to true for 4xx errors and false for 5xx errors
-   */
   expose?: boolean;
+  code?: ApiErrorCode;
 };
+
+export type ApiErrorCode =
+  | 'BAD_REQUEST'
+  | 'UNAUTHORIZED'
+  | 'INVALID_CREDENTIALS'
+  | 'INVALID_REFRESH_TOKEN'
+  | 'INVALID_ACCESS_TOKEN'
+  | 'INVALID_TOKEN'
+  | 'INVALID_USER'
+  | 'INVALID_PASSWORD'
+  | 'INVALID_EMAIL'
+  | 'INVALID_USERNAME'
+  | 'FORBIDDEN'
+  | 'NOT_FOUND'
+  | 'METHOD_NOT_ALLOWED'
+  | 'CONFLICT'
+  | 'UNPROCESSABLE_ENTITY'
+  | 'TOO_MANY_REQUESTS'
+  | 'INTERNAL_SERVER_ERROR'
+  | 'BAD_GATEWAY'
+  | 'SERVICE_UNAVAILABLE'
+  | 'GATEWAY_TIMEOUT';
