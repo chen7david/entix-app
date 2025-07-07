@@ -97,7 +97,10 @@ export default function RolesPage() {
       createForm.resetFields();
     },
     onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to create role');
+      message.error(
+        (error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message ||
+          'Failed to create role',
+      );
     },
   });
 
@@ -112,7 +115,10 @@ export default function RolesPage() {
       setSelectedRole(null);
     },
     onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to update role');
+      message.error(
+        (error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message ||
+          'Failed to update role',
+      );
     },
   });
 
@@ -123,7 +129,10 @@ export default function RolesPage() {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
     onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to delete role');
+      message.error(
+        (error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message ||
+          'Failed to delete role',
+      );
     },
   });
 
@@ -135,7 +144,10 @@ export default function RolesPage() {
       refetchRolePermissions();
     },
     onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to assign permission');
+      message.error(
+        (error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message ||
+          'Failed to assign permission',
+      );
     },
   });
 
@@ -147,7 +159,10 @@ export default function RolesPage() {
       refetchRolePermissions();
     },
     onError: (error: Error) => {
-      message.error((error as any).response?.data?.message || 'Failed to remove permission');
+      message.error(
+        (error as unknown as { response?: { data?: { message?: string } } }).response?.data?.message ||
+          'Failed to remove permission',
+      );
     },
   });
 
