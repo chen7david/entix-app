@@ -42,7 +42,7 @@ jobs:
         run: pnpm check-types
 
       - name: Test
-        run: pnpm test
+        run: pnpm test --filter web
 
       - name: Build all apps and packages
         run: pnpm build
