@@ -52,3 +52,16 @@ export default tseslint.config({
   },
 });
 ```
+
+## CI/CD
+
+- **CI**: Runs on pull requests to `main` or `staging`. Lints, type-checks, tests, and builds the app.
+- **CD**: Runs on push to `main` or `staging`. Builds and deploys the app to GitHub Pages, including a CNAME file for custom domain support.
+- **Secrets required**: `GH_PAGES_DEPLOY_TOKEN` (GitHub token), `CUSTOM_DOMAIN` (your domain).
+
+### Running tests locally
+
+```sh
+pnpm install
+pnpm test
+```
