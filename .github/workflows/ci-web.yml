@@ -1,13 +1,13 @@
-name: Web CI
+name: CI
 
 on:
   pull_request:
-    branches:
-      - main
-      - staging
+    branches: [main, staging]
+  push:
+    branches: [main, staging]
 
 jobs:
-  ci:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -35,18 +35,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint web app
-        run: pnpm --filter web lint
+      - name: Lint
+        run: pnpm lint
 
-      - name: Type check web app
-        run: pnpm --filter web tsc --noEmit
+      - name: Type check
+        run: pnpm check-types
 
-      - name: Run tests
-        run: pnpm --filter web test
+      - name: Test
+        run: pnpm test
 
-      - name: Build web app
-        run: pnpm --filter web build
+      - name: Build all apps and packages
+        run: pnpm build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_ACCESS_TOKEN_KEY: ${{ secrets.VITE_ACCESS_TOKEN_KEY }}
           VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
+          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
