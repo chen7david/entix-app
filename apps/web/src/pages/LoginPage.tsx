@@ -31,7 +31,7 @@ export const LoginPage = () => {
         </Title>
         <Text type="secondary">Sign in to your account</Text>
       </div>
-      Testing 123
+
       <Form
         form={form}
         name="login"
