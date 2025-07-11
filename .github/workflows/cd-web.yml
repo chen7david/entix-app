@@ -2,11 +2,16 @@ name: Web CD
 
 on:
   push:
-    branches: [main, staging]
+    branches:
+      - main
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/**'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,7 +27,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Cache turbo build setup
+      - name: Cache Turbo
         uses: actions/cache@v4
         with:
           path: .turbo
@@ -41,9 +46,12 @@ jobs:
           VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
           CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: apps/web/dist
-          cname: ${{ vars.CUSTOM_DOMAIN }}
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: entix-app
+          directory: apps/web/dist
+          branch: ${{ github.ref_name }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
