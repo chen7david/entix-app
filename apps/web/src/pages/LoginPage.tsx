@@ -67,7 +67,7 @@ export const LoginPage = () => {
           </div>
           <div>
             <Link to="/auth/forgot-password" style={{ color: 'var(--ant-color-primary)' }}>
-              Forgot your password?
+              Forgot your passwords?
             </Link>
           </div>
         </Space>
