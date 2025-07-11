@@ -2,7 +2,7 @@ name: Web CD
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
     paths:
       - 'apps/web/**'
       - '.github/workflows/**'
@@ -53,5 +53,5 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/web/dist --project-name production-entix-app
+          command: pages deploy apps/web/dist --project-name ${{ github.ref == 'refs/heads/main' && 'production-entix-app' || 'staging-entix-app' }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
