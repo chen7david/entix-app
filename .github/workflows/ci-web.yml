@@ -3,12 +3,15 @@ name: CI
 on:
   pull_request:
     branches: [main, staging]
-  push:
-    branches: [main, staging]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/**'
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -18,19 +21,22 @@ jobs:
         with:
           version: 9
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Cache turbo build setup
+      - name: Cache dependencies and build artifacts
         uses: actions/cache@v4
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: |
+            node_modules
+            .turbo
+            apps/web/node_modules
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-deps-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -44,10 +50,9 @@ jobs:
       - name: Test
         run: pnpm test --filter web
 
-      - name: Build all apps and packages
+      - name: Build web application
         run: pnpm build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_ACCESS_TOKEN_KEY: ${{ secrets.VITE_ACCESS_TOKEN_KEY }}
-          VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
-          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_ACCESS_TOKEN_KEY: ${{ vars.VITE_ACCESS_TOKEN_KEY }}
+          VITE_REFRESH_TOKEN_KEY: ${{ vars.VITE_REFRESH_TOKEN_KEY }}
