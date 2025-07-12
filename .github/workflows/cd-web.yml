@@ -14,44 +14,51 @@ jobs:
       contents: read
       deployments: write
 
+    # Define environment variables at job level for cleaner access
+    env:
+      VITE_API_URL: ${{ secrets.VITE_API_URL }}
+      VITE_ACCESS_TOKEN_KEY: ${{ secrets.VITE_ACCESS_TOKEN_KEY }}
+      VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
+      CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+      # Determine project name based on branch
+      PROJECT_NAME: ${{ github.ref == 'refs/heads/main' && 'production-entix-app' || 'staging-entix-app' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Node.js and pnpm
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-
-      - name: Cache Turbo build artifacts
+      - name: Cache dependencies and build artifacts
         uses: actions/cache@v4
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: |
+            node_modules
+            .turbo
+            apps/web/node_modules
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-deps-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build all apps and packages
+      - name: Build web application
         run: pnpm build
-        env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-          VITE_ACCESS_TOKEN_KEY: ${{ secrets.VITE_ACCESS_TOKEN_KEY }}
-          VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
-          CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/web/dist --project-name ${{ github.ref == 'refs/heads/main' && 'production-entix-app' || 'staging-entix-app' }} --branch=main
+          command: pages deploy apps/web/dist --project-name ${{ env.PROJECT_NAME }} --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
