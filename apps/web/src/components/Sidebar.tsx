@@ -13,8 +13,8 @@ import {
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermissions, useLogout } from '@/hooks/auth.hook';
-import { useTheme } from '@/providers/ThemeProvider';
 import { PermissionCode } from '@repo/entix-sdk';
+import { useTheme } from '@/hooks/theme.hook';
 
 const { Sider } = Layout;
 const { Text } = Typography;
