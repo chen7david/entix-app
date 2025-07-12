@@ -1,21 +1,7 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { ConfigProvider } from 'antd';
 import { getStoredTheme, setStoredTheme, themeConfig } from '@config/theme.config';
-
-type ThemeContextType = {
-  themeMode: 'light' | 'dark';
-  toggleTheme: () => void;
-};
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-};
+import { ThemeContext, type ThemeContextType } from '../contexts/theme.context';
 
 type ThemeProviderProps = {
   children: ReactNode;
