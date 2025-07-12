@@ -14,14 +14,8 @@ jobs:
       contents: read
       deployments: write
 
-    # Define environment variables at job level for cleaner access
-    env:
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
-      VITE_ACCESS_TOKEN_KEY: ${{ secrets.VITE_ACCESS_TOKEN_KEY }}
-      VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
-
-      # Determine project name based on branch
-      PROJECT_NAME: ${{ github.ref == 'refs/heads/main' && 'production-entix-app' || 'staging-entix-app' }}
+    environment:
+      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
 
     steps:
       - name: Checkout repository
@@ -54,11 +48,15 @@ jobs:
 
       - name: Build web application
         run: pnpm build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_ACCESS_TOKEN_KEY: ${{ vars.VITE_ACCESS_TOKEN_KEY }}
+          VITE_REFRESH_TOKEN_KEY: ${{ vars.VITE_REFRESH_TOKEN_KEY }}
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/web/dist --project-name ${{ env.PROJECT_NAME }} --branch=main
+          command: pages deploy apps/web/dist --project-name ${{ secrets.CLOUDFLARE_PROJECT_NAME }} --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
