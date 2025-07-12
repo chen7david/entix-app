@@ -19,7 +19,7 @@ jobs:
       VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_ACCESS_TOKEN_KEY: ${{ secrets.VITE_ACCESS_TOKEN_KEY }}
       VITE_REFRESH_TOKEN_KEY: ${{ secrets.VITE_REFRESH_TOKEN_KEY }}
-      CUSTOM_DOMAIN: ${{ vars.CUSTOM_DOMAIN }}
+
       # Determine project name based on branch
       PROJECT_NAME: ${{ github.ref == 'refs/heads/main' && 'production-entix-app' || 'staging-entix-app' }}
 
