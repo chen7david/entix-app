@@ -14,8 +14,7 @@ jobs:
       contents: read
       deployments: write
 
-    environment:
-      name: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
 
     steps:
       - name: Checkout repository
