@@ -1,52 +1,47 @@
-# Use Node.js 20 Alpine as base image
-FROM node:20-alpine AS base
+# -------------------------
+# Base build stage
+# -------------------------
+    FROM node:20-alpine AS base
 
-# Install pnpm
-RUN npm install -g pnpm
-
-# Set working directory
-WORKDIR /app
-
-# Copy the entire monorepo (needed for workspace dependencies)
-COPY ../../ .
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Build the API application
-RUN pnpm build --filter=api
-
+    RUN npm install -g pnpm
+    WORKDIR /app
+    
+    COPY pnpm-lock.yaml pnpm-workspace.yaml package.json turbo.json ./
+    
+    COPY apps/ ./apps/
+    COPY packages/entix-sdk/ ./packages/entix-sdk/
+    COPY packages/errors/ ./packages/errors/
+    
+    RUN pnpm install --frozen-lockfile
+    RUN pnpm build
+    
+    
+# -------------------------
 # Production stage
-FROM node:20-alpine AS production
-
-# Install pnpm
-RUN npm install -g pnpm
-
-# Set working directory
-WORKDIR /app
-
-# Copy only the built API application
-COPY --from=base /app/apps/api/dist ./dist
-
-# Copy only the built SDK packages that the API depends on
-COPY --from=base /app/packages/entix-sdk/dist ./packages/entix-sdk/dist
-COPY --from=base /app/packages/api-errors/dist ./packages/api-errors/dist
-
-# Copy only the package.json files needed for runtime
-COPY ../../package.json ./
-COPY ../package.json ./apps/api/
-COPY ../../packages/entix-sdk/package.json ./packages/entix-sdk/
-COPY ../../packages/api-errors/package.json ./packages/api-errors/
-
-# Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
-
-# Set environment variables
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Expose port
-EXPOSE 3000
-
-# Start the application
-CMD ["node", "dist/server.js"] 
+# -------------------------
+    FROM node:20-alpine AS production
+    
+    RUN npm install -g pnpm
+    WORKDIR /app
+    
+    # Copy pnpm lockfile so --frozen-lockfile works
+    COPY --from=base /app/pnpm-lock.yaml ./
+    
+    COPY --from=base /app/apps/api/dist ./dist
+    COPY --from=base /app/packages/entix-sdk/dist ./packages/entix-sdk/dist
+    COPY --from=base /app/packages/errors/dist ./packages/errors/dist
+    
+    COPY --from=base /app/package.json ./
+    COPY --from=base /app/apps/api/package.json ./apps/api/
+    COPY --from=base /app/packages/entix-sdk/package.json ./packages/entix-sdk/
+    COPY --from=base /app/packages/errors/package.json ./packages/errors/
+    
+    RUN pnpm install --frozen-lockfile --prod
+    
+    ENV NODE_ENV=production
+    ENV PORT=3000
+    
+    EXPOSE 3000
+    
+    CMD ["node", "dist/server.js"]
+    
