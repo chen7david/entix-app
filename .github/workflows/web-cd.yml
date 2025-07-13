@@ -1,4 +1,4 @@
-name: WEB CD
+name: Web CD
 
 on:
   push:
