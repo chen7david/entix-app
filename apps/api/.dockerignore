@@ -37,6 +37,7 @@ README.md
 # Test files
 coverage
 .nyc_output
+__tests__
 
 # Logs
 logs
@@ -92,4 +93,19 @@ jspm_packages/
 .dynamodb/
 
 # TernJS port file
-.tern-port 
+.tern-port
+
+# Exclude other apps in monorepo
+../../apps/web
+../../apps/*/node_modules
+
+# Exclude development files
+*.ts
+!*.d.ts
+tsconfig.json
+jest.config.js
+nodemon.json
+drizzle.config.ts
+
+# Exclude source maps in production
+*.map 
