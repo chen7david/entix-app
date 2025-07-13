@@ -2,13 +2,8 @@ import { Delete, JsonController, Params, Post, UseBefore } from 'routing-control
 import { RolePermissionService } from './role_permission.service';
 import { Injectable } from '@utils/typedi.util';
 import { validateParams } from '@middleware/validation.middleware';
-import {
-  CreateRolePermissionParamsDto,
-  createRolePermissionSchema,
-  RolePermissionIdsDto,
-  rolePermissionIdsSchema,
-  SuccessResultDto,
-} from '@repo/entix-sdk';
+import { createRolePermissionSchema, rolePermissionIdsSchema } from '@repo/entix-sdk';
+import type { CreateRolePermissionParamsDto, RolePermissionIdsDto, SuccessResultDto } from '@repo/entix-sdk';
 
 @Injectable()
 @JsonController('/v1/role-permissions')
