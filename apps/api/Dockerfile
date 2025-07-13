@@ -16,9 +16,9 @@
     RUN pnpm build
     
     
-    # -------------------------
-    # Production stage
-    # -------------------------
+# -------------------------
+# Production stage
+# -------------------------
     FROM node:20-alpine AS production
     
     RUN npm install -g pnpm
