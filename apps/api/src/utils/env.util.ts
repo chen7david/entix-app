@@ -1,4 +1,4 @@
-import { AppEnv, AppEnvFileName } from 'src/constants/app.constant';
+import { AppEnv, AppEnvFileName } from '@constants/app.constant';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';

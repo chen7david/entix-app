@@ -1,11 +1,11 @@
-name: WEB CD
+name: API CI
 
 on:
   push:
     branches: [main, staging]
     paths:
-      - 'apps/web/**'
-      - '.github/workflows/cd-web.yml'
+      - 'apps/api/**'
+      - '.github/workflows/ci-api.yaml'
 
 jobs:
   deploy:

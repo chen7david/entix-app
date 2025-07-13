@@ -1,11 +1,11 @@
-name: Web CI
+name: WEB CI
 
 on:
   pull_request:
     branches: [main, staging]
     paths:
       - 'apps/web/**'
-      - '.github/workflows/**'
+      - '.github/workflows/ci-web.yml'
 
 jobs:
   build-and-test:

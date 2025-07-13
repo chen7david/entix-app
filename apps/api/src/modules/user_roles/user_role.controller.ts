@@ -1,11 +1,6 @@
 import { validateParams } from '@middleware/validation.middleware';
-import {
-  CreateUserRoleDto,
-  createUserRoleSchema,
-  DeleteUserRoleDto,
-  deleteUserRoleSchema,
-  SuccessResultDto,
-} from '@repo/entix-sdk';
+import { createUserRoleSchema, deleteUserRoleSchema } from '@repo/entix-sdk';
+import type { CreateUserRoleDto, DeleteUserRoleDto, SuccessResultDto } from '@repo/entix-sdk';
 import { Delete, JsonController, Params, Post, UseBefore } from 'routing-controllers';
 import { UserRoleService } from './user_role.service';
 import { Injectable } from '@utils/typedi.util';
