@@ -5,7 +5,7 @@ on:
     branches: [main, staging]
     paths:
       - 'apps/api/**'
-      - '.github/workflows/ci-api.yaml'
+      - '.github/workflows/api-ci.yaml'
 
 jobs:
   test-api:

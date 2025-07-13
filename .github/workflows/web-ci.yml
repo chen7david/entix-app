@@ -5,7 +5,7 @@ on:
     branches: [main, staging]
     paths:
       - 'apps/web/**'
-      - '.github/workflows/ci-web.yml'
+      - '.github/workflows/web-ci.yml'
 
 jobs:
   test-web:
