@@ -6,7 +6,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: entix-api
+  IMAGE_NAME: entix-app
 
 jobs:
   test-api:
