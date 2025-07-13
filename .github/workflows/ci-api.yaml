@@ -8,13 +8,28 @@ on:
       - '.github/workflows/ci-api.yaml'
 
 jobs:
-  deploy:
+  test-api:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      deployments: write
 
-    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb
 
     steps:
       - name: Checkout repository
@@ -31,13 +46,12 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
-      - name: Cache dependencies and build artifacts
+      - name: Cache dependencies and turbo
         uses: actions/cache@v4
         with:
           path: |
             node_modules
             .turbo
-            apps/web/node_modules
           key: ${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-deps-
@@ -45,26 +59,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type check
-        run: pnpm check-types
-
-      - name: Test
-        run: pnpm test --filter web
-
-      - name: Build web application
+      - name: Build all packages
         run: pnpm build
-        env:
-          VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_ACCESS_TOKEN_KEY: ${{ vars.VITE_ACCESS_TOKEN_KEY }}
-          VITE_REFRESH_TOKEN_KEY: ${{ vars.VITE_REFRESH_TOKEN_KEY }}
 
-      - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy apps/web/dist --project-name ${{ secrets.CLOUDFLARE_PROJECT_NAME }} --branch=main
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+      - name: Lint API
+        run: pnpm lint --filter=api
+
+      - name: Type check API
+        run: pnpm check-types --filter=api
+
+      - name: Run tests for API only
+        run: pnpm test --filter=api

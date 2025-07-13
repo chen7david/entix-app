@@ -8,7 +8,7 @@ on:
       - '.github/workflows/ci-web.yml'
 
 jobs:
-  build-and-test:
+  test-web:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
 
