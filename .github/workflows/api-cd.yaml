@@ -73,7 +73,7 @@ jobs:
       - name: Run tests for API only
         run: pnpm test --filter=api
 
-  build-and-push:
+  build-and-push-api:
     name: Build & Push Docker Image
     needs: [test-api]
     runs-on: ubuntu-latest
