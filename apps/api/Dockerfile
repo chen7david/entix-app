@@ -7,19 +7,13 @@ RUN npm install -g pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/entix-sdk/package.json ./packages/entix-sdk/
-COPY packages/api-errors/package.json ./packages/api-errors/
+# Copy the entire monorepo (needed for workspace dependencies)
+COPY ../../ .
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
-COPY . .
-
-# Build the application
+# Build the API application
 RUN pnpm build --filter=api
 
 # Production stage
@@ -31,11 +25,11 @@ RUN npm install -g pnpm
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/
-COPY packages/entix-sdk/package.json ./packages/entix-sdk/
-COPY packages/api-errors/package.json ./packages/api-errors/
+# Copy workspace configuration
+COPY ../../package.json ../../pnpm-lock.yaml ../../pnpm-workspace.yaml ./
+COPY ../package.json ./apps/api/
+COPY ../../packages/entix-sdk/package.json ./packages/entix-sdk/
+COPY ../../packages/api-errors/package.json ./packages/api-errors/
 
 # Install only production dependencies
 RUN pnpm install --frozen-lockfile --prod
