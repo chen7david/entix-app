@@ -102,9 +102,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ vars.IMAGE_TAG }},enable=true
+            type=raw,value=${{ vars.IMAGE_TAG || github.sha }}
             type=sha,format=short
 
       - name: Build & Push Docker Image
