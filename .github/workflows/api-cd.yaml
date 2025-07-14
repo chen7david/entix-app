@@ -120,9 +120,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Show pushed image tags
-        run: echo "Tags pushed: ${{ steps.meta.outputs.tags }}"
-
       - name: Trigger Jenkins Deploy
         if: success()
         uses: appleboy/jenkins-action@v1.1.1
