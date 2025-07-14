@@ -104,8 +104,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ vars.IMAGE_TAG || github.sha }}
+            type=raw,value=${{ github.sha }}
             type=sha,format=short
+            type=raw,value=staging-latest,enable=${{ github.ref_name == 'staging' }}
+            type=raw,value=production-latest,enable=${{ github.ref_name == 'main' }}
 
       - name: Build & Push Docker Image
         uses: docker/build-push-action@v5
@@ -117,6 +119,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Show pushed image tags
+        run: echo "Tags pushed: ${{ steps.meta.outputs.tags }}"
 
       - name: Trigger Jenkins Deploy
         if: success()
