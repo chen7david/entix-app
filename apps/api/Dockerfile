@@ -37,8 +37,10 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
-# Copy pnpm lockfile for dependency installation
+# Copy workspace configuration files
 COPY --from=base /app/pnpm-lock.yaml ./
+COPY --from=base /app/pnpm-workspace.yaml ./
+COPY --from=base /app/package.json ./
 
 # Copy built API files
 COPY --from=base /app/apps/api/dist ./dist
@@ -48,13 +50,12 @@ COPY --from=base /app/packages/entix-sdk/dist ./packages/entix-sdk/dist
 COPY --from=base /app/packages/errors/dist ./packages/errors/dist
 
 # Copy package.json files for dependency resolution
-COPY --from=base /app/package.json ./
 COPY --from=base /app/apps/api/package.json ./apps/api/
 COPY --from=base /app/packages/entix-sdk/package.json ./packages/entix-sdk/
 COPY --from=base /app/packages/errors/package.json ./packages/errors/
 
-# Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+# Install only production dependencies with shamefully-hoist to ensure all deps are available
+RUN pnpm install --frozen-lockfile --prod --shamefully-hoist
 
 # Change ownership to non-root user
 RUN chown -R nodejs:nodejs /app
@@ -74,5 +75,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
 
 # Start the application
-CMD ["node", "dist/server.js"]
-    
+CMD ["node", "dist/src/server.js"]  
