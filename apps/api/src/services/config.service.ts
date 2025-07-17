@@ -15,6 +15,10 @@ export class ConfigService {
     return this.env.NODE_ENV === AppEnv.Production;
   }
 
+  get isStaging(): boolean {
+    return this.env.NODE_ENV === AppEnv.Staging;
+  }
+
   get isDevelopment(): boolean {
     return this.env.NODE_ENV === AppEnv.Development;
   }
