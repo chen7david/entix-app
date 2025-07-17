@@ -23,19 +23,19 @@ pipeline {
         MAX_POOL_SIZE = '20'
 
         // AWS Configuration
-        AWS_REGION = credentials('STAGING_AWS_REGION')
-        AWS_ACCESS_KEY_ID = credentials('STAGING_AWS_ACCESS_KEY_ID')
-        AWS_SECRET_ACCESS_KEY = credentials('STAGING_AWS_SECRET_ACCESS_KEY')
+        AWS_REGION = credentials('AWS_REGION')
+        AWS_ACCESS_KEY_ID = credentials('AWS_ACCESS_KEY_ID')
+        AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
         
         // Cognito Configuration
-        AWS_COGNITO_USER_POOL_ID = credentials('STAGING_AWS_COGNITO_USER_POOL_ID')
-        AWS_COGNITO_USER_POOL_CLIENT_ID = credentials('STAGING_AWS_COGNITO_USER_POOL_CLIENT_ID')
+        AWS_COGNITO_USER_POOL_ID = credentials('COGNITO_USER_POOL_ID')
+        AWS_COGNITO_USER_POOL_CLIENT_ID = credentials('COGNITO_CLIENT_ID')
         
-        // JWT Configuration
-        JWT_ACCESS_TOKEN_SECRET = credentials('STAGING_JWT_ACCESS_TOKEN_SECRET')
-        JWT_REFRESH_TOKEN_SECRET = credentials('STAGING_JWT_REFRESH_TOKEN_SECRET')
-        JWT_ACCESS_TOKEN_EXPIRATION_TIME = credentials('STAGING_JWT_ACCESS_TOKEN_EXPIRATION_TIME')
-        JWT_REFRESH_TOKEN_EXPIRATION_TIME = credentials('STAGING_JWT_REFRESH_TOKEN_EXPIRATION_TIME')
+        // JWT Configuration (using default values for staging)
+        JWT_ACCESS_TOKEN_SECRET = 'staging_access_token_secret'
+        JWT_REFRESH_TOKEN_SECRET = 'staging_refresh_token_secret'
+        JWT_ACCESS_TOKEN_EXPIRATION_TIME = '15m'
+        JWT_REFRESH_TOKEN_EXPIRATION_TIME = '7d'
     }
 
     stages {
