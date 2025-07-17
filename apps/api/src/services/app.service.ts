@@ -16,7 +16,7 @@ export class AppService {
   registerRoutes(): AppService {
     useExpressServer(this.app, {
       routePrefix: '/api',
-      controllers: [__dirname + '/../modules/**/*.controller.ts'],
+      controllers: [__dirname + '/../modules/**/*.controller.{js,ts}'],
       middlewares: [ErrorHandlerMiddleware],
       defaultErrorHandler: false,
       cors: true,
