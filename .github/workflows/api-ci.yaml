@@ -1,0 +1,72 @@
+name: Api CI
+
+on:
+  pull_request:
+    branches: [main, staging]
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-ci.yaml'
+
+jobs:
+  test-api:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd="pg_isready -U testuser -d testdb"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://testuser:testpassword@localhost:5432/testdb
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Cache dependencies and turbo
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules
+            .turbo
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-deps-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm build
+
+      - name: Lint API
+        run: pnpm lint --filter=api
+
+      - name: Type check API
+        run: pnpm check-types --filter=api
+
+      - name: Run tests for API only
+        run: pnpm test --filter=api

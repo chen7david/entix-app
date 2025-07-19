@@ -2,30 +2,34 @@ import { JsonController, Post, Body, UseBefore, HttpCode, Get, HeaderParam } fro
 import { Injectable } from '@utils/typedi.util';
 import { validateBody, validateHeaders } from '@middleware/validation.middleware';
 import { UserAuthService } from '@modules/auth/user-auth.service';
-import { LoginDto, LoginResultDto, ResendConfirmationCodeDto } from '@repo/entix-sdk';
 import { loginSchema, resendConfirmationCodeSchema } from '@repo/entix-sdk';
 import { CognitoAuthService } from '@modules/auth/cognito-auth.service';
 import {
   signUpSchema,
+  confirmSignUpSchema,
+  forgotPasswordSchema,
+  confirmForgotPasswordSchema,
+  changePasswordSchema,
+  logoutSchema,
+  refreshTokenSchema,
+  verifySessionSchema,
+} from '@repo/entix-sdk';
+import type {
+  LoginDto,
+  LoginResultDto,
+  ResendConfirmationCodeDto,
   SignUpDto,
   SignUpResultDto,
   ResendConfirmationCodeResultDto,
   ConfirmSignUpDto,
-  confirmSignUpSchema,
   SuccessResultDto,
   ForgotPasswordDto,
   ForgotPasswordResultDto,
-  forgotPasswordSchema,
   ConfirmForgotPasswordDto,
-  confirmForgotPasswordSchema,
   ChangePasswordDto,
-  changePasswordSchema,
   LogoutDto,
-  logoutSchema,
   RefreshTokenDto,
   RefreshTokenResultDto,
-  refreshTokenSchema,
-  verifySessionSchema,
   VerifySessionResultDto,
 } from '@repo/entix-sdk';
 

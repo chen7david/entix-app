@@ -18,7 +18,7 @@ export class ServerService {
 
   start(): ServerService {
     const app = this.appService.init().getApp();
-    const port = this.configService.env.PORT;
+    const port = this.configService.env.APP_PORT;
 
     app.listen(port, () => {
       this.logger.info('Server is running 🚀', {

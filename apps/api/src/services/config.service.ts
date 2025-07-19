@@ -1,4 +1,4 @@
-import { EnvResult } from '@config/env.config';
+import type { EnvResult } from '@config/env.config';
 import { EnvToken } from '@factories/env.factory';
 import { AppEnv } from '@constants/app.constant';
 import { Inject, Injectable } from '@utils/typedi.util';
@@ -13,6 +13,10 @@ export class ConfigService {
 
   get isProduction(): boolean {
     return this.env.NODE_ENV === AppEnv.Production;
+  }
+
+  get isStaging(): boolean {
+    return this.env.NODE_ENV === AppEnv.Staging;
   }
 
   get isDevelopment(): boolean {

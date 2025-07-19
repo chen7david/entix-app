@@ -7,6 +7,7 @@ import { authorizationChecker } from '@middleware/authz-checker.middleware';
 import { currentUserChecker } from '@middleware/current-user-checker.middleware';
 import { OpenAPIService } from './openapi.service';
 import morgan from 'morgan';
+
 @Injectable()
 export class AppService {
   private app: Application = express();
@@ -16,12 +17,21 @@ export class AppService {
   registerRoutes(): AppService {
     useExpressServer(this.app, {
       routePrefix: '/api',
-      controllers: [__dirname + '/../modules/**/*.controller.ts'],
+      controllers: [__dirname + '/../modules/**/*.controller.{js,ts}'],
       middlewares: [ErrorHandlerMiddleware],
       defaultErrorHandler: false,
-      cors: true,
       authorizationChecker,
       currentUserChecker,
+      cors: {
+        origin: [
+          'https://staging.entix.org', // staging web app
+          'https://entix.org', // production web app
+          'http://localhost:5173', // local dev (if needed)
+        ],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+      },
     });
     return this;
   }

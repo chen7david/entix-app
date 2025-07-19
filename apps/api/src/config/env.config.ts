@@ -2,8 +2,8 @@ import { z } from '@utils/zod.util';
 
 export const envSchema = z.object({
   // API
-  PORT: z.coerce.number(),
-  NODE_ENV: z.enum(['development', 'production', 'test']),
+  APP_PORT: z.coerce.number(),
+  NODE_ENV: z.enum(['development', 'staging', 'production', 'test']),
 
   // Logging
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),

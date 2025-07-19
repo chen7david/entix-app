@@ -3,19 +3,16 @@ import { PermissionService } from './permission.service';
 import { Injectable } from '@utils/typedi.util';
 import { validateBody, validateParams } from '@middleware/validation.middleware';
 import { RolePermissionService } from '@modules/role_permissons/role_permission.service';
-import {
+import { createPermissionSchema, GetPermissionsResultDto, idSchema, updatePermissionSchema } from '@repo/entix-sdk';
+import type {
   CreatePermissionParamsDto,
   CreatePermissionResultDto,
-  createPermissionSchema,
   GetPermissionResultDto,
   GetPermissionRolesResultDto,
-  GetPermissionsResultDto,
   IdDto,
-  idSchema,
   SuccessResultDto,
   UpdatePermissionParamsDto,
   UpdatePermissionResultDto,
-  updatePermissionSchema,
 } from '@repo/entix-sdk';
 
 @Injectable()

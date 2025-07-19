@@ -36,6 +36,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
+    "isolatedModules": true,
 
     /* Emit */
     "declaration": true,

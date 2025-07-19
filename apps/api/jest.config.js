@@ -1,0 +1,31 @@
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+module.exports = {
+  preset: 'ts-jest',
+  testEnvironment: 'node',
+  roots: ['<rootDir>/src'],
+  testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'],
+  transform: {
+    '^.+\\.ts$': 'ts-jest',
+  },
+  collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/server.ts', '!src/**/index.ts'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  moduleNameMapper: {
+    '^@utils/(.*)$': '<rootDir>/src/utils/$1',
+    '^@services/(.*)$': '<rootDir>/src/services/$1',
+    '^@controllers/(.*)$': '<rootDir>/src/controllers/$1',
+    '^@repositories/(.*)$': '<rootDir>/src/repositories/$1',
+    '^@entities/(.*)$': '<rootDir>/src/entities/$1',
+    '^@middleware/(.*)$': '<rootDir>/src/middleware/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@factories/(.*)$': '<rootDir>/src/factories/$1',
+    '^@constants/(.*)$': '<rootDir>/src/constants/$1',
+    '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+    '^@database/(.*)$': '<rootDir>/src/database/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
+  testTimeout: 10000,
+  verbose: true,
+  clearMocks: true,
+  restoreMocks: true,
+};

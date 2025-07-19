@@ -1,15 +1,19 @@
-name: Web CI
+name: Web CD
 
 on:
-  pull_request:
+  push:
     branches: [main, staging]
     paths:
       - 'apps/web/**'
-      - '.github/workflows/**'
+      - '.github/workflows/web-cd.yml'
 
 jobs:
-  build-and-test:
+  deploy-web:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
 
     steps:
@@ -56,3 +60,11 @@ jobs:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_ACCESS_TOKEN_KEY: ${{ vars.VITE_ACCESS_TOKEN_KEY }}
           VITE_REFRESH_TOKEN_KEY: ${{ vars.VITE_REFRESH_TOKEN_KEY }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/web/dist --project-name ${{ secrets.CLOUDFLARE_PROJECT_NAME }} --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -2,15 +2,9 @@ import { Injectable } from '@utils/typedi.util';
 import { UserService } from './user.service';
 import { validateParams } from '@middleware/validation.middleware';
 import { JsonController, Get, Params, CurrentUser, Authorized, UseBefore, NotFoundError } from 'routing-controllers';
-import {
-  idSchema,
-  IdDto,
-  GetUserRolesResultDto,
-  GetUsersResultDto,
-  GetUserResultDto,
-  PermissionCode,
-} from '@repo/entix-sdk';
-import { User } from './user.model';
+import { idSchema, GetUsersResultDto, PermissionCode } from '@repo/entix-sdk';
+import type { IdDto, GetUserRolesResultDto, GetUserResultDto } from '@repo/entix-sdk';
+import { type User } from './user.model';
 
 @Injectable()
 @JsonController('/v1/users')
