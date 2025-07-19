@@ -31,8 +31,8 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
         
         // Cognito Configuration
-        AWS_COGNITO_USER_POOL_ID = credentials('COGNITO_USER_POOL_ID')
-        AWS_COGNITO_USER_POOL_CLIENT_ID = credentials('COGNITO_CLIENT_ID')
+        AWS_COGNITO_USER_POOL_ID = credentials('AWS_COGNITO_USER_POOL_ID')
+        AWS_COGNITO_USER_POOL_CLIENT_ID = credentials('AWS_COGNITO_USER_POOL_CLIENT_ID')
         
         // JWT Configuration (using default values for staging)
         JWT_ACCESS_TOKEN_SECRET = credentials('JWT_ACCESS_TOKEN_SECRET')
