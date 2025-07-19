@@ -33,6 +33,13 @@ export class JwtService {
   }
 
   removeBearerPrefix(token: string): string {
+    if (!token.startsWith('Bearer ')) {
+      throw new UnauthorizedError({
+        message: 'Invalid token format. Expected "Bearer <token>"',
+        code: 'INVALID_ACCESS_TOKEN',
+      });
+    }
+
     const tokenWithoutBearer = token.split(' ')[1];
     if (!tokenWithoutBearer) {
       throw new UnauthorizedError({

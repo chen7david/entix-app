@@ -5,7 +5,17 @@ import { Container } from 'typedi';
 
 export const authorizationChecker = async (action: Action, required: number[]): Promise<boolean> => {
   const jwtService = Container.get(JwtService);
-  const token = jwtService.removeBearerPrefix(action.request.headers['authorization']);
+  const authorizationHeader = action.request.headers['authorization'];
+
+  // Check if authorization header exists
+  if (!authorizationHeader) {
+    throw new UnauthorizedError({
+      message: 'Authorization header is missing',
+      code: 'UNAUTHORIZED',
+    });
+  }
+
+  const token = jwtService.removeBearerPrefix(authorizationHeader);
 
   const payload = jwtService.verifyAccessToken(token);
 
