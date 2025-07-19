@@ -3,9 +3,9 @@ pipeline {
 
     environment {
         // App Configuration
-        APP_NAME = 'EntixAPI'
-        NODE_ENV = 'staging'
-        PORT = '4000'
+        APP_NAME = credentials('APP_NAME')
+        APP_PORT = credentials('APP_PORT')
+        NODE_ENV = credentials('NODE_ENV')
 
         // Docker Configuration
         DOCKER_REGISTRY = 'ghcr.io'
@@ -17,7 +17,7 @@ pipeline {
         LOG_LEVEL = 'info'
 
         // Database Configuration
-        DATABASE_URL = credentials('STAGING_DATABASE_URL')
+        DATABASE_URL = credentials('DATABASE_URL')
         CONNECTION_TIMEOUT_MILLIS = '5000'
         IDLE_TIMEOUT_MILLIS = '30000'
         MAX_POOL_SIZE = '20'
@@ -59,9 +59,9 @@ pipeline {
                 docker run -d \
                     --name $CONTAINER_NAME \
                     --network db_network \
-                    -p $PORT:$PORT \
+                    -p $APP_PORT:$APP_PORT \
                     -e NODE_ENV=$NODE_ENV \
-                    -e PORT=$PORT \
+                    -e PORT=$APP_PORT \
                     -e APP_NAME=$APP_NAME \
                     -e LOG_LEVEL=$LOG_LEVEL \
                     -e DATABASE_URL=$DATABASE_URL \

@@ -2,7 +2,7 @@ import { z } from '@utils/zod.util';
 
 export const envSchema = z.object({
   // API
-  PORT: z.coerce.number(),
+  APP_PORT: z.coerce.number(),
   NODE_ENV: z.enum(['development', 'staging', 'production', 'test']),
 
   // Logging
