@@ -61,7 +61,7 @@ pipeline {
                     --network db_network \
                     -p $APP_PORT:$APP_PORT \
                     -e NODE_ENV=$NODE_ENV \
-                    -e PORT=$APP_PORT \
+                    -e APP_PORT=$APP_PORT \
                     -e APP_NAME=$APP_NAME \
                     -e LOG_LEVEL=$LOG_LEVEL \
                     -e DATABASE_URL=$DATABASE_URL \
