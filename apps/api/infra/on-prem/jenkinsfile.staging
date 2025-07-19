@@ -14,6 +14,9 @@ pipeline {
         CONTAINER_NAME = credentials('CONTAINER_NAME')
 
         // Logger Configuration
+        NEW_RELIC_ENABLED = credentials('NEW_RELIC_ENABLED')
+        NEW_RELIC_APP_NAME = credentials('NEW_RELIC_APP_NAME')
+        NEW_RELIC_LICENSE_KEY = credentials('NEW_RELIC_LICENSE_KEY')
         LOG_LEVEL = credentials('LOG_LEVEL')
 
         // Database Configuration
