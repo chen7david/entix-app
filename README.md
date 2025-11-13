@@ -17,5 +17,13 @@ Pass the `CloudflareBindings` as generics when instantiation `Hono`:
 
 ```ts
 // src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
+const app = new Hono<{ Bindings: CloudflareBindings }>();
+```
+
+### Cloudflare deployment:
+
+Due to simple code organization of this app you will have to update the default build scritp for `preview URLs` to
+
+```cmd
+npm install && cd web && npm install && cd .. && npm run web:build
 ```
