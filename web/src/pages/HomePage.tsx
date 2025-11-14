@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 export const HomePage = () => {
   const [message, setMessage] = useState("");
@@ -19,9 +20,11 @@ export const HomePage = () => {
       <header className="w-full max-w-5xl flex justify-between items-center py-6 px-4">
         <div className="text-3xl font-extrabold text-green-600">Entix</div>
 
-        <button className="px-5 py-2 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition">
-          Login
-        </button>
+        <Link to="/login">
+          <button className="px-5 py-2 rounded-full bg-green-600 text-white font-semibold hover:bg-green-700 transition">
+            Login
+          </button>
+        </Link>
       </header>
 
       {/* Hero Section */}
@@ -38,9 +41,11 @@ export const HomePage = () => {
             mastery with fun, science-powered practice.
           </p>
 
-          <button className="mt-6 px-8 py-3 bg-green-600 text-white font-bold rounded-full text-lg hover:bg-green-700 transition shadow-md">
-            Get Started
-          </button>
+          <Link to="/signup">
+            <button className="mt-6 px-8 py-3 bg-green-600 text-white font-bold rounded-full text-lg hover:bg-green-700 transition shadow-md">
+              Get Started
+            </button>
+          </Link>
 
           <p className="mt-6 text-md text-gray-600">
             Server Message:{" "}
