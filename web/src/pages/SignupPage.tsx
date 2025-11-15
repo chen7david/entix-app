@@ -1,15 +1,50 @@
-import { Form, Input, Button } from "antd";
+import { Form, Input, Button, App } from "antd";
 import { Link } from "react-router-dom";
 import { createSchemaFieldRule } from "antd-zod";
 import { createUserDto, type CreateUserDto } from "@shared/dtos/user.dto";
+import { useState } from "react";
 
 const zodRule = createSchemaFieldRule(createUserDto);
 
 export const SignupPage = () => {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const { message } = App.useApp();
 
-  const onFinish = (values: CreateUserDto) => {
+  const onFinish = async (values: CreateUserDto) => {
     console.log("Signup submitted:", values);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/v1/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(values),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      console.log("Signup response:", {
+        ok: res.ok,
+        status: res.status,
+        data,
+      });
+
+      if (!res.ok) {
+        message.error(data?.message ?? "Signup failed");
+        return;
+      }
+
+      message.success("Account created!");
+      form.resetFields();
+    } catch (err: any) {
+      console.error("Signup error:", err);
+      message.error("Network error — try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -29,7 +64,6 @@ export const SignupPage = () => {
       {/* Signup Card */}
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md">
         <Form form={form} layout="vertical" onFinish={onFinish}>
-          {/* Username */}
           <Form.Item
             label={
               <span className="font-semibold text-green-700">Username</span>
@@ -43,7 +77,6 @@ export const SignupPage = () => {
             />
           </Form.Item>
 
-          {/* Email */}
           <Form.Item
             label={<span className="font-semibold text-green-700">Email</span>}
             name="email"
@@ -55,7 +88,6 @@ export const SignupPage = () => {
             />
           </Form.Item>
 
-          {/* Password */}
           <Form.Item
             label={
               <span className="font-semibold text-green-700">Password</span>
@@ -69,7 +101,6 @@ export const SignupPage = () => {
             />
           </Form.Item>
 
-          {/* Confirm Password */}
           <Form.Item
             label={
               <span className="font-semibold text-green-700">
@@ -85,11 +116,11 @@ export const SignupPage = () => {
             />
           </Form.Item>
 
-          {/* Submit */}
           <Form.Item>
             <Button
               type="primary"
               htmlType="submit"
+              loading={loading}
               className="!w-full !bg-green-600 !border-none !py-2 !rounded-full hover:!bg-green-700 transition"
             >
               Create Account
@@ -97,7 +128,6 @@ export const SignupPage = () => {
           </Form.Item>
         </Form>
 
-        {/* Already have an account? */}
         <div className="text-center mt-4">
           <span className="text-gray-600">Already have an account? </span>
           <Link
