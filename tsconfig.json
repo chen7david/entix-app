@@ -6,8 +6,16 @@
     "strict": true,
     "skipLibCheck": true,
     "lib": ["ESNext"],
+
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "types": ["./worker-configuration.d.ts"]
-  }
+
+    "types": ["./worker-configuration.d.ts"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./shared/*"]
+    }
+  },
+  "include": ["./**/*.ts", "./shared/**/*.ts"]
 }
