@@ -1,8 +1,14 @@
 import { Form, Input, Button } from "antd";
 import { Link } from "react-router-dom";
+import { createSchemaFieldRule } from "antd-zod";
+import { createUserDto, type CreateUserDto } from "@shared/dtos/user.dto";
+
+const zodRule = createSchemaFieldRule(createUserDto);
 
 export const SignupPage = () => {
-  const onFinish = (values: any) => {
+  const [form] = Form.useForm();
+
+  const onFinish = (values: CreateUserDto) => {
     console.log("Signup submitted:", values);
   };
 
@@ -22,14 +28,14 @@ export const SignupPage = () => {
 
       {/* Signup Card */}
       <div className="bg-white p-8 rounded-3xl shadow-lg w-full max-w-md">
-        <Form layout="vertical" onFinish={onFinish}>
+        <Form form={form} layout="vertical" onFinish={onFinish}>
           {/* Username */}
           <Form.Item
             label={
               <span className="font-semibold text-green-700">Username</span>
             }
             name="username"
-            rules={[{ required: true, message: "Please enter a username" }]}
+            rules={[zodRule]}
           >
             <Input
               className="!rounded-full !py-2"
@@ -41,10 +47,7 @@ export const SignupPage = () => {
           <Form.Item
             label={<span className="font-semibold text-green-700">Email</span>}
             name="email"
-            rules={[
-              { required: true, message: "Please enter your email" },
-              { type: "email", message: "Invalid email format" },
-            ]}
+            rules={[zodRule]}
           >
             <Input
               className="!rounded-full !py-2"
@@ -58,7 +61,7 @@ export const SignupPage = () => {
               <span className="font-semibold text-green-700">Password</span>
             }
             name="password"
-            rules={[{ required: true, message: "Please enter a password" }]}
+            rules={[zodRule]}
           >
             <Input.Password
               className="!rounded-full !py-2"
@@ -73,19 +76,8 @@ export const SignupPage = () => {
                 Confirm Password
               </span>
             }
-            name="confirm"
-            dependencies={["password"]}
-            rules={[
-              { required: true, message: "Please confirm your password" },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue("password") === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error("Passwords do not match"));
-                },
-              }),
-            ]}
+            name="passwordConfirm"
+            rules={[zodRule]}
           >
             <Input.Password
               className="!rounded-full !py-2"
