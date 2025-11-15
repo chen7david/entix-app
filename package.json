@@ -3,7 +3,7 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run api:dev\" \"npm run web:dev\"",
-    "api:dev": "wrangler dev --port 3000",
+    "api:dev": "wrangler dev --config wrangler.dev.jsonc --port 3000",
     "web:dev": "cd web && npm run dev",
     "web:build": "cd web && npm run build",
     "deploy": "wrangler deploy --minify",
