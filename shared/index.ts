@@ -1,11 +1,8 @@
 import { z } from "zod";
 
-export const SHARED_GREETING = "Hello from shared code!";
-
 export const userSchema = z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
+    name: z.string().min(3, { message: "Username must be at least 3 characters" }).max(255),
+    email: z.email({ message: "Invalid email address" }),
 });
 
 export type UserDTO = z.infer<typeof userSchema>;
