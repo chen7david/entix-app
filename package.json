@@ -2,8 +2,10 @@
 	"name": "entix-app",
 	"type": "module",
 	"scripts": {
-		"dev": "wrangler dev",
-		"deploy": "wrangler deploy --minify",
+		"dev:api": "wrangler dev",
+		"dev:web": "cd web && npm run dev",
+		"build:web": "cd web && npm run build",
+		"deploy": "wrangler deploy --minify --env prod",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
