@@ -3,13 +3,12 @@
 Entix-App is a full-stack application built on **Cloudflare Workers** (API) and a **Vite + React** frontend (web).  
 Though API and Web run as separate applications during development, **production deployment bundles both together** into a single Worker, which serves API endpoints and static assets from one place.
 
-This document explains the project layout, how local development works, how shared packages are handled, and how deployment behaves.
+This document explains the project layout, how local development works, how shared packages are handled, how deployments work, and how staging vs production environments behave.
 
 ---
 
 ## **Project Structure**
 
-```
 entix-app/
  ├── src/              # Worker API source code
  ├── web/              # Vite + React frontend
@@ -17,19 +16,13 @@ entix-app/
  ├── wrangler.jsonc    # Cloudflare Worker config
  ├── package.json      # Root package manager config
  └── ...
-```
 
 ### **Package Manager**
 - The entire project uses **npm**.
 - Installing root-level dependencies:  
-  ```bash
   npm install
-  ```
 - Installing frontend dependencies:  
-  ```bash
-  cd web
-  npm install
-  ```
+  cd web && npm install
 
 ---
 
@@ -39,11 +32,9 @@ The `shared` directory contains code used by **both** the API and the Web.
 
 Import shared items like this:
 
-```ts
 import { UserDTO } from "@shared";
-```
 
-Path aliases work because Vite and Wrangler both read the root `tsconfig` (extended in `web`), and `vite-tsconfig-paths` resolves them automatically.
+Path aliases work because Vite and Wrangler both read the root `tsconfig`, and `vite-tsconfig-paths` resolves them automatically.
 
 No symlinks or publishing required — just import.
 
@@ -53,110 +44,116 @@ No symlinks or publishing required — just import.
 
 Local development intentionally runs **as two separate applications**:
 
-### **1. API (Cloudflare Worker Local Mode)**
+### **1. API (Cloudflare Worker Local Mode)**  
 Runs on port **3000**:
 
-```bash
 wrangler dev --local --port 3000
-```
 
-### **2. Web (Vite Dev Server)**
+### **2. Web (Vite Dev Server)**  
 Runs on port **8000**:
 
-```bash
 cd web && npm run dev
-```
 
 Using the root script:
 
-```bash
 npm run dev
-```
 
-`concurrently` launches both dev servers.  
-You will see:
-
-- API → `http://localhost:3000`
-- Web → `http://localhost:8000`
+This launches both API and Web concurrently.
 
 ---
 
 ## **Calling the API in Development**
 
-The Vite dev server is configured to **proxy all `/api` traffic** to the local API Worker.
+Vite proxies all `/api` calls to the local Worker API.
 
-`web/vite.config.ts`:
+Correct API usage in development:
 
-```ts
-server: {
-  port: 8000,
-  proxy: {
-    "/api": {
-      target: "http://localhost:3000",
-      changeOrigin: true,
-    },
-  },
-},
-```
-
-### **API calls in dev should NEVER include localhost or a URL.**
-
-Correct usage:
-
-```ts
 const response = await axios.get<UserDTO>("/api/v1/users");
-```
 
-### **External APIs still require full URLs:**
+Do **not** hardcode localhost URLs.
 
-```ts
+External APIs still require full URLs:
+
 await axios.get("https://example.com/weather");
-```
 
 ---
 
-## **Production Deployment**
+## **Deployments**
 
-In production, everything becomes **one single Cloudflare Worker**:
+Entix-App uses **Cloudflare GitHub Integration** to automate deployments for **staging** and uses manual commands for **production**.
 
-1. The frontend is built into `web/dist`
-2. Wrangler deploys the Worker and serves static assets from the `dist` folder
-3. API and Web are now combined into one unified deployment
+### **Staging (Preview Deployments)**  
+Whenever you create a **Pull Request**, Cloudflare automatically:
 
-The asset config in `wrangler.jsonc`:
+- Builds the feature branch  
+- Deploys it as a **preview Worker environment**  
+- Posts a **Preview URL** in the PR comments  
+- We treat this preview as our **staging deployment**
 
-```jsonc
+This preview behaves exactly like production, with:
+
+- Static assets  
+- API routes  
+- Environment bindings  
+- Worker logic  
+
+### **Environment Separation**
+
+We have **two isolated Cloudflare environments**:
+
+#### **1. staging**
+Created automatically with each PR.  
+Has its own:
+
+- D1 Database  
+- R2 bucket(s)  
+- KV namespaces  
+- Queues  
+- Environment variables  
+
+#### **2. prod**
+The live production environment.  
+Also has its **own** bindings separate from staging.
+
+Cloudflare selects the correct environment using:
+
+--env staging  
+--env prod
+
+### **Production Deployment**
+
+Executed manually:
+
+npm run deploy
+
+This performs:
+
+1. Build the frontend → `web/dist`
+2. Deploy entire Worker + static assets to **prod**
+
+---
+
+## **Production Behavior**
+
+In production:
+
+- API and Web run in **one Cloudflare Worker**
+- All static assets come from `web/dist`
+- No separate servers  
+- Routing is automatic  
+- No hardcoded backend URLs needed  
+
+Asset config in `wrangler.jsonc`:
+
 "assets": {
   "binding": "ASSETS",
   "directory": "./web/dist"
 }
-```
-
-### **Routing Notes**
-- Production automatically resolves API routes correctly  
-- No need to hardcode backend URLs  
-- API and Web redeploy together as one unit
-
----
-
-## **Deployment Command**
-
-Deploying to Cloudflare Production:
-
-```bash
-npm run deploy
-```
-
-This performs:
-
-1. `npm run build:web`
-2. `wrangler deploy --minify --env prod`
 
 ---
 
 ## **Root Scripts (package.json)**
 
-```json
 {
   "scripts": {
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
@@ -167,32 +164,36 @@ This performs:
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   }
 }
-```
 
 ---
 
 ## **Key Behaviors Summary**
 
 ### **Development**
-- Two separate ports:
-  - API → 3000  
-  - Web → 8000  
-- `/api` routes automatically forwarded to API  
-- Shared DTO imports work with `@shared`  
-- Vite handles backend routing in dev
+- API → port 3000  
+- Web → port 8000  
+- Vite proxies `/api` → API Worker  
+- Shared DTO imports via `@shared`  
+- Never hardcode URLs
+
+### **Staging**
+- Auto-deployed for every Pull Request  
+- Preview URL is posted automatically  
+- Fully isolated Cloudflare environment  
+- Separate: D1, R2, KV, Queues, ENV vars
 
 ### **Production**
-- Built frontend is served by the Worker  
-- API and Web deployed together  
-- No separate servers  
-- URLs resolved automatically by Cloudflare
+- Single Worker hosts **both** API + Web  
+- Deploy with: `npm run deploy`  
+- Separate D1 / KV / R2 / Queues from staging  
 
 ---
 
 ## **Developer Notes**
 - Install dependencies:
-  - **Root/API/shared:** `npm install`
-  - **Web-only:** `cd web && npm install`
-- Never use full URLs for internal API calls  
-- External calls must use full URLs  
-- Any code change in API or Web redeploys the entire Worker
+  - Root/API/shared → `npm install`
+  - Web → `cd web && npm install`
+- Internal API calls must always be relative  
+- External APIs require full URLs  
+- All code changes in Web or API redeploy the Worker  
+- PR previews = staging; manual deploy = production
