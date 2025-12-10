@@ -10,7 +10,7 @@
 		"install:web": "cd web && npm install",
 		"install:api": "npm install",
 		"deploy": "npm run install:web && npm run build:web && wrangler deploy --minify --env prod",
-		"deploy:preview": "npm run build:web && wrangler versions upload --minify --env prod",
+		"deploy:preview": "npm run install:web && npm run build:web && wrangler versions upload --minify --env prod",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
