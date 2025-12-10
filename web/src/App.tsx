@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { userSchema } from '@shared/index'
 import type { UserDTO } from "@shared/index";
 import { createSchemaFieldRule } from 'antd-zod';
 import { Button, Form, Input } from 'antd'
+import axios from 'axios'
 
 function App() {
   const [user, setUser] = useState<UserDTO | null>(null);
@@ -12,6 +13,15 @@ function App() {
     console.log(values);
     setUser(values);
   };
+
+  const getUser = async () => {
+    const response = await axios.get<UserDTO>("/api/v1/users");
+    setUser(response.data);
+  };
+
+  useEffect(() => {
+    getUser();
+  }, []);
 
   return (
     <>
