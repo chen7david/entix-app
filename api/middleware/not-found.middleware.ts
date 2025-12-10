@@ -1,11 +1,6 @@
 import { Context } from 'hono';
+import { NotFoundError } from '../errors/app.error';
 
-export const notFoundHandler = async (c: Context) => {
-    return c.json(
-        {
-            success: false,
-            message: `Route ${c.req.path} not found`,
-        },
-        404
-    );
+export const notFoundHandler = (c: Context) => {
+    throw new NotFoundError(`Route ${c.req.path} not found`);
 };

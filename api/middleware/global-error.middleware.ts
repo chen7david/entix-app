@@ -22,9 +22,22 @@ export const globalErrorHandler = async (err: Error, c: Context) => {
 
     // 2. Custom AppError
     if (err instanceof AppError) {
-        return c.json({ message: err.message, ...(err.details ? { details: err.details } : {}) }, err.status);
+        return c.json(
+            {
+                success: false,
+                message: err.message,
+                ...(err.details ? { details: err.details } : {}),
+            },
+            err.status
+        );
     }
 
     // 3. Unknown or unhandled error
-    return c.json({ message: 'Internal Server Error' }, 500);
+    return c.json(
+        {
+            success: false,
+            message: 'Internal Server Error',
+        },
+        500
+    );
 };
