@@ -7,11 +7,15 @@
 	"name": "entix-app",
 	"main": "src/index.ts",
 	"compatibility_date": "2025-12-10",
-	"assets": {
-		"binding": "ASSETS",
-		"directory": "./web/dist"
-	},
 	"observability": {
 		"enabled": true
+	},
+	"env": {
+		"prod": {
+			"assets": {
+				"binding": "ASSETS",
+				"directory": "./web/dist"
+			}
+		}
 	}
 }
