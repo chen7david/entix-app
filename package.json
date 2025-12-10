@@ -5,9 +5,10 @@
 		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
 		"dev:api": "wrangler dev --local --port 3000",
 		"dev:web": "cd web && npm run dev",
-		"dev:install": "npm ci && npm run install:web",
+		"dev:init": "npm run install:api && npm run install:web",
 		"build:web": "cd web && npm run build",
-		"install:web": "cd web && npm ci",
+		"install:web": "cd web && npm install",
+		"install:api": "npm install",
 		"deploy": "npm run install:web && npm run build:web && wrangler deploy --minify --env prod",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
