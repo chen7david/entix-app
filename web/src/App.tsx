@@ -2,9 +2,25 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import { SHARED_GREETING, userSchema } from '@shared/index'
+import type { UserDTO } from "@shared/index";
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  const [user, setUser] = useState<UserDTO | null>(null);
+
+
+
+  const verifyUser = () => {
+
+    const user: UserDTO = userSchema.parse({
+      id: 1,
+      name: "John Doe",
+      email: "john.doe@example.com",
+    });
+
+    setUser(user);
+  };
 
   return (
     <>
@@ -18,8 +34,9 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+        <button onClick={verifyUser}>
+          {SHARED_GREETING}
+          {user?.name}
         </button>
         <p>
           Edit <code>src/App.tsx</code> and save to test HMR
