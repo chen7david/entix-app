@@ -2,15 +2,13 @@
 	"name": "entix-app",
 	"type": "module",
 	"scripts": {
+		"dev:init": "npm install && cd web && npm install",
 		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
 		"dev:api": "wrangler dev --local --port 3000",
 		"dev:web": "cd web && npm run dev",
-		"dev:init": "npm run install:api && npm run install:web",
-		"build:web": "cd web && npm run build",
-		"install:web": "cd web && npm install",
-		"install:api": "npm install",
-		"deploy": "npm run install:web && npm run build:web && wrangler deploy --minify --env prod",
-		"deploy:preview": "npm run install:web && npm run build:web && wrangler versions upload --minify --env prod",
+		"build:web": "cd web && npm install && npm run build",
+		"deploy": "npm run build:web && wrangler deploy --minify --env prod",
+		"deploy:preview": "npm run build:web && wrangler versions upload --minify --env prod",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
