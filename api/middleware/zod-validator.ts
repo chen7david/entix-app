@@ -1,9 +1,9 @@
-import type { Context } from 'hono';
 import { zValidator } from '@hono/zod-validator';
-import type { ZodSchema } from 'zod';
+import type { ZodObject } from 'zod';
+import type { ValidationTargets } from 'hono';
 
-export const zodValidator = <T extends ZodSchema>(target: 'json' | 'query' | 'param' | 'form', schema: T) =>
-    zValidator(target, schema, (result, c: Context) => {
+export const zodValidator = <T extends ZodObject>(target: keyof ValidationTargets, schema: T) =>
+    zValidator(target, schema, (result) => {
         if (!result.success) throw result.error;
     });
 

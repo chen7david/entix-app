@@ -1,6 +1,5 @@
 import { Hono } from 'hono';
 import { loginSchema } from '@shared/index';
-import type { LoginDTO } from '@shared/index';
 import { zodValidator } from '../middleware/zod-validator';
 
 
