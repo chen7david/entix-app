@@ -1,9 +1,33 @@
-# **Entix-App – Project Overview**
+# **Entix-App**
 
-Entix-App is a full-stack application built on **Cloudflare Workers** (API) and a **Vite + React** frontend (web).  
-Though API and Web run as separate applications during development, **production deployment bundles both together** into a single Worker, which serves API endpoints and static assets from one place.
+Entix-App is a full-stack application built on **Cloudflare Workers** (API) and a **Vite + React** frontend (web).
 
-This document explains the project layout, how local development works, how shared packages are handled, and how deployment behaves.
+- **Development**: Runs as two separate processes (Vite + Wrangler) for a fast developer experience.
+- **Production**: Bundles into a **single Cloudflare Worker** that serves both the API and the static frontend assets.
+
+---
+
+## **Architecture**
+
+### **Development Architecture**
+In development, we run two separate servers. Vite proxies API requests to the Worker.
+
+```mermaid
+graph LR
+    Dev[Developer] -->|http://localhost:8000| Vite[Vite Dev Server]
+    Vite -->|/api/* (Proxy)| Worker[Cloudflare Worker (API)]
+    Worker -->|Port 3000| Logic[API Logic]
+```
+
+### **Production Architecture**
+In production, everything is deployed as a single unit. The Worker handles routing for both API endpoints and static files.
+
+```mermaid
+graph LR
+    User[User] -->|https://entix.app| Worker[Cloudflare Worker]
+    Worker -->|/api/*| Logic[API Logic]
+    Worker -->|*| Assets[Static Assets (web/dist)]
+```
 
 ---
 
@@ -15,184 +39,122 @@ entix-app/
  ├── web/              # Vite + React frontend
  ├── shared/           # Shared DTOs, schemas, utilities
  ├── wrangler.jsonc    # Cloudflare Worker config
- ├── package.json      # Root package manager config
- └── ...
+ └── package.json      # Root package manager config
 ```
 
-### **Package Manager**
-- The entire project uses **npm**.
-- Installing root-level dependencies:  
-  ```bash
-  npm install
-  ```
-- Installing frontend dependencies:  
-  ```bash
-  cd web
-  npm install
-  ```
+### **Shared Code**
+The `shared` directory contains code used by **both** the API and the Web (e.g., Zod schemas, DTO types).
+- Import via: `import { UserDTO } from "@shared";`
+- No build step required; resolved automatically by `vite-tsconfig-paths` and Wrangler.
 
 ---
 
-## **Shared Types & DTOs**
+## **Development Workflow**
 
-The `shared` directory contains code used by **both** the API and the Web.
-
-Import shared items like this:
-
-```ts
-import { UserDTO } from "@shared";
-```
-
-Path aliases work because Vite and Wrangler both read the root `tsconfig` (extended in `web`), and `vite-tsconfig-paths` resolves them automatically.
-
-No symlinks or publishing required — just import.
-
----
-
-## **Local Development**
-
-Local development intentionally runs **as two separate applications**:
-
-### **1. API (Cloudflare Worker Local Mode)**
-Runs on port **3000**:
+### **1. Setup**
+Install dependencies for the root, API, and Web:
 
 ```bash
-wrangler dev --local --port 3000
+npm run dev:init
+# Or manually:
+# npm install && cd web && npm install
 ```
 
-### **2. Web (Vite Dev Server)**
-Runs on port **8000**:
-
-```bash
-cd web && npm run dev
-```
-
-Using the root script:
+### **2. Run Locally**
+Start both the API and Web servers concurrently:
 
 ```bash
 npm run dev
 ```
 
-`concurrently` launches both dev servers.  
-You will see:
+- **Web**: [http://localhost:8000](http://localhost:8000)
+- **API**: [http://localhost:3000](http://localhost:3000)
 
-- API → `http://localhost:3000`
-- Web → `http://localhost:8000`
+### **3. API Usage**
+The frontend is configured to proxy `/api` requests to the backend. **Always use relative paths** in your frontend code:
 
----
+```typescript
+// ✅ Correct
+const res = await axios.get("/api/v1/users");
 
-## **Calling the API in Development**
-
-The Vite dev server is configured to **proxy all `/api` traffic** to the local API Worker.
-
-`web/vite.config.ts`:
-
-```ts
-server: {
-  port: 8000,
-  proxy: {
-    "/api": {
-      target: "http://localhost:3000",
-      changeOrigin: true,
-    },
-  },
-},
-```
-
-### **API calls in dev should NEVER include localhost or a URL.**
-
-Correct usage:
-
-```ts
-const response = await axios.get<UserDTO>("/api/v1/users");
-```
-
-### **External APIs still require full URLs:**
-
-```ts
-await axios.get("https://example.com/weather");
+// ❌ Incorrect (Don't hardcode localhost)
+const res = await axios.get("http://localhost:3000/api/v1/users");
 ```
 
 ---
 
-## **Production Deployment**
+## **Deployment**
 
-In production, everything becomes **one single Cloudflare Worker**:
+We use **Cloudflare Environments** to separate Staging and Production.
 
-1. The frontend is built into `web/dist`
-2. Wrangler deploys the Worker and serves static assets from the `dist` folder
-3. API and Web are now combined into one unified deployment
+### **Staging (Preview)**
+- **Trigger**: Automatic on every Pull Request.
+- **Mechanism**: Cloudflare GitHub Integration builds and deploys a **Preview Worker**.
+- **Environment**: Uses the `staging` environment in `wrangler.jsonc`.
+- **Isolation**: Has separate D1 databases, KV namespaces, and R2 buckets from production.
 
-The asset config in `wrangler.jsonc`:
+### **Production**
+- **Trigger**: Manual deployment.
+- **Command**:
+  ```bash
+  npm run deploy
+  ```
+- **Mechanism**: Builds the frontend (`web/dist`) and deploys the Worker with assets to the `prod` environment.
+
+### **Environment Configuration**
+`wrangler.jsonc` defines the environments:
 
 ```jsonc
-"assets": {
-  "binding": "ASSETS",
-  "directory": "./web/dist"
+"env": {
+  "staging": { ... }, // Uses preview databases/assets
+  "prod": { ... }     // Uses production databases/assets
 }
 ```
 
-### **Routing Notes**
-- Production automatically resolves API routes correctly  
-- No need to hardcode backend URLs  
-- API and Web redeploy together as one unit
-
 ---
 
-## **Deployment Command**
+## **Error Handling & Validation**
 
-Deploying to Cloudflare Production:
+The API uses a unified error handling strategy to ensure consistent responses.
 
-```bash
-npm run deploy
-```
-
-This performs:
-
-1. `npm run build:web`
-2. `wrangler deploy --minify --env prod`
-
----
-
-## **Root Scripts (package.json)**
+### **Response Format**
+All errors follow this JSON structure:
 
 ```json
 {
-  "scripts": {
-    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
-    "dev:api": "wrangler dev --local --port 3000",
-    "dev:web": "cd web && npm run dev",
-    "build:web": "cd web && npm run build",
-    "deploy": "npm run build:web && wrangler deploy --minify --env prod",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
-  }
+  "success": false,
+  "message": "Error description",
+  "details": { ... }, // Optional validation details
+  "status": 400
 }
 ```
 
+### **Validation**
+We use **Zod** for request validation. Validation errors return a `422 Unprocessable Entity` status with detailed field errors.
+
+```typescript
+// Example: Validation Error Response
+{
+  "success": false,
+  "message": "Validation failed",
+  "details": {
+    "email": ["Invalid email address"]
+  },
+  "status": 400
+}
+```
+
+### **404 Handling**
+Routes that do not exist return a standard 404 response generated by the central error handler.
+
 ---
 
-## **Key Behaviors Summary**
+## **Scripts Reference**
 
-### **Development**
-- Two separate ports:
-  - API → 3000  
-  - Web → 8000  
-- `/api` routes automatically forwarded to API  
-- Shared DTO imports work with `@shared`  
-- Vite handles backend routing in dev
-
-### **Production**
-- Built frontend is served by the Worker  
-- API and Web deployed together  
-- No separate servers  
-- URLs resolved automatically by Cloudflare
-
----
-
-## **Developer Notes**
-- Install dependencies:
-  - **Root/API/shared:** `npm install`
-  - **Web-only:** `cd web && npm install`
-- Never use full URLs for internal API calls  
-- External calls must use full URLs  
-- Any code change in API or Web redeploys the entire Worker
+| Script | Description |
+| :--- | :--- |
+| `npm run dev` | Starts API and Web in development mode. |
+| `npm run dev:init` | Installs all dependencies (Root + Web). |
+| `npm run build:web` | Builds the React frontend to `web/dist`. |
+| `npm run deploy` | Builds web and deploys to **Production**. |
+| `npm run deploy:staging` | Builds web and deploys to **Staging** (manual trigger). |

@@ -1,17 +1,23 @@
 import { Hono } from "hono";
-import { userSchema } from "@shared/index";
-import type { UserDTO } from "@shared/index";
+import { globalErrorHandler } from "./middleware/global-error.middleware";
+import { notFoundHandler } from "./middleware/not-found.middleware";
+import authRoute from "./routes/auth.route";
+import usersRoute from "./routes/users.route";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
-app.get("/api/v1/users", (c) => {
-  const user: UserDTO = userSchema.parse({
-    id: "1",
-    name: "Server User",
-    email: "server.user@example.com",
-  });
+// ---------------------------
+// Routes
+// ---------------------------
 
-  return c.json(user);
-});
+app.route("/api/v1/users", usersRoute);
+app.route("/api/v1/auth", authRoute);
+
+// ---------------------------
+// Error & 404 handlers
+// ---------------------------
+
+app.notFound(notFoundHandler);
+app.onError(globalErrorHandler);
 
 export default app;

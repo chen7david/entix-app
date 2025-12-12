@@ -6,12 +6,23 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "entix-app",
 	"main": "api/main.ts",
+	"preview_urls": true,
 	"compatibility_date": "2025-12-10",
 	"observability": {
 		"enabled": true
 	},
 	"env": {
 		"prod": {
+			"assets": {
+				"binding": "ASSETS",
+				"directory": "./web/dist",
+				"not_found_handling": "single-page-application",
+				"run_worker_first": [
+					"/api/*"
+				]
+			}
+		},
+		"staging": {
 			"assets": {
 				"binding": "ASSETS",
 				"directory": "./web/dist",
