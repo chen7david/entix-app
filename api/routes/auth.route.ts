@@ -1,11 +1,11 @@
 import { Hono } from 'hono';
 import { loginSchema } from '@shared/index';
-import { zodValidator } from '../middleware/zod-validator';
+import { validator } from '../middleware/zod-validator';
 
 
 const app = new Hono();
 
-app.post('/login', zodValidator('json', loginSchema), async (c) => {
+app.post('/login', validator('json', loginSchema), async (c) => {
     const { username } = c.req.valid('json');
 
     return c.json({
