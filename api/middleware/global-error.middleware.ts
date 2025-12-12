@@ -14,7 +14,7 @@ export const globalErrorHandler = async (err: Error, c: Context) => {
             {
                 success: false,
                 message: 'Validation failed',
-                details: flattened,
+                details: 'properties' in flattened ? flattened.properties : flattened,
             },
             { status: 400 }
         );

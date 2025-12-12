@@ -6,8 +6,8 @@ export const userSchema = z.object({
 });
 
 export const loginSchema = z.object({
-    username: z.string().min(1, "Username is required"),
-    password: z.string().min(1, "Password is required"),
+    username: z.string('Username is required').min(1, "Username is required"),
+    password: z.string('Password is required').min(1, "Password is required"),
 });
 
 export type UserDTO = z.infer<typeof userSchema>;
