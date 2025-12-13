@@ -4,7 +4,7 @@ import { pino } from "pino";
 export const logger = () =>
     pinoLogger({
         pino: pino({
-            base: undefined,
+            level: "info",
             timestamp: () => `,"time":"${new Date().toISOString()}"`,
         }),
         http: { reqId: () => Math.random().toString(36).slice(2, 9) },

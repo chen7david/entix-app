@@ -1,6 +1,7 @@
 {
 	"name": "entix-app",
 	"type": "module",
+	"version": "1.0.0",
 	"scripts": {
 		"dev:init": "npm install && cd web && npm install",
 		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",

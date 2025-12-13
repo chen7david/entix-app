@@ -1,3 +1,4 @@
+import { OpenAPIHono } from "@hono/zod-openapi";
 import type { Logger } from "pino";
 
 export type AppEnv = {
@@ -6,3 +7,5 @@ export type AppEnv = {
         logger: Logger;
     };
 }
+
+export type AppOpenApi = OpenAPIHono<AppEnv>
