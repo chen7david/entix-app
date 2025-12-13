@@ -1,13 +1,13 @@
-import authRoute from "./routes/auth.route";
-import usersRoute from "./routes/users.route";
 import { createApp } from "./lib/app.lib";
 import { configureOpenApi } from "./lib/open-api.lib";
+import { mountRoutes } from "./lib/app.lib";
+import { routes } from "./routes/index.route";
 
 const app = createApp();
 
 configureOpenApi(app);
+mountRoutes(app, routes, '/api/v1');
 
-app.route("/api/v1/users", usersRoute);
-app.route("/api/v1/auth", authRoute);
+
 
 export default app;
