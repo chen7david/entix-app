@@ -6,6 +6,10 @@ import { globalErrorHandler } from "../middleware/global-error.middleware";
 import { logger } from "../middleware/logger.middleware";
 
 
+export const createRouter = () => {
+    const router = new OpenAPIHono<AppEnv>({ strict: false });
+    return router;
+}
 
 export const createApp = () => {
     const app = new OpenAPIHono<AppEnv>({ strict: false });
