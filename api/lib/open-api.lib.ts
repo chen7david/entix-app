@@ -3,7 +3,7 @@ import packageJson from "../../package.json";
 import { Scalar } from "@scalar/hono-api-reference";
 
 export const configureOpenApi = (app: AppOpenApi) => {
-    app.doc("/api/v1/doc", {
+    app.doc("/api/v1/openapi", {
         openapi: "3.1.0",
         info: {
             title: "Entix API",
@@ -12,7 +12,7 @@ export const configureOpenApi = (app: AppOpenApi) => {
     })
 
     app.get('/api/v1/api-reference', Scalar({
-        url: '/api/v1/doc', theme: 'purple', pageTitle: 'Awesome API', layout: 'classic', defaultHttpClient: {
+        url: '/api/v1/openapi', theme: 'purple', pageTitle: 'Awesome API', layout: 'classic', defaultHttpClient: {
             targetKey: 'js',
             clientKey: 'fetch',
         }
