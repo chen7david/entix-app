@@ -1,4 +1,4 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
+import { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
 import type { Logger } from "pino";
 
 export type AppEnv = {
@@ -15,3 +15,5 @@ export type MountRoutesType = {
     routes: OpenAPIHono<AppEnv>[];
     prefix: string;
 }
+
+export type AppHandler<R extends RouteConfig> = RouteHandler<R, AppEnv>
