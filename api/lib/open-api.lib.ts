@@ -11,5 +11,10 @@ export const configureOpenApi = (app: AppOpenApi) => {
         },
     })
 
-    app.get('/reference', Scalar({ url: '/doc', theme: 'purple', pageTitle: 'Awesome API', }))
+    app.get('/client', Scalar({
+        url: '/doc', theme: 'purple', pageTitle: 'Awesome API', layout: 'classic', defaultHttpClient: {
+            targetKey: 'js',
+            clientKey: 'fetch',
+        }
+    }))
 }
