@@ -1,8 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { userSchema } from "@shared/index";
-import { HttpStatusCodes } from "../../helpers/http.helpers";
-import { validator } from "../../middleware/zod-validator";
-import { jsonContent } from "../../helpers/http.helpers";
+import { HttpStatusCodes, jsonContent, jsonContentRequired } from "../../helpers/http.helpers";
 
 export class UserRoutes {
     static findAll = createRoute({
@@ -19,12 +17,11 @@ export class UserRoutes {
         method: 'post',
         path: '/users',
         request: {
-            body: jsonContent(userSchema, 'User to create'),
+            body: jsonContentRequired(userSchema, 'User to create'),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(userSchema.array(), 'List of all usesrs'),
         },
-        middleware: [validator('json', userSchema)],
     });
 
 
