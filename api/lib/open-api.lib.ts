@@ -1,5 +1,6 @@
 import { AppOpenApi } from "../app.type";
 import packageJson from "../../package.json";
+import { Scalar } from "@scalar/hono-api-reference";
 
 export const configureOpenApi = (app: AppOpenApi) => {
     app.doc("/doc", {
@@ -9,4 +10,6 @@ export const configureOpenApi = (app: AppOpenApi) => {
             version: packageJson.version,
         },
     })
+
+    app.get('/reference', Scalar({ url: '/doc', theme: 'purple', pageTitle: 'Awesome API', }))
 }
