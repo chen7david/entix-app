@@ -17,8 +17,8 @@ function App() {
   };
 
   const getUser = async () => {
-    const response = await axios.get<UserDTO>("/api/v1/users");
-    setUser(response.data);
+    const response = await axios.get<UserDTO[]>("/api/v1/users");
+    setUser(response.data[0]);
   };
 
   useEffect(() => {
