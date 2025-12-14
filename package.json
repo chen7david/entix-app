@@ -1,6 +1,7 @@
 {
 	"name": "entix-app",
 	"type": "module",
+	"version": "1.0.0",
 	"scripts": {
 		"dev:init": "npm install && cd web && npm install",
 		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
@@ -12,9 +13,14 @@
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
+		"@hono/zod-openapi": "^1.1.5",
 		"@hono/zod-validator": "^0.7.5",
+		"@scalar/hono-api-reference": "^0.9.28",
 		"concurrently": "^9.2.1",
 		"hono": "^4.10.8",
+		"hono-pino": "^0.10.3",
+		"pino": "^10.1.0",
+		"stoker": "^2.0.1",
 		"zod": "^4.1.13"
 	},
 	"devDependencies": {
