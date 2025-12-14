@@ -63,7 +63,7 @@ function App() {
               }}
             >
               <Paragraph style={{ margin: 0 }}>
-                <strong>Current user:</strong> {user.name} ({user.email})
+                <strong>Current user:</strong> {user.username} ({user.email})
               </Paragraph>
             </Card>
           )}
