@@ -6,7 +6,7 @@ import { routes } from "./routes/index.route";
 const app = createApp();
 
 configureOpenApi(app);
-mountRoutes(app, routes, '/api/v1');
+mountRoutes({ app, routes, prefix: '/api/v1' });
 
 
 
