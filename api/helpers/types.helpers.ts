@@ -10,7 +10,7 @@ export type AppEnv = {
 
 export type AppOpenApi = OpenAPIHono<AppEnv>
 
-export type MountRoutesType = {
+export type MountRoutes = {
     app: AppOpenApi;
     routes: OpenAPIHono<AppEnv>[];
     prefix: string;

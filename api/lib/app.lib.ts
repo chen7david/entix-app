@@ -1,6 +1,6 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { AppEnv, MountRoutesType } from "../app.type";
+import { AppEnv, MountRoutes } from "../helpers/types.helpers";
 import { notFoundHandler } from "../middleware/not-found.middleware";
 import { globalErrorHandler } from "../middleware/global-error.middleware";
 import { logger } from "../middleware/logger.middleware"
@@ -10,7 +10,7 @@ export const createRouter = () => {
     return router;
 }
 
-export const mountRoutes = ({ app, routes, prefix }: MountRoutesType) => {
+export const mountRoutes = ({ app, routes, prefix }: MountRoutes) => {
     routes.forEach((route) => {
         app.route(prefix, route);
     });
