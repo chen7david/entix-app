@@ -1,7 +1,6 @@
-import authRoute from "./auth.route";
-import usersRoute from "./users.route";
+import { userRoutes } from "./users/users.index";
+
 
 export const routes = [
-    usersRoute,
-    authRoute
+    userRoutes
 ]

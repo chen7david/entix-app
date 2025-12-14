@@ -1,7 +1,7 @@
 import { z } from '@hono/zod-openapi'
 
 export const userSchema = z.object({
-    name: z.string().min(3, { message: "Username must be at least 3 characters" }).max(255),
+    username: z.string().min(3, { message: "Username must be at least 3 characters" }).max(255),
     email: z.email({ message: "Invalid email address" }),
 });
 
