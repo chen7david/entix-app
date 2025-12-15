@@ -3,8 +3,10 @@ import { authContextSchema, signInSchema, signUpSchema, userSchema } from "@shar
 import { HttpStatusCodes, jsonContent, jsonContentRequired } from "@api/helpers/http.helpers";
 
 export class AuthRoutes {
+    static tags = ['Auth'];
+
     static signIn = createRoute({
-        tags: ['Auth'],
+        tags: AuthRoutes.tags,
         method: 'post',
         path: '/sign-in',
         request: {
@@ -16,7 +18,7 @@ export class AuthRoutes {
     });
 
     static signUp = createRoute({
-        tags: ['Auth'],
+        tags: AuthRoutes.tags,
         method: 'post',
         path: '/sign-up',
         request: {
