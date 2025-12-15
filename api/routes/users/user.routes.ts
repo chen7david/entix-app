@@ -23,7 +23,4 @@ export class UserRoutes {
             [HttpStatusCodes.OK]: jsonContent(userSchema.array(), 'List of all usesrs'),
         },
     });
-
-
-
 }
