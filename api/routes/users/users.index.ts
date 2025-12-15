@@ -1,4 +1,4 @@
-import { createRouter } from "../../lib/app.lib";
+import { createRouter } from "@api/lib/app.lib";
 import { UserHandler } from "./user.handlers";
 import { UserRoutes } from './user.routes'
 

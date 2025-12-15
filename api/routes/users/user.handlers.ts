@@ -1,5 +1,5 @@
-import { HttpStatusCodes } from "../../helpers/http.helpers";
-import { AppHandler } from '../../helpers/types.helpers';
+import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import { AppHandler } from '@api/helpers/types.helpers';
 import { UserRoutes } from './user.routes';
 
 export class UserHandler {
