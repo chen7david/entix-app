@@ -14,9 +14,9 @@ In development, we run two separate servers. Vite proxies API requests to the Wo
 
 ```mermaid
 graph LR
-    Dev[Developer] -->|http://localhost:8000| Vite[Vite Dev Server]
-    Vite -->|/api/* (Proxy)| Worker[Cloudflare Worker (API)]
-    Worker -->|Port 3000| Logic[API Logic]
+    Dev[Developer] -->|"http://localhost:8000"| Vite["Vite Dev Server"]
+    Vite -->|"/api/* (Proxy)"| Worker["Cloudflare Worker (API)"]
+    Worker -->|"Port 3000"| Logic["API Logic"]
 ```
 
 ### **Production Architecture**
@@ -24,9 +24,9 @@ In production, everything is deployed as a single unit. The Worker handles routi
 
 ```mermaid
 graph LR
-    User[User] -->|https://entix.app| Worker[Cloudflare Worker]
-    Worker -->|/api/*| Logic[API Logic]
-    Worker -->|*| Assets[Static Assets (web/dist)]
+    User[User] -->|"https://entix.app"| Worker["Cloudflare Worker"]
+    Worker -->|"/api/*"| Logic["API Logic"]
+    Worker -->|"*"| Assets["Static Assets (web/dist)"]
 ```
 
 ---
