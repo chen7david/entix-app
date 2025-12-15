@@ -1,13 +1,13 @@
 import { createRoute } from "@hono/zod-openapi";
 import { userSchema } from "@shared/index";
-import { HttpStatusCodes, jsonContent, jsonContentRequired } from "@api/helpers/http.helpers";
+import { HttpStatusCodes, jsonContent, jsonContentRequired, HttpMethods } from "@api/helpers/http.helpers";
 
 export class UserRoutes {
     static tags = ['Users'];
 
     static findAll = createRoute({
         tags: UserRoutes.tags,
-        method: 'get',
+        method: HttpMethods.GET,
         path: '/users',
         responses: {
             [HttpStatusCodes.OK]: jsonContent(userSchema.array(), 'List of all users'),
@@ -16,7 +16,7 @@ export class UserRoutes {
 
     static create = createRoute({
         tags: UserRoutes.tags,
-        method: 'post',
+        method: HttpMethods.POST,
         path: '/users',
         request: {
             body: jsonContentRequired(userSchema, 'User to create'),

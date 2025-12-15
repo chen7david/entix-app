@@ -1,13 +1,13 @@
 import { createRoute } from "@hono/zod-openapi";
 import { authContextSchema, signInSchema, signUpSchema, userSchema } from "@shared/index";
-import { HttpStatusCodes, jsonContent, jsonContentRequired } from "@api/helpers/http.helpers";
+import { HttpStatusCodes, jsonContent, jsonContentRequired, HttpMethods } from "@api/helpers/http.helpers";
 
 export class AuthRoutes {
     static tags = ['Auth'];
 
     static signIn = createRoute({
         tags: AuthRoutes.tags,
-        method: 'post',
+        method: HttpMethods.POST,
         path: '/sign-in',
         request: {
             body: jsonContentRequired(signInSchema, 'User to sign in'),
@@ -19,7 +19,7 @@ export class AuthRoutes {
 
     static signUp = createRoute({
         tags: AuthRoutes.tags,
-        method: 'post',
+        method: HttpMethods.POST,
         path: '/sign-up',
         request: {
             body: jsonContentRequired(signUpSchema, 'User to create'),
