@@ -1,5 +1,4 @@
-import { userRoutes } from "@api/routes/users/users.index";
-
+import { userRoutes } from "./users/users.index";
 
 export const routes = [
     userRoutes
