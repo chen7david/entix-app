@@ -3,17 +3,9 @@ import { userSchema } from './user.dto';
 
 export const signInSchema = z.object({
     username: z.string('Username is required').min(1, "Username is required").openapi({
-        param: {
-            name: 'username',
-            in: 'path',
-        },
         example: 'chen7david',
     }),
     password: z.string('Password is required').min(1, "Password is required").openapi({
-        param: {
-            name: 'password',
-            in: 'path',
-        },
         example: 'password',
     }),
 });
@@ -22,10 +14,6 @@ export type SignInDTO = z.infer<typeof signInSchema>;
 
 export const signUpSchema = z.object({
     username: z.string('Username is required').min(1, "Username is required").openapi({
-        param: {
-            name: 'username',
-            in: 'path',
-        },
         example: 'chen7david',
     }),
     password: z.string('Password is required').min(1, "Password is required"),
