@@ -9,8 +9,12 @@ export class UserHandler {
 
         return c.json([
             {
+                id: "123e4567-e89b-12d3-a456-426614174000",
+                xid: "123e4567-e89b-12d3-a456-426614174000",
                 username: 'testUser',
-                email: 'testUser@entix.com',
+                email: 'testUser@entix.org',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
             },
         ], HttpStatusCodes.OK);
     }
@@ -22,9 +26,13 @@ export class UserHandler {
 
         return c.json([
             {
+                id: "123e4567-e89b-12d3-a456-426614174000",
+                xid: "123e4567-e89b-12d3-a456-426614174000",
                 username,
                 email,
-            }
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+            },
         ], HttpStatusCodes.OK);
     }
 }
