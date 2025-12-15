@@ -1,4 +1,4 @@
-import { AppOpenApi } from "../helpers/types.helpers";
+import { AppOpenApi } from "@api/helpers/types.helpers";
 import packageJson from "../../package.json";
 import { Scalar } from "@scalar/hono-api-reference";
 

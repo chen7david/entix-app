@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { userSchema } from "@shared/index";
-import { HttpStatusCodes, jsonContent, jsonContentRequired } from "../../helpers/http.helpers";
+import { HttpStatusCodes, jsonContent, jsonContentRequired } from "@api/helpers/http.helpers";
 
 export class UserRoutes {
     static findAll = createRoute({

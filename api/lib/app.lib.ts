@@ -1,9 +1,9 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { AppEnv, MountRoutes } from "../helpers/types.helpers";
-import { notFoundHandler } from "../middleware/not-found.middleware";
-import { globalErrorHandler } from "../middleware/global-error.middleware";
-import { logger } from "../middleware/logger.middleware"
+import { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
+import { notFoundHandler } from "@api/middleware/not-found.middleware";
+import { globalErrorHandler } from "@api/middleware/global-error.middleware";
+import { logger } from "@api/middleware/logger.middleware"
 
 export const createRouter = () => {
     const router = new OpenAPIHono<AppEnv>({
