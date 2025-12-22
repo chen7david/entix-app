@@ -10,7 +10,6 @@ export const usersTable = sqliteTable("users", {
     username: text("username").notNull().unique(),
     email: text("email").notNull().unique(),
     password: text("password").notNull(),
-    sex: integer("sex").notNull().default(1),
 });
 
 export const userInsertSchema = createInsertSchema(usersTable);
@@ -19,7 +18,6 @@ export const userCreateSchema = createInsertSchema(usersTable, {
     username: (s) => z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/, "Only letters, numbers, underscore"),
     email: (s) => z.email(),
     password: () => z.string().min(8).max(200),
-    sex: () => z.number().default(1),
 }).omit({
     id: true,
 });

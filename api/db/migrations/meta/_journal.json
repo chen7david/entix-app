@@ -50,6 +50,13 @@
       "when": 1766419011501,
       "tag": "0006_new_cerise",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1766420800799,
+      "tag": "0007_eager_maverick",
+      "breakpoints": true
     }
   ]
 }
