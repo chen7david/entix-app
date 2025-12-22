@@ -10,6 +10,6 @@ export default defineConfig({
     out: './api/db/migrations',
     dialect: 'sqlite',
     dbCredentials: {
-        url: getLocalD1Url(process.env.CLOUDFLARE_D1_LOCAL_DB!),
+        url: getLocalD1Url('e798b42c80df346fc2744f419503bd99e4275db6eab3e364b54e11cb73a82b59.sqlite'),
     },
 });
