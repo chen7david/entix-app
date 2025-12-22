@@ -12,7 +12,7 @@
 		"enabled": true
 	},
 	"env": {
-		"local": {
+		"development": {
 			"vars": {
 				"SECRET_KEY": "value",
 				"API_TOKEN": "value"
@@ -20,8 +20,8 @@
 			"d1_databases": [
 				{
 					"binding": "DB",
-					"database_name": "entix-app-local",
-					"database_id": "1213",
+					"database_name": "entix-app-development",
+					"database_id": "12345678910",
 					"migrations_dir": "api/db/migrations"
 				}
 			]
@@ -44,7 +44,7 @@
 				}
 			]
 		},
-		"prod": {
+		"production": {
 			"assets": {
 				"binding": "ASSETS",
 				"directory": "./web/dist",
@@ -56,8 +56,8 @@
 			"d1_databases": [
 				{
 					"binding": "DB",
-					"database_name": "entix-app-prod",
-					"database_id": "eefb5055-5e00-4afa-bfe1-85eafcfd7eaa",
+					"database_name": "entix-app-production",
+					"database_id": "3605b429-6cdc-48ed-ad20-5fc7852bd166",
 					"migrations_dir": "api/db/migrations"
 				}
 			]
