@@ -5,15 +5,17 @@
 	"scripts": {
 		"dev:init": "npm install && cd web && npm install",
 		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
-		"dev:api": "wrangler dev --local --port 3000",
+		"dev:api": "wrangler dev --env local --port 3000",
 		"dev:web": "cd web && npm run dev",
 		"build:web": "cd web && npm install && npm run build",
 		"deploy": "npm run build:web && wrangler deploy --minify --env prod",
 		"deploy:staging": "npm run build:web && wrangler versions upload --minify --env staging",
-		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
+		"cf-typegen": "wrangler types --env-interface CloudflareBindings --env local",
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio --config drizzle.config.local.ts",
 		"db:migrate": "drizzle-kit migrate --config drizzle.config.local.ts",
+		"wrangler:migrate": "npx wrangler d1 migrations apply entix-app-local --local --env local",
+		"migrate:local": "npx wrangler d1 execute entix-app-local --env local --local --file=api/db/migrations/$npm_config_migration",
 		"db:migrate:remote": "drizzle-kit migrate"
 	},
 	"dependencies": {
@@ -22,6 +24,7 @@
 		"@scalar/hono-api-reference": "^0.9.28",
 		"concurrently": "^9.2.1",
 		"drizzle-orm": "^0.45.1",
+		"drizzle-zod": "^0.8.3",
 		"hono": "^4.10.8",
 		"hono-pino": "^0.10.3",
 		"pino": "^10.1.0",
