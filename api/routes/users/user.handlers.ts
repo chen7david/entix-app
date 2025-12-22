@@ -1,11 +1,18 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { UserRoutes } from './user.routes';
+import { getDbClient } from '@api/factories/db.factory';
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (c) => {
 
         c.var.logger.info(`All users`);
+
+        const db = getDbClient(c);
+
+        const check = await db.$client.prepare("SELECT 1 AS ok").first<{ ok: number }>();
+
+        c.var.logger.info({ check }, "DB connection check");
 
         return c.json([
             {
