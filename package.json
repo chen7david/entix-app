@@ -14,8 +14,8 @@
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio --config drizzle.config.local.ts",
 		"db:migrate:local": "npx wrangler d1 migrations apply entix-app-local --local --env local",
-		"db:migrate:staging": "npx wrangler d1 migrations apply entix-app-local --remote --env staging",
-		"db:migrate:prod": "npx wrangler d1 migrations apply entix-app-local --remote --env prod",
+		"db:migrate:staging": "npx wrangler d1 migrations apply entix-app-staging --remote --env staging",
+		"db:migrate:prod": "npx wrangler d1 migrations apply entix-app-prod --remote --env prod",
 		"old:db:migrate:local": "npx wrangler d1 execute entix-app-local --env local --local --file=api/db/migrations/$npm_config_migration",
 		"old:db:migrate": "drizzle-kit migrate --config drizzle.config.local.ts",
 		"old:db:migrate:remote": "drizzle-kit migrate"
