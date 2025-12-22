@@ -71,6 +71,13 @@
       "when": 1766424001075,
       "tag": "0009_magical_doctor_octopus",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1766426514574,
+      "tag": "0010_wild_ironclad",
+      "breakpoints": true
     }
   ]
 }
