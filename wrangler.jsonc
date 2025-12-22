@@ -21,6 +21,7 @@
 				{
 					"binding": "DB",
 					"database_name": "entix-app-local",
+					"database_id": "1213",
 					"migrations_dir": "api/db/migrations"
 				}
 			]
