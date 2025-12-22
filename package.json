@@ -8,13 +8,13 @@
 		"dev:api": "wrangler dev --local --port 3000",
 		"dev:web": "cd web && npm run dev",
 		"build:web": "cd web && npm install && npm run build",
-		"deploy": "npm run build:web && wrangler deploy --minify --env prod",
-		"deploy:staging": "npm run build:web && wrangler versions upload --minify --env staging",
+		"deploy": "npm run build:web && wrangler deploy --minify --env prod && db:migrate:remote",
+		"deploy:staging": "npm run build:web && wrangler versions upload --minify --env staging && db:migrate:remote",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings",
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio --config drizzle.config.local.ts",
 		"db:migrate": "drizzle-kit migrate --config drizzle.config.local.ts",
-		"db:migrate:remote": "drizzle-kit migrate --config drizzle.config.ts"
+		"db:migrate:remote": "drizzle-kit migrate"
 	},
 	"dependencies": {
 		"@hono/zod-openapi": "^1.1.5",
