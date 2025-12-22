@@ -8,15 +8,17 @@
 		"dev:api": "wrangler dev --env local --port 3000",
 		"dev:web": "cd web && npm run dev",
 		"build:web": "cd web && npm install && npm run build",
-		"deploy": "npm run build:web && wrangler deploy --minify --env prod",
-		"deploy:staging": "npm run build:web && wrangler versions upload --minify --env staging",
+		"deploy": "npm run db:migrate:prod && npm run build:web && wrangler deploy --minify --env prod",
+		"deploy:staging": "npm run db:migrate:staging && npm run build:web && wrangler versions upload --minify --env staging",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings --env local",
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio --config drizzle.config.local.ts",
-		"db:migrate": "drizzle-kit migrate --config drizzle.config.local.ts",
-		"wrangler:migrate": "npx wrangler d1 migrations apply entix-app-local --local --env local",
-		"migrate:local": "npx wrangler d1 execute entix-app-local --env local --local --file=api/db/migrations/$npm_config_migration",
-		"db:migrate:remote": "drizzle-kit migrate"
+		"db:migrate:local": "npx wrangler d1 migrations apply entix-app-local --local --env local",
+		"db:migrate:staging": "npx wrangler d1 migrations apply entix-app-local --env staging",
+		"db:migrate:prod": "npx wrangler d1 migrations apply entix-app-local --env prod",
+		"old:db:migrate:local": "npx wrangler d1 execute entix-app-local --env local --local --file=api/db/migrations/$npm_config_migration",
+		"old:db:migrate": "drizzle-kit migrate --config drizzle.config.local.ts",
+		"old:db:migrate:remote": "drizzle-kit migrate"
 	},
 	"dependencies": {
 		"@hono/zod-openapi": "^1.1.5",
