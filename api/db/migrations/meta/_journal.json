@@ -64,6 +64,13 @@
       "when": 1766423784040,
       "tag": "0008_warm_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1766424001075,
+      "tag": "0009_magical_doctor_octopus",
+      "breakpoints": true
     }
   ]
 }
