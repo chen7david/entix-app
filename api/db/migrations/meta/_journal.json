@@ -15,6 +15,13 @@
       "when": 1766365659717,
       "tag": "0001_normal_princess_powerful",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1766369111589,
+      "tag": "0002_heavy_jane_foster",
+      "breakpoints": true
     }
   ]
 }
