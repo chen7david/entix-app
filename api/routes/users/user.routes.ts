@@ -22,7 +22,7 @@ export class UserRoutes {
             body: jsonContentRequired(userSchema, 'User to create'),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(userSchema.array(), 'List of all users'),
+            [HttpStatusCodes.OK]: jsonContent(userSchema, 'User created'),
         },
     });
 }

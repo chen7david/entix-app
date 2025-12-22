@@ -12,15 +12,19 @@
 		"enabled": true
 	},
 	"env": {
-		"prod": {
-			"assets": {
-				"binding": "ASSETS",
-				"directory": "./web/dist",
-				"not_found_handling": "single-page-application",
-				"run_worker_first": [
-					"/api/*"
-				]
-			}
+		"development": {
+			"vars": {
+				"SECRET_KEY": "value",
+				"API_TOKEN": "value"
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "entix-app-development",
+					"database_id": "12345678910",
+					"migrations_dir": "api/db/migrations"
+				}
+			]
 		},
 		"staging": {
 			"assets": {
@@ -30,7 +34,33 @@
 				"run_worker_first": [
 					"/api/*"
 				]
-			}
-		}
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "entix-app-staging",
+					"database_id": "5b4c24ea-7c1a-4ca2-9d11-3666795412cc",
+					"migrations_dir": "api/db/migrations"
+				}
+			]
+		},
+		"production": {
+			"assets": {
+				"binding": "ASSETS",
+				"directory": "./web/dist",
+				"not_found_handling": "single-page-application",
+				"run_worker_first": [
+					"/api/*"
+				]
+			},
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "entix-app-production",
+					"database_id": "3605b429-6cdc-48ed-ad20-5fc7852bd166",
+					"migrations_dir": "api/db/migrations"
+				}
+			]
+		},
 	}
 }
