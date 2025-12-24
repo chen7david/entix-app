@@ -6,15 +6,16 @@ Entix-App is a full-stack application built on **Cloudflare Workers** (API) and 
 
 1. [Overview](#overview)
 2. [Quick Start](#quick-start)
-3. [Architecture](#architecture)
-4. [Project Structure](#project-structure)
-5. [Database](#database)
-6. [Routing Architecture](#routing-architecture)
-7. [Error Handling & Validation](#error-handling--validation)
-8. [Development Workflow](#development-workflow)
-9. [Deployment](#deployment)
-10. [Scripts Reference](#scripts-reference)
-11. [API Documentation](#api-documentation)
+3. [Environment Variables](#environment-variables)
+4. [Architecture](#architecture)
+5. [Project Structure](#project-structure)
+6. [Database](#database)
+7. [Routing Architecture](#routing-architecture)
+8. [Error Handling & Validation](#error-handling--validation)
+9. [Development Workflow](#development-workflow)
+10. [Deployment](#deployment)
+11. [Scripts Reference](#scripts-reference)
+12. [API Documentation](#api-documentation)
 
 ---
 
@@ -59,6 +60,28 @@ After the database is created, apply migrations:
 ```bash
 npm run db:migrate:development
 ```
+
+---
+
+## Environment Variables
+
+### Local Development Configuration
+
+Create a `.dev.vars` file in the project root for local development environment variables.
+
+**Example `.dev.vars`:**
+
+```bash
+# Local D1 Database Identifier
+# This is the SQLite filename created by Miniflare in .wrangler/state/v3/d1/miniflare-D1DatabaseObject/
+CLOUDFLARE_D1_LOCAL_DB=your-database-id-here.sqlite
+```
+
+**Important Notes:**
+- `.dev.vars` is gitignored and should **never** be committed
+- This file is only used for local development
+- The `CLOUDFLARE_D1_LOCAL_DB` variable tells Drizzle which local SQLite file to use
+- To find your database ID, check `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/` after running `npm run dev` and hitting a database endpoint
 
 ---
 
