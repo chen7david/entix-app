@@ -5,85 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1766358598546,
-      "tag": "0000_colossal_franklin_storm",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1766365659717,
-      "tag": "0001_normal_princess_powerful",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1766369111589,
-      "tag": "0002_heavy_jane_foster",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1766369662898,
-      "tag": "0003_blue_mandarin",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1766408889238,
-      "tag": "0004_empty_lifeguard",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1766408929052,
-      "tag": "0005_cool_la_nuit",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1766419011501,
-      "tag": "0006_new_cerise",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1766420800799,
-      "tag": "0007_eager_maverick",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1766423784040,
-      "tag": "0008_warm_cable",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1766424001075,
-      "tag": "0009_magical_doctor_octopus",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "6",
-      "when": 1766426514574,
-      "tag": "0010_wild_ironclad",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "6",
-      "when": 1766426873067,
-      "tag": "0011_new_anita_blake",
+      "when": 1766539438212,
+      "tag": "0000_slimy_tana_nile",
       "breakpoints": true
     }
   ]

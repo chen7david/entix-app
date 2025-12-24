@@ -2,7 +2,7 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { UserRoutes } from './user.routes';
 import { getDbClient } from '@api/factories/db.factory';
-import { usersTable } from '@api/db/schema.db';
+import { user } from '@api/db/schema.db';
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (c) => {
@@ -11,7 +11,7 @@ export class UserHandler {
 
         const db = getDbClient(c);
 
-        const users = await db.select().from(usersTable);
+        const users = await db.select().from(user);
 
         c.var.logger.info({ users }, "DB connection check");
 
@@ -21,7 +21,7 @@ export class UserHandler {
     static create: AppHandler<typeof UserRoutes.create> = async (c) => {
         const userData = c.req.valid('json')
 
-        c.var.logger.info(`User ${userData.username} created`);
+        c.var.logger.info(`User ${userData.name} created`);
 
         return c.json(userData, HttpStatusCodes.OK);
     }
