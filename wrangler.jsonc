@@ -27,6 +27,7 @@
 			]
 		},
 		"staging": {
+			"name": "entix-app",
 			"assets": {
 				"binding": "ASSETS",
 				"directory": "./web/dist",
@@ -45,6 +46,7 @@
 			]
 		},
 		"production": {
+			"name": "entix-app",
 			"assets": {
 				"binding": "ASSETS",
 				"directory": "./web/dist",
@@ -60,7 +62,7 @@
 					"database_id": "3605b429-6cdc-48ed-ad20-5fc7852bd166",
 					"migrations_dir": "api/db/migrations"
 				}
-			],"name": "entix-app"
+			],
 		},
 	}
 }
