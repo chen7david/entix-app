@@ -1,1 +1,0 @@
-ALTER TABLE `users` ADD `sex` integer DEFAULT 1 NOT NULL;

@@ -21,6 +21,7 @@
 		"@hono/zod-openapi": "^1.1.5",
 		"@hono/zod-validator": "^0.7.5",
 		"@scalar/hono-api-reference": "^0.9.28",
+		"better-auth": "^1.4.9",
 		"concurrently": "^9.2.1",
 		"drizzle-orm": "^0.45.1",
 		"drizzle-zod": "^0.8.3",
@@ -31,6 +32,8 @@
 		"zod": "^4.1.13"
 	},
 	"devDependencies": {
+		"@better-auth/cli": "^1.4.9",
+		"@types/better-sqlite3": "^7.6.13",
 		"better-sqlite3": "^12.5.0",
 		"dotenv": "^17.2.3",
 		"drizzle-kit": "^0.31.8",

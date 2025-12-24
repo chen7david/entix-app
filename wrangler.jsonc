@@ -8,6 +8,9 @@
 	"main": "api/main.ts",
 	"preview_urls": true,
 	"compatibility_date": "2025-12-10",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
 	"observability": {
 		"enabled": true
 	},
