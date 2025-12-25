@@ -113,7 +113,6 @@ export class EmailService {
  * Use this in your Better Auth configuration
  */
 export function createEmailService(env: CloudflareBindings): EmailService {
-    const isDevelopment = false
-    // env.BETTER_AUTH_URL?.includes('localhost') || false;
+    const isDevelopment = env.BETTER_AUTH_URL?.includes('localhost') || false;
     return new EmailService(env.RESEND_API_KEY, 'donotreply@entix.org', isDevelopment);
 }
