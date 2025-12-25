@@ -2,19 +2,16 @@ import { betterAuth } from "better-auth";
 import { AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
-import { betterAuthOptions } from "./options";
+import { getBetterAuthOptions } from "./options";
 import * as schema from "./../../db/schema.db";
 
 export const auth = (env: CloudflareBindings) => {
     const db = drizzle(env.DB, { schema });
 
     return betterAuth({
-        ...betterAuthOptions,
+        ...getBetterAuthOptions(env),
         baseURL: env.BETTER_AUTH_URL,
         secret: env.BETTER_AUTH_SECRET,
-        emailAndPassword: {
-            enabled: true,
-        },
         database: drizzleAdapter(db, { provider: "sqlite" }),
     });
 };
