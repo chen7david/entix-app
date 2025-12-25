@@ -13,6 +13,10 @@ export const auth = (env: CloudflareBindings) => {
         baseURL: env.BETTER_AUTH_URL,
         secret: env.BETTER_AUTH_SECRET,
         database: drizzleAdapter(db, { provider: "sqlite" }),
+        security: {
+            allowedOrigins: ["*"],
+            disableSameOriginProtection: true
+        }
     });
 };
 
