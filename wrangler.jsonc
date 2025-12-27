@@ -18,7 +18,7 @@
 		"development": {
 			"vars": {
 				"SECRET_KEY": "value",
-				"API_TOKEN": "value"
+				"API_TOKEN": "value",
 			},
 			"d1_databases": [
 				{

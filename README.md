@@ -80,6 +80,9 @@ CLOUDFLARE_D1_LOCAL_DB=your-database-id-here.sqlite
 # Better Auth Configuration
 BETTER_AUTH_URL=http://localhost:3000
 BETTER_AUTH_SECRET=your-secret-key-here-min-32-chars
+
+# Resend Configuration
+RESEND_API_KEY=re_123456789
 ```
 
 **Important Notes:**
@@ -186,6 +189,21 @@ If you encounter issues where migrations appear applied but tables are missing:
    - Development: `npm run db:migrate:development`
    - Staging: `npm run db:migrate:staging`
    - Production: `npm run db:migrate:production`
+
+---
+
+## Resend Email Setup
+
+To enable email verification and password reset, you need to configure Resend:
+
+1. **Sign up** at [resend.com](https://resend.com)
+2. **Create API Key** and add it to your `.dev.vars` file:
+   ```bash
+   RESEND_API_KEY=re_123456789
+   ```
+3. **Verify Domain** (Production only):
+   - Add DNS records provided by Resend to your domain DNS
+   - Update `fromEmail` in `api/services/email.service.ts` if using a custom domain
 
 ---
 
