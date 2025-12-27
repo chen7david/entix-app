@@ -19,11 +19,6 @@ export const auth = (env: CloudflareBindings) => {
             "https://*.chen7david.workers.dev", // Wildcard for feature branches
             env.BETTER_AUTH_URL
         ],
-        advanced: {
-            // Disable origin check for development or if specifically needed
-            // Ideally, use trustedOrigins instead of disabling this completely
-            disableOriginCheck: env.BETTER_AUTH_URL.includes("localhost"),
-        },
     });
 };
 
