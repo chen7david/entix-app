@@ -16,7 +16,7 @@ export const auth = (env: CloudflareBindings) => {
         trustedOrigins: [
             "http://localhost:3000",
             "https://entix.org",
-            "https://*.chen7david.workers.dev", // Wildcard for feature branches
+            "https://*.chen7david.workers.dev",
             env.BETTER_AUTH_URL
         ],
         advanced: {
