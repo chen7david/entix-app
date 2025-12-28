@@ -2,9 +2,9 @@ import { betterAuth } from "better-auth";
 import { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
-import { betterAuthOptions } from "./options";
-import * as schema from "./../../db/schema.db";
-import { Mailer } from "./../mail/mailer.lib";
+import { betterAuthOptions } from "./better-auth-options.lib";
+import * as schema from "../../db/schema.db";
+import { Mailer } from "../mail/mailer.lib";
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
