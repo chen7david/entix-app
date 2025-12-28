@@ -22,14 +22,16 @@ export const auth = (ctx: AppContext) => {
         emailVerification: {
             sendOnSignUp: true,
             sendVerificationEmail: async ({ user, url }) => {
-                void mailer.sendTemplate({
-                    to: user.email,
-                    templateId: "email-verification",
-                    variables: {
-                        DISPLAY_NAME: user.name,
-                        VERIFICATION_LINK: url,
-                    },
-                });
+                ctx.executionCtx.waitUntil(
+                    mailer.sendTemplate({
+                        to: user.email,
+                        templateId: "email-verification",
+                        variables: {
+                            DISPLAY_NAME: user.name,
+                            VERIFICATION_LINK: url,
+                        },
+                    })
+                );
             }
         },
         security: {
