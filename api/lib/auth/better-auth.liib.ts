@@ -21,6 +21,24 @@ export const auth = (ctx: AppContext) => {
         emailAndPassword: {
             enabled: true,
             requireEmailVerification: true,
+            sendResetPassword: async ({ user, url }) => {
+                ctx.executionCtx.waitUntil(
+                    mailer.sendTemplate({
+                        to: user.email,
+                        templateId: "reset-password",
+                        variables: {
+                            DISPLAY_NAME: user.name,
+                            RESET_LINK: url,
+                        },
+                    })
+                );
+            },
+            onPasswordReset: async ({ user }) => {
+                console.log(`Password for user ${user.email} has been reset.`);
+            },
+            resetPassword: {
+                allowedRedirectURLs: ["http://localhost:3000", "https://app.entix.org"],
+            },
         },
         emailVerification: {
             sendOnSignUp: true,
