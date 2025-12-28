@@ -8,13 +8,16 @@ import { Mailer } from "./../mail/mailer.lib";
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
-    const mailer = new Mailer(ctx);
+    const mailer = new Mailer(ctx.env.RESEND_API_KEY);
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
         ...betterAuthOptions,
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
+        advanced: {
+            disableCSRFCheck: true
+        },
         emailAndPassword: {
             enabled: true,
             requireEmailVerification: true,
@@ -34,12 +37,6 @@ export const auth = (ctx: AppContext) => {
                 );
             }
         },
-        security: {
-            allowOrigin: ['http://localhost:3000', 'https://entix.app']
-        },
-        advanced: {
-            disableCSRFCheck: true
-        }
     });
 };
 

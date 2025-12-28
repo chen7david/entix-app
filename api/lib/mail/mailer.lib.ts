@@ -17,8 +17,8 @@ export class Mailer {
     private $client: Resend;
     private sender: string = 'Entix <donotreply@entix.org>';
 
-    constructor(ctx: AppContext) {
-        this.$client = new Resend(ctx.env.RESEND_API_KEY);
+    constructor(apiKey: string) {
+        this.$client = new Resend(apiKey);
     }
 
     public async sendHtml({ to, subject, html }: SendHtmlParams) {
