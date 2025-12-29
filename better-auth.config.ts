@@ -2,8 +2,8 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
-import { betterAuthOptions } from "./api/lib/auth/better-auth-options.lib";
 import { config as loadEnv } from "dotenv";
+import { betterAuthGlobalOptions } from "@api/lib/auth/better-auth.lib";
 
 loadEnv({ path: ".dev.vars" });
 
@@ -16,7 +16,7 @@ const sqlite = new Database(url);
 const db = drizzle(sqlite);
 
 export const auth = betterAuth({
-    ...betterAuthOptions,
+    ...betterAuthGlobalOptions,
     baseURL: process.env.BETTER_AUTH_URL!,
     secret: process.env.BETTER_AUTH_SECRET!,
     database: drizzleAdapter(db, { provider: "sqlite" }),
