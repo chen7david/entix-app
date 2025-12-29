@@ -8,6 +8,13 @@
       "when": 1766539438212,
       "tag": "0000_slimy_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1766968888182,
+      "tag": "0001_faithful_nomad",
+      "breakpoints": true
     }
   ]
 }
