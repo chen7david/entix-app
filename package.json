@@ -15,6 +15,7 @@
 		"db:migrate:development": "npx wrangler d1 migrations apply entix-app-development --local --env development",
 		"db:migrate:staging": "npx wrangler d1 migrations apply entix-app-staging --remote --env staging",
 		"db:migrate:production": "npx wrangler d1 migrations apply entix-app-production --remote --env production",
+		"auth:generate": "npx @better-auth/cli generate --config ./better-auth.config.ts",
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings --env development"
 	},
 	"dependencies": {

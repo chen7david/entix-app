@@ -1,10 +1,19 @@
-import { betterAuth } from "better-auth";
+import { betterAuth, BetterAuthOptions } from "better-auth";
 import { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
-import { betterAuthOptions } from "./better-auth-options.lib";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
+import { organization } from 'better-auth/plugins';
+
+export const betterAuthGlobalOptions: BetterAuthOptions = {
+    appName: 'entix-app',
+    basePath: '/api/v1/auth',
+    plugins: [organization()],
+    advanced: {
+        disableCSRFCheck: true
+    },
+};
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
@@ -12,12 +21,9 @@ export const auth = (ctx: AppContext) => {
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
-        ...betterAuthOptions,
+        ...betterAuthGlobalOptions,
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
-        advanced: {
-            disableCSRFCheck: true
-        },
         emailAndPassword: {
             enabled: true,
             requireEmailVerification: true,
