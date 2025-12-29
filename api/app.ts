@@ -2,7 +2,7 @@ import { createApp } from "./lib/app.lib";
 import { configureOpenApi } from "./lib/open-api.lib";
 import { mountRoutes } from "./lib/app.lib";
 import { routes } from "./routes/index.route";
-import { mountBetterAuth } from "./lib/better-auth";
+import { mountBetterAuth } from "./lib/auth/better-auth.lib";
 
 const app = createApp();
 

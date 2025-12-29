@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { betterAuth } from "better-auth";
-import { betterAuthOptions } from "./api/lib/better-auth/options";
+import { betterAuthOptions } from "./api/lib/auth/better-auth-options.lib";
 import { config as loadEnv } from "dotenv";
 
 loadEnv({ path: ".dev.vars" });

@@ -16,9 +16,12 @@
 	},
 	"env": {
 		"development": {
+			"name": "entix-app",
 			"vars": {
 				"SECRET_KEY": "value",
-				"API_TOKEN": "value"
+				"API_TOKEN": "value",
+				"FRONTEND_URL": "http://localhost:8000",
+				"BETTER_AUTH_URL": "http://localhost:3000"
 			},
 			"d1_databases": [
 				{
@@ -31,6 +34,12 @@
 		},
 		"staging": {
 			"name": "entix-app",
+			"vars": {
+				"SECRET_KEY": "value",
+				"API_TOKEN": "value",
+				"FRONTEND_URL": "https://staging.entix.org",
+				"BETTER_AUTH_URL": "https://staging.entix.org"
+			},
 			"assets": {
 				"binding": "ASSETS",
 				"directory": "./web/dist",
@@ -50,6 +59,12 @@
 		},
 		"production": {
 			"name": "entix-app",
+			"vars": {
+				"SECRET_KEY": "value",
+				"API_TOKEN": "value",
+				"FRONTEND_URL": "https://entix.org",
+				"BETTER_AUTH_URL": "https://entix.org"
+			},
 			"assets": {
 				"binding": "ASSETS",
 				"directory": "./web/dist",
