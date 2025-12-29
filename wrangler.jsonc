@@ -20,7 +20,8 @@
 			"vars": {
 				"SECRET_KEY": "value",
 				"API_TOKEN": "value",
-				"FRONTEND_URL": "http://localhost:8000"
+				"FRONTEND_URL": "http://localhost:8000",
+				"BETTER_AUTH_URL": "http://localhost:3000"
 			},
 			"d1_databases": [
 				{
@@ -36,7 +37,8 @@
 			"vars": {
 				"SECRET_KEY": "value",
 				"API_TOKEN": "value",
-				"FRONTEND_URL": "https://staging.entix.org"
+				"FRONTEND_URL": "https://staging.entix.org",
+				"BETTER_AUTH_URL": "https://staging.entix.org"
 			},
 			"assets": {
 				"binding": "ASSETS",
@@ -60,7 +62,8 @@
 			"vars": {
 				"SECRET_KEY": "value",
 				"API_TOKEN": "value",
-				"FRONTEND_URL": "https://entix.org"
+				"FRONTEND_URL": "https://entix.org",
+				"BETTER_AUTH_URL": "https://entix.org"
 			},
 			"assets": {
 				"binding": "ASSETS",
