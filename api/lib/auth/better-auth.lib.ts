@@ -15,9 +15,6 @@ export const auth = (ctx: AppContext) => {
         ...betterAuthOptions,
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
-        advanced: {
-            disableCSRFCheck: true
-        },
         emailAndPassword: {
             enabled: true,
             requireEmailVerification: true,
