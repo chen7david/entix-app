@@ -3,8 +3,8 @@ import { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import { betterAuthOptions } from "./better-auth-options.lib";
-import * as schema from "../../db/schema.db";
 import { Mailer } from "../mail/mailer.lib";
+import * as schema from "../../db/schema.db";
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
@@ -37,7 +37,10 @@ export const auth = (ctx: AppContext) => {
                 console.log(`Password for user ${user.email} has been reset.`);
             },
             resetPassword: {
-                allowedRedirectURLs: ["http://localhost:3000", "https://app.entix.org"],
+                allowedRedirectURLs: [
+                    ctx.env.BETTER_AUTH_URL,
+                    ctx.env.FRONTEND_URL,
+                ],
             },
         },
         emailVerification: {
