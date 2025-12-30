@@ -22,8 +22,28 @@ export const mountRoutes = ({ app, routes, prefix }: MountRoutes) => {
     });
 }
 
+import { cors } from 'hono/cors';
+
 export const createApp = () => {
     const app = new OpenAPIHono<AppEnv>({ strict: false });
+
+    app.use('*', cors({
+        origin: (origin, c) => {
+            const allowedOrigins = [
+                'http://localhost:3000',
+                'http://localhost:8000', // Vite default
+                c.env.FRONTEND_URL,
+                'https://entix.org',
+                'https://staging.entix.org'
+            ];
+            return allowedOrigins.includes(origin) ? origin : null;
+        },
+        allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+        exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
+        maxAge: 600,
+        credentials: true,
+    }));
 
     app.use(logger());
 
