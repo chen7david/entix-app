@@ -22,7 +22,7 @@ export const auth = (ctx: AppContext) => {
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
         ...betterAuthGlobalOptions,
-        baseURL: ctx.env.VITE_BETTER_AUTH_URL,
+        baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
         emailAndPassword: {
             enabled: true,
@@ -44,7 +44,7 @@ export const auth = (ctx: AppContext) => {
             },
             resetPassword: {
                 allowedRedirectURLs: [
-                    ctx.env.VITE_BETTER_AUTH_URL,
+                    ctx.env.BETTER_AUTH_URL,
                     ctx.env.FRONTEND_URL,
                 ],
             },

@@ -22,7 +22,7 @@ export const SignUpForm: React.FC = () => {
             }, {
                 onSuccess: () => {
                     message.success('Account created! Please check your email for verification.');
-                    navigate('/auth/login');
+                    navigate(links.auth.signIn);
                 },
                 onError: (ctx) => {
                     message.error(ctx.error.message);
