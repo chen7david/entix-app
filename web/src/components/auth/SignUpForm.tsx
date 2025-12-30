@@ -3,6 +3,7 @@ import { Form, Input, Button, Card, Typography, message } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { signUp } from '../../lib/auth-client';
 import { Link, useNavigate } from 'react-router';
+import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
@@ -82,7 +83,7 @@ export const SignUpForm: React.FC = () => {
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text>Already have an account? <Link to="/auth/login">Log in</Link></Text>
+                    <Text>Already have an account? <Link to={links.auth.signIn}>Log in</Link></Text>
                 </div>
             </Form>
         </Card>

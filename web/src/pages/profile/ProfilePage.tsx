@@ -3,7 +3,7 @@ import { Card, Avatar, Typography, Button, Descriptions, Spin, message } from 'a
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useSession, signOut } from '../../lib/auth-client';
 import { useNavigate } from 'react-router';
-
+import { links } from '../../constants/links';
 const { Title } = Typography;
 
 export const ProfilePage: React.FC = () => {
@@ -16,7 +16,7 @@ export const ProfilePage: React.FC = () => {
                 fetchOptions: {
                     onSuccess: () => {
                         message.success('Logged out successfully');
-                        navigate('/auth/login');
+                        navigate(links.auth.signIn);
                     },
                 },
             });
@@ -38,7 +38,7 @@ export const ProfilePage: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <Card style={{ textAlign: 'center' }}>
                     <Title level={4}>You are not logged in</Title>
-                    <Button type="primary" onClick={() => navigate('/auth/login')}>
+                    <Button type="primary" onClick={() => navigate(links.auth.signIn)}>
                         Go to Login
                     </Button>
                 </Card>
