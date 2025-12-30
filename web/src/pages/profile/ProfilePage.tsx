@@ -1,7 +1,7 @@
 import React from 'react';
-import { Card, Avatar, Typography, Button, Descriptions, Spin, message } from 'antd';
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
-import { useSession, signOut } from '../../lib/auth-client';
+import { Card, Avatar, Typography, Button, Descriptions, Spin } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import { useSession } from '../../lib/auth-client';
 import { useNavigate } from 'react-router';
 import { links } from '../../constants/links';
 const { Title } = Typography;
@@ -9,21 +9,6 @@ const { Title } = Typography;
 export const ProfilePage: React.FC = () => {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
-
-    const handleLogout = async () => {
-        try {
-            await signOut({
-                fetchOptions: {
-                    onSuccess: () => {
-                        message.success('Logged out successfully');
-                        navigate(links.auth.signIn);
-                    },
-                },
-            });
-        } catch (error) {
-            message.error('Failed to log out');
-        }
-    };
 
     if (isPending) {
         return (
@@ -47,14 +32,8 @@ export const ProfilePage: React.FC = () => {
     }
 
     return (
-        <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-            <Card
-                actions={[
-                    <Button type="text" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-                        Logout
-                    </Button>
-                ]}
-            >
+        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <Card>
                 <Card.Meta
                     avatar={<Avatar size={64} icon={<UserOutlined />} src={session.user.image} />}
                     title={<Title level={3}>{session.user.name}</Title>}
