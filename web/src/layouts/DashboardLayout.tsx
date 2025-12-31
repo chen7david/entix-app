@@ -14,7 +14,7 @@ export const DashboardLayout: React.FC = () => {
             <DashboardSidebar />
 
             <main
-                className={`transition-all duration-200 ease-in-out pt-16 min-h-screen ${sidebarOpen ? 'ml-[250px]' : 'ml-[80px]'
+                className={`transition-all duration-200 ease-in-out pt-16 min-h-screen ${sidebarOpen ? 'ml-[250px]' : 'ml-[0px]'
                     }`}
             >
                 <div className="p-6">
