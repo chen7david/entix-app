@@ -13,14 +13,17 @@ export const DashboardLayout: React.FC = () => {
             <DashboardTopBar />
             <DashboardSidebar />
 
-            <main
-                className={`transition-all duration-200 ease-in-out pt-16 min-h-screen ${sidebarOpen ? 'ml-[250px]' : 'ml-[0px]'
-                    }`}
+            <div
+                role="main"
+                className={`transition-all duration-200 ease-in-out pt-16 min-h-screen
+                    ml-0
+                    md:${sidebarOpen ? 'ml-[250px]' : 'ml-[80px]'}
+                `}
             >
                 <div className="p-6">
                     <Outlet />
                 </div>
-            </main>
+            </div>
         </div>
     );
 };
