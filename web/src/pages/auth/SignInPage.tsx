@@ -18,7 +18,7 @@ export const SignInPage: React.FC = () => {
             }, {
                 onSuccess: () => {
                     message.success('Signed in successfully!');
-                    navigate(links.dashboard.index);
+                    navigate(links.dashboard.profile);
                 },
                 onError: (ctx) => {
                     message.error(ctx.error.message);
