@@ -37,10 +37,10 @@ export const DashboardSidebar: React.FC = () => {
 
     const menuItems = [
         {
-            key: links.profile.index,
+            key: links.dashboard.profile,
             icon: <DashboardOutlined />,
             label: 'Profile',
-            onClick: () => navigate(links.profile.index),
+            onClick: () => navigate(links.dashboard.profile),
         },
     ];
 
