@@ -21,7 +21,7 @@ export const LoginForm: React.FC = () => {
             }, {
                 onSuccess: () => {
                     message.success('Logged in successfully!');
-                    navigate('/profile');
+                    navigate(links.dashboard.profile);
                 },
                 onError: (ctx) => {
                     message.error(ctx.error.message);
@@ -50,6 +50,7 @@ export const LoginForm: React.FC = () => {
             >
                 <Form.Item
                     name="email"
+                    initialValue={'chen7david+test1@gmail.com'}
                     rules={[
                         { required: true, message: 'Please input your email!' },
                         { type: 'email', message: 'Please enter a valid email!' }
@@ -60,6 +61,7 @@ export const LoginForm: React.FC = () => {
 
                 <Form.Item
                     name="password"
+                    initialValue={'@Password1'}
                     rules={[{ required: true, message: 'Please input your password!' }]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="Password" />
