@@ -1,39 +1,25 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import React from 'react';
+import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
-import { signUp } from '../../lib/auth-client';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
-export const SignUpForm: React.FC = () => {
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
-    const [form] = Form.useForm();
+export interface SignUpValues {
+    email: string;
+    password: string;
+    name: string;
+}
 
-    const onFinish = async (values: any) => {
-        setLoading(true);
-        try {
-            await signUp.email({
-                email: values.email,
-                password: values.password,
-                name: values.name,
-            }, {
-                onSuccess: () => {
-                    message.success('Account created! Please check your email for verification.');
-                    navigate(links.auth.signIn);
-                },
-                onError: (ctx) => {
-                    message.error(ctx.error.message);
-                }
-            });
-        } catch (error) {
-            message.error('An unexpected error occurred');
-        } finally {
-            setLoading(false);
-        }
-    };
+interface SignUpFormProps {
+    onSubmit: (values: SignUpValues) => void;
+    isLoading: boolean;
+    apiError?: string;
+}
+
+export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, apiError }) => {
+    const [form] = Form.useForm();
 
     return (
         <Card style={{ width: 400, margin: '0 auto', marginTop: 50 }}>
@@ -42,10 +28,19 @@ export const SignUpForm: React.FC = () => {
                 <Text type="secondary">Create your account to get started</Text>
             </div>
 
+            {apiError && (
+                <Alert
+                    message={apiError}
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: 24 }}
+                />
+            )}
+
             <Form
                 form={form}
                 name="signup"
-                onFinish={onFinish}
+                onFinish={onSubmit}
                 layout="vertical"
                 size="large"
             >
@@ -77,13 +72,13 @@ export const SignUpForm: React.FC = () => {
                 </Form.Item>
 
                 <Form.Item>
-                    <Button type="primary" htmlType="submit" block loading={loading}>
+                    <Button type="primary" htmlType="submit" block loading={isLoading}>
                         Sign Up
                     </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text>Already have an account? <Link to={links.auth.signIn}>Log in</Link></Text>
+                    <Text>Already have an account? <Link to={links.auth.signIn}>Sign in</Link></Text>
                 </div>
             </Form>
         </Card>

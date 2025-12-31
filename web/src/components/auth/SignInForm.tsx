@@ -1,50 +1,45 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message } from 'antd';
+import React from 'react';
+import { Form, Input, Button, Card, Typography, Alert } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
-import { signIn } from '../../lib/auth-client';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
-export const LoginForm: React.FC = () => {
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
-    const [form] = Form.useForm();
+export interface SignInValues {
+    email: string;
+    password: string;
+}
 
-    const onFinish = async (values: any) => {
-        setLoading(true);
-        try {
-            await signIn.email({
-                email: values.email,
-                password: values.password,
-            }, {
-                onSuccess: () => {
-                    message.success('Logged in successfully!');
-                    navigate('/profile');
-                },
-                onError: (ctx) => {
-                    message.error(ctx.error.message);
-                }
-            });
-        } catch (error) {
-            message.error('An unexpected error occurred');
-        } finally {
-            setLoading(false);
-        }
-    };
+interface SignInFormProps {
+    onSubmit: (values: SignInValues) => void;
+    isLoading: boolean;
+    apiError?: string;
+}
+
+export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, apiError }) => {
+    const [form] = Form.useForm();
 
     return (
         <Card style={{ width: 400, margin: '0 auto', marginTop: 50 }}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <Title level={2}>Welcome Back</Title>
-                <Text type="secondary">Please log in to continue</Text>
+                <Text type="secondary">Please sign in to continue</Text>
             </div>
+
+            {apiError && (
+                <Alert
+                    message={apiError}
+                    type="error"
+                    showIcon
+                    style={{ marginBottom: 24 }}
+                />
+            )}
 
             <Form
                 form={form}
-                name="login"
-                onFinish={onFinish}
+                name="signin"
+                onFinish={onSubmit}
                 layout="vertical"
                 size="large"
             >
@@ -66,8 +61,8 @@ export const LoginForm: React.FC = () => {
                 </Form.Item>
 
                 <Form.Item>
-                    <Button type="primary" htmlType="submit" block loading={loading}>
-                        Log In
+                    <Button type="primary" htmlType="submit" block loading={isLoading}>
+                        Sign In
                     </Button>
                 </Form.Item>
 

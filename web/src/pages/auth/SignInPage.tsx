@@ -1,25 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { message } from 'antd';
-import { SignUpForm, type SignUpValues } from '@web/src/components/auth/SignUpForm';
-import { signUp } from '@web/src/lib/auth-client';
+import { SignInForm, type SignInValues } from '@web/src/components/auth/SignInForm';
+import { signIn } from '@web/src/lib/auth-client';
 import { links } from '@web/src/constants/links';
 
-export const SignUpPage: React.FC = () => {
+export const SignInPage: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
-    const handleSignUp = async (values: SignUpValues) => {
+    const handleSignIn = async (values: SignInValues) => {
         setLoading(true);
         try {
-            await signUp.email({
+            await signIn.email({
                 email: values.email,
                 password: values.password,
-                name: values.name,
             }, {
                 onSuccess: () => {
-                    message.success('Account created! Please check your email for verification.');
-                    navigate(links.auth.signIn);
+                    message.success('Signed in successfully!');
+                    navigate(links.dashboard.index);
                 },
                 onError: (ctx) => {
                     message.error(ctx.error.message);
@@ -32,5 +31,5 @@ export const SignUpPage: React.FC = () => {
         }
     };
 
-    return <SignUpForm onSubmit={handleSignUp} isLoading={loading} />;
+    return <SignInForm onSubmit={handleSignIn} isLoading={loading} />;
 };

@@ -20,7 +20,7 @@ export const ProfilePage: React.FC = () => {
                     },
                 },
             });
-        } catch (error) {
+        } catch {
             message.error('Failed to log out');
         }
     };
@@ -39,7 +39,7 @@ export const ProfilePage: React.FC = () => {
                 <Card style={{ textAlign: 'center' }}>
                     <Title level={4}>You are not logged in</Title>
                     <Button type="primary" onClick={() => navigate(links.auth.signIn)}>
-                        Go to Login
+                        Go to Sign In
                     </Button>
                 </Card>
             </div>

@@ -3,7 +3,8 @@ export const links = {
         signIn: '/auth/sign-in',
         signUp: '/auth/sign-up',
     },
-    profile: {
-        index: '/profile',
+    dashboard: {
+        index: '/dashboard',
+        profile: '/dashboard/profile',
     }
-}
+} as const;
