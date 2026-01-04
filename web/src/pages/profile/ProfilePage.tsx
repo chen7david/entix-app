@@ -33,6 +33,14 @@ export const ProfilePage: React.FC = () => {
         );
     }
 
+    const addDummyRows = (count: number) => {
+        return Array.from({ length: count }, (_, i) => (
+            <Descriptions.Item key={`dummy-${i}`} label={`Dummy ${i}`}>
+                {i}
+            </Descriptions.Item>
+        ));
+    };
+
     if (!session) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -71,9 +79,11 @@ export const ProfilePage: React.FC = () => {
                         <Descriptions.Item label="Created At">
                             {new Date(session.user.createdAt).toLocaleString()}
                         </Descriptions.Item>
+                        {addDummyRows(100)} // TODO: Remove this
                     </Descriptions>
                 </div>
             </Card>
+
         </div>
     );
 };
