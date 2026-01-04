@@ -29,7 +29,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
 
             {apiError && (
                 <Alert
-                    message={apiError}
+                    title="Error"
+                    description={apiError}
                     type="error"
                     showIcon
                     style={{ marginBottom: 24 }}
