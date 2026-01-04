@@ -13,7 +13,7 @@ export const SidenavContainer: React.FC<SidenavContainerProps> = ({
 }) => {
     return (
         <div className={cn('bg-green-100',
-            'h-[calc(100dvh)] z-30 fixed  w-60 inset-y-0 md:translate-x-0',
+            'h-[calc(100dvh)] z-30 fixed w-60 inset-y-0 md:translate-x-0',
             'transform transition-all duration-300 ease-in-out',
             className,
             { 'translate-x-0': show },

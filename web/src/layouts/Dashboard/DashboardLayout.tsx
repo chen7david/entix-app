@@ -12,13 +12,11 @@ export const DashboardLayout: React.FC<HtmlElementProps> = ({
 }) => {
     return (
         <>
-            <SidenavContainer show={true}>
-
+            <SidenavContainer show={false}>
+                Test Dashboard Content
             </SidenavContainer>
-            <MainContainer>
-                <div className={cn("min-h-screen w-full flex items-center justify-center bg-gray-100 overflow-hidden", className)} {...restProps}>
-                    <Outlet />
-                </div>
+            <MainContainer className={cn("", className)} {...restProps}>
+                <Outlet />
             </MainContainer>
         </>
     );
