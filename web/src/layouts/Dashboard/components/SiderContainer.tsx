@@ -1,11 +1,11 @@
 import type { HtmlElementProps } from '@web/src/types';
 import cn from 'classnames'
 
-interface SidenavContainerProps extends HtmlElementProps {
+interface SiderContainerProps extends HtmlElementProps {
     show: boolean;
 }
 
-export const SidenavContainer: React.FC<SidenavContainerProps> = ({
+export const SiderContainer: React.FC<SiderContainerProps> = ({
     className,
     children,
     show,
