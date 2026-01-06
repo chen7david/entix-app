@@ -29,7 +29,7 @@ export const DesktopDrawer: React.FC<DesktopDrawerProps> = ({
     return (
         <div
             className={classNames(
-                "flex flex-col h-full bg-white border-r border-gray-200",
+                "flex flex-col h-full bg-white",
                 className
             )}
             style={{ width, ...style }}
