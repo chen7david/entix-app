@@ -1,27 +1,22 @@
 import { Outlet } from "react-router";
-import type { HtmlElementProps } from '@web/src/types';
-import cn from 'classnames'
-import { MainContainer } from "./components/MainContainer";
-import { SiderContainer } from "./components/SiderContainer";
-import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
+import { Layout } from "antd";
 import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
-import { SidebarMenu } from "@web/src/components/navigation/Sidebar/SidebarMenu";
+import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
 
-export const DashboardLayout: React.FC<HtmlElementProps> = ({
-    className,
-    ...restProps
-}) => {
-    const { isOpen } = useSidebar();
+const { Sider, Content } = Layout;
 
+export const DashboardLayout: React.FC = () => {
     return (
-        <>
-            <SiderContainer show={isOpen}>
-                <SidebarMenu />
+        <Layout className="min-h-screen">
+            <Sider className="hidden md:block" width={240} theme="light">
                 <MobileSidebar />
-            </SiderContainer>
-            <MainContainer className={cn("", className)} {...restProps}>
-                <Outlet />
-            </MainContainer>
-        </>
+                <DesktopSidebar />
+            </Sider>
+            <Layout hasSider>
+                <Content className="overflow-auto">
+                    <Outlet />
+                </Content>
+            </Layout>
+        </Layout>
     );
 };

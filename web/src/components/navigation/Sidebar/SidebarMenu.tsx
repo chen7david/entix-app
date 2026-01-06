@@ -1,50 +1,64 @@
 import { Menu } from "antd";
 import { HomeOutlined, UserOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
+import { useNavigate, useLocation } from "react-router";
+import { links } from "@web/src/constants/links";
+import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
 
 export const SidebarMenu: React.FC = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { close } = useSidebar();
+
+    const menuItems = [
+        {
+            label: 'Home',
+            key: links.dashboard.index,
+            icon: <HomeOutlined />,
+        },
+        {
+            label: 'Profile',
+            key: links.dashboard.profile,
+            icon: <UserOutlined />,
+        },
+        {
+            label: 'Lessons',
+            key: links.dashboard.lessons,
+            icon: <BookOutlined />,
+        },
+        {
+            label: 'Shop',
+            key: links.dashboard.shop,
+            icon: <ShoppingOutlined />,
+        },
+        {
+            label: 'Wallet',
+            key: links.dashboard.wallet,
+            icon: <WalletOutlined />,
+        },
+        {
+            label: 'Movies',
+            key: links.dashboard.movies,
+            icon: <YoutubeOutlined />,
+        },
+        {
+            label: 'Orders',
+            key: links.dashboard.orders,
+            icon: <TruckOutlined />,
+        },
+    ];
+
+    const handleMenuClick = (e: { key: string }) => {
+        navigate(e.key);
+        close();
+    };
+
     return (
         <Menu
             mode="inline"
-            defaultSelectedKeys={["1"]}
-            defaultOpenKeys={["sub1"]}
+            selectedKeys={[location.pathname]}
             style={{ height: "100%", borderRight: 0 }}
-            items={[
-                {
-                    label: 'Home',
-                    key: '/',
-                    icon: <HomeOutlined />,
-                },
-                {
-                    label: 'Profile',
-                    key: '/profile',
-                    icon: <UserOutlined />,
-                },
-                {
-                    label: 'Lessons',
-                    key: '/lessons',
-                    icon: <BookOutlined />,
-                },
-                {
-                    label: 'Shop',
-                    key: '/shop',
-                    icon: <ShoppingOutlined />,
-                },
-                {
-                    label: 'Wallet',
-                    key: '/wallet',
-                    icon: <WalletOutlined />,
-                },
-                {
-                    label: 'Movies',
-                    key: '/movies',
-                    icon: <YoutubeOutlined />,
-                },
-                {
-                    label: 'Orders',
-                    key: '/orders',
-                    icon: <TruckOutlined />,
-                },
-            ]}
+            onClick={handleMenuClick}
+            items={menuItems}
         />
     );
 };

@@ -21,7 +21,7 @@ export const Toolbar = ({
         >
             <Form layout="inline">
                 <Form.Item>
-                    <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" />
+                    <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" className="md:hidden" />
 
                 </Form.Item>
             </Form>

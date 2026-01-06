@@ -24,7 +24,7 @@ export const MobileSidebar: React.FC = () => {
             onClose={close}
             placement="left"
             closable={false}
-            width={240}
+            size={240}
             extra={
                 <Button icon={<CloseOutlined />} type="text" onClick={close} />
             }
