@@ -5,7 +5,8 @@ import { ProfilePage } from "./pages/profile/ProfilePage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
-import { DashboardLayout } from "./layouts/Dashboard/DashboardLayout";
+// import { DashboardLayout } from "./layouts/Dashboard/DashboardLayout";
+import { DashboardLayoutV2 } from "./layouts/Dashboard/DashboardLayoutV2";
 
 export default function App() {
   return (
@@ -16,7 +17,7 @@ export default function App() {
           <Route path="sign-in" element={<SignInPage />} />
           <Route path="sign-up" element={<SignUpPage />} />
         </Route>
-        <Route path={links.dashboard.index} element={<DashboardLayout />}>
+        <Route path={links.dashboard.index} element={<DashboardLayoutV2 />}>
           <Route path='profile' element={<ProfilePage />} />
         </Route>
       </Routes>

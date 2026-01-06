@@ -8,7 +8,6 @@ interface SiderContainerProps extends HtmlElementProps {
 export const SiderContainer: React.FC<SiderContainerProps> = ({
     className,
     children,
-    show,
     ...restProps
 }) => {
     return (

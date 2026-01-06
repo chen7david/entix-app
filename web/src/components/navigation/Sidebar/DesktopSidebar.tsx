@@ -1,33 +1,23 @@
-import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
-import { Avatar, Button, Drawer } from "antd";
+import { Avatar, Button } from "antd";
 import { SidebarMenu } from "./SidebarMenu";
-import { CloseOutlined } from "@ant-design/icons";
 import { useAuth } from "@web/src/hooks/auth/auth.hook";
 import { useNavigate } from "react-router";
 import { links } from "@web/src/constants/links";
+import { DesktopDrawer } from "./DesktopDrawer";
 
-export const Sidebar: React.FC = () => {
-    const { isOpen, close } = useSidebar();
+export const DesktopSidebar: React.FC = () => {
     const { signOut } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
         signOut();
-        close();
         navigate(links.auth.signIn);
     };
 
     return (
-        <Drawer
+        <DesktopDrawer
             title={<h1>Entix</h1>}
-            open={isOpen}
-            onClose={close}
-            placement="left"
-            closable={false}
-            size={240}
-            extra={
-                <Button icon={<CloseOutlined />} type="text" onClick={close} />
-            }
+            width={240}
             footer={(
                 <div className="flex items-center justify-between">
                     <Avatar />
@@ -36,6 +26,6 @@ export const Sidebar: React.FC = () => {
             )}
         >
             <SidebarMenu />
-        </Drawer>
+        </DesktopDrawer>
     );
 };
