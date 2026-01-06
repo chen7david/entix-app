@@ -4,6 +4,8 @@ import cn from 'classnames'
 import { MainContainer } from "./components/MainContainer";
 import { SiderContainer } from "./components/SiderContainer";
 import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
+import { Sidebar } from "@web/src/components/navigation/Sidebar/Sidebar";
+import { SidebarMenu } from "@web/src/components/navigation/Sidebar/SidebarMenu";
 
 export const DashboardLayout: React.FC<HtmlElementProps> = ({
     className,
@@ -14,7 +16,8 @@ export const DashboardLayout: React.FC<HtmlElementProps> = ({
     return (
         <>
             <SiderContainer show={isOpen}>
-                Test Dashboard Content
+                <SidebarMenu />
+                <Sidebar />
             </SiderContainer>
             <MainContainer className={cn("", className)} {...restProps}>
                 <Outlet />

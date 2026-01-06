@@ -4,6 +4,7 @@ import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useSession, signOut } from '../../lib/auth-client';
 import { useNavigate } from 'react-router';
 import { links } from '../../constants/links';
+import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 const { Title } = Typography;
 
 export const ProfilePage: React.FC = () => {
@@ -55,35 +56,38 @@ export const ProfilePage: React.FC = () => {
     }
 
     return (
-        <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-            <Card
-                actions={[
-                    <Button type="text" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-                        Logout
-                    </Button>
-                ]}
-            >
-                <Card.Meta
-                    avatar={<Avatar size={64} icon={<UserOutlined />} src={session.user.image} />}
-                    title={<Title level={3}>{session.user.name}</Title>}
-                    description={session.user.email}
-                />
-                <div style={{ marginTop: '24px' }}>
-                    <Descriptions title="User Information" bordered column={1}>
-                        <Descriptions.Item label="ID">{session.user.id}</Descriptions.Item>
-                        <Descriptions.Item label="Email">{session.user.email}</Descriptions.Item>
-                        <Descriptions.Item label="Name">{session.user.name}</Descriptions.Item>
-                        <Descriptions.Item label="Verified">
-                            {session.user.emailVerified ? 'Yes' : 'No'}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Created At">
-                            {new Date(session.user.createdAt).toLocaleString()}
-                        </Descriptions.Item>
-                        {addDummyRows(100)} // TODO: Remove this
-                    </Descriptions>
-                </div>
-            </Card>
+        <>
+            <Toolbar />
+            <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
+                <Card
+                    actions={[
+                        <Button type="text" danger icon={<LogoutOutlined />} onClick={handleLogout}>
+                            Logout
+                        </Button>
+                    ]}
+                >
+                    <Card.Meta
+                        avatar={<Avatar size={64} icon={<UserOutlined />} src={session.user.image} />}
+                        title={<Title level={3}>{session.user.name}</Title>}
+                        description={session.user.email}
+                    />
+                    <div style={{ marginTop: '24px' }}>
+                        <Descriptions title="User Information" bordered column={1}>
+                            <Descriptions.Item label="ID">{session.user.id}</Descriptions.Item>
+                            <Descriptions.Item label="Email">{session.user.email}</Descriptions.Item>
+                            <Descriptions.Item label="Name">{session.user.name}</Descriptions.Item>
+                            <Descriptions.Item label="Verified">
+                                {session.user.emailVerified ? 'Yes' : 'No'}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Created At">
+                                {new Date(session.user.createdAt).toLocaleString()}
+                            </Descriptions.Item>
+                            {addDummyRows(100)} // TODO: Remove this
+                        </Descriptions>
+                    </div>
+                </Card>
 
-        </div>
+            </div>
+        </>
     );
 };

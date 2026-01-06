@@ -12,12 +12,14 @@ export const SiderContainer: React.FC<SiderContainerProps> = ({
     ...restProps
 }) => {
     return (
-        <div className={cn('bg-green-100',
-            'h-[calc(100dvh)] z-30 fixed w-60 inset-y-0 md:translate-x-0',
-            'transform transition-all duration-300 ease-in-out',
+        <div className={cn(
+            "bg-green-100",
+            "h-[100dvh] w-60",
+            "overflow-y-auto",
+            "z-30 hidden lg:block",
+            "transition-all duration-300 ease-in-out",
             className,
-            { 'translate-x-0': show },
-            { '-translate-x-full block': !show },
+
         )} {...restProps}>
             {children}
         </div>

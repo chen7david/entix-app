@@ -7,7 +7,7 @@ export const AppContainer: React.FC<HtmlElementProps> = ({
     ...restProps
 }) => {
     return (
-        <div className={cn("h-[calc(100dvh)] m-0 p-0", className)} {...restProps}>
+        <div className={cn("flex h-[calc(100dvh)] m-0 p-0", className)} {...restProps}>
             {children}
         </div>
     );
