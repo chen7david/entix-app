@@ -39,7 +39,6 @@ export const SidebarMenu: React.FC = () => {
                     key: '/movies',
                     icon: <YoutubeOutlined />,
                 },
-
                 {
                     label: 'Orders',
                     key: '/orders',
