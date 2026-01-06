@@ -17,7 +17,7 @@ export const DesktopSidebar: React.FC = () => {
     return (
         <DesktopDrawer
             title={<h1>Entix</h1>}
-            width={240}
+            size={240}
             footer={(
                 <div className="flex items-center justify-between">
                     <Avatar />
