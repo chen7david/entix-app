@@ -5,7 +5,7 @@ import { ProfilePage } from "./pages/profile/ProfilePage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
-import { DashboardLayout } from "./layouts/Dashboard/DashboardLayout";
+import { DashboardLayout } from "./layouts/DashboardLayout";
 
 export default function App() {
   return (
