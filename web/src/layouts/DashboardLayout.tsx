@@ -12,8 +12,8 @@ export const DashboardLayout: React.FC = () => {
                 <MobileSidebar />
                 <DesktopSidebar />
             </Sider>
-            <Layout hasSider>
-                <Content className="overflow-auto">
+            <Layout hasSider >
+                <Content className="overflow-auto bg-gray-50">
                     <Outlet />
                 </Content>
             </Layout>

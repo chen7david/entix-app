@@ -1,9 +1,9 @@
 import React from 'react';
 import { Card, Avatar, Typography, Button, Descriptions, Spin, message } from 'antd';
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
-import { useSession, signOut } from '../../lib/auth-client';
+import { useSession, signOut } from '../../../lib/auth-client';
 import { useNavigate } from 'react-router';
-import { links } from '../../constants/links';
+import { links } from '../../../constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 const { Title } = Typography;
 

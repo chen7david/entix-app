@@ -42,7 +42,7 @@ export const DesktopDrawer: React.FC<DesktopDrawerProps> = ({
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden py-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 {children}
             </div>
 
