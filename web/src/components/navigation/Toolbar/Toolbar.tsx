@@ -20,12 +20,13 @@ export const Toolbar = ({
             {...rest}
         >
             <Form layout="inline">
-                <Form.Item>
-                    <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" className="md:hidden" />
-
-                </Form.Item>
+                <div className="md:hidden">
+                    <Form.Item>
+                        <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" />
+                    </Form.Item>
+                </div>
+                {children}
             </Form>
-            {children}
         </div>
     )
 }
