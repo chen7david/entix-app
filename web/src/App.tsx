@@ -2,6 +2,11 @@ import { Routes, Route, Navigate } from "react-router";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { SignInPage } from "./pages/auth/SignInPage";
 import { ProfilePage } from "./pages/profile/ProfilePage";
+import { LessonsPage } from "./pages/lessons/LessonsPage";
+import { ShopPage } from "./pages/shop/ShopPage";
+import { WalletPage } from "./pages/wallet/WalletPage";
+import { MoviesPage } from "./pages/movies/MoviesPage";
+import { OrdersPage } from "./pages/orders/OrdersPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
@@ -18,6 +23,11 @@ export default function App() {
         </Route>
         <Route path={links.dashboard.index} element={<DashboardLayout />}>
           <Route path='profile' element={<ProfilePage />} />
+          <Route path='lessons' element={<LessonsPage />} />
+          <Route path='shop' element={<ShopPage />} />
+          <Route path='wallet' element={<WalletPage />} />
+          <Route path='movies' element={<MoviesPage />} />
+          <Route path='orders' element={<OrdersPage />} />
         </Route>
       </Routes>
     </AppContainer>
