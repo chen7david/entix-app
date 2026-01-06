@@ -34,7 +34,7 @@ export const SidebarContent: React.FC = () => {
 
 
             {/* User Profile / Footer */}
-            <div className="p-4 bg-gray-50">
+            <div className="p-4">
                 {isLoading ? (
                     <Skeleton active avatar paragraph={{ rows: 1 }} />
                 ) : session.data ? (
