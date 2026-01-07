@@ -13,6 +13,9 @@ import { AppContainer } from "./components/containers/AppContainer";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { DashboardPage } from "./pages/dashboard/dashboard/DashboardPage";
 
+import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
+import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
+
 export default function App() {
   return (
     <AppContainer>
@@ -21,6 +24,8 @@ export default function App() {
         <Route path="/auth" element={<AuthLayout />}>
           <Route path="sign-in" element={<SignInPage />} />
           <Route path="sign-up" element={<SignUpPage />} />
+          <Route path="verify-email" element={<VerifyEmailPage />} />
+          <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
         </Route>
         <Route path={links.dashboard.index} element={<DashboardLayout />}>
           <Route index element={<DashboardPage />} />

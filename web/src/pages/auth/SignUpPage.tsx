@@ -19,7 +19,7 @@ export const SignUpPage: React.FC = () => {
             }, {
                 onSuccess: () => {
                     message.success('Account created! Please check your email for verification.');
-                    navigate(links.auth.signIn);
+                    navigate(links.auth.emailVerificationPending, { state: { email: values.email } });
                 },
                 onError: (ctx) => {
                     message.error(ctx.error.message);

@@ -51,14 +51,15 @@ export const auth = (ctx: AppContext) => {
         },
         emailVerification: {
             sendOnSignUp: true,
-            sendVerificationEmail: async ({ user, url }) => {
+            sendVerificationEmail: async ({ user, url, token }) => {
+                const verificationUrl = `${ctx.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
                 ctx.executionCtx.waitUntil(
                     mailer.sendTemplate({
                         to: user.email,
                         templateId: "email-verification",
                         variables: {
                             DISPLAY_NAME: user.name,
-                            VERIFICATION_LINK: url,
+                            VERIFICATION_LINK: verificationUrl,
                         },
                     })
                 );
