@@ -8,8 +8,8 @@ const { Sider, Content } = Layout;
 export const DashboardLayout: React.FC = () => {
     return (
         <Layout className="min-h-screen">
+            <MobileSidebar />
             <Sider className="hidden md:block" width={240} theme="light">
-                <MobileSidebar />
                 <DesktopSidebar />
             </Sider>
             <Layout hasSider >
