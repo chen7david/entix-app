@@ -2,19 +2,23 @@ import React from 'react';
 import { Avatar, Button, Typography, Skeleton } from 'antd';
 import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
+import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
 
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
-    const { signOut, session, isLoading } = useAuth();
+    const { session, isLoading } = useAuth();
+    const { mutate: signOut } = useSignOut();
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        signOut();
-        navigate(links.auth.signIn);
+        signOut(undefined, {
+            onSuccess: () => {
+                navigate(links.auth.signIn);
+            }
+        });
     };
 
     return (

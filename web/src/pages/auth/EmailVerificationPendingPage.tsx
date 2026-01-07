@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, Typography, Button, message } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
-import { authClient } from '@web/src/lib/auth-client';
+import { useResendVerification } from '@web/src/hooks/auth/auth.hook';
 import { useLocation } from 'react-router';
 
 const { Title, Text } = Typography;
@@ -9,30 +9,24 @@ const { Title, Text } = Typography;
 export const EmailVerificationPendingPage: React.FC = () => {
     const location = useLocation();
     const email = location.state?.email; // Expect email to be passed in state
-    const [loading, setLoading] = useState(false);
+    const { mutate: resend, isPending } = useResendVerification();
 
-    const handleResend = async () => {
+    const handleResend = () => {
         if (!email) {
             message.error("Email address not found. Please sign in again.");
             return;
         }
 
-        setLoading(true);
-        try {
-            const { error } = await authClient.sendVerificationEmail({
-                email,
-            });
-
-            if (error) {
-                message.error(error.message || "Failed to resend verification email.");
-            } else {
+        resend({
+            email,
+        }, {
+            onSuccess: () => {
                 message.success("Verification email sent!");
+            },
+            onError: (error) => {
+                message.error(error.message || "Failed to resend verification email.");
             }
-        } catch {
-            message.error("An unexpected error occurred.");
-        } finally {
-            setLoading(false);
-        }
+        });
     };
 
     return (
@@ -56,7 +50,7 @@ export const EmailVerificationPendingPage: React.FC = () => {
                     <Button
                         type="default"
                         onClick={handleResend}
-                        loading={loading}
+                        loading={isPending}
                         disabled={!email}
                     >
                         Resend Email

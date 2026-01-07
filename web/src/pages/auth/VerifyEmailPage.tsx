@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { Typography, Spin, Button, Result } from 'antd';
-import { authClient } from '@web/src/lib/auth-client';
+import { useVerifyEmail } from '@web/src/hooks/auth/auth.hook';
 import { links } from '@web/src/constants/links';
 
 const { Text } = Typography;
@@ -12,34 +12,29 @@ export const VerifyEmailPage: React.FC = () => {
     const token = searchParams.get('token');
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(token ? 'verifying' : 'error');
 
+    const { mutate: verify } = useVerifyEmail();
+
     useEffect(() => {
         if (!token) {
             return;
         }
 
-        const verify = async () => {
-            try {
-                const { error } = await authClient.verifyEmail({
-                    query: {
-                        token,
-                    },
-                });
-
-                if (error) {
-                    setStatus('error');
-                } else {
-                    setStatus('success');
-                    setTimeout(() => {
-                        navigate(links.dashboard.index);
-                    }, 3000);
-                }
-            } catch {
+        verify({
+            query: {
+                token,
+            },
+        }, {
+            onSuccess: () => {
+                setStatus('success');
+                setTimeout(() => {
+                    navigate(links.dashboard.index);
+                }, 3000);
+            },
+            onError: () => {
                 setStatus('error');
             }
-        };
-
-        verify();
-    }, [token, navigate]);
+        });
+    }, [token, navigate, verify]);
 
     if (status === 'verifying') {
         return (
