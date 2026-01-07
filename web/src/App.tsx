@@ -13,25 +13,36 @@ import { AppContainer } from "./components/containers/AppContainer";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { DashboardPage } from "./pages/dashboard/dashboard/DashboardPage";
 
+import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
+import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient();
+
 export default function App() {
   return (
-    <AppContainer>
-      <Routes>
-        <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
-        <Route path="/auth" element={<AuthLayout />}>
-          <Route path="sign-in" element={<SignInPage />} />
-          <Route path="sign-up" element={<SignUpPage />} />
-        </Route>
-        <Route path={links.dashboard.index} element={<DashboardLayout />}>
-          <Route index element={<DashboardPage />} />
-          <Route path='profile' element={<ProfilePage />} />
-          <Route path='lessons' element={<LessonsPage />} />
-          <Route path='shop' element={<ShopPage />} />
-          <Route path='wallet' element={<WalletPage />} />
-          <Route path='movies' element={<MoviesPage />} />
-          <Route path='orders' element={<OrdersPage />} />
-        </Route>
-      </Routes>
-    </AppContainer>
-  );
+    <QueryClientProvider client={queryClient}>
+      <AppContainer>
+        <Routes>
+          <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route path="sign-in" element={<SignInPage />} />
+            <Route path="sign-up" element={<SignUpPage />} />
+            <Route path="verify-email" element={<VerifyEmailPage />} />
+            <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
+          </Route>
+          <Route path={links.dashboard.index} element={<DashboardLayout />}>
+            <Route index element={<DashboardPage />} />
+            <Route path='profile' element={<ProfilePage />} />
+            <Route path='lessons' element={<LessonsPage />} />
+            <Route path='shop' element={<ShopPage />} />
+            <Route path='wallet' element={<WalletPage />} />
+            <Route path='movies' element={<MoviesPage />} />
+            <Route path='orders' element={<OrdersPage />} />
+          </Route>
+        </Routes>
+      </AppContainer>
+    </QueryClientProvider>
+  )
 }

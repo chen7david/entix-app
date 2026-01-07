@@ -1,36 +1,29 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router';
 import { message } from 'antd';
 import { SignUpForm, type SignUpValues } from '@web/src/components/auth/SignUpForm';
-import { signUp } from '@web/src/lib/auth-client';
+import { useSignUp } from '@web/src/hooks/auth/auth.hook';
 import { links } from '@web/src/constants/links';
 
 export const SignUpPage: React.FC = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
+    const { mutate: signUp, isPending } = useSignUp();
 
-    const handleSignUp = async (values: SignUpValues) => {
-        setLoading(true);
-        try {
-            await signUp.email({
-                email: values.email,
-                password: values.password,
-                name: values.name,
-            }, {
-                onSuccess: () => {
-                    message.success('Account created! Please check your email for verification.');
-                    navigate(links.auth.signIn);
-                },
-                onError: (ctx) => {
-                    message.error(ctx.error.message);
-                }
-            });
-        } catch {
-            message.error('An unexpected error occurred');
-        } finally {
-            setLoading(false);
-        }
+    const handleSignUp = (values: SignUpValues) => {
+        signUp({
+            email: values.email,
+            password: values.password,
+            name: values.name,
+        }, {
+            onSuccess: () => {
+                message.success('Account created! Please check your email for verification.');
+                navigate(links.auth.emailVerificationPending, { state: { email: values.email } });
+            },
+            onError: (error) => {
+                message.error(error.message || "Failed to create account");
+            }
+        });
     };
 
-    return <SignUpForm onSubmit={handleSignUp} isLoading={loading} />;
+    return <SignUpForm onSubmit={handleSignUp} isLoading={isPending} />;
 };
