@@ -4,12 +4,12 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
-import { organization } from 'better-auth/plugins';
+import { organization, openAPI } from 'better-auth/plugins';
 
 export const betterAuthGlobalOptions: BetterAuthOptions = {
     appName: 'entix-app',
     basePath: '/api/v1/auth',
-    plugins: [organization()],
+    plugins: [organization(), openAPI()],
     advanced: {
         disableCSRFCheck: true
     },
