@@ -1,5 +1,8 @@
 # API & Error Handling
 
+[← Back to Table of Contents](../README.md)
+
+
 ## API Documentation
 
 The Worker serves OpenAPI documentation:

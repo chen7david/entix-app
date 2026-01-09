@@ -1,5 +1,8 @@
 # Architecture & Structure
 
+[← Back to Table of Contents](../README.md)
+
+
 ## Architecture
 
 ### Development Architecture

@@ -1,5 +1,8 @@
 # Setup & Development
 
+[← Back to Table of Contents](../README.md)
+
+
 ## Quick Start
 
 ### Setup
@@ -19,6 +22,9 @@ npm run dev
 - **Web**: [http://localhost:8000](http://localhost:8000)
 - **API**: [http://localhost:3000](http://localhost:3000)
 
+# Database & Authentication
+
+[← Back to Table of Contents](../README.md)
 ### Initialize Database
 The local database is automatically created by Miniflare when you:
 1. Start `npm run dev`
@@ -50,6 +56,9 @@ BETTER_AUTH_URL=http://localhost:3000
 BETTER_AUTH_SECRET=your-secret-key-here-min-32-chars
 ```
 
+# Architecture & Structure
+
+[← Back to Table of Contents](../README.md)
 **Important Notes:**
 - `.dev.vars` is gitignored and should **never** be committed
 - This file is only used for local development
@@ -60,7 +69,9 @@ BETTER_AUTH_SECRET=your-secret-key-here-min-32-chars
 
 ---
 
-## Development Workflow
+## Deployment
+
+[← Back to Table of Contents](../README.md)
 
 ### 1. Install Dependencies
 ```bash
@@ -81,6 +92,9 @@ npm run db:migrate:development
 ```
 
 ### 5. Develop Features
+# Troubleshooting
+
+[← Back to Table of Contents](../README.md)
 - Create/modify routes in `api/routes/`
 - Update schemas in `api/db/schema.db.ts`
 - Generate migrations: `npm run db:generate`
@@ -101,6 +115,9 @@ const res = await axios.get("http://localhost:3000/api/v1/users");
 
 ## Scripts Reference
 
+# API & Error Handling
+
+[← Back to Table of Contents](../README.md)
 | Script | Description |
 |:---|:---|
 | `npm run dev` | Starts API and Web in development mode |

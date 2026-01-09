@@ -1,5 +1,8 @@
 # Troubleshooting
 
+[← Back to Table of Contents](../README.md)
+
+
 ### Local Database Issues
 If tables are missing or migrations aren't applying:
 1. Stop `npm run dev`
