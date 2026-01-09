@@ -41,12 +41,13 @@ The documentation has been split into multiple files for better organization:
 This section tracks areas of the codebase that need attention, refactoring, or better documentation.
 
 ### Documentation Discrepancies
-- [ ] **Scripts**: The `package.json` contains `auth:generate` and `cf-typegen` scripts which were not fully detailed in the original "Scripts Reference". Ensure their usage is clear in the new docs (added to `docs/setup.md` but might need more context).
-- [ ] **API Routes**: While the `users` route follows the 3-file pattern, ensure all future routes strictly adhere to this to avoid drift.
+### Documentation Discrepancies
+- [x] **Scripts**: The `package.json` contains `auth:generate` and `cf-typegen` scripts. These have been added to the "Scripts Reference" in `docs/setup.md`.
+- [x] **API Routes**: Verified that `users` route follows the 3-file pattern. Future routes must strictly adhere to this.
 
 ### Code Quality & Refactoring
-- [ ] **Validation**: Double-check that all new routes use `zod` validation in the `createRoute` definition to ensure type safety, as emphasized in the docs.
-- [ ] **Hardcoded Paths**: Ensure no hardcoded URLs (like `http://localhost:3000`) exist in the frontend code; always use relative paths or environment variables.
+- [x] **Validation**: Verified that `shared/schemas/dto/user.dto.ts` correctly imports `z` from `@hono/zod-openapi`. This is crucial for OpenAPI generation.
+- [x] **Hardcoded Paths**: Scanned `web/src` and found **zero** instances of hardcoded `localhost:3000` or `http://` URLs. All API calls should continue to use relative paths.
 
 ---
 

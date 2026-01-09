@@ -55,6 +55,15 @@ Defines the OpenAPI specification using `createRoute`.
 
 **Rule**: Validation schemas **MUST** be in `request.body`, `request.query`, `request.params`, or `request.headers`.  
 **Rule**: Do **NOT** use validator middleware; it breaks type inference.
+**Rule**: Always import `z` from `@hono/zod-openapi` (not `zod`) to ensure `.openapi()` method support.
+
+```typescript
+// ✅ Correct
+import { z } from '@hono/zod-openapi';
+
+// ❌ Incorrect
+import { z } from 'zod';
+```
 
 ```typescript
 // users/user.routes.ts

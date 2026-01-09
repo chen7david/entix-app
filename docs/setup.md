@@ -115,4 +115,5 @@ const res = await axios.get("http://localhost:3000/api/v1/users");
 | `npm run db:migrate:production` | Applies migrations to production D1 database |
 | `npm run deploy:staging` | Migrates DB + deploys to Staging |
 | `npm run deploy:production` | Migrates DB + deploys to Production |
-| `npm run cf-typegen` | Generates TypeScript types for Cloudflare bindings |
+| `npm run auth:generate` | Generates Better Auth migrations using the temporary `better-auth.config.ts` |
+| `npm run cf-typegen` | Generates TypeScript types for Cloudflare bindings (e.g., `env.DB`) |
