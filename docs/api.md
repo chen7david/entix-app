@@ -7,9 +7,9 @@
 
 The Worker serves OpenAPI documentation:
 
-- **OpenAPI Specification (JSON)**: `https://entix.org/api/v1/openapi`
+- **OpenAPI Specification (JSON)**: [https://entix.org/api/v1/openapi](https://entix.org/api/v1/openapi)
   - Raw JSON definition of all endpoints, schemas, and responses
-- **Interactive API Reference**: `https://entix.org/api/v1/api-reference`
+- **Interactive API Reference**: [https://entix.org/api/v1/api-reference](https://entix.org/api/v1/api-reference)
   - Interactive documentation powered by **Scalar**
   - Test endpoints directly from the browser
   - View request/response schemas
