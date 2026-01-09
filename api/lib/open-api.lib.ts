@@ -12,9 +12,22 @@ export const configureOpenApi = (app: AppOpenApi) => {
     })
 
     app.get('/api/v1/api-reference', Scalar({
-        url: '/api/v1/openapi', theme: 'purple', pageTitle: 'Awesome API', layout: 'classic', defaultHttpClient: {
+        pageTitle: 'Entix API Reference',
+        theme: 'purple',
+        layout: 'classic',
+        defaultHttpClient: {
             targetKey: 'js',
             clientKey: 'fetch',
-        }
+        },
+        sources: [
+            {
+                url: '/api/v1/openapi',
+                title: 'Main API',
+            },
+            {
+                url: '/api/v1/auth/open-api/generate-schema',
+                title: 'Authentication API',
+            }
+        ]
     }))
 }
