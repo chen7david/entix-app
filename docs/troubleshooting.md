@@ -1,6 +1,6 @@
 # Troubleshooting
 
-[← Back to Table of Contents](../README.md)
+
 
 
 ### Local Database Issues

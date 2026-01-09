@@ -7,7 +7,9 @@
 		"dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
 		"dev:api": "wrangler dev --env development --port 3000",
 		"dev:web": "cd web && npm run dev",
-		"build:web": "cd web && npm install && npm run build",
+		"build:web": "cd web && npm install && npm run build && cd .. && npm run build:docs",
+		"dev:docs": "vitepress dev docs",
+		"build:docs": "vitepress build docs",
 		"db:generate": "drizzle-kit generate",
 		"db:studio": "drizzle-kit studio",
 		"deploy:staging": "npm run db:migrate:staging && wrangler versions upload --minify --env staging",
@@ -41,6 +43,8 @@
 		"better-sqlite3": "^12.5.0",
 		"dotenv": "^17.2.3",
 		"drizzle-kit": "^0.31.8",
+		"vitepress": "^1.6.4",
+		"vue": "^3.5.26",
 		"wrangler": "^4.53.0"
 	}
 }

@@ -40,25 +40,26 @@ The documentation has been split into multiple files for better organization:
 
 ---
 
-## Documentation Deployment Proposal
+## Documentation
 
-To expose this documentation publicly, we recommend using **VitePress** deployed to **Cloudflare Pages**.
+The documentation is built with **VitePress** and served at `/docs`.
 
-### Why VitePress?
-- **Fast**: Built on Vite, instant server start.
-- **Markdown-first**: Uses the exact structure we have created in `docs/`.
-- **Customizable**: Easy to theme and extend with Vue components if needed.
+### Running Locally
+To start the documentation server in development mode:
+```bash
+npm run dev:docs
+```
+Access it at `http://localhost:5173/docs`.
 
-### Deployment Strategy
-Since we are already in the Cloudflare ecosystem:
-1. **Initialize VitePress**: Run `npx vitepress init` in the `docs/` directory.
-2. **Configure Cloudflare Pages**:
-   - Connect the repository to a new Cloudflare Pages project.
-   - **Build Command**: `npm run docs:build` (script to be added).
-   - **Output Directory**: `docs/.vitepress/dist`.
-3. **CI/CD**: Cloudflare Pages automatically deploys on every push to `main`.
+### Building
+To build the documentation for production:
+```bash
+npm run build:docs
+```
+The output is generated in `web/dist/docs`.
 
-This approach keeps the documentation close to the code while providing a professional, searchable, and performant documentation site.
+### Deployment
+The documentation is automatically built and deployed alongside the web application. Cloudflare Workers Assets serves the `web/dist` directory, making the docs available at `https://entix.app/docs`.
 
 ---
 

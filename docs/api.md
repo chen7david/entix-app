@@ -1,15 +1,15 @@
 # API & Error Handling
 
-[← Back to Table of Contents](../README.md)
+
 
 
 ## API Documentation
 
 The Worker serves OpenAPI documentation:
 
-- **OpenAPI Specification (JSON)**: [/api/v1/openapi](/api/v1/openapi)
+- **OpenAPI Specification (JSON)**: `https://entix.org/api/v1/openapi`
   - Raw JSON definition of all endpoints, schemas, and responses
-- **Interactive API Reference**: [/api/v1/api-reference](/api/v1/api-reference)
+- **Interactive API Reference**: `https://entix.org/api/v1/api-reference`
   - Interactive documentation powered by **Scalar**
   - Test endpoints directly from the browser
   - View request/response schemas

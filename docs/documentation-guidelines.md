@@ -28,7 +28,7 @@ We follow a modular documentation structure compatible with static site generato
 1. **Identify the Topic**: Does it fit into an existing file? If not, create a new one in `docs/`.
 2. **Create the File**: Use a descriptive kebab-case filename.
 3. **Add Navigation**:
-   - Add a "Back to Table of Contents" link at the top of the file.
+   - Add a link to your new file in the main `README.md`.
    - Add a link to your new file in the main `README.md`.
 4. **Verify**: Preview the Markdown to ensure rendering is correct.
 

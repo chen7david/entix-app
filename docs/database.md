@@ -1,6 +1,6 @@
 # Database & Authentication
 
-[← Back to Table of Contents](../README.md)
+
 
 
 ## Database
@@ -62,12 +62,12 @@ This project uses [Better Auth](https://www.better-auth.com/) for authentication
 
 Better Auth is integrated into the application with a **dual-configuration architecture**:
 
-1. **Runtime Configuration** ([api/lib/better-auth/index.ts](file:///Users/david/Documents/Developer/entix-app/api/lib/better-auth/index.ts))
+1. **Runtime Configuration** (`api/lib/better-auth/index.ts`)
    - Used by the Cloudflare Worker at runtime
    - Connects to Cloudflare D1 via Drizzle ORM
    - Receives environment bindings dynamically
 
-2. **CLI Configuration** ([better-auth.config.ts](file:///Users/david/Documents/Developer/entix-app/better-auth.config.ts))
+2. **CLI Configuration** (`better-auth.config.ts`)
    - **Temporary file** used only for running Better Auth CLI commands
    - Connects to the local SQLite database in `.wrangler/state/`
    - Required for generating migrations during initial setup
@@ -95,7 +95,7 @@ Cloudflare Workers have a unique runtime environment that differs from tradition
 
 #### Runtime Configuration
 
-**File**: [api/lib/better-auth/index.ts](file:///Users/david/Documents/Developer/entix-app/api/lib/better-auth/index.ts)
+**File**: `api/lib/better-auth/index.ts`
 
 ```typescript
 import { betterAuth } from "better-auth";
@@ -131,7 +131,7 @@ export const mountBetterAuth = (app: AppOpenApi) => {
 
 #### CLI Configuration (Temporary)
 
-**File**: [better-auth.config.ts](file:///Users/david/Documents/Developer/entix-app/better-auth.config.ts)
+**File**: `better-auth.config.ts`
 
 ```typescript
 import Database from "better-sqlite3";
@@ -192,7 +192,7 @@ wrangler secret put BETTER_AUTH_SECRET --env production
 
 ### Database Schema
 
-Better Auth requires four tables in your database. These are defined in [api/db/schema.db.ts](file:///Users/david/Documents/Developer/entix-app/api/db/schema.db.ts):
+Better Auth requires four tables in your database. These are defined in `api/db/schema.db.ts`:
 
 1. **`user`** - User accounts
 2. **`session`** - Active user sessions
