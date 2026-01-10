@@ -11,6 +11,7 @@ The Worker serves OpenAPI documentation:
   - Raw JSON definition of all endpoints, schemas, and responses
 - **Interactive API Reference**: [https://entix.org/api/v1/api-reference](https://entix.org/api/v1/api-reference)
   - Interactive documentation powered by **Scalar**
+  - Includes both **Main API** and **Authentication API**
   - Test endpoints directly from the browser
   - View request/response schemas
   - Generate client code snippets
