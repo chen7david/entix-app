@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
-import { message } from 'antd';
+import { message, Card, Typography } from 'antd';
 import { SignInForm, type SignInValues } from '@web/src/components/auth/SignInForm';
 import { useSignIn } from '@web/src/hooks/auth/auth.hook';
 import { links } from '@web/src/constants/links';
+
+const { Title, Text } = Typography;
 
 export const SignInPage: React.FC = () => {
     const navigate = useNavigate();
@@ -24,5 +26,13 @@ export const SignInPage: React.FC = () => {
         });
     };
 
-    return <SignInForm onSubmit={handleSignIn} isLoading={isPending} />;
+    return (
+        <Card style={{ width: 400, margin: '0 auto', marginTop: 50 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Title level={2}>Welcome Back</Title>
+                <Text type="secondary">Please sign in to continue</Text>
+            </div>
+            <SignInForm onSubmit={handleSignIn} isLoading={isPending} />
+        </Card>
+    );
 };

@@ -1,10 +1,10 @@
 import React from 'react';
-import { Form, Input, Button, Card, Typography, Alert } from 'antd';
+import { Form, Input, Button, Typography, Alert } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
 import { links } from '@web/src/constants/links';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export interface SignInValues {
     email: string;
@@ -21,11 +21,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
     const [form] = Form.useForm();
 
     return (
-        <Card style={{ width: 400, margin: '0 auto', marginTop: 50 }}>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <Title level={2}>Welcome Back</Title>
-                <Text type="secondary">Please sign in to continue</Text>
-            </div>
+        <>
 
             {apiError && (
                 <Alert
@@ -71,6 +67,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                     <Text>Don't have an account? <Link to={links.auth.signUp}>Sign up</Link></Text>
                 </div>
             </Form>
-        </Card>
+        </>
     );
 };
