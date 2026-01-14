@@ -124,3 +124,21 @@ export const useResetPassword = () => {
         },
     });
 };
+
+export const useChangePassword = () => {
+    return useMutation({
+        mutationFn: async (values: { currentPassword: string; newPassword: string; revokeOtherSessions?: boolean }) => {
+            const response = await authClient.changePassword({
+                currentPassword: values.currentPassword,
+                newPassword: values.newPassword,
+                revokeOtherSessions: values.revokeOtherSessions,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to change password");
+            }
+
+            return response;
+        },
+    });
+};
