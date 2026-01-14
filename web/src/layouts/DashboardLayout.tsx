@@ -18,7 +18,6 @@ export const DashboardLayout: React.FC = () => {
                 <Content
                     className="overflow-auto"
                     style={{
-                        padding: token.paddingLG,
                         backgroundColor: token.colorBgLayout
                     }}
                 >
