@@ -1,5 +1,5 @@
 import { Menu } from "antd";
-import { HomeOutlined, UserOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
+import { HomeOutlined, UserOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, SettingOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
@@ -19,6 +19,11 @@ export const SidebarMenu: React.FC = () => {
             label: 'Profile',
             key: links.dashboard.profile,
             icon: <UserOutlined />,
+        },
+        {
+            label: 'Settings',
+            key: links.dashboard.settings,
+            icon: <SettingOutlined />,
         },
         {
             label: 'Lessons',
