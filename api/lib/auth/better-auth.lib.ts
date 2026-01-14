@@ -5,11 +5,49 @@ import { drizzle } from "drizzle-orm/d1";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
 import { organization, openAPI } from 'better-auth/plugins';
+import { createAccessControl } from "better-auth/plugins/access";
+import { Role, Permission, RolePermissions } from "../../../shared/types/auth-types";
+
+const statements = {
+    organization: ["update", "delete"],
+    member: ["create", "update", "delete"],
+    billing: ["manage"],
+    project: ["create", "delete"]
+} as const;
+
+const ac = createAccessControl(statements);
+
+const ownerRole = ac.newRole({
+    organization: ["update", "delete"],
+    member: ["create", "update", "delete"],
+    billing: ["manage"],
+    project: ["create", "delete"]
+});
+
+const adminRole = ac.newRole({
+    organization: ["update"],
+    member: ["create", "update", "delete"],
+    project: ["create", "delete"]
+});
+
+const memberRole = ac.newRole({
+    project: ["create"]
+});
 
 export const betterAuthGlobalOptions: BetterAuthOptions = {
     appName: 'entix-app',
     basePath: '/api/v1/auth',
-    plugins: [organization(), openAPI()],
+    plugins: [
+        organization({
+            ac: ac,
+            roles: {
+                [Role.OWNER]: ownerRole,
+                [Role.ADMIN]: adminRole,
+                [Role.MEMBER]: memberRole,
+            }
+        }),
+        openAPI()
+    ],
     advanced: {
         disableCSRFCheck: true
     },
