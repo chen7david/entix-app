@@ -1,9 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
-import { message } from 'antd';
+import { message, Card, Typography } from 'antd';
 import { SignUpForm, type SignUpValues } from '@web/src/components/auth/SignUpForm';
 import { useSignUp } from '@web/src/hooks/auth/auth.hook';
 import { links } from '@web/src/constants/links';
+
+const { Title, Text } = Typography;
 
 export const SignUpPage: React.FC = () => {
     const navigate = useNavigate();
@@ -25,5 +27,13 @@ export const SignUpPage: React.FC = () => {
         });
     };
 
-    return <SignUpForm onSubmit={handleSignUp} isLoading={isPending} />;
+    return (
+        <Card style={{ width: 400, margin: '0 auto', marginTop: 50 }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <Title level={2}>Sign Up</Title>
+                <Text type="secondary">Create your account to get started</Text>
+            </div>
+            <SignUpForm onSubmit={handleSignUp} isLoading={isPending} />
+        </Card>
+    );
 };

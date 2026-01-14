@@ -13,10 +13,16 @@ export const useAuth = () => {
 export const useSignIn = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string }) => {
-            return await authClient.signIn.email({
+            const response = await authClient.signIn.email({
                 email: values.email,
                 password: values.password,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to sign in");
+            }
+
+            return response;
         },
     });
 };
@@ -24,11 +30,17 @@ export const useSignIn = () => {
 export const useSignUp = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string; name: string }) => {
-            return await authClient.signUp.email({
+            const response = await authClient.signUp.email({
                 email: values.email,
                 password: values.password,
                 name: values.name,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to sign up");
+            }
+
+            return response;
         },
     });
 };
@@ -36,7 +48,13 @@ export const useSignUp = () => {
 export const useSignOut = () => {
     return useMutation({
         mutationFn: async () => {
-            return await authClient.signOut();
+            const response = await authClient.signOut();
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to sign out");
+            }
+
+            return response;
         },
     });
 };
@@ -44,9 +62,15 @@ export const useSignOut = () => {
 export const useVerifyEmail = () => {
     return useMutation({
         mutationFn: async (values: { query: { token: string } }) => {
-            return await authClient.verifyEmail({
+            const response = await authClient.verifyEmail({
                 query: values.query,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to verify email");
+            }
+
+            return response;
         },
     });
 };
@@ -54,9 +78,49 @@ export const useVerifyEmail = () => {
 export const useResendVerification = () => {
     return useMutation({
         mutationFn: async (values: { email: string }) => {
-            return await authClient.sendVerificationEmail({
+            const response = await authClient.sendVerificationEmail({
                 email: values.email,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to send verification email");
+            }
+
+            return response;
+        },
+    });
+};
+
+export const useForgotPassword = () => {
+    return useMutation({
+        mutationFn: async (values: { email: string; redirectTo?: string }) => {
+            const response = await authClient.requestPasswordReset({
+                email: values.email,
+                redirectTo: values.redirectTo,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to send password reset email");
+            }
+
+            return response;
+        },
+    });
+};
+
+export const useResetPassword = () => {
+    return useMutation({
+        mutationFn: async (values: { newPassword: string; token: string }) => {
+            const response = await authClient.resetPassword({
+                newPassword: values.newPassword,
+                token: values.token,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to reset password");
+            }
+
+            return response;
         },
     });
 };
