@@ -6,7 +6,7 @@ export const AuthLayout = () => {
 
     return (
         <div
-            className="min-h-screen w-full flex items-center justify-center overflow-hidden p-4"
+            className="min-h-[100dvh] w-full flex items-center justify-center overflow-y-auto p-4"
             style={{ backgroundColor: token.colorBgLayout }}
         >
             <Outlet />
