@@ -4,6 +4,8 @@ export const links = {
         signUp: '/auth/sign-up',
         verifyEmail: '/auth/verify-email',
         emailVerificationPending: '/auth/email-verification-pending',
+        forgotPassword: '/auth/forgot-password',
+        resetPassword: '/auth/reset-password',
     },
     dashboard: {
         index: '/dashboard',

@@ -90,3 +90,37 @@ export const useResendVerification = () => {
         },
     });
 };
+
+export const useForgotPassword = () => {
+    return useMutation({
+        mutationFn: async (values: { email: string; redirectTo?: string }) => {
+            const response = await authClient.requestPasswordReset({
+                email: values.email,
+                redirectTo: values.redirectTo,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to send password reset email");
+            }
+
+            return response;
+        },
+    });
+};
+
+export const useResetPassword = () => {
+    return useMutation({
+        mutationFn: async (values: { newPassword: string; token: string }) => {
+            const response = await authClient.resetPassword({
+                newPassword: values.newPassword,
+                token: values.token,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to reset password");
+            }
+
+            return response;
+        },
+    });
+};

@@ -15,6 +15,8 @@ import { DashboardPage } from "./pages/dashboard/dashboard/DashboardPage";
 
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
+import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -31,6 +33,8 @@ export default function App() {
             <Route path="sign-up" element={<SignUpPage />} />
             <Route path="verify-email" element={<VerifyEmailPage />} />
             <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
           <Route path={links.dashboard.index} element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />

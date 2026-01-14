@@ -1,31 +1,29 @@
 import React from 'react';
 import { Form, Input, Button, Typography, Alert } from 'antd';
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
+import { MailOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
 import { links } from '@web/src/constants/links';
 
 const { Text } = Typography;
 
-export interface SignInValues {
+export interface ForgotPasswordValues {
     email: string;
-    password: string;
 }
 
-interface SignInFormProps {
-    onSubmit: (values: SignInValues) => void;
+interface ForgotPasswordFormProps {
+    onSubmit: (values: ForgotPasswordValues) => void;
     isLoading: boolean;
     apiError?: string;
 }
 
-export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, apiError }) => {
+export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSubmit, isLoading, apiError }) => {
     const [form] = Form.useForm();
 
     return (
         <>
             {apiError && (
                 <Alert
-                    title="Error"
-                    description={apiError}
+                    message={apiError}
                     type="error"
                     showIcon
                     style={{ marginBottom: 24 }}
@@ -34,7 +32,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
 
             <Form
                 form={form}
-                name="signin"
+                name="forgotPassword"
                 onFinish={onSubmit}
                 layout="vertical"
                 size="large"
@@ -49,25 +47,14 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                     <Input prefix={<MailOutlined />} placeholder="Email" />
                 </Form.Item>
 
-                <Form.Item
-                    name="password"
-                    rules={[{ required: true, message: 'Please input your password!' }]}
-                >
-                    <Input.Password prefix={<LockOutlined />} placeholder="Password" />
-                </Form.Item>
-
-                <div style={{ marginBottom: 24, textAlign: 'right' }}>
-                    <Link to={links.auth.forgotPassword}>Forgot password?</Link>
-                </div>
-
                 <Form.Item>
                     <Button type="primary" htmlType="submit" block loading={isLoading}>
-                        Sign In
+                        Send Reset Link
                     </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text>Don't have an account? <Link to={links.auth.signUp}>Sign up</Link></Text>
+                    <Text>Remember your password? <Link to={links.auth.signIn}>Sign in</Link></Text>
                 </div>
             </Form>
         </>
