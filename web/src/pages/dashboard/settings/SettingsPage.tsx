@@ -1,28 +1,14 @@
 import React from 'react';
-import { Card, Typography, message, Divider } from 'antd';
-import { ChangePasswordForm, type ChangePasswordValues } from '@web/src/components/auth/ChangePasswordForm';
-import { useChangePassword } from '@web/src/hooks/auth/auth.hook';
+import { useNavigate } from 'react-router';
+import { Card, Typography, Divider, Button, Space } from 'antd';
+import { LockOutlined, RightOutlined } from '@ant-design/icons';
+import { links } from '@web/src/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 
 const { Title, Text } = Typography;
 
 export const SettingsPage: React.FC = () => {
-    const { mutate: changePassword, isPending } = useChangePassword();
-
-    const handleChangePassword = (values: ChangePasswordValues) => {
-        changePassword({
-            currentPassword: values.currentPassword,
-            newPassword: values.newPassword,
-            revokeOtherSessions: values.revokeOtherSessions,
-        }, {
-            onSuccess: () => {
-                message.success('Password changed successfully!');
-            },
-            onError: (error) => {
-                message.error(error.message || "Failed to change password");
-            }
-        });
-    };
+    const navigate = useNavigate();
 
     return (
         <>
@@ -34,12 +20,25 @@ export const SettingsPage: React.FC = () => {
 
                     <Divider />
 
-                    <Title level={4}>Change Password</Title>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
-                        Update your password to keep your account secure
-                    </Text>
-
-                    <ChangePasswordForm onSubmit={handleChangePassword} isLoading={isPending} />
+                    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                                <LockOutlined style={{ fontSize: 20, marginRight: 12 }} />
+                                <Title level={4} style={{ margin: 0 }}>Password</Title>
+                            </div>
+                            <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                                Change your password to keep your account secure. You'll need to enter your current password to make changes.
+                            </Text>
+                            <Button
+                                type="default"
+                                icon={<RightOutlined />}
+                                iconPosition="end"
+                                onClick={() => navigate(links.dashboard.changePassword)}
+                            >
+                                Change Password
+                            </Button>
+                        </div>
+                    </Space>
                 </Card>
             </div>
         </>

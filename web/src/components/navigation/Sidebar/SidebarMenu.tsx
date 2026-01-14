@@ -21,11 +21,6 @@ export const SidebarMenu: React.FC = () => {
             icon: <UserOutlined />,
         },
         {
-            label: 'Settings',
-            key: links.dashboard.settings,
-            icon: <SettingOutlined />,
-        },
-        {
             label: 'Lessons',
             key: links.dashboard.lessons,
             icon: <BookOutlined />,
@@ -49,6 +44,11 @@ export const SidebarMenu: React.FC = () => {
             label: 'Orders',
             key: links.dashboard.orders,
             icon: <TruckOutlined />,
+        },
+        {
+            label: 'Settings',
+            key: links.dashboard.settings,
+            icon: <SettingOutlined />,
         },
     ];
 

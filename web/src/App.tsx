@@ -8,6 +8,7 @@ import { WalletPage } from "./pages/dashboard/wallet/WalletPage";
 import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
 import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
 import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
+import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
@@ -41,6 +42,7 @@ export default function App() {
             <Route index element={<DashboardPage />} />
             <Route path='profile' element={<ProfilePage />} />
             <Route path='settings' element={<SettingsPage />} />
+            <Route path='change-password' element={<ChangePasswordPage />} />
             <Route path='lessons' element={<LessonsPage />} />
             <Route path='shop' element={<ShopPage />} />
             <Route path='wallet' element={<WalletPage />} />
