@@ -1,19 +1,27 @@
 import { Outlet } from "react-router";
-import { Layout } from "antd";
+import { Layout, theme } from "antd";
 import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
 import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
 
 const { Sider, Content } = Layout;
 
 export const DashboardLayout: React.FC = () => {
+    const { token } = theme.useToken();
+
     return (
         <Layout className="min-h-screen">
             <MobileSidebar />
             <Sider className="hidden md:block" width={240} theme="light">
                 <DesktopSidebar />
             </Sider>
-            <Layout hasSider >
-                <Content className="overflow-auto bg-gray-50">
+            <Layout hasSider>
+                <Content
+                    className="overflow-auto"
+                    style={{
+                        padding: token.paddingLG,
+                        backgroundColor: token.colorBgLayout
+                    }}
+                >
                     <Outlet />
                 </Content>
             </Layout>
