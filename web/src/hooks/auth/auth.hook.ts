@@ -13,10 +13,16 @@ export const useAuth = () => {
 export const useSignIn = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string }) => {
-            return await authClient.signIn.email({
+            const response = await authClient.signIn.email({
                 email: values.email,
                 password: values.password,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to sign in");
+            }
+
+            return response;
         },
     });
 };
@@ -24,11 +30,17 @@ export const useSignIn = () => {
 export const useSignUp = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string; name: string }) => {
-            return await authClient.signUp.email({
+            const response = await authClient.signUp.email({
                 email: values.email,
                 password: values.password,
                 name: values.name,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to sign up");
+            }
+
+            return response;
         },
     });
 };
