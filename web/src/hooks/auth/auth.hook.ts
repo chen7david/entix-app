@@ -48,7 +48,13 @@ export const useSignUp = () => {
 export const useSignOut = () => {
     return useMutation({
         mutationFn: async () => {
-            return await authClient.signOut();
+            const response = await authClient.signOut();
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to sign out");
+            }
+
+            return response;
         },
     });
 };
@@ -56,9 +62,15 @@ export const useSignOut = () => {
 export const useVerifyEmail = () => {
     return useMutation({
         mutationFn: async (values: { query: { token: string } }) => {
-            return await authClient.verifyEmail({
+            const response = await authClient.verifyEmail({
                 query: values.query,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to verify email");
+            }
+
+            return response;
         },
     });
 };
@@ -66,9 +78,15 @@ export const useVerifyEmail = () => {
 export const useResendVerification = () => {
     return useMutation({
         mutationFn: async (values: { email: string }) => {
-            return await authClient.sendVerificationEmail({
+            const response = await authClient.sendVerificationEmail({
                 email: values.email,
             });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to send verification email");
+            }
+
+            return response;
         },
     });
 };
