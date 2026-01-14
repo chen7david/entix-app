@@ -9,6 +9,8 @@ import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
 import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
 import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
 import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
+import { OrganizationListPage } from "./pages/dashboard/organization/OrganizationListPage";
+import { CreateOrganizationPage } from "./pages/dashboard/organization/CreateOrganizationPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
@@ -48,6 +50,8 @@ export default function App() {
             <Route path='wallet' element={<WalletPage />} />
             <Route path='movies' element={<MoviesPage />} />
             <Route path='orders' element={<OrdersPage />} />
+            <Route path='organizations' element={<OrganizationListPage />} />
+            <Route path='organizations/create' element={<CreateOrganizationPage />} />
           </Route>
         </Routes>
       </AppContainer>
