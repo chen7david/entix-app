@@ -1,8 +1,8 @@
 import React from 'react';
 import { Avatar, Button, Typography, Skeleton } from 'antd';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { UserOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
-import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useAuth } from '@web/src/hooks/auth/auth.hook';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
 
@@ -10,22 +10,13 @@ const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
     const { session, isLoading } = useAuth();
-    const { mutate: signOut } = useSignOut();
     const navigate = useNavigate();
-
-    const handleLogout = () => {
-        signOut(undefined, {
-            onSuccess: () => {
-                navigate(links.auth.signIn);
-            }
-        });
-    };
 
     return (
         <div className="flex flex-col h-full">
             {/* Header / Logo */}
-            <div className="p-4 bg-gray-100 flex items-center h-14">
-                <span className="text-lg font-bold">Entix</span>
+            <div className="p-4 flex items-center h-16 border-b border-gray-100">
+                <span className="text-xl font-bold">Entix</span>
             </div>
 
 
@@ -50,16 +41,6 @@ export const SidebarContent: React.FC = () => {
                                 <Text type="secondary" className="text-xs truncate">{session.data.user?.email}</Text>
                             </div>
                         </div>
-                        <Button
-                            type="text"
-                            danger
-                            icon={<LogoutOutlined />}
-                            onClick={handleLogout}
-                            block
-                            className="flex items-center justify-start pl-0 hover:bg-red-50"
-                        >
-                            Logout
-                        </Button>
                     </div>
                 ) : (
                     <Button type="primary" block onClick={() => navigate(links.auth.signIn)}>

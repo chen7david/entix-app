@@ -14,7 +14,7 @@ export const Toolbar = ({
     return (
         <div
             className={cn(
-                'bg-gray-100 z-10 flex items-center sticky top-0 h-14 md:pr-4 md:pl-0 px-4',
+                'bg-gray-100 z-10 flex items-center sticky top-0 h-16 md:pr-4 md:pl-0 px-4',
                 className,
             )}
             {...rest}

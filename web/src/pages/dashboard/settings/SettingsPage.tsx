@@ -1,14 +1,24 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
 import { Card, Typography, Divider, Button, Space } from 'antd';
-import { LockOutlined, RightOutlined } from '@ant-design/icons';
+import { LockOutlined, RightOutlined, LogoutOutlined } from '@ant-design/icons';
 import { links } from '@web/src/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { useSignOut } from '@web/src/hooks/auth/auth.hook';
 
 const { Title, Text } = Typography;
 
 export const SettingsPage: React.FC = () => {
     const navigate = useNavigate();
+    const { mutate: signOut } = useSignOut();
+
+    const handleLogout = () => {
+        signOut(undefined, {
+            onSuccess: () => {
+                navigate(links.auth.signIn);
+            }
+        });
+    };
 
     return (
         <>
@@ -36,6 +46,24 @@ export const SettingsPage: React.FC = () => {
                                 onClick={() => navigate(links.dashboard.changePassword)}
                             >
                                 Change Password
+                            </Button>
+                        </div>
+
+                        <Divider />
+
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                                <LogoutOutlined style={{ fontSize: 20, marginRight: 12, color: '#ff4d4f' }} />
+                                <Title level={4} type="danger" style={{ margin: 0 }}>Sign Out</Title>
+                            </div>
+                            <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                                Sign out of your account on this device.
+                            </Text>
+                            <Button
+                                danger
+                                onClick={handleLogout}
+                            >
+                                Sign Out
                             </Button>
                         </div>
                     </Space>
