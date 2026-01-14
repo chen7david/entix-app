@@ -22,7 +22,6 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
 
     return (
         <>
-
             {apiError && (
                 <Alert
                     title="Error"

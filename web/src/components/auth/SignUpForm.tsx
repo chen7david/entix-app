@@ -23,7 +23,6 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
 
     return (
         <>
-
             {apiError && (
                 <Alert
                     message={apiError}
