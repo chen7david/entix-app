@@ -27,7 +27,7 @@ export const SignInPage: React.FC = () => {
     };
 
     return (
-        <Card style={{ width: 400, margin: '0 auto', marginTop: 50 }}>
+        <Card style={{ width: 400, margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <Title level={2}>Welcome Back</Title>
                 <Text type="secondary">Please sign in to continue</Text>

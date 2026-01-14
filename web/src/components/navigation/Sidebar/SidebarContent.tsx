@@ -1,6 +1,6 @@
 import React from 'react';
-import { Avatar, Button, Typography, Skeleton } from 'antd';
-import { LogoutOutlined, UserOutlined } from '@ant-design/icons';
+import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from 'antd';
+import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
 import { useNavigate } from 'react-router';
@@ -13,19 +13,45 @@ export const SidebarContent: React.FC = () => {
     const { mutate: signOut } = useSignOut();
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        signOut(undefined, {
-            onSuccess: () => {
-                navigate(links.auth.signIn);
-            }
-        });
+    const handleMenuClick: MenuProps['onClick'] = (e) => {
+        if (e.key === 'logout') {
+            signOut(undefined, {
+                onSuccess: () => {
+                    navigate(links.auth.signIn);
+                }
+            });
+        } else {
+            navigate(e.key);
+        }
     };
+
+    const userMenuItems: MenuProps['items'] = [
+        {
+            key: links.dashboard.profile,
+            label: 'Profile',
+            icon: <UserOutlined />,
+        },
+        {
+            key: links.dashboard.settings,
+            label: 'Settings',
+            icon: <SettingOutlined />,
+        },
+        {
+            type: 'divider',
+        },
+        {
+            key: 'logout',
+            label: 'Sign Out',
+            icon: <LogoutOutlined />,
+            danger: true,
+        },
+    ];
 
     return (
         <div className="flex flex-col h-full">
             {/* Header / Logo */}
-            <div className="p-4 bg-gray-100 flex items-center h-14">
-                <span className="text-lg font-bold">Entix</span>
+            <div className="p-4 flex items-center h-16 border-b border-gray-100">
+                <span className="text-xl font-bold">Entix</span>
             </div>
 
 
@@ -43,23 +69,18 @@ export const SidebarContent: React.FC = () => {
                     <Skeleton active avatar paragraph={{ rows: 1 }} />
                 ) : session.data ? (
                     <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3">
-                            <Avatar size="large" icon={<UserOutlined />} src={session.data.user?.image} />
-                            <div className="flex flex-col overflow-hidden">
-                                <Text strong className="truncate">{session.data.user?.name}</Text>
-                                <Text type="secondary" className="text-xs truncate">{session.data.user?.email}</Text>
+                        <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <Avatar size="large" icon={<UserOutlined />} src={session.data.user?.image} />
+                                <div className="flex flex-col overflow-hidden">
+                                    <Text strong className="truncate">{session.data.user?.name}</Text>
+                                    <Text type="secondary" className="text-xs truncate">{session.data.user?.email}</Text>
+                                </div>
                             </div>
+                            <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} placement="topRight" trigger={['click']}>
+                                <Button type="text" icon={<MoreOutlined />} />
+                            </Dropdown>
                         </div>
-                        <Button
-                            type="text"
-                            danger
-                            icon={<LogoutOutlined />}
-                            onClick={handleLogout}
-                            block
-                            className="flex items-center justify-start pl-0 hover:bg-red-50"
-                        >
-                            Logout
-                        </Button>
                     </div>
                 ) : (
                     <Button type="primary" block onClick={() => navigate(links.auth.signIn)}>
