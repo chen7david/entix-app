@@ -1,5 +1,6 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { Resend } from "resend";
+import { Logger } from "pino";
 
 type SendTemplateParams = {
     to: string;
@@ -16,9 +17,11 @@ type SendHtmlParams = {
 export class Mailer {
     private $client: Resend;
     private sender: string = 'Entix <donotreply@entix.org>';
+    private logger: Logger;
 
-    constructor(apiKey: string) {
+    constructor(apiKey: string, logger: Logger) {
         this.$client = new Resend(apiKey);
+        this.logger = logger;
     }
 
     public async sendHtml({ to, subject, html }: SendHtmlParams) {
@@ -30,7 +33,7 @@ export class Mailer {
                 react: html,
             });
         } catch (error) {
-            console.error(error);
+            this.logger.error({ error }, 'Failed to send HTML email');
         }
     }
 
@@ -45,7 +48,7 @@ export class Mailer {
                 },
             });
         } catch (error) {
-            console.error(error);
+            this.logger.error({ error }, 'Failed to send template email');
         }
     }
 }

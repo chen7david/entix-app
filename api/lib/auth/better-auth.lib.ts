@@ -11,7 +11,8 @@ import { betterAuthGlobalOptions } from "./better-auth.config";
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
-    const mailer = new Mailer(ctx.env.RESEND_API_KEY);
+    const logger = ctx.var.logger;
+    const mailer = new Mailer(ctx.env.RESEND_API_KEY, logger);
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
@@ -34,7 +35,7 @@ export const auth = (ctx: AppContext) => {
                 );
             },
             onPasswordReset: async ({ user }) => {
-                console.log(`Password for user ${user.email} has been reset.`);
+                logger.info({ user: user.email }, `Password for user ${user.email} has been reset.`);
             },
             resetPassword: {
                 allowedRedirectURLs: [

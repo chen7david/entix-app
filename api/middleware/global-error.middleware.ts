@@ -4,12 +4,13 @@ import { AppError } from '../errors/app.error';
 import { z } from 'zod';
 
 export const globalErrorHandler = async (err: Error, c: Context) => {
-    console.error('Caught error:', err);
+    const logger = c.get('logger');
+    logger.error({ err }, 'Caught error');
 
     // 1. Zod validation error
     if (err instanceof ZodError) {
         const flattened = z.treeifyError(err);
-        console.log('Flattened Zod error:', flattened);
+        logger.info({ flattened }, 'Flattened Zod error');
         return c.json(
             {
                 success: false,
