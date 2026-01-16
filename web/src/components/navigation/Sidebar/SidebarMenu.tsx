@@ -44,6 +44,16 @@ export const SidebarMenu: React.FC = () => {
             label: 'Organizations',
             key: links.dashboard.organizations,
             icon: <TeamOutlined />,
+            children: [
+                {
+                    label: 'All Organizations',
+                    key: links.dashboard.organizations,
+                },
+                {
+                    label: 'Invite Members',
+                    key: links.dashboard.inviteMember,
+                }
+            ]
         },
     ];
 

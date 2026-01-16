@@ -1,5 +1,5 @@
 import { authClient } from "@web/src/lib/auth-client";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useCreateOrganization = () => {
     const queryClient = useQueryClient();
@@ -87,5 +87,80 @@ export const useSetActiveOrganization = () => {
 };
 
 // Re-export the list hook from better-auth for consistency
+// Re-export the list hook from better-auth for consistency
 export const useListOrganizations = authClient.useListOrganizations;
 export const useActiveOrganization = authClient.useActiveOrganization;
+export const useListInvitations = () => {
+    return useQuery({
+        queryKey: ["listInvitations"],
+        queryFn: async () => {
+            const response = await authClient.organization.listInvitations();
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to list invitations");
+            }
+            return response.data;
+        }
+    });
+};
+
+export const useInviteMember = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (values: { email: string; role: "admin" | "member" | "owner" }) => {
+            const response = await authClient.organization.inviteMember({
+                email: values.email,
+                role: values.role,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to invite member");
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["listInvitations"] });
+        }
+    });
+};
+
+export const useCancelInvitation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (values: { invitationId: string }) => {
+            const response = await authClient.organization.cancelInvitation({
+                invitationId: values.invitationId,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to cancel invitation");
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["listInvitations"] });
+        }
+    });
+};
+
+export const useAcceptInvitation = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (values: { invitationId: string }) => {
+            const response = await authClient.organization.acceptInvitation({
+                invitationId: values.invitationId,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to accept invitation");
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["listOrganizations"] });
+            queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+        }
+    });
+};

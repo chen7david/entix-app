@@ -4,7 +4,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
-import { betterAuthGlobalOptions } from "./better-auth.config";
+import { getBetterAuthGlobalOptions } from "./better-auth.config";
 
 
 
@@ -16,7 +16,7 @@ export const auth = (ctx: AppContext) => {
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
-        ...betterAuthGlobalOptions,
+        ...getBetterAuthGlobalOptions({ mailer, frontendUrl: ctx.env.FRONTEND_URL }),
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
         emailAndPassword: {

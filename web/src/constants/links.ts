@@ -6,6 +6,7 @@ export const links = {
         emailVerificationPending: '/auth/email-verification-pending',
         forgotPassword: '/auth/forgot-password',
         resetPassword: '/auth/reset-password',
+        acceptInvitation: '/auth/accept-invitation',
     },
     dashboard: {
         index: '/dashboard',
@@ -19,5 +20,6 @@ export const links = {
         orders: '/dashboard/orders',
         organizations: '/dashboard/organizations',
         createOrganization: '/dashboard/organizations/create',
-    }
+        inviteMember: '/dashboard/organizations/invite',
+    },
 } as const;
