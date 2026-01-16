@@ -43,7 +43,7 @@ export const InvitationList: React.FC = () => {
     return (
         <List
             itemLayout="horizontal"
-            dataSource={invitations as Invitation[]}
+            dataSource={invitations?.filter(inv => inv.status === 'pending') as Invitation[]}
             renderItem={(invitation: Invitation) => (
                 <List.Item
                     actions={[
