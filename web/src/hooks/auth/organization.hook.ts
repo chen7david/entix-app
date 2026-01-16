@@ -174,7 +174,7 @@ export const useAcceptInvitation = () => {
                 details: err.details,
                 cause: err.cause,
             });
-
+            console.error(JSON.stringify(err));
         }
     });
 };
