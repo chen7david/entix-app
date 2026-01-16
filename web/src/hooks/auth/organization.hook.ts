@@ -148,15 +148,20 @@ export const useAcceptInvitation = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (values: { invitationId: string }) => {
-            const response = await authClient.organization.acceptInvitation({
-                invitationId: values.invitationId,
-            });
+            try {
+                const response = await authClient.organization.acceptInvitation({
+                    invitationId: values.invitationId,
+                });
 
-            if (response.error) {
-                throw new Error(response.error.message || "Failed to accept invitation");
+                if (response.error) {
+                    throw new Error(response.error.message || "Failed to accept invitation");
+                }
+
+                return response;
+            } catch (error) {
+                console.error(error);
+                throw error;
             }
-
-            return response;
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["listOrganizations"] });
