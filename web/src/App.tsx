@@ -13,6 +13,8 @@ import { OrganizationListPage } from "./pages/dashboard/organization/Organizatio
 import { CreateOrganizationPage } from "./pages/dashboard/organization/CreateOrganizationPage";
 import { InviteMemberPage } from "./pages/dashboard/organization/InviteMemberPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
+import { MembersPage } from "./pages/dashboard/organization/MembersPage";
+import { InvitationsPage } from "./pages/dashboard/organization/InvitationsPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";

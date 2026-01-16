@@ -19,6 +19,13 @@ export const links = {
         movies: '/dashboard/movies',
         orders: '/dashboard/orders',
         organizations: '/dashboard/organizations',
+        organization: {
+            list: "/dashboard/organizations",
+            create: "/dashboard/organizations/create",
+            inviteMember: "/dashboard/organizations/invite",
+            members: "/dashboard/organizations/members",
+            invitations: "/dashboard/organizations/invitations",
+        },
         createOrganization: '/dashboard/organizations/create',
         inviteMember: '/dashboard/organizations/invite',
     },

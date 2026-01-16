@@ -90,6 +90,18 @@ export const useSetActiveOrganization = () => {
 // Re-export the list hook from better-auth for consistency
 export const useListOrganizations = authClient.useListOrganizations;
 export const useActiveOrganization = authClient.useActiveOrganization;
+export const useListMembers = () => {
+    return useQuery({
+        queryKey: ["listMembers"],
+        queryFn: async () => {
+            const response = await authClient.organization.listMembers();
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to list members");
+            }
+            return response.data;
+        }
+    });
+};
 export const useListInvitations = () => {
     return useQuery({
         queryKey: ["listInvitations"],
@@ -175,6 +187,26 @@ export const useAcceptInvitation = () => {
                 cause: err.cause,
             });
             console.error(JSON.stringify(err));
+        }
+    });
+};
+export const useRemoveMember = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (values: { memberId: string }) => {
+            const response = await authClient.organization.removeMember({
+                memberIdOrEmail: values.memberId,
+            });
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to remove member");
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["listMembers"] });
+            queryClient.invalidateQueries({ queryKey: ["listOrganizations"] });
         }
     });
 };

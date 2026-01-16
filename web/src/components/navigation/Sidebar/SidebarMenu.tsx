@@ -47,11 +47,19 @@ export const SidebarMenu: React.FC = () => {
             children: [
                 {
                     label: 'All Organizations',
-                    key: links.dashboard.organizations,
+                    key: links.dashboard.organization.list,
+                },
+                {
+                    label: 'Members',
+                    key: links.dashboard.organization.members,
+                },
+                {
+                    label: 'Invitations',
+                    key: links.dashboard.organization.invitations,
                 },
                 {
                     label: 'Invite Members',
-                    key: links.dashboard.inviteMember,
+                    key: links.dashboard.organization.inviteMember,
                 }
             ]
         },
