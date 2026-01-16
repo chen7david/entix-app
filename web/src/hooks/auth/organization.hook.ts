@@ -166,6 +166,15 @@ export const useAcceptInvitation = () => {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["listOrganizations"] });
             queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+        },
+        onError: (err: any) => {
+            console.error("Accept invitation failed:", {
+                code: err.code,
+                message: err.message,
+                details: err.details,
+                cause: err.cause,
+            });
+
         }
     });
 };
