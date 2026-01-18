@@ -15,6 +15,20 @@
       "when": 1766968888182,
       "tag": "0001_faithful_nomad",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1768750393745,
+      "tag": "0002_flaky_monster_badoon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1768750885527,
+      "tag": "0003_goofy_johnny_storm",
+      "breakpoints": true
     }
   ]
 }
