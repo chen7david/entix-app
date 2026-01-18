@@ -1,27 +1,22 @@
-import { betterAuth, BetterAuthOptions } from "better-auth";
+import { betterAuth } from "better-auth";
 import { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
-import { organization, openAPI } from 'better-auth/plugins';
+import { getBetterAuthGlobalOptions } from "./better-auth.config";
 
-export const betterAuthGlobalOptions: BetterAuthOptions = {
-    appName: 'entix-app',
-    basePath: '/api/v1/auth',
-    plugins: [organization(), openAPI()],
-    advanced: {
-        disableCSRFCheck: true
-    },
-};
+
+
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
-    const mailer = new Mailer(ctx.env.RESEND_API_KEY);
+    const logger = ctx.var.logger;
+    const mailer = new Mailer(ctx.env.RESEND_API_KEY, logger);
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
-        ...betterAuthGlobalOptions,
+        ...getBetterAuthGlobalOptions({ mailer, frontendUrl: ctx.env.FRONTEND_URL }),
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
         emailAndPassword: {
@@ -40,7 +35,7 @@ export const auth = (ctx: AppContext) => {
                 );
             },
             onPasswordReset: async ({ user }) => {
-                console.log(`Password for user ${user.email} has been reset.`);
+                logger.info({ user: user.email }, `Password for user ${user.email} has been reset.`);
             },
             resetPassword: {
                 allowedRedirectURLs: [

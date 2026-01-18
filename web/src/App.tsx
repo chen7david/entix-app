@@ -9,6 +9,10 @@ import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
 import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
 import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
 import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
+import { OrganizationListPage } from "./pages/dashboard/organization/OrganizationListPage";
+import { CreateOrganizationPage } from "./pages/dashboard/organization/CreateOrganizationPage";
+import { InviteMemberPage } from "./pages/dashboard/organization/InviteMemberPage";
+import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
@@ -37,6 +41,7 @@ export default function App() {
             <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
+            <Route path="accept-invitation" element={<AcceptInvitationPage />} />
           </Route>
           <Route path={links.dashboard.index} element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />
@@ -48,6 +53,9 @@ export default function App() {
             <Route path='wallet' element={<WalletPage />} />
             <Route path='movies' element={<MoviesPage />} />
             <Route path='orders' element={<OrdersPage />} />
+            <Route path='organizations' element={<OrganizationListPage />} />
+            <Route path='organizations/create' element={<CreateOrganizationPage />} />
+            <Route path='organizations/invite' element={<InviteMemberPage />} />
           </Route>
         </Routes>
       </AppContainer>

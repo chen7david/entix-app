@@ -1,5 +1,5 @@
 import { Menu } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
+import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, TeamOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
@@ -39,6 +39,29 @@ export const SidebarMenu: React.FC = () => {
             label: 'Orders',
             key: links.dashboard.orders,
             icon: <TruckOutlined />,
+        },
+        {
+            label: 'Organizations',
+            key: links.dashboard.organizations,
+            icon: <TeamOutlined />,
+            children: [
+                {
+                    label: 'All Organizations',
+                    key: links.dashboard.organization.list,
+                },
+                {
+                    label: 'Members',
+                    key: links.dashboard.organization.members,
+                },
+                {
+                    label: 'Invitations',
+                    key: links.dashboard.organization.invitations,
+                },
+                {
+                    label: 'Invite Members',
+                    key: links.dashboard.organization.inviteMember,
+                }
+            ]
         },
     ];
 

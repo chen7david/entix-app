@@ -18,7 +18,7 @@ export const themeConfig: ThemeConfig = {
     },
     components: {
         Input: {
-            fontSize: 16, // iOS zoom fix
+            fontSize: 16,
             controlHeight: 40,
             borderRadius: 6,
             activeShadow: '0 0 0 2px rgba(100, 108, 255, 0.1)',
@@ -26,7 +26,7 @@ export const themeConfig: ThemeConfig = {
             activeBorderColor: '#646cff',
         },
         Select: {
-            fontSize: 16, // iOS zoom fix
+            fontSize: 16,
             controlHeight: 40,
             borderRadius: 6,
             colorPrimaryHover: '#747bff',
