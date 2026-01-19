@@ -28,6 +28,8 @@ export const user = sqliteTable("user", {
     banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
 });
 
+export type User = typeof user.$inferSelect;
+
 export const session = sqliteTable(
     "session",
     {
