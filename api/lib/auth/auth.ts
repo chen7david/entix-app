@@ -5,8 +5,8 @@ import { drizzle } from "drizzle-orm/d1";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
 import { betterAuthGlobalOptions } from "./config/global.config";
-import { getEmailAndPasswordConfig } from "./features/email-and-password.feature";
-import { getEmailVerificationConfig } from "./features/email-verification.feature";
+import { getEmailAndPasswordConfig } from "./config/features/email-and-password.feature";
+import { getEmailVerificationConfig } from "./config/features/email-verification.feature";
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });

@@ -1,11 +1,12 @@
 import { AppContext } from "@api/helpers/types.helpers";
-import { Mailer } from "../../mail/mailer.lib";
+import { Mailer } from "../../../mail/mailer.lib";
 import { BetterAuthOptions } from "better-auth";
 
-export const getEmailVerificationConfig = (ctx: AppContext, mailer: Mailer): Partial<BetterAuthOptions> => ({
+export const getEmailVerificationConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => ({
     emailVerification: {
         sendOnSignUp: true,
         sendVerificationEmail: async ({ user, url, token }) => {
+            if (!ctx || !mailer) return;
             const verificationUrl = `${ctx.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
             ctx.executionCtx.waitUntil(
                 mailer.sendTemplate({

@@ -1,12 +1,13 @@
 import { AppContext } from "@api/helpers/types.helpers";
-import { Mailer } from "../../mail/mailer.lib";
+import { Mailer } from "../../../mail/mailer.lib";
 import { BetterAuthOptions } from "better-auth";
 
-export const getEmailAndPasswordConfig = (ctx: AppContext, mailer: Mailer): Partial<BetterAuthOptions> => ({
+export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => ({
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: true,
         sendResetPassword: async ({ user, url }) => {
+            if (!ctx || !mailer) return;
             ctx.executionCtx.waitUntil(
                 mailer.sendTemplate({
                     to: user.email,
