@@ -19,6 +19,8 @@ import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
+import { AdminLayout } from './layouts/AdminLayout';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -38,6 +40,12 @@ export default function App() {
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
           </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboardPage />} />
+          </Route>
+
           <Route path={links.dashboard.index} element={<DashboardLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path='profile' element={<ProfilePage />} />

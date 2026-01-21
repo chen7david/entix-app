@@ -22,7 +22,13 @@ export const user = sqliteTable("user", {
         .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
+    role: text("role").default("user").notNull(),
+    banned: integer("banned", { mode: "boolean" }).default(false).notNull(),
+    banReason: text("ban_reason"),
+    banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
 });
+
+export type User = typeof user.$inferSelect;
 
 export const session = sqliteTable(
     "session",
@@ -42,6 +48,7 @@ export const session = sqliteTable(
             .notNull()
             .references(() => user.id, { onDelete: "cascade" }),
         activeOrganizationId: text("active_organization_id"),
+        impersonatedBy: text("impersonated_by"),
     },
     (table) => [index("session_userId_idx").on(table.userId)],
 );
