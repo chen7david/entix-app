@@ -7,7 +7,7 @@ import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 const { Title } = Typography;
 
 export const OrganizationDashboardPage = () => {
-    const { activeOrganization, loading } = useOrganization();
+    const { activeOrganization, loading, userRole } = useOrganization();
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteError, setInviteError] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export const OrganizationDashboardPage = () => {
                         <Descriptions.Item label="ID">{activeOrganization.id}</Descriptions.Item>
                         <Descriptions.Item label="Name">{activeOrganization.name}</Descriptions.Item>
                         <Descriptions.Item label="Slug">{activeOrganization.slug}</Descriptions.Item>
-                        <Descriptions.Item label="Role">{activeOrganization.role || 'Member'}</Descriptions.Item>
+                        <Descriptions.Item label="Role">{userRole || 'Member'}</Descriptions.Item>
                     </Descriptions>
                 </Card>
 

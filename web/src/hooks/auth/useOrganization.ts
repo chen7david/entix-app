@@ -1,6 +1,7 @@
 import { authClient } from "@web/src/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router";
+import { useAuth } from "./auth.hook";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
@@ -94,10 +95,16 @@ export const useOrganization = () => {
         return path;
     };
 
+    const { session } = useAuth();
+    const userId = session.data?.user?.id;
+
+    const userRole = activeOrganization?.members?.find((m: any) => m.userId === userId)?.role;
+
     return {
         organizations,
         activeOrganization,
         members,
+        userRole,
         loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
         isCreating,
         isSwitching,
