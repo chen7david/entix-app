@@ -126,6 +126,28 @@ export const useOrganization = () => {
         navigate(links.auth.selectOrganization);
     };
 
+    const { mutateAsync: acceptInvitationMutation, isPending: isAcceptingInvitation } = useMutation({
+        mutationFn: async (invitationId: string) => {
+            return await authClient.organization.acceptInvitation({ invitationId });
+        },
+        onSuccess: async (result) => {
+            if (result.data) {
+                // Invalidate queries to refresh organization list and active org
+                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+                await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
+
+                // Set the accepted organization as active
+                if (result.data.invitation?.organizationId) {
+                    await setActiveMutation(result.data.invitation.organizationId);
+                }
+            }
+        }
+    });
+
+    const acceptInvitation = async (invitationId: string) => {
+        return acceptInvitationMutation(invitationId);
+    };
+
     return {
         organizations,
         activeOrganization,
@@ -134,11 +156,13 @@ export const useOrganization = () => {
         loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
         isCreating,
         isSwitching,
+        isAcceptingInvitation,
         listOrganizations,
         createOrganization,
         setActive,
         getOrgLink,
         listMembers,
         checkOrganizationStatus,
+        acceptInvitation,
     };
 };

@@ -8,6 +8,7 @@ export const links = {
         resetPassword: '/auth/reset-password',
         noOrganization: '/auth/no-organization',
         selectOrganization: '/auth/select-organization',
+        acceptInvitation: '/auth/accept-invitation',
     },
     dashboard: {
         index: '/dashboard',

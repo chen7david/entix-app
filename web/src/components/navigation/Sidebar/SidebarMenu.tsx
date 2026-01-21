@@ -55,10 +55,16 @@ export const SidebarMenu: React.FC = () => {
                     label: 'All Organizations',
                     key: '/organization',
                 },
-                ...(activeOrganization ? [{
-                    label: 'Members',
-                    key: getOrgLink('/members'),
-                }] : [])
+                ...(activeOrganization ? [
+                    {
+                        label: 'Dashboard',
+                        key: getOrgLink(''),
+                    },
+                    {
+                        label: 'Members',
+                        key: getOrgLink('/members'),
+                    }
+                ] : [])
             ]
         },
     ];
