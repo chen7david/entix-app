@@ -62,10 +62,10 @@ export default function App() {
           </Route>
 
           {/* Organization Routes */}
-          <Route path="/organization">
+          <Route path={links.organization.index} element={<DashboardLayout />}>
             <Route index element={<OrganizationListPage />} />
             <Route path="create" element={<CreateOrganizationPage />} />
-            <Route path=":id" element={<DashboardLayout />}>
+            <Route path=":id">
               <Route index element={<OrganizationDashboardPage />} />
             </Route>
           </Route>

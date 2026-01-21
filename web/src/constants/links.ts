@@ -17,5 +17,10 @@ export const links = {
         wallet: '/dashboard/wallet',
         movies: '/dashboard/movies',
         orders: '/dashboard/orders',
+    },
+    organization: {
+        index: '/organization',
+        create: '/organization/create',
+        edit: '/organization/:id',
     }
 } as const;
