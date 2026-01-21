@@ -20,7 +20,8 @@ export default defineConfig({
                 items: [
                     { text: 'Setup & Development', link: '/setup' },
                     { text: 'Architecture', link: '/architecture' },
-                    { text: 'Database & Auth', link: '/database' },
+                    { text: 'Database', link: '/database' },
+                    { text: 'Authentication', link: '/authentication' },
                     { text: 'API & Errors', link: '/api' },
                     { text: 'Deployment', link: '/deployment' },
                     { text: 'Troubleshooting', link: '/troubleshooting' },
