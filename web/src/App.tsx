@@ -23,6 +23,7 @@ import { AdminLayout } from './layouts/AdminLayout';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
+import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -65,7 +66,7 @@ export default function App() {
             <Route index element={<OrganizationListPage />} />
             <Route path=":id">
               <Route index element={<OrganizationDashboardPage />} />
-              <Route path="members" element={<div>Members Page (Placeholder)</div>} />
+              <Route path="members" element={<OrganizationMembersPage />} />
             </Route>
           </Route>
         </Routes>

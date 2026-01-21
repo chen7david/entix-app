@@ -6,6 +6,7 @@ export const useOrganization = () => {
     const navigate = useNavigate();
     const [organizations, setOrganizations] = useState<any[]>([]);
     const [activeOrganization, setActiveOrganization] = useState<any>(null);
+    const [members, setMembers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
     const [isSwitching, setIsSwitching] = useState(false);
@@ -51,8 +52,18 @@ export const useOrganization = () => {
         const { data } = await authClient.organization.getFullOrganization();
         if (data) {
             setActiveOrganization(data);
+            if (data.members) {
+                setMembers(data.members);
+            }
         }
     }
+
+    const getOrgLink = (path: string) => {
+        if (activeOrganization?.id) {
+            return `/organization/${activeOrganization.id}${path.startsWith('/') ? path : `/${path}`}`;
+        }
+        return path;
+    };
 
     useEffect(() => {
         listOrganizations();
@@ -62,11 +73,13 @@ export const useOrganization = () => {
     return {
         organizations,
         activeOrganization,
+        members,
         loading,
         isCreating,
         isSwitching,
         listOrganizations,
         createOrganization,
         setActive,
+        getOrgLink,
     };
 };

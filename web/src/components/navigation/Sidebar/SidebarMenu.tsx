@@ -1,4 +1,4 @@
-import { Menu } from "antd";
+import { Menu, type MenuProps } from "antd";
 import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, TeamOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
@@ -9,7 +9,7 @@ export const SidebarMenu: React.FC = () => {
     const location = useLocation();
     const { close } = useSidebar();
 
-    const menuItems = [
+    const menuItems: MenuProps['items'] = [
         {
             label: 'Home',
             key: links.dashboard.index,
