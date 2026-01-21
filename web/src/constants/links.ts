@@ -6,6 +6,9 @@ export const links = {
         emailVerificationPending: '/auth/email-verification-pending',
         forgotPassword: '/auth/forgot-password',
         resetPassword: '/auth/reset-password',
+        noOrganization: '/auth/no-organization',
+        selectOrganization: '/auth/select-organization',
+        acceptInvitation: '/auth/accept-invitation',
     },
     dashboard: {
         index: '/dashboard',
@@ -17,5 +20,10 @@ export const links = {
         wallet: '/dashboard/wallet',
         movies: '/dashboard/movies',
         orders: '/dashboard/orders',
+    },
+    organization: {
+        index: '/organization',
+        create: '/organization/create',
+        edit: '/organization/:id',
     }
 } as const;

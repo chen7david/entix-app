@@ -5,6 +5,7 @@ import { SidebarMenu } from './SidebarMenu';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
+import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
 
 const { Text } = Typography;
 
@@ -52,6 +53,10 @@ export const SidebarContent: React.FC = () => {
             {/* Header / Logo */}
             <div className="p-4 flex items-center h-16 border-b border-gray-100">
                 <span className="text-xl font-bold">Entix</span>
+            </div>
+
+            <div className="px-4 py-2">
+                <OrganizationSwitcher />
             </div>
 
 

@@ -5,8 +5,8 @@ import { drizzle } from "drizzle-orm/d1";
 import { Mailer } from "../mail/mailer.lib";
 import * as schema from "../../db/schema.db";
 import { betterAuthGlobalOptions } from "./config/global.config";
-import { getEmailAndPasswordConfig } from "./features/email-and-password.feature";
-import { getEmailVerificationConfig } from "./features/email-verification.feature";
+import { getEmailAndPasswordConfig } from "./config/features/email-and-password.feature";
+import { getEmailVerificationConfig } from "./config/features/email-verification.feature";
 
 export const auth = (ctx: AppContext) => {
     const db = drizzle(ctx.env.DB, { schema });
@@ -14,9 +14,9 @@ export const auth = (ctx: AppContext) => {
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
-        ...betterAuthGlobalOptions,
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
+        ...betterAuthGlobalOptions(ctx, mailer),
         ...getEmailAndPasswordConfig(ctx, mailer),
         ...getEmailVerificationConfig(ctx, mailer),
     });

@@ -21,6 +21,12 @@ import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { AdminLayout } from './layouts/AdminLayout';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
+import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
+import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
+import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
+import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
+import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -39,6 +45,9 @@ export default function App() {
             <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
+            <Route path="no-organization" element={<NoOrganizationPage />} />
+            <Route path="select-organization" element={<SelectOrganizationPage />} />
+            <Route path="accept-invitation" element={<AcceptInvitationPage />} />
           </Route>
 
           {/* Admin Routes */}
@@ -56,6 +65,15 @@ export default function App() {
             <Route path='wallet' element={<WalletPage />} />
             <Route path='movies' element={<MoviesPage />} />
             <Route path='orders' element={<OrdersPage />} />
+          </Route>
+
+          {/* Organization Routes */}
+          <Route path={links.organization.index} element={<DashboardLayout />}>
+            <Route index element={<OrganizationListPage />} />
+            <Route path=":id">
+              <Route index element={<OrganizationDashboardPage />} />
+              <Route path="members" element={<OrganizationMembersPage />} />
+            </Route>
           </Route>
         </Routes>
       </AppContainer>

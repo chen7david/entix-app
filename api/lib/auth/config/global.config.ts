@@ -1,12 +1,14 @@
 
 import { BetterAuthOptions } from 'better-auth';
-import { betterAuthPluginsConfig } from './plugins.config';
+import { getBetterAuthPluginsConfig } from './plugins.config';
+import { AppContext } from '@api/helpers/types.helpers';
+import { Mailer } from '@api/lib/mail/mailer.lib';
 
-export const betterAuthGlobalOptions: BetterAuthOptions = {
+export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: Mailer): BetterAuthOptions => ({
     appName: 'entix-app',
     basePath: '/api/v1/auth',
     advanced: {
         disableCSRFCheck: true
     },
-    plugins: betterAuthPluginsConfig
-};
+    plugins: getBetterAuthPluginsConfig(ctx, mailer),
+});

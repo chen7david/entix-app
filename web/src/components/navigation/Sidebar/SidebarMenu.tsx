@@ -1,15 +1,18 @@
-import { Menu } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
+import { Menu, type MenuProps } from "antd";
+import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, TeamOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 
 export const SidebarMenu: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { close } = useSidebar();
 
-    const menuItems = [
+    const { getOrgLink, activeOrganization } = useOrganization();
+
+    const menuItems: MenuProps['items'] = [
         {
             label: 'Home',
             key: links.dashboard.index,
@@ -39,6 +42,30 @@ export const SidebarMenu: React.FC = () => {
             label: 'Orders',
             key: links.dashboard.orders,
             icon: <TruckOutlined />,
+        },
+        {
+            type: 'divider',
+        },
+        {
+            label: 'Organizations',
+            key: 'organizations-submenu',
+            icon: <TeamOutlined />,
+            children: [
+                {
+                    label: 'All Organizations',
+                    key: '/organization',
+                },
+                ...(activeOrganization ? [
+                    {
+                        label: 'Dashboard',
+                        key: getOrgLink(''),
+                    },
+                    {
+                        label: 'Members',
+                        key: getOrgLink('/members'),
+                    }
+                ] : [])
+            ]
         },
     ];
 
