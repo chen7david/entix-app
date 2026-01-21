@@ -27,6 +27,7 @@ import { OrganizationMembersPage } from "./pages/organization/OrganizationMember
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
+import { AuthGuard } from "./components/auth/AuthGuard";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -51,11 +52,20 @@ export default function App() {
           </Route>
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <AuthGuard>
+              <AdminLayout />
+            </AuthGuard>
+          }>
             <Route index element={<AdminDashboardPage />} />
           </Route>
 
-          <Route path={links.dashboard.index} element={<DashboardLayout />}>
+          <Route path={links.dashboard.index} element={
+            <AuthGuard>
+              <DashboardLayout />
+            </AuthGuard>
+          }>
             <Route index element={<DashboardPage />} />
             <Route path='profile' element={<ProfilePage />} />
             <Route path='settings' element={<SettingsPage />} />
@@ -68,7 +78,11 @@ export default function App() {
           </Route>
 
           {/* Organization Routes */}
-          <Route path={links.organization.index} element={<DashboardLayout />}>
+          <Route path={links.organization.index} element={
+            <AuthGuard>
+              <DashboardLayout />
+            </AuthGuard>
+          }>
             <Route index element={<OrganizationListPage />} />
             <Route path=":id">
               <Route index element={<OrganizationDashboardPage />} />

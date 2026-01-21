@@ -72,25 +72,30 @@ export const SidebarContent: React.FC = () => {
             <div className="p-4">
                 {isLoading ? (
                     <Skeleton active avatar paragraph={{ rows: 1 }} />
-                ) : session.data ? (
+                ) : (
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-3 overflow-hidden">
-                                <Avatar size="large" icon={<UserOutlined />} src={session.data.user?.image} />
-                                <div className="flex flex-col overflow-hidden">
-                                    <Text strong className="truncate">{session.data.user?.name}</Text>
-                                    <Text type="secondary" className="text-xs truncate">{session.data.user?.email}</Text>
+                                <Avatar
+                                    size={40}
+                                    src={session.data?.user?.image}
+                                    icon={<UserOutlined />}
+                                    className="flex-shrink-0 border border-gray-200"
+                                />
+                                <div className="flex flex-col min-w-0">
+                                    <Text strong className="truncate text-sm text-gray-900">
+                                        {session.data?.user?.name}
+                                    </Text>
+                                    <Text type="secondary" className="truncate text-xs">
+                                        {session.data?.user?.email}
+                                    </Text>
                                 </div>
                             </div>
-                            <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} placement="topRight" trigger={['click']}>
-                                <Button type="text" icon={<MoreOutlined />} />
+                            <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
+                                <Button type="text" icon={<MoreOutlined />} className="flex-shrink-0 text-gray-500 hover:text-gray-700" />
                             </Dropdown>
                         </div>
                     </div>
-                ) : (
-                    <Button type="primary" block onClick={() => navigate(links.auth.signIn)}>
-                        Sign In
-                    </Button>
                 )}
             </div>
         </div>
