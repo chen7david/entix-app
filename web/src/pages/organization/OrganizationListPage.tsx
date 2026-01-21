@@ -1,13 +1,16 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Card, List, Button, Typography, Skeleton } from "antd";
-import { useNavigate } from "react-router";
 import { PlusOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 
+import { useState } from "react";
+import { CreateOrganizationForm } from "@web/src/components/organization/CreateOrganizationForm";
+import { Modal } from "antd";
+
 export const OrganizationListPage = () => {
     const { organizations, loading, setActive } = useOrganization();
-    const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     return (
         <div className="p-6 max-w-4xl mx-auto">
@@ -16,7 +19,7 @@ export const OrganizationListPage = () => {
                 <Button
                     type="primary"
                     icon={<PlusOutlined />}
-                    onClick={() => navigate("/organization/create")}
+                    onClick={() => setIsModalOpen(true)}
                 >
                     Create Organization
                 </Button>
@@ -43,6 +46,15 @@ export const OrganizationListPage = () => {
                     )}
                 />
             )}
+
+            <Modal
+                title="Create Organization"
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                footer={null}
+            >
+                <CreateOrganizationForm onSuccess={() => setIsModalOpen(false)} />
+            </Modal>
         </div>
     );
 };

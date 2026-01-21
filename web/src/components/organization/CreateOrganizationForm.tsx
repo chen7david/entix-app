@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Button, Form, Input, Card, Typography, Alert } from "antd";
+import { Button, Form, Input, Alert } from "antd";
 
-const { Title } = Typography;
 
-export const CreateOrganizationForm = () => {
+export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     const { createOrganization } = useOrganization();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -15,13 +14,14 @@ export const CreateOrganizationForm = () => {
         const { error } = await createOrganization(values.name, values.slug);
         if (error) {
             setError(error.message || "Failed to create organization");
+        } else {
+            onSuccess?.();
         }
         setLoading(false);
     };
 
     return (
-        <Card style={{ maxWidth: 600, margin: "0 auto" }}>
-            <Title level={2}>Create Organization</Title>
+        <div>
             {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
             <Form layout="vertical" onFinish={onFinish}>
                 <Form.Item
@@ -44,6 +44,6 @@ export const CreateOrganizationForm = () => {
                     </Button>
                 </Form.Item>
             </Form>
-        </Card>
+        </div>
     );
 };

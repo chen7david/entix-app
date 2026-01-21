@@ -21,7 +21,6 @@ import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { AdminLayout } from './layouts/AdminLayout';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
-import { CreateOrganizationPage } from "./pages/organization/CreateOrganizationPage";
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 
@@ -64,7 +63,6 @@ export default function App() {
           {/* Organization Routes */}
           <Route path={links.organization.index} element={<DashboardLayout />}>
             <Route index element={<OrganizationListPage />} />
-            <Route path="create" element={<CreateOrganizationPage />} />
             <Route path=":id">
               <Route index element={<OrganizationDashboardPage />} />
             </Route>
