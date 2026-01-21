@@ -1,20 +1,15 @@
 import React from 'react';
-import { Card, List, Typography, Button, Spin, message } from 'antd';
+import { Card, Typography, Spin } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
 export const SelectOrganizationPage: React.FC = () => {
-    const { organizations, setActive, loading } = useOrganization();
+    const { loading } = useOrganization();
     const navigate = useNavigate();
-
-    const handleSelect = async (orgId: string) => {
-        await setActive(orgId);
-        message.success('Organization selected successfully');
-        navigate(links.dashboard.index);
-    };
 
     if (loading) {
         return (
@@ -26,33 +21,27 @@ export const SelectOrganizationPage: React.FC = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-            <Card className="w-full max-w-lg shadow-lg">
-                <div className="text-center mb-6">
-                    <Title level={3}>Select Organization</Title>
-                    <Text type="secondary">Choose an organization to continue</Text>
+            <Card className="w-full max-w-md shadow-lg text-center">
+                <div className="mb-8 flex justify-center">
+                    <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                            E
+                        </div>
+                        <span className="text-2xl font-bold text-gray-800">Entix</span>
+                    </div>
                 </div>
 
-                <List
-                    itemLayout="horizontal"
-                    dataSource={organizations}
-                    renderItem={(org) => (
-                        <List.Item
-                            actions={[
-                                <Button
-                                    type="primary"
-                                    onClick={() => handleSelect(org.id)}
-                                >
-                                    Select
-                                </Button>
-                            ]}
-                        >
-                            <List.Item.Meta
-                                title={org.name}
-                                description={`Slug: ${org.slug}`}
-                            />
-                        </List.Item>
-                    )}
-                />
+                <div className="text-center mb-8">
+                    <Title level={3} style={{ marginBottom: 8 }}>Select Organization</Title>
+                    <Text type="secondary">Choose an organization to continue to your dashboard</Text>
+                </div>
+
+                <div className="flex justify-center">
+                    <OrganizationSwitcher
+                        allowCreate={false}
+                        afterSelect={() => navigate(links.dashboard.index)}
+                    />
+                </div>
             </Card>
         </div>
     );

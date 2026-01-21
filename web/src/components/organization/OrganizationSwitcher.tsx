@@ -2,7 +2,7 @@ import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Select, message } from "antd";
 import { useNavigate } from "react-router";
 
-export const OrganizationSwitcher = () => {
+export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allowCreate?: boolean; afterSelect?: () => void }) => {
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();
     const navigate = useNavigate();
 
@@ -17,8 +17,25 @@ export const OrganizationSwitcher = () => {
             message.error("Failed to switch organization");
         } else {
             message.success("Switched organization successfully");
+            if (afterSelect) {
+                afterSelect();
+            }
         }
     };
+
+    const options = [
+        ...(organizations?.map(org => ({
+            label: org.name,
+            value: org.id,
+        })) || [])
+    ];
+
+    if (allowCreate) {
+        options.push({
+            label: "+ Create New Organization",
+            value: "create_new",
+        });
+    }
 
     return (
         <Select
@@ -27,16 +44,7 @@ export const OrganizationSwitcher = () => {
             value={activeOrganization?.id}
             onChange={handleChange}
             loading={isSwitching}
-            options={[
-                ...(organizations?.map(org => ({
-                    label: org.name,
-                    value: org.id,
-                })) || []),
-                {
-                    label: "+ Create New Organization",
-                    value: "create_new",
-                }
-            ]}
+            options={options}
         />
     );
 };
