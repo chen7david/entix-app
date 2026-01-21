@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Spin } from 'antd';
+import { Typography, Spin } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
 import { useNavigate } from 'react-router';
@@ -21,7 +21,7 @@ export const SelectOrganizationPage: React.FC = () => {
 
     return (
         <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
-            <Card className="w-full max-w-md shadow-lg text-center">
+            <div className="w-full max-w-md text-center">
                 <div className="mb-8 flex justify-center">
                     <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
@@ -42,7 +42,7 @@ export const SelectOrganizationPage: React.FC = () => {
                         afterSelect={() => navigate(links.dashboard.index)}
                     />
                 </div>
-            </Card>
+            </div>
         </div>
     );
 };
