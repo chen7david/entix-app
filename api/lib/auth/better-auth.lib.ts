@@ -14,9 +14,9 @@ export const auth = (ctx: AppContext) => {
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),
-        ...betterAuthGlobalOptions,
         baseURL: ctx.env.BETTER_AUTH_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,
+        ...betterAuthGlobalOptions(ctx, mailer),
         ...getEmailAndPasswordConfig(ctx, mailer),
         ...getEmailVerificationConfig(ctx, mailer),
     });
