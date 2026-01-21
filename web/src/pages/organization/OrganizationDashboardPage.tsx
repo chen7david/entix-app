@@ -2,6 +2,7 @@ import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Typography, Card, Skeleton, Button, Input, Alert } from "antd";
 import { useState } from "react";
 import { authClient } from "@web/src/lib/auth-client";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 
 const { Title } = Typography;
 
@@ -40,33 +41,36 @@ export const OrganizationDashboardPage = () => {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <Title level={2}>Dashboard: {activeOrganization.name}</Title>
-                <Button onClick={() => setActive(activeOrganization.id)}>
-                    Set as Active Organization
-                </Button>
-            </div>
-
-            <Card title="Organization Details" className="mb-6">
-                <p><strong>ID:</strong> {activeOrganization.id}</p>
-                <p><strong>Slug:</strong> {activeOrganization.slug}</p>
-            </Card>
-
-            <Card title="Invite User">
-                {inviteError && <Alert message={inviteError} type="error" showIcon className="mb-4" />}
-                {inviteSuccess && <Alert message={inviteSuccess} type="success" showIcon className="mb-4" />}
-                <div className="flex gap-4">
-                    <Input
-                        placeholder="User Email"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                    />
-                    <Button type="primary" loading={inviteLoading} onClick={handleInvite}>
-                        Invite
+        <>
+            <Toolbar />
+            <div className="p-6 max-w-4xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <Title level={2}>Dashboard: {activeOrganization.name}</Title>
+                    <Button onClick={() => setActive(activeOrganization.id)}>
+                        Set as Active Organization
                     </Button>
                 </div>
-            </Card>
-        </div>
+
+                <Card title="Organization Details" className="mb-6">
+                    <p><strong>ID:</strong> {activeOrganization.id}</p>
+                    <p><strong>Slug:</strong> {activeOrganization.slug}</p>
+                </Card>
+
+                <Card title="Invite User">
+                    {inviteError && <Alert message={inviteError} type="error" showIcon className="mb-4" />}
+                    {inviteSuccess && <Alert message={inviteSuccess} type="success" showIcon className="mb-4" />}
+                    <div className="flex gap-4">
+                        <Input
+                            placeholder="User Email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                        />
+                        <Button type="primary" loading={inviteLoading} onClick={handleInvite}>
+                            Invite
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+        </>
     );
 };

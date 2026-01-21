@@ -3,11 +3,14 @@ import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOu
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 
 export const SidebarMenu: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { close } = useSidebar();
+
+    const { getOrgLink } = useOrganization();
 
     const menuItems: MenuProps['items'] = [
         {
@@ -45,8 +48,18 @@ export const SidebarMenu: React.FC = () => {
         },
         {
             label: 'Organizations',
-            key: '/organization',
+            key: 'organizations-submenu',
             icon: <TeamOutlined />,
+            children: [
+                {
+                    label: 'All Organizations',
+                    key: '/organization',
+                },
+                {
+                    label: 'Members',
+                    key: getOrgLink('/members'),
+                }
+            ]
         },
     ];
 

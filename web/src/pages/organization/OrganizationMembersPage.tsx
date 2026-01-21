@@ -1,6 +1,7 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Table, Typography, Avatar, Tag, Skeleton } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 
 const { Title } = Typography;
 
@@ -48,14 +49,19 @@ export const OrganizationMembersPage = () => {
         return <div>Organization not found</div>;
     }
 
+
+
     return (
-        <div className="p-6">
-            <Title level={2}>Members</Title>
-            <Table
-                dataSource={members}
-                columns={columns}
-                rowKey={(record: any) => record.id || record.userId}
-            />
-        </div>
+        <>
+            <Toolbar />
+            <div className="p-6">
+                <Title level={2}>Members</Title>
+                <Table
+                    dataSource={members}
+                    columns={columns}
+                    rowKey={(record: any) => record.id || record.userId}
+                />
+            </div>
+        </>
     );
 };
