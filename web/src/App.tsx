@@ -27,8 +27,8 @@ import { OrganizationMembersPage } from "./pages/organization/OrganizationMember
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
-import { AuthGuard } from "./components/auth/AuthGuard";
-import { GuestGuard } from "./components/auth/GuestGuard";
+import { AuthGuard } from "./components/guards/AuthGuard";
+import { GuestGuard } from "./components/guards/GuestGuard";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
