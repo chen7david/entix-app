@@ -59,7 +59,6 @@ export const OrganizationListPage = () => {
                                         }
                                     >
                                         <p>Slug: {org.slug}</p>
-                                        <p>Role: {org.role}</p>
                                     </Card>
                                 </List.Item>
                             );

@@ -1,6 +1,6 @@
 import { authClient } from "@web/src/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
@@ -48,17 +48,25 @@ export const useOrganization = () => {
         }
     });
 
+    const location = useLocation();
+
     const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
         mutationFn: async (organizationId: string) => {
             return await authClient.organization.setActive({ organizationId });
         },
-        onSuccess: async (result) => {
+        onSuccess: async (result, variables) => {
             if (result.data) {
                 await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
                 // We also invalidate members because the active organization changed, 
                 // and the members query depends on activeOrganization.id, so it will automatically refetch.
                 // But explicit invalidation is safer if keys overlap.
                 await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
+
+                // If the current URL contains the old organization ID, update it to the new one
+                if (activeOrganization?.id && location.pathname.includes(activeOrganization.id)) {
+                    const newPath = location.pathname.replace(activeOrganization.id, variables);
+                    navigate(newPath);
+                }
             }
         }
     });
