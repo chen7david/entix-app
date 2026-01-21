@@ -24,6 +24,8 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
+import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
+import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -42,6 +44,8 @@ export default function App() {
             <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
             <Route path="forgot-password" element={<ForgotPasswordPage />} />
             <Route path="reset-password" element={<ResetPasswordPage />} />
+            <Route path="no-organization" element={<NoOrganizationPage />} />
+            <Route path="select-organization" element={<SelectOrganizationPage />} />
           </Route>
 
           {/* Admin Routes */}

@@ -2,6 +2,7 @@ import { authClient } from "@web/src/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "./auth.hook";
+import { links } from "@web/src/constants/links";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
@@ -100,6 +101,31 @@ export const useOrganization = () => {
 
     const userRole = activeOrganization?.members?.find((m: any) => m.userId === userId)?.role;
 
+    const checkOrganizationStatus = async () => {
+        // We need to fetch fresh data
+        const { data: orgs } = await authClient.organization.list();
+        const { data: activeOrg } = await authClient.organization.getFullOrganization();
+
+        if (activeOrg) {
+            navigate(links.dashboard.index);
+            return;
+        }
+
+        if (!orgs || orgs.length === 0) {
+            navigate(links.auth.noOrganization);
+            return;
+        }
+
+        if (orgs.length === 1) {
+            await setActive(orgs[0].id);
+            navigate(links.dashboard.index);
+            return;
+        }
+
+        // More than 1 organization and no active one
+        navigate(links.auth.selectOrganization);
+    };
+
     return {
         organizations,
         activeOrganization,
@@ -113,5 +139,6 @@ export const useOrganization = () => {
         setActive,
         getOrgLink,
         listMembers,
+        checkOrganizationStatus,
     };
 };

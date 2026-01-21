@@ -1,24 +1,24 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
 import { message, Card, Typography } from 'antd';
 import { SignInForm, type SignInValues } from '@web/src/components/auth/SignInForm';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useSignIn } from '@web/src/hooks/auth/auth.hook';
-import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
 export const SignInPage: React.FC = () => {
-    const navigate = useNavigate();
+
     const { mutate: signIn, isPending } = useSignIn();
+    const { checkOrganizationStatus } = useOrganization();
 
     const handleSignIn = (values: SignInValues) => {
         signIn({
             email: values.email,
             password: values.password,
         }, {
-            onSuccess: () => {
+            onSuccess: async () => {
                 message.success('Signed in successfully!');
-                navigate(links.dashboard.profile);
+                await checkOrganizationStatus();
             },
             onError: (error) => {
                 message.error(error.message || "Failed to sign in");

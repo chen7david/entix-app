@@ -6,6 +6,8 @@ export const links = {
         emailVerificationPending: '/auth/email-verification-pending',
         forgotPassword: '/auth/forgot-password',
         resetPassword: '/auth/reset-password',
+        noOrganization: '/auth/no-organization',
+        selectOrganization: '/auth/select-organization',
     },
     dashboard: {
         index: '/dashboard',
