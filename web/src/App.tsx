@@ -21,6 +21,9 @@ import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { AdminLayout } from './layouts/AdminLayout';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { CreateOrganizationPage } from "./pages/organization/CreateOrganizationPage";
+import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
+import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -56,6 +59,15 @@ export default function App() {
             <Route path='wallet' element={<WalletPage />} />
             <Route path='movies' element={<MoviesPage />} />
             <Route path='orders' element={<OrdersPage />} />
+          </Route>
+
+          {/* Organization Routes */}
+          <Route path="/organization">
+            <Route index element={<OrganizationListPage />} />
+            <Route path="create" element={<CreateOrganizationPage />} />
+            <Route path=":id" element={<DashboardLayout />}>
+              <Route index element={<OrganizationDashboardPage />} />
+            </Route>
           </Route>
         </Routes>
       </AppContainer>
