@@ -1,62 +1,83 @@
 import { authClient } from "@web/src/lib/auth-client";
-import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
-    const [organizations, setOrganizations] = useState<any[]>([]);
-    const [activeOrganization, setActiveOrganization] = useState<any>(null);
-    const [members, setMembers] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isCreating, setIsCreating] = useState(false);
-    const [isSwitching, setIsSwitching] = useState(false);
+    const queryClient = useQueryClient();
 
-    const listOrganizations = async () => {
-        setLoading(true);
-        const { data, error } = await authClient.organization.list();
-        if (data) {
-            setOrganizations(data);
+    const { data: organizations = [], isLoading: loadingOrganizations } = useQuery({
+        queryKey: ['organizations'],
+        queryFn: async () => {
+            const { data } = await authClient.organization.list();
+            return data || [];
         }
-        setLoading(false);
-        return { data, error };
-    };
+    });
+
+    const { data: activeOrganization, isLoading: loadingActiveOrg } = useQuery({
+        queryKey: ['activeOrganization'],
+        queryFn: async () => {
+            const { data } = await authClient.organization.getFullOrganization();
+            return data || null;
+        }
+    });
+
+    const { data: members = [], isLoading: loadingMembers } = useQuery({
+        queryKey: ['organizationMembers', activeOrganization?.id],
+        queryFn: async () => {
+            if (!activeOrganization?.id) return [];
+            const { data } = await authClient.organization.listMembers({
+                query: {
+                    organizationId: activeOrganization.id,
+                }
+            });
+            return data?.members || [];
+        },
+        enabled: !!activeOrganization?.id
+    });
+
+    const { mutateAsync: createOrganizationMutation, isPending: isCreating } = useMutation({
+        mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
+            return await authClient.organization.create({ name, slug });
+        },
+        onSuccess: async (result) => {
+            if (result.data) {
+                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+                navigate(`/organization/${result.data.id}`);
+            }
+        }
+    });
+
+    const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
+        mutationFn: async (organizationId: string) => {
+            return await authClient.organization.setActive({ organizationId });
+        },
+        onSuccess: async (result) => {
+            if (result.data) {
+                await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
+                // We also invalidate members because the active organization changed, 
+                // and the members query depends on activeOrganization.id, so it will automatically refetch.
+                // But explicit invalidation is safer if keys overlap.
+                await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
+            }
+        }
+    });
 
     const createOrganization = async (name: string, slug: string) => {
-        setIsCreating(true);
-        const { data, error } = await authClient.organization.create({
-            name,
-            slug,
-        });
-        if (data) {
-            await listOrganizations();
-            navigate(`/organization/${data.id}`);
-        }
-        setIsCreating(false);
-        return { data, error };
+        return createOrganizationMutation({ name, slug });
     };
 
     const setActive = async (organizationId: string) => {
-        setIsSwitching(true);
-        const { data, error } = await authClient.organization.setActive({
-            organizationId,
-        });
-        if (data) {
-            setActiveOrganization(data);
-            navigate(`/organization/${organizationId}`);
-        }
-        setIsSwitching(false);
-        return { data, error };
+        return setActiveMutation(organizationId);
     };
 
-    const getActiveOrganization = async () => {
-        const { data } = await authClient.organization.getFullOrganization();
-        if (data) {
-            setActiveOrganization(data);
-            if (data.members) {
-                setMembers(data.members);
-            }
-        }
-    }
+    const listOrganizations = async () => {
+        return queryClient.refetchQueries({ queryKey: ['organizations'] });
+    };
+
+    const listMembers = async () => {
+        return queryClient.refetchQueries({ queryKey: ['organizationMembers', activeOrganization?.id] });
+    };
 
     const getOrgLink = (path: string) => {
         if (activeOrganization?.id) {
@@ -65,21 +86,17 @@ export const useOrganization = () => {
         return path;
     };
 
-    useEffect(() => {
-        listOrganizations();
-        getActiveOrganization();
-    }, []);
-
     return {
         organizations,
         activeOrganization,
         members,
-        loading,
+        loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
         isCreating,
         isSwitching,
         listOrganizations,
         createOrganization,
         setActive,
         getOrgLink,
+        listMembers,
     };
 };

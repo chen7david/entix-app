@@ -1,5 +1,5 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Typography, Card, Skeleton, Button, Input, Alert } from "antd";
+import { Typography, Card, Skeleton, Button, Input, Alert, Descriptions } from "antd";
 import { useState } from "react";
 import { authClient } from "@web/src/lib/auth-client";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
@@ -7,7 +7,7 @@ import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 const { Title } = Typography;
 
 export const OrganizationDashboardPage = () => {
-    const { activeOrganization, loading, setActive } = useOrganization();
+    const { activeOrganization, loading } = useOrganization();
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteError, setInviteError] = useState<string | null>(null);
@@ -46,14 +46,15 @@ export const OrganizationDashboardPage = () => {
             <div className="p-6 max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <Title level={2}>Dashboard: {activeOrganization.name}</Title>
-                    <Button onClick={() => setActive(activeOrganization.id)}>
-                        Set as Active Organization
-                    </Button>
                 </div>
 
                 <Card title="Organization Details" className="mb-6">
-                    <p><strong>ID:</strong> {activeOrganization.id}</p>
-                    <p><strong>Slug:</strong> {activeOrganization.slug}</p>
+                    <Descriptions bordered column={1}>
+                        <Descriptions.Item label="ID">{activeOrganization.id}</Descriptions.Item>
+                        <Descriptions.Item label="Name">{activeOrganization.name}</Descriptions.Item>
+                        <Descriptions.Item label="Slug">{activeOrganization.slug}</Descriptions.Item>
+                        <Descriptions.Item label="Role">{activeOrganization.role || 'Member'}</Descriptions.Item>
+                    </Descriptions>
                 </Card>
 
                 <Card title="Invite User">

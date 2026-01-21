@@ -10,7 +10,7 @@ export const SidebarMenu: React.FC = () => {
     const location = useLocation();
     const { close } = useSidebar();
 
-    const { getOrgLink } = useOrganization();
+    const { getOrgLink, activeOrganization } = useOrganization();
 
     const menuItems: MenuProps['items'] = [
         {
@@ -55,10 +55,10 @@ export const SidebarMenu: React.FC = () => {
                     label: 'All Organizations',
                     key: '/organization',
                 },
-                {
+                ...(activeOrganization ? [{
                     label: 'Members',
                     key: getOrgLink('/members'),
-                }
+                }] : [])
             ]
         },
     ];
