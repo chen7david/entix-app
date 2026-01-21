@@ -65,6 +65,7 @@ export default function App() {
             <Route index element={<OrganizationListPage />} />
             <Route path=":id">
               <Route index element={<OrganizationDashboardPage />} />
+              <Route path="members" element={<div>Members Page (Placeholder)</div>} />
             </Route>
           </Route>
         </Routes>

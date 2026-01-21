@@ -1,23 +1,21 @@
 import { useState } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Button, Form, Input, Alert } from "antd";
+import { Button, Form, Input, Alert, message } from "antd";
 
 
 export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
-    const { createOrganization } = useOrganization();
-    const [loading, setLoading] = useState(false);
+    const { createOrganization, isCreating } = useOrganization();
     const [error, setError] = useState<string | null>(null);
 
     const onFinish = async (values: { name: string; slug: string }) => {
-        setLoading(true);
         setError(null);
         const { error } = await createOrganization(values.name, values.slug);
         if (error) {
             setError(error.message || "Failed to create organization");
         } else {
+            message.success("Organization created successfully");
             onSuccess?.();
         }
-        setLoading(false);
     };
 
     return (
@@ -39,7 +37,7 @@ export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }
                     <Input placeholder="enter-organization-slug" />
                 </Form.Item>
                 <Form.Item>
-                    <Button type="primary" htmlType="submit" loading={loading} block>
+                    <Button type="primary" htmlType="submit" loading={isCreating} block>
                         Create Organization
                     </Button>
                 </Form.Item>

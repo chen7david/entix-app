@@ -7,6 +7,8 @@ export const useOrganization = () => {
     const [organizations, setOrganizations] = useState<any[]>([]);
     const [activeOrganization, setActiveOrganization] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isCreating, setIsCreating] = useState(false);
+    const [isSwitching, setIsSwitching] = useState(false);
 
     const listOrganizations = async () => {
         setLoading(true);
@@ -19,6 +21,7 @@ export const useOrganization = () => {
     };
 
     const createOrganization = async (name: string, slug: string) => {
+        setIsCreating(true);
         const { data, error } = await authClient.organization.create({
             name,
             slug,
@@ -27,10 +30,12 @@ export const useOrganization = () => {
             await listOrganizations();
             navigate(`/organization/${data.id}`);
         }
+        setIsCreating(false);
         return { data, error };
     };
 
     const setActive = async (organizationId: string) => {
+        setIsSwitching(true);
         const { data, error } = await authClient.organization.setActive({
             organizationId,
         });
@@ -38,6 +43,7 @@ export const useOrganization = () => {
             setActiveOrganization(data);
             navigate(`/organization/${organizationId}`);
         }
+        setIsSwitching(false);
         return { data, error };
     };
 
@@ -57,6 +63,8 @@ export const useOrganization = () => {
         organizations,
         activeOrganization,
         loading,
+        isCreating,
+        isSwitching,
         listOrganizations,
         createOrganization,
         setActive,
