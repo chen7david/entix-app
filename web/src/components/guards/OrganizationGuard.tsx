@@ -5,11 +5,12 @@ import { links } from '@web/src/constants/links';
 import { Spin } from 'antd';
 
 export const OrganizationGuard: React.FC = () => {
-    const { activeOrganization, organizations, loading, setActive } = useOrganization();
+    const { activeOrganization, organizations, loading, isFetching, setActive } = useOrganization();
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (loading) return;
+        // Wait for initial load OR background fetch if we have no data yet
+        if (loading || (isFetching && (!organizations || organizations.length === 0))) return;
 
         if (activeOrganization) {
             return;
@@ -36,9 +37,9 @@ export const OrganizationGuard: React.FC = () => {
         // More than 1 organization
         navigate(links.context.selectOrganization, { replace: true });
 
-    }, [loading, activeOrganization, organizations, navigate, setActive]);
+    }, [loading, isFetching, activeOrganization, organizations, navigate, setActive]);
 
-    if (loading || (!activeOrganization && organizations.length === 1)) {
+    if (loading || (isFetching && (!organizations || organizations.length === 0)) || (!activeOrganization && organizations.length === 1)) {
         // Show spinner while loading or auto-selecting
         return (
             <div className="flex justify-center items-center h-screen w-full">

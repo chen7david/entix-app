@@ -9,7 +9,11 @@ export const useOrganization = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const { data: organizations = [], isLoading: loadingOrganizations } = useQuery({
+    const {
+        data: organizations = [],
+        isLoading: loadingOrganizations,
+        isFetching: fetchingOrganizations
+    } = useQuery({
         queryKey: ['organizations'],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
@@ -182,6 +186,7 @@ export const useOrganization = () => {
         members,
         userRole,
         loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
+        isFetching: fetchingOrganizations,
         isCreating,
         isSwitching,
         isAcceptingInvitation,
