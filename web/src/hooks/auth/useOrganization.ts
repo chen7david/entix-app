@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "./auth.hook";
 import { links } from "@web/src/constants/links";
+import { useCallback } from "react";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
@@ -73,28 +74,28 @@ export const useOrganization = () => {
         }
     });
 
-    const createOrganization = async (name: string, slug: string) => {
+    const createOrganization = useCallback(async (name: string, slug: string) => {
         return createOrganizationMutation({ name, slug });
-    };
+    }, [createOrganizationMutation]);
 
-    const setActive = async (organizationId: string) => {
+    const setActive = useCallback(async (organizationId: string) => {
         return setActiveMutation(organizationId);
-    };
+    }, [setActiveMutation]);
 
-    const listOrganizations = async () => {
+    const listOrganizations = useCallback(async () => {
         return queryClient.refetchQueries({ queryKey: ['organizations'] });
-    };
+    }, [queryClient]);
 
-    const listMembers = async () => {
+    const listMembers = useCallback(async () => {
         return queryClient.refetchQueries({ queryKey: ['organizationMembers', activeOrganization?.id] });
-    };
+    }, [queryClient, activeOrganization?.id]);
 
-    const getOrgLink = (path: string) => {
+    const getOrgLink = useCallback((path: string) => {
         if (activeOrganization?.id) {
             return `/organization/${activeOrganization.id}${path.startsWith('/') ? path : `/${path}`}`;
         }
         return path;
-    };
+    }, [activeOrganization?.id]);
 
     const { session } = useAuth();
     const userId = session.data?.user?.id;
@@ -102,9 +103,23 @@ export const useOrganization = () => {
     const userRole = activeOrganization?.members?.find((m: any) => m.userId === userId)?.role;
 
     const checkOrganizationStatus = async () => {
-        // We need to fetch fresh data
-        const { data: orgs } = await authClient.organization.list();
-        const { data: activeOrg } = await authClient.organization.getFullOrganization();
+        // 1. Fetch and cache organizations
+        const orgs = await queryClient.fetchQuery({
+            queryKey: ['organizations'],
+            queryFn: async () => {
+                const { data } = await authClient.organization.list();
+                return data || [];
+            }
+        });
+
+        // 2. Fetch and cache active organization
+        let activeOrg = await queryClient.fetchQuery({
+            queryKey: ['activeOrganization'],
+            queryFn: async () => {
+                const { data } = await authClient.organization.getFullOrganization();
+                return data || null;
+            }
+        });
 
         if (activeOrg) {
             navigate(links.dashboard.index);
@@ -117,7 +132,20 @@ export const useOrganization = () => {
         }
 
         if (orgs.length === 1) {
+            // 3. Set active organization
             await setActive(orgs[0].id);
+
+            // 4. RE-FETCH active organization to ensure cache is updated and we have the data
+            // We force a fetch to ensure we get the updated state from the server
+            activeOrg = await queryClient.fetchQuery({
+                queryKey: ['activeOrganization'],
+                queryFn: async () => {
+                    const { data } = await authClient.organization.getFullOrganization();
+                    return data || null;
+                },
+                staleTime: 0
+            });
+
             navigate(links.dashboard.index);
             return;
         }
@@ -144,9 +172,9 @@ export const useOrganization = () => {
         }
     });
 
-    const acceptInvitation = async (invitationId: string) => {
+    const acceptInvitation = useCallback(async (invitationId: string) => {
         return acceptInvitationMutation(invitationId);
-    };
+    }, [acceptInvitationMutation]);
 
     return {
         organizations,
