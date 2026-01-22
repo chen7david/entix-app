@@ -112,7 +112,7 @@ export const useOrganization = () => {
         }
 
         if (!orgs || orgs.length === 0) {
-            navigate(links.auth.noOrganization);
+            navigate(links.context.noOrganization);
             return;
         }
 
@@ -123,7 +123,7 @@ export const useOrganization = () => {
         }
 
         // More than 1 organization and no active one
-        navigate(links.auth.selectOrganization);
+        navigate(links.context.selectOrganization);
     };
 
     const { mutateAsync: acceptInvitationMutation, isPending: isAcceptingInvitation } = useMutation({

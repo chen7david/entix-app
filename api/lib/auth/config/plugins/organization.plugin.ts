@@ -2,6 +2,7 @@ import { AppContext } from "@api/helpers/types.helpers";
 import { organization } from "better-auth/plugins";
 import { ac, member, owner, admin } from "../../rbac/permissions.rbac";
 import { Mailer } from "@api/lib/mail/mailer.lib";
+import { links } from "@web/src/constants/links";
 
 export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) => organization({
     ac,
@@ -14,7 +15,7 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) =
         if (!ctx || !mailer) {
             return
         }
-        const inviteLink = `${ctx.env.FRONTEND_URL}/auth/accept-invitation?id=${data.id}`;
+        const inviteLink = `${ctx.env.FRONTEND_URL}/${links.context.acceptInvitation}?id=${data.id}`;
 
         await mailer.sendTemplate({
             to: data.email,
