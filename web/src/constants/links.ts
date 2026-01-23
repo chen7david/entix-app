@@ -6,9 +6,6 @@ export const links = {
         emailVerificationPending: '/auth/email-verification-pending',
         forgotPassword: '/auth/forgot-password',
         resetPassword: '/auth/reset-password',
-        noOrganization: '/auth/no-organization',
-        selectOrganization: '/auth/select-organization',
-        acceptInvitation: '/auth/accept-invitation',
     },
     dashboard: {
         index: '/dashboard',
@@ -24,6 +21,12 @@ export const links = {
     organization: {
         index: '/organization',
         create: '/organization/create',
-        edit: '/organization/:id',
+        edit: '/organization/:slug',
+    },
+    context: {
+        index: '/context',
+        noOrganization: '/context/no-organization',
+        selectOrganization: '/context/select-organization',
+        acceptInvitation: '/context/accept-invitation',
     }
 } as const;

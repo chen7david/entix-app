@@ -3,12 +3,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useLocation } from "react-router";
 import { useAuth } from "./auth.hook";
 import { links } from "@web/src/constants/links";
+import { useCallback } from "react";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    const { data: organizations = [], isLoading: loadingOrganizations } = useQuery({
+    const {
+        data: organizations = [],
+        isLoading: loadingOrganizations,
+        isFetching: fetchingOrganizations
+    } = useQuery({
         queryKey: ['organizations'],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
@@ -23,6 +28,7 @@ export const useOrganization = () => {
             return data || null;
         }
     });
+
 
     const { data: members = [], isLoading: loadingMembers } = useQuery({
         queryKey: ['organizationMembers', activeOrganization?.id],
@@ -45,7 +51,7 @@ export const useOrganization = () => {
         onSuccess: async (result) => {
             if (result.data) {
                 await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-                navigate(`/organization/${result.data.id}`);
+                navigate(`/organization/${result.data.slug}`);
             }
         }
     });
@@ -58,43 +64,46 @@ export const useOrganization = () => {
         },
         onSuccess: async (result, variables) => {
             if (result.data) {
+                // If the current URL contains the old organization slug, update it to the new one
+                // We do this BEFORE invalidating queries to avoid race conditions where the 
+                // OrganizationSlugGuard sees the new active org but the old URL.
+                const newOrg = organizations.find(o => o.id === variables);
+                if (activeOrganization?.slug && newOrg?.slug && location.pathname.includes(activeOrganization.slug)) {
+                    const newPath = location.pathname.replace(activeOrganization.slug, newOrg.slug);
+                    navigate(newPath);
+                }
+
                 await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
                 // We also invalidate members because the active organization changed, 
                 // and the members query depends on activeOrganization.id, so it will automatically refetch.
                 // But explicit invalidation is safer if keys overlap.
                 await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
-
-                // If the current URL contains the old organization ID, update it to the new one
-                if (activeOrganization?.id && location.pathname.includes(activeOrganization.id)) {
-                    const newPath = location.pathname.replace(activeOrganization.id, variables);
-                    navigate(newPath);
-                }
             }
         }
     });
 
-    const createOrganization = async (name: string, slug: string) => {
+    const createOrganization = useCallback(async (name: string, slug: string) => {
         return createOrganizationMutation({ name, slug });
-    };
+    }, [createOrganizationMutation]);
 
-    const setActive = async (organizationId: string) => {
+    const setActive = useCallback(async (organizationId: string) => {
         return setActiveMutation(organizationId);
-    };
+    }, [setActiveMutation]);
 
-    const listOrganizations = async () => {
+    const listOrganizations = useCallback(async () => {
         return queryClient.refetchQueries({ queryKey: ['organizations'] });
-    };
+    }, [queryClient]);
 
-    const listMembers = async () => {
+    const listMembers = useCallback(async () => {
         return queryClient.refetchQueries({ queryKey: ['organizationMembers', activeOrganization?.id] });
-    };
+    }, [queryClient, activeOrganization?.id]);
 
-    const getOrgLink = (path: string) => {
-        if (activeOrganization?.id) {
-            return `/organization/${activeOrganization.id}${path.startsWith('/') ? path : `/${path}`}`;
+    const getOrgLink = useCallback((path: string) => {
+        if (activeOrganization?.slug) {
+            return `/organization/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
         }
         return path;
-    };
+    }, [activeOrganization?.slug]);
 
     const { session } = useAuth();
     const userId = session.data?.user?.id;
@@ -102,9 +111,23 @@ export const useOrganization = () => {
     const userRole = activeOrganization?.members?.find((m: any) => m.userId === userId)?.role;
 
     const checkOrganizationStatus = async () => {
-        // We need to fetch fresh data
-        const { data: orgs } = await authClient.organization.list();
-        const { data: activeOrg } = await authClient.organization.getFullOrganization();
+        // 1. Fetch and cache organizations
+        const orgs = await queryClient.fetchQuery({
+            queryKey: ['organizations'],
+            queryFn: async () => {
+                const { data } = await authClient.organization.list();
+                return data || [];
+            }
+        });
+
+        // 2. Fetch and cache active organization
+        let activeOrg = await queryClient.fetchQuery({
+            queryKey: ['activeOrganization'],
+            queryFn: async () => {
+                const { data } = await authClient.organization.getFullOrganization();
+                return data || null;
+            }
+        });
 
         if (activeOrg) {
             navigate(links.dashboard.index);
@@ -112,18 +135,31 @@ export const useOrganization = () => {
         }
 
         if (!orgs || orgs.length === 0) {
-            navigate(links.auth.noOrganization);
+            navigate(links.context.noOrganization);
             return;
         }
 
         if (orgs.length === 1) {
+            // 3. Set active organization
             await setActive(orgs[0].id);
+
+            // 4. RE-FETCH active organization to ensure cache is updated and we have the data
+            // We force a fetch to ensure we get the updated state from the server
+            activeOrg = await queryClient.fetchQuery({
+                queryKey: ['activeOrganization'],
+                queryFn: async () => {
+                    const { data } = await authClient.organization.getFullOrganization();
+                    return data || null;
+                },
+                staleTime: 0
+            });
+
             navigate(links.dashboard.index);
             return;
         }
 
         // More than 1 organization and no active one
-        navigate(links.auth.selectOrganization);
+        navigate(links.context.selectOrganization);
     };
 
     const { mutateAsync: acceptInvitationMutation, isPending: isAcceptingInvitation } = useMutation({
@@ -144,9 +180,9 @@ export const useOrganization = () => {
         }
     });
 
-    const acceptInvitation = async (invitationId: string) => {
+    const acceptInvitation = useCallback(async (invitationId: string) => {
         return acceptInvitationMutation(invitationId);
-    };
+    }, [acceptInvitationMutation]);
 
     return {
         organizations,
@@ -154,6 +190,7 @@ export const useOrganization = () => {
         members,
         userRole,
         loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
+        isFetching: fetchingOrganizations,
         isCreating,
         isSwitching,
         isAcceptingInvitation,

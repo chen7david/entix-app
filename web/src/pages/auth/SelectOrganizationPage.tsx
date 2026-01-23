@@ -8,8 +8,14 @@ import { links } from '@web/src/constants/links';
 const { Title, Text } = Typography;
 
 export const SelectOrganizationPage: React.FC = () => {
-    const { loading } = useOrganization();
+    const { loading, activeOrganization } = useOrganization();
     const navigate = useNavigate();
+
+    React.useEffect(() => {
+        if (activeOrganization) {
+            navigate(links.dashboard.index, { replace: true });
+        }
+    }, [activeOrganization, navigate]);
 
     if (loading) {
         return (

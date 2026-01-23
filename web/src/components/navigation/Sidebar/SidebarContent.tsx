@@ -3,15 +3,17 @@ import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from '
 import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
-import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
+
 
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
     const { session, isLoading } = useAuth();
     const { mutate: signOut } = useSignOut();
+    const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
 
     const handleMenuClick: MenuProps['onClick'] = (e) => {
@@ -50,48 +52,50 @@ export const SidebarContent: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Header / Logo */}
-            <div className="p-4 flex items-center h-16 border-b border-gray-100">
-                <span className="text-xl font-bold">Entix</span>
+            {/* User Profile (Top) */}
+            <div className="p-4">
+                {isLoading ? (
+                    <Skeleton active avatar paragraph={{ rows: 1 }} />
+                ) : (
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <Avatar
+                            size={40}
+                            src={session.data?.user?.image}
+                            icon={<UserOutlined />}
+                            className="flex-shrink-0 border border-gray-200"
+                        />
+                        <div className="flex flex-col min-w-0">
+                            <Text strong className="truncate text-sm text-gray-900">
+                                {session.data?.user?.name}
+                            </Text>
+                            <Text type="secondary" className="truncate text-xs">
+                                {session.data?.user?.email}
+                            </Text>
+                        </div>
+                    </div>
+                )}
             </div>
-
-            <div className="px-4 py-2">
-                <OrganizationSwitcher />
-            </div>
-
-
 
             {/* Menu */}
             <div className="flex-1 overflow-y-auto py-2">
                 <SidebarMenu />
             </div>
 
-
-
-            {/* User Profile / Footer */}
-            <div className="p-4">
-                {isLoading ? (
-                    <Skeleton active avatar paragraph={{ rows: 1 }} />
-                ) : session.data ? (
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-3 overflow-hidden">
-                                <Avatar size="large" icon={<UserOutlined />} src={session.data.user?.image} />
-                                <div className="flex flex-col overflow-hidden">
-                                    <Text strong className="truncate">{session.data.user?.name}</Text>
-                                    <Text type="secondary" className="text-xs truncate">{session.data.user?.email}</Text>
-                                </div>
-                            </div>
-                            <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} placement="topRight" trigger={['click']}>
-                                <Button type="text" icon={<MoreOutlined />} />
-                            </Dropdown>
-                        </div>
+            {/* Footer: Settings & Logo */}
+            <div className="p-4 border-t border-gray-100 flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col">
+                        <span className="text-xl font-bold text-gray-400">Entix</span>
+                        {activeOrganization && (
+                            <span className="text-xs text-gray-500 font-medium truncate max-w-[150px]">
+                                {activeOrganization.name}
+                            </span>
+                        )}
                     </div>
-                ) : (
-                    <Button type="primary" block onClick={() => navigate(links.auth.signIn)}>
-                        Sign In
-                    </Button>
-                )}
+                    <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
+                        <Button type="text" icon={<MoreOutlined />} className="text-gray-500 hover:text-gray-700" />
+                    </Dropdown>
+                </div>
             </div>
         </div>
     );

@@ -14,7 +14,6 @@ import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { DashboardPage } from "./pages/dashboard/dashboard/DashboardPage";
-
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
@@ -27,6 +26,10 @@ import { OrganizationMembersPage } from "./pages/organization/OrganizationMember
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
+import { AuthGuard } from "./components/guards/AuthGuard";
+import { GuestGuard } from "./components/guards/GuestGuard";
+import { OrganizationGuard } from "./components/guards/OrganizationGuard";
+import { OrganizationSlugGuard } from "./components/guards/OrganizationSlugGuard";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -38,41 +41,57 @@ export default function App() {
       <AppContainer>
         <Routes>
           <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
-          <Route path="/auth" element={<AuthLayout />}>
-            <Route path="sign-in" element={<SignInPage />} />
-            <Route path="sign-up" element={<SignUpPage />} />
-            <Route path="verify-email" element={<VerifyEmailPage />} />
-            <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
-            <Route path="forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="reset-password" element={<ResetPasswordPage />} />
-            <Route path="no-organization" element={<NoOrganizationPage />} />
-            <Route path="select-organization" element={<SelectOrganizationPage />} />
-            <Route path="accept-invitation" element={<AcceptInvitationPage />} />
+
+          {/* Public Routes (Guest Only) */}
+          <Route element={<GuestGuard />}>
+            <Route path="/auth" element={<AuthLayout />}>
+              <Route path="sign-in" element={<SignInPage />} />
+              <Route path="sign-up" element={<SignUpPage />} />
+              <Route path="verify-email" element={<VerifyEmailPage />} />
+              <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
+              <Route path="forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="reset-password" element={<ResetPasswordPage />} />
+            </Route>
           </Route>
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboardPage />} />
-          </Route>
+          {/* Protected Routes */}
+          <Route element={<AuthGuard />}>
 
-          <Route path={links.dashboard.index} element={<DashboardLayout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path='profile' element={<ProfilePage />} />
-            <Route path='settings' element={<SettingsPage />} />
-            <Route path='change-password' element={<ChangePasswordPage />} />
-            <Route path='lessons' element={<LessonsPage />} />
-            <Route path='shop' element={<ShopPage />} />
-            <Route path='wallet' element={<WalletPage />} />
-            <Route path='movies' element={<MoviesPage />} />
-            <Route path='orders' element={<OrdersPage />} />
-          </Route>
+            {/* Context Routes (Authenticated but no active org required) */}
+            <Route path={links.context.index} element={<AuthLayout />}>
+              <Route path="no-organization" element={<NoOrganizationPage />} />
+              <Route path="select-organization" element={<SelectOrganizationPage />} />
+              <Route path="accept-invitation" element={<AcceptInvitationPage />} />
+            </Route>
 
-          {/* Organization Routes */}
-          <Route path={links.organization.index} element={<DashboardLayout />}>
-            <Route index element={<OrganizationListPage />} />
-            <Route path=":id">
-              <Route index element={<OrganizationDashboardPage />} />
-              <Route path="members" element={<OrganizationMembersPage />} />
+            {/* Organization Protected Routes */}
+            <Route element={<OrganizationGuard />}>
+              {/* Admin Routes */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<AdminDashboardPage />} />
+              </Route>
+
+              {/* Dashboard Routes */}
+              <Route path={links.dashboard.index} element={<DashboardLayout />}>
+                <Route index element={<DashboardPage />} />
+                <Route path='profile' element={<ProfilePage />} />
+                <Route path='settings' element={<SettingsPage />} />
+                <Route path='change-password' element={<ChangePasswordPage />} />
+                <Route path='lessons' element={<LessonsPage />} />
+                <Route path='shop' element={<ShopPage />} />
+                <Route path='wallet' element={<WalletPage />} />
+                <Route path='movies' element={<MoviesPage />} />
+                <Route path='orders' element={<OrdersPage />} />
+              </Route>
+
+              {/* Organization Routes */}
+              <Route path={links.organization.index} element={<DashboardLayout />}>
+                <Route index element={<OrganizationListPage />} />
+                <Route path=":slug" element={<OrganizationSlugGuard />}>
+                  <Route index element={<OrganizationDashboardPage />} />
+                  <Route path="members" element={<OrganizationMembersPage />} />
+                </Route>
+              </Route>
             </Route>
           </Route>
         </Routes>
