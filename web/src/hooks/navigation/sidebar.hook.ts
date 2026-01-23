@@ -2,7 +2,7 @@ import { atom, useAtom } from 'jotai';
 import { useAuth } from '../auth/auth.hook';
 import { useEffect } from 'react';
 
-const sidebarOpenAtom = atom(true);
+const sidebarOpenAtom = atom(false);
 
 export const useSidebar = () => {
     const [isOpen, setIsOpen] = useAtom(sidebarOpenAtom);
