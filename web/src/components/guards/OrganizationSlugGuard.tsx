@@ -6,11 +6,11 @@ import { links } from '@web/src/constants/links';
 
 export const OrganizationSlugGuard: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
-    const { activeOrganization, organizations, loading, isFetching, setActive, isFetchingActiveOrg } = useOrganization();
+    const { activeOrganization, organizations, loading, isFetching, setActive } = useOrganization();
     const navigate = useNavigate();
 
     useEffect(() => {
-        if (loading || !slug || isFetchingActiveOrg) return;
+        if (loading || !slug) return;
 
         // If we are already in the correct organization, do nothing
         if (activeOrganization?.slug === slug) {
@@ -26,7 +26,7 @@ export const OrganizationSlugGuard: React.FC = () => {
         }
 
         // If targetOrg is not found, we let the render logic handle the 404
-    }, [slug, activeOrganization, organizations, loading, setActive, isFetchingActiveOrg]);
+    }, [slug, activeOrganization, organizations, loading, setActive]);
 
     if (loading || (isFetching && !organizations.length)) {
         return (

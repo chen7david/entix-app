@@ -21,16 +21,13 @@ export const useOrganization = () => {
         }
     });
 
-    const { data: activeOrganization, isLoading: loadingActiveOrg, isFetching: fetchingActiveOrg } = useQuery({
+    const { data: activeOrganization, isLoading: loadingActiveOrg } = useQuery({
         queryKey: ['activeOrganization'],
         queryFn: async () => {
             const { data } = await authClient.organization.getFullOrganization();
             return data || null;
         }
     });
-
-    // ... (rest of the file)
-
 
 
     const { data: members = [], isLoading: loadingMembers } = useQuery({
@@ -204,6 +201,5 @@ export const useOrganization = () => {
         listMembers,
         checkOrganizationStatus,
         acceptInvitation,
-        isFetchingActiveOrg: fetchingActiveOrg,
     };
 };
