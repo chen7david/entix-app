@@ -3,15 +3,17 @@ import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from '
 import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
-import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
+
 
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
     const { session, isLoading } = useAuth();
     const { mutate: signOut } = useSignOut();
+    const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
 
     const handleMenuClick: MenuProps['onClick'] = (e) => {
@@ -74,10 +76,6 @@ export const SidebarContent: React.FC = () => {
                 )}
             </div>
 
-            <div className="px-4 py-2 mt-2">
-                <OrganizationSwitcher />
-            </div>
-
             {/* Menu */}
             <div className="flex-1 overflow-y-auto py-2">
                 <SidebarMenu />
@@ -86,7 +84,14 @@ export const SidebarContent: React.FC = () => {
             {/* Footer: Settings & Logo */}
             <div className="p-4 border-t border-gray-100 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-gray-400">Entix</span>
+                    <div className="flex flex-col">
+                        <span className="text-xl font-bold text-gray-400">Entix</span>
+                        {activeOrganization && (
+                            <span className="text-xs text-gray-500 font-medium truncate max-w-[150px]">
+                                {activeOrganization.name}
+                            </span>
+                        )}
+                    </div>
                     <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
                         <Button type="text" icon={<MoreOutlined />} className="text-gray-500 hover:text-gray-700" />
                     </Dropdown>
