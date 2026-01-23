@@ -53,7 +53,7 @@ export const SidebarContent: React.FC = () => {
     return (
         <div className="flex flex-col h-full">
             {/* User Profile (Top) */}
-            <div className="p-4 border-b border-gray-100">
+            <div className="p-4">
                 {isLoading ? (
                     <Skeleton active avatar paragraph={{ rows: 1 }} />
                 ) : (
