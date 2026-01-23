@@ -21,7 +21,7 @@ export const links = {
     organization: {
         index: '/organization',
         create: '/organization/create',
-        edit: '/organization/:id',
+        edit: '/organization/:slug',
     },
     context: {
         index: '/context',

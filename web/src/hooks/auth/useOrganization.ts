@@ -21,13 +21,17 @@ export const useOrganization = () => {
         }
     });
 
-    const { data: activeOrganization, isLoading: loadingActiveOrg } = useQuery({
+    const { data: activeOrganization, isLoading: loadingActiveOrg, isFetching: fetchingActiveOrg } = useQuery({
         queryKey: ['activeOrganization'],
         queryFn: async () => {
             const { data } = await authClient.organization.getFullOrganization();
             return data || null;
         }
     });
+
+    // ... (rest of the file)
+
+
 
     const { data: members = [], isLoading: loadingMembers } = useQuery({
         queryKey: ['organizationMembers', activeOrganization?.id],
@@ -50,7 +54,7 @@ export const useOrganization = () => {
         onSuccess: async (result) => {
             if (result.data) {
                 await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-                navigate(`/organization/${result.data.id}`);
+                navigate(`/organization/${result.data.slug}`);
             }
         }
     });
@@ -63,17 +67,20 @@ export const useOrganization = () => {
         },
         onSuccess: async (result, variables) => {
             if (result.data) {
+                // If the current URL contains the old organization slug, update it to the new one
+                // We do this BEFORE invalidating queries to avoid race conditions where the 
+                // OrganizationSlugGuard sees the new active org but the old URL.
+                const newOrg = organizations.find(o => o.id === variables);
+                if (activeOrganization?.slug && newOrg?.slug && location.pathname.includes(activeOrganization.slug)) {
+                    const newPath = location.pathname.replace(activeOrganization.slug, newOrg.slug);
+                    navigate(newPath);
+                }
+
                 await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
                 // We also invalidate members because the active organization changed, 
                 // and the members query depends on activeOrganization.id, so it will automatically refetch.
                 // But explicit invalidation is safer if keys overlap.
                 await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
-
-                // If the current URL contains the old organization ID, update it to the new one
-                if (activeOrganization?.id && location.pathname.includes(activeOrganization.id)) {
-                    const newPath = location.pathname.replace(activeOrganization.id, variables);
-                    navigate(newPath);
-                }
             }
         }
     });
@@ -95,11 +102,11 @@ export const useOrganization = () => {
     }, [queryClient, activeOrganization?.id]);
 
     const getOrgLink = useCallback((path: string) => {
-        if (activeOrganization?.id) {
-            return `/organization/${activeOrganization.id}${path.startsWith('/') ? path : `/${path}`}`;
+        if (activeOrganization?.slug) {
+            return `/organization/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
         }
         return path;
-    }, [activeOrganization?.id]);
+    }, [activeOrganization?.slug]);
 
     const { session } = useAuth();
     const userId = session.data?.user?.id;
@@ -197,5 +204,6 @@ export const useOrganization = () => {
         listMembers,
         checkOrganizationStatus,
         acceptInvitation,
+        isFetchingActiveOrg: fetchingActiveOrg,
     };
 };

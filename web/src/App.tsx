@@ -29,6 +29,7 @@ import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { GuestGuard } from "./components/guards/GuestGuard";
 import { OrganizationGuard } from "./components/guards/OrganizationGuard";
+import { OrganizationSlugGuard } from "./components/guards/OrganizationSlugGuard";
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -86,7 +87,7 @@ export default function App() {
               {/* Organization Routes */}
               <Route path={links.organization.index} element={<DashboardLayout />}>
                 <Route index element={<OrganizationListPage />} />
-                <Route path=":id">
+                <Route path=":slug" element={<OrganizationSlugGuard />}>
                   <Route index element={<OrganizationDashboardPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />
                 </Route>
