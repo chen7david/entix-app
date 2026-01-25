@@ -1,17 +1,27 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Typography, Card, Skeleton, Button, Input, Alert, Descriptions } from "antd";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { authClient } from "@web/src/lib/auth-client";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useAuth } from "@web/src/hooks/auth/auth.hook";
 
 const { Title } = Typography;
 
 export const OrganizationDashboardPage = () => {
-    const { activeOrganization, loading, userRole } = useOrganization();
+    const { activeOrganization, loading, members } = useOrganization();
+    const { session } = useAuth();
+    const userId = session.data?.user?.id;
+
     const [inviteEmail, setInviteEmail] = useState("");
     const [inviteLoading, setInviteLoading] = useState(false);
     const [inviteError, setInviteError] = useState<string | null>(null);
     const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+
+    const userRoles = useMemo(() => {
+        if (!members || !userId) return [];
+        const member = members.find((m: any) => m.userId === userId);
+        return (member?.role || "").split(",").map((r: string) => r.trim()).filter(Boolean);
+    }, [members, userId]);
 
     if (loading) {
         return <Skeleton active />;
@@ -53,7 +63,7 @@ export const OrganizationDashboardPage = () => {
                         <Descriptions.Item label="ID">{activeOrganization.id}</Descriptions.Item>
                         <Descriptions.Item label="Name">{activeOrganization.name}</Descriptions.Item>
                         <Descriptions.Item label="Slug">{activeOrganization.slug}</Descriptions.Item>
-                        <Descriptions.Item label="Role">{userRole || 'Member'}</Descriptions.Item>
+                        <Descriptions.Item label="Role">{userRoles.join(", ") || 'Member'}</Descriptions.Item>
                     </Descriptions>
                 </Card>
 
