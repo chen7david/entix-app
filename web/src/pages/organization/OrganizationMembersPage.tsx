@@ -115,7 +115,7 @@ export const OrganizationMembersPage = () => {
                 <Popconfirm
                     title="Remove member"
                     description="Are you sure you want to remove this member from the organization?"
-                    onConfirm={() => handleRemoveMember(record.userId || record.user.id)}
+                    onConfirm={() => handleRemoveMember(record.id)}
                     okText="Yes"
                     cancelText="No"
                     disabled={!canRemove}
