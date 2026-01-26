@@ -185,6 +185,7 @@ export const SessionsPage: React.FC = () => {
                                                                 icon={<CopyOutlined style={{ fontSize: 12 }} />}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
+                                                                    if (!session.userAgent) return;
                                                                     navigator.clipboard.writeText(session.userAgent);
                                                                     message.success('User Agent copied');
                                                                 }}
