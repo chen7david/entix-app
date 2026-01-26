@@ -44,6 +44,42 @@ export const useOrganization = () => {
         enabled: !!activeOrganization?.id
     });
 
+    const { data: invitations = [], isLoading: loadingInvitations } = useQuery({
+        queryKey: ['organizationInvitations', activeOrganization?.id],
+        queryFn: async () => {
+            if (!activeOrganization?.id) return [];
+            const { data } = await authClient.organization.listInvitations({
+                query: {
+                    organizationId: activeOrganization.id,
+                }
+            });
+            return data || [];
+        },
+        enabled: !!activeOrganization?.id
+    });
+
+    const { mutateAsync: inviteMemberMutation, isPending: isInviting } = useMutation({
+        mutationFn: async ({ email, role }: { email: string; role: string }) => {
+            return await authClient.organization.inviteMember({
+                email,
+                role: role as "member" | "admin" | "owner",
+                organizationId: activeOrganization!.id
+            });
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
+        }
+    });
+
+    const { mutateAsync: cancelInvitationMutation, isPending: isCancelingInvitation } = useMutation({
+        mutationFn: async (invitationId: string) => {
+            return await authClient.organization.cancelInvitation({ invitationId });
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
+        }
+    });
+
     const { mutateAsync: createOrganizationMutation, isPending: isCreating } = useMutation({
         mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
             return await authClient.organization.create({ name, slug });
@@ -228,17 +264,28 @@ export const useOrganization = () => {
         return removeMemberMutation({ memberId });
     }, [removeMemberMutation]);
 
+    const inviteMember = useCallback(async (email: string, role: string) => {
+        return inviteMemberMutation({ email, role });
+    }, [inviteMemberMutation]);
+
+    const cancelInvitation = useCallback(async (invitationId: string) => {
+        return cancelInvitationMutation(invitationId);
+    }, [cancelInvitationMutation]);
+
     return {
         organizations,
         activeOrganization,
         members,
-        userRoles, // Expose array
-        checkPermission, // Expose permission checker
-        loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
+        invitations, // Expose invitations
+        userRoles,
+        checkPermission,
+        loading: loadingOrganizations || loadingActiveOrg || loadingMembers || loadingInvitations,
         isFetching: fetchingOrganizations,
         isCreating,
         isSwitching,
         isAcceptingInvitation,
+        isInviting,
+        isCancelingInvitation,
         listOrganizations,
         createOrganization,
         setActive,
@@ -248,6 +295,8 @@ export const useOrganization = () => {
         acceptInvitation,
         updateMemberRoles,
         removeMember,
+        inviteMember,
+        cancelInvitation,
         isUpdatingRole,
         isRemovingMember,
     };

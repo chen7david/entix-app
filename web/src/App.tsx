@@ -23,6 +23,7 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
+import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
@@ -90,6 +91,7 @@ export default function App() {
                 <Route path=":slug" element={<OrganizationSlugGuard />}>
                   <Route index element={<OrganizationDashboardPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />
+                  <Route path="invitations" element={<OrganizationInvitationsPage />} />
                 </Route>
               </Route>
             </Route>

@@ -1,21 +1,16 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Typography, Card, Skeleton, Button, Input, Alert, Descriptions } from "antd";
-import { useState, useMemo } from "react";
-import { authClient } from "@web/src/lib/auth-client";
+import { Typography, Card, Skeleton, Descriptions, Statistic, Row, Col } from "antd";
+import { UserOutlined, MailOutlined, FieldTimeOutlined } from "@ant-design/icons";
+import { useMemo } from "react";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/auth.hook";
 
 const { Title } = Typography;
 
 export const OrganizationDashboardPage = () => {
-    const { activeOrganization, loading, members } = useOrganization();
+    const { activeOrganization, loading, members, invitations } = useOrganization();
     const { session } = useAuth();
     const userId = session.data?.user?.id;
-
-    const [inviteEmail, setInviteEmail] = useState("");
-    const [inviteLoading, setInviteLoading] = useState(false);
-    const [inviteError, setInviteError] = useState<string | null>(null);
-    const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
 
     const userRoles = useMemo(() => {
         if (!members || !userId) return [];
@@ -31,25 +26,6 @@ export const OrganizationDashboardPage = () => {
         return <div>Organization not found</div>;
     }
 
-    const handleInvite = async () => {
-        setInviteLoading(true);
-        setInviteError(null);
-        setInviteSuccess(null);
-        const { error } = await authClient.organization.inviteMember({
-            email: inviteEmail,
-            role: "member",
-            organizationId: activeOrganization.id
-        });
-
-        if (error) {
-            setInviteError(error.message || "Failed to invite user");
-        } else {
-            setInviteSuccess("User invited successfully");
-            setInviteEmail("");
-        }
-        setInviteLoading(false);
-    };
-
     return (
         <>
             <Toolbar />
@@ -58,6 +34,36 @@ export const OrganizationDashboardPage = () => {
                     <Title level={2}>Dashboard: {activeOrganization.name}</Title>
                 </div>
 
+                <Row gutter={16} className="mb-6">
+                    <Col span={8}>
+                        <Card>
+                            <Statistic
+                                title="Total Members"
+                                value={members?.length || 0}
+                                prefix={<UserOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col span={8}>
+                        <Card>
+                            <Statistic
+                                title="Pending Invitations"
+                                value={invitations?.length || 0}
+                                prefix={<MailOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col span={8}>
+                        <Card>
+                            <Statistic
+                                title="Created At"
+                                value={new Date(activeOrganization.createdAt).toLocaleDateString()}
+                                prefix={<FieldTimeOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
                 <Card title="Organization Details" className="mb-6">
                     <Descriptions bordered column={1}>
                         <Descriptions.Item label="ID">{activeOrganization.id}</Descriptions.Item>
@@ -65,21 +71,6 @@ export const OrganizationDashboardPage = () => {
                         <Descriptions.Item label="Slug">{activeOrganization.slug}</Descriptions.Item>
                         <Descriptions.Item label="Role">{userRoles.join(", ") || 'Member'}</Descriptions.Item>
                     </Descriptions>
-                </Card>
-
-                <Card title="Invite User">
-                    {inviteError && <Alert message={inviteError} type="error" showIcon className="mb-4" />}
-                    {inviteSuccess && <Alert message={inviteSuccess} type="success" showIcon className="mb-4" />}
-                    <div className="flex gap-4">
-                        <Input
-                            placeholder="User Email"
-                            value={inviteEmail}
-                            onChange={(e) => setInviteEmail(e.target.value)}
-                        />
-                        <Button type="primary" loading={inviteLoading} onClick={handleInvite}>
-                            Invite
-                        </Button>
-                    </div>
                 </Card>
             </div>
         </>
