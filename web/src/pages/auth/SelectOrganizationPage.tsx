@@ -30,7 +30,7 @@ export const SelectOrganizationPage: React.FC = () => {
             <div className="w-full max-w-md text-center">
                 <div className="mb-8 flex justify-center">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                        <div className="w-10 h-10 bg-[#646cff] rounded-lg flex items-center justify-center text-white font-bold text-xl">
                             E
                         </div>
                         <span className="text-2xl font-bold text-gray-800">Entix</span>
