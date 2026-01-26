@@ -52,7 +52,7 @@ export const SidebarMenu: React.FC = () => {
             icon: <TeamOutlined />,
             children: [
                 {
-                    label: 'All Organizations',
+                    label: 'Organizations',
                     key: '/organization',
                 },
                 ...(activeOrganization ? [
@@ -63,6 +63,10 @@ export const SidebarMenu: React.FC = () => {
                     {
                         label: 'Members',
                         key: getOrgLink('/members'),
+                    },
+                    {
+                        label: 'Invitations',
+                        key: getOrgLink('/invitations'),
                     }
                 ] : [])
             ]

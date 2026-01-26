@@ -23,6 +23,7 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
+import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
@@ -42,13 +43,17 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
 
+          {/* Public routes (no guard) */}
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route path="verify-email" element={<VerifyEmailPage />} />
+            <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
+          </Route>
+
           {/* Public Routes (Guest Only) */}
           <Route element={<GuestGuard />}>
             <Route path="/auth" element={<AuthLayout />}>
               <Route path="sign-in" element={<SignInPage />} />
               <Route path="sign-up" element={<SignUpPage />} />
-              <Route path="verify-email" element={<VerifyEmailPage />} />
-              <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
             </Route>
@@ -90,6 +95,7 @@ export default function App() {
                 <Route path=":slug" element={<OrganizationSlugGuard />}>
                   <Route index element={<OrganizationDashboardPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />
+                  <Route path="invitations" element={<OrganizationInvitationsPage />} />
                 </Route>
               </Route>
             </Route>

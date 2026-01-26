@@ -1,6 +1,6 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { organization } from "better-auth/plugins";
-import { ac, member, owner, admin } from "../../rbac/permissions.rbac";
+import { ac, member, owner, admin } from "@shared/auth/permissions";
 import { Mailer } from "@api/lib/mail/mailer.lib";
 import { links } from "@web/src/constants/links";
 

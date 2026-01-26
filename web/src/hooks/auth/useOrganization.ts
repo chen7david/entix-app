@@ -44,6 +44,42 @@ export const useOrganization = () => {
         enabled: !!activeOrganization?.id
     });
 
+    const { data: invitations = [], isLoading: loadingInvitations } = useQuery({
+        queryKey: ['organizationInvitations', activeOrganization?.id],
+        queryFn: async () => {
+            if (!activeOrganization?.id) return [];
+            const { data } = await authClient.organization.listInvitations({
+                query: {
+                    organizationId: activeOrganization.id,
+                }
+            });
+            return data || [];
+        },
+        enabled: !!activeOrganization?.id
+    });
+
+    const { mutateAsync: inviteMemberMutation, isPending: isInviting } = useMutation({
+        mutationFn: async ({ email, role }: { email: string; role: string }) => {
+            return await authClient.organization.inviteMember({
+                email,
+                role: role as "member" | "admin" | "owner",
+                organizationId: activeOrganization!.id
+            });
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
+        }
+    });
+
+    const { mutateAsync: cancelInvitationMutation, isPending: isCancelingInvitation } = useMutation({
+        mutationFn: async (invitationId: string) => {
+            return await authClient.organization.cancelInvitation({ invitationId });
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
+        }
+    });
+
     const { mutateAsync: createOrganizationMutation, isPending: isCreating } = useMutation({
         mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
             return await authClient.organization.create({ name, slug });
@@ -108,7 +144,20 @@ export const useOrganization = () => {
     const { session } = useAuth();
     const userId = session.data?.user?.id;
 
-    const userRole = activeOrganization?.members?.find((m: any) => m.userId === userId)?.role;
+    const userRoles = (members?.find((m: any) => m.userId === userId)?.role || "").split(",").map((r: string) => r.trim()).filter(Boolean);
+
+    // Helper to check permissions client-side using better-auth pattern
+    const checkPermission = useCallback((permission: { permissions: Record<string, string[]> }) => {
+        if (!userRoles.length) return false;
+
+        return userRoles.some((role: string) => {
+            return authClient.organization.checkRolePermission({
+                role: role as any,
+                permissions: permission.permissions
+            });
+        });
+    }, [userRoles]);
+
 
     const checkOrganizationStatus = async () => {
         // 1. Fetch and cache organizations
@@ -180,20 +229,63 @@ export const useOrganization = () => {
         }
     });
 
+    const { mutateAsync: updateMemberRoleMutation, isPending: isUpdatingRole } = useMutation({
+        mutationFn: async ({ memberId, roles }: { memberId: string; roles: string[] }) => {
+            // Join roles with comma
+            return await authClient.organization.updateMemberRole({ memberId, role: roles.join(",") });
+        },
+        onSuccess: async () => {
+            // Invalidate generically to ensuring list refresh
+            await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
+        }
+    });
+
+    const { mutateAsync: removeMemberMutation, isPending: isRemovingMember } = useMutation({
+        mutationFn: async ({ memberId }: { memberId: string }) => {
+            return await authClient.organization.removeMember({ memberIdOrEmail: memberId });
+        },
+        onSuccess: async () => {
+            // Invalidate generically to ensuring list refresh
+            await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
+            // Also invalidate active organization in case the removed member was the current user (edge case)
+            await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
+        }
+    });
+
     const acceptInvitation = useCallback(async (invitationId: string) => {
         return acceptInvitationMutation(invitationId);
     }, [acceptInvitationMutation]);
+
+    const updateMemberRoles = useCallback(async (memberId: string, roles: string[]) => {
+        return updateMemberRoleMutation({ memberId, roles });
+    }, [updateMemberRoleMutation]);
+
+    const removeMember = useCallback(async (memberId: string) => {
+        return removeMemberMutation({ memberId });
+    }, [removeMemberMutation]);
+
+    const inviteMember = useCallback(async (email: string, role: string) => {
+        return inviteMemberMutation({ email, role });
+    }, [inviteMemberMutation]);
+
+    const cancelInvitation = useCallback(async (invitationId: string) => {
+        return cancelInvitationMutation(invitationId);
+    }, [cancelInvitationMutation]);
 
     return {
         organizations,
         activeOrganization,
         members,
-        userRole,
-        loading: loadingOrganizations || loadingActiveOrg || loadingMembers,
+        invitations, // Expose invitations
+        userRoles,
+        checkPermission,
+        loading: loadingOrganizations || loadingActiveOrg || loadingMembers || loadingInvitations,
         isFetching: fetchingOrganizations,
         isCreating,
         isSwitching,
         isAcceptingInvitation,
+        isInviting,
+        isCancelingInvitation,
         listOrganizations,
         createOrganization,
         setActive,
@@ -201,5 +293,11 @@ export const useOrganization = () => {
         listMembers,
         checkOrganizationStatus,
         acceptInvitation,
+        updateMemberRoles,
+        removeMember,
+        inviteMember,
+        cancelInvitation,
+        isUpdatingRole,
+        isRemovingMember,
     };
 };
