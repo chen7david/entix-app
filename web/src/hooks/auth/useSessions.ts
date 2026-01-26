@@ -26,12 +26,15 @@ export function useRevokeSession() {
 
     return useMutation({
         mutationFn: async (token: string) => {
-            // Use Better Auth's native revokeSession client API
             const response = await authClient.revokeSession({ token });
+            
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to revoke session");
+            }
+            
             return response;
         },
         onSuccess: () => {
-            // Invalidate and refetch sessions
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
         },
     });
@@ -43,10 +46,14 @@ export function useRevokeOtherSessions() {
     return useMutation({
         mutationFn: async () => {
             const response = await authClient.revokeOtherSessions();
+            
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to revoke other sessions");
+            }
+            
             return response;
         },
         onSuccess: () => {
-            // Invalidate and refetch sessions
             queryClient.invalidateQueries({ queryKey: ['sessions'] });
         },
     });

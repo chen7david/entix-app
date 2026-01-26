@@ -182,8 +182,16 @@ export const SessionsPage: React.FC = () => {
                                                 {session.userAgent && (
                                                     <Text
                                                         type="secondary"
-                                                        style={{ fontSize: 11, display: 'block', marginTop: 8 }}
-                                                        className="truncate"
+                                                        style={{
+                                                            fontSize: 11,
+                                                            display: 'block',
+                                                            marginTop: 8,
+                                                            maxWidth: '100%',
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap'
+                                                        }}
+                                                        className="hidden sm:block"
                                                     >
                                                         {session.userAgent}
                                                     </Text>
