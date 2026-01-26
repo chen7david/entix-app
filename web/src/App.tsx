@@ -43,13 +43,19 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
 
+          {/* Public routes (no guard) */}
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route path="verify-email" element={<VerifyEmailPage />} />
+            <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
+          </Route>
+
           {/* Public Routes (Guest Only) */}
           <Route element={<GuestGuard />}>
             <Route path="/auth" element={<AuthLayout />}>
               <Route path="sign-in" element={<SignInPage />} />
               <Route path="sign-up" element={<SignUpPage />} />
-              <Route path="verify-email" element={<VerifyEmailPage />} />
-              <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
+              {/* <Route path="verify-email" element={<VerifyEmailPage />} />
+              <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} /> */}
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
             </Route>
