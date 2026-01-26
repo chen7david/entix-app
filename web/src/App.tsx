@@ -54,8 +54,6 @@ export default function App() {
             <Route path="/auth" element={<AuthLayout />}>
               <Route path="sign-in" element={<SignInPage />} />
               <Route path="sign-up" element={<SignUpPage />} />
-              {/* <Route path="verify-email" element={<VerifyEmailPage />} />
-              <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} /> */}
               <Route path="forgot-password" element={<ForgotPasswordPage />} />
               <Route path="reset-password" element={<ResetPasswordPage />} />
             </Route>
