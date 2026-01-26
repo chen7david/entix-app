@@ -30,24 +30,25 @@ export const ForgotPasswordPage: React.FC = () => {
 
     if (emailSent) {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '16px' }}>
+            <Card style={{ width: 400, margin: '0 auto' }}>
                 <Result
                     status="success"
                     title="Check your email"
                     subTitle={
-                        <>
+                        <div style={{ marginBottom: 24 }}>
                             We've sent a password reset link to <Text strong>{sentEmail}</Text>.
                             <br />
                             Please check your inbox and click the link to reset your password.
-                        </>
+                        </div>
                     }
                     extra={[
-                        <Button key="signin" onClick={() => navigate(links.auth.signIn)}>
+                        <Button key="signin" onClick={() => navigate(links.auth.signIn)} block>
                             Back to Sign In
                         </Button>,
                     ]}
+                    style={{ padding: '0 0 24px 0' }}
                 />
-            </div>
+            </Card>
         );
     }
 

@@ -30,13 +30,13 @@ export const EmailVerificationPendingPage: React.FC = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-[60vh] p-4">
-            <Card className="max-w-md w-full text-center shadow-md">
+        <Card style={{ width: 400, margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
                 <div className="mb-6">
-                    <MailOutlined style={{ fontSize: '48px', color: '#1890ff' }} />
+                    <MailOutlined style={{ fontSize: '48px', color: '#646cff' }} />
                 </div>
-                <Title level={3}>Check your email</Title>
-                <div className="mb-6">
+                <Title level={2}>Check your email</Title>
+                <div style={{ marginBottom: 24 }}>
                     <Text>
                         We've sent a verification link to <Text strong>{email || 'your email address'}</Text>.
                     </Text>
@@ -52,14 +52,15 @@ export const EmailVerificationPendingPage: React.FC = () => {
                         onClick={handleResend}
                         loading={isPending}
                         disabled={!email}
+                        block
                     >
                         Resend Email
                     </Button>
-                    <Text type="secondary" className="text-xs">
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
                         Did not receive the email? Check your spam folder.
                     </Text>
                 </div>
-            </Card>
-        </div>
+            </div>
+        </Card>
     );
 };
