@@ -41,23 +41,15 @@ export const SessionsPage: React.FC = () => {
 
     const handleRevokeSession = (token: string) => {
         revokeSession(token, {
-            onSuccess: () => {
-                message.success('Session revoked successfully');
-            },
-            onError: () => {
-                message.error('Failed to revoke session');
-            },
+            onSuccess: () => message.success('Session revoked successfully'),
+            onError: () => message.error('Failed to revoke session'),
         });
     };
 
     const handleRevokeAllOtherSessions = () => {
         revokeOtherSessions(undefined, {
-            onSuccess: () => {
-                message.success('All other sessions revoked successfully');
-            },
-            onError: () => {
-                message.error('Failed to revoke sessions');
-            },
+            onSuccess: () => message.success('All other sessions revoked successfully'),
+            onError: () => message.error('Failed to revoke sessions'),
         });
     };
 
@@ -72,13 +64,10 @@ export const SessionsPage: React.FC = () => {
 
     const getDeviceInfo = (userAgent?: string) => {
         if (!userAgent) return 'Unknown Device';
-
-        // Simple browser detection
         if (userAgent.includes('Chrome')) return 'Chrome';
         if (userAgent.includes('Firefox')) return 'Firefox';
         if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
         if (userAgent.includes('Edge')) return 'Edge';
-
         return 'Unknown Browser';
     };
 
@@ -102,14 +91,14 @@ export const SessionsPage: React.FC = () => {
     return (
         <>
             <Toolbar />
+
             <div className="p-6 max-w-4xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <Title level={2} className="!mb-2">Active Sessions</Title>
-                        <Text type="secondary">
-                            Manage your active sessions across all devices
-                        </Text>
+                        <Text type="secondary">Manage your active sessions across all devices</Text>
                     </div>
+
                     {otherSessionsCount > 0 && (
                         <Popconfirm
                             title="Revoke all other sessions?"
@@ -119,11 +108,7 @@ export const SessionsPage: React.FC = () => {
                             okButtonProps={{ danger: true }}
                             cancelText="Cancel"
                         >
-                            <Button
-                                danger
-                                loading={isRevokingAll}
-                                icon={<DeleteOutlined />}
-                            >
+                            <Button danger loading={isRevokingAll} icon={<DeleteOutlined />}>
                                 Revoke All Other Sessions
                             </Button>
                         </Popconfirm>
@@ -136,10 +121,7 @@ export const SessionsPage: React.FC = () => {
                         <Skeleton active paragraph={{ rows: 3 }} />
                     </Space>
                 ) : !sessions || sessions.length === 0 ? (
-                    <Empty
-                        description="No active sessions found"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    />
+                    <Empty description="No active sessions found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
                 ) : (
                     <List
                         dataSource={sortedSessions}
@@ -153,30 +135,32 @@ export const SessionsPage: React.FC = () => {
                                             width: '100%',
                                             borderColor: isCurrent ? token.colorPrimary : token.colorBorder,
                                         }}
-                                        styles={{
-                                            body: { padding: 20 }
-                                        }}
+                                        styles={{ body: { padding: 20 } }}
                                     >
                                         <div className="flex justify-between items-start">
-                                            <Space direction="vertical" size="small" style={{ flex: 1 }}>
+                                            <Space
+                                                direction="vertical"
+                                                size="small"
+                                                style={{ flex: 1, minWidth: 0 }}
+                                            >
                                                 <Space>
                                                     <span style={{ fontSize: 24 }}>
                                                         {getDeviceIcon(session.userAgent)}
                                                     </span>
+
                                                     <div>
                                                         <Space>
                                                             <Text strong style={{ fontSize: 16 }}>
                                                                 {getDeviceInfo(session.userAgent)}
                                                             </Text>
+
                                                             {isCurrent && (
-                                                                <Tag
-                                                                    color="success"
-                                                                    icon={<SafetyOutlined />}
-                                                                >
+                                                                <Tag color="success" icon={<SafetyOutlined />}>
                                                                     Current Session
                                                                 </Tag>
                                                             )}
                                                         </Space>
+
                                                         <div style={{ marginTop: 4 }}>
                                                             <Space split={<span>•</span>} size="small">
                                                                 {session.ipAddress && (
@@ -193,7 +177,7 @@ export const SessionsPage: React.FC = () => {
                                                 </Space>
 
                                                 {session.userAgent && (
-                                                    <div className="flex items-center gap-2 mt-2 w-full max-w-full overflow-hidden">
+                                                    <div className="flex items-center gap-2 mt-2 w-full overflow-hidden">
                                                         <Tooltip title="Copy User Agent">
                                                             <Button
                                                                 type="text"
@@ -201,29 +185,29 @@ export const SessionsPage: React.FC = () => {
                                                                 icon={<CopyOutlined style={{ fontSize: 12 }} />}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    if (session.userAgent) {
-                                                                        navigator.clipboard.writeText(session.userAgent);
-                                                                        message.success('User Agent copied');
-                                                                    }
+                                                                    navigator.clipboard.writeText(session.userAgent);
+                                                                    message.success('User Agent copied');
                                                                 }}
                                                                 style={{ flexShrink: 0 }}
                                                             />
                                                         </Tooltip>
+
                                                         <Tooltip title={session.userAgent}>
-                                                            <Text
-                                                                type="secondary"
+                                                            <span
+                                                                className="cursor-help"
                                                                 style={{
+                                                                    flex: 1,
+                                                                    minWidth: 0,
+                                                                    display: 'block',
                                                                     fontSize: 11,
+                                                                    color: token.colorTextSecondary,
                                                                     overflow: 'hidden',
                                                                     textOverflow: 'ellipsis',
                                                                     whiteSpace: 'nowrap',
-                                                                    flex: 1,
-                                                                    minWidth: 0
                                                                 }}
-                                                                className="cursor-help"
                                                             >
                                                                 {session.userAgent}
-                                                            </Text>
+                                                            </span>
                                                         </Tooltip>
                                                     </div>
                                                 )}
