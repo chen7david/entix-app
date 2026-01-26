@@ -10,7 +10,8 @@ import {
     Skeleton,
     Popconfirm,
     message,
-    theme
+    theme,
+    Tooltip
 } from 'antd';
 import {
     LaptopOutlined,
@@ -19,6 +20,7 @@ import {
     ClockCircleOutlined,
     SafetyOutlined,
     DeleteOutlined,
+    CopyOutlined
 } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useListSessions, useRevokeSession, useRevokeOtherSessions } from '@web/src/hooks/auth/useSessions';
@@ -84,7 +86,18 @@ export const SessionsPage: React.FC = () => {
         return sessionToken === currentSession.data?.session?.token;
     };
 
-    const otherSessionsCount = sessions?.filter(s => !isCurrentSession(s.token)).length || 0;
+    const sortedSessions = React.useMemo(() => {
+        if (!sessions) return [];
+        return [...sessions].sort((a, b) => {
+            const aIsCurrent = isCurrentSession(a.token);
+            const bIsCurrent = isCurrentSession(b.token);
+            if (aIsCurrent && !bIsCurrent) return -1;
+            if (!aIsCurrent && bIsCurrent) return 1;
+            return 0;
+        });
+    }, [sessions, currentSession]);
+
+    const otherSessionsCount = sortedSessions.filter(s => !isCurrentSession(s.token)).length || 0;
 
     return (
         <>
@@ -129,7 +142,7 @@ export const SessionsPage: React.FC = () => {
                     />
                 ) : (
                     <List
-                        dataSource={sessions}
+                        dataSource={sortedSessions}
                         renderItem={(session) => {
                             const isCurrent = isCurrentSession(session.token);
 
@@ -180,21 +193,39 @@ export const SessionsPage: React.FC = () => {
                                                 </Space>
 
                                                 {session.userAgent && (
-                                                    <Text
-                                                        type="secondary"
-                                                        style={{
-                                                            fontSize: 11,
-                                                            display: 'block',
-                                                            marginTop: 8,
-                                                            maxWidth: '100%',
-                                                            overflow: 'hidden',
-                                                            textOverflow: 'ellipsis',
-                                                            whiteSpace: 'nowrap'
-                                                        }}
-                                                        className="hidden sm:block"
-                                                    >
-                                                        {session.userAgent}
-                                                    </Text>
+                                                    <div className="flex items-center gap-2 mt-2 w-full max-w-full overflow-hidden">
+                                                        <Tooltip title="Copy User Agent">
+                                                            <Button
+                                                                type="text"
+                                                                size="small"
+                                                                icon={<CopyOutlined style={{ fontSize: 12 }} />}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (session.userAgent) {
+                                                                        navigator.clipboard.writeText(session.userAgent);
+                                                                        message.success('User Agent copied');
+                                                                    }
+                                                                }}
+                                                                style={{ flexShrink: 0 }}
+                                                            />
+                                                        </Tooltip>
+                                                        <Tooltip title={session.userAgent}>
+                                                            <Text
+                                                                type="secondary"
+                                                                style={{
+                                                                    fontSize: 11,
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    whiteSpace: 'nowrap',
+                                                                    flex: 1,
+                                                                    minWidth: 0
+                                                                }}
+                                                                className="hidden sm:block cursor-help"
+                                                            >
+                                                                {session.userAgent}
+                                                            </Text>
+                                                        </Tooltip>
+                                                    </div>
                                                 )}
                                             </Space>
 
