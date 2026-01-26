@@ -220,7 +220,7 @@ export const SessionsPage: React.FC = () => {
                                                                     flex: 1,
                                                                     minWidth: 0
                                                                 }}
-                                                                className="hidden sm:block cursor-help"
+                                                                className="cursor-help"
                                                             >
                                                                 {session.userAgent}
                                                             </Text>
