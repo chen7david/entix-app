@@ -33,6 +33,7 @@ import { OrganizationGuard } from "./components/guards/OrganizationGuard";
 import { OrganizationSlugGuard } from "./components/guards/OrganizationSlugGuard";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/error/ErrorFallback';
+import { NotFoundPage } from './pages/error/NotFoundPage';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -117,6 +118,13 @@ export default function App() {
                   </Route>
                 </Route>
               </Route>
+            </Route>
+
+            {/* Catch-all 404 route */}
+
+
+            <Route element={<AuthLayout />}>
+              <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
         </AppContainer>
