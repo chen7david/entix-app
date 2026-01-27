@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { SignInPage } from "./pages/auth/SignInPage";
 import { ProfilePage } from "./pages/dashboard/profile/ProfilePage";
+import { SessionsPage } from "./pages/dashboard/sessions/SessionsPage";
 import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
 import { ShopPage } from "./pages/dashboard/shop/ShopPage";
 import { WalletPage } from "./pages/dashboard/wallet/WalletPage";
@@ -99,6 +100,7 @@ export default function App() {
                 <Route path={links.dashboard.index} element={<DashboardLayout />}>
                   <Route index element={<DashboardPage />} />
                   <Route path='profile' element={<ProfilePage />} />
+                  <Route path='sessions' element={<SessionsPage />} />
                   <Route path='settings' element={<SettingsPage />} />
                   <Route path='change-password' element={<ChangePasswordPage />} />
                   <Route path='lessons' element={<LessonsPage />} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from 'antd';
-import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
+import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined, SafetyOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
@@ -33,6 +33,11 @@ export const SidebarContent: React.FC = () => {
             key: links.dashboard.profile,
             label: 'Profile',
             icon: <UserOutlined />,
+        },
+        {
+            key: links.dashboard.sessions,
+            label: 'Sessions',
+            icon: <SafetyOutlined />,
         },
         {
             key: links.dashboard.settings,

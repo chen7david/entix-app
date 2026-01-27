@@ -10,6 +10,7 @@ export const links = {
     dashboard: {
         index: '/dashboard',
         profile: '/dashboard/profile',
+        sessions: '/dashboard/sessions',
         settings: '/dashboard/settings',
         changePassword: '/dashboard/change-password',
         lessons: '/dashboard/lessons',
