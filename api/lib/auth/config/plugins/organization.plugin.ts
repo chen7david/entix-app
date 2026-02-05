@@ -3,6 +3,7 @@ import { organization } from "better-auth/plugins";
 import { ac, member, owner, admin } from "@shared/auth/permissions";
 import { Mailer } from "@api/lib/mail/mailer.lib";
 import { links } from "@web/src/constants/links";
+import { FinanceService } from "@api/lib/finance/finance.service";
 
 export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) => organization({
     ac,
@@ -16,6 +17,8 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) =
             return
         }
         const inviteLink = `${ctx.env.FRONTEND_URL}${links.context.acceptInvitation}?id=${data.id}`;
+        console.log("554554");
+        console.log({ inviteLink })
 
         await mailer.sendTemplate({
             to: data.email,
@@ -27,4 +30,13 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) =
             }
         });
     },
+    organizationHooks: {
+        afterAddMember: async (data) => {
+            if (!ctx) return;
+            const financeService = new FinanceService(ctx);
+            // Create default accounts
+            await financeService.ensureFinancialAccount(data.member.userId, data.member.organizationId, 'RMB');
+            await financeService.ensureFinancialAccount(data.member.userId, data.member.organizationId, 'ETP');
+        }
+    }
 });

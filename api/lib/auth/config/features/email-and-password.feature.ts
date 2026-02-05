@@ -5,7 +5,7 @@ import { BetterAuthOptions } from "better-auth";
 export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => ({
     emailAndPassword: {
         enabled: true,
-        requireEmailVerification: true,
+        requireEmailVerification: ctx?.env.SKIP_EMAIL_VERIFICATION === 'true' ? false : true,
         sendResetPassword: async ({ user, url }) => {
             if (!ctx || !mailer) return;
             ctx.executionCtx.waitUntil(

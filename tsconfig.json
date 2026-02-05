@@ -8,11 +8,13 @@
     "lib": [
       "ESNext"
     ],
+    "types": [
+      "@cloudflare/workers-types",
+      "jest",
+      "node"
+    ],
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
-    "types": [
-      "./worker-configuration.d.ts"
-    ],
     "paths": {
       "@shared/*": [
         "./shared/*"
@@ -25,4 +27,15 @@
       ]
     }
   },
+  "include": [
+    "api/**/*",
+    "worker-configuration.d.ts",
+    "better-auth.config.ts",
+    "drizzle.config.ts",
+    "tests/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "web"
+  ]
 }

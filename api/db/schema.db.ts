@@ -26,6 +26,7 @@ export const user = sqliteTable("user", {
     banned: integer("banned", { mode: "boolean" }).default(false).notNull(),
     banReason: text("ban_reason"),
     banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
+    transactionPin: text("transaction_pin"),
 });
 
 export type User = typeof user.$inferSelect;
@@ -202,5 +203,103 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
     user: one(user, {
         fields: [invitation.inviterId],
         references: [user.id],
+    }),
+}));
+
+export const financialAccount = sqliteTable(
+    "financial_account",
+    {
+        id: text("id").primaryKey(),
+        organizationId: text("organization_id")
+            .notNull()
+            .references(() => organization.id, { onDelete: "cascade" }),
+        userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+        currency: text("currency").notNull(),
+        type: text("type").notNull(), // LIABILITY, ASSET, REVENUE, EXPENSE, EQUITY
+        balance: integer("balance").default(0).notNull(), // Stored in cents
+        code: text("code").unique(),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("financial_account_org_idx").on(table.organizationId),
+        index("financial_account_user_idx").on(table.userId),
+    ],
+);
+
+export const financialTransaction = sqliteTable(
+    "financial_transaction",
+    {
+        id: text("id").primaryKey(),
+        organizationId: text("organization_id")
+            .notNull()
+            .references(() => organization.id, { onDelete: "cascade" }),
+        type: text("type").notNull(), // TRANSFER, DEPOSIT, WITHDRAWAL, REVERSAL
+        description: text("description").notNull(),
+        reference: text("reference"),
+        metadata: text("metadata", { mode: "json" }),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        index("financial_transaction_org_idx").on(table.organizationId),
+    ],
+);
+
+export const financialPosting = sqliteTable(
+    "financial_posting",
+    {
+        id: text("id").primaryKey(),
+        transactionId: text("transaction_id")
+            .notNull()
+            .references(() => financialTransaction.id, { onDelete: "cascade" }),
+        accountId: text("account_id")
+            .notNull()
+            .references(() => financialAccount.id, { onDelete: "cascade" }),
+        amount: integer("amount").notNull(), // Positive or Negative cents
+        description: text("description"),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        index("financial_posting_tx_idx").on(table.transactionId),
+        index("financial_posting_account_idx").on(table.accountId),
+    ],
+);
+
+export const financialAccountRelations = relations(financialAccount, ({ one, many }) => ({
+    organization: one(organization, {
+        fields: [financialAccount.organizationId],
+        references: [organization.id],
+    }),
+    user: one(user, {
+        fields: [financialAccount.userId],
+        references: [user.id],
+    }),
+    postings: many(financialPosting),
+}));
+
+export const financialTransactionRelations = relations(financialTransaction, ({ one, many }) => ({
+    organization: one(organization, {
+        fields: [financialTransaction.organizationId],
+        references: [organization.id],
+    }),
+    postings: many(financialPosting),
+}));
+
+export const financialPostingRelations = relations(financialPosting, ({ one }) => ({
+    transaction: one(financialTransaction, {
+        fields: [financialPosting.transactionId],
+        references: [financialTransaction.id],
+    }),
+    account: one(financialAccount, {
+        fields: [financialPosting.accountId],
+        references: [financialAccount.id],
     }),
 }));

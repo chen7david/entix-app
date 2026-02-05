@@ -1,17 +1,38 @@
 import React from 'react';
-import { Typography } from 'antd';
+import { Tabs, Typography } from 'antd';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { WalletOverview } from '@web/src/components/finance/WalletOverview';
+import { TransferForm } from '@web/src/components/finance/TransferForm';
+import { TransactionHistory } from '@web/src/components/finance/TransactionHistory';
 
 const { Title } = Typography;
 
 export const WalletPage: React.FC = () => {
+    const items = [
+        {
+            key: 'overview',
+            label: 'Overview',
+            children: <WalletOverview />,
+        },
+        {
+            key: 'transfer',
+            label: 'Transfer',
+            children: <TransferForm />,
+        },
+        {
+            key: 'history',
+            label: 'History',
+            children: <TransactionHistory />,
+        }
+    ];
+
     return (
-        <>
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Toolbar />
-            <div className="p-6 max-w-4xl mx-auto">
+            <div style={{ padding: 24, flex: 1, overflow: 'auto' }}>
                 <Title level={2}>Wallet</Title>
-                <p>Welcome to the Wallet page.</p>
+                <Tabs defaultActiveKey="overview" items={items} destroyInactiveTabPane={true} />
             </div>
-        </>
+        </div>
     );
 };
