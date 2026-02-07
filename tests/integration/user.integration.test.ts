@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, TestDb } from "./utils";
-import { user } from "../api/db/schema.db";
+import { createTestDb, TestDb } from "../lib/utils";
+import { user } from "@api/db/schema.db";
 import { eq } from "drizzle-orm";
-import { createMockUser } from "./factories";
+import { createMockUser } from "../factories/user.factory";
 
 describe("User Integration Test", () => {
     let db: TestDb;

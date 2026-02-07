@@ -1,9 +1,9 @@
 import { drizzle } from "drizzle-orm/d1";
 import { applyD1Migrations, env } from "cloudflare:test";
-import * as schema from "../api/db/schema.db";
+import * as schema from "../../api/db/schema.db";
 
 // Use Vite's import.meta.glob to load all SQL migrations as raw strings
-const migrationFiles = import.meta.glob('../api/db/migrations/*.sql', { eager: true, query: '?raw', import: 'default' });
+const migrationFiles = import.meta.glob('../../api/db/migrations/*.sql', { eager: true, query: '?raw', import: 'default' });
 
 export async function createTestDb() {
     // 1. Prepare migrations list
