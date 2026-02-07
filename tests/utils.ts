@@ -26,3 +26,5 @@ export async function createTestDb() {
     const db = drizzle(env.DB, { schema });
     return db;
 }
+
+export type TestDb = Awaited<ReturnType<typeof createTestDb>>;

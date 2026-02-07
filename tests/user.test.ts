@@ -1,24 +1,21 @@
-import { describe, it, expect } from "vitest";
-import { createTestDb } from "./utils";
+import { describe, it, expect, beforeEach } from "vitest";
+import { createTestDb, TestDb } from "./utils";
 import { user } from "../api/db/schema.db";
 import { eq } from "drizzle-orm";
+import { createMockUser } from "./factories";
 
 describe("User Integration Test", () => {
-    // Tests are run in isolation, so we can setup a fresh DB for each test file or test case
-    // For now we just create one for this suite
+    let db: TestDb;
+
+    beforeEach(async () => {
+        db = await createTestDb();
+    });
 
     it("should create and retrieve a user", async () => {
-        const db = await createTestDb();
-
-        const newUser = {
-            id: "user_123",
+        const newUser = createMockUser({
             name: "Test User",
-            email: "test@example.com",
-            role: "user",
-            banned: false,
-            createdAt: new Date(),
-            updatedAt: new Date()
-        };
+            email: "test@example.com"
+        });
 
         // Insert
         await db.insert(user).values(newUser);
