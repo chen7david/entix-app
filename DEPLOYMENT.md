@@ -2,9 +2,12 @@
 
 ## Testing in Staging
 Our tests (Vitest) run in the **Build Environment** (CI). They verify your code inside a simulated Cloudflare Worker environment (`workerd`) *before* it is deployed. 
-- **They do NOT run against the live Staging database.**
-- They use isolated, temporary databases.
-- If tests fail, the build is cancelled, protecting your environment.
+
+**Crucially:**
+- **Tests are ALWAYS ephemeral**, even when you are deploying to Staging.
+- They **NEVER** connect to your live `entix-app-staging` database.
+- They use a fresh, empty database created just for the test, which is destroyed immediately after.
+- This ensures that a bad test cannot wipe or corrupt your staging data.
 
 ## Cloudflare Dashboard Settings
 Update your **Build & Deploy** settings to the following:

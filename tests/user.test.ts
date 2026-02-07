@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createTestDb } from "./utils";
 import { user } from "../api/db/schema.db";
 import { eq } from "drizzle-orm";
