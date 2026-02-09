@@ -10,6 +10,7 @@ export interface SignUpValues {
     email: string;
     password: string;
     name: string;
+    organizationName: string;
 }
 
 interface SignUpFormProps {
@@ -54,6 +55,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
                     ]}
                 >
                     <Input prefix={<MailOutlined />} placeholder="Email" />
+                </Form.Item>
+
+                <Form.Item
+                    name="organizationName"
+                    rules={[{ required: true, message: 'Please input your organization name!' }]}
+                >
+                    <Input prefix={<UserOutlined />} placeholder="Organization Name" />
                 </Form.Item>
 
                 <Form.Item

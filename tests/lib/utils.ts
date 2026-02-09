@@ -2,7 +2,8 @@ import { drizzle } from "drizzle-orm/d1";
 import { applyD1Migrations, env } from "cloudflare:test";
 import * as schema from "../../api/db/schema.db";
 
-const migrationFiles = import.meta.glob('../../api/db/migrations/*.sql', { eager: true, query: '?raw', import: 'default' });
+// Use import.meta.glob to let Vite load the files at build time
+const migrationFiles = import.meta.glob('/api/db/migrations/*.sql', { eager: true, query: '?raw', import: 'default' });
 
 const migrations = Object.entries(migrationFiles)
     .sort(([pathA], [pathB]) => pathA.localeCompare(pathB))

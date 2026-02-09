@@ -8,7 +8,7 @@ import { mountBetterAuth } from "./lib/auth/auth";
 const app = createApp();
 
 configureOpenApi(app);
-mountBetterAuth(app);
 mountRoutes({ app, routes, prefix: '/api/v1' });
+mountBetterAuth(app);
 
 export default app;
