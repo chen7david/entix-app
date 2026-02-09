@@ -11,6 +11,11 @@ export default defineWorkersConfig({
                 wrangler: { configPath: "./wrangler.jsonc" },
                 miniflare: {
                     d1Databases: ["DB"],
+                    bindings: {
+                        RESEND_API_KEY: "re_mock_key",
+                        BETTER_AUTH_URL: "http://localhost:3000",
+                        BETTER_AUTH_SECRET: "12345678901234567890123456789012",
+                    }
                 },
             },
         },
