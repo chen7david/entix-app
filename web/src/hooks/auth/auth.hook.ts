@@ -27,6 +27,28 @@ export const useSignIn = () => {
     });
 };
 
+
+export const useSignUpWithOrg = () => {
+    return useMutation({
+        mutationFn: async (values: { email: string; password: string; name: string; organizationName: string }) => {
+            const response = await fetch("/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(values),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || "Failed to sign up");
+            }
+
+            return response.json();
+        },
+    });
+};
+
 export const useSignUp = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string; name: string }) => {

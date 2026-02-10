@@ -36,4 +36,30 @@ export const authContextSchema = z.object({
     refreshToken: z.string().openapi({ example: "xxxxx.yyyyy.zzzzz" }),
 });
 
+
 export type AuthContextDTO = z.infer<typeof authContextSchema>;
+
+export const signUpWithOrgSchema = z.object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    name: z.string().min(1),
+    organizationName: z.string().min(2),
+});
+
+export type SignUpWithOrgDTO = z.infer<typeof signUpWithOrgSchema>;
+
+export const signUpWithOrgResponseSchema = z.object({
+    user: z.object({
+        id: z.string(),
+        email: z.string(),
+        name: z.string(),
+        role: z.string(),
+    }),
+    organization: z.object({
+        id: z.string(),
+        name: z.string(),
+        slug: z.string(),
+    }),
+});
+
+export type SignUpWithOrgResponseDTO = z.infer<typeof signUpWithOrgResponseSchema>;

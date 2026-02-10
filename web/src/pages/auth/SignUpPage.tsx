@@ -2,23 +2,26 @@ import React from 'react';
 import { useNavigate } from 'react-router';
 import { message, Card, Typography } from 'antd';
 import { SignUpForm, type SignUpValues } from '@web/src/components/auth/SignUpForm';
-import { useSignUp } from '@web/src/hooks/auth/auth.hook';
+import { useSignUpWithOrg } from '@web/src/hooks/auth/auth.hook';
 import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
 export const SignUpPage: React.FC = () => {
     const navigate = useNavigate();
-    const { mutate: signUp, isPending } = useSignUp();
+    const { mutate: signUp, isPending } = useSignUpWithOrg();
 
     const handleSignUp = (values: SignUpValues) => {
         signUp({
             email: values.email,
             password: values.password,
             name: values.name,
+            organizationName: values.organizationName,
         }, {
             onSuccess: () => {
-                message.success('Account created! Please check your email for verification.');
+                message.success('Account and Organization created!');
+                // Navigate to dashboard or email verification depending on flow
+                // For now, let's assume dashboard or email verification
                 navigate(links.auth.emailVerificationPending, { state: { email: values.email } });
             },
             onError: (error) => {
