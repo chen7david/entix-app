@@ -2,12 +2,14 @@ import React from 'react';
 import { Card, Typography, Button, message } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { useResendVerification } from '@web/src/hooks/auth/auth.hook';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
+import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
 export const EmailVerificationPendingPage: React.FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const email = location.state?.email; // Expect email to be passed in state
     const { mutate: resend, isPending } = useResendVerification();
 
@@ -55,6 +57,13 @@ export const EmailVerificationPendingPage: React.FC = () => {
                         block
                     >
                         Resend Email
+                    </Button>
+                    <Button
+                        type="default"
+                        onClick={() => navigate(links.auth.signIn)}
+                        block
+                    >
+                        Go to Sign In
                     </Button>
                     <Text type="secondary" style={{ fontSize: '12px' }}>
                         Did not receive the email? Check your spam folder.
