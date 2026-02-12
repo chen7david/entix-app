@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { Card, Button, Spin, Result, message } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
@@ -13,6 +13,7 @@ export const AcceptInvitationPage: React.FC = () => {
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const hasAcceptedRef = useRef(false);
 
     useEffect(() => {
         if (isAuthLoading) return;
@@ -29,7 +30,8 @@ export const AcceptInvitationPage: React.FC = () => {
         }
 
         // Auto-accept if authenticated and not already processed
-        if (!success && !error && !isAcceptingInvitation) {
+        if (!success && !error && !isAcceptingInvitation && !hasAcceptedRef.current) {
+            hasAcceptedRef.current = true; // Mark as accepted immediately to prevent double-invocation
             handleAccept();
         }
     }, [invitationId, isAuthenticated, isAuthLoading]);
