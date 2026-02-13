@@ -3,10 +3,10 @@ import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { drizzle } from "drizzle-orm/d1";
 import { user, member, organization } from "../../api/db/schema.db";
-import { nanoid } from "nanoid";
 import { eq, and } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { createMockOrganization } from "../factories/organization.factory";
+import { createMockMember } from "../factories/member.factory";
 
 describe("Member Unique Constraint Test", () => {
 
@@ -25,24 +25,22 @@ describe("Member Unique Constraint Test", () => {
         await db.insert(organization).values(testOrg);
 
         // First insert should succeed
-        await db.insert(member).values({
-            id: nanoid(),
+        const member1 = createMockMember({
             organizationId: testOrg.id,
             userId: testUser.id,
             role: "member",
-            createdAt: new Date(),
         });
+        await db.insert(member).values(member1);
 
         // Second insert with same userId and organizationId should fail
         let errorThrown = false;
         try {
-            await db.insert(member).values({
-                id: nanoid(),
+            const member2 = createMockMember({
                 organizationId: testOrg.id,
                 userId: testUser.id,
                 role: "admin", // Different role doesn't matter
-                createdAt: new Date(),
             });
+            await db.insert(member).values(member2);
         } catch (error: any) {
             errorThrown = true;
             // SQLite unique constraint error - check cause.message first as D1 wraps errors
@@ -71,22 +69,20 @@ describe("Member Unique Constraint Test", () => {
         await db.insert(organization).values([testOrg1, testOrg2]);
 
         // Add user to first org
-        await db.insert(member).values({
-            id: nanoid(),
+        const member1 = createMockMember({
             organizationId: testOrg1.id,
             userId: testUser.id,
             role: "member",
-            createdAt: new Date(),
         });
+        await db.insert(member).values(member1);
 
         // Add same user to second org should succeed
-        await db.insert(member).values({
-            id: nanoid(),
+        const member2 = createMockMember({
             organizationId: testOrg2.id,
             userId: testUser.id,
             role: "owner",
-            createdAt: new Date(),
         });
+        await db.insert(member).values(member2);
 
         // Verify two members exist
         const members = await db.select().from(member).where(
@@ -107,22 +103,20 @@ describe("Member Unique Constraint Test", () => {
         await db.insert(organization).values(testOrg);
 
         // Add first user to org
-        await db.insert(member).values({
-            id: nanoid(),
+        const member1 = createMockMember({
             organizationId: testOrg.id,
             userId: testUser1.id,
             role: "owner",
-            createdAt: new Date(),
         });
+        await db.insert(member).values(member1);
 
         // Add second user to same org should succeed
-        await db.insert(member).values({
-            id: nanoid(),
+        const member2 = createMockMember({
             organizationId: testOrg.id,
             userId: testUser2.id,
             role: "member",
-            createdAt: new Date(),
         });
+        await db.insert(member).values(member2);
 
         // Verify two members exist
         const members = await db.select().from(member).where(
