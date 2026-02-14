@@ -145,7 +145,7 @@ export const createApp = () => {
 3. **Not Found Handler**: Returns 404 for non-existent routes
 4. **Global Error Handler**: Catches and formats all errors
 
-For detailed middleware documentation, see [Middleware](file:///Users/davidchen/Developer/entix-app/docs/middleware.md).
+For detailed middleware documentation, see [Middleware](./middleware.md).
 
 ---
 
@@ -200,7 +200,7 @@ All errors return this format:
 2. **AppError**: Custom status code with optional details
 3. **Generic Errors**: 500 Internal Server Error
 
-For complete error handling documentation, see [Middleware](file:///Users/davidchen/Developer/entix-app/docs/middleware.md).
+For complete error handling documentation, see [Middleware](./middleware.md).
 
 ---
 
