@@ -6,15 +6,21 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Pa
     emailAndPassword: {
         enabled: true,
         requireEmailVerification: true,
-        sendResetPassword: async ({ user, url }) => {
+        sendResetPassword: async ({ user, url, token }) => {
             if (!ctx || !mailer) return;
+
+            // Construct frontend reset URL instead of using backend API URL
+            // The 'url' parameter from BetterAuth points to the backend API
+            // We want users to go directly to the frontend with the token as a query param
+            const frontendResetUrl = `${ctx.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
+
             ctx.executionCtx.waitUntil(
                 mailer.sendTemplate({
                     to: user.email,
                     templateId: "reset-password",
                     variables: {
                         DISPLAY_NAME: user.name,
-                        RESET_LINK: url,
+                        RESET_LINK: frontendResetUrl, // Use frontend URL, not backend API URL
                     },
                 })
             );
