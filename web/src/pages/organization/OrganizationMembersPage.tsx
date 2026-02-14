@@ -3,13 +3,16 @@ import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, m
 import { UserOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/auth.hook";
+import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useState } from "react";
 
 const { Title } = Typography;
 
 export const OrganizationMembersPage = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [form] = Form.useForm();
+    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [inviteForm] = Form.useForm();
+    const [createForm] = Form.useForm();
     const {
         members,
         loading,
@@ -25,14 +28,26 @@ export const OrganizationMembersPage = () => {
     const { session } = useAuth();
     const currentUserId = session.data?.user?.id;
 
+    const createMemberMutation = useCreateMember(activeOrganization?.id || "");
+
     const handleInvite = async (values: any) => {
         try {
             await inviteMember(values.email, values.role);
             message.success("Invitation sent successfully");
-            setIsModalOpen(false);
-            form.resetFields();
+            setIsInviteModalOpen(false);
+            inviteForm.resetFields();
         } catch (error: any) {
             message.error(error.message || "Failed to send invitation");
+        }
+    };
+
+    const handleCreateMember = async (values: any) => {
+        try {
+            await createMemberMutation.mutateAsync(values);
+            setIsCreateModalOpen(false);
+            createForm.resetFields();
+        } catch (error: any) {
+            // Error handling is done in the hook
         }
     };
 
@@ -142,7 +157,9 @@ export const OrganizationMembersPage = () => {
                         icon={<DeleteOutlined />}
                         disabled={!canRemove}
                         title={!canRemove ? "Cannot remove this member" : "Remove member"}
-                    />
+                    >
+                        Remove
+                    </Button>
                 </Popconfirm>
             );
         }
@@ -177,11 +194,18 @@ export const OrganizationMembersPage = () => {
                             </Tag>
                         )}
                         <Button
-                            type="primary"
+                            type="default"
                             icon={<PlusOutlined />}
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setIsInviteModalOpen(true)}
                         >
                             Invite Member
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsCreateModalOpen(true)}
+                        >
+                            Create New Member
                         </Button>
                     </div>
                 </div>
@@ -191,14 +215,15 @@ export const OrganizationMembersPage = () => {
                     rowKey={(record: any) => record.id || record.userId}
                 />
 
+                {/* Invite Member Modal */}
                 <Modal
                     title="Invite Member"
-                    open={isModalOpen}
-                    onCancel={() => setIsModalOpen(false)}
+                    open={isInviteModalOpen}
+                    onCancel={() => setIsInviteModalOpen(false)}
                     footer={null}
                 >
                     <Form
-                        form={form}
+                        form={inviteForm}
                         layout="vertical"
                         onFinish={handleInvite}
                         initialValues={{ role: 'member' }}
@@ -228,9 +253,66 @@ export const OrganizationMembersPage = () => {
 
                         <Form.Item className="mb-0 flex justify-end">
                             <Space>
-                                <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                <Button onClick={() => setIsInviteModalOpen(false)}>Cancel</Button>
                                 <Button type="primary" htmlType="submit" loading={isInviting}>
                                     Send Invitation
+                                </Button>
+                            </Space>
+                        </Form.Item>
+                    </Form>
+                </Modal>
+
+                {/* Create New Member Modal */}
+                <Modal
+                    title="Create New Member"
+                    open={isCreateModalOpen}
+                    onCancel={() => setIsCreateModalOpen(false)}
+                    footer={null}
+                >
+                    <Form
+                        form={createForm}
+                        layout="vertical"
+                        onFinish={handleCreateMember}
+                        initialValues={{ role: 'member' }}
+                    >
+                        <Form.Item
+                            name="name"
+                            label="Full Name"
+                            rules={[
+                                { required: true, message: 'Please input the full name!' }
+                            ]}
+                        >
+                            <Input placeholder="John Doe" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="email"
+                            label="Email Address"
+                            rules={[
+                                { required: true, message: 'Please input the email address!' },
+                                { type: 'email', message: 'Please enter a valid email!' }
+                            ]}
+                        >
+                            <Input placeholder="colleague@example.com" />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="role"
+                            label="Role"
+                            rules={[{ required: true, message: 'Please select a role!' }]}
+                        >
+                            <Select>
+                                <Select.Option value="member">Member</Select.Option>
+                                <Select.Option value="admin">Admin</Select.Option>
+                                <Select.Option value="owner">Owner</Select.Option>
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item className="mb-0 flex justify-end">
+                            <Space>
+                                <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                                <Button type="primary" htmlType="submit" loading={createMemberMutation.isPending}>
+                                    Create Member
                                 </Button>
                             </Space>
                         </Form.Item>
