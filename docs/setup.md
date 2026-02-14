@@ -117,3 +117,54 @@ const res = await axios.get("http://localhost:3000/api/v1/users");
 | `npm run deploy:production` | Migrates DB + deploys to Production |
 | `npm run auth:generate` | Generates Better Auth migrations using the temporary `better-auth.config.ts` |
 | `npm run cf-typegen` | Generates TypeScript types for Cloudflare bindings (e.g., `env.DB`) |
+| `npm test` | Runs all tests using Vitest |
+
+---
+
+## Path Aliases
+
+The project uses path aliases for cleaner imports across the codebase.
+
+### Available Aliases
+
+| Alias | Maps To | Usage |
+|:---|:---|:---|
+| `@api` | `./api` | API server code |
+| `@shared` | `./shared` | Shared code (DTOs, schemas, types) |
+| `@web` | `./web` | Frontend code |
+
+### Configuration
+
+Path aliases are configured in:
+
+1. **`vitest.config.ts`** - For tests
+2. **`tsconfig.json`** - For TypeScript compilation
+3. **Frontend build config** - For Vite (via `vite-tsconfig-paths`)
+
+### Usage Examples
+
+```typescript
+// Instead of relative paths
+import { user } from '../../../api/db/schema.db';
+
+// Use path alias
+import { user } from '@api/db/schema.db';
+```
+
+```typescript
+// Shared types
+import { UserDTO } from '@shared';
+```
+
+```typescript
+// Cross-module imports
+import { createApp } from '@api/lib/app.lib';
+```
+
+### Benefits
+
+- **Cleaner imports**: No `../../../` chaos
+- **Refactor-friendly**: Moving files doesn't break imports
+- **Consistent**: Same aliases across API, frontend, and tests
+- **IDE support**: Full autocomplete and go-to-definition
+

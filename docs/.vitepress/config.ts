@@ -23,9 +23,11 @@ export default defineConfig({
                     { text: 'Database', link: '/database' },
                     { text: 'Authentication', link: '/authentication' },
                     { text: 'API & Errors', link: '/api' },
+                    { text: 'Middleware', link: '/middleware' },
+                    { text: 'Frontend', link: '/frontend' },
+                    { text: 'Testing', link: '/testing' },
                     { text: 'Deployment', link: '/deployment' },
-                    { text: 'Troubleshooting', link: '/troubleshooting' },
-                    { text: 'Guidelines', link: '/documentation-guidelines' }
+                    { text: 'Troubleshooting', link: '/troubleshooting' }
                 ]
             }
         ],

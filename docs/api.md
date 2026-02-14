@@ -18,6 +18,100 @@ The Worker serves OpenAPI documentation:
 
 ---
 
+## OpenAPI & Scalar Integration
+
+The application uses **Scalar** for beautiful, interactive API documentation.
+
+### Configuration
+
+**File**: `api/lib/open-api.lib.ts`
+
+```typescript
+app.get('/api/v1/api-reference', Scalar({
+  pageTitle: 'Entix API Reference',
+  theme: 'purple',
+  layout: 'classic',
+  defaultHttpClient: {
+    targetKey: 'js',
+    clientKey: 'fetch',
+  },
+  sources: [
+    {
+      url: '/api/v1/openapi',
+      title: 'Main API',
+    },
+    {
+      url: '/api/v1/auth/open-api/generate-schema',
+      title: 'Authentication API',
+    }
+  ]
+}))
+```
+
+### Features
+
+- **Dual API Sources**: Combines Main API and Better Auth API documentation in one interface
+- **Interactive Testing**: Test endpoints directly from the docs
+- **Client Code Generation**: Auto-generate code snippets in multiple languages (fetch, axios, curl, etc.)
+- **Theme**: Purple theme for visual consistency
+- **Classic Layout**: Traditional sidebar navigation
+
+### Accessing Documentation
+
+- **Local Development**: `/api/v1/api-reference`
+- **Production**: [https://entix.org/api/v1/api-reference](https://entix.org/api/v1/api-reference)
+
+---
+
+## CORS Configuration
+
+Cross-Origin Resource Sharing (CORS) is configured to allow the frontend to communicate with the API across different origins.
+
+### Configuration
+
+**File**: `api/lib/app.lib.ts`
+
+```typescript
+app.use('*', cors({
+  origin: (origin, c) => {
+    const allowedOrigins = [
+      'http://localhost:3000',     // API server
+      'http://localhost:8000',     // Vite dev server
+      c.env.FRONTEND_URL,          // Dynamic frontend URL
+      'https://entix.org',         // Production
+      'https://staging.entix.org'  // Staging
+    ];
+    return allowedOrigins.includes(origin) ? origin : null;
+  },
+  allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+  exposeHeaders: ['Content-Length', 'X-Kuma-Revision'],
+  maxAge: 600,
+  credentials: true,
+}));
+```
+
+### Key Features
+
+- **Dynamic Origin Validation**: Checks request origin against allowlist
+- **Environment-Aware**: Uses `c.env.FRONTEND_URL` for deployment flexibility
+- **Credentials Support**: `credentials: true` allows cookies and auth headers
+- **Preflight Caching**: `maxAge: 600` caches preflight responses for 10 minutes
+- **Security**: Rejects requests from non-allowlisted origins
+
+### Why CORS Matters
+
+In development:
+- Frontend runs on `http://localhost:8000` (Vite)
+- API runs on `http://localhost:3000` (Wrangler)
+- Different ports = different origins = CORS required
+
+In production:
+- Both frontend and API served from same origin
+- CORS still validates for security
+
+---
+
 ## Error Handling & Validation
 
 ### Centralized Error Handling
