@@ -126,20 +126,29 @@ wrangler secret put BETTER_AUTH_SECRET --env production
 Before deploying to production:
 
 - [ ] All tests pass locally (`npm test`)
+- [ ] **Frontend built**: `npm run build:web` (CRITICAL - deploy script does NOT build automatically)
 - [ ] Database migrations applied to staging
-- [ ] Frontend builds without errors (`npm run build:web`)
 - [ ] Environment variables configured in Cloudflare Dashboard
 - [ ] Staging deployment tested and verified
 - [ ] Database backups in place (if applicable)
 
 ### Deploy to Production
 
+> [!WARNING]
+> The `deploy:production` script does **NOT** build the frontend automatically. You must run `npm run build:web` first, or Cloudflare will deploy whatever is currently in `web/dist/` (potentially stale assets).
+
+**Correct deployment workflow**:
 ```bash
+# 1. Build frontend (creates web/dist/)
+npm run build:web
+
+# 2. Deploy to production (migrates DB + deploys Worker)
 npm run deploy:production
 ```
 
-This will:
-1. (Optionally) Run database migrations
-2. Build frontend with `npm run build:web`
-3. Deploy Worker + assets to Cloudflare
+**What `deploy:production` does**:
+1. Run database migrations (`db:migrate:production`)
+2. Deploy Worker + assets from `web/dist/` to Cloudflare
+
+If you deploy without building first, users will see old frontend code!
 
