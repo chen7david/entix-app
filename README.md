@@ -37,15 +37,28 @@ npm run db:migrate:development
 
 ### Documentation Topics
 
+**Getting Started**
 | Topic | Description |
 |-------|------------|
 | [Setup & Development](docs/setup.md) | Installation, environment variables, development workflow, scripts reference |
 | [Architecture](docs/architecture.md) | System architecture, project structure, 3-file routing pattern, middleware stack |
+
+**Backend**
+| Topic | Description |
+|-------|------------|
 | [Database](docs/database.md) | D1 setup, migrations, Better Auth integration, wrangler configuration |
 | [Authentication](docs/authentication.md) | Better Auth configuration, features, and plugins |
 | [API & Errors](docs/api.md) | OpenAPI/Scalar setup, CORS configuration, error handling, validation |
 | [Middleware](docs/middleware.md) | CORS, logger, error handlers, execution order |
+
+**Frontend**
+| Topic | Description |
+|-------|------------|
 | [Frontend](docs/frontend.md) | React/Vite architecture, API integration, build process |
+
+**Operations**
+| Topic | Description |
+|-------|------------|
 | [Testing](docs/testing.md) | Vitest setup, test factories, writing tests, CI/CD |
 | [Deployment](docs/deployment.md) | Staging/production deployment, build configuration, migrations |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
