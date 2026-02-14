@@ -16,16 +16,33 @@ export default defineConfig({
 
         sidebar: [
             {
-                text: 'Guide',
+                text: 'Getting Started',
                 items: [
                     { text: 'Setup & Development', link: '/setup' },
-                    { text: 'Architecture', link: '/architecture' },
+                    { text: 'Architecture', link: '/architecture' }
+                ]
+            },
+            {
+                text: 'Backend',
+                items: [
                     { text: 'Database', link: '/database' },
                     { text: 'Authentication', link: '/authentication' },
                     { text: 'API & Errors', link: '/api' },
+                    { text: 'Middleware', link: '/middleware' }
+                ]
+            },
+            {
+                text: 'Frontend',
+                items: [
+                    { text: 'Frontend', link: '/frontend' }
+                ]
+            },
+            {
+                text: 'Operations',
+                items: [
+                    { text: 'Testing', link: '/testing' },
                     { text: 'Deployment', link: '/deployment' },
-                    { text: 'Troubleshooting', link: '/troubleshooting' },
-                    { text: 'Guidelines', link: '/documentation-guidelines' }
+                    { text: 'Troubleshooting', link: '/troubleshooting' }
                 ]
             }
         ],

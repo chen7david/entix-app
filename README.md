@@ -1,86 +1,104 @@
 # Entix-App
 
-Entix-App is a full-stack application built on **Cloudflare Workers** (API) and **Vite + React** (frontend).
+A full-stack application built on **Cloudflare Workers** (API) + **Vite + React** (frontend).
 
-## Documentation
+## Quick Start
 
-The documentation has been split into multiple files for better organization:
+### Prerequisites
 
-- 🚀 **[Setup & Development](docs/setup.md)**
-  - Quick Start
-  - Environment Variables
-  - Development Workflow
-  - Scripts Reference
+- Node.js 20+
+- npm
 
-- 🏗️ **[Architecture & Structure](docs/architecture.md)**
-  - System Architecture
-  - Project Structure
-  - Routing Pattern
+### Setup & Run
 
-- 🗄️ **[Database & Authentication](docs/database.md)**
-  - Database Environments
-  - Better Auth Setup
-  - Schema & Migrations
+```bash
+# 1. Install dependencies
+npm run dev:init
 
-- 🔌 **[API & Error Handling](docs/api.md)**
-  - API Documentation Links
-  - Error Handling
-  - Validation Rules
+# 2. Start development servers (API + Frontend)
+npm run dev
 
-- 🚀 **[Deployment](docs/deployment.md)**
-  - Staging & Production
-  - Environment Configuration
+# 3. Initialize database (after hitting an API endpoint)
+npm run db:migrate:development
+```
 
-- 🔧 **[Troubleshooting](docs/troubleshooting.md)**
-  - Common Issues & Solutions
-
-- 📚 **[Documentation Guidelines](docs/documentation-guidelines.md)**
-  - Best Practices
-  - How to Contribute
+- **Web**: [http://localhost:8000](http://localhost:8000)
+- **API**: [http://localhost:3000](http://localhost:3000)
+- **API Reference**: [http://localhost:3000/api/v1/api-reference](http://localhost:3000/api/v1/api-reference)
 
 ---
 
 ## Documentation
 
-The documentation is built with **VitePress** and served at `/docs`.
+📚 **Full documentation is available via VuePress**:
 
-### Running Locally
-To start the documentation server in development mode:
-```bash
-npm run dev:docs
-```
-Access it at `http://localhost:5173/docs`.
+- **Local**: Run `npm run dev:docs` then visit [http://localhost:5173/docs](http://localhost:5173/docs)
+- **Production**: [https://entix.org/docs](https://entix.org/docs) (after deployment)
 
-### Building
-To build the documentation for production:
-```bash
-npm run build:docs
-```
-The output is generated in `web/dist/docs`.
+### Documentation Topics
 
-### Deployment
-The documentation is automatically built and deployed alongside the web application. Cloudflare Workers Assets serves the `web/dist` directory, making the docs available at `https://entix.app/docs`.
+**Getting Started**
+| Topic | Description |
+|-------|------------|
+| [Setup & Development](docs/setup.md) | Installation, environment variables, development workflow, scripts reference |
+| [Architecture](docs/architecture.md) | System architecture, project structure, 3-file routing pattern, middleware stack |
+
+**Backend**
+| Topic | Description |
+|-------|------------|
+| [Database](docs/database.md) | D1 setup, migrations, Better Auth integration, wrangler configuration |
+| [Authentication](docs/authentication.md) | Better Auth configuration, features, and plugins |
+| [API & Errors](docs/api.md) | OpenAPI/Scalar setup, CORS configuration, error handling, validation |
+| [Middleware](docs/middleware.md) | CORS, logger, error handlers, execution order |
+
+**Frontend**
+| Topic | Description |
+|-------|------------|
+| [Frontend](docs/frontend.md) | React/Vite architecture, API integration, build process |
+
+**Operations**
+| Topic | Description |
+|-------|------------|
+| [Testing](docs/testing.md) | Vitest setup, test factories, writing tests, CI/CD |
+| [Deployment](docs/deployment.md) | Staging/production deployment, build configuration, migrations |
+| [Troubleshooting](docs/troubleshooting.md) | Common issues and solutions |
 
 ---
 
-## Tech Debt / TODO
+## Tech Stack
 
-This section tracks areas of the codebase that need attention, refactoring, or better documentation.
+**Backend**
+- Cloudflare Workers (Edge runtime)
+- Hono (Web framework)
+- D1 Database (SQLite at the edge)
+- Drizzle ORM
+- Better Auth (Authentication)
+- OpenAPI + Scalar (API documentation)
 
-### Documentation Discrepancies
-### Documentation Discrepancies
-- [x] **Scripts**: The `package.json` contains `auth:generate` and `cf-typegen` scripts. These have been added to the "Scripts Reference" in `docs/setup.md`.
-- [x] **API Routes**: Verified that `users` route follows the 3-file pattern. Future routes must strictly adhere to this.
+**Frontend**
+- React 18
+- Vite
+- TypeScript
+- React Router
+- Jotai (State management)
 
-### Code Quality & Refactoring
-- [x] **Validation**: Verified that `shared/schemas/dto/user.dto.ts` correctly imports `z` from `@hono/zod-openapi`. This is crucial for OpenAPI generation.
-- [x] **Hardcoded Paths**: Scanned `web/src` and found **zero** instances of hardcoded `localhost:3000` or `http://` URLs. All API calls should continue to use relative paths.
+**Development**
+- Vitest (Testing with Workers pool)
+- TypeScript
+- Wrangler (Cloudflare CLI)
+- VuePress (Documentation)
 
 ---
 
 ## Quick Links
 
-- **Web**: [http://localhost:8000](http://localhost:8000)
-- **API**: [http://localhost:3000](http://localhost:3000)
 - **OpenAPI JSON**: [/api/v1/openapi](http://localhost:3000/api/v1/openapi)
 - **API Reference**: [/api/v1/api-reference](http://localhost:3000/api/v1/api-reference)
+- **Documentation**: [/docs](http://localhost:5173/docs)
+- **GitHub**: [chen7david/entix-app](https://github.com/chen7david/entix-app)
+
+---
+
+## License
+
+MIT

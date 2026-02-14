@@ -297,3 +297,105 @@ Better Auth automatically provides these endpoints at `/api/v1/auth/*`:
 | `/api/v1/auth/sign-out` | POST | Sign out current session |
 | `/api/v1/auth/session` | GET | Get current session |
 | `/api/v1/auth/verify-email` | POST | Verify email address |
+
+---
+
+## Wrangler Configuration
+
+**File**: `wrangler.jsonc`
+
+Wrangler configures how Cloudflare Workers runs your application across different environments.
+
+### Environment Structure
+
+```jsonc
+{
+  "name": "entix-app",
+  "main": "api/main.ts",
+  "env": {
+    "development": { ... },
+    "staging": { ... },
+    "production": { ... }
+  }
+}
+```
+
+### Bindings
+
+Bindings connect your Worker to Cloudflare resources like databases and static assets.
+
+#### D1 Database Binding
+
+**All environments use the same binding name**: `DB`
+
+```jsonc
+"d1_databases": [
+  {
+    "binding": "DB",
+    "database_name": "entix-app-development",
+    "database_id": "...",
+    "migrations_dir": "api/db/migrations"
+  }
+]
+```
+
+**Usage in code**:
+```typescript
+const db = drizzle(env.DB, { schema });
+```
+
+The `env.DB` binding is automatically injected by Cloudflare Workers runtime.
+
+#### Assets Binding (Staging/Production)
+
+Serves the frontend static files:
+
+```jsonc
+"assets": {
+  "binding": "ASSETS",
+  "directory": "./web/dist",
+  "not_found_handling": "single-page-application",
+  "run_worker_first": [
+    "/api/*"
+  ]
+}
+```
+
+**How it works**:
+- Requests to `/api/*` → Handled by Worker (API logic)
+- All other requests → Served from `web/dist` (React app)
+- 404s → Return `index.html` (SPA client-side routing)
+
+### Environment Variables
+
+Each environment has its own variables:
+
+```jsonc
+"vars": {
+  "SECRET_KEY": "value",
+  "API_TOKEN": "value",
+  "FRONTEND_URL": "http://localhost:8000",
+  "BETTER_AUTH_URL": "http://localhost:3000"
+}
+```
+
+**Sensitive values** (secrets) should be set via Wrangler CLI:
+```bash
+wrangler secret put SECRET_NAME --env production
+```
+
+### Environment-Specific Configuration
+
+| Configuration | Development | Staging | Production |
+|---------------|-------------|---------|------------|
+| **Frontend URL** | `http://localhost:8000` | `https://staging.entix.org` | `https://entix.org` |
+| **Better Auth URL** | `http://localhost:3000` | `https://staging.entix.org` | `https://entix.org` |
+| **Assets** | None (Vite proxy) | `web/dist` | `web/dist` |
+| **Database** | Local Miniflare | `entix-app-staging` | `entix-app-production` |
+
+### Key Settings
+
+- **`nodejs_compat`**: Enables Node.js compatibility for packages like Better Auth
+- **`preview_urls`**: Generates preview URLs for deployments
+- **`observability.enabled`**: Enables logging and monitoring
+
