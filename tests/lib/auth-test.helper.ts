@@ -30,17 +30,14 @@ export function extractCookies(response: Response): string {
 /**
  * Get an authenticated session cookie for a user
  * Creates the user if they don't exist, then signs them in
- * 
- * @param app - The Hono app instance
- * @param env - The test environment
- * @param user - User credentials (email, password, optional name)
- * @returns Session cookie string ready to use in Cookie header
  */
-export async function getAuthCookie(
-    app: Hono<AppEnv>,
-    env: any,
-    user: { email: string; password: string; name?: string }
-): Promise<string> {
+export async function getAuthCookie(params: {
+    app: Hono<AppEnv>;
+    env: any;
+    user: { email: string; password: string; name?: string };
+}): Promise<string> {
+    const { app, env, user } = params;
+
     // Sign up user (ignores if already exists)
     await app.request(
         "/api/v1/auth/sign-up/email",
@@ -77,21 +74,18 @@ export async function getAuthCookie(
 /**
  * Create an authenticated organization with owner session
  * Performs signup-with-org and returns both the session cookie and org details
- * 
- * @param app - The Hono app instance
- * @param env - The test environment
- * @param password - Password for the owner account (default: "Password123!")
- * @returns Object containing session cookie, org ID, and full org data
  */
-export async function createAuthenticatedOrg(
-    app: Hono<AppEnv>,
-    env: any,
-    password: string = "Password123!"
-): Promise<{
+export async function createAuthenticatedOrg(params: {
+    app: Hono<AppEnv>;
+    env: any;
+    password?: string;
+}): Promise<{
     cookie: string;
     orgId: string;
     orgData: SignUpWithOrgResponseDTO;
 }> {
+    const { app, env, password = "Password123!" } = params;
+
     const orgPayload = createMockSignUpWithOrgPayload({ password });
 
     // Create org and user via signup-with-org

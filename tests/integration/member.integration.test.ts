@@ -13,14 +13,20 @@ describe("Member Creation Integration Tests", () => {
 
     beforeEach(async () => {
         await createTestDb();
-        const { cookie, orgId: id } = await createAuthenticatedOrg(app, env);
+        const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
         sessionCookie = cookie;
         orgId = id;
     });
 
     it("should create a member successfully", async () => {
         const payload = createMockMemberCreationPayload();
-        const res = await createMemberRequest(app, env, orgId, payload, sessionCookie);
+        const res = await createMemberRequest({
+            app,
+            env,
+            organizationId: orgId,
+            payload,
+            cookie: sessionCookie
+        });
 
         expect(res.status).toBe(200);
         const body = await res.json() as CreateMemberResponseDTO;
@@ -33,24 +39,48 @@ describe("Member Creation Integration Tests", () => {
         const payload = createMockMemberCreationPayload();
 
         // First request - should succeed
-        await createMemberRequest(app, env, orgId, payload, sessionCookie);
+        await createMemberRequest({
+            app,
+            env,
+            organizationId: orgId,
+            payload,
+            cookie: sessionCookie
+        });
 
         // Second request with same email - should fail
-        const res = await createMemberRequest(app, env, orgId, payload, sessionCookie);
+        const res = await createMemberRequest({
+            app,
+            env,
+            organizationId: orgId,
+            payload,
+            cookie: sessionCookie
+        });
 
         expect(res.status).toBe(400);
     });
 
     it("should fail when organization does not exist", async () => {
         const payload = createMockMemberCreationPayload();
-        const res = await createMemberRequest(app, env, "fake-id", payload, sessionCookie);
+        const res = await createMemberRequest({
+            app,
+            env,
+            organizationId: "fake-id",
+            payload,
+            cookie: sessionCookie
+        });
 
         expect(res.status).toBe(404);
     });
 
     it("should create member with different role", async () => {
         const payload = createMockMemberCreationPayload({ role: "admin" });
-        const res = await createMemberRequest(app, env, orgId, payload, sessionCookie);
+        const res = await createMemberRequest({
+            app,
+            env,
+            organizationId: orgId,
+            payload,
+            cookie: sessionCookie
+        });
 
         expect(res.status).toBe(200);
         const body = await res.json() as CreateMemberResponseDTO;
@@ -59,15 +89,25 @@ describe("Member Creation Integration Tests", () => {
 
     it("should fail when user lacks permission (unauthorized member)", async () => {
         // Create another user who is NOT in the original org
-        const intruderCookie = await getAuthCookie(app, env, {
-            email: "intruder@example.com",
-            password: "Password123!",
-            name: "Intruder"
+        const intruderCookie = await getAuthCookie({
+            app,
+            env,
+            user: {
+                email: "intruder@example.com",
+                password: "Password123!",
+                name: "Intruder"
+            }
         });
 
         // Try to add member to the FIRST organization (should fail - not a member)
         const payload = createMockMemberCreationPayload();
-        const res = await createMemberRequest(app, env, orgId, payload, intruderCookie);
+        const res = await createMemberRequest({
+            app,
+            env,
+            organizationId: orgId,
+            payload,
+            cookie: intruderCookie
+        });
 
         expect(res.status).toBe(403);
         const body = await res.json() as { message: string };

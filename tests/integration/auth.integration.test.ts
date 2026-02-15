@@ -14,7 +14,7 @@ describe("Auth Integration Test", () => {
 
     it("POST /api/v1/auth/signup-with-org should create user and organization", async () => {
         const payload = createMockSignUpWithOrgPayload();
-        const res = await signUpWithOrgRequest(app, env, payload);
+        const res = await signUpWithOrgRequest({ app, env, payload });
 
         expect(res.status).toBe(200);
         const body = await res.json() as SignUpWithOrgResponseDTO;
@@ -32,11 +32,11 @@ describe("Auth Integration Test", () => {
         const payload = createMockSignUpWithOrgPayload();
 
         // First request to create user
-        const setupRes = await signUpWithOrgRequest(app, env, payload);
+        const setupRes = await signUpWithOrgRequest({ app, env, payload });
         expect(setupRes.status).toBe(200);
 
         // Second request with same user
-        const res = await signUpWithOrgRequest(app, env, payload);
+        const res = await signUpWithOrgRequest({ app, env, payload });
 
         expect(res.status).toBe(400);
         const body = await res.json() as { message: string };
@@ -51,11 +51,11 @@ describe("Auth Integration Test", () => {
         payload2.organizationName = payload1.organizationName;
 
         // First request to create organization
-        const setupRes = await signUpWithOrgRequest(app, env, payload1);
+        const setupRes = await signUpWithOrgRequest({ app, env, payload: payload1 });
         expect(setupRes.status).toBe(200);
 
         // Second request with same organization name
-        const res = await signUpWithOrgRequest(app, env, payload2);
+        const res = await signUpWithOrgRequest({ app, env, payload: payload2 });
 
         expect(res.status).toBe(400);
         const body = await res.json() as { message: string };
