@@ -4,29 +4,12 @@ import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
 import { getAuthCookie, createAuthenticatedOrg } from "../lib/auth-test.helper";
+import { createMemberRequest } from "../lib/api-request.helper";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
 
 describe("Member Creation Integration Tests", () => {
     let orgId: string;
     let sessionCookie: string;
-
-    /**
-     * Helper to create a member via API
-     */
-    const createMember = async (
-        payload: ReturnType<typeof createMockMemberCreationPayload>,
-        cookie = sessionCookie,
-        orgIdParam = orgId
-    ) => {
-        return app.request(`/api/v1/organizations/${orgIdParam}/members`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Cookie": cookie
-            },
-            body: JSON.stringify(payload),
-        }, env);
-    };
 
     beforeEach(async () => {
         await createTestDb();
@@ -37,7 +20,7 @@ describe("Member Creation Integration Tests", () => {
 
     it("should create a member successfully", async () => {
         const payload = createMockMemberCreationPayload();
-        const res = await createMember(payload);
+        const res = await createMemberRequest(app, env, orgId, payload, sessionCookie);
 
         expect(res.status).toBe(200);
         const body = await res.json() as CreateMemberResponseDTO;
@@ -50,24 +33,24 @@ describe("Member Creation Integration Tests", () => {
         const payload = createMockMemberCreationPayload();
 
         // First request - should succeed
-        await createMember(payload);
+        await createMemberRequest(app, env, orgId, payload, sessionCookie);
 
         // Second request with same email - should fail
-        const res = await createMember(payload);
+        const res = await createMemberRequest(app, env, orgId, payload, sessionCookie);
 
         expect(res.status).toBe(400);
     });
 
     it("should fail when organization does not exist", async () => {
         const payload = createMockMemberCreationPayload();
-        const res = await createMember(payload, sessionCookie, "fake-id");
+        const res = await createMemberRequest(app, env, "fake-id", payload, sessionCookie);
 
         expect(res.status).toBe(404);
     });
 
     it("should create member with different role", async () => {
         const payload = createMockMemberCreationPayload({ role: "admin" });
-        const res = await createMember(payload);
+        const res = await createMemberRequest(app, env, orgId, payload, sessionCookie);
 
         expect(res.status).toBe(200);
         const body = await res.json() as CreateMemberResponseDTO;
@@ -84,7 +67,7 @@ describe("Member Creation Integration Tests", () => {
 
         // Try to add member to the FIRST organization (should fail - not a member)
         const payload = createMockMemberCreationPayload();
-        const res = await createMember(payload, intruderCookie);
+        const res = await createMemberRequest(app, env, orgId, payload, intruderCookie);
 
         expect(res.status).toBe(403);
         const body = await res.json() as { message: string };

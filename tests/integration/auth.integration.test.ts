@@ -3,6 +3,7 @@ import app from "../../api/app";
 import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
+import { signUpWithOrgRequest } from "../lib/api-request.helper";
 import { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 
 describe("Auth Integration Test", () => {
@@ -13,14 +14,7 @@ describe("Auth Integration Test", () => {
 
     it("POST /api/v1/auth/signup-with-org should create user and organization", async () => {
         const payload = createMockSignUpWithOrgPayload();
-
-        const res = await app.request("/api/v1/auth/signup-with-org", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        }, env);
+        const res = await signUpWithOrgRequest(app, env, payload);
 
         expect(res.status).toBe(200);
         const body = await res.json() as SignUpWithOrgResponseDTO;
@@ -38,51 +32,30 @@ describe("Auth Integration Test", () => {
         const payload = createMockSignUpWithOrgPayload();
 
         // First request to create user
-        const setupRes = await app.request("/api/v1/auth/signup-with-org", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }, env);
+        const setupRes = await signUpWithOrgRequest(app, env, payload);
         expect(setupRes.status).toBe(200);
 
         // Second request with same user
-        const res = await app.request("/api/v1/auth/signup-with-org", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        }, env);
+        const res = await signUpWithOrgRequest(app, env, payload);
 
         expect(res.status).toBe(400);
         const body = await res.json() as { message: string };
         expect(body.message).toBe("User already exists");
     });
 
-    it("POST /api/v1/auth/signup-with-org should return error for existing organization name", async () => {
-        const payload = createMockSignUpWithOrgPayload();
+    it("POST /api/v1/auth/signup-with-org should return error for existing organization", async () => {
+        const payload1 = createMockSignUpWithOrgPayload();
+        const payload2 = createMockSignUpWithOrgPayload();
 
-        // First request to create org
-        const setupRes = await app.request("/api/v1/auth/signup-with-org", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-        }, env);
+        // Use same org name for both payloads
+        payload2.organizationName = payload1.organizationName;
+
+        // First request to create organization
+        const setupRes = await signUpWithOrgRequest(app, env, payload1);
         expect(setupRes.status).toBe(200);
 
-        const newPayload = createMockSignUpWithOrgPayload({
-            organizationName: payload.organizationName
-        });
-        // We need a different email to bypass the user check, but same org name
-        // The factory generates random emails, so we just override the org name to match the first one.
-
-        const res = await app.request("/api/v1/auth/signup-with-org", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(newPayload),
-        }, env);
+        // Second request with same organization name
+        const res = await signUpWithOrgRequest(app, env, payload2);
 
         expect(res.status).toBe(400);
         const body = await res.json() as { message: string };
