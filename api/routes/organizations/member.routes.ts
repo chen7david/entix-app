@@ -1,6 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 import { createMemberSchema, createMemberResponseSchema } from "@shared/schemas/dto/member.dto";
 import { HttpStatusCodes, jsonContent, jsonContentRequired, HttpMethods } from "@api/helpers/http.helpers";
+import { requireOwnerOrAdmin } from "@api/middleware/require-role.middleware";
 import { z } from "zod";
 
 export class MemberRoutes {
@@ -11,6 +12,7 @@ export class MemberRoutes {
         method: HttpMethods.POST,
         path: '/organizations/{organizationId}/members',
         summary: "Create a new member and user",
+        middleware: [requireOwnerOrAdmin] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             body: jsonContentRequired(createMemberSchema, 'Member details'),

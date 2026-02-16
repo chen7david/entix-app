@@ -65,4 +65,36 @@ export class MemberRepository {
         });
         return !!member;
     }
+
+    /**
+     * Find membership details for a user in an organization
+     * Returns null if user is not a member
+     */
+    async findMembership(userId: string, organizationId: string): Promise<{
+        id: string;
+        userId: string;
+        organizationId: string;
+        role: string;
+        createdAt: Date;
+    } | null> {
+        const db = getDbClient(this.ctx);
+        const member = await db.query.member.findFirst({
+            where: and(
+                eq(schema.member.userId, userId),
+                eq(schema.member.organizationId, organizationId)
+            ),
+        });
+
+        if (!member) {
+            return null;
+        }
+
+        return {
+            id: member.id,
+            userId: member.userId,
+            organizationId: member.organizationId,
+            role: member.role,
+            createdAt: member.createdAt,
+        };
+    }
 }

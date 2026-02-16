@@ -1,9 +1,7 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
 import { ForbiddenError, UnauthorizedError } from "@api/errors/app.error";
-import { getDbClient } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
-import { eq, and } from "drizzle-orm";
+import { MemberRepository } from "@api/repositories/member.repository";
 
 /**
  * Middleware to verify user is a member of the organization
@@ -17,9 +15,7 @@ import { eq, and } from "drizzle-orm";
  * - membershipRole: string
  * 
  * Usage:
- * ```typescript
  * app.use('/api/v1/organizations/:organizationId/*', requireOrgMembership);
- * ```
  */
 export const requireOrgMembership = async (c: AppContext, next: Next) => {
     const userId = c.get('userId');
@@ -33,13 +29,9 @@ export const requireOrgMembership = async (c: AppContext, next: Next) => {
         throw new Error("organizationId parameter missing from route");
     }
 
-    const db = getDbClient(c);
-    const membership = await db.query.member.findFirst({
-        where: and(
-            eq(schema.member.userId, userId),
-            eq(schema.member.organizationId, organizationId)
-        )
-    });
+    // Use repository pattern for consistency
+    const memberRepo = new MemberRepository(c);
+    const membership = await memberRepo.findMembership(userId, organizationId);
 
     if (!membership) {
         throw new ForbiddenError(
