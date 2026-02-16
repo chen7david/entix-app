@@ -4,62 +4,30 @@ import { MemberRoutes } from './member.routes';
 import { UserRepository } from '@api/repositories/user.repository';
 import { OrganizationRepository } from '@api/repositories/organization.repository';
 import { MemberRepository } from '@api/repositories/member.repository';
-import { nanoid } from "nanoid";
 import { HTTPException } from "hono/http-exception";
-import { getDbClient } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
-import { eq, and } from "drizzle-orm";
-import { validateSession } from "@api/middleware/auth.middleware";
+import { ForbiddenError } from "@api/errors/app.error";
+import { nanoid } from "nanoid"; // Assuming nanoid is imported from 'nanoid'
 
 export class MemberHandler {
     static createMember: AppHandler<typeof MemberRoutes.createMember> = async (c) => {
-        const { organizationId } = c.req.valid("param");
         const { email, name, role } = c.req.valid("json");
 
-        // Validate session explicitly
-        const currentUserId = await validateSession(c);
+        // Get context (verified by middleware)
+        const currentUserId = c.get('userId')!;
+        const organizationId = c.get('organizationId')!;
+        const currentRole = c.get('membershipRole')!;
 
         c.var.logger.info({ currentUserId, organizationId, email, name, role }, "Creating new member");
+
+        // Verify current user has permission (owner or admin)
+        if (!['owner', 'admin'].includes(currentRole)) {
+            c.var.logger.warn({ currentUserId, organizationId, role: currentRole }, "Forbidden: User lacks permission to add members");
+            throw new ForbiddenError("Only owners and admins can add members");
+        }
 
         const userRepo = new UserRepository(c);
         const orgRepo = new OrganizationRepository(c);
         const memberRepo = new MemberRepository(c);
-
-        // Validate organization exists first (before checking user permissions)
-        const organization = await orgRepo.findById(organizationId);
-        if (!organization) {
-            c.var.logger.warn({ organizationId }, "Organization not found");
-            throw new HTTPException(HttpStatusCodes.NOT_FOUND, {
-                message: "Organization not found"
-            });
-        }
-
-        // Check if user has permission to add members to this organization
-        const db = getDbClient(c);
-        const currentMembership = await db.query.member.findFirst({
-            where: and(
-                eq(schema.member.userId, currentUserId),
-                eq(schema.member.organizationId, organizationId)
-            )
-        });
-
-        if (!currentMembership) {
-            c.var.logger.warn({ currentUserId, organizationId }, "Forbidden: User is not a member of this organization");
-            throw new HTTPException(HttpStatusCodes.FORBIDDEN, {
-                message: "You are not a member of this organization"
-            });
-        }
-
-        // Check if user has admin or owner role (required to add members)
-        const userRoles = (currentMembership.role || "").split(",").map(r => r.trim()).filter(Boolean);
-        const canAddMembers = userRoles.includes("owner") || userRoles.includes("admin");
-
-        if (!canAddMembers) {
-            c.var.logger.warn({ currentUserId, organizationId, userRoles }, "Forbidden: User lacks permission to add members");
-            throw new HTTPException(HttpStatusCodes.FORBIDDEN, {
-                message: "You do not have permission to add members to this organization"
-            });
-        }
 
         // Check if user already exists
         const existingUser = await userRepo.findUserByEmail(email);

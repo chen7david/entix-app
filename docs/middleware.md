@@ -253,6 +253,190 @@ GET /api/v1/nonexistent
 }
 ```
 
+## Authentication Middleware
+
+**Files**: 
+- `api/middleware/auth.middleware.ts`
+- `api/middleware/org-membership.middleware.ts`
+- `api/lib/auth-middleware.lib.ts`
+
+Entix-App uses a **two-layer authentication architecture** to secure routes:
+
+1. **Layer 1**: `requireAuth` - Validates user session
+2. **Layer 2**: `requireOrgMembership` - Validates organization membership
+
+### Layer 1: requireAuth
+
+Validates that the user has a valid session and sets `userId` in the request context.
+
+**File**: `api/middleware/auth.middleware.ts`
+
+```typescript
+export const requireAuth = async (c: AppContext, next: Next) => {
+    const authClient = auth(c);
+    const session = await authClient.api.getSession({ 
+        headers: c.req.raw.headers 
+    });
+
+    if (!session || !session.user) {
+        throw new UnauthorizedError("Authentication required");
+    }
+
+    c.set("userId", session.user.id);
+    await next();
+};
+```
+
+**What it does**:
+- Checks for valid session using Better Auth
+- Stores `userId` in context for downstream handlers
+- Throws `UnauthorizedError` (401) if no valid session
+
+**Applied to**: All routes starting with `/api/v1/organizations/*`
+
+### Layer 2: requireOrgMembership
+
+Validates that the authenticated user is a member of the organization in the route.
+
+**File**: `api/middleware/org-membership.middleware.ts`
+
+```typescript
+export const requireOrgMembership = async (c: AppContext, next: Next) => {
+    const userId = c.get('userId');
+    const organizationId = c.req.param('organizationId');
+    
+    if (!userId) {
+        throw new UnauthorizedError("Authentication required");
+    }
+    
+    const db = getDbClient(c);
+    const membership = await db.query.member.findFirst({
+        where: and(
+            eq(schema.member.userId, userId),
+            eq(schema.member.organizationId, organizationId)
+        )
+    });
+    
+    if (!membership) {
+        throw new ForbiddenError(
+            `You are not a member of organization: ${organizationId}`
+        );
+    }
+    
+    // Store membership details in context
+    c.set('organizationId', organizationId);
+    c.set('membershipId', membership.id);
+    c.set('membershipRole', membership.role);
+    
+    await next();
+};
+```
+
+**What it does**:
+- Extracts `organizationId` from route params
+- Queries database to verify user is a member
+- Stores `organizationId`, `membershipId`, and `membershipRole` in context
+- Throws `ForbiddenError` (403) if not a member
+
+**Applied to**: All routes matching `/api/v1/organizations/:organizationId/*`
+
+### Middleware Chain
+
+```mermaid
+graph LR
+    Request[Request] --> RequireAuth[requireAuth]
+    RequireAuth -->|Sets userId| RequireOrgMembership[requireOrgMembership]
+    RequireOrgMembership -->|Sets org context| Handler[Route Handler]
+    RequireAuth -.No session.-> Unauthorized[401 Unauthorized]
+    RequireOrgMembership -.Not member.-> Forbidden[403 Forbidden]
+```
+
+### Context Variables
+
+After both middleware layers run, handlers have access to:
+
+```typescript
+const userId = c.get('userId')!;              // From requireAuth
+const organizationId = c.get('organizationId')!;  // From requireOrgMembership
+const membershipId = c.get('membershipId')!;      // From requireOrgMembership
+const membershipRole = c.get('membershipRole')!;  // From requireOrgMembership
+```
+
+**Note**: Use `!` (non-null assertion) because middleware guarantees these exist.
+
+### Example Handler
+
+With both middleware layers, handlers are simplified:
+
+```typescript
+export class LessonHandler {
+    static create: AppHandler = async (c) => {
+        // No need to check auth or membership - middleware did it!
+        const userId = c.get('userId')!;
+        const organizationId = c.get('organizationId')!;
+        const role = c.get('membershipRole')!;
+        
+        const data = c.req.valid("json");
+        
+        // Create resource with org and user context
+        const lesson = await db.insert(schema.lesson).values({
+            id: nanoid(),
+            userId,
+            organizationId,
+            ...data,
+        }).returning();
+        
+        return c.json(lesson[0]);
+    };
+}
+```
+
+**Benefits**:
+- ✅ No repeated membership checks in handlers
+- ✅ Single database query per request (cached in context)
+- ✅ Clean, readable handlers
+- ✅ Type-safe context access
+
+### Mounting Middleware
+
+Both layers are mounted in `api/lib/auth-middleware.lib.ts`:
+
+```typescript
+export const mountAuthMiddleware = (app: AppOpenApi) => {
+    // Layer 1: Authentication (sets userId in context)
+    app.use('/api/v1/organizations/*', requireAuth);
+
+    // Layer 2: Organization membership (sets org context)
+    app.use('/api/v1/organizations/:organizationId/*', requireOrgMembership);
+};
+```
+
+**Execution order**:
+1. Request to `/api/v1/organizations/org-123/lessons`
+2. `requireAuth` runs → validates session → sets `userId`
+3. `requireOrgMembership` runs → validates membership → sets `organizationId`, `membershipId`, `membershipRole`
+4. Handler runs → has access to all context variables
+
+### Error Responses
+
+**Unauthenticated** (no session):
+```json
+{
+  "success": false,
+  "message": "Authentication required"
+}
+```
+Status: `401 Unauthorized`
+
+**Not a member** (valid session, but not in org):
+```json
+{
+  "success": false,
+  "message": "You are not a member of organization: org-123"
+}
+```
+Status: `403 Forbidden`
+
 ## Middleware Registration
 
 Middleware is registered in `api/lib/app.lib.ts` in the `createApp()` function:
@@ -266,11 +450,14 @@ export const createApp = () => {
 
     // 2. Logger (logs all requests)
     app.use(logger());
+    
+    // 3. Authentication (mounts requireAuth and requireOrgMembership)
+    mountAuthMiddleware(app);
 
-    // 3. Not Found (catches unmatched routes)
+    // 4. Not Found (catches unmatched routes)
     app.notFound(notFoundHandler);
 
-    // 4. Error Handler (catches all errors)
+    // 5. Error Handler (catches all errors)
     app.onError(globalErrorHandler);
 
     return app;
@@ -278,3 +465,4 @@ export const createApp = () => {
 ```
 
 **Important**: Order matters! CORS must run first to handle preflight OPTIONS requests.
+

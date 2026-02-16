@@ -114,3 +114,21 @@ export async function unauthenticatedPost<T = any>(params: {
         body: JSON.stringify(body),
     }, env);
 }
+
+/**
+ * Type-safe JSON parser for test responses
+ * Usage: const body = await parseJson<MyDTO>(response);
+ */
+export async function parseJson<T>(response: Response): Promise<T> {
+    return await response.json() as T;
+}
+
+/**
+ * Type for standard error response
+ */
+export type ErrorResponse = {
+    success: false;
+    message: string;
+    details?: Record<string, unknown>;
+};
+

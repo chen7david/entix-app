@@ -1,13 +1,17 @@
-import { OpenAPIHono, RouteConfig, RouteHandler } from "@hono/zod-openapi";
-import { Context } from "hono";
-import type { Logger } from "pino";
+import type { OpenAPIHono, RouteConfig, RouteHandler } from '@hono/zod-openapi';
+import type { Context } from 'hono';
+import type { PinoLogger } from 'hono-pino';
 
 export type AppEnv = {
     Bindings: CloudflareBindings;
     Variables: {
-        logger: Logger;
+        logger: PinoLogger;
+        userId?: string;  // Set by requireAuth middleware
+        organizationId?: string;  // Set by requireOrgMembership middleware
+        membershipId?: string;  // Set by requireOrgMembership middleware
+        membershipRole?: string;  // Set by requireOrgMembership middleware
     };
-}
+};
 
 export type AppOpenApi = OpenAPIHono<AppEnv>
 

@@ -69,7 +69,9 @@ describe("Member Creation Integration Tests", () => {
             cookie: sessionCookie
         });
 
-        expect(res.status).toBe(404);
+        // Middleware checks membership before handler checks org existence
+        // User is not a member of fake-id, so 403 is returned
+        expect(res.status).toBe(403);
     });
 
     it("should create member with different role", async () => {
@@ -111,6 +113,7 @@ describe("Member Creation Integration Tests", () => {
 
         expect(res.status).toBe(403);
         const body = await res.json() as { message: string };
-        expect(body.message).toBe("You are not a member of this organization");
+        // Middleware now includes org ID in error message
+        expect(body.message).toContain("You are not a member of organization");
     });
 });

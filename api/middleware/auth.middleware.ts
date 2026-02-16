@@ -2,6 +2,7 @@ import { HTTPException } from "hono/http-exception";
 import { auth } from "@api/lib/auth/auth";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppContext } from "@api/helpers/types.helpers";
+import type { Next } from "hono";
 
 /**
  * Validates the user session and returns the user ID
@@ -22,3 +23,20 @@ export async function validateSession(c: AppContext): Promise<string> {
     c.set("userId", session.user.id);
     return session.user.id;
 }
+
+/**
+ * Hono middleware that validates session for protected routes
+ * Sets userId in context for downstream handlers to use
+ * 
+ * Usage:
+ * ```typescript
+ * export const protectedRoutes = createRouter()
+ *     .use(requireAuth)  // Apply to all routes in this router
+ *     .openapi(MyRoutes.endpoint, MyHandler.endpoint);
+ * ```
+ */
+export const requireAuth = async (c: AppContext, next: Next) => {
+    const userId = await validateSession(c);
+    c.set("userId", userId);
+    await next();
+};
