@@ -34,7 +34,7 @@ export const useOrganization = () => {
     const activeOrganization = contextVal?.activeOrganization || null;
     const loadingActiveOrg = contextVal?.loading || false;
 
-    const { mutate: createOrganizationMutation, isPending: isCreating } = useMutation({
+    const { mutateAsync: createOrganizationMutation, isPending: isCreating } = useMutation({
         mutationFn: async (vars: { name: string; slug: string }) => {
             return await authClient.organization.create(vars);
         },

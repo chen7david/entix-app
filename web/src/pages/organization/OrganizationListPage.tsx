@@ -78,7 +78,7 @@ export const OrganizationListPage = () => {
         {
             title: 'Actions',
             key: 'actions',
-            render: (_: any, record: any) => {
+            render: () => {
                 const items: MenuProps['items'] = [
                     {
                         key: 'view',
