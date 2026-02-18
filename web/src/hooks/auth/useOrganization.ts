@@ -12,7 +12,7 @@ export const useOrganization = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
-    // Try to consume context - might be undefined if outside OrgLayout
+    // Try to consume context - might be undefined if outside OrgGuard
     // We treat it as optional here because this hook is used globally
     let contextVal;
     try {
@@ -120,7 +120,7 @@ export const useOrganization = () => {
             if (result.data) {
                 // Only invalidate cache — do NOT navigate here.
                 // Navigation is the caller's responsibility.
-                // Auto-navigating here caused "bounce back" when OrganizationSlugGuard
+                // Auto-navigating here caused "bounce back" when OrgGuard
                 // called setActive on /orgs/:slug pages (Members, Invitations, etc).
                 await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
                 await queryClient.invalidateQueries({ queryKey: ['organizations'] });

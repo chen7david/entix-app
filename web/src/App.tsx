@@ -32,7 +32,7 @@ import { AdminGuard } from "./components/guards/AdminGuard";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/error/ErrorFallback';
 import { NotFoundPage } from './pages/error/NotFoundPage';
-import { OrgLayout } from './layouts/OrgLayout';
+import { OrgGuard } from './components/guards/OrgGuard';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
@@ -87,7 +87,7 @@ export default function App() {
               </Route>
 
               {/* URL-scoped Organization Routes: /org/:slug/... */}
-              <Route path="org/:slug" element={<OrgLayout />}>
+              <Route path="org/:slug" element={<OrgGuard />}>
                 {/* Org index - redirect to dashboard */}
                 <Route index element={<Navigate to="dashboard" replace />} />
                 {/* Dashboard Routes */}
