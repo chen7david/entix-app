@@ -10,7 +10,7 @@ export class MemberRoutes {
     static createMember = createRoute({
         tags: MemberRoutes.tags,
         method: HttpMethods.POST,
-        path: '/organizations/{organizationId}/members',
+        path: '/orgs/{organizationId}/members',
         summary: "Create a new member and user",
         middleware: [requireOwnerOrAdmin] as const,
         request: {
@@ -18,7 +18,7 @@ export class MemberRoutes {
             body: jsonContentRequired(createMemberSchema, 'Member details'),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(createMemberResponseSchema, 'Member created successfully'),
+            [HttpStatusCodes.CREATED]: jsonContent(createMemberResponseSchema, 'Member created successfully'),
             [HttpStatusCodes.BAD_REQUEST]: {
                 description: "User already exists or invalid data"
             },

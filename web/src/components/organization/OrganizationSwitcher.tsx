@@ -8,7 +8,7 @@ export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allo
 
     const handleChange = async (value: string) => {
         if (value === 'create_new') {
-            navigate('/organization'); // Navigate to list to create new
+            navigate('/orgs'); // Navigate to list to create new
             return;
         }
 

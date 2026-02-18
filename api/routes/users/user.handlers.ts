@@ -1,19 +1,18 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { UserRoutes } from './user.routes';
-import { getDbClient } from '@api/factories/db.factory';
-import { user } from '@api/db/schema.db';
+import { UserRepository } from '@api/repositories/user.repository';
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (c) => {
+        const organizationId = c.req.valid('param').organizationId;
 
-        c.var.logger.info(`All users`);
+        c.var.logger.info({ organizationId }, `Fetching users for organization`);
 
-        const db = getDbClient(c);
+        const userRepo = new UserRepository(c);
+        const users = await userRepo.findUsersByOrganization(organizationId);
 
-        const users = await db.select().from(user);
-
-        c.var.logger.info({ users }, "DB connection check");
+        c.var.logger.info({ count: users.length, organizationId }, "Users fetched for organization");
 
         return c.json(users, HttpStatusCodes.OK);
     }
@@ -23,6 +22,6 @@ export class UserHandler {
 
         c.var.logger.info(`User ${userData.name} created`);
 
-        return c.json(userData, HttpStatusCodes.OK);
+        return c.json(userData, HttpStatusCodes.CREATED);
     }
 }

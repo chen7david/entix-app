@@ -12,7 +12,7 @@ import { ForbiddenError, InternalServerError } from "@api/errors/app.error";
  * @returns Middleware function
  * 
  * Usage:
- * app.post('/api/v1/organizations/:organizationId/members', 
+ * app.post('/api/v1/orgs/:organizationId/members', 
  *   requireAuth,
  *   requireOrgMembership,
  *   requireRole(['owner', 'admin']),

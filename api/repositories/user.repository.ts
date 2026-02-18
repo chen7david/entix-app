@@ -70,4 +70,21 @@ export class UserRepository {
             body: { email, redirectTo }
         });
     }
+
+    /**
+     * Find all users belonging to an organization
+     * Queries via the member table to scope results to the given org
+     */
+    async findUsersByOrganization(organizationId: string): Promise<(typeof schema.user.$inferSelect)[]> {
+        const db = getDbClient(this.ctx);
+
+        const members = await db.query.member.findMany({
+            where: eq(schema.member.organizationId, organizationId),
+            with: {
+                user: true,
+            },
+        });
+
+        return members.map((m) => m.user);
+    }
 }

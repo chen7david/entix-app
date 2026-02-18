@@ -1,4 +1,4 @@
-import { HTTPException } from "hono/http-exception";
+import { UnauthorizedError } from "@api/errors/app.error";
 import { auth } from "@api/lib/auth/auth";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppContext } from "@api/helpers/types.helpers";
@@ -14,9 +14,7 @@ export async function validateSession(c: AppContext): Promise<string> {
 
     if (!session || !session.user) {
         c.var.logger.warn("Unauthorized: No valid session");
-        throw new HTTPException(HttpStatusCodes.UNAUTHORIZED, {
-            message: "Authentication required"
-        });
+        throw new UnauthorizedError("Authentication required");
     }
 
     // Set userId in context if needed, but returning it is safer for direct usage

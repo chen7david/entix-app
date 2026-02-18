@@ -87,7 +87,7 @@ export const useOrganization = () => {
         onSuccess: async (result) => {
             if (result.data) {
                 await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-                navigate(`/organization/${result.data.slug}`);
+                navigate(`/orgs/${result.data.slug}`);
             }
         }
     });
@@ -136,7 +136,7 @@ export const useOrganization = () => {
 
     const getOrgLink = useCallback((path: string) => {
         if (activeOrganization?.slug) {
-            return `/organization/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
+            return `/orgs/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
         }
         return path;
     }, [activeOrganization?.slug]);

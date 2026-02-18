@@ -7,7 +7,7 @@ export const useCreateMember = (organizationId: string) => {
 
     return useMutation({
         mutationFn: async (values: CreateMemberDTO) => {
-            const response = await fetch(`/api/v1/organizations/${organizationId}/members`, {
+            const response = await fetch(`/api/v1/orgs/${organizationId}/members`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(values),

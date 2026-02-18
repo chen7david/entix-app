@@ -20,10 +20,13 @@ export const links = {
         orders: '/dashboard/orders',
     },
     organization: {
-        index: '/organization',
-        create: '/organization/create',
-        edit: '/organization/:slug',
-        invitations: '/organization/:slug/invitations',
+        index: '/orgs',
+        create: '/orgs/create',
+        edit: '/orgs/:slug',
+        invitations: '/orgs/:slug/invitations',
+    },
+    admin: {
+        index: '/dashboard/admin',
     },
     context: {
         index: '/context',

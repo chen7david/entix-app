@@ -19,7 +19,7 @@ import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { AdminLayout } from './layouts/AdminLayout';
+
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
@@ -32,6 +32,7 @@ import { AuthGuard } from "./components/guards/AuthGuard";
 import { GuestGuard } from "./components/guards/GuestGuard";
 import { OrganizationGuard } from "./components/guards/OrganizationGuard";
 import { OrganizationSlugGuard } from "./components/guards/OrganizationSlugGuard";
+import { AdminGuard } from "./components/guards/AdminGuard";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/error/ErrorFallback';
 import { NotFoundPage } from './pages/error/NotFoundPage';
@@ -91,11 +92,6 @@ export default function App() {
 
               {/* Organization Protected Routes */}
               <Route element={<OrganizationGuard />}>
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboardPage />} />
-                </Route>
-
                 {/* Dashboard Routes */}
                 <Route path={links.dashboard.index} element={<DashboardLayout />}>
                   <Route index element={<DashboardPage />} />
@@ -108,6 +104,10 @@ export default function App() {
                   <Route path='wallet' element={<WalletPage />} />
                   <Route path='movies' element={<MoviesPage />} />
                   <Route path='orders' element={<OrdersPage />} />
+                  {/* Admin Routes (within dashboard layout, guarded by AdminGuard) */}
+                  <Route element={<AdminGuard />}>
+                    <Route path='admin' element={<AdminDashboardPage />} />
+                  </Route>
                 </Route>
 
                 {/* Organization Routes */}

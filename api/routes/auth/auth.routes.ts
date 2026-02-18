@@ -14,7 +14,7 @@ export class AuthRoutes {
             body: jsonContentRequired(signUpWithOrgSchema, 'User and Organization details'),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(signUpWithOrgResponseSchema, 'User and organization created successfully'),
+            [HttpStatusCodes.CREATED]: jsonContent(signUpWithOrgResponseSchema, 'User and organization created successfully'),
             [HttpStatusCodes.BAD_REQUEST]: {
                 description: "Bad request",
             },

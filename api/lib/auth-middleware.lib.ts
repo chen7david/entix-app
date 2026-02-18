@@ -13,8 +13,8 @@ import { requireOrgMembership } from "@api/middleware/org-membership.middleware"
  */
 export const mountAuthMiddleware = (app: AppOpenApi) => {
     // Layer 1: Authentication (sets userId in context)
-    app.use('/api/v1/organizations/*', requireAuth);
+    app.use('/api/v1/orgs/*', requireAuth);
 
     // Layer 2: Organization membership (sets organizationId, membershipId, membershipRole)
-    app.use('/api/v1/organizations/:organizationId/*', requireOrgMembership);
+    app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
 };

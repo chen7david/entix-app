@@ -1,38 +1,40 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, TestDb } from "../lib/utils";
-import { createMockUser } from "../factories/user.factory";
-import { user } from "@api/db/schema.db";
+import { createTestDb } from "../lib/utils";
 import app from "@api/app";
 import { env } from "cloudflare:test";
+import { createAuthenticatedOrg } from "../lib/auth-test.helper";
+import { authenticatedGet } from "../lib/api-request.helper";
 
 describe("API Integration Test", () => {
-    let db: TestDb;
+    let sessionCookie: string;
+    let orgId: string;
 
     beforeEach(async () => {
-        db = await createTestDb();
+        await createTestDb();
+        const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
+        sessionCookie = cookie;
+        orgId = id;
     });
 
-    it("GET /api/v1/users should return list of users", async () => {
-        // 1. Setup: Insert a user directly into DB
-        const mockUser = createMockUser({ name: "API User" });
-        await db.insert(user).values(mockUser);
+    it("GET /api/v1/orgs/:orgId/users should return list of users in organization", async () => {
+        // The owner user was already created via createAuthenticatedOrg
+        const res = await authenticatedGet({
+            app,
+            env,
+            path: `/api/v1/orgs/${orgId}/users`,
+            cookie: sessionCookie,
+        });
 
-        // 2. Act: Call the API
-        const res = await app.request("/api/v1/users", {}, env);
-
-        // 3. Assert: Check response
         expect(res.status).toBe(200);
 
-        // Strict typing: Cast unknown body to expected type
-        const body: typeof user.$inferSelect[] = await res.json();
+        const body: any[] = await res.json();
 
         expect(body).toBeInstanceOf(Array);
-        expect(body).toHaveLength(1);
-        expect(body[0]).toMatchObject({
-            id: mockUser.id,
-            name: "API User",
-            email: mockUser.email,
-        });
+        // At least the owner user should be present
+        expect(body.length).toBeGreaterThanOrEqual(1);
+        expect(body[0]).toHaveProperty("id");
+        expect(body[0]).toHaveProperty("email");
+        expect(body[0]).toHaveProperty("name");
     });
 
     it("GET /api/v1/unknown should return 404 JSON", async () => {

@@ -28,7 +28,7 @@ export async function createMemberRequest(params: {
         headers["Cookie"] = cookie;
     }
 
-    return app.request(`/api/v1/organizations/${organizationId}/members`, {
+    return app.request(`/api/v1/orgs/${organizationId}/members`, {
         method: "POST",
         headers,
         body: JSON.stringify(payload),

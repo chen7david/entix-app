@@ -29,13 +29,13 @@ describe("Organization Membership Middleware Tests", () => {
         const res = await authenticatedPost({
             app,
             env,
-            path: `/api/v1/organizations/${orgId}/members`,
+            path: `/api/v1/orgs/${orgId}/members`,
             body: payload,
             cookie: sessionCookie
         });
 
         // Should succeed (user is owner of org)
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(201);
     });
 
     it("should return 403 when user is not a member", async () => {
@@ -55,7 +55,7 @@ describe("Organization Membership Middleware Tests", () => {
         const res = await authenticatedPost({
             app,
             env,
-            path: `/api/v1/organizations/${orgId}/members`,
+            path: `/api/v1/orgs/${orgId}/members`,
             body: payload,
             cookie: intruderCookie
         });
@@ -73,7 +73,7 @@ describe("Organization Membership Middleware Tests", () => {
         const res = await unauthenticatedPost({
             app,
             env,
-            path: `/api/v1/organizations/${orgId}/members`,
+            path: `/api/v1/orgs/${orgId}/members`,
             body: payload
         });
 
@@ -89,7 +89,7 @@ describe("Organization Membership Middleware Tests", () => {
         const res = await authenticatedPost({
             app,
             env,
-            path: `/api/v1/organizations/fake-org-id/members`,
+            path: `/api/v1/orgs/fake-org-id/members`,
             body: payload,
             cookie: sessionCookie
         });
@@ -107,12 +107,12 @@ describe("Organization Membership Middleware Tests", () => {
         const res = await authenticatedPost({
             app,
             env,
-            path: `/api/v1/organizations/${orgId}/members`,
+            path: `/api/v1/orgs/${orgId}/members`,
             body: payload,
             cookie: sessionCookie
         });
 
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(201);
 
         // If handler successfully created member, it means middleware provided:
         // - userId (from requireAuth)

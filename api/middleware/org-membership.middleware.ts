@@ -15,7 +15,7 @@ import { MemberRepository } from "@api/repositories/member.repository";
  * - membershipRole: string
  * 
  * Usage:
- * app.use('/api/v1/organizations/:organizationId/*', requireOrgMembership);
+ * app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
  */
 export const requireOrgMembership = async (c: AppContext, next: Next) => {
     const userId = c.get('userId');

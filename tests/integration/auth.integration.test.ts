@@ -16,7 +16,7 @@ describe("Auth Integration Test", () => {
         const payload = createMockSignUpWithOrgPayload();
         const res = await signUpWithOrgRequest({ app, env, payload });
 
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(201);
         const body = await res.json() as SignUpWithOrgResponseDTO;
 
         expect(body).toHaveProperty("user");
@@ -33,12 +33,12 @@ describe("Auth Integration Test", () => {
 
         // First request to create user
         const setupRes = await signUpWithOrgRequest({ app, env, payload });
-        expect(setupRes.status).toBe(200);
+        expect(setupRes.status).toBe(201);
 
         // Second request with same user
         const res = await signUpWithOrgRequest({ app, env, payload });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(409);
         const body = await res.json() as { message: string };
         expect(body.message).toBe("User already exists");
     });
@@ -52,12 +52,12 @@ describe("Auth Integration Test", () => {
 
         // First request to create organization
         const setupRes = await signUpWithOrgRequest({ app, env, payload: payload1 });
-        expect(setupRes.status).toBe(200);
+        expect(setupRes.status).toBe(201);
 
         // Second request with same organization name
         const res = await signUpWithOrgRequest({ app, env, payload: payload2 });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(409);
         const body = await res.json() as { message: string };
         expect(body.message).toBe("Organization name already taken");
     });

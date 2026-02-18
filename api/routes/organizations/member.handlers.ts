@@ -4,8 +4,7 @@ import { MemberRoutes } from './member.routes';
 import { UserRepository } from '@api/repositories/user.repository';
 import { OrganizationRepository } from '@api/repositories/organization.repository';
 import { MemberRepository } from '@api/repositories/member.repository';
-import { HTTPException } from "hono/http-exception";
-import { ForbiddenError } from "@api/errors/app.error";
+import { ConflictError } from "@api/errors/app.error";
 import { nanoid } from "nanoid"; // Assuming nanoid is imported from 'nanoid'
 
 export class MemberHandler {
@@ -26,9 +25,7 @@ export class MemberHandler {
         const existingUser = await userRepo.findUserByEmail(email);
         if (existingUser) {
             c.var.logger.warn({ email }, "User with this email already exists");
-            throw new HTTPException(HttpStatusCodes.BAD_REQUEST, {
-                message: "User with this email already exists"
-            });
+            throw new ConflictError("User with this email already exists");
         }
 
         // Generate random secure password (not disclosed to user)
@@ -65,6 +62,6 @@ export class MemberHandler {
                 name: userResult.user.name,
                 emailVerified: userResult.user.emailVerified,
             },
-        }, HttpStatusCodes.OK);
+        }, HttpStatusCodes.CREATED);
     };
 }

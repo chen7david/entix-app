@@ -28,7 +28,7 @@ describe("Member Creation Integration Tests", () => {
             cookie: sessionCookie
         });
 
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(201);
         const body = await res.json() as CreateMemberResponseDTO;
 
         expect(body.user.email).toBe(payload.email);
@@ -56,7 +56,7 @@ describe("Member Creation Integration Tests", () => {
             cookie: sessionCookie
         });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(409);
     });
 
     it("should fail when organization does not exist", async () => {
@@ -84,7 +84,7 @@ describe("Member Creation Integration Tests", () => {
             cookie: sessionCookie
         });
 
-        expect(res.status).toBe(200);
+        expect(res.status).toBe(201);
         const body = await res.json() as CreateMemberResponseDTO;
         expect(body.member.role).toBe("admin");
     });
