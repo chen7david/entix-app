@@ -28,10 +28,10 @@ export const links = {
     admin: {
         index: (slug: string) => `/org/${slug}/dashboard/admin`,
     },
-    context: {
-        index: '/context',
-        noOrganization: '/context/no-organization',
-        selectOrganization: '/context/select-organization',
-        acceptInvitation: '/context/accept-invitation',
+    onboarding: {
+        index: '/onboarding',
+        noOrganization: '/onboarding/no-organization',
+        selectOrganization: '/onboarding/select-organization',
+        acceptInvitation: '/onboarding/accept-invitation',
     }
 } as const;

@@ -12,7 +12,7 @@ import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
 import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
-import { AppContainer } from "./components/containers/AppContainer";
+
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
@@ -22,9 +22,9 @@ import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
-import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
-import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
-import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
+import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
+import { SelectOrganizationPage } from "./pages/onboarding/SelectOrganizationPage";
+import { AcceptInvitationPage } from "./pages/onboarding/AcceptInvitationPage";
 import { HomePage } from "./pages/home/HomePage";
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { GuestGuard } from "./components/guards/GuestGuard";
@@ -56,7 +56,7 @@ export default function App() {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <AppContainer>
+        <div className="flex h-[calc(100dvh)] m-0 p-0">
           <Routes>
             <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
 
@@ -79,8 +79,8 @@ export default function App() {
             {/* Protected Routes */}
             <Route element={<AuthGuard />}>
 
-              {/* Context Routes (Authenticated but no active org required) */}
-              <Route path={links.context.index} element={<AuthLayout />}>
+              {/* Onboarding Routes (Authenticated but no active org required) */}
+              <Route path={links.onboarding.index} element={<AuthLayout />}>
                 <Route path="no-organization" element={<NoOrganizationPage />} />
                 <Route path="select-organization" element={<SelectOrganizationPage />} />
                 <Route path="accept-invitation" element={<AcceptInvitationPage />} />
@@ -88,36 +88,31 @@ export default function App() {
 
               {/* URL-scoped Organization Routes: /org/:slug/... */}
               <Route path="org/:slug" element={<OrgGuard />}>
-                {/* Org index - redirect to dashboard */}
-                <Route index element={<Navigate to="dashboard" replace />} />
-                {/* Dashboard Routes */}
-                <Route path="dashboard" element={<DashboardLayout />}>
-                  <Route index element={<HomePage />} />
-                  <Route path='profile' element={<ProfilePage />} />
-                  <Route path='sessions' element={<SessionsPage />} />
-                  <Route path='settings' element={<SettingsPage />} />
-                  <Route path='change-password' element={<ChangePasswordPage />} />
-                  <Route path='lessons' element={<LessonsPage />} />
-                  <Route path='shop' element={<ShopPage />} />
-                  <Route path='wallet' element={<WalletPage />} />
-                  <Route path='movies' element={<MoviesPage />} />
-                  <Route path='orders' element={<OrdersPage />} />
-                  {/* Admin Routes */}
-                  <Route element={<AdminGuard />}>
-                    <Route path='admin' element={<AdminDashboardPage />} />
-                  </Route>
-                </Route>
+                <Route element={<DashboardLayout />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
 
-                {/* Organization Management within the org context */}
-                <Route path="members" element={<DashboardLayout />}>
-                  <Route index element={<OrganizationMembersPage />} />
-                </Route>
-                <Route path="invitations" element={<DashboardLayout />}>
-                  <Route index element={<OrganizationInvitationsPage />} />
-                </Route>
-                {/* Organization Management */}
-                <Route path="organizations" element={<DashboardLayout />}>
-                  <Route index element={<OrganizationListPage />} />
+                  {/* Dashboard Routes */}
+                  <Route path="dashboard">
+                    <Route index element={<HomePage />} />
+                    <Route path='profile' element={<ProfilePage />} />
+                    <Route path='sessions' element={<SessionsPage />} />
+                    <Route path='settings' element={<SettingsPage />} />
+                    <Route path='change-password' element={<ChangePasswordPage />} />
+                    <Route path='lessons' element={<LessonsPage />} />
+                    <Route path='shop' element={<ShopPage />} />
+                    <Route path='wallet' element={<WalletPage />} />
+                    <Route path='movies' element={<MoviesPage />} />
+                    <Route path='orders' element={<OrdersPage />} />
+                    {/* Admin Routes */}
+                    <Route element={<AdminGuard />}>
+                      <Route path='admin' element={<AdminDashboardPage />} />
+                    </Route>
+                  </Route>
+
+                  {/* Organization Management */}
+                  <Route path="members" element={<OrganizationMembersPage />} />
+                  <Route path="invitations" element={<OrganizationInvitationsPage />} />
+                  <Route path="organizations" element={<OrganizationListPage />} />
                 </Route>
               </Route>
             </Route>
@@ -129,7 +124,7 @@ export default function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
-        </AppContainer>
+        </div>
       </QueryClientProvider>
     </ErrorBoundary>
   )

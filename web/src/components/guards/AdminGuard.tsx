@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
+import { useAuth } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
 import { Spin, Result, Button } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';

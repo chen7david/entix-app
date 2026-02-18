@@ -3,9 +3,9 @@ import { Menu, type MenuProps } from "antd";
 import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, TeamOutlined, CrownOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
-import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
+import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useAuth } from "@web/src/hooks/auth/auth.hook";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
 
 export const SidebarMenu: React.FC = () => {
     const navigate = useNavigate();

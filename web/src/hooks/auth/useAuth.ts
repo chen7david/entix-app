@@ -1,8 +1,8 @@
-import { authClient } from "@web/src/lib/auth-client";
+import { useSession, signIn, signUp, signOut, verifyEmail, sendVerificationEmail, requestPasswordReset, resetPassword, changePassword } from "@web/src/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 
 export const useAuth = () => {
-    const session = authClient.useSession();
+    const session = useSession();
     return {
         session,
         isAuthenticated: !!session.data,
@@ -13,7 +13,7 @@ export const useAuth = () => {
 export const useSignIn = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string }) => {
-            const response = await authClient.signIn.email({
+            const response = await signIn.email({
                 email: values.email,
                 password: values.password,
             });
@@ -52,7 +52,7 @@ export const useSignUpWithOrg = () => {
 export const useSignUp = () => {
     return useMutation({
         mutationFn: async (values: { email: string; password: string; name: string }) => {
-            const response = await authClient.signUp.email({
+            const response = await signUp.email({
                 email: values.email,
                 password: values.password,
                 name: values.name,
@@ -70,7 +70,7 @@ export const useSignUp = () => {
 export const useSignOut = () => {
     return useMutation({
         mutationFn: async () => {
-            const response = await authClient.signOut();
+            const response = await signOut();
 
             if (response.error) {
                 throw new Error(response.error.message || "Failed to sign out");
@@ -84,7 +84,7 @@ export const useSignOut = () => {
 export const useVerifyEmail = () => {
     return useMutation({
         mutationFn: async (values: { query: { token: string } }) => {
-            const response = await authClient.verifyEmail({
+            const response = await verifyEmail({
                 query: values.query,
             });
 
@@ -100,7 +100,7 @@ export const useVerifyEmail = () => {
 export const useResendVerification = () => {
     return useMutation({
         mutationFn: async (values: { email: string }) => {
-            const response = await authClient.sendVerificationEmail({
+            const response = await sendVerificationEmail({
                 email: values.email,
             });
 
@@ -116,7 +116,7 @@ export const useResendVerification = () => {
 export const useForgotPassword = () => {
     return useMutation({
         mutationFn: async (values: { email: string; redirectTo?: string }) => {
-            const response = await authClient.requestPasswordReset({
+            const response = await requestPasswordReset({
                 email: values.email,
                 redirectTo: values.redirectTo,
             });
@@ -133,7 +133,7 @@ export const useForgotPassword = () => {
 export const useResetPassword = () => {
     return useMutation({
         mutationFn: async (values: { newPassword: string; token: string }) => {
-            const response = await authClient.resetPassword({
+            const response = await resetPassword({
                 newPassword: values.newPassword,
                 token: values.token,
             });
@@ -150,7 +150,7 @@ export const useResetPassword = () => {
 export const useChangePassword = () => {
     return useMutation({
         mutationFn: async (values: { currentPassword: string; newPassword: string; revokeOtherSessions?: boolean }) => {
-            const response = await authClient.changePassword({
+            const response = await changePassword({
                 currentPassword: values.currentPassword,
                 newPassword: values.newPassword,
                 revokeOtherSessions: values.revokeOtherSessions,

@@ -88,7 +88,7 @@ export const OrgGuard: React.FC = () => {
                     status="403"
                     title="Access Denied"
                     subTitle="You do not have access to this organization."
-                    extra={<Button type="primary" onClick={() => navigate(links.context.selectOrganization)}>Switch Organization</Button>}
+                    extra={<Button type="primary" onClick={() => navigate(links.onboarding.selectOrganization)}>Switch Organization</Button>}
                 />
             );
         }

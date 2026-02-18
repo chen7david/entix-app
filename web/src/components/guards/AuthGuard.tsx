@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
+import { useAuth } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
 import { Spin } from 'antd';
 

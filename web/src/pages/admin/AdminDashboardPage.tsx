@@ -5,7 +5,7 @@ import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@web/src/lib/auth-client';
 import { TeamOutlined, SafetyOutlined, StopOutlined } from '@ant-design/icons';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
+import { useAuth } from '@web/src/hooks/auth/useAuth';
 
 const { Title, Text } = Typography;
 

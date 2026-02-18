@@ -2,7 +2,7 @@ import React from 'react';
 import { message, Card, Typography } from 'antd';
 import { SignInForm, type SignInValues } from '@web/src/components/auth/SignInForm';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { useSignIn } from '@web/src/hooks/auth/auth.hook';
+import { useSignIn } from '@web/src/hooks/auth/useAuth';
 
 const { Title, Text } = Typography;
 

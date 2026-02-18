@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useInvitations } from "@web/src/hooks/auth/useInvitations";
 import { Table, Typography, Button, Modal, Form, Input, Select, Tag, Popconfirm, message, Space, Statistic, Row, Col, Card } from "antd";
 import { PlusOutlined, DeleteOutlined, MailOutlined, ClockCircleOutlined, CheckCircleOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
@@ -8,15 +9,16 @@ import dayjs from "dayjs";
 const { Title, Text } = Typography;
 
 export const OrganizationInvitationsPage = () => {
+    const { activeOrganization } = useOrganization();
+
     const {
         invitations,
-        loading,
-        activeOrganization,
+        loadingInvitations: loading,
         inviteMember,
         cancelInvitation,
         isInviting,
         isCancelingInvitation
-    } = useOrganization();
+    } = useInvitations();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');

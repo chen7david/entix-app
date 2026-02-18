@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Typography, Button, message } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
-import { useResendVerification } from '@web/src/hooks/auth/auth.hook';
+import { useResendVerification } from '@web/src/hooks/auth/useAuth';
 import { useLocation, useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
 

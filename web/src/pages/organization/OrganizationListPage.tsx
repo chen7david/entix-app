@@ -1,4 +1,6 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useMembers } from "@web/src/hooks/auth/useMembers";
+import { useInvitations } from "@web/src/hooks/auth/useInvitations";
 import { Table, Button, Typography, Skeleton, Modal, Statistic, Row, Col, Card, Tag, Input, Dropdown } from "antd";
 import type { MenuProps } from "antd";
 import { PlusOutlined, TeamOutlined, MailOutlined, AppstoreOutlined, SearchOutlined, MoreOutlined, EyeOutlined } from "@ant-design/icons";
@@ -10,7 +12,9 @@ import dayjs from "dayjs";
 const { Title, Text } = Typography;
 
 export const OrganizationListPage = () => {
-    const { organizations, loading, activeOrganization, members, invitations } = useOrganization();
+    const { organizations, loading, activeOrganization } = useOrganization();
+    const { members } = useMembers();
+    const { invitations } = useInvitations();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');
 

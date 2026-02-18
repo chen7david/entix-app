@@ -3,7 +3,7 @@ import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from '
 import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined, SafetyOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
 import { SidebarOrgSwitcher } from './SidebarOrgSwitcher';
-import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';

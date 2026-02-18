@@ -24,7 +24,7 @@ import {
 } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useListSessions, useRevokeSession, useRevokeOtherSessions } from '@web/src/hooks/auth/useSessions';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
+import { useAuth } from '@web/src/hooks/auth/useAuth';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 

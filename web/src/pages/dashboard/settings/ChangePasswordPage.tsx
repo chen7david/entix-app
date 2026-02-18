@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router';
 import { Card, Typography, message } from 'antd';
 import { ChangePasswordForm, type ChangePasswordValues } from '@web/src/components/auth/ChangePasswordForm';
-import { useChangePassword } from '@web/src/hooks/auth/auth.hook';
+import { useChangePassword } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';

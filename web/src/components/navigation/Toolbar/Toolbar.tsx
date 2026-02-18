@@ -1,7 +1,7 @@
-import { Button, Form } from 'antd'
+import { Button } from 'antd'
 import cn from 'classnames'
 import { MenuOutlined } from '@ant-design/icons';
-import { useSidebar } from '@web/src/hooks/navigation/sidebar.hook';
+import { useSidebar } from '@web/src/hooks/navigation/useSidebar';
 
 
 export const Toolbar = ({
@@ -19,14 +19,14 @@ export const Toolbar = ({
             )}
             {...rest}
         >
-            <Form layout="inline">
+            <div className="flex items-center w-full gap-2">
                 <div className="md:hidden">
-                    <Form.Item>
+                    <div>
                         <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" />
-                    </Form.Item>
+                    </div>
                 </div>
                 {children}
-            </Form>
+            </div>
         </div>
     )
 }

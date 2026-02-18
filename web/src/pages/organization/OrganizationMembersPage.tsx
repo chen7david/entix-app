@@ -1,8 +1,9 @@
+import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card } from "antd";
 import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useAuth } from "@web/src/hooks/auth/auth.hook";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useState } from "react";
 
@@ -12,15 +13,16 @@ export const OrganizationMembersPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [createForm] = Form.useForm();
+    const { activeOrganization } = useOrganization();
+
     const {
         members,
-        loading,
-        activeOrganization,
+        loadingMembers: loading,
         updateMemberRoles,
         removeMember,
         checkPermission,
         userRoles: currentUserRoles,
-    } = useOrganization();
+    } = useMembers();
 
     const { session } = useAuth();
     const currentUserId = session.data?.user?.id;

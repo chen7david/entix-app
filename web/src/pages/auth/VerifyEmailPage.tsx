@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { Typography, Spin, Button, Result, Card, message } from 'antd';
-import { useVerifyEmail } from '@web/src/hooks/auth/auth.hook';
+import { useVerifyEmail } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { links } from '@web/src/constants/links';
 

@@ -3,7 +3,7 @@ import { Card, Typography, Divider, Button, Space } from 'antd';
 import { LockOutlined, RightOutlined, LogoutOutlined } from '@ant-design/icons';
 import { links } from '@web/src/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
-import { useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 const { Title, Text } = Typography;
