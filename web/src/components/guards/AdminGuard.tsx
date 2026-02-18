@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/auth.hook';
 import { links } from '@web/src/constants/links';
 import { Spin, Result, Button } from 'antd';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 /**
  * Guard component that restricts access to admin-only routes.
@@ -11,6 +12,7 @@ import { Spin, Result, Button } from 'antd';
  */
 export const AdminGuard: React.FC = () => {
     const { session, isLoading } = useAuth();
+    const { checkOrganizationStatus } = useOrganization();
 
     if (isLoading) {
         return (
@@ -30,7 +32,7 @@ export const AdminGuard: React.FC = () => {
                 status="403"
                 title="403"
                 subTitle="Sorry, you are not authorized to access this page."
-                extra={<Button type="primary" href={links.dashboard.index}>Back to Dashboard</Button>}
+                extra={<Button type="primary" onClick={() => checkOrganizationStatus()}>Back to Dashboard</Button>}
             />
         );
     }

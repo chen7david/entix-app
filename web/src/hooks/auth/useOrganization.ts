@@ -1,14 +1,29 @@
 import { authClient } from "@web/src/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate } from "react-router";
 import { useAuth } from "./auth.hook";
 import { links } from "@web/src/constants/links";
 import { useCallback } from "react";
+
+// import { useContext } from "react";
+import { useOrgContext } from "@web/src/context/OrgContext"; // Import context
 
 export const useOrganization = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
+    // Try to consume context - might be undefined if outside OrgLayout
+    // We treat it as optional here because this hook is used globally
+    let contextVal;
+    try {
+        contextVal = useOrgContext();
+    } catch (e) {
+        // Not in provider
+        contextVal = null;
+    }
+
+    // 1. Fetch user's organizations (Client-side source of truth for org list)
+    // We always fetch the list because it's needed for the switcher and 'my organizations'
     const {
         data: organizations = [],
         isLoading: loadingOrganizations,
@@ -21,15 +36,17 @@ export const useOrganization = () => {
         }
     });
 
-    const { data: activeOrganization, isLoading: loadingActiveOrg } = useQuery({
-        queryKey: ['activeOrganization'],
-        queryFn: async () => {
-            const { data } = await authClient.organization.getFullOrganization();
-            return data || null;
-        }
-    });
+    // 2. Active Organization - derived strictly from Context if available
+    const activeOrganization = contextVal?.activeOrganization || null;
+    const loadingActiveOrg = contextVal?.loading || false;
+
+    // Legacy active org fetch (only if NOT in context and we need to check session?)
+    // User requested "No session reliance". So we rely on Context.
+    // If not in context, activeOrganization is null. 
+    // This is correct behavior for "Select Org" page.
 
 
+    // 3. Organization Data Queries - scoped by ID
     const { data: members = [], isLoading: loadingMembers } = useQuery({
         queryKey: ['organizationMembers', activeOrganization?.id],
         queryFn: async () => {
@@ -80,51 +97,36 @@ export const useOrganization = () => {
         }
     });
 
-    const { mutateAsync: createOrganizationMutation, isPending: isCreating } = useMutation({
-        mutationFn: async ({ name, slug }: { name: string; slug: string }) => {
-            return await authClient.organization.create({ name, slug });
+    const { mutate: createOrganizationMutation, isPending: isCreating } = useMutation({
+        mutationFn: async (vars: { name: string; slug: string }) => {
+            return await authClient.organization.create(vars);
         },
         onSuccess: async (result) => {
             if (result.data) {
                 await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-                navigate(`/orgs/${result.data.slug}`);
+                // Navigate to new URL-based route using slug
+                navigate(links.dashboard.index(result.data.slug));
             }
         }
     });
 
-    const location = useLocation();
+    // const location = useLocation();
 
     const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
         mutationFn: async (organizationId: string) => {
             return await authClient.organization.setActive({ organizationId });
         },
-        onSuccess: async (result, variables) => {
+        onSuccess: async (result) => {
             if (result.data) {
-                // If the current URL contains the old organization slug, update it to the new one
-                // We do this BEFORE invalidating queries to avoid race conditions where the 
-                // OrganizationSlugGuard sees the new active org but the old URL.
-                const newOrg = organizations.find(o => o.id === variables);
-                if (activeOrganization?.slug && newOrg?.slug && location.pathname.includes(activeOrganization.slug)) {
-                    const newPath = location.pathname.replace(activeOrganization.slug, newOrg.slug);
-                    navigate(newPath);
-                }
-
+                // Only invalidate cache — do NOT navigate here.
+                // Navigation is the caller's responsibility.
+                // Auto-navigating here caused "bounce back" when OrganizationSlugGuard
+                // called setActive on /orgs/:slug pages (Members, Invitations, etc).
                 await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
-                // We also invalidate members because the active organization changed, 
-                // and the members query depends on activeOrganization.id, so it will automatically refetch.
-                // But explicit invalidation is safer if keys overlap.
-                await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
+                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
             }
         }
     });
-
-    const createOrganization = useCallback(async (name: string, slug: string) => {
-        return createOrganizationMutation({ name, slug });
-    }, [createOrganizationMutation]);
-
-    const setActive = useCallback(async (organizationId: string) => {
-        return setActiveMutation(organizationId);
-    }, [setActiveMutation]);
 
     const listOrganizations = useCallback(async () => {
         return queryClient.refetchQueries({ queryKey: ['organizations'] });
@@ -136,7 +138,7 @@ export const useOrganization = () => {
 
     const getOrgLink = useCallback((path: string) => {
         if (activeOrganization?.slug) {
-            return `/orgs/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
+            return `/org/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
         }
         return path;
     }, [activeOrganization?.slug]);
@@ -178,8 +180,8 @@ export const useOrganization = () => {
             }
         });
 
-        if (activeOrg) {
-            navigate(links.dashboard.index);
+        if (activeOrg?.slug) {
+            navigate(links.dashboard.index(activeOrg.slug));
             return;
         }
 
@@ -188,22 +190,15 @@ export const useOrganization = () => {
             return;
         }
 
-        if (orgs.length === 1) {
+        if (orgs.length === 1 && orgs[0].slug) {
             // 3. Set active organization
             await setActive(orgs[0].id);
 
             // 4. RE-FETCH active organization to ensure cache is updated and we have the data
             // We force a fetch to ensure we get the updated state from the server
-            activeOrg = await queryClient.fetchQuery({
-                queryKey: ['activeOrganization'],
-                queryFn: async () => {
-                    const { data } = await authClient.organization.getFullOrganization();
-                    return data || null;
-                },
-                staleTime: 0
-            });
+            // activeOrg = await queryClient.fetchQuery({ ... }); // No need to fetch again to navigate, we have the slug
 
-            navigate(links.dashboard.index);
+            navigate(links.dashboard.index(orgs[0].slug));
             return;
         }
 
@@ -272,11 +267,19 @@ export const useOrganization = () => {
         return cancelInvitationMutation(invitationId);
     }, [cancelInvitationMutation]);
 
+    const createOrganization = useCallback(async (name: string, slug: string) => {
+        return createOrganizationMutation({ name, slug });
+    }, [createOrganizationMutation]);
+
+    const setActive = useCallback(async (organizationId: string) => {
+        return setActiveMutation(organizationId);
+    }, [setActiveMutation]);
+
     return {
         organizations,
         activeOrganization,
         members,
-        invitations, // Expose invitations
+        invitations,
         userRoles,
         checkPermission,
         loading: loadingOrganizations || loadingActiveOrg || loadingMembers || loadingInvitations,

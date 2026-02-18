@@ -9,7 +9,7 @@ export const AcceptInvitationPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const invitationId = searchParams.get('id');
     const navigate = useNavigate();
-    const { acceptInvitation, isAcceptingInvitation } = useOrganization();
+    const { acceptInvitation, isAcceptingInvitation, checkOrganizationStatus } = useOrganization();
     const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -53,8 +53,8 @@ export const AcceptInvitationPage: React.FC = () => {
     };
 
     const handleGoToDashboard = () => {
-        // Navigate to the dashboard of the active organization (which was set on success)
-        navigate(links.dashboard.index);
+        // Check status to determine best redirection (likely the new org)
+        checkOrganizationStatus();
     };
 
     if (isAuthLoading || (isAuthenticated && isAcceptingInvitation && !success && !error)) {
@@ -74,7 +74,7 @@ export const AcceptInvitationPage: React.FC = () => {
                         title="Invitation Failed"
                         subTitle={error}
                         extra={[
-                            <Button type="primary" key="dashboard" onClick={() => navigate(links.dashboard.index)}>
+                            <Button type="primary" key="dashboard" onClick={() => checkOrganizationStatus()}>
                                 Go to Dashboard
                             </Button>
                         ]}

@@ -1,3 +1,4 @@
+import React from 'react';
 import { Menu, type MenuProps } from "antd";
 import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, TeamOutlined, CrownOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
@@ -13,39 +14,46 @@ export const SidebarMenu: React.FC = () => {
     const { session } = useAuth();
 
     const { getOrgLink, activeOrganization } = useOrganization();
+    const slug = activeOrganization?.slug || '';
 
     const isAdmin = session.data?.user?.role === 'admin';
 
     const menuItems: MenuProps['items'] = [
         {
             label: 'Home',
-            key: links.dashboard.index,
+            key: slug ? links.dashboard.index(slug) : 'home-disabled',
             icon: <HomeOutlined />,
+            disabled: !slug,
         },
         {
             label: 'Lessons',
-            key: links.dashboard.lessons,
+            key: slug ? links.dashboard.lessons(slug) : 'lessons-disabled',
             icon: <BookOutlined />,
+            disabled: !slug,
         },
         {
             label: 'Shop',
-            key: links.dashboard.shop,
+            key: slug ? links.dashboard.shop(slug) : 'shop-disabled',
             icon: <ShoppingOutlined />,
+            disabled: !slug,
         },
         {
             label: 'Wallet',
-            key: links.dashboard.wallet,
+            key: slug ? links.dashboard.wallet(slug) : 'wallet-disabled',
             icon: <WalletOutlined />,
+            disabled: !slug,
         },
         {
             label: 'Movies',
-            key: links.dashboard.movies,
+            key: slug ? links.dashboard.movies(slug) : 'movies-disabled',
             icon: <YoutubeOutlined />,
+            disabled: !slug,
         },
         {
             label: 'Orders',
-            key: links.dashboard.orders,
+            key: slug ? links.dashboard.orders(slug) : 'orders-disabled',
             icon: <TruckOutlined />,
+            disabled: !slug,
         },
         {
             type: 'divider',
@@ -86,7 +94,7 @@ export const SidebarMenu: React.FC = () => {
                 children: [
                     {
                         label: 'Dashboard',
-                        key: links.admin.index,
+                        key: slug ? links.admin.index(slug) : 'admin-dashboard-disabled',
                     },
                 ],
             },

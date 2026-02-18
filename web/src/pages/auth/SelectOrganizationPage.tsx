@@ -3,17 +3,19 @@ import { Typography, Spin } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
 import { useNavigate } from 'react-router';
-import { links } from '@web/src/constants/links';
+// import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;
 
 export const SelectOrganizationPage: React.FC = () => {
-    const { loading, activeOrganization } = useOrganization();
+    const { loading, activeOrganization, checkOrganizationStatus } = useOrganization();
     const navigate = useNavigate();
 
     React.useEffect(() => {
         if (activeOrganization) {
-            navigate(links.dashboard.index, { replace: true });
+            if (activeOrganization) {
+                checkOrganizationStatus(); // Use checkOrganizationStatus to navigate
+            }
         }
     }, [activeOrganization, navigate]);
 
@@ -44,8 +46,7 @@ export const SelectOrganizationPage: React.FC = () => {
 
                 <div className="flex justify-center">
                     <OrganizationSwitcher
-                        allowCreate={false}
-                        afterSelect={() => navigate(links.dashboard.index)}
+                        afterSelect={() => checkOrganizationStatus()}
                     />
                 </div>
             </div>

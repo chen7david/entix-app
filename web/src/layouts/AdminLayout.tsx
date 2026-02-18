@@ -3,10 +3,11 @@ import { Navigate, Outlet } from 'react-router';
 import { useSession } from '@web/src/lib/auth-client';
 import { Spin, Result, Button } from 'antd';
 import { links } from '@web/src/constants/links';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 export const AdminLayout: React.FC = () => {
     const { data: session, isPending, error } = useSession();
-
+    const { checkOrganizationStatus } = useOrganization();
     if (isPending) {
         return (
             <div className="min-h-[100dvh] w-full flex items-center justify-center min-h-screen">
@@ -22,7 +23,7 @@ export const AdminLayout: React.FC = () => {
                     status="500"
                     title="500"
                     subTitle="Sorry, something went wrong."
-                    extra={<Button type="primary" href={links.dashboard.index}>Back Home</Button>}
+                    extra={<Button type="primary" onClick={() => checkOrganizationStatus()}>Back Home</Button>}
                 />
             </div>
         );
@@ -39,7 +40,7 @@ export const AdminLayout: React.FC = () => {
                     status="403"
                     title="403"
                     subTitle="Sorry, you are not authorized to access this page."
-                    extra={<Button type="primary" href={links.dashboard.index}>Back Home</Button>}
+                    extra={<Button type="primary" onClick={() => checkOrganizationStatus()}>Back Home</Button>}
                 />
             </div>
         );

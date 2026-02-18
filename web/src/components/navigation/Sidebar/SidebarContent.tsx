@@ -2,11 +2,11 @@ import React from 'react';
 import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from 'antd';
 import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined, SafetyOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
+import { SidebarOrgSwitcher } from './SidebarOrgSwitcher';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/auth.hook';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
-
 
 const { Text } = Typography;
 
@@ -15,6 +15,7 @@ export const SidebarContent: React.FC = () => {
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
+    const slug = activeOrganization?.slug || '';
 
     const handleMenuClick: MenuProps['onClick'] = (e) => {
         if (e.key === 'logout') {
@@ -29,24 +30,26 @@ export const SidebarContent: React.FC = () => {
     };
 
     const userMenuItems: MenuProps['items'] = [
-        {
-            key: links.dashboard.profile,
-            label: 'Profile',
-            icon: <UserOutlined />,
-        },
-        {
-            key: links.dashboard.sessions,
-            label: 'Sessions',
-            icon: <SafetyOutlined />,
-        },
-        {
-            key: links.dashboard.settings,
-            label: 'Settings',
-            icon: <SettingOutlined />,
-        },
-        {
-            type: 'divider',
-        },
+        ...(slug ? [
+            {
+                key: links.dashboard.profile(slug),
+                label: 'Profile',
+                icon: <UserOutlined />,
+            },
+            {
+                key: links.dashboard.sessions(slug),
+                label: 'Sessions',
+                icon: <SafetyOutlined />,
+            },
+            {
+                key: links.dashboard.settings(slug),
+                label: 'Settings',
+                icon: <SettingOutlined />,
+            },
+            {
+                type: 'divider' as const,
+            },
+        ] : []),
         {
             key: 'logout',
             label: 'Sign Out',
@@ -86,22 +89,18 @@ export const SidebarContent: React.FC = () => {
                 <SidebarMenu />
             </div>
 
-            {/* Footer: Settings & Logo */}
-            <div className="p-4 border-t border-gray-100 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                        <span className="text-xl font-bold text-gray-400">Entix</span>
-                        {activeOrganization && (
-                            <span className="text-xs text-gray-500 font-medium truncate max-w-[150px]">
-                                {activeOrganization.name}
-                            </span>
-                        )}
+            {/* Footer: Org Switcher & User Menu */}
+            <div className="border-t border-gray-100">
+                <div className="flex items-center gap-1 p-2">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <SidebarOrgSwitcher />
                     </div>
                     <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
-                        <Button type="text" icon={<MoreOutlined />} className="text-gray-500 hover:text-gray-700" />
+                        <Button type="text" icon={<MoreOutlined />} className="text-gray-500 hover:text-gray-700 flex-shrink-0" />
                     </Dropdown>
                 </div>
             </div>
         </div>
     );
 };
+

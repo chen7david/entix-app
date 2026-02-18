@@ -1,15 +1,16 @@
-import React from 'react';
 import { useNavigate } from 'react-router';
 import { Card, Typography, Divider, Button, Space } from 'antd';
 import { LockOutlined, RightOutlined, LogoutOutlined } from '@ant-design/icons';
 import { links } from '@web/src/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 const { Title, Text } = Typography;
 
-export const SettingsPage: React.FC = () => {
+export const SettingsPage = () => { // Changed from React.FC
     const navigate = useNavigate();
+    const { activeOrganization } = useOrganization(); // Added this line
     const { mutate: signOut } = useSignOut();
 
     const handleLogout = () => {
@@ -43,7 +44,7 @@ export const SettingsPage: React.FC = () => {
                                 type="default"
                                 icon={<RightOutlined />}
                                 iconPosition="end"
-                                onClick={() => navigate(links.dashboard.changePassword)}
+                                onClick={() => activeOrganization?.slug && navigate(links.dashboard.changePassword(activeOrganization.slug))}
                             >
                                 Change Password
                             </Button>

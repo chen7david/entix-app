@@ -7,12 +7,20 @@ const { Title } = Typography;
 import { useState } from "react";
 import { CreateOrganizationForm } from "@web/src/components/organization/CreateOrganizationForm";
 import { Modal } from "antd";
+import { useNavigate } from "react-router";
+import { links } from "@web/src/constants/links";
 
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 
 export const OrganizationListPage = () => {
     const { organizations, loading, setActive, activeOrganization } = useOrganization();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const navigate = useNavigate();
+
+    const handleSelectOrg = async (org: { id: string; slug: string }) => {
+        await setActive(org.id);
+        navigate(links.dashboard.index(org.slug));
+    };
 
     return (
         <>
@@ -43,7 +51,7 @@ export const OrganizationListPage = () => {
                                         title={org.name}
                                         hoverable
                                         className={isActive ? "border-purple-500 border-2" : ""}
-                                        onClick={() => !isActive && setActive(org.id)}
+                                        onClick={() => !isActive && handleSelectOrg(org)}
                                         extra={
                                             <Button
                                                 type={isActive ? "primary" : "default"}
@@ -51,7 +59,7 @@ export const OrganizationListPage = () => {
                                                 className={isActive ? "bg-purple-500" : ""}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    if (!isActive) setActive(org.id);
+                                                    if (!isActive) handleSelectOrg(org);
                                                 }}
                                             >
                                                 {isActive ? "Active" : "Select"}

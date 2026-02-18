@@ -14,15 +14,12 @@ import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 import { AppContainer } from "./components/containers/AppContainer";
 import { DashboardLayout } from "./layouts/DashboardLayout";
-import { DashboardPage } from "./pages/dashboard/dashboard/DashboardPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
-import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
@@ -31,13 +28,11 @@ import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
 import { HomePage } from "./pages/home/HomePage";
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { GuestGuard } from "./components/guards/GuestGuard";
-import { OrganizationGuard } from "./components/guards/OrganizationGuard";
-import { OrganizationSlugGuard } from "./components/guards/OrganizationSlugGuard";
 import { AdminGuard } from "./components/guards/AdminGuard";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/error/ErrorFallback';
 import { NotFoundPage } from './pages/error/NotFoundPage';
-
+import { OrgLayout } from './layouts/OrgLayout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
@@ -91,10 +86,12 @@ export default function App() {
                 <Route path="accept-invitation" element={<AcceptInvitationPage />} />
               </Route>
 
-              {/* Organization Protected Routes */}
-              <Route element={<OrganizationGuard />}>
+              {/* URL-scoped Organization Routes: /org/:slug/... */}
+              <Route path="org/:slug" element={<OrgLayout />}>
+                {/* Org index - redirect to dashboard */}
+                <Route index element={<Navigate to="dashboard" replace />} />
                 {/* Dashboard Routes */}
-                <Route path={links.dashboard.index} element={<DashboardLayout />}>
+                <Route path="dashboard" element={<DashboardLayout />}>
                   <Route index element={<HomePage />} />
                   <Route path='profile' element={<ProfilePage />} />
                   <Route path='sessions' element={<SessionsPage />} />
@@ -105,21 +102,24 @@ export default function App() {
                   <Route path='wallet' element={<WalletPage />} />
                   <Route path='movies' element={<MoviesPage />} />
                   <Route path='orders' element={<OrdersPage />} />
-                  {/* Admin Routes (within dashboard layout, guarded by AdminGuard) */}
+                  {/* Admin Routes */}
                   <Route element={<AdminGuard />}>
                     <Route path='admin' element={<AdminDashboardPage />} />
                   </Route>
                 </Route>
 
-                {/* Organization Routes */}
-                <Route path={links.organization.index} element={<DashboardLayout />}>
-                  <Route index element={<OrganizationListPage />} />
-                  <Route path=":slug" element={<OrganizationSlugGuard />}>
-                    <Route index element={<OrganizationDashboardPage />} />
-                    <Route path="members" element={<OrganizationMembersPage />} />
-                    <Route path="invitations" element={<OrganizationInvitationsPage />} />
-                  </Route>
+                {/* Organization Management within the org context */}
+                <Route path="members" element={<DashboardLayout />}>
+                  <Route index element={<OrganizationMembersPage />} />
                 </Route>
+                <Route path="invitations" element={<DashboardLayout />}>
+                  <Route index element={<OrganizationInvitationsPage />} />
+                </Route>
+              </Route>
+
+              {/* Organization list (not scoped to a specific org) */}
+              <Route path="orgs" element={<DashboardLayout />}>
+                <Route index element={<OrganizationListPage />} />
               </Route>
             </Route>
 
