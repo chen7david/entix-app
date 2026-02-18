@@ -65,13 +65,10 @@ export const SidebarMenu: React.FC = () => {
             children: [
                 {
                     label: 'Organizations',
-                    key: links.organization.index,
+                    key: slug ? links.organization.index(slug) : 'orgs-disabled',
+                    disabled: !slug,
                 },
                 ...(activeOrganization ? [
-                    {
-                        label: 'Dashboard',
-                        key: getOrgLink(''),
-                    },
                     {
                         label: 'Members',
                         key: getOrgLink('/members'),

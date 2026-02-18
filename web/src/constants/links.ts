@@ -20,8 +20,7 @@ export const links = {
         orders: (slug: string) => `/org/${slug}/dashboard/orders`,
     },
     organization: {
-        index: '/orgs',
-        create: '/orgs/create',
+        index: (slug: string) => `/org/${slug}/organizations`,
         edit: (slug: string) => `/org/${slug}/settings`,
         invitations: (slug: string) => `/org/${slug}/invitations`,
         members: (slug: string) => `/org/${slug}/members`,

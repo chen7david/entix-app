@@ -55,7 +55,7 @@ export const OrganizationSlugGuard: React.FC = () => {
                 title="Organization Not Found"
                 subTitle="You are not a member of this organization or it does not exist."
                 extra={
-                    <Button type="primary" onClick={() => navigate(links.organization.index)}>
+                    <Button type="primary" onClick={() => navigate(links.organization.index(slug || ''))}>
                         Back to Organizations
                     </Button>
                 }

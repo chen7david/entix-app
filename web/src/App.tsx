@@ -115,11 +115,10 @@ export default function App() {
                 <Route path="invitations" element={<DashboardLayout />}>
                   <Route index element={<OrganizationInvitationsPage />} />
                 </Route>
-              </Route>
-
-              {/* Organization list (not scoped to a specific org) */}
-              <Route path="orgs" element={<DashboardLayout />}>
-                <Route index element={<OrganizationListPage />} />
+                {/* Organization Management */}
+                <Route path="organizations" element={<DashboardLayout />}>
+                  <Route index element={<OrganizationListPage />} />
+                </Route>
               </Route>
             </Route>
 

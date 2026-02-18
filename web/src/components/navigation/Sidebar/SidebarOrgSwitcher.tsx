@@ -23,8 +23,11 @@ export const SidebarOrgSwitcher: React.FC = () => {
     };
 
     const handleManageOrgs = () => {
-        setOpen(false);
-        navigate(links.organization.index);
+        const slug = activeOrganization?.slug;
+        if (slug) {
+            setOpen(false);
+            navigate(links.organization.index(slug));
+        }
     };
 
     const orgList = (
@@ -155,7 +158,7 @@ export const SidebarOrgSwitcher: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
                     <Text strong style={{ fontSize: 13, lineHeight: '18px', color: '#1a1a1a' }} ellipsis>
-                        {activeOrganization?.name || 'Entix'}
+                        Entix
                     </Text>
                     <Text type="secondary" style={{ fontSize: 11, lineHeight: '14px' }} ellipsis>
                         {activeOrganization?.slug || 'No organization'}
