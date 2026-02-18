@@ -28,6 +28,7 @@ import { OrganizationInvitationsPage } from "./pages/organization/OrganizationIn
 import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
+import { HomePage } from "./pages/home/HomePage";
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { GuestGuard } from "./components/guards/GuestGuard";
 import { OrganizationGuard } from "./components/guards/OrganizationGuard";
@@ -94,7 +95,7 @@ export default function App() {
               <Route element={<OrganizationGuard />}>
                 {/* Dashboard Routes */}
                 <Route path={links.dashboard.index} element={<DashboardLayout />}>
-                  <Route index element={<DashboardPage />} />
+                  <Route index element={<HomePage />} />
                   <Route path='profile' element={<ProfilePage />} />
                   <Route path='sessions' element={<SessionsPage />} />
                   <Route path='settings' element={<SettingsPage />} />
