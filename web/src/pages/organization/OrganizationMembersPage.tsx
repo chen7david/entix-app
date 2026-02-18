@@ -1,17 +1,16 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input } from "antd";
-import { UserOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card } from "antd";
+import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/auth.hook";
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useState } from "react";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export const OrganizationMembersPage = () => {
-    const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [inviteForm] = Form.useForm();
+    const [searchText, setSearchText] = useState('');
     const [createForm] = Form.useForm();
     const {
         members,
@@ -21,8 +20,6 @@ export const OrganizationMembersPage = () => {
         removeMember,
         checkPermission,
         userRoles: currentUserRoles,
-        inviteMember,
-        isInviting
     } = useOrganization();
 
     const { session } = useAuth();
@@ -30,16 +27,6 @@ export const OrganizationMembersPage = () => {
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
 
-    const handleInvite = async (values: any) => {
-        try {
-            await inviteMember(values.email, values.role);
-            message.success("Invitation sent successfully");
-            setIsInviteModalOpen(false);
-            inviteForm.resetFields();
-        } catch (error: any) {
-            message.error(error.message || "Failed to send invitation");
-        }
-    };
 
     const handleCreateMember = async (values: any) => {
         try {
@@ -73,6 +60,11 @@ export const OrganizationMembersPage = () => {
         }
     };
 
+    // Compute role counts
+    const totalMembers = members?.length || 0;
+    const adminCount = members?.filter((m: any) => (m.role || '').includes('admin')).length || 0;
+    const ownerCount = members?.filter((m: any) => (m.role || '').includes('owner')).length || 0;
+
     const columns = [
         {
             title: 'User',
@@ -87,6 +79,10 @@ export const OrganizationMembersPage = () => {
                     </div>
                 </div>
             ),
+            filteredValue: searchText ? [searchText] : null,
+            onFilter: (value: any, record: any) =>
+                record.user?.name?.toLowerCase().includes(value.toLowerCase()) ||
+                record.user?.email?.toLowerCase().includes(value.toLowerCase()),
         },
         {
             title: 'Role',
@@ -178,7 +174,10 @@ export const OrganizationMembersPage = () => {
             <Toolbar />
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <Title level={2}>Members</Title>
+                    <div>
+                        <Title level={2} style={{ marginBottom: 4 }}>Members</Title>
+                        <Text type="secondary">Manage organization members and roles</Text>
+                    </div>
                     <div className="flex items-center gap-4">
                         {currentUserRoles && currentUserRoles.length > 0 ? (
                             <Space>
@@ -194,13 +193,6 @@ export const OrganizationMembersPage = () => {
                             </Tag>
                         )}
                         <Button
-                            type="default"
-                            icon={<PlusOutlined />}
-                            onClick={() => setIsInviteModalOpen(true)}
-                        >
-                            Invite Member
-                        </Button>
-                        <Button
                             type="primary"
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateModalOpen(true)}
@@ -209,58 +201,56 @@ export const OrganizationMembersPage = () => {
                         </Button>
                     </div>
                 </div>
+
+                {/* Stats Cards */}
+                <Row gutter={16} className="mb-6">
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Total Members"
+                                value={totalMembers}
+                                prefix={<TeamOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Admins"
+                                value={adminCount}
+                                prefix={<SafetyOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Owners"
+                                value={ownerCount}
+                                prefix={<CrownOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
+                {/* Search */}
+                <div className="mb-4">
+                    <Input
+                        placeholder="Search members..."
+                        prefix={<SearchOutlined />}
+                        className="max-w-xs"
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                    />
+                </div>
+
                 <Table
                     dataSource={members}
                     columns={columns}
                     rowKey={(record: any) => record.id || record.userId}
+                    pagination={{ pageSize: 10 }}
                 />
 
-                {/* Invite Member Modal */}
-                <Modal
-                    title="Invite Member"
-                    open={isInviteModalOpen}
-                    onCancel={() => setIsInviteModalOpen(false)}
-                    footer={null}
-                >
-                    <Form
-                        form={inviteForm}
-                        layout="vertical"
-                        onFinish={handleInvite}
-                        initialValues={{ role: 'member' }}
-                    >
-                        <Form.Item
-                            name="email"
-                            label="Email Address"
-                            rules={[
-                                { required: true, message: 'Please input the email address!' },
-                                { type: 'email', message: 'Please enter a valid email!' }
-                            ]}
-                        >
-                            <Input placeholder="colleague@example.com" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="role"
-                            label="Role"
-                            rules={[{ required: true, message: 'Please select a role!' }]}
-                        >
-                            <Select>
-                                <Select.Option value="member">Member</Select.Option>
-                                <Select.Option value="admin">Admin</Select.Option>
-                                <Select.Option value="owner">Owner</Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        <Form.Item className="mb-0 flex justify-end">
-                            <Space>
-                                <Button onClick={() => setIsInviteModalOpen(false)}>Cancel</Button>
-                                <Button type="primary" htmlType="submit" loading={isInviting}>
-                                    Send Invitation
-                                </Button>
-                            </Space>
-                        </Form.Item>
-                    </Form>
-                </Modal>
 
                 {/* Create New Member Modal */}
                 <Modal

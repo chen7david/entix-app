@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Button, Modal, Form, Input, Select, Tag, Popconfirm, message, Space } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Table, Typography, Button, Modal, Form, Input, Select, Tag, Popconfirm, message, Space, Statistic, Row, Col, Card } from "antd";
+import { PlusOutlined, DeleteOutlined, MailOutlined, ClockCircleOutlined, CheckCircleOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import dayjs from "dayjs";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export const OrganizationInvitationsPage = () => {
     const {
@@ -18,6 +19,7 @@ export const OrganizationInvitationsPage = () => {
     } = useOrganization();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [searchText, setSearchText] = useState('');
     const [form] = Form.useForm();
 
     const handleInvite = async (values: any) => {
@@ -40,11 +42,19 @@ export const OrganizationInvitationsPage = () => {
         }
     };
 
+    // Compute stats
+    const totalInvitations = invitations?.length || 0;
+    const pendingCount = invitations?.filter((i: any) => i.status === 'pending').length || 0;
+    const acceptedCount = invitations?.filter((i: any) => i.status === 'accepted').length || 0;
+
     const columns = [
         {
             title: 'Email',
             dataIndex: 'email',
             key: 'email',
+            filteredValue: searchText ? [searchText] : null,
+            onFilter: (value: any, record: any) =>
+                record.email?.toLowerCase().includes(value.toLowerCase()),
         },
         {
             title: 'Role',
@@ -66,7 +76,7 @@ export const OrganizationInvitationsPage = () => {
             title: 'Expires At',
             dataIndex: 'expiresAt',
             key: 'expiresAt',
-            render: (date: string) => new Date(date).toLocaleDateString(),
+            render: (date: string) => dayjs(date).format('MMM D, YYYY'),
         },
         {
             title: 'Actions',
@@ -99,7 +109,10 @@ export const OrganizationInvitationsPage = () => {
             <Toolbar />
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <Title level={2}>Invitations</Title>
+                    <div>
+                        <Title level={2} style={{ marginBottom: 4 }}>Invitations</Title>
+                        <Text type="secondary">Manage pending and sent invitations</Text>
+                    </div>
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -109,11 +122,56 @@ export const OrganizationInvitationsPage = () => {
                     </Button>
                 </div>
 
+                {/* Stats Cards */}
+                <Row gutter={16} className="mb-6">
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Total Invitations"
+                                value={totalInvitations}
+                                prefix={<MailOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Pending"
+                                value={pendingCount}
+                                prefix={<ClockCircleOutlined />}
+                                valueStyle={pendingCount > 0 ? { color: '#fa8c16' } : undefined}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Accepted"
+                                value={acceptedCount}
+                                prefix={<CheckCircleOutlined />}
+                                valueStyle={acceptedCount > 0 ? { color: '#52c41a' } : undefined}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
+                {/* Search */}
+                <div className="mb-4">
+                    <Input
+                        placeholder="Search invitations..."
+                        prefix={<SearchOutlined />}
+                        className="max-w-xs"
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                    />
+                </div>
+
                 <Table
                     dataSource={invitations}
                     columns={columns}
                     rowKey="id"
                     loading={loading}
+                    pagination={{ pageSize: 10 }}
                 />
 
                 <Modal
