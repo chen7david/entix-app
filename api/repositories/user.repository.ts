@@ -1,6 +1,7 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { getDbClient } from "@api/factories/db.factory";
 import { auth } from "@api/lib/auth/auth";
+import { InternalServerError } from "@api/errors/app.error";
 import * as schema from "@api/db/schema.db";
 import { eq } from "drizzle-orm";
 
@@ -42,7 +43,7 @@ export class UserRepository {
         });
 
         if (!result) {
-            throw new Error("Failed to create user");
+            throw new InternalServerError("Failed to create user");
         }
 
         return result as CreateUserResult;

@@ -1,6 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
-import { ForbiddenError } from "@api/errors/app.error";
+import { ForbiddenError, InternalServerError } from "@api/errors/app.error";
 
 /**
  * Middleware factory to enforce role-based authorization
@@ -24,7 +24,7 @@ export const requireRole = (allowedRoles: string[]) => {
         const currentRole = c.get('membershipRole');
 
         if (!currentRole) {
-            throw new Error("membershipRole not found in context. Ensure requireOrgMembership middleware runs first.");
+            throw new InternalServerError("membershipRole not found in context. Ensure requireOrgMembership middleware runs first.");
         }
 
         if (!allowedRoles.includes(currentRole)) {

@@ -1,6 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
-import { ForbiddenError, UnauthorizedError } from "@api/errors/app.error";
+import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { MemberRepository } from "@api/repositories/member.repository";
 
 /**
@@ -26,7 +26,7 @@ export const requireOrgMembership = async (c: AppContext, next: Next) => {
     }
 
     if (!organizationId) {
-        throw new Error("organizationId parameter missing from route");
+        throw new InternalServerError("organizationId parameter missing from route");
     }
 
     // Use repository pattern for consistency
