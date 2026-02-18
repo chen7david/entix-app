@@ -31,7 +31,7 @@ export const UserTable: React.FC = () => {
         }, {
             onSuccess: () => {
                 message.success('Impersonation started');
-                window.location.href = '/dashboard'; // Redirect to dashboard as the user
+                window.location.href = '/'; // Redirect to root, auth flow will route to correct dashboard
             },
             onError: (ctx) => {
                 message.error(ctx.error.message);
