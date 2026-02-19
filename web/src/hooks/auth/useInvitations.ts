@@ -1,4 +1,5 @@
 import { authClient } from "@web/src/lib/auth-client";
+import type { OrgRole } from "@shared/auth/permissions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useOrganization } from "./useOrganization";
@@ -25,7 +26,7 @@ export const useInvitations = () => {
         mutationFn: async ({ email, role }: { email: string; role: string }) => {
             return await authClient.organization.inviteMember({
                 email,
-                role: role as "member" | "admin" | "owner",
+                role: role as OrgRole,
                 organizationId: activeOrganization!.id
             });
         },

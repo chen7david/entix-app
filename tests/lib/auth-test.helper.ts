@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 import type { AppEnv } from "@api/helpers/types.helpers";
 import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
+import type { OrgRole } from "@shared/auth/permissions";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createMockMember } from "../factories/member.factory";
 import { drizzle } from "drizzle-orm/d1";
@@ -137,7 +138,7 @@ export async function createOrgMemberWithRole(params: {
     app: Hono<AppEnv>;
     env: any;
     orgId: string;
-    role: "owner" | "admin" | "member";
+    role: OrgRole;
     email: string;
 }): Promise<{ cookie: string; userId: string }> {
     const { app, env, orgId, role, email } = params;
@@ -193,7 +194,7 @@ export async function createSuperAdmin(params: {
     const db = drizzle(params.env.DB);
     await db
         .update(userTable)
-        .set({ role: "admin" } as any)
+        .set({ role: "admin" } as Partial<typeof userTable.$inferInsert>)
         .where(eq(userTable.email, email));
 
     // Re-sign-in directly (NOT via getAuthCookie which calls sign-up again)

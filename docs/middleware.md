@@ -312,7 +312,7 @@ export const requireAuth = async (c: AppContext, next: Next) => {
     }
 
     c.set("userId", session.user.id);
-    c.set("isSuperAdmin", (session.user as any).role === "admin");
+    c.set("isSuperAdmin", session.user.role === "admin");
     await next();
 };
 ```

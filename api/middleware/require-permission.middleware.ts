@@ -1,7 +1,9 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
+import type { Role } from "better-auth/plugins/access";
 import { ForbiddenError, InternalServerError } from "@api/errors/app.error";
 import { roles, type statement } from "@shared/auth/permissions";
+
 
 /**
  * Middleware factory to enforce permission-based authorization
@@ -48,13 +50,13 @@ export const requirePermission = (
             );
         }
 
-        const roleDefinition = roles[currentRole];
+        const roleDefinition = roles[currentRole] as Role | undefined;
 
         if (!roleDefinition) {
             throw new ForbiddenError(`Unknown role: ${currentRole}`);
         }
 
-        const result = (roleDefinition as any).authorize({ [resource]: actions }) as { success: boolean; error?: string };
+        const result = roleDefinition.authorize({ [resource]: actions });
 
         if (!result.success) {
             const userId = c.get('userId');

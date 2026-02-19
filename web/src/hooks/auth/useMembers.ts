@@ -1,4 +1,5 @@
 import { authClient } from "@web/src/lib/auth-client";
+import type { OrgRole } from "@shared/auth/permissions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { useCallback } from "react";
@@ -32,7 +33,7 @@ export const useMembers = () => {
 
         return userRoles.some((role: string) => {
             return authClient.organization.checkRolePermission({
-                role: role as any,
+                role: role as OrgRole,
                 permissions: permission.permissions
             });
         });

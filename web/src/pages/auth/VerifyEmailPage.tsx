@@ -27,7 +27,7 @@ export const VerifyEmailPage: React.FC = () => {
             },
         }, {
             onSuccess: (response) => {
-                const data = response.data as any; // Cast to avoid strict type checks here if type definitions are incomplete
+                const data = response.data as { status?: boolean } | null;
                 if (data?.status) {
                     message.success("Email verified successfully!");
                     // Check org status to redirect appropriately

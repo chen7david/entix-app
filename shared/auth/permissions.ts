@@ -25,3 +25,6 @@ export const roles = {
 } as const;
 
 export const { member, admin, owner } = roles;
+
+/** Organization-level role. Derived from the `roles` object above. */
+export type OrgRole = keyof typeof roles;

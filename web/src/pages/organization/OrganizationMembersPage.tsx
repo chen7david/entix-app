@@ -1,6 +1,7 @@
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card } from "antd";
+import type { ColumnsType } from "antd/es/table";
 import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
@@ -64,35 +65,37 @@ export const OrganizationMembersPage = () => {
 
     // Compute role counts
     const totalMembers = members?.length || 0;
-    const adminCount = members?.filter((m: any) => (m.role || '').includes('admin')).length || 0;
-    const ownerCount = members?.filter((m: any) => (m.role || '').includes('owner')).length || 0;
+    const adminCount = members?.filter((m: Record<string, unknown>) => (String(m.role || '')).includes('admin')).length || 0;
+    const ownerCount = members?.filter((m: Record<string, unknown>) => (String(m.role || '')).includes('owner')).length || 0;
 
-    const columns = [
+    const columns: ColumnsType<Record<string, unknown>> = [
         {
             title: 'User',
             dataIndex: 'user',
             key: 'user',
-            render: (user: any) => (
+            render: (user: Record<string, unknown>) => (
                 <div className="flex items-center gap-2">
-                    <Avatar src={user.image} icon={<UserOutlined />} />
+                    <Avatar src={user.image as string | undefined} icon={<UserOutlined />} />
                     <div className="flex flex-col">
-                        <span>{user.name}</span>
-                        <span className="text-xs text-gray-500">{user.email}</span>
+                        <span>{user.name as string}</span>
+                        <span className="text-xs text-gray-500">{user.email as string}</span>
                     </div>
                 </div>
             ),
             filteredValue: searchText ? [searchText] : null,
-            onFilter: (value: any, record: any) =>
-                record.user?.name?.toLowerCase().includes(value.toLowerCase()) ||
-                record.user?.email?.toLowerCase().includes(value.toLowerCase()),
+            onFilter: (value, record) => {
+                const user = record.user as Record<string, string> | undefined;
+                const v = String(value).toLowerCase();
+                return (user?.name?.toLowerCase().includes(v) || user?.email?.toLowerCase().includes(v)) ?? false;
+            },
         },
         {
             title: 'Role',
             dataIndex: 'role',
             key: 'role',
-            render: (role: string, record: any) => {
+            render: (role, record) => {
                 const isSelf = record.userId === currentUserId;
-                const memberRoles = (role || "").split(",").map(r => r.trim()).filter(Boolean);
+                const memberRoles = (String(role || "")).split(",").map(r => r.trim()).filter(Boolean);
 
                 const canEdit = canUpdateMember && !isSelf;
 
@@ -115,7 +118,7 @@ export const OrganizationMembersPage = () => {
                         mode="multiple"
                         defaultValue={memberRoles}
                         style={{ width: 180 }}
-                        onChange={(values) => handleRoleChange(record.id, values)}
+                        onChange={(values) => handleRoleChange(record.id as string, values)}
                         options={[
                             { value: 'member', label: 'Member' },
                             { value: 'admin', label: 'Admin' },
@@ -136,7 +139,7 @@ export const OrganizationMembersPage = () => {
     columns.push({
         title: 'Actions',
         key: 'actions',
-        render: (_: any, record: any) => {
+        render: (_: unknown, record: Record<string, unknown>) => {
             const isSelf = record.userId === currentUserId;
             const canRemove = canDeleteMember && !isSelf;
 
@@ -144,7 +147,7 @@ export const OrganizationMembersPage = () => {
                 <Popconfirm
                     title="Remove member"
                     description="Are you sure you want to remove this member from the organization?"
-                    onConfirm={() => handleRemoveMember(record.id)}
+                    onConfirm={() => handleRemoveMember(record.id as string)}
                     okText="Yes"
                     cancelText="No"
                     disabled={!canRemove}
@@ -161,7 +164,7 @@ export const OrganizationMembersPage = () => {
                 </Popconfirm>
             );
         }
-    } as any);
+    });
 
     if (loading) {
         return <Skeleton active />;
