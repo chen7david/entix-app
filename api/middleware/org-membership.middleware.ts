@@ -29,6 +29,15 @@ export const requireOrgMembership = async (c: AppContext, next: Next) => {
         throw new InternalServerError("organizationId parameter missing from route");
     }
 
+    // Super admins bypass org membership check
+    if (c.get('isSuperAdmin')) {
+        c.var.logger.info({ userId, organizationId }, "Super admin bypass — skipping membership check");
+        c.set('organizationId', organizationId);
+        c.set('membershipRole', 'owner'); // Treat as owner for downstream handlers
+        await next();
+        return;
+    }
+
     // Use repository pattern for consistency
     const memberRepo = new MemberRepository(c);
     const membership = await memberRepo.findMembership(userId, organizationId);

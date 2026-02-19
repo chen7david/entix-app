@@ -17,8 +17,8 @@ export async function validateSession(c: AppContext): Promise<string> {
         throw new UnauthorizedError("Authentication required");
     }
 
-    // Set userId in context if needed, but returning it is safer for direct usage
     c.set("userId", session.user.id);
+    c.set("isSuperAdmin", (session.user as any).role === "admin");
     return session.user.id;
 }
 

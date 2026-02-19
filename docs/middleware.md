@@ -253,50 +253,80 @@ GET /api/v1/nonexistent
 }
 ```
 
-## Authentication Middleware
+## Authentication & Authorization
 
 **Files**: 
 - `api/middleware/auth.middleware.ts`
 - `api/middleware/org-membership.middleware.ts`
+- `api/middleware/require-permission.middleware.ts`
 - `api/lib/auth-middleware.lib.ts`
 
-Entix-App uses a **two-layer authentication architecture** to secure routes:
+Entix-App uses a **four-layer security architecture** to protect organization-scoped routes:
 
-1. **Layer 1**: `requireAuth` - Validates user session
-2. **Layer 2**: `requireOrgMembership` - Validates organization membership
+1. **Layer 1**: `requireAuth` — Validates user session, detects super admins
+2. **Layer 2**: `requireOrgMembership` — Validates organization membership
+3. **Layer 3**: `requirePermission` — Validates specific resource permissions
+4. **Layer 4**: Super admin bypass (cross-cuts layers 2 and 3)
+
+### Middleware Chain
+
+```mermaid
+graph LR
+    Request[Request] --> RequireAuth[requireAuth]
+    RequireAuth -->|Sets userId, isSuperAdmin| RequireOrgMembership[requireOrgMembership]
+    RequireOrgMembership -->|Sets org context| RequirePermission[requirePermission]
+    RequirePermission -->|Allowed| Handler[Route Handler]
+    RequireAuth -.No session.-> Unauthorized[401 Unauthorized]
+    RequireOrgMembership -.Not member.-> Forbidden[403 Forbidden]
+    RequirePermission -.No permission.-> Forbidden
+```
+
+> **Super admins** bypass layers 2 and 3 entirely.
+
+### Admin Disambiguation
+
+The term "admin" has two meanings in this app:
+
+| Concept | Entity | Field | Values | Scope |
+|---------|--------|-------|--------|-------|
+| **Super Admin** | `user` | `user.role` | `"user"` / `"admin"` | Platform-wide |
+| **Org Admin** | `member` | `member.role` | `"member"` / `"admin"` / `"owner"` | Per-organization |
+
+In code, use `isSuperAdmin` (context variable) for platform-level admins and `membershipRole` for org-level roles.
+
+---
 
 ### Layer 1: requireAuth
 
-Validates that the user has a valid session and sets `userId` in the request context.
+Validates that the user has a valid session, sets `userId` and `isSuperAdmin` in context.
 
 **File**: `api/middleware/auth.middleware.ts`
 
 ```typescript
 export const requireAuth = async (c: AppContext, next: Next) => {
     const authClient = auth(c);
-    const session = await authClient.api.getSession({ 
-        headers: c.req.raw.headers 
-    });
+    const session = await authClient.api.getSession({ headers: c.req.raw.headers });
 
     if (!session || !session.user) {
         throw new UnauthorizedError("Authentication required");
     }
 
     c.set("userId", session.user.id);
+    c.set("isSuperAdmin", (session.user as any).role === "admin");
     await next();
 };
 ```
 
 **What it does**:
 - Checks for valid session using Better Auth
-- Stores `userId` in context for downstream handlers
+- Stores `userId` and `isSuperAdmin` in context
 - Throws `UnauthorizedError` (401) if no valid session
 
-**Applied to**: All routes starting with `/api/v1/organizations/*`
+---
 
 ### Layer 2: requireOrgMembership
 
-Validates that the authenticated user is a member of the organization in the route.
+Validates that the authenticated user is a member of the organization in the route. **Super admins bypass this check**.
 
 **File**: `api/middleware/org-membership.middleware.ts`
 
@@ -304,59 +334,160 @@ Validates that the authenticated user is a member of the organization in the rou
 export const requireOrgMembership = async (c: AppContext, next: Next) => {
     const userId = c.get('userId');
     const organizationId = c.req.param('organizationId');
-    
-    if (!userId) {
-        throw new UnauthorizedError("Authentication required");
+
+    // Super admins bypass org membership check
+    if (c.get('isSuperAdmin')) {
+        c.set('organizationId', organizationId);
+        c.set('membershipRole', 'owner'); // Treat as owner
+        await next();
+        return;
     }
-    
-    const db = getDbClient(c);
-    const membership = await db.query.member.findFirst({
-        where: and(
-            eq(schema.member.userId, userId),
-            eq(schema.member.organizationId, organizationId)
-        )
-    });
-    
+
+    const memberRepo = new MemberRepository(c);
+    const membership = await memberRepo.findMembership(userId, organizationId);
+
     if (!membership) {
-        throw new ForbiddenError(
-            `You are not a member of organization: ${organizationId}`
-        );
+        throw new ForbiddenError(`You are not a member of organization: ${organizationId}`);
     }
-    
-    // Store membership details in context
+
     c.set('organizationId', organizationId);
     c.set('membershipId', membership.id);
     c.set('membershipRole', membership.role);
-    
     await next();
 };
 ```
 
-**What it does**:
-- Extracts `organizationId` from route params
-- Queries database to verify user is a member
-- Stores `organizationId`, `membershipId`, and `membershipRole` in context
-- Throws `ForbiddenError` (403) if not a member
+---
 
-**Applied to**: All routes matching `/api/v1/organizations/:organizationId/*`
+### Layer 3: requirePermission
 
-### Middleware Chain
+Validates that the user's **org role** has the necessary permission for a specific resource and action. Uses static permissions defined in `shared/auth/permissions.ts`. **Super admins bypass this check**.
 
-```mermaid
-graph LR
-    Request[Request] --> RequireAuth[requireAuth]
-    RequireAuth -->|Sets userId| RequireOrgMembership[requireOrgMembership]
-    RequireOrgMembership -->|Sets org context| Handler[Route Handler]
-    RequireAuth -.No session.-> Unauthorized[401 Unauthorized]
-    RequireOrgMembership -.Not member.-> Forbidden[403 Forbidden]
+**File**: `api/middleware/require-permission.middleware.ts`
+
+```typescript
+export const requirePermission = (
+    resource: keyof typeof statement,
+    actions: (typeof statement)[keyof typeof statement][number][]
+) => {
+    return async (c: AppContext, next: Next) => {
+        // Super admins bypass all permission checks
+        if (c.get('isSuperAdmin')) {
+            await next();
+            return;
+        }
+
+        const currentRole = c.get('membershipRole');
+        const roleDefinition = roles[currentRole];
+        const result = roleDefinition.authorize({ [resource]: actions });
+
+        if (!result.success) {
+            throw new ForbiddenError(
+                `You are not allowed to access resource: ${resource}`
+            );
+        }
+
+        await next();
+    };
+};
 ```
+
+#### Permissions Definition
+
+Permissions are defined statically in `shared/auth/permissions.ts`:
+
+```typescript
+export const statement = {
+    project: ["create", "share", "update", "delete"],
+    invitation: ["create", "cancel"],
+    member: ["create", "update", "delete"],
+} as const;
+
+export const ac = createAccessControl(statement);
+
+export const roles = {
+    member: ac.newRole({
+        project: ["create"],
+    }),
+    admin: ac.newRole({
+        project: ["create", "update"],
+        invitation: ["create", "cancel"],
+        member: ["create", "update", "delete"],
+    }),
+    owner: ac.newRole({
+        project: ["create", "update", "delete"],
+        invitation: ["create", "cancel"],
+        member: ["create", "update", "delete"],
+    }),
+} as const;
+```
+
+**Performance**: These are static objects — permission checks are simple in-memory lookups with **zero database queries**.
+
+---
+
+### Protecting Routes
+
+Here's how to protect routes with different levels of authorization:
+
+#### Basic: Auth + org membership only
+
+```typescript
+// Any org member can access
+const orgRoutes = createRouter()
+    .openapi(MyRoutes.listProjects, MyHandler.listProjects);
+// requireAuth + requireOrgMembership are applied globally via mountAuthMiddleware
+```
+
+#### Permission-based: Specific resource + action
+
+```typescript
+import { requirePermission } from '@api/middleware/require-permission.middleware';
+
+// Only users with 'member:create' permission (admin, owner)
+const createMember = createRoute({
+    method: 'post',
+    path: '/orgs/{organizationId}/members',
+    middleware: [requirePermission('member', ['create'])] as const,
+    // ...
+});
+
+// Only users with 'project:update' permission (admin, owner)
+const updateProject = createRoute({
+    method: 'put',
+    path: '/orgs/{organizationId}/projects/{projectId}',
+    middleware: [requirePermission('project', ['update'])] as const,
+    // ...
+});
+
+// Only users with 'project:delete' permission (owner only)
+const deleteProject = createRoute({
+    method: 'delete',
+    path: '/orgs/{organizationId}/projects/{projectId}',
+    middleware: [requirePermission('project', ['delete'])] as const,
+    // ...
+});
+```
+
+#### Permission matrix by role
+
+| Resource | Action | Member | Admin | Owner | Super Admin |
+|----------|--------|--------|-------|-------|-------------|
+| project | create | ✅ | ✅ | ✅ | ✅ (bypass) |
+| project | update | ❌ | ✅ | ✅ | ✅ (bypass) |
+| project | delete | ❌ | ❌ | ✅ | ✅ (bypass) |
+| invitation | create | ❌ | ✅ | ✅ | ✅ (bypass) |
+| member | create | ❌ | ✅ | ✅ | ✅ (bypass) |
+
+---
 
 ### Context Variables
 
-After both middleware layers run, handlers have access to:
+After all middleware layers run, handlers have access to:
 
 ```typescript
 const userId = c.get('userId')!;              // From requireAuth
+const isSuperAdmin = c.get('isSuperAdmin');    // From requireAuth
 const organizationId = c.get('organizationId')!;  // From requireOrgMembership
 const membershipId = c.get('membershipId')!;      // From requireOrgMembership
 const membershipRole = c.get('membershipRole')!;  // From requireOrgMembership
@@ -366,56 +497,37 @@ const membershipRole = c.get('membershipRole')!;  // From requireOrgMembership
 
 ### Example Handler
 
-With both middleware layers, handlers are simplified:
-
 ```typescript
-export class LessonHandler {
-    static create: AppHandler = async (c) => {
-        // No need to check auth or membership - middleware did it!
+export class MemberHandler {
+    static createMember: AppHandler<typeof MemberRoutes.createMember> = async (c) => {
+        // No need to check auth, membership, or permissions — middleware did it!
         const userId = c.get('userId')!;
         const organizationId = c.get('organizationId')!;
-        const role = c.get('membershipRole')!;
+        const { email, name, role } = c.req.valid("json");
         
-        const data = c.req.valid("json");
-        
-        // Create resource with org and user context
-        const lesson = await db.insert(schema.lesson).values({
-            id: nanoid(),
-            userId,
-            organizationId,
-            ...data,
-        }).returning();
-        
-        return c.json(lesson[0]);
+        // Create the member...
+        return c.json(result, 201);
     };
 }
 ```
 
-**Benefits**:
-- ✅ No repeated membership checks in handlers
-- ✅ Single database query per request (cached in context)
-- ✅ Clean, readable handlers
-- ✅ Type-safe context access
+---
 
 ### Mounting Middleware
 
-Both layers are mounted in `api/lib/auth-middleware.lib.ts`:
+Both base layers are mounted in `api/lib/auth-middleware.lib.ts`:
 
 ```typescript
 export const mountAuthMiddleware = (app: AppOpenApi) => {
-    // Layer 1: Authentication (sets userId in context)
-    app.use('/api/v1/organizations/*', requireAuth);
+    // Layer 1: Authentication (sets userId, isSuperAdmin)
+    app.use('/api/v1/orgs/*', requireAuth);
 
-    // Layer 2: Organization membership (sets org context)
-    app.use('/api/v1/organizations/:organizationId/*', requireOrgMembership);
+    // Layer 2: Organization membership (sets organizationId, membershipId, membershipRole)
+    app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
 };
 ```
 
-**Execution order**:
-1. Request to `/api/v1/organizations/org-123/lessons`
-2. `requireAuth` runs → validates session → sets `userId`
-3. `requireOrgMembership` runs → validates membership → sets `organizationId`, `membershipId`, `membershipRole`
-4. Handler runs → has access to all context variables
+Layer 3 (`requirePermission`) is applied per-route via the `middleware` option in route definitions.
 
 ### Error Responses
 
@@ -433,6 +545,15 @@ Status: `401 Unauthorized`
 {
   "success": false,
   "message": "You are not a member of organization: org-123"
+}
+```
+Status: `403 Forbidden`
+
+**Insufficient permissions** (org member, but lacks required permission):
+```json
+{
+  "success": false,
+  "message": "You are not allowed to access resource: member"
 }
 ```
 Status: `403 Forbidden`
@@ -465,4 +586,3 @@ export const createApp = () => {
 ```
 
 **Important**: Order matters! CORS must run first to handle preflight OPTIONS requests.
-

@@ -7,6 +7,7 @@ export type AppEnv = {
     Variables: {
         logger: PinoLogger;
         userId?: string;  // Set by requireAuth middleware
+        isSuperAdmin?: boolean;  // Set by requireAuth middleware (platform-level admin, NOT org-level)
         organizationId?: string;  // Set by requireOrgMembership middleware
         membershipId?: string;  // Set by requireOrgMembership middleware
         membershipRole?: string;  // Set by requireOrgMembership middleware
