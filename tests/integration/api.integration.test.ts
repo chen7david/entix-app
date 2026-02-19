@@ -3,27 +3,21 @@ import { createTestDb } from "../lib/utils";
 import app from "@api/app";
 import { env } from "cloudflare:test";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
-import { authenticatedGet } from "../lib/api-request.helper";
+import { createTestClient } from "../lib/test-client";
 
 describe("API Integration Test", () => {
-    let sessionCookie: string;
+    let client: ReturnType<typeof createTestClient>;
     let orgId: string;
 
     beforeEach(async () => {
         await createTestDb();
         const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
-        sessionCookie = cookie;
+        client = createTestClient(app, env, cookie);
         orgId = id;
     });
 
     it("GET /api/v1/orgs/:orgId/users should return list of users in organization", async () => {
-        // The owner user was already created via createAuthenticatedOrg
-        const res = await authenticatedGet({
-            app,
-            env,
-            path: `/api/v1/orgs/${orgId}/users`,
-            cookie: sessionCookie,
-        });
+        const res = await client.orgs.users.list(orgId);
 
         expect(res.status).toBe(200);
 

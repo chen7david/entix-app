@@ -4,35 +4,25 @@ import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { getAuthCookie, createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
-import {
-    authenticatedPost,
-    unauthenticatedPost,
-    parseJson,
-    type ErrorResponse
-} from "../lib/api-request.helper";
+import { createTestClient, type TestClient } from "../lib/test-client";
+import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
 
 describe("Organization Membership Middleware Tests", () => {
+    let client: TestClient;
     let orgId: string;
-    let sessionCookie: string;
 
     beforeEach(async () => {
         await createTestDb();
         const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
-        sessionCookie = cookie;
+        client = createTestClient(app, env, cookie);
         orgId = id;
     });
 
     it("should allow access when user is a member", async () => {
         // User created org in beforeEach, so they're a member
         const payload = createMockMemberCreationPayload();
-        const res = await authenticatedPost({
-            app,
-            env,
-            path: `/api/v1/orgs/${orgId}/members`,
-            body: payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create(orgId, payload);
 
         // Should succeed (user is owner of org)
         expect(res.status).toBe(201);
@@ -51,14 +41,9 @@ describe("Organization Membership Middleware Tests", () => {
         });
 
         // Second user tries to access first org's resources
+        const intruderClient = createTestClient(app, env, intruderCookie);
         const payload = createMockMemberCreationPayload();
-        const res = await authenticatedPost({
-            app,
-            env,
-            path: `/api/v1/orgs/${orgId}/members`,
-            body: payload,
-            cookie: intruderCookie
-        });
+        const res = await intruderClient.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(403);
         const body = await parseJson<ErrorResponse>(res);
@@ -68,14 +53,10 @@ describe("Organization Membership Middleware Tests", () => {
     });
 
     it("should return 401 when not authenticated", async () => {
-        // Try to access without session token
+        // Client without cookies (unauthenticated)
+        const unauthClient = createTestClient(app, env);
         const payload = createMockMemberCreationPayload();
-        const res = await unauthenticatedPost({
-            app,
-            env,
-            path: `/api/v1/orgs/${orgId}/members`,
-            body: payload
-        });
+        const res = await unauthClient.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(401);
         const body = await parseJson<ErrorResponse>(res);
@@ -86,13 +67,7 @@ describe("Organization Membership Middleware Tests", () => {
     it("should handle non-existent organization gracefully", async () => {
         // Try to access a fake org
         const payload = createMockMemberCreationPayload();
-        const res = await authenticatedPost({
-            app,
-            env,
-            path: `/api/v1/orgs/fake-org-id/members`,
-            body: payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create("fake-org-id", payload);
 
         // Middleware checks membership before handler checks org existence
         // So this returns 403 (not a member) instead of 404 (org not found)
@@ -104,13 +79,7 @@ describe("Organization Membership Middleware Tests", () => {
     it("should verify middleware sets context correctly", async () => {
         // Create a member successfully using the handler
         const payload = createMockMemberCreationPayload();
-        const res = await authenticatedPost({
-            app,
-            env,
-            path: `/api/v1/orgs/${orgId}/members`,
-            body: payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(201);
 

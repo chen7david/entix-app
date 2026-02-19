@@ -4,29 +4,24 @@ import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
 import { getAuthCookie, createAuthenticatedOrg } from "../lib/auth-test.helper";
-import { createMemberRequest } from "../lib/api-request.helper";
+import { createTestClient, type TestClient } from "../lib/test-client";
+import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
 
 describe("Member Creation Integration Tests", () => {
+    let client: TestClient;
     let orgId: string;
-    let sessionCookie: string;
 
     beforeEach(async () => {
         await createTestDb();
         const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
-        sessionCookie = cookie;
+        client = createTestClient(app, env, cookie);
         orgId = id;
     });
 
     it("should create a member successfully", async () => {
         const payload = createMockMemberCreationPayload();
-        const res = await createMemberRequest({
-            app,
-            env,
-            organizationId: orgId,
-            payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(201);
         const body = await res.json() as CreateMemberResponseDTO;
@@ -39,35 +34,17 @@ describe("Member Creation Integration Tests", () => {
         const payload = createMockMemberCreationPayload();
 
         // First request - should succeed
-        await createMemberRequest({
-            app,
-            env,
-            organizationId: orgId,
-            payload,
-            cookie: sessionCookie
-        });
+        await client.orgs.members.create(orgId, payload);
 
         // Second request with same email - should fail
-        const res = await createMemberRequest({
-            app,
-            env,
-            organizationId: orgId,
-            payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(409);
     });
 
     it("should fail when organization does not exist", async () => {
         const payload = createMockMemberCreationPayload();
-        const res = await createMemberRequest({
-            app,
-            env,
-            organizationId: "fake-id",
-            payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create("fake-id", payload);
 
         // Middleware checks membership before handler checks org existence
         // User is not a member of fake-id, so 403 is returned
@@ -76,13 +53,7 @@ describe("Member Creation Integration Tests", () => {
 
     it("should create member with different role", async () => {
         const payload = createMockMemberCreationPayload({ role: "admin" });
-        const res = await createMemberRequest({
-            app,
-            env,
-            organizationId: orgId,
-            payload,
-            cookie: sessionCookie
-        });
+        const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(201);
         const body = await res.json() as CreateMemberResponseDTO;
@@ -101,18 +72,15 @@ describe("Member Creation Integration Tests", () => {
             }
         });
 
+        // Create a client for the intruder
+        const intruderClient = createTestClient(app, env, intruderCookie);
+
         // Try to add member to the FIRST organization (should fail - not a member)
         const payload = createMockMemberCreationPayload();
-        const res = await createMemberRequest({
-            app,
-            env,
-            organizationId: orgId,
-            payload,
-            cookie: intruderCookie
-        });
+        const res = await intruderClient.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(403);
-        const body = await res.json() as { message: string };
+        const body = await parseJson<ErrorResponse>(res);
         // Middleware now includes org ID in error message
         expect(body.message).toContain("You are not a member of organization");
     });

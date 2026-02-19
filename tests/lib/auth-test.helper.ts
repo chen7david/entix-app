@@ -2,6 +2,10 @@ import type { Hono } from "hono";
 import type { AppEnv } from "@api/helpers/types.helpers";
 import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
+import { createMockMember } from "../factories/member.factory";
+import { drizzle } from "drizzle-orm/d1";
+import { user as userTable, member as memberTable } from "@api/db/schema.db";
+import { eq } from "drizzle-orm";
 
 /**
  * Extract cookies from a Response object
@@ -121,3 +125,88 @@ export async function createAuthenticatedOrg(params: {
         orgData,
     };
 }
+
+/**
+ * Create a user with known credentials, add them to an org with a
+ * specific role via direct DB insert, and return their session cookie.
+ *
+ * Uses direct DB insertion to bypass the invite/email flow — this is
+ * intentional for test setup (not suitable for production code).
+ */
+export async function createOrgMemberWithRole(params: {
+    app: Hono<AppEnv>;
+    env: any;
+    orgId: string;
+    role: "owner" | "admin" | "member";
+    email: string;
+}): Promise<{ cookie: string; userId: string }> {
+    const { app, env, orgId, role, email } = params;
+
+    // 1. Sign up + sign in with known password
+    const cookie = await getAuthCookie({
+        app,
+        env,
+        user: { email, password: "Password123!", name: `Test ${role}` },
+    });
+
+    // 2. Look up user ID from DB
+    const db = drizzle(env.DB);
+    const [dbUser] = await db
+        .select({ id: userTable.id })
+        .from(userTable)
+        .where(eq(userTable.email, email));
+
+    if (!dbUser) throw new Error(`User ${email} not found in DB after sign-up`);
+
+    // 3. Insert membership directly (bypasses invite flow)
+    const mockMember = createMockMember({
+        organizationId: orgId,
+        userId: dbUser.id,
+        role,
+    });
+    await db.insert(memberTable).values(mockMember);
+
+    return { cookie, userId: dbUser.id };
+}
+
+/**
+ * Create a super admin user (platform-level).
+ * Signs up with known credentials, sets `user.role = "admin"` in DB,
+ * then re-authenticates so the session reflects the updated role.
+ */
+export async function createSuperAdmin(params: {
+    app: Hono<AppEnv>;
+    env: any;
+    email?: string;
+}): Promise<{ cookie: string; email: string }> {
+    const email = params.email ?? `superadmin.${Date.now()}@example.com`;
+    const password = "Password123!";
+
+    // Initial sign-up + sign-in
+    await getAuthCookie({
+        app: params.app,
+        env: params.env,
+        user: { email, password, name: "Super Admin" },
+    });
+
+    // Set user.role = "admin" directly in DB (better-auth admin plugin field)
+    const db = drizzle(params.env.DB);
+    await db
+        .update(userTable)
+        .set({ role: "admin" } as any)
+        .where(eq(userTable.email, email));
+
+    // Re-sign-in directly (NOT via getAuthCookie which calls sign-up again)
+    const signInRes = await params.app.request("/api/v1/auth/sign-in/email", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password }),
+    }, params.env);
+
+    if (!signInRes.ok) {
+        throw new Error(`Super admin re-sign-in failed: ${signInRes.status}`);
+    }
+
+    return { cookie: extractCookies(signInRes), email };
+}
+
