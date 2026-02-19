@@ -18,7 +18,7 @@ export async function validateSession(c: AppContext): Promise<string> {
     }
 
     c.set("userId", session.user.id);
-    c.set("isSuperAdmin", (session.user as any).role === "admin");
+    c.set("isSuperAdmin", session.user.role === "admin");
     return session.user.id;
 }
 
