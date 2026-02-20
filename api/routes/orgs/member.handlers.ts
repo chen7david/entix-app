@@ -2,10 +2,8 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { MemberRoutes } from './member.routes';
 import { UserRepository } from '@api/repositories/user.repository';
-import { OrganizationRepository } from '@api/repositories/organization.repository';
 import { MemberRepository } from '@api/repositories/member.repository';
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { getDbClient } from "@api/factories/db.factory";
 import { nanoid } from "nanoid";
 
 export class MemberHandler {
@@ -17,10 +15,7 @@ export class MemberHandler {
         const organizationId = c.get('organizationId')!;
 
         c.var.logger.info({ currentUserId, organizationId, email, name, role }, "Creating new member");
-
-        const db = getDbClient(c);
         const userRepo = new UserRepository(c);
-        const orgRepo = new OrganizationRepository(c);
         const memberRepo = new MemberRepository(c);
 
         // Check if user already exists

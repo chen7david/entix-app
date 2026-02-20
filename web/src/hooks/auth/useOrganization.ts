@@ -80,7 +80,7 @@ export const useOrganization = () => {
         });
 
         // 2. Fetch and cache active organization
-        let activeOrg = await queryClient.fetchQuery({
+        const activeOrg = await queryClient.fetchQuery({
             queryKey: ['activeOrganization'],
             queryFn: async () => {
                 const { data } = await authClient.organization.getFullOrganization();

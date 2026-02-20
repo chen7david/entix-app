@@ -36,7 +36,7 @@ export const OrganizationMembersPage = () => {
             await createMemberMutation.mutateAsync(values);
             setIsCreateModalOpen(false);
             createForm.resetFields();
-        } catch (error: any) {
+        } catch {
             // Error handling is done in the hook
         }
     };
@@ -49,7 +49,7 @@ export const OrganizationMembersPage = () => {
         try {
             await updateMemberRoles(memberId, newRoles);
             message.success('Roles updated successfully');
-        } catch (error) {
+        } catch {
             message.error('Failed to update roles');
         }
     };
@@ -58,7 +58,7 @@ export const OrganizationMembersPage = () => {
         try {
             await removeMember(memberId);
             message.success('Member removed successfully');
-        } catch (error) {
+        } catch {
             message.error('Failed to remove member');
         }
     };

@@ -10,7 +10,7 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Pa
         emailAndPassword: {
             enabled: true,
             requireEmailVerification,
-            sendResetPassword: async ({ user, url, token }) => {
+            async sendResetPassword({ user, token }) {
                 if (!ctx || !mailer) return;
                 const resetUrl = `${ctx.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
                 ctx.executionCtx.waitUntil(

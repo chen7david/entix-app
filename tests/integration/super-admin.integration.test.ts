@@ -4,7 +4,7 @@ import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
 import { createAuthenticatedOrg, getAuthCookie, createSuperAdmin } from "../lib/auth-test.helper";
-import { createTestClient, type TestClient } from "../lib/test-client";
+import { createTestClient } from "../lib/test-client";
 import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
 

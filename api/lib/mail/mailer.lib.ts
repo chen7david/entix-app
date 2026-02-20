@@ -1,4 +1,3 @@
-import { AppContext } from "@api/helpers/types.helpers";
 import { Resend } from "resend";
 
 type SendTemplateParams = {

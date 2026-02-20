@@ -1,6 +1,5 @@
 import { UnauthorizedError } from "@api/errors/app.error";
 import { auth } from "@api/lib/auth/auth";
-import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
 

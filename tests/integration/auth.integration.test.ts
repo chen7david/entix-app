@@ -6,7 +6,6 @@ import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 import { mockMemberAddFailure } from "../lib/mock-errors";
-import { getDbClient } from "@api/factories/db.factory";
 import * as schema from "@api/db/schema.db";
 import { eq } from "drizzle-orm";
 
