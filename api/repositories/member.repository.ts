@@ -83,4 +83,19 @@ export class MemberRepository {
             createdAt: member.createdAt,
         };
     }
+
+    /**
+     * Prepare a query to add a member for batching
+     */
+    prepareAdd(id: string, organizationId: string, userId: string, role: string) {
+        const db = getDbClient(this.ctx);
+        const now = new Date();
+        return db.insert(schema.member).values({
+            id,
+            organizationId,
+            userId,
+            role,
+            createdAt: now,
+        });
+    }
 }

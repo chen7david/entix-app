@@ -98,4 +98,39 @@ export class UserRepository {
         await db.delete(schema.session).where(eq(schema.session.userId, userId));
         await db.delete(schema.user).where(eq(schema.user.id, userId));
     }
+
+    /**
+     * Prepare a query to create a user for batching
+     */
+    prepareCreateUser(id: string, email: string, name: string, emailVerified: boolean) {
+        const db = getDbClient(this.ctx);
+        const now = new Date();
+        return db.insert(schema.user).values({
+            id,
+            email,
+            name,
+            emailVerified,
+            createdAt: now,
+            updatedAt: now,
+            role: "user",
+            banned: false,
+        });
+    }
+
+    /**
+     * Prepare a query to create an account for batching
+     */
+    prepareCreateAccount(id: string, userId: string, providerId: string, passwordHash: string) {
+        const db = getDbClient(this.ctx);
+        const now = new Date();
+        return db.insert(schema.account).values({
+            id,
+            accountId: providerId === "credential" ? userId : id,
+            providerId,
+            userId,
+            password: passwordHash,
+            createdAt: now,
+            updatedAt: now,
+        });
+    }
 }
