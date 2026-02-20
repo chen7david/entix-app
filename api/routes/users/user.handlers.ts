@@ -4,9 +4,6 @@ import { UserRoutes } from './user.routes';
 import { UserRepository } from '@api/repositories/user.repository';
 import { MemberRepository } from '@api/repositories/member.repository';
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { getDbClient } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
-import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export class UserHandler {
@@ -29,7 +26,6 @@ export class UserHandler {
 
         c.var.logger.info({ email, name, organizationId }, "Creating new user");
 
-        const db = getDbClient(c);
         const userRepo = new UserRepository(c);
         const memberRepo = new MemberRepository(c);
 
@@ -63,9 +59,7 @@ export class UserHandler {
         } catch (error) {
             c.var.logger.error({ error, userId: userResult.user.id }, "Error establishing membership, rolling back user creation");
 
-            await db.delete(schema.account).where(eq(schema.account.userId, userResult.user.id));
-            await db.delete(schema.session).where(eq(schema.session.userId, userResult.user.id));
-            await db.delete(schema.user).where(eq(schema.user.id, userResult.user.id));
+            await userRepo.deleteUserAndAssociatedData(userResult.user.id);
 
             throw new InternalServerError("Membership creation failed, user creation rolled back");
         }

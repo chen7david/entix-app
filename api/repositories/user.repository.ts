@@ -86,4 +86,16 @@ export class UserRepository {
 
         return members.map((m) => m.user);
     }
+
+    /**
+     * Delete user and all associated BetterAuth data (accounts, sessions)
+     * Used for compensating transactions / complete user removal
+     */
+    async deleteUserAndAssociatedData(userId: string): Promise<void> {
+        const db = getDbClient(this.ctx);
+        // Cascade manually since D1 lacks foreign key cascade delete guarantees in all configurations
+        await db.delete(schema.account).where(eq(schema.account.userId, userId));
+        await db.delete(schema.session).where(eq(schema.session.userId, userId));
+        await db.delete(schema.user).where(eq(schema.user.id, userId));
+    }
 }

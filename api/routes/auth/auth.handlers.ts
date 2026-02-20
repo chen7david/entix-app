@@ -5,15 +5,11 @@ import { UserRepository } from "@api/repositories/user.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { getDbClient } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
-import { eq } from "drizzle-orm";
 
 export class AuthHandler {
     static signupWithOrg: AppHandler<typeof AuthRoutes.signupWithOrg> = async (c) => {
         const { email, password, name, organizationName } = c.req.valid("json");
 
-        const db = getDbClient(c);
         const userRepo = new UserRepository(c);
         const orgRepo = new OrganizationRepository(c);
         const memberRepo = new MemberRepository(c);
@@ -44,12 +40,15 @@ export class AuthHandler {
         });
 
         // Create organization via repository
+        let createdOrgId: string | undefined;
+
         try {
             c.var.logger.info({ organizationName, slug }, "Creating organization");
             const orgId = await orgRepo.createOrganization({
                 name: organizationName,
                 slug,
             });
+            createdOrgId = orgId;
 
             // Add user as owner via repository
             c.var.logger.info({ userId: userResult.user.id, orgId }, "Adding user as owner");
@@ -78,9 +77,13 @@ export class AuthHandler {
             c.var.logger.error({ error, userId: userResult.user.id }, "Error during organization setup, rolling back user creation");
 
             // Compensating transaction: remove the created user arrays from BetterAuth
-            await db.delete(schema.account).where(eq(schema.account.userId, userResult.user.id));
-            await db.delete(schema.session).where(eq(schema.session.userId, userResult.user.id));
-            await db.delete(schema.user).where(eq(schema.user.id, userResult.user.id));
+            await userRepo.deleteUserAndAssociatedData(userResult.user.id);
+
+            // If the organization was created before the crash, clean it up too (Scenario B)
+            if (createdOrgId) {
+                await orgRepo.deleteOrganization(createdOrgId);
+                c.var.logger.info({ orgId: createdOrgId }, "Rolled back orphaned organization");
+            }
 
             throw new InternalServerError("Failed to setup organization, please try again");
         }

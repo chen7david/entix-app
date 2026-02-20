@@ -5,12 +5,17 @@ import { createTestDb } from "../lib/utils";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
+import { mockMemberAddFailure } from "../lib/mock-errors";
+import { getDbClient } from "@api/factories/db.factory";
+import * as schema from "@api/db/schema.db";
+import { eq } from "drizzle-orm";
 
 describe("Auth Integration Test", () => {
     let client: TestClient;
+    let db: ReturnType<typeof createTestDb> extends Promise<infer U> ? U : never;
 
     beforeEach(async () => {
-        await createTestDb();
+        db = await createTestDb();
         client = createTestClient(app, env);
     });
 
@@ -62,5 +67,32 @@ describe("Auth Integration Test", () => {
         expect(res.status).toBe(409);
         const body = await res.json() as { message: string };
         expect(body.message).toBe("Organization name already taken");
+    });
+
+    it("POST /api/v1/auth/signup-with-org should rollback user and organization on setup failure", async () => {
+        const payload = createMockSignUpWithOrgPayload();
+
+        // Mock the member repository to fail
+        mockMemberAddFailure();
+
+        const res = await client.auth.signUpWithOrg(payload);
+
+        // Ensure the handler correctly caught and rolled it back
+        expect(res.status).toBe(500);
+        const body = await res.json() as { message: string };
+        expect(body.message).toBe("Failed to setup organization, please try again");
+
+        // Verify the user was deleted
+        const user = await db.query.user.findFirst({
+            where: eq(schema.user.email, payload.email)
+        });
+        expect(user).toBeUndefined();
+
+        // Verify the organization was deleted
+        const slug = payload.organizationName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const org = await db.query.organization.findFirst({
+            where: eq(schema.organization.slug, slug)
+        });
+        expect(org).toBeUndefined();
     });
 });
