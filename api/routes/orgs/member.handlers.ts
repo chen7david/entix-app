@@ -4,8 +4,11 @@ import { MemberRoutes } from './member.routes';
 import { UserRepository } from '@api/repositories/user.repository';
 import { OrganizationRepository } from '@api/repositories/organization.repository';
 import { MemberRepository } from '@api/repositories/member.repository';
-import { ConflictError } from "@api/errors/app.error";
-import { nanoid } from "nanoid"; // Assuming nanoid is imported from 'nanoid'
+import { ConflictError, InternalServerError } from "@api/errors/app.error";
+import { getDbClient } from "@api/factories/db.factory";
+import * as schema from "@api/db/schema.db";
+import { eq } from "drizzle-orm";
+import { nanoid } from "nanoid";
 
 export class MemberHandler {
     static createMember: AppHandler<typeof MemberRoutes.createMember> = async (c) => {
@@ -17,6 +20,7 @@ export class MemberHandler {
 
         c.var.logger.info({ currentUserId, organizationId, email, name, role }, "Creating new member");
 
+        const db = getDbClient(c);
         const userRepo = new UserRepository(c);
         const orgRepo = new OrganizationRepository(c);
         const memberRepo = new MemberRepository(c);
@@ -39,29 +43,39 @@ export class MemberHandler {
             name,
         });
 
-        // Add member to organization
-        c.var.logger.info({ userId: userResult.user.id, organizationId, role }, "Adding member to organization");
-        const memberResult = await memberRepo.addMember({
-            userId: userResult.user.id,
-            organizationId,
-            role,
-        });
+        try {
+            // Add member to organization
+            c.var.logger.info({ userId: userResult.user.id, organizationId, role }, "Adding member to organization");
+            const memberResult = await memberRepo.addMember({
+                userId: userResult.user.id,
+                organizationId,
+                role,
+            });
 
-        // Send password reset email so user can set their own password
-        const resetUrl = `${c.env.FRONTEND_URL}/auth/reset-password`;
-        c.var.logger.info({ email, resetUrl }, "Sending password reset email");
-        await userRepo.sendPasswordResetEmail(email, resetUrl);
+            // Send password reset email so user can set their own password
+            const resetUrl = `${c.env.FRONTEND_URL}/auth/reset-password`;
+            c.var.logger.info({ email, resetUrl }, "Sending password reset email");
+            await userRepo.sendPasswordResetEmail(email, resetUrl);
 
-        c.var.logger.info({ userId: userResult.user.id, memberId: memberResult.id }, "Member created successfully");
+            c.var.logger.info({ userId: userResult.user.id, memberId: memberResult.id }, "Member created successfully");
 
-        return c.json({
-            member: memberResult,
-            user: {
-                id: userResult.user.id,
-                email: userResult.user.email,
-                name: userResult.user.name,
-                emailVerified: userResult.user.emailVerified,
-            },
-        }, HttpStatusCodes.CREATED);
+            return c.json({
+                member: memberResult,
+                user: {
+                    id: userResult.user.id,
+                    email: userResult.user.email,
+                    name: userResult.user.name,
+                    emailVerified: userResult.user.emailVerified,
+                },
+            }, HttpStatusCodes.CREATED);
+        } catch (error) {
+            c.var.logger.error({ error, userId: userResult.user.id }, "Error establishing membership, rolling back user creation");
+
+            await db.delete(schema.account).where(eq(schema.account.userId, userResult.user.id));
+            await db.delete(schema.session).where(eq(schema.session.userId, userResult.user.id));
+            await db.delete(schema.user).where(eq(schema.user.id, userResult.user.id));
+
+            throw new InternalServerError("Membership creation failed, user creation rolled back");
+        }
     };
 }

@@ -1,22 +1,14 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { getDbClient } from "@api/factories/db.factory";
-import { auth } from "@api/lib/auth/auth";
 import * as schema from "@api/db/schema.db";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { OrgRole } from "@shared/auth/permissions";
 
 export interface AddMemberInput {
     userId: string;
     organizationId: string;
-    role: string;
-}
-
-export interface AddMemberResult {
-    id: string;
-    userId: string;
-    organizationId: string;
-    role: string;
-    createdAt: Date;
+    role: OrgRole;
 }
 
 /**
@@ -30,7 +22,7 @@ export class MemberRepository {
      * Add a user as a member to an organization
      * Uses direct DB insertion since server-side auth doesn't expose organization methods
      */
-    async addMember(input: AddMemberInput): Promise<AddMemberResult> {
+    async addMember(input: AddMemberInput): Promise<schema.Member> {
         const db = getDbClient(this.ctx);
         const memberId = nanoid();
         const now = new Date();
@@ -70,13 +62,7 @@ export class MemberRepository {
      * Find membership details for a user in an organization
      * Returns null if user is not a member
      */
-    async findMembership(userId: string, organizationId: string): Promise<{
-        id: string;
-        userId: string;
-        organizationId: string;
-        role: string;
-        createdAt: Date;
-    } | null> {
+    async findMembership(userId: string, organizationId: string): Promise<schema.Member | null> {
         const db = getDbClient(this.ctx);
         const member = await db.query.member.findFirst({
             where: and(

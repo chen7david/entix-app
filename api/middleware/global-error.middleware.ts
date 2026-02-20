@@ -1,16 +1,16 @@
-import { Context } from 'hono';
+import type { AppContext } from '../helpers/types.helpers';
 import { ZodError } from 'zod';
 import { HTTPException } from 'hono/http-exception';
 import { AppError } from '../errors/app.error';
 import { z } from 'zod';
 
-export const globalErrorHandler = async (err: Error, c: Context) => {
-    console.error('Caught error:', err);
+export const globalErrorHandler = async (err: Error, c: AppContext) => {
+    c.var.logger.error({ err }, 'Caught error');
 
     // 1. Zod validation error
     if (err instanceof ZodError) {
         const flattened = z.treeifyError(err);
-        console.log('Flattened Zod error:', flattened);
+        c.var.logger.warn({ flattened }, 'Flattened Zod error');
         return c.json(
             {
                 success: false,

@@ -53,6 +53,8 @@ export const session = sqliteTable(
     (table) => [index("session_userId_idx").on(table.userId)],
 );
 
+export type Session = typeof session.$inferSelect;
+
 export const account = sqliteTable(
     "account",
     {
@@ -83,6 +85,8 @@ export const account = sqliteTable(
     (table) => [index("account_userId_idx").on(table.userId)],
 );
 
+export type Account = typeof account.$inferSelect;
+
 export const verification = sqliteTable(
     "verification",
     {
@@ -101,6 +105,8 @@ export const verification = sqliteTable(
     (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
+export type Verification = typeof verification.$inferSelect;
+
 export const organization = sqliteTable(
     "organization",
     {
@@ -113,6 +119,8 @@ export const organization = sqliteTable(
     },
     (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
 );
+
+export type Organization = typeof organization.$inferSelect;
 
 export const member = sqliteTable(
     "member",
@@ -133,6 +141,8 @@ export const member = sqliteTable(
         uniqueIndex("member_org_user_uidx").on(table.organizationId, table.userId),
     ],
 );
+
+export type Member = typeof member.$inferSelect;
 
 export const invitation = sqliteTable(
     "invitation",
@@ -157,6 +167,8 @@ export const invitation = sqliteTable(
         index("invitation_email_idx").on(table.email),
     ],
 );
+
+export type Invitation = typeof invitation.$inferSelect;
 
 export const userRelations = relations(user, ({ many }) => ({
     sessions: many(session),

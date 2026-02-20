@@ -1,9 +1,9 @@
 import { z } from '@hono/zod-openapi'
 
 export const createMemberSchema = z.object({
-    email: z.string().email().openapi({ example: 'newmember@example.com' }),
+    email: z.email().openapi({ example: 'newmember@example.com' }),
     name: z.string().min(1).openapi({ example: 'John Doe' }),
-    role: z.string().min(1).openapi({ example: 'member' }),
+    role: z.enum(['owner', 'admin', 'member']).openapi({ example: 'member' }),
 });
 
 export type CreateMemberDTO = z.infer<typeof createMemberSchema>;

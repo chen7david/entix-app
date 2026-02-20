@@ -38,7 +38,7 @@ export class OrganizationRepository {
     /**
      * Find organization by slug
      */
-    async findBySlug(slug: string): Promise<typeof schema.organization.$inferSelect | undefined> {
+    async findBySlug(slug: string): Promise<schema.Organization | undefined> {
         const db = getDbClient(this.ctx);
         return await db.query.organization.findFirst({
             where: eq(schema.organization.slug, slug),
@@ -48,7 +48,7 @@ export class OrganizationRepository {
     /**
      * Find organization by ID
      */
-    async findById(id: string): Promise<typeof schema.organization.$inferSelect | undefined> {
+    async findById(id: string): Promise<schema.Organization | undefined> {
         const db = getDbClient(this.ctx);
         return await db.query.organization.findFirst({
             where: eq(schema.organization.id, id),

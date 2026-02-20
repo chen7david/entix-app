@@ -4,12 +4,16 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { UserRepository } from "@api/repositories/user.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
-import { ConflictError } from "@api/errors/app.error";
+import { ConflictError, InternalServerError } from "@api/errors/app.error";
+import { getDbClient } from "@api/factories/db.factory";
+import * as schema from "@api/db/schema.db";
+import { eq } from "drizzle-orm";
 
 export class AuthHandler {
     static signupWithOrg: AppHandler<typeof AuthRoutes.signupWithOrg> = async (c) => {
         const { email, password, name, organizationName } = c.req.valid("json");
 
+        const db = getDbClient(c);
         const userRepo = new UserRepository(c);
         const orgRepo = new OrganizationRepository(c);
         const memberRepo = new MemberRepository(c);
@@ -40,34 +44,45 @@ export class AuthHandler {
         });
 
         // Create organization via repository
-        c.var.logger.info({ organizationName, slug }, "Creating organization");
-        const orgId = await orgRepo.createOrganization({
-            name: organizationName,
-            slug,
-        });
-
-        // Add user as owner via repository
-        c.var.logger.info({ userId: userResult.user.id, orgId }, "Adding user as owner");
-        await memberRepo.addMember({
-            userId: userResult.user.id,
-            organizationId: orgId,
-            role: "owner",
-        });
-
-        c.var.logger.info({ userId: userResult.user.id, orgId }, "Signup with organization completed");
-
-        return c.json({
-            user: {
-                id: userResult.user.id,
-                email: userResult.user.email,
-                name: userResult.user.name,
-                role: "owner",
-            },
-            organization: {
-                id: orgId,
+        try {
+            c.var.logger.info({ organizationName, slug }, "Creating organization");
+            const orgId = await orgRepo.createOrganization({
                 name: organizationName,
-                slug: slug,
-            },
-        }, HttpStatusCodes.CREATED);
+                slug,
+            });
+
+            // Add user as owner via repository
+            c.var.logger.info({ userId: userResult.user.id, orgId }, "Adding user as owner");
+            await memberRepo.addMember({
+                userId: userResult.user.id,
+                organizationId: orgId,
+                role: "owner",
+            });
+
+            c.var.logger.info({ userId: userResult.user.id, orgId }, "Signup with organization completed");
+
+            return c.json({
+                user: {
+                    id: userResult.user.id,
+                    email: userResult.user.email,
+                    name: userResult.user.name,
+                    role: "owner",
+                },
+                organization: {
+                    id: orgId,
+                    name: organizationName,
+                    slug: slug,
+                },
+            }, HttpStatusCodes.CREATED);
+        } catch (error) {
+            c.var.logger.error({ error, userId: userResult.user.id }, "Error during organization setup, rolling back user creation");
+
+            // Compensating transaction: remove the created user arrays from BetterAuth
+            await db.delete(schema.account).where(eq(schema.account.userId, userResult.user.id));
+            await db.delete(schema.session).where(eq(schema.session.userId, userResult.user.id));
+            await db.delete(schema.user).where(eq(schema.user.id, userResult.user.id));
+
+            throw new InternalServerError("Failed to setup organization, please try again");
+        }
     };
 }

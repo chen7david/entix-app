@@ -33,6 +33,7 @@ export const requireOrgMembership = async (c: AppContext, next: Next) => {
     if (c.get('isSuperAdmin')) {
         c.var.logger.info({ userId, organizationId }, "Super admin bypass — skipping membership check");
         c.set('organizationId', organizationId);
+        c.set('membershipId', 'super-admin'); // Sentinel value for super admins
         c.set('membershipRole', 'owner'); // Treat as owner for downstream handlers
         await next();
         return;

@@ -52,7 +52,7 @@ export class UserRepository {
     /**
      * Find user by email address
      */
-    async findUserByEmail(email: string): Promise<typeof schema.user.$inferSelect | undefined> {
+    async findUserByEmail(email: string): Promise<schema.User | undefined> {
         const db = getDbClient(this.ctx);
         return await db.query.user.findFirst({
             where: eq(schema.user.email, email),
@@ -75,9 +75,8 @@ export class UserRepository {
      * Find all users belonging to an organization
      * Queries via the member table to scope results to the given org
      */
-    async findUsersByOrganization(organizationId: string): Promise<(typeof schema.user.$inferSelect)[]> {
+    async findUsersByOrganization(organizationId: string): Promise<schema.User[]> {
         const db = getDbClient(this.ctx);
-
         const members = await db.query.member.findMany({
             where: eq(schema.member.organizationId, organizationId),
             with: {

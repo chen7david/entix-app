@@ -34,7 +34,6 @@ export async function validateSession(c: AppContext): Promise<string> {
  * ```
  */
 export const requireAuth = async (c: AppContext, next: Next) => {
-    const userId = await validateSession(c);
-    c.set("userId", userId);
+    await validateSession(c);
     await next();
 };
