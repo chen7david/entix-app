@@ -1,6 +1,7 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { Mailer } from "../../../mail/mailer.lib";
 import { BetterAuthOptions } from "better-auth";
+import { UserRepository } from "@api/repositories/user.repository";
 
 export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => {
     // Disable email verification requirement in tests
@@ -23,6 +24,14 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Pa
                         },
                     })
                 );
+            },
+            async onPasswordReset({ user }) {
+                if (!ctx) return;
+
+                ctx.var.logger.info({ userId: user.id, email: user.email }, "Password reset successful, ensuring email is verified");
+
+                const userRepo = new UserRepository(ctx);
+                await userRepo.updateUser(user.id, { emailVerified: true });
             },
         },
     };

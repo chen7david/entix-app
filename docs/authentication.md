@@ -45,3 +45,39 @@ To generate the schema:
 ```bash
 npm run auth:generate
 ```
+
+## Registration Flow
+
+Entix utilizes a unified, atomic registration flow for all user creation to guarantee data integrity across the `User`, `Account`, `Member`, and `Organization` domains.
+
+### The `RegistrationService`
+
+All user creation passes through `RegistrationService` rather than calling Better Auth directly or writing raw queries from the route handlers. This explicitly prevents orphaned data (e.g., a "User" existing without an associated "Member").
+
+It implements two primary atomic flows using Cloudflare D1's `db.batch()`:
+
+1. **`signupWithOrg`**: Called when a new user registers organically. It atomically inserts a `User`, a `Credential Account`, an `Organization`, and a `Member` record designating them as the owner.
+2. **`createUserAndMember`**: Called when an admin explicitly invites a new user to an existing organization. It atomically inserts a `User`, a `Credential Account`, and a `Member` record.
+
+### The "Invited User" Flow
+
+When an admin invites a user via `createUserAndMember`:
+
+1. The service generates a securely hashed dummy password to create the credential account.
+2. The user is inserted with `emailVerified: false`.
+3. The service triggers Better Auth to email the user a **Password Reset Token**.
+
+Because the user is explicitly invited, we want to give them a single-link onboarding experience where setting their password *simultaneously* verifies their email. 
+
+To achieve this, we listen for successful password resets in our Better Auth configuration:
+
+```typescript
+// api/lib/auth/config/features/email-and-password.feature.ts
+async onPasswordReset({ user }) {
+    if (!ctx) return;
+    const userRepo = new UserRepository(ctx);
+    await userRepo.updateUser(user.id, { emailVerified: true });
+}
+```
+
+When the invited user clicks the email link and successfully sets their password on the frontend, the backend intercepts this event and automatically enforces `emailVerified = true`.

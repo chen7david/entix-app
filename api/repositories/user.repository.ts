@@ -60,6 +60,16 @@ export class UserRepository {
     }
 
     /**
+     * Update an existing user's data
+     */
+    async updateUser(userId: string, data: Partial<typeof schema.user.$inferInsert>): Promise<void> {
+        const db = getDbClient(this.ctx);
+        await db.update(schema.user)
+            .set(data)
+            .where(eq(schema.user.id, userId));
+    }
+
+    /**
      * Send password reset email to user
      * Uses BetterAuth's built-in password reset functionality
      */
