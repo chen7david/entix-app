@@ -31,18 +31,18 @@ export const requirePermission = (
     resource: keyof typeof statement,
     actions: (typeof statement)[keyof typeof statement][number][]
 ) => {
-    return async (c: AppContext, next: Next) => {
+    return async (ctx: AppContext, next: Next) => {
         // Super admins bypass all permission checks
-        if (c.get('isSuperAdmin')) {
-            c.var.logger.info(
-                { userId: c.get('userId'), resource, actions },
+        if (ctx.get('isSuperAdmin')) {
+            ctx.var.logger.info(
+                { userId: ctx.get('userId'), resource, actions },
                 "Super admin bypass — skipping permission check"
             );
             await next();
             return;
         }
 
-        const currentRole = c.get('membershipRole') as keyof typeof roles | undefined;
+        const currentRole = ctx.get('membershipRole') as keyof typeof roles | undefined;
 
         if (!currentRole) {
             throw new InternalServerError(
@@ -59,10 +59,10 @@ export const requirePermission = (
         const result = roleDefinition.authorize({ [resource]: actions });
 
         if (!result.success) {
-            const userId = c.get('userId');
-            const organizationId = c.get('organizationId');
+            const userId = ctx.get('userId');
+            const organizationId = ctx.get('organizationId');
 
-            c.var.logger.warn(
+            ctx.var.logger.warn(
                 { userId, organizationId, currentRole, resource, actions },
                 "Forbidden: insufficient permissions"
             );

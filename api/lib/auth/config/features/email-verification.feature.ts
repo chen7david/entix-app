@@ -13,7 +13,8 @@ export const getEmailVerificationConfig = (ctx?: AppContext, mailer?: Mailer): P
             sendOnSignUp: true,
             sendVerificationEmail: async ({ user, token }) => {
                 if (!ctx || !mailer) return;
-                const verificationUrl = `${ctx.env.FRONTEND_URL}/auth/verify-email?token=${token}`;
+
+                const verificationUrl = `${ctx.var.frontendUrl}/auth/verify-email?token=${token}`;
                 ctx.executionCtx.waitUntil(
                     mailer.sendTemplate({
                         to: user.email,

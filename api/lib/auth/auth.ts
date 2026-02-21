@@ -32,5 +32,5 @@ export const auth = (ctx: AppContext) => {
 };
 
 export const mountBetterAuth = (app: AppOpenApi) => {
-    app.on(["GET", "POST"], "/api/v1/auth/*", (c) => auth(c).handler(c.req.raw));
+    app.on(["GET", "POST"], "/api/v1/auth/*", (ctx) => auth(ctx).handler(ctx.req.raw));
 }

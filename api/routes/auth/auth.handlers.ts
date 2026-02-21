@@ -5,12 +5,12 @@ import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { RegistrationService } from "@api/services/registration.service";
 
 export class AuthHandler {
-    static signupWithOrg: AppHandler<typeof AuthRoutes.signupWithOrg> = async (c) => {
-        const { email, password, name, organizationName } = c.req.valid("json");
+    static signupWithOrg: AppHandler<typeof AuthRoutes.signupWithOrg> = async (ctx) => {
+        const { email, password, name, organizationName } = ctx.req.valid("json");
 
-        c.var.logger.info({ email, organizationName }, "Signup with organization request");
+        ctx.var.logger.info({ email, organizationName }, "Signup with organization request");
 
-        const registrationService = new RegistrationService(c);
+        const registrationService = new RegistrationService(ctx);
 
         try {
             const result = await registrationService.signupWithOrg({
@@ -20,11 +20,11 @@ export class AuthHandler {
                 organizationName
             });
 
-            c.var.logger.info({ userId: result.user.id, orgId: result.organization.id }, "Signup with organization completed");
+            ctx.var.logger.info({ userId: result.user.id, orgId: result.organization.id }, "Signup with organization completed");
 
-            return c.json(result, HttpStatusCodes.CREATED);
+            return ctx.json(result, HttpStatusCodes.CREATED);
         } catch (error: any) {
-            c.var.logger.error({ error }, "Error during organization setup, rolling back");
+            ctx.var.logger.error({ error }, "Error during organization setup, rolling back");
 
             if (error instanceof ConflictError) {
                 throw error;

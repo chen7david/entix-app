@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
 import { notFoundHandler } from "@api/middleware/not-found.middleware";
 import { globalErrorHandler } from "@api/middleware/global-error.middleware";
+import { frontendUrlMiddleware } from "@api/middleware/frontend-url.middleware";
 import { logger } from "@api/middleware/logger.middleware"
 
 export const createRouter = () => {
@@ -26,17 +27,17 @@ export const mountRoutes = ({ app, routes, prefix }: MountRoutes) => {
 export const createApp = () => {
     const app = new OpenAPIHono<AppEnv>({ strict: false });
 
+    app.use('*', frontendUrlMiddleware());
+
     app.use('*', cors({
-        origin: (origin, c) => {
-            const configuredOrigins = (c.env.CORS_ORIGINS || '')
+        origin: (origin, ctx) => {
+            const configuredOrigins = (ctx.env.CORS_ORIGINS || '')
                 .split(',')
                 .map((o: string) => o.trim())
                 .filter(Boolean);
 
             const allowedOrigins = [
-                'http://localhost:3000',
-                'http://localhost:8000',
-                c.env.FRONTEND_URL,
+                ctx.var.frontendUrl,
                 ...configuredOrigins
             ];
             return allowedOrigins.includes(origin) ? origin : null;

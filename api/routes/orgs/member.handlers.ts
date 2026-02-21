@@ -6,16 +6,16 @@ import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { RegistrationService } from "@api/services/registration.service";
 
 export class MemberHandler {
-    static createMember: AppHandler<typeof MemberRoutes.createMember> = async (c) => {
-        const { email, name, role } = c.req.valid("json");
+    static createMember: AppHandler<typeof MemberRoutes.createMember> = async (ctx) => {
+        const { email, name, role } = ctx.req.valid("json");
 
         // Get context (verified by middleware)
-        const currentUserId = c.get('userId')!;
-        const organizationId = c.get('organizationId')!;
+        const currentUserId = ctx.get('userId')!;
+        const organizationId = ctx.get('organizationId')!;
 
-        c.var.logger.info({ currentUserId, organizationId, email, name, role }, "Creating new member");
-        const registrationService = new RegistrationService(c);
-        const userRepo = new UserRepository(c);
+        ctx.var.logger.info({ currentUserId, organizationId, email, name, role }, "Creating new member");
+        const registrationService = new RegistrationService(ctx);
+        const userRepo = new UserRepository(ctx);
 
         try {
             const result = await registrationService.createUserAndMember(
@@ -26,15 +26,15 @@ export class MemberHandler {
             );
 
             // Send password reset email so user can set their own password
-            const resetUrl = `${c.env.FRONTEND_URL}/auth/reset-password`;
-            c.var.logger.info({ email, resetUrl }, "Sending password reset email");
+            const resetUrl = `${ctx.var.frontendUrl}/auth/reset-password`;
+            ctx.var.logger.info({ email, resetUrl }, "Sending password reset email");
             await userRepo.sendPasswordResetEmail(email, resetUrl);
 
-            c.var.logger.info({ userId: result.user.id, memberId: result.member.id }, "Member created successfully");
+            ctx.var.logger.info({ userId: result.user.id, memberId: result.member.id }, "Member created successfully");
 
-            return c.json(result, HttpStatusCodes.CREATED);
+            return ctx.json(result, HttpStatusCodes.CREATED);
         } catch (error: any) {
-            c.var.logger.error({ error }, "Error establishing membership");
+            ctx.var.logger.error({ error }, "Error establishing membership");
 
             if (error instanceof ConflictError) {
                 throw error;

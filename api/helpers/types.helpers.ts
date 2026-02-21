@@ -6,6 +6,7 @@ export type AppEnv = {
     Bindings: CloudflareBindings;
     Variables: {
         logger: PinoLogger;
+        frontendUrl: string; // Set generically for the entire request
         userId?: string;  // Set by requireAuth middleware
         isSuperAdmin?: boolean;  // Set by requireAuth middleware (platform-level admin, NOT org-level)
         organizationId?: string;  // Set by requireOrgMembership middleware

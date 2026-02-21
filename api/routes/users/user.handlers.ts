@@ -6,27 +6,27 @@ import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { RegistrationService } from "@api/services/registration.service";
 
 export class UserHandler {
-    static findAll: AppHandler<typeof UserRoutes.findAll> = async (c) => {
-        const organizationId = c.req.valid('param').organizationId;
+    static findAll: AppHandler<typeof UserRoutes.findAll> = async (ctx) => {
+        const organizationId = ctx.req.valid('param').organizationId;
 
-        c.var.logger.info({ organizationId }, `Fetching users for organization`);
+        ctx.var.logger.info({ organizationId }, `Fetching users for organization`);
 
-        const userRepo = new UserRepository(c);
+        const userRepo = new UserRepository(ctx);
         const users = await userRepo.findUsersByOrganization(organizationId);
 
-        c.var.logger.info({ count: users.length, organizationId }, "Users fetched for organization");
+        ctx.var.logger.info({ count: users.length, organizationId }, "Users fetched for organization");
 
-        return c.json(users, HttpStatusCodes.OK);
+        return ctx.json(users, HttpStatusCodes.OK);
     }
 
-    static create: AppHandler<typeof UserRoutes.create> = async (c) => {
-        const { email, name } = c.req.valid('json');
-        const organizationId = c.req.valid('param').organizationId;
+    static create: AppHandler<typeof UserRoutes.create> = async (ctx) => {
+        const { email, name } = ctx.req.valid('json');
+        const organizationId = ctx.req.valid('param').organizationId;
 
-        c.var.logger.info({ email, name, organizationId }, "Creating new user");
+        ctx.var.logger.info({ email, name, organizationId }, "Creating new user");
 
-        const registrationService = new RegistrationService(c);
-        const userRepo = new UserRepository(c);
+        const registrationService = new RegistrationService(ctx);
+        const userRepo = new UserRepository(ctx);
 
         try {
             const result = await registrationService.createUserAndMember(
@@ -37,13 +37,13 @@ export class UserHandler {
             );
 
             // Send password reset email so user can set their own password
-            const resetUrl = `${c.env.FRONTEND_URL}/auth/reset-password`;
-            c.var.logger.info({ email, resetUrl }, "Sending password reset email");
+            const resetUrl = `${ctx.var.frontendUrl}/auth/reset-password`;
+            ctx.var.logger.info({ email, resetUrl }, "Sending password reset email");
             await userRepo.sendPasswordResetEmail(email, resetUrl);
 
-            c.var.logger.info({ userId: result.user.id, memberId: result.member.id }, "User created and joined successfully");
+            ctx.var.logger.info({ userId: result.user.id, memberId: result.member.id }, "User created and joined successfully");
 
-            return c.json({
+            return ctx.json({
                 id: result.user.id,
                 name: result.user.name,
                 email: result.user.email,
@@ -53,7 +53,7 @@ export class UserHandler {
                 image: null,
             }, HttpStatusCodes.CREATED);
         } catch (error: any) {
-            c.var.logger.error({ error }, "Error creating user/membership");
+            ctx.var.logger.error({ error }, "Error creating user/membership");
 
             if (error instanceof ConflictError) {
                 throw error;

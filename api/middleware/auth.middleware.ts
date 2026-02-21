@@ -7,17 +7,17 @@ import type { Next } from "hono";
  * Validates the user session and returns the user ID
  * Throws 401 if unauthorized
  */
-export async function validateSession(c: AppContext): Promise<string> {
-    const authClient = auth(c);
-    const session = await authClient.api.getSession({ headers: c.req.raw.headers });
+export async function validateSession(ctx: AppContext): Promise<string> {
+    const authClient = auth(ctx);
+    const session = await authClient.api.getSession({ headers: ctx.req.raw.headers });
 
     if (!session || !session.user) {
-        c.var.logger.warn("Unauthorized: No valid session");
+        ctx.var.logger.warn("Unauthorized: No valid session");
         throw new UnauthorizedError("Authentication required");
     }
 
-    c.set("userId", session.user.id);
-    c.set("isSuperAdmin", session.user.role === "admin");
+    ctx.set("userId", session.user.id);
+    ctx.set("isSuperAdmin", session.user.role === "admin");
     return session.user.id;
 }
 
@@ -32,7 +32,7 @@ export async function validateSession(c: AppContext): Promise<string> {
  *     .openapi(MyRoutes.endpoint, MyHandler.endpoint);
  * ```
  */
-export const requireAuth = async (c: AppContext, next: Next) => {
-    await validateSession(c);
+export const requireAuth = async (ctx: AppContext, next: Next) => {
+    await validateSession(ctx);
     await next();
 };

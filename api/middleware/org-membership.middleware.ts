@@ -17,9 +17,9 @@ import { MemberRepository } from "@api/repositories/member.repository";
  * Usage:
  * app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
  */
-export const requireOrgMembership = async (c: AppContext, next: Next) => {
-    const userId = c.get('userId');
-    const organizationId = c.req.param('organizationId');
+export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
+    const userId = ctx.get('userId');
+    const organizationId = ctx.req.param('organizationId');
 
     if (!userId) {
         throw new UnauthorizedError("Authentication required");
@@ -30,17 +30,17 @@ export const requireOrgMembership = async (c: AppContext, next: Next) => {
     }
 
     // Super admins bypass org membership check
-    if (c.get('isSuperAdmin')) {
-        c.var.logger.info({ userId, organizationId }, "Super admin bypass — skipping membership check");
-        c.set('organizationId', organizationId);
-        c.set('membershipId', 'super-admin'); // Sentinel value for super admins
-        c.set('membershipRole', 'owner'); // Treat as owner for downstream handlers
+    if (ctx.get('isSuperAdmin')) {
+        ctx.var.logger.info({ userId, organizationId }, "Super admin bypass — skipping membership check");
+        ctx.set('organizationId', organizationId);
+        ctx.set('membershipId', 'super-admin'); // Sentinel value for super admins
+        ctx.set('membershipRole', 'owner'); // Treat as owner for downstream handlers
         await next();
         return;
     }
 
     // Use repository pattern for consistency
-    const memberRepo = new MemberRepository(c);
+    const memberRepo = new MemberRepository(ctx);
     const membership = await memberRepo.findMembership(userId, organizationId);
 
     if (!membership) {
@@ -50,9 +50,9 @@ export const requireOrgMembership = async (c: AppContext, next: Next) => {
     }
 
     // Store membership details in context
-    c.set('organizationId', organizationId);
-    c.set('membershipId', membership.id);
-    c.set('membershipRole', membership.role);
+    ctx.set('organizationId', organizationId);
+    ctx.set('membershipId', membership.id);
+    ctx.set('membershipRole', membership.role);
 
     await next();
 };
