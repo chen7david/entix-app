@@ -17,19 +17,23 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Pa
 
                 // If the user's email is not verified, it implies they are a newly invited user.
                 // Send them a specialized "Welcome" template rather than a generic "Reset Password" template.
-                const emailPromise = !user.emailVerified
-                    ? mailer.sendWelcomeEmailWithPasswordReset({
-                        to: user.email,
-                        displayName: user.name,
-                        resetUrl,
-                    })
-                    : mailer.sendPasswordResetEmail({
-                        to: user.email,
-                        displayName: user.name,
-                        resetUrl,
-                    });
-
-                ctx.executionCtx.waitUntil(emailPromise);
+                if (!user.emailVerified) {
+                    ctx.executionCtx.waitUntil(
+                        mailer.sendWelcomeEmailWithPasswordReset({
+                            to: user.email,
+                            displayName: user.name,
+                            resetUrl,
+                        })
+                    );
+                } else {
+                    ctx.executionCtx.waitUntil(
+                        mailer.sendPasswordResetEmail({
+                            to: user.email,
+                            displayName: user.name,
+                            resetUrl,
+                        })
+                    );
+                }
             },
             async onPasswordReset({ user }) {
                 if (!ctx) return;
