@@ -14,16 +14,22 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Pa
             async sendResetPassword({ user, token }) {
                 if (!ctx || !mailer) return;
                 const resetUrl = `${ctx.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
-                ctx.executionCtx.waitUntil(
-                    mailer.sendTemplate({
+
+                // If the user's email is not verified, it implies they are a newly invited user.
+                // Send them a specialized "Welcome" template rather than a generic "Reset Password" template.
+                const emailPromise = !user.emailVerified
+                    ? mailer.sendWelcomeEmailWithPasswordReset({
                         to: user.email,
-                        templateId: "reset-password",
-                        variables: {
-                            DISPLAY_NAME: user.name,
-                            RESET_LINK: resetUrl,
-                        },
+                        displayName: user.name,
+                        resetUrl,
                     })
-                );
+                    : mailer.sendPasswordResetEmail({
+                        to: user.email,
+                        displayName: user.name,
+                        resetUrl,
+                    });
+
+                ctx.executionCtx.waitUntil(emailPromise);
             },
             async onPasswordReset({ user }) {
                 if (!ctx) return;

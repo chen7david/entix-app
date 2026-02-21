@@ -65,11 +65,11 @@ When an admin invites a user via `createUserAndMember`:
 
 1. The service generates a securely hashed dummy password to create the credential account.
 2. The user is inserted with `emailVerified: false`.
-3. The service triggers Better Auth to email the user a **Password Reset Token**.
+3. The service triggers Better Auth's password reset flow.
 
-Because the user is explicitly invited, we want to give them a single-link onboarding experience where setting their password *simultaneously* verifies their email. 
+Because the user is explicitly invited, we want to give them a seamless onboarding experience. Instead of sending a generic "Reset Password" email, our application intercepts the BetterAuth password reset callback. If the user's `emailVerified` flag is `false`, we explicitly dispatch a `welcome-initial-password-setup` email template through our mailer instead, creating a smooth welcome experience.
 
-To achieve this, we listen for successful password resets in our Better Auth configuration:
+When the invited user clicks the email link and successfully sets their password on the frontend, the backend intercepts this event:
 
 ```typescript
 // api/lib/auth/config/features/email-and-password.feature.ts

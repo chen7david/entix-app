@@ -12,6 +12,12 @@ type SendHtmlParams = {
     html: string;
 }
 
+type SendPasswordResetParams = {
+    to: string;
+    displayName: string;
+    resetUrl: string;
+}
+
 export class Mailer {
     private $client: Resend;
     private sender: string = 'Entix <donotreply@entix.org>';
@@ -46,5 +52,27 @@ export class Mailer {
         } catch (error) {
             console.error(error);
         }
+    }
+
+    public async sendWelcomeEmailWithPasswordReset({ to, displayName, resetUrl }: SendPasswordResetParams) {
+        return this.sendTemplate({
+            to,
+            templateId: "welcome-initial-password-setup",
+            variables: {
+                DISPLAY_NAME: displayName,
+                RESET_LINK: resetUrl,
+            },
+        });
+    }
+
+    public async sendPasswordResetEmail({ to, displayName, resetUrl }: SendPasswordResetParams) {
+        return this.sendTemplate({
+            to,
+            templateId: "reset-password",
+            variables: {
+                DISPLAY_NAME: displayName,
+                RESET_LINK: resetUrl,
+            },
+        });
     }
 }
