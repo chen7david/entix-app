@@ -102,7 +102,7 @@ describe("Auth Integration Test", () => {
         // Mock the member repository `prepareAdd` to intentionally insert a conflicting 'id'
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
-        const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function () {
+        const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
             const getDbClient = require("@api/factories/db.factory").getDbClient;
             return getDbClient((this as any).ctx).insert(schema.member).values({
                 id: "pre-existing-conflict", // Will conflict

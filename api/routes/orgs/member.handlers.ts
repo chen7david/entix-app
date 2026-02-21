@@ -2,9 +2,8 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { MemberRoutes } from './member.routes';
 import { UserRepository } from '@api/repositories/user.repository';
-import { MemberRepository } from '@api/repositories/member.repository';
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { nanoid } from "nanoid";
+import { RegistrationService } from "@api/services/registration.service";
 
 export class MemberHandler {
     static createMember: AppHandler<typeof MemberRoutes.createMember> = async (c) => {
@@ -15,58 +14,33 @@ export class MemberHandler {
         const organizationId = c.get('organizationId')!;
 
         c.var.logger.info({ currentUserId, organizationId, email, name, role }, "Creating new member");
+        const registrationService = new RegistrationService(c);
         const userRepo = new UserRepository(c);
-        const memberRepo = new MemberRepository(c);
-
-        // Check if user already exists
-        const existingUser = await userRepo.findUserByEmail(email);
-        if (existingUser) {
-            c.var.logger.warn({ email }, "User with this email already exists");
-            throw new ConflictError("User with this email already exists");
-        }
-
-        // Generate random secure password (not disclosed to user)
-        const dummyPassword = nanoid(32); // Secure random password
-
-        // Create user (email verification sent automatically if sendOnSignUp: true)
-        c.var.logger.info({ email }, "Creating user");
-        const userResult = await userRepo.createUser({
-            email,
-            password: dummyPassword,
-            name,
-        });
 
         try {
-            // Add member to organization
-            c.var.logger.info({ userId: userResult.user.id, organizationId, role }, "Adding member to organization");
-            const memberResult = await memberRepo.addMember({
-                userId: userResult.user.id,
+            const result = await registrationService.createUserAndMember(
+                email,
+                name,
                 organizationId,
-                role,
-            });
+                role
+            );
 
             // Send password reset email so user can set their own password
             const resetUrl = `${c.env.FRONTEND_URL}/auth/reset-password`;
             c.var.logger.info({ email, resetUrl }, "Sending password reset email");
             await userRepo.sendPasswordResetEmail(email, resetUrl);
 
-            c.var.logger.info({ userId: userResult.user.id, memberId: memberResult.id }, "Member created successfully");
+            c.var.logger.info({ userId: result.user.id, memberId: result.member.id }, "Member created successfully");
 
-            return c.json({
-                member: memberResult,
-                user: {
-                    id: userResult.user.id,
-                    email: userResult.user.email,
-                    name: userResult.user.name,
-                    emailVerified: userResult.user.emailVerified,
-                },
-            }, HttpStatusCodes.CREATED);
-        } catch (error) {
-            c.var.logger.error({ error, userId: userResult.user.id }, "Error establishing membership, rolling back user creation");
+            return c.json(result, HttpStatusCodes.CREATED);
+        } catch (error: any) {
+            c.var.logger.error({ error }, "Error establishing membership");
 
-            await userRepo.deleteUserAndAssociatedData(userResult.user.id);
+            if (error instanceof ConflictError) {
+                throw error;
+            }
 
-            throw new InternalServerError("Membership creation failed, user creation rolled back");
+            throw new InternalServerError("Membership creation failed, please try again");
         }
     };
 }

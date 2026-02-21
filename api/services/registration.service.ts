@@ -73,4 +73,54 @@ export class RegistrationService {
             }
         };
     }
+
+    async createUserAndMember(email: string, name: string, organizationId: string, role: string) {
+        this.ctx.var.logger.info({ email, organizationId, role }, "Starting atomic user and member creation");
+        const db = getDbClient(this.ctx);
+        const userRepo = new UserRepository(this.ctx);
+        const memberRepo = new MemberRepository(this.ctx);
+
+        // Pre-validate uniqueness
+        const existingUser = await userRepo.findUserByEmail(email);
+        if (existingUser) {
+            throw new ConflictError("User with this email already exists");
+        }
+
+        // Generate absolute IDs
+        const uId = nanoid();
+        const acctId = nanoid();
+        const memberId = nanoid();
+        const emailVerified = false;
+
+        const dummyPassword = nanoid(32);
+        const hashedPassword = await hashPassword(dummyPassword);
+
+        // Prepare queries
+        const userQuery = userRepo.prepareCreateUser(uId, email, name, emailVerified);
+        const accountQuery = userRepo.prepareCreateAccount(acctId, uId, "credential", hashedPassword);
+        const memberQuery = memberRepo.prepareAdd(memberId, organizationId, uId, role);
+
+        // Atomic multi-domain execution
+        await db.batch([
+            userQuery,
+            accountQuery,
+            memberQuery,
+        ]);
+
+        return {
+            member: {
+                id: memberId,
+                userId: uId,
+                organizationId,
+                role,
+                createdAt: new Date(),
+            },
+            user: {
+                id: uId,
+                email,
+                name,
+                emailVerified,
+            }
+        };
+    }
 }

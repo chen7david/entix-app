@@ -11,3 +11,14 @@ export function createMockSignUpWithOrgPayload(overrides: Partial<SignUpWithOrgD
         ...overrides,
     };
 }
+
+export function createMockUserPayload(overrides: Partial<Omit<SignUpWithOrgDTO, "organizationName">> = {}): Omit<SignUpWithOrgDTO, "organizationName"> {
+    const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+
+    return {
+        email: `test.user.${uniqueId}@example.com`,
+        password: "password123",
+        name: "Test User",
+        ...overrides,
+    };
+}
