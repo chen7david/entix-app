@@ -138,7 +138,7 @@ export async function createOrgMemberWithRole(params: {
     app: Hono<AppEnv>;
     env: any;
     orgId: string;
-    role: OrgRole;
+    role: string;
     email: string;
 }): Promise<{ cookie: string; userId: string }> {
     const { app, env, orgId, role, email } = params;

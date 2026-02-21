@@ -87,4 +87,28 @@ describe("Permission-Based Authorization Tests", () => {
             expect(body.message).toBeDefined();
         });
     });
+    describe("Multi-role permissions (comma-separated)", () => {
+        let multiRoleClient: TestClient;
+
+        beforeEach(async () => {
+            const result = await createOrgMemberWithRole({
+                app,
+                env,
+                orgId: ownerOrgId,
+                role: "member, admin",
+                email: `multirole.${Date.now()}@example.com`,
+            });
+            multiRoleClient = createTestClient(app, env, result.cookie);
+        });
+
+        it("should grant access if at least ONE of the user's comma-separated roles has the permission", async () => {
+            const payload = createMockMemberCreationPayload();
+            const res = await multiRoleClient.orgs.members.create(ownerOrgId, payload);
+
+            // Even though "member" lacks creation permission, "admin" grants it.
+            expect(res.status).toBe(201);
+            const body = await parseJson<CreateMemberResponseDTO>(res);
+            expect(body.user.email).toBe(payload.email);
+        });
+    });
 });

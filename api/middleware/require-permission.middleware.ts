@@ -42,33 +42,46 @@ export const requirePermission = (
             return;
         }
 
-        const currentRole = ctx.get('membershipRole') as keyof typeof roles | undefined;
+        const currentRoleString = ctx.get('membershipRole') as string | undefined;
 
-        if (!currentRole) {
+        if (!currentRoleString) {
             throw new InternalServerError(
                 "membershipRole not found in context. Ensure requireOrgMembership middleware runs first."
             );
         }
 
-        const roleDefinition = roles[currentRole] as Role | undefined;
+        const userRoles = currentRoleString.split(',').map((r) => r.trim());
+        let hasPermission = false;
+        let lastError = "";
 
-        if (!roleDefinition) {
-            throw new ForbiddenError(`Unknown role: ${currentRole}`);
+        for (const roleName of userRoles) {
+            const roleDefinition = roles[roleName as keyof typeof roles] as Role | undefined;
+
+            if (!roleDefinition) {
+                ctx.var.logger.warn(`Unknown role encountered: ${roleName}`);
+                continue;
+            }
+
+            const result = roleDefinition.authorize({ [resource]: actions });
+            if (result.success) {
+                hasPermission = true;
+                break;
+            } else {
+                lastError = result.error || "";
+            }
         }
 
-        const result = roleDefinition.authorize({ [resource]: actions });
-
-        if (!result.success) {
+        if (!hasPermission) {
             const userId = ctx.get('userId');
             const organizationId = ctx.get('organizationId');
 
             ctx.var.logger.warn(
-                { userId, organizationId, currentRole, resource, actions },
-                "Forbidden: insufficient permissions"
+                { userId, organizationId, roles: userRoles, resource, actions },
+                "Forbidden: insufficient permissions across all assigned roles"
             );
 
             throw new ForbiddenError(
-                result.error || `You do not have permission to perform [${actions.join(', ')}] on [${resource}]`
+                lastError || `You do not have permission to perform [${actions.join(', ')}] on [${resource}]`
             );
         }
 
