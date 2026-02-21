@@ -36,18 +36,8 @@ export class OrganizationRepository {
         });
     }
 
-    /**
-     * Delete organization by ID
-     * Used for compensating transactions during failed setups
-     */
-    async deleteOrganization(id: string): Promise<void> {
-        const db = getDbClient(this.ctx);
-        await db.delete(schema.organization).where(eq(schema.organization.id, id));
-    }
-
-    /**
-     * Prepare a query to create an organization for batching
-     */
+    /** Prepare a query to create an organization for batching
+        */
     prepareCreate(id: string, name: string, slug: string) {
         const db = getDbClient(this.ctx);
         const now = new Date();

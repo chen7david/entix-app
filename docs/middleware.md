@@ -32,7 +32,7 @@ app.use('*', cors({
         const allowedOrigins = [
             'http://localhost:3000',     // API server
             'http://localhost:8000',     // Vite dev server
-            c.env.FRONTEND_URL,          // Dynamic frontend URL
+            c.var.frontendUrl,           // Dynamic frontend URL injected by middleware
             'https://entix.org',         // Production
             'https://staging.entix.org'  // Staging
         ];
@@ -49,7 +49,7 @@ app.use('*', cors({
 ### Key Points
 
 - **Dynamic Origin Check**: Uses a function to validate origins against an allowlist
-- **Environment Awareness**: Includes `c.env.FRONTEND_URL` for environment-specific origin
+- **Dynamic Preview Branch Support**: Resolves `c.var.frontendUrl` based on the live `ctx.req.url` at *runtime*. E.g., if Cloudflare deploys to `branch-abc.workers.dev`, the middleware instantly whitelists it without requiring build-time configs!
 - **Credentials Support**: `credentials: true` allows cookies and authentication headers
 - **Preflight Caching**: `maxAge: 600` caches preflight responses for 10 minutes
 - **Security**: Rejects requests from unlisted origins by returning `null`
