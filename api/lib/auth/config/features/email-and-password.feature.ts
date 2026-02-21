@@ -2,6 +2,7 @@ import { AppContext } from "@api/helpers/types.helpers";
 import { Mailer } from "../../../mail/mailer.lib";
 import { BetterAuthOptions } from "better-auth";
 import { UserRepository } from "@api/repositories/user.repository";
+import { getFrontendUrl } from "@api/helpers/url.helpers";
 
 export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => {
     // Disable email verification requirement in tests
@@ -13,7 +14,9 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Pa
             requireEmailVerification,
             async sendResetPassword({ user, token }) {
                 if (!ctx || !mailer) return;
-                const resetUrl = `${ctx.env.FRONTEND_URL}/auth/reset-password?token=${token}`;
+
+                const frontendUrl = getFrontendUrl(ctx);
+                const resetUrl = `${frontendUrl}/auth/reset-password?token=${token}`;
 
                 // If the user's email is not verified, it implies they are a newly invited user.
                 // Send them a specialized "Welcome" template rather than a generic "Reset Password" template.
