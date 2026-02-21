@@ -2,42 +2,32 @@ import { describe, it, expect, beforeEach } from "vitest";
 import app from "@api/app";
 import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
-import { createTestClient, type TestClient } from "../lib/test-client";
+import { createTestClient } from "../lib/test-client";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
-import { createMockUserPayload } from "../factories/auth.factory";
+import { createMockUserDbRecord } from "../factories/auth.factory";
 import * as schema from "@api/db/schema.db";
 import { eq } from "drizzle-orm";
 
 describe("User & Member Creation Atomicity", () => {
-    let client: TestClient;
     let db: ReturnType<typeof createTestDb> extends Promise<infer U> ? U : never;
 
     beforeEach(async () => {
         db = await createTestDb();
-        client = createTestClient(app, env);
     });
 
     it("POST /api/v1/orgs/:orgId/members should rollback user creation atomically on setup failure", async () => {
         // Use the proper test helper to get a real valid database session
-        const { orgId, cookie, orgData } = await createAuthenticatedOrg({ app, env });
-        const userId = orgData.user.id;
+        const { orgId, cookie } = await createAuthenticatedOrg({ app, env });
 
-        const fakeConflictUserId = "fake-conflict-user";
-        await db.insert(schema.user).values({
-            id: fakeConflictUserId,
-            name: "Fake Conflict User",
-            email: "fake-conflict@example.com",
-            emailVerified: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        });
+        const fakeConflictUser = createMockUserDbRecord({ id: "fake-conflict-user" });
+        await db.insert(schema.user).values(fakeConflictUser);
 
         // Seed a member explicitly to trigger a UNIQUE constraint violation later
         await db.insert(schema.member).values({
             id: "pre-existing-conflict",
             organizationId: orgId,
-            userId: fakeConflictUserId, // Avoid triggering constraint here but satisfy FK
+            userId: fakeConflictUser.id, // Avoid triggering constraint here but satisfy FK
             role: "member",
             createdAt: new Date(),
         });

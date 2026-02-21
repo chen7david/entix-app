@@ -22,3 +22,17 @@ export function createMockUserPayload(overrides: Partial<Omit<SignUpWithOrgDTO, 
         ...overrides,
     };
 }
+
+export function createMockUserDbRecord(overrides: any = {}) {
+    const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+
+    return {
+        id: `usr_${uniqueId}`,
+        name: `Test User ${uniqueId}`,
+        email: `test.user.${uniqueId}@example.com`,
+        emailVerified: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+    };
+}
