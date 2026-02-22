@@ -7,7 +7,7 @@ import { RegistrationService } from "@api/services/registration.service";
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (ctx) => {
-        const organizationId = ctx.req.valid('param').organizationId;
+        const organizationId = ctx.get('organizationId')!;
 
         ctx.var.logger.info({ organizationId }, `Fetching users for organization`);
 
@@ -21,7 +21,7 @@ export class UserHandler {
 
     static create: AppHandler<typeof UserRoutes.create> = async (ctx) => {
         const { email, name } = ctx.req.valid('json');
-        const organizationId = ctx.req.valid('param').organizationId;
+        const organizationId = ctx.get('organizationId')!;
 
         ctx.var.logger.info({ email, name, organizationId }, "Creating new user");
 
