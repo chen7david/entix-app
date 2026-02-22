@@ -103,16 +103,19 @@ export default function App() {
                     <Route path='wallet' element={<WalletPage />} />
                     <Route path='movies' element={<MoviesPage />} />
                     <Route path='orders' element={<OrdersPage />} />
-                    {/* Admin Routes */}
-                    <Route element={<AdminGuard />}>
-                      <Route path='admin' element={<AdminDashboardPage />} />
-                    </Route>
                   </Route>
 
                   {/* Organization Management */}
                   <Route path="members" element={<OrganizationMembersPage />} />
                   <Route path="invitations" element={<OrganizationInvitationsPage />} />
                   <Route path="organizations" element={<OrganizationListPage />} />
+                </Route>
+              </Route>
+
+              {/* Global Admin Routes */}
+              <Route element={<AdminGuard />}>
+                <Route element={<DashboardLayout />}>
+                  <Route path="admin" element={<AdminDashboardPage />} />
                 </Route>
               </Route>
             </Route>

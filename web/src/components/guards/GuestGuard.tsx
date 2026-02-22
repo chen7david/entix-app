@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-// import { links } from '@web/src/constants/links'; // Unused now
 import { Spin } from 'antd';
 
 export const GuestGuard: React.FC = () => {

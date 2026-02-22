@@ -26,7 +26,7 @@ export const links = {
         members: (slug: string) => `/org/${slug}/members`,
     },
     admin: {
-        index: (slug: string) => `/org/${slug}/dashboard/admin`,
+        index: '/admin',
     },
     onboarding: {
         index: '/onboarding',

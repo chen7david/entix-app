@@ -1,8 +1,7 @@
 import React from 'react';
-import { Navigate, Outlet } from 'react-router';
+import { Outlet } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { links } from '@web/src/constants/links';
-import { Spin, Result, Button } from 'antd';
+import { Result, Button } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 /**
@@ -11,22 +10,12 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
  * Renders Outlet for admin users, shows 403 for non-admins.
  */
 export const AdminGuard: React.FC = () => {
-    const { session, isLoading } = useAuth();
+    const { session } = useAuth();
     const { checkOrganizationStatus } = useOrganization();
 
-    if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-screen w-full">
-                <Spin size="large" />
-            </div>
-        );
-    }
+    // Note: isLoading and session existence are already guaranteed by the parent AuthGuard.
 
-    if (!session.data?.user) {
-        return <Navigate to={links.auth.signIn} replace />;
-    }
-
-    if (session.data.user.role !== 'admin') {
+    if (session.data?.user?.role !== 'admin') {
         return (
             <Result
                 status="403"

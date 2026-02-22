@@ -91,7 +91,7 @@ export const SidebarMenu: React.FC = () => {
                 children: [
                     {
                         label: 'Dashboard',
-                        key: slug ? links.admin.index(slug) : 'admin-dashboard-disabled',
+                        key: links.admin.index,
                     },
                 ],
             },

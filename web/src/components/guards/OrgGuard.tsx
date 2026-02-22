@@ -79,21 +79,15 @@ export const OrgGuard: React.FC = () => {
     }
 
     // Validation Guard
-    if (!slug || !activeOrganization) {
-        const hasAccess = organizations.some(o => o.slug === slug);
-
-        if (!hasAccess && !loadingOrgs) {
-            return (
-                <Result
-                    status="403"
-                    title="Access Denied"
-                    subTitle="You do not have access to this organization."
-                    extra={<Button type="primary" onClick={() => navigate(links.onboarding.selectOrganization)}>Switch Organization</Button>}
-                />
-            );
-        }
-
-        return <Result status="404" title="Organization Not Found" />;
+    if (!activeOrganization && !loadingOrgs) {
+        return (
+            <Result
+                status="403"
+                title="Access Denied"
+                subTitle="You do not have access to this organization, or it does not exist."
+                extra={<Button type="primary" onClick={() => navigate(links.onboarding.selectOrganization)}>Switch Organization</Button>}
+            />
+        );
     }
 
     // Provider — URL is the single source of truth for active org
