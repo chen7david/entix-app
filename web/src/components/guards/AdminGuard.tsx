@@ -10,12 +10,12 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
  * Renders Outlet for admin users, shows 403 for non-admins.
  */
 export const AdminGuard: React.FC = () => {
-    const { session } = useAuth();
+    const { isSuperAdmin } = useAuth();
     const { checkOrganizationStatus } = useOrganization();
 
     // Note: isLoading and session existence are already guaranteed by the parent AuthGuard.
 
-    if (session.data?.user?.role !== 'admin') {
+    if (!isSuperAdmin) {
         return (
             <Result
                 status="403"

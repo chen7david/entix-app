@@ -11,7 +11,7 @@ import { links } from '@web/src/constants/links';
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
-    const { session, isLoading } = useAuth();
+    const { session, isLoading, isSuperAdmin } = useAuth();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
@@ -30,7 +30,7 @@ export const SidebarContent: React.FC = () => {
     };
 
     const userMenuItems: MenuProps['items'] = [
-        ...(session.data?.user?.role === 'admin' ? [
+        ...(isSuperAdmin ? [
             {
                 key: links.admin.index,
                 label: 'Admin Management',
