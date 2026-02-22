@@ -4,19 +4,13 @@ Middleware in Entix-App is built using [Hono](https://hono.dev/) and processes r
 
 ## Middleware Execution Order
 
-```mermaid
-graph LR
-    Request[Incoming Request] --> CORS[CORS Middleware]
-    CORS --> Logger[Logger Middleware]
-    Logger --> Route{Route Exists?}
-    Route -->|Yes| Handler[Route Handler]
-    Route -->|No| NotFound[Not Found Handler]
-    Handler --> Response[Response]
-    NotFound --> Response
-    Handler -.Error.-> GlobalError[Global Error Handler]
-    Middleware -.Error.-> GlobalError
-    GlobalError --> ErrorResponse[Error Response]
-```
+1.  **Incoming Request**
+2.  **CORS Middleware**: Validates Origin and handles OPTIONS preflight.
+3.  **Logger Middleware**: Structures log context for tracing.
+4.  **Route Matcher**:
+    *   If **Yes**: Executes the matched **Route Handler** and proceeds to Response.
+    *   If **No**: Executes the **Not Found (404) Handler** and proceeds to Response.
+5.  **Global Error Handler**: Any unhandled exception dropped by a Middleware or Route Handler is swept here, returning a unified Error Response payloads.
 
 ## CORS Middleware
 
@@ -270,16 +264,15 @@ Entix-App uses a **four-layer security architecture** to protect organization-sc
 
 ### Middleware Chain
 
-```mermaid
-graph LR
-    Request[Request] --> RequireAuth[requireAuth]
-    RequireAuth -->|Sets userId, isSuperAdmin| RequireOrgMembership[requireOrgMembership]
-    RequireOrgMembership -->|Sets org context| RequirePermission[requirePermission]
-    RequirePermission -->|Allowed| Handler[Route Handler]
-    RequireAuth -.No session.-> Unauthorized[401 Unauthorized]
-    RequireOrgMembership -.Not member.-> Forbidden[403 Forbidden]
-    RequirePermission -.No permission.-> Forbidden
-```
+1.  `requireAuth`: Validates session validity.
+    *   *If Pass*: Sets `userId` and `isSuperAdmin` in context.
+    *   *If Fail*: **401 Unauthorized**
+2.  `requireOrgMembership`: Validates tenant authorization block.
+    *   *If Pass*: Sets `organizationId`, `membershipRole`, and `membershipId` in context.
+    *   *If Fail*: **403 Forbidden**
+3.  `requirePermission`: Validates the Action Matrix execution parameters.
+    *   *If Pass*: Reaches the intended **Route Handler**.
+    *   *If Fail*: **403 Forbidden**
 
 > **Super admins** bypass layers 2 and 3 entirely.
 

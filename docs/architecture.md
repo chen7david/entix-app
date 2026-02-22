@@ -8,22 +8,16 @@
 ### Development Architecture
 In development, two separate servers run concurrently. Vite proxies API requests to the Worker.
 
-```mermaid
-graph LR
-    Dev[Developer] -->|"http://localhost:8000"| Vite["Vite Dev Server"]
-    Vite -->|"/api/* (Proxy)"| Worker["Cloudflare Worker (API)"]
-    Worker -->|"Port 3000"| Logic["API Logic"]
-```
+*   **Developer** → (`http://localhost:8000`) → **Vite Dev Server**
+*   **Vite Dev Server** → (`/api/*` Proxy) → **Cloudflare Worker (API)**
+*   **Cloudflare Worker** → (Port 3000) → **API Logic**
 
 ### Production Architecture
-In production, a single Worker handles both API requests and static file serving.
+In production, a single Cloudflare Worker handles both API payload logic and Static Asset serving for the frontend React application.
 
-```mermaid
-graph LR
-    User[User] -->|"https://entix.app"| Worker["Cloudflare Worker"]
-    Worker -->|"/api/*"| Logic["API Logic"]
-    Worker -->|"*"| Assets["Static Assets (web/dist)"]
-```
+*   **User** → (`https://entix.app`) → **Cloudflare Worker**
+*   **Cloudflare Worker** → Routes to  **API Logic** (if path matches `/api/*`)
+*   **Cloudflare Worker** → Routes to  **Static Assets** (for all other paths e.g., index.html)
 
 ---
 
