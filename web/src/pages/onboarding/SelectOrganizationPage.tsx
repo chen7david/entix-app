@@ -3,7 +3,7 @@ import { Typography, Spin } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { OrganizationSwitcher } from '@web/src/components/organization/OrganizationSwitcher';
 import { useNavigate } from 'react-router';
-// import { links } from '@web/src/constants/links';
+
 
 const { Title, Text } = Typography;
 
