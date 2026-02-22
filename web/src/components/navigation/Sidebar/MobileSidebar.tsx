@@ -1,4 +1,4 @@
-import { useSidebar } from "@web/src/hooks/navigation/sidebar.hook";
+import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Button, Drawer } from "antd";
 import { CloseOutlined } from "@ant-design/icons";
 import { SidebarContent } from "./SidebarContent";

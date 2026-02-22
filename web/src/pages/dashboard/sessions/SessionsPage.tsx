@@ -24,7 +24,7 @@ import {
 } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useListSessions, useRevokeSession, useRevokeOtherSessions } from '@web/src/hooks/auth/useSessions';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
+import { useAuth } from '@web/src/hooks/auth/useAuth';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -92,7 +92,7 @@ export const SessionsPage: React.FC = () => {
         <>
             <Toolbar />
 
-            <div className="p-6 max-w-4xl mx-auto">
+            <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
                         <Title level={2} className="!mb-2">Active Sessions</Title>

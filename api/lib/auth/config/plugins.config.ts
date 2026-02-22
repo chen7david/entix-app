@@ -1,4 +1,4 @@
-import { organization, openAPI, admin } from 'better-auth/plugins';
+import { openAPI, admin } from 'better-auth/plugins';
 import { AppContext } from '@api/helpers/types.helpers';
 import { Mailer } from '@api/lib/mail/mailer.lib';
 import { getOrganizationPluginConfig } from './plugins/organization.plugin';

@@ -8,7 +8,7 @@ export const OrdersPage: React.FC = () => {
     return (
         <>
             <Toolbar />
-            <div className="p-6 max-w-4xl mx-auto">
+            <div className="p-6">
                 <Title level={2}>Orders</Title>
                 <p>Welcome to the Orders page.</p>
             </div>

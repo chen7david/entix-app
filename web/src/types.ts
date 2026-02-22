@@ -1,1 +1,0 @@
-export type HtmlElementProps = React.HTMLAttributes<HTMLElement>;

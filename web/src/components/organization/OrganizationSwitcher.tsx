@@ -1,6 +1,7 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Select, message } from "antd";
 import { useNavigate } from "react-router";
+import { links } from "@web/src/constants/links";
 
 export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allowCreate?: boolean; afterSelect?: () => void }) => {
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();
@@ -8,7 +9,7 @@ export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allo
 
     const handleChange = async (value: string) => {
         if (value === 'create_new') {
-            navigate('/organization'); // Navigate to list to create new
+            navigate('/orgs'); // Navigate to list to create new
             return;
         }
 
@@ -19,6 +20,12 @@ export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allo
             message.success("Switched organization successfully");
             if (afterSelect) {
                 afterSelect();
+            } else {
+                // Default: navigate to the selected org's dashboard
+                const selectedOrg = organizations.find(o => o.id === value);
+                if (selectedOrg?.slug) {
+                    navigate(links.dashboard.index(selectedOrg.slug));
+                }
             }
         }
     };

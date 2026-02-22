@@ -1,38 +1,43 @@
+import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input } from "antd";
-import { UserOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card } from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useAuth } from "@web/src/hooks/auth/auth.hook";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useState } from "react";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export const OrganizationMembersPage = () => {
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [form] = Form.useForm();
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [createForm] = Form.useForm();
+    const { activeOrganization } = useOrganization();
+
     const {
         members,
-        loading,
-        activeOrganization,
+        loadingMembers: loading,
         updateMemberRoles,
         removeMember,
         checkPermission,
         userRoles: currentUserRoles,
-        inviteMember,
-        isInviting
-    } = useOrganization();
+    } = useMembers();
 
     const { session } = useAuth();
     const currentUserId = session.data?.user?.id;
 
-    const handleInvite = async (values: any) => {
+    const createMemberMutation = useCreateMember(activeOrganization?.id || "");
+
+
+    const handleCreateMember = async (values: any) => {
         try {
-            await inviteMember(values.email, values.role);
-            message.success("Invitation sent successfully");
-            setIsModalOpen(false);
-            form.resetFields();
-        } catch (error: any) {
-            message.error(error.message || "Failed to send invitation");
+            await createMemberMutation.mutateAsync(values);
+            setIsCreateModalOpen(false);
+            createForm.resetFields();
+        } catch {
+            // Error handling is done in the hook
         }
     };
 
@@ -44,7 +49,7 @@ export const OrganizationMembersPage = () => {
         try {
             await updateMemberRoles(memberId, newRoles);
             message.success('Roles updated successfully');
-        } catch (error) {
+        } catch {
             message.error('Failed to update roles');
         }
     };
@@ -53,33 +58,44 @@ export const OrganizationMembersPage = () => {
         try {
             await removeMember(memberId);
             message.success('Member removed successfully');
-        } catch (error) {
+        } catch {
             message.error('Failed to remove member');
         }
     };
 
-    const columns = [
+    // Compute role counts
+    const totalMembers = members?.length || 0;
+    const adminCount = members?.filter((m: Record<string, unknown>) => (String(m.role || '')).includes('admin')).length || 0;
+    const ownerCount = members?.filter((m: Record<string, unknown>) => (String(m.role || '')).includes('owner')).length || 0;
+
+    const columns: ColumnsType<Record<string, unknown>> = [
         {
             title: 'User',
             dataIndex: 'user',
             key: 'user',
-            render: (user: any) => (
+            render: (user: Record<string, unknown>) => (
                 <div className="flex items-center gap-2">
-                    <Avatar src={user.image} icon={<UserOutlined />} />
+                    <Avatar src={user.image as string | undefined} icon={<UserOutlined />} />
                     <div className="flex flex-col">
-                        <span>{user.name}</span>
-                        <span className="text-xs text-gray-500">{user.email}</span>
+                        <span>{user.name as string}</span>
+                        <span className="text-xs text-gray-500">{user.email as string}</span>
                     </div>
                 </div>
             ),
+            filteredValue: searchText ? [searchText] : null,
+            onFilter: (value, record) => {
+                const user = record.user as Record<string, string> | undefined;
+                const v = String(value).toLowerCase();
+                return (user?.name?.toLowerCase().includes(v) || user?.email?.toLowerCase().includes(v)) ?? false;
+            },
         },
         {
             title: 'Role',
             dataIndex: 'role',
             key: 'role',
-            render: (role: string, record: any) => {
+            render: (role, record) => {
                 const isSelf = record.userId === currentUserId;
-                const memberRoles = (role || "").split(",").map(r => r.trim()).filter(Boolean);
+                const memberRoles = (String(role || "")).split(",").map(r => r.trim()).filter(Boolean);
 
                 const canEdit = canUpdateMember && !isSelf;
 
@@ -102,7 +118,7 @@ export const OrganizationMembersPage = () => {
                         mode="multiple"
                         defaultValue={memberRoles}
                         style={{ width: 180 }}
-                        onChange={(values) => handleRoleChange(record.id, values)}
+                        onChange={(values) => handleRoleChange(record.id as string, values)}
                         options={[
                             { value: 'member', label: 'Member' },
                             { value: 'admin', label: 'Admin' },
@@ -123,7 +139,7 @@ export const OrganizationMembersPage = () => {
     columns.push({
         title: 'Actions',
         key: 'actions',
-        render: (_: any, record: any) => {
+        render: (_: unknown, record: Record<string, unknown>) => {
             const isSelf = record.userId === currentUserId;
             const canRemove = canDeleteMember && !isSelf;
 
@@ -131,7 +147,7 @@ export const OrganizationMembersPage = () => {
                 <Popconfirm
                     title="Remove member"
                     description="Are you sure you want to remove this member from the organization?"
-                    onConfirm={() => handleRemoveMember(record.id)}
+                    onConfirm={() => handleRemoveMember(record.id as string)}
                     okText="Yes"
                     cancelText="No"
                     disabled={!canRemove}
@@ -142,11 +158,13 @@ export const OrganizationMembersPage = () => {
                         icon={<DeleteOutlined />}
                         disabled={!canRemove}
                         title={!canRemove ? "Cannot remove this member" : "Remove member"}
-                    />
+                    >
+                        Remove
+                    </Button>
                 </Popconfirm>
             );
         }
-    } as any);
+    });
 
     if (loading) {
         return <Skeleton active />;
@@ -161,7 +179,10 @@ export const OrganizationMembersPage = () => {
             <Toolbar />
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <Title level={2}>Members</Title>
+                    <div>
+                        <Title level={2} style={{ marginBottom: 4 }}>Members</Title>
+                        <Text type="secondary">Manage organization members and roles</Text>
+                    </div>
                     <div className="flex items-center gap-4">
                         {currentUserRoles && currentUserRoles.length > 0 ? (
                             <Space>
@@ -179,30 +200,86 @@ export const OrganizationMembersPage = () => {
                         <Button
                             type="primary"
                             icon={<PlusOutlined />}
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={() => setIsCreateModalOpen(true)}
                         >
-                            Invite Member
+                            Create New Member
                         </Button>
                     </div>
                 </div>
+
+                {/* Stats Cards */}
+                <Row gutter={16} className="mb-6">
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Total Members"
+                                value={totalMembers}
+                                prefix={<TeamOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Admins"
+                                value={adminCount}
+                                prefix={<SafetyOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card>
+                            <Statistic
+                                title="Owners"
+                                value={ownerCount}
+                                prefix={<CrownOutlined />}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
+                {/* Search */}
+                <div className="mb-4">
+                    <Input
+                        placeholder="Search members..."
+                        prefix={<SearchOutlined />}
+                        className="max-w-xs"
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                    />
+                </div>
+
                 <Table
                     dataSource={members}
                     columns={columns}
                     rowKey={(record: any) => record.id || record.userId}
+                    pagination={{ pageSize: 10 }}
                 />
 
+
+                {/* Create New Member Modal */}
                 <Modal
-                    title="Invite Member"
-                    open={isModalOpen}
-                    onCancel={() => setIsModalOpen(false)}
+                    title="Create New Member"
+                    open={isCreateModalOpen}
+                    onCancel={() => setIsCreateModalOpen(false)}
                     footer={null}
                 >
                     <Form
-                        form={form}
+                        form={createForm}
                         layout="vertical"
-                        onFinish={handleInvite}
+                        onFinish={handleCreateMember}
                         initialValues={{ role: 'member' }}
                     >
+                        <Form.Item
+                            name="name"
+                            label="Full Name"
+                            rules={[
+                                { required: true, message: 'Please input the full name!' }
+                            ]}
+                        >
+                            <Input placeholder="John Doe" />
+                        </Form.Item>
+
                         <Form.Item
                             name="email"
                             label="Email Address"
@@ -228,9 +305,9 @@ export const OrganizationMembersPage = () => {
 
                         <Form.Item className="mb-0 flex justify-end">
                             <Space>
-                                <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                                <Button type="primary" htmlType="submit" loading={isInviting}>
-                                    Send Invitation
+                                <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                                <Button type="primary" htmlType="submit" loading={createMemberMutation.isPending}>
+                                    Create Member
                                 </Button>
                             </Space>
                         </Form.Item>

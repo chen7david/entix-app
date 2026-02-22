@@ -1,16 +1,17 @@
-import { Context } from 'hono';
+import type { AppContext } from '../helpers/types.helpers';
 import { ZodError } from 'zod';
+import { HTTPException } from 'hono/http-exception';
 import { AppError } from '../errors/app.error';
 import { z } from 'zod';
 
-export const globalErrorHandler = async (err: Error, c: Context) => {
-    console.error('Caught error:', err);
+export const globalErrorHandler = async (err: Error, ctx: AppContext) => {
+    ctx.var.logger.error({ err }, 'Caught error');
 
     // 1. Zod validation error
     if (err instanceof ZodError) {
         const flattened = z.treeifyError(err);
-        console.log('Flattened Zod error:', flattened);
-        return c.json(
+        ctx.var.logger.warn({ flattened }, 'Flattened Zod error');
+        return ctx.json(
             {
                 success: false,
                 message: 'Validation failed',
@@ -20,9 +21,20 @@ export const globalErrorHandler = async (err: Error, c: Context) => {
         );
     }
 
-    // 2. Custom AppError
+    // 2. HTTPException from Hono
+    if (err instanceof HTTPException) {
+        return ctx.json(
+            {
+                success: false,
+                message: err.message,
+            },
+            { status: err.status }
+        );
+    }
+
+    // 3. Custom AppError
     if (err instanceof AppError) {
-        return c.json(
+        return ctx.json(
             {
                 success: false,
                 message: err.message,
@@ -32,8 +44,8 @@ export const globalErrorHandler = async (err: Error, c: Context) => {
         );
     }
 
-    // 3. Unknown or unhandled error
-    return c.json(
+    // 4. Unknown or unhandled error
+    return ctx.json(
         {
             success: false,
             message: 'Internal Server Error',

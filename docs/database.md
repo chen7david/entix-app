@@ -52,6 +52,30 @@ If you encounter issues where migrations appear applied but tables are missing:
    - Staging: `npm run db:migrate:staging`
    - Production: `npm run db:migrate:production`
 
+### Atomic Multi-Domain Transactions
+
+When an operation requires writing to multiple tables across different domains (e.g., creating a User, an Organization, and a Member relationship simultaneously), you **MUST** use the Service pattern combined with Drizzle's `db.batch()`.
+
+Cloudflare D1 does not fully support nested or cross-handler traditional transactions without Durable Objects. To prevent partial state failures (e.g., an orphaned User record if Organization creation fails), follow this pattern:
+
+1. **Pre-generate IDs**: Centralize ID generation (`nanoid()`) inside the Service so all IDs are known before the batch executes.
+2. **Expose Preparable Queries**: Repositories must expose `prepareCreate...` methods that return Drizzle `Insert` queries instead of executing them immediately.
+3. **Batch Execution**: The Service executes all the prepared queries atomically using `db.batch([q1, q2, q3])`.
+
+**Example Pattern:**
+
+```typescript
+// inside api/services/example.service.ts
+const uId = nanoid();
+const oId = nanoid();
+
+const q1 = this.userRepo.prepareCreateUser(uId, email, name);
+const q2 = this.orgRepo.prepareCreate(oId, orgName);
+
+// Executes completely or rolls back completely
+await db.batch([q1, q2]);
+```
+
 ---
 
 ## Better Auth Setup

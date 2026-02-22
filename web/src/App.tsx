@@ -12,30 +12,27 @@ import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
 import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
-import { AppContainer } from "./components/containers/AppContainer";
+
 import { DashboardLayout } from "./layouts/DashboardLayout";
-import { DashboardPage } from "./pages/dashboard/dashboard/DashboardPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { AdminLayout } from './layouts/AdminLayout';
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
-import { OrganizationDashboardPage } from "./pages/organization/OrganizationDashboardPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
-import { NoOrganizationPage } from "./pages/auth/NoOrganizationPage";
-import { SelectOrganizationPage } from "./pages/auth/SelectOrganizationPage";
-import { AcceptInvitationPage } from "./pages/auth/AcceptInvitationPage";
+import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
+import { SelectOrganizationPage } from "./pages/onboarding/SelectOrganizationPage";
+import { AcceptInvitationPage } from "./pages/onboarding/AcceptInvitationPage";
+import { HomePage } from "./pages/home/HomePage";
 import { AuthGuard } from "./components/guards/AuthGuard";
 import { GuestGuard } from "./components/guards/GuestGuard";
-import { OrganizationGuard } from "./components/guards/OrganizationGuard";
-import { OrganizationSlugGuard } from "./components/guards/OrganizationSlugGuard";
+import { AdminGuard } from "./components/guards/AdminGuard";
 import { ErrorBoundary } from 'react-error-boundary';
 import { ErrorFallback } from './components/error/ErrorFallback';
 import { NotFoundPage } from './pages/error/NotFoundPage';
-
+import { OrgGuard } from './components/guards/OrgGuard';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
@@ -59,7 +56,7 @@ export default function App() {
       }}
     >
       <QueryClientProvider client={queryClient}>
-        <AppContainer>
+        <div className="flex h-[calc(100dvh)] m-0 p-0">
           <Routes>
             <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
 
@@ -82,42 +79,43 @@ export default function App() {
             {/* Protected Routes */}
             <Route element={<AuthGuard />}>
 
-              {/* Context Routes (Authenticated but no active org required) */}
-              <Route path={links.context.index} element={<AuthLayout />}>
+              {/* Onboarding Routes (Authenticated but no active org required) */}
+              <Route path={links.onboarding.index} element={<AuthLayout />}>
                 <Route path="no-organization" element={<NoOrganizationPage />} />
                 <Route path="select-organization" element={<SelectOrganizationPage />} />
                 <Route path="accept-invitation" element={<AcceptInvitationPage />} />
               </Route>
 
-              {/* Organization Protected Routes */}
-              <Route element={<OrganizationGuard />}>
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<AdminDashboardPage />} />
-                </Route>
+              {/* URL-scoped Organization Routes: /org/:slug/... */}
+              <Route path="org/:slug" element={<OrgGuard />}>
+                <Route element={<DashboardLayout />}>
+                  <Route index element={<Navigate to="dashboard" replace />} />
 
-                {/* Dashboard Routes */}
-                <Route path={links.dashboard.index} element={<DashboardLayout />}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path='profile' element={<ProfilePage />} />
-                  <Route path='sessions' element={<SessionsPage />} />
-                  <Route path='settings' element={<SettingsPage />} />
-                  <Route path='change-password' element={<ChangePasswordPage />} />
-                  <Route path='lessons' element={<LessonsPage />} />
-                  <Route path='shop' element={<ShopPage />} />
-                  <Route path='wallet' element={<WalletPage />} />
-                  <Route path='movies' element={<MoviesPage />} />
-                  <Route path='orders' element={<OrdersPage />} />
-                </Route>
-
-                {/* Organization Routes */}
-                <Route path={links.organization.index} element={<DashboardLayout />}>
-                  <Route index element={<OrganizationListPage />} />
-                  <Route path=":slug" element={<OrganizationSlugGuard />}>
-                    <Route index element={<OrganizationDashboardPage />} />
-                    <Route path="members" element={<OrganizationMembersPage />} />
-                    <Route path="invitations" element={<OrganizationInvitationsPage />} />
+                  {/* Dashboard Routes */}
+                  <Route path="dashboard">
+                    <Route index element={<HomePage />} />
+                    <Route path='profile' element={<ProfilePage />} />
+                    <Route path='sessions' element={<SessionsPage />} />
+                    <Route path='settings' element={<SettingsPage />} />
+                    <Route path='change-password' element={<ChangePasswordPage />} />
+                    <Route path='lessons' element={<LessonsPage />} />
+                    <Route path='shop' element={<ShopPage />} />
+                    <Route path='wallet' element={<WalletPage />} />
+                    <Route path='movies' element={<MoviesPage />} />
+                    <Route path='orders' element={<OrdersPage />} />
                   </Route>
+
+                  {/* Organization Management */}
+                  <Route path="members" element={<OrganizationMembersPage />} />
+                  <Route path="invitations" element={<OrganizationInvitationsPage />} />
+                  <Route path="organizations" element={<OrganizationListPage />} />
+                </Route>
+              </Route>
+
+              {/* Global Admin Routes */}
+              <Route element={<AdminGuard />}>
+                <Route element={<DashboardLayout />}>
+                  <Route path="admin" element={<AdminDashboardPage />} />
                 </Route>
               </Route>
             </Route>
@@ -129,7 +127,7 @@ export default function App() {
               <Route path="*" element={<NotFoundPage />} />
             </Route>
           </Routes>
-        </AppContainer>
+        </div>
       </QueryClientProvider>
     </ErrorBoundary>
   )

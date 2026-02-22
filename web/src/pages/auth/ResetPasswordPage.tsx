@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
 import { message, Card, Typography, Result, Button } from 'antd';
 import { ResetPasswordForm, type ResetPasswordValues } from '@web/src/components/auth/ResetPasswordForm';
-import { useResetPassword } from '@web/src/hooks/auth/auth.hook';
+import { useResetPassword } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
 
 const { Title, Text } = Typography;

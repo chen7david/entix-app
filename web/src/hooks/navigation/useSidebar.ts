@@ -1,5 +1,5 @@
 import { atom, useAtom } from 'jotai';
-import { useAuth } from '../auth/auth.hook';
+import { useAuth } from '../auth/useAuth';
 import { useEffect } from 'react';
 
 const sidebarOpenAtom = atom(false);

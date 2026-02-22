@@ -15,7 +15,7 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) =
         if (!ctx || !mailer) {
             return
         }
-        const inviteLink = `${ctx.env.FRONTEND_URL}${links.context.acceptInvitation}?id=${data.id}`;
+        const inviteLink = `${ctx.var.frontendUrl}${links.onboarding.acceptInvitation}?id=${data.id}`;
 
         await mailer.sendTemplate({
             to: data.email,

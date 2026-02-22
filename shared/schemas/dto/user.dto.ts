@@ -11,3 +11,10 @@ export const userSchema = z.object({
 });
 
 export type UserDTO = z.infer<typeof userSchema>;
+
+export const createUserSchema = z.object({
+    email: z.email().openapi({ example: "user@example.com" }),
+    name: z.string().min(1).openapi({ example: "John Doe" }),
+});
+
+export type CreateUserDTO = z.infer<typeof createUserSchema>;

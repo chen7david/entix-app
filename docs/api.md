@@ -77,7 +77,7 @@ app.use('*', cors({
     const allowedOrigins = [
       'http://localhost:3000',     // API server
       'http://localhost:8000',     // Vite dev server
-      c.env.FRONTEND_URL,          // Dynamic frontend URL
+      c.var.frontendUrl,           // Dynamic frontend URL injected by middleware
       'https://entix.org',         // Production
       'https://staging.entix.org'  // Staging
     ];
@@ -94,7 +94,8 @@ app.use('*', cors({
 ### Key Features
 
 - **Dynamic Origin Validation**: Checks request origin against allowlist
-- **Environment-Aware**: Uses `c.env.FRONTEND_URL` for deployment flexibility
+- **Dynamic Preview Branch Support**: Uses `getFrontendUrl(ctx)` middleware to resolve the origin at *runtime* instead of build-time. This natively allows Cloudflare's auto-generated preview branches (`*.workers.dev`) to authenticate dynamically without needing hardcoded environment variables per branch.
+- **Environment Fallback**: Explicitly falls back to `c.env.FRONTEND_URL` for asynchronous background jobs (CRON, queues) where no active HTTP request origin exists.
 - **Credentials Support**: `credentials: true` allows cookies and auth headers
 - **Preflight Caching**: `maxAge: 600` caches preflight responses for 10 minutes
 - **Security**: Rejects requests from non-allowlisted origins

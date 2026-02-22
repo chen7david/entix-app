@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Typography, Button } from 'antd';
-import { useSignOut } from '@web/src/hooks/auth/auth.hook';
+import { useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
 

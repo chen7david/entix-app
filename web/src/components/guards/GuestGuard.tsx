@@ -1,18 +1,18 @@
 import React, { useEffect } from 'react';
-import { useNavigate, Outlet } from 'react-router';
-import { useAuth } from '@web/src/hooks/auth/auth.hook';
-import { links } from '@web/src/constants/links';
+import { Outlet } from 'react-router';
+import { useAuth } from '@web/src/hooks/auth/useAuth';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { Spin } from 'antd';
 
 export const GuestGuard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
-    const navigate = useNavigate();
+    const { checkOrganizationStatus } = useOrganization();
 
     useEffect(() => {
         if (!isLoading && isAuthenticated) {
-            navigate(links.dashboard.index, { replace: true });
+            checkOrganizationStatus();
         }
-    }, [isLoading, isAuthenticated, navigate]);
+    }, [isLoading, isAuthenticated, checkOrganizationStatus]);
 
     if (isLoading) {
         return (

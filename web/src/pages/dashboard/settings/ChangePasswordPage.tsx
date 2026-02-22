@@ -2,14 +2,16 @@ import React from 'react';
 import { useNavigate } from 'react-router';
 import { Card, Typography, message } from 'antd';
 import { ChangePasswordForm, type ChangePasswordValues } from '@web/src/components/auth/ChangePasswordForm';
-import { useChangePassword } from '@web/src/hooks/auth/auth.hook';
+import { useChangePassword } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 const { Title, Text } = Typography;
 
 export const ChangePasswordPage: React.FC = () => {
     const navigate = useNavigate();
+    const { activeOrganization } = useOrganization();
     const { mutate: changePassword, isPending } = useChangePassword();
 
     const handleChangePassword = (values: ChangePasswordValues) => {
@@ -21,7 +23,11 @@ export const ChangePasswordPage: React.FC = () => {
             onSuccess: () => {
                 message.success('Password changed successfully!');
                 setTimeout(() => {
-                    navigate(links.dashboard.settings);
+                    if (activeOrganization?.slug) {
+                        navigate(links.dashboard.settings(activeOrganization.slug));
+                    } else {
+                        navigate(-1); // Fallback
+                    }
                 }, 1500);
             },
             onError: (error) => {

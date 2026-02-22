@@ -1,9 +1,12 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { cors } from 'hono/cors';
 import { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
 import { notFoundHandler } from "@api/middleware/not-found.middleware";
 import { globalErrorHandler } from "@api/middleware/global-error.middleware";
-import { logger } from "@api/middleware/logger.middleware"
+import { frontendUrlMiddleware } from "@api/middleware/frontend-url.middleware";
+import { logger } from "@api/middleware/logger.middleware";
+import { getCorsOrigins } from "@api/helpers/cors.helpers";
 
 export const createRouter = () => {
     const router = new OpenAPIHono<AppEnv>({
@@ -22,20 +25,14 @@ export const mountRoutes = ({ app, routes, prefix }: MountRoutes) => {
     });
 }
 
-import { cors } from 'hono/cors';
-
 export const createApp = () => {
     const app = new OpenAPIHono<AppEnv>({ strict: false });
 
+    app.use('*', frontendUrlMiddleware());
+
     app.use('*', cors({
-        origin: (origin, c) => {
-            const allowedOrigins = [
-                'http://localhost:3000',
-                'http://localhost:8000', // Vite default
-                c.env.FRONTEND_URL,
-                'https://entix.org',
-                'https://staging.entix.org'
-            ];
+        origin: (origin, ctx) => {
+            const allowedOrigins = getCorsOrigins(ctx);
             return allowedOrigins.includes(origin) ? origin : null;
         },
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
