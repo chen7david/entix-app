@@ -33,4 +33,32 @@ export class UserRoutes {
             [HttpStatusCodes.CREATED]: jsonContent(userSchema, 'User created'),
         },
     });
+
+    static setActiveOrg = createRoute({
+        tags: UserRoutes.tags,
+        method: HttpMethods.POST,
+        path: '/users/active-org',
+        middleware: [] as const, // auth is handled globally or checked within the handler
+        request: {
+            body: jsonContentRequired(z.object({
+                organizationId: z.string().nullable()
+            }), 'Organization ID to set as active'),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Active organization updated'),
+            [HttpStatusCodes.UNAUTHORIZED]: { description: "Unauthorized" },
+            [HttpStatusCodes.NOT_FOUND]: { description: "Organization not found" }
+        },
+    });
+
+    static getActiveOrg = createRoute({
+        tags: UserRoutes.tags,
+        method: HttpMethods.GET,
+        path: '/users/active-org',
+        middleware: [] as const,
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.object({ organizationId: z.string().nullable() }), 'Active organization'),
+            [HttpStatusCodes.UNAUTHORIZED]: { description: "Unauthorized" }
+        },
+    });
 }

@@ -4,5 +4,7 @@ import { UserRoutes } from './user.routes'
 
 export const userRoutes = createRouter()
     .openapi(UserRoutes.create, UserHandler.create)
-    .openapi(UserRoutes.findAll, UserHandler.findAll);
+    .openapi(UserRoutes.findAll, UserHandler.findAll)
+    .openapi(UserRoutes.setActiveOrg, UserHandler.setActiveOrg)
+    .openapi(UserRoutes.getActiveOrg, UserHandler.getActiveOrg);
 

@@ -30,4 +30,61 @@ export class MemberRoutes {
             },
         },
     });
+
+    static getMembers = createRoute({
+        tags: MemberRoutes.tags,
+        method: HttpMethods.GET,
+        path: '/orgs/{organizationId}/members',
+        summary: "List all members of an organization",
+        middleware: [requirePermission('member', ['update'])] as const,
+        request: {
+            params: z.object({ organizationId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.object({ members: z.array(z.any()) }), 'Members list'),
+            [HttpStatusCodes.NOT_FOUND]: {
+                description: "Organization not found"
+            },
+        },
+    });
+
+    static updateMemberRole = createRoute({
+        tags: MemberRoutes.tags,
+        method: HttpMethods.PUT,
+        path: '/orgs/{organizationId}/members/{memberId}/role',
+        summary: "Update a member's role",
+        middleware: [requirePermission('member', ['update'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                memberId: z.string()
+            }),
+            body: jsonContent(z.object({
+                role: z.string().min(1, "Role is required"),
+            }), "Role Update Request")
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), "Role updated successfully"),
+            [HttpStatusCodes.NOT_FOUND]: { description: "Member or Organization not found" }
+        }
+    });
+
+    static removeMember = createRoute({
+        tags: MemberRoutes.tags,
+        method: HttpMethods.DELETE,
+        path: '/orgs/{organizationId}/members/{memberId}',
+        summary: "Remove a member from an organization",
+        middleware: [requirePermission('member', ['delete'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                memberId: z.string()
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), "Member removed successfully"),
+            [HttpStatusCodes.NOT_FOUND]: { description: "Member or Organization not found" }
+        }
+    });
+
 }

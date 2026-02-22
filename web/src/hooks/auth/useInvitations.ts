@@ -1,5 +1,4 @@
 import { authClient } from "@web/src/lib/auth-client";
-import type { OrgRole } from "@shared/auth/permissions";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useOrganization } from "./useOrganization";
@@ -24,11 +23,13 @@ export const useInvitations = () => {
 
     const { mutateAsync: inviteMemberMutation, isPending: isInviting } = useMutation({
         mutationFn: async ({ email, role }: { email: string; role: string }) => {
-            return await authClient.organization.inviteMember({
-                email,
-                role: role as OrgRole,
-                organizationId: activeOrganization!.id
+            const res = await fetch(`/api/v1/orgs/${activeOrganization!.id}/invitations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, role })
             });
+            if (!res.ok) throw new Error('Failed to invite member');
+            return await res.json();
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
@@ -37,7 +38,12 @@ export const useInvitations = () => {
 
     const { mutateAsync: cancelInvitationMutation, isPending: isCancelingInvitation } = useMutation({
         mutationFn: async (invitationId: string) => {
-            return await authClient.organization.cancelInvitation({ invitationId });
+            const res = await fetch(`/api/v1/orgs/${activeOrganization!.id}/invitations/${invitationId}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) throw new Error('Failed to cancel invitation');
+            return await res.json();
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });

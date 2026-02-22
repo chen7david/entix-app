@@ -4,6 +4,10 @@ import { UserRoutes } from './user.routes';
 import { UserRepository } from '@api/repositories/user.repository';
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { RegistrationService } from "@api/services/registration.service";
+import { auth } from "@api/lib/auth/auth";
+import { getDbClient } from "@api/factories/db.factory";
+import * as schema from "@api/db/schema.db";
+import { eq } from "drizzle-orm";
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (ctx) => {
@@ -61,5 +65,55 @@ export class UserHandler {
 
             throw new InternalServerError("User creation failed, please try again");
         }
+    }
+
+    static setActiveOrg: AppHandler<typeof UserRoutes.setActiveOrg> = async (ctx) => {
+        const { organizationId } = ctx.req.valid('json');
+
+        const authClient = auth(ctx);
+        const session = await authClient.api.getSession({ headers: ctx.req.raw.headers });
+
+        if (!session || !session.session) {
+            return ctx.json({ error: 'Unauthorized' }, HttpStatusCodes.UNAUTHORIZED as any);
+        }
+
+        const sessionId = session.session.id;
+        const db = getDbClient(ctx);
+
+        if (organizationId) {
+            // Verify organization exists before setting it
+            const org = await db.query.organization.findFirst({
+                where: (orgs, { eq }) => eq(orgs.id, organizationId)
+            });
+
+            if (!org) {
+                return ctx.json({ error: 'Organization not found' }, HttpStatusCodes.NOT_FOUND as any);
+            }
+        }
+
+        // Direct database update bypassing Better Auth membership checks
+        await db.update(schema.session)
+            .set({ activeOrganizationId: organizationId })
+            .where(eq(schema.session.id, sessionId));
+
+        return ctx.json({ success: true }, HttpStatusCodes.OK);
+    }
+
+    static getActiveOrg: AppHandler<typeof UserRoutes.getActiveOrg> = async (ctx) => {
+        const authClient = auth(ctx);
+        const session = await authClient.api.getSession({ headers: ctx.req.raw.headers });
+
+        if (!session || !session.session) {
+            return ctx.json({ error: 'Unauthorized' }, HttpStatusCodes.UNAUTHORIZED as any);
+        }
+
+        const sessionId = session.session.id;
+        const db = getDbClient(ctx);
+
+        const sessionRecord = await db.query.session.findFirst({
+            where: (sessions, { eq }) => eq(sessions.id, sessionId)
+        });
+
+        return ctx.json({ organizationId: sessionRecord?.activeOrganizationId || null }, HttpStatusCodes.OK);
     }
 }

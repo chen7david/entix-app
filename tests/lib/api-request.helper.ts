@@ -17,6 +17,7 @@ export async function parseJson<T>(response: Response): Promise<T> {
  */
 export type ErrorResponse = {
     success: false;
-    message: string;
+    message?: string;
+    error?: string;
     details?: Record<string, unknown>;
 };

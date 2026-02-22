@@ -39,11 +39,13 @@ export const OrgGuard: React.FC = () => {
         : null;
 
     // 3. Fetch server's current active org to detect mismatches
-    const { data: serverActiveOrg } = useQuery({
-        queryKey: ['serverActiveOrganization'],
+    const { data: serverActiveOrgId } = useQuery({
+        queryKey: ['serverActiveOrganizationId'],
         queryFn: async () => {
-            const { data } = await authClient.organization.getFullOrganization();
-            return data || null;
+            const res = await fetch('/api/v1/users/active-org');
+            if (!res.ok) return null;
+            const data = await res.json();
+            return data?.organizationId || null;
         },
         // Only fetch once we know which org the URL wants
         enabled: !!activeOrganization,
@@ -51,23 +53,24 @@ export const OrgGuard: React.FC = () => {
 
     // 4. Sync server session when URL slug differs from server's active org
     useEffect(() => {
-        if (!activeOrganization || syncingRef.current) return;
+        if (!activeOrganization || syncingRef.current || serverActiveOrgId === undefined) return;
 
-        // If server has no active org, or a different one, sync it
-        const serverSlug = serverActiveOrg?.slug;
-        if (serverSlug !== activeOrganization.slug) {
+        // If server has no active org, or a different one by ID, sync it
+        if (serverActiveOrgId !== activeOrganization.id) {
             syncingRef.current = true;
-            authClient.organization.setActive({
-                organizationId: activeOrganization.id
+            fetch('/api/v1/users/active-org', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ organizationId: activeOrganization.id })
             }).then(() => {
                 // Update the server active org cache to reflect the sync
-                queryClient.setQueryData(['serverActiveOrganization'], activeOrganization);
+                queryClient.setQueryData(['serverActiveOrganizationId'], activeOrganization.id);
                 queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
             }).finally(() => {
                 syncingRef.current = false;
             });
         }
-    }, [activeOrganization, serverActiveOrg, queryClient]);
+    }, [activeOrganization, serverActiveOrgId, queryClient]);
 
     // Loading State
     if (loadingOrgs) {

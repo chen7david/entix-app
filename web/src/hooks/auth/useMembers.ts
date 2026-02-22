@@ -41,8 +41,14 @@ export const useMembers = () => {
 
     const { mutateAsync: updateMemberRoleMutation, isPending: isUpdatingRole } = useMutation({
         mutationFn: async ({ memberId, roles }: { memberId: string; roles: string[] }) => {
-            // Join roles with comma
-            return await authClient.organization.updateMemberRole({ memberId, role: roles.join(",") });
+            const roleString = roles.join(",");
+            const res = await fetch(`/api/v1/orgs/${activeOrganization?.id}/members/${memberId}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ role: roleString })
+            });
+            if (!res.ok) throw new Error('Failed to update member role');
+            return await res.json();
         },
         onSuccess: async () => {
             // Invalidate generically to ensuring list refresh
@@ -52,7 +58,11 @@ export const useMembers = () => {
 
     const { mutateAsync: removeMemberMutation, isPending: isRemovingMember } = useMutation({
         mutationFn: async ({ memberId }: { memberId: string }) => {
-            return await authClient.organization.removeMember({ memberIdOrEmail: memberId });
+            const res = await fetch(`/api/v1/orgs/${activeOrganization?.id}/members/${memberId}`, {
+                method: 'DELETE',
+            });
+            if (!res.ok) throw new Error('Failed to remove member');
+            return await res.json();
         },
         onSuccess: async () => {
             // Invalidate generically to ensuring list refresh

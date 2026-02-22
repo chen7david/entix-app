@@ -85,6 +85,21 @@ export class MemberRepository {
     }
 
     /**
+     * Find all members of an organization, including their user objects
+     */
+    async findMembersByOrganization(organizationId: string) {
+        const db = getDbClient(this.ctx);
+        const members = await db.query.member.findMany({
+            where: eq(schema.member.organizationId, organizationId),
+            with: {
+                user: true,
+            },
+        });
+
+        return members;
+    }
+
+    /**
      * Prepare a query to add a member for batching
      */
     prepareAdd(id: string, organizationId: string, userId: string, role: string) {
@@ -97,5 +112,28 @@ export class MemberRepository {
             role,
             createdAt: now,
         });
+    }
+
+    /**
+     * Update a member's role
+     */
+    async updateRole(memberId: string, role: string) {
+        const db = getDbClient(this.ctx);
+        const result = await db.update(schema.member)
+            .set({ role })
+            .where(eq(schema.member.id, memberId));
+
+        return result;
+    }
+
+    /**
+     * Remove a member from an organization
+     */
+    async remove(memberId: string) {
+        const db = getDbClient(this.ctx);
+        const result = await db.delete(schema.member)
+            .where(eq(schema.member.id, memberId));
+
+        return result;
     }
 }

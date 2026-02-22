@@ -48,12 +48,21 @@ export const useOrganization = () => {
 
     const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
         mutationFn: async (organizationId: string) => {
-            return await authClient.organization.setActive({ organizationId });
+            const res = await fetch('/api/v1/users/active-org', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ organizationId })
+            });
+            if (!res.ok) throw new Error('Failed to set active organization');
+            return await res.json();
         },
         onSuccess: async (result) => {
-            if (result.data) {
-                await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
-                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+            if (result.success) {
+                // We use setTimeout so that the DB's session update takes priority over any subsequent DB queries
+                setTimeout(async () => {
+                    await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
+                    await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+                }, 100);
             }
         }
     });
@@ -80,13 +89,17 @@ export const useOrganization = () => {
         });
 
         // 2. Fetch and cache active organization
-        const activeOrg = await queryClient.fetchQuery({
-            queryKey: ['activeOrganization'],
+        const activeOrgId = await queryClient.fetchQuery({
+            queryKey: ['serverActiveOrganizationId'],
             queryFn: async () => {
-                const { data } = await authClient.organization.getFullOrganization();
-                return data || null;
+                const res = await fetch('/api/v1/users/active-org');
+                if (!res.ok) return null;
+                const data = await res.json();
+                return data?.organizationId || null;
             }
         });
+
+        const activeOrg = orgs.find(o => o.id === activeOrgId) || null;
 
         if (activeOrg?.slug) {
             navigate(links.dashboard.index(activeOrg.slug));

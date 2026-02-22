@@ -36,3 +36,17 @@ export const requireAuth = async (ctx: AppContext, next: Next) => {
     await validateSession(ctx);
     await next();
 };
+
+/**
+ * Hono middleware that validates session and super admin role
+ */
+export const requireSuperAdmin = async (ctx: AppContext, next: Next) => {
+    await validateSession(ctx);
+
+    if (!ctx.get('isSuperAdmin')) {
+        ctx.var.logger.warn("Forbidden: Super admin privileges required");
+        return ctx.json({ error: 'Requires super admin privileges' }, 403);
+    }
+
+    await next();
+};
