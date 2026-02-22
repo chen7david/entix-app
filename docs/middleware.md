@@ -22,14 +22,8 @@ The CORS middleware is configured to allow cross-origin requests from specific o
 
 ```typescript
 app.use('*', cors({
-    origin: (origin, c) => {
-        const allowedOrigins = [
-            'http://localhost:3000',     // API server
-            'http://localhost:8000',     // Vite dev server
-            c.var.frontendUrl,           // Dynamic frontend URL injected by middleware
-            'https://entix.org',         // Production
-            'https://staging.entix.org'  // Staging
-        ];
+    origin: (origin, ctx) => {
+        const allowedOrigins = getCorsOrigins(ctx);
         return allowedOrigins.includes(origin) ? origin : null;
     },
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -42,8 +36,8 @@ app.use('*', cors({
 
 ### Key Points
 
-- **Dynamic Origin Check**: Uses a function to validate origins against an allowlist
-- **Dynamic Preview Branch Support**: Resolves `c.var.frontendUrl` based on the live `ctx.req.url` at *runtime*. E.g., if Cloudflare deploys to `branch-abc.workers.dev`, the middleware instantly whitelists it without requiring build-time configs!
+- **Environment-Driven Origins**: Parses external domains dynamically via the `CORS_ORIGINS` comma-separated environment variable (set inside `wrangler.jsonc` or Cloudflare dashboard).
+- **Dynamic Preview Branch Support**: `getCorsOrigins` intrinsically wraps `getFrontendUrl()`, automatically whitelisting live Cloudflare Preview URLs at runtime without manual compilation bypasses.
 - **Credentials Support**: `credentials: true` allows cookies and authentication headers
 - **Preflight Caching**: `maxAge: 600` caches preflight responses for 10 minutes
 - **Security**: Rejects requests from unlisted origins by returning `null`

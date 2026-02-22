@@ -5,7 +5,8 @@ import { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
 import { notFoundHandler } from "@api/middleware/not-found.middleware";
 import { globalErrorHandler } from "@api/middleware/global-error.middleware";
 import { frontendUrlMiddleware } from "@api/middleware/frontend-url.middleware";
-import { logger } from "@api/middleware/logger.middleware"
+import { logger } from "@api/middleware/logger.middleware";
+import { getCorsOrigins } from "@api/helpers/cors.helpers";
 
 export const createRouter = () => {
     const router = new OpenAPIHono<AppEnv>({
@@ -31,15 +32,7 @@ export const createApp = () => {
 
     app.use('*', cors({
         origin: (origin, ctx) => {
-            const configuredOrigins = (ctx.env.CORS_ORIGINS || '')
-                .split(',')
-                .map((o: string) => o.trim())
-                .filter(Boolean);
-
-            const allowedOrigins = [
-                ctx.var.frontendUrl,
-                ...configuredOrigins
-            ];
+            const allowedOrigins = getCorsOrigins(ctx);
             return allowedOrigins.includes(origin) ? origin : null;
         },
         allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
