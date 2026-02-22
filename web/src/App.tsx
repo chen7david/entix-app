@@ -14,11 +14,13 @@ import { AuthLayout } from "./layouts/AuthLayout";
 import { links } from "./constants/links";
 
 import { DashboardLayout } from "./layouts/DashboardLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { GlobalUsersPage } from './pages/admin/GlobalUsersPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
@@ -114,8 +116,9 @@ export default function App() {
 
               {/* Global Admin Routes */}
               <Route element={<AdminGuard />}>
-                <Route element={<DashboardLayout />}>
+                <Route element={<AdminLayout />}>
                   <Route path="admin" element={<AdminDashboardPage />} />
+                  <Route path="admin/users" element={<GlobalUsersPage />} />
                 </Route>
               </Route>
             </Route>

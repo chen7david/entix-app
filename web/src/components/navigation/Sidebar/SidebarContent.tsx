@@ -30,6 +30,16 @@ export const SidebarContent: React.FC = () => {
     };
 
     const userMenuItems: MenuProps['items'] = [
+        ...(session.data?.user?.role === 'admin' ? [
+            {
+                key: links.admin.index,
+                label: 'Admin Management',
+                icon: <SafetyOutlined style={{ color: '#faad14' }} />,
+            },
+            {
+                type: 'divider' as const,
+            },
+        ] : []),
         ...(slug ? [
             {
                 key: links.dashboard.profile(slug),
