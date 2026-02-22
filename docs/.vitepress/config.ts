@@ -27,6 +27,7 @@ export default defineConfig({
                 items: [
                     { text: 'Database', link: '/database' },
                     { text: 'Authentication', link: '/authentication' },
+                    { text: 'Security', link: '/security' },
                     { text: 'API & Errors', link: '/api' },
                     { text: 'Middleware', link: '/middleware' }
                 ]
