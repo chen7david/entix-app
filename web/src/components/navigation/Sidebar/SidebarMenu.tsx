@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
+import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, MailOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
@@ -55,24 +55,23 @@ export const SidebarMenu: React.FC = () => {
             type: 'divider',
         },
         {
-
-
             label: 'Organizations',
             key: slug ? links.organization.index(slug) : 'orgs-disabled',
+            icon: <BankOutlined />,
             disabled: !slug,
         },
         ...(activeOrganization ? [
             {
                 label: 'Members',
                 key: getOrgLink('/members'),
+                icon: <TeamOutlined />,
             },
             {
                 label: 'Invitations',
                 key: getOrgLink('/invitations'),
+                icon: <MailOutlined />,
             }
         ] : [])
-
-
     ];
 
     const handleMenuClick = (e: { key: string }) => {
