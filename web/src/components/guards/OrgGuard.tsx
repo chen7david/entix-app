@@ -81,12 +81,14 @@ export const OrgGuard: React.FC = () => {
     // Validation Guard
     if (!activeOrganization && !loadingOrgs) {
         return (
-            <Result
-                status="403"
-                title="Access Denied"
-                subTitle="You do not have access to this organization, or it does not exist."
-                extra={<Button type="primary" onClick={() => navigate(links.onboarding.selectOrganization)}>Switch Organization</Button>}
-            />
+            <div className="flex justify-center items-center h-screen w-full">
+                <Result
+                    status="403"
+                    title="Access Denied"
+                    subTitle="You do not have access to this organization, or it does not exist."
+                    extra={<Button type="primary" onClick={() => navigate(links.onboarding.selectOrganization)}>Switch Organization</Button>}
+                />
+            </div>
         );
     }
 

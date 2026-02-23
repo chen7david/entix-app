@@ -11,7 +11,7 @@ const { Text } = Typography;
 export const AdminSidebarContent: React.FC = () => {
     const { session } = useAuth();
     const { mutate: signOut } = useSignOut();
-    const { getOrgLink, activeOrganization } = useOrganization();
+    const { checkOrganizationStatus } = useOrganization();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -22,11 +22,7 @@ export const AdminSidebarContent: React.FC = () => {
                 onSuccess: () => navigate(links.auth.signIn)
             });
         } else if (e.key === 'exit') {
-            if (activeOrganization?.slug) {
-                navigate(getOrgLink('/dashboard'));
-            } else {
-                navigate(links.onboarding.selectOrganization);
-            }
+            checkOrganizationStatus();
         }
     };
 

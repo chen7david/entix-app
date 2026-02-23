@@ -28,8 +28,8 @@ export const GlobalUsersPage: React.FC = () => {
         },
         onSuccess: () => {
             message.success('Successfully impersonating user');
-            // Navigate to onboarding or dashboard to pick up their context
-            window.location.href = '/onboarding';
+            // Navigate to root to refresh the app state and let GuestGuard compute the user's org routing
+            window.location.href = '/';
         },
         onError: (err: any) => {
             message.error(err.message || 'Failed to impersonate user');

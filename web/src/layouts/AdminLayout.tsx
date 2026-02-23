@@ -1,7 +1,6 @@
 import { Outlet } from "react-router";
 import { Layout, theme } from "antd";
 import { AdminDesktopSidebar } from "./AdminDesktopSidebar";
-// import { AdminMobileSidebar } from "./AdminMobileSidebar"; // Optional later depending on needs
 
 const { Sider, Content } = Layout;
 
