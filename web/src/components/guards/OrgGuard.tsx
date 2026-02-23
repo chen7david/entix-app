@@ -3,7 +3,8 @@ import { useNavigate, useParams, Outlet } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authClient } from '@web/src/lib/auth-client';
 import { links } from '@web/src/constants/links';
-import { Spin, Result, Button } from 'antd';
+import { Button } from 'antd';
+import { CenteredSpin, CenteredResult } from '@web/src/components/common/CenteredView';
 import { OrgProvider } from '@web/src/context/OrgContext';
 
 /**
@@ -71,17 +72,13 @@ export const OrgGuard: React.FC = () => {
 
     // Loading State
     if (loadingOrgs) {
-        return (
-            <div className="flex justify-center items-center h-screen w-full">
-                <Spin size="large" tip="Loading organization..." />
-            </div>
-        );
+        return <CenteredSpin tip="Loading organization..." />;
     }
 
     // Validation Guard
     if (!activeOrganization && !loadingOrgs) {
         return (
-            <Result
+            <CenteredResult
                 status="403"
                 title="Access Denied"
                 subTitle="You do not have access to this organization, or it does not exist."

@@ -1,22 +1,18 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, TeamOutlined, CrownOutlined } from "@ant-design/icons";
+import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@web/src/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
 
 export const SidebarMenu: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { close } = useSidebar();
-    const { session } = useAuth();
 
     const { getOrgLink, activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || '';
-
-    const isAdmin = session.data?.user?.role === 'admin';
 
     const menuItems: MenuProps['items'] = [
         {
@@ -59,43 +55,24 @@ export const SidebarMenu: React.FC = () => {
             type: 'divider',
         },
         {
-            label: 'Organization',
-            key: 'organizations-submenu',
-            icon: <TeamOutlined />,
-            children: [
-                {
-                    label: 'Organizations',
-                    key: slug ? links.organization.index(slug) : 'orgs-disabled',
-                    disabled: !slug,
-                },
-                ...(activeOrganization ? [
-                    {
-                        label: 'Members',
-                        key: getOrgLink('/members'),
-                    },
-                    {
-                        label: 'Invitations',
-                        key: getOrgLink('/invitations'),
-                    }
-                ] : [])
-            ]
+
+
+            label: 'Organizations',
+            key: slug ? links.organization.index(slug) : 'orgs-disabled',
+            disabled: !slug,
         },
-        ...(isAdmin ? [
+        ...(activeOrganization ? [
             {
-                type: 'divider' as const,
+                label: 'Members',
+                key: getOrgLink('/members'),
             },
             {
-                label: 'Admin',
-                key: 'admin-submenu',
-                icon: <CrownOutlined />,
-                children: [
-                    {
-                        label: 'Dashboard',
-                        key: links.admin.index,
-                    },
-                ],
-            },
-        ] : []),
+                label: 'Invitations',
+                key: getOrgLink('/invitations'),
+            }
+        ] : [])
+
+
     ];
 
     const handleMenuClick = (e: { key: string }) => {

@@ -7,6 +7,7 @@ export const useAuth = () => {
         session,
         isAuthenticated: !!session.data,
         isLoading: session.isPending,
+        isSuperAdmin: session.data?.user?.role === 'admin',
     };
 };
 

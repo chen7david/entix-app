@@ -11,7 +11,7 @@ import { links } from '@web/src/constants/links';
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
-    const { session, isLoading } = useAuth();
+    const { session, isLoading, isSuperAdmin } = useAuth();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
@@ -30,6 +30,16 @@ export const SidebarContent: React.FC = () => {
     };
 
     const userMenuItems: MenuProps['items'] = [
+        ...(isSuperAdmin ? [
+            {
+                key: links.admin.index,
+                label: 'Admin Management',
+                icon: <SafetyOutlined style={{ color: '#faad14' }} />,
+            },
+            {
+                type: 'divider' as const,
+            },
+        ] : []),
         ...(slug ? [
             {
                 key: links.dashboard.profile(slug),
