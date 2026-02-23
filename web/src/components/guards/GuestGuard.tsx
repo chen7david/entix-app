@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Outlet } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { Spin } from 'antd';
+import { CenteredSpin } from '@web/src/components/common/CenteredView';
 
 export const GuestGuard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -15,11 +15,7 @@ export const GuestGuard: React.FC = () => {
     }, [isLoading, isAuthenticated, checkOrganizationStatus]);
 
     if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-screen w-full">
-                <Spin size="large" />
-            </div>
-        );
+        return <CenteredSpin />;
     }
 
     if (isAuthenticated) {

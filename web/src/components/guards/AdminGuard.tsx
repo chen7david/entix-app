@@ -1,7 +1,8 @@
 import React from 'react';
 import { Outlet } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { Result, Button } from 'antd';
+import { Button } from 'antd';
+import { CenteredResult } from '@web/src/components/common/CenteredView';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 /**
@@ -17,14 +18,12 @@ export const AdminGuard: React.FC = () => {
 
     if (!isSuperAdmin) {
         return (
-            <div className="flex justify-center items-center h-screen w-full">
-                <Result
-                    status="403"
-                    title="403"
-                    subTitle="Sorry, you are not authorized to access this page."
-                    extra={<Button type="primary" onClick={() => checkOrganizationStatus()}>Back to Dashboard</Button>}
-                />
-            </div>
+            <CenteredResult
+                status="403"
+                title="403"
+                subTitle="Sorry, you are not authorized to access this page."
+                extra={<Button type="primary" onClick={() => checkOrganizationStatus()}>Back to Dashboard</Button>}
+            />
         );
     }
 

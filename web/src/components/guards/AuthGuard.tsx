@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
-import { Spin } from 'antd';
+import { CenteredSpin } from '@web/src/components/common/CenteredView';
 
 import { Outlet } from 'react-router';
 
@@ -18,11 +18,7 @@ export const AuthGuard: React.FC = () => {
     }, [isLoading, isAuthenticated, navigate, location]);
 
     if (isLoading) {
-        return (
-            <div className="flex justify-center items-center h-screen w-full">
-                <Spin size="large" />
-            </div>
-        );
+        return <CenteredSpin />;
     }
 
     if (!isAuthenticated) {
