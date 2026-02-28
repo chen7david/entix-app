@@ -1,28 +1,10 @@
 import React, { useState } from 'react';
 import { Typography, Card, Statistic, Row, Col, Table, Tag, type TableColumnsType, Input, Alert } from 'antd';
-import { useQuery } from '@tanstack/react-query';
 import { CheckCircleOutlined, WarningOutlined, SendOutlined, SearchOutlined } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { useAdminEmails, type EmailRow, type EmailEvent } from '@web/src/hooks/admin/useAdminEmails';
 
 const { Title, Text } = Typography;
-
-type EmailEvent = 'sent' | 'delivered' | 'delivery_delayed' | 'complained' | 'bounced' | 'opened' | 'clicked' | null;
-
-interface EmailRow {
-    id: string;
-    to: string[] | null;
-    from: string;
-    subject: string | null;
-    created_at: string;
-    last_event: EmailEvent;
-    scheduled_at: string | null;
-}
-
-interface EmailListResponse {
-    object: 'list';
-    data: EmailRow[];
-    has_more: boolean;
-}
 
 const eventTagProps: Record<string, { color: string; label: string }> = {
     delivered: { color: 'green', label: 'Delivered' },
@@ -40,19 +22,10 @@ const EventTag: React.FC<{ event: EmailEvent }> = ({ event }) => {
     return <Tag color={props.color}>{props.label}</Tag>;
 };
 
-async function fetchEmailList(): Promise<EmailListResponse> {
-    const res = await fetch('/api/v1/admin/emails?limit=100', { credentials: 'include' });
-    if (!res.ok) throw new Error(`Failed to fetch emails: ${res.status}`);
-    return res.json();
-}
-
 export const EmailInsightsPage: React.FC = () => {
     const [searchText, setSearchText] = useState('');
 
-    const { data, isLoading } = useQuery<EmailListResponse>({
-        queryKey: ['admin', 'emails'],
-        queryFn: fetchEmailList,
-    });
+    const { data, isLoading } = useAdminEmails();
 
     const rawEmails = data?.data ?? [];
 
