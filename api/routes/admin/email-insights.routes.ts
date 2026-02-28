@@ -64,7 +64,7 @@ export class EmailInsightsRoutes {
     static get = createRoute({
         tags: EmailInsightsRoutes.tags,
         method: HttpMethods.GET,
-        path: '/admin/emails/:emailId',
+        path: '/admin/emails/{emailId}',
         middleware: [requireAuth, requireSuperAdmin] as const,
         request: {
             params: z.object({ emailId: z.string() }),

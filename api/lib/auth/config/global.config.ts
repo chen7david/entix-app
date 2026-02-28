@@ -12,7 +12,7 @@ export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService):
         disabled: true, // we use pino for logging and disable the messy internal logger
     },
     advanced: {
-        useSecureCookies: true,
+        useSecureCookies: ctx ? ctx.var.frontendUrl.startsWith("https://") : true,
         disableCSRFCheck: true
     },
     trustedOrigins: ctx ? [ctx.env.FRONTEND_URL, ctx.var.frontendUrl] : undefined,
