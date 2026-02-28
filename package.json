@@ -25,6 +25,7 @@
 		"@hono/zod-openapi": "^1.1.5",
 		"@hono/zod-validator": "^0.7.5",
 		"@scalar/hono-api-reference": "^0.9.28",
+		"aws4fetch": "^1.0.20",
 		"better-auth": "^1.4.9",
 		"classnames": "^2.5.1",
 		"concurrently": "^9.2.1",
