@@ -14,5 +14,6 @@ export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService):
     advanced: {
         useSecureCookies: true,
         disableCSRFCheck: true
-    }
+    },
+    trustedOrigins: ctx ? [ctx.env.FRONTEND_URL, ctx.var.frontendUrl] : undefined,
 });

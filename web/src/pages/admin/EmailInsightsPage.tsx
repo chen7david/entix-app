@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Typography, Card, Statistic, Row, Col, Table, Tag, type TableColumnsType, Input, Alert } from 'antd';
 import { useQuery } from '@tanstack/react-query';
 import { CheckCircleOutlined, WarningOutlined, SendOutlined, SearchOutlined } from '@ant-design/icons';
+import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 
 const { Title, Text } = Typography;
 
@@ -103,73 +104,76 @@ export const EmailInsightsPage: React.FC = () => {
     ];
 
     return (
-        <div className="p-8">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <Title level={2} style={{ marginBottom: 4 }}>Email Insights</Title>
-                    <Text type="secondary">Monitor email delivery status and activity via Resend</Text>
+        <>
+            <Toolbar />
+            <div className="p-8">
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <Title level={2} style={{ marginBottom: 4 }}>Email Insights</Title>
+                        <Text type="secondary">Monitor email delivery status and activity via Resend</Text>
+                    </div>
+                </div>
+
+                <Row gutter={16} className="mb-8">
+                    <Col xs={24} sm={8}>
+                        <Card loading={isLoading} className="border-gray-200 shadow-sm">
+                            <Statistic
+                                title="Total Emails"
+                                value={totalSent}
+                                prefix={<SendOutlined className="text-blue-500" />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card loading={isLoading} className="border-gray-200 shadow-sm">
+                            <Statistic
+                                title="Delivered / Opened / Clicked"
+                                value={delivered}
+                                prefix={<CheckCircleOutlined className="text-green-500" />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col xs={24} sm={8}>
+                        <Card loading={isLoading} className="border-gray-200 shadow-sm">
+                            <Statistic
+                                title="Bounced / Complained"
+                                value={failed}
+                                prefix={<WarningOutlined className="text-red-500" />}
+                                valueStyle={failed > 0 ? { color: '#ff4d4f' } : undefined}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
+                <div className="space-y-4">
+                    <Input
+                        placeholder="Search by email or subject..."
+                        prefix={<SearchOutlined />}
+                        className="max-w-xs"
+                        value={searchText}
+                        onChange={e => setSearchText(e.target.value)}
+                        allowClear
+                    />
+
+                    {searchText && (
+                        <Alert
+                            message="Local Filter Active"
+                            description="This filter only searches the currently visible page of recent emails. If you don't see your expected result, the email might have been sent before the loaded timeframe."
+                            type="info"
+                            showIcon
+                        />
+                    )}
+
+                    <Table<EmailRow>
+                        dataSource={emails}
+                        columns={columns}
+                        rowKey="id"
+                        loading={isLoading}
+                        pagination={{ pageSize: 20, showSizeChanger: false }}
+                        locale={{ emptyText: 'No emails found' }}
+                    />
                 </div>
             </div>
-
-            <Row gutter={16} className="mb-8">
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading} className="border-gray-200 shadow-sm">
-                        <Statistic
-                            title="Total Emails"
-                            value={totalSent}
-                            prefix={<SendOutlined className="text-blue-500" />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading} className="border-gray-200 shadow-sm">
-                        <Statistic
-                            title="Delivered / Opened / Clicked"
-                            value={delivered}
-                            prefix={<CheckCircleOutlined className="text-green-500" />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading} className="border-gray-200 shadow-sm">
-                        <Statistic
-                            title="Bounced / Complained"
-                            value={failed}
-                            prefix={<WarningOutlined className="text-red-500" />}
-                            valueStyle={failed > 0 ? { color: '#ff4d4f' } : undefined}
-                        />
-                    </Card>
-                </Col>
-            </Row>
-
-            <div className="space-y-4">
-                <Input
-                    placeholder="Search by email or subject..."
-                    prefix={<SearchOutlined />}
-                    className="max-w-xs"
-                    value={searchText}
-                    onChange={e => setSearchText(e.target.value)}
-                    allowClear
-                />
-
-                {searchText && (
-                    <Alert
-                        message="Local Filter Active"
-                        description="This filter only searches the currently visible page of recent emails. If you don't see your expected result, the email might have been sent before the loaded timeframe."
-                        type="info"
-                        showIcon
-                    />
-                )}
-
-                <Table<EmailRow>
-                    dataSource={emails}
-                    columns={columns}
-                    rowKey="id"
-                    loading={isLoading}
-                    pagination={{ pageSize: 20, showSizeChanger: false }}
-                    locale={{ emptyText: 'No emails found' }}
-                />
-            </div>
-        </div>
+        </>
     );
 };

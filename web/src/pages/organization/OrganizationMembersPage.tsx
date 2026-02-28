@@ -1,10 +1,11 @@
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, Popconfirm, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card } from "antd";
+import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card, Dropdown, type MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined } from "@ant-design/icons";
+import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MoreOutlined, MailOutlined, KeyOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useState } from "react";
 
@@ -60,6 +61,26 @@ export const OrganizationMembersPage = () => {
             message.success('Member removed successfully');
         } catch {
             message.error('Failed to remove member');
+        }
+    };
+
+    const handleResendPassword = async (email: string) => {
+        if (!email) return;
+        const { error } = await requestPasswordReset({ email, redirectTo: window.location.origin + '/auth/reset-password' });
+        if (error) {
+            message.error('Failed to send password reset: ' + error.message);
+        } else {
+            message.success('Password reset email sent');
+        }
+    };
+
+    const handleResendVerification = async (email: string) => {
+        if (!email) return;
+        const { error } = await sendVerificationEmail({ email, callbackURL: window.location.origin });
+        if (error) {
+            message.error('Failed to send verification email: ' + error.message);
+        } else {
+            message.success('Verification email sent');
         }
     };
 
@@ -142,26 +163,48 @@ export const OrganizationMembersPage = () => {
         render: (_: unknown, record: Record<string, unknown>) => {
             const isSelf = record.userId === currentUserId;
             const canRemove = canDeleteMember && !isSelf;
+            const user = record.user as Record<string, unknown> | undefined;
+            const email = (user?.email as string) || '';
+
+            const items: MenuProps['items'] = [
+                {
+                    key: 'verify',
+                    label: 'Resend Verification Email',
+                    icon: <MailOutlined />,
+                    onClick: () => handleResendVerification(email),
+                },
+                {
+                    key: 'password',
+                    label: 'Resend Password Reset',
+                    icon: <KeyOutlined />,
+                    onClick: () => handleResendPassword(email),
+                },
+                {
+                    type: 'divider',
+                },
+                {
+                    key: 'remove',
+                    label: 'Remove Member',
+                    icon: <DeleteOutlined />,
+                    danger: true,
+                    disabled: !canRemove,
+                    onClick: () => {
+                        Modal.confirm({
+                            title: 'Remove Member',
+                            content: `Are you sure you want to remove ${user?.name || 'this member'}?`,
+                            okText: 'Yes, Remove',
+                            okType: 'danger',
+                            cancelText: 'Cancel',
+                            onOk: () => handleRemoveMember(record.id as string),
+                        });
+                    }
+                }
+            ];
 
             return (
-                <Popconfirm
-                    title="Remove member"
-                    description="Are you sure you want to remove this member from the organization?"
-                    onConfirm={() => handleRemoveMember(record.id as string)}
-                    okText="Yes"
-                    cancelText="No"
-                    disabled={!canRemove}
-                >
-                    <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        disabled={!canRemove}
-                        title={!canRemove ? "Cannot remove this member" : "Remove member"}
-                    >
-                        Remove
-                    </Button>
-                </Popconfirm>
+                <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+                    <Button type="text" icon={<MoreOutlined />} />
+                </Dropdown>
             );
         }
     });
