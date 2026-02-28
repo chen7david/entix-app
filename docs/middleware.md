@@ -249,12 +249,18 @@ GET /api/v1/nonexistent
 - `api/middleware/require-permission.middleware.ts`
 - `api/lib/auth-middleware.lib.ts`
 
-Entix-App uses a **four-layer security architecture** to protect organization-scoped routes:
+Entix-App uses a structured security architecture to protect both organization-scoped and platform-level routes:
 
 1. **Layer 1**: `requireAuth` — Validates user session, detects super admins
-2. **Layer 2**: `requireOrgMembership` — Validates organization membership
-3. **Layer 3**: `requirePermission` — Validates specific resource permissions
-4. **Layer 4**: Super admin bypass (cross-cuts layers 2 and 3)
+2. **Layer 2**: `requireOrgMembership` — Validates organization membership for org-scoped routes
+3. **Layer 3**: `requirePermission` — Validates specific resource permissions for org-scoped routes
+4. **Layer 4**: Super admin bypass — Allows platform admins to bypass layers 2 and 3
+5. **Platform Layer**: `requireSuperAdmin` — Restricts access strictly to platform admins (super admins) for admin routes
+
+### Platform vs. Organization Scope
+
+*   **Platform-Level Routes** (e.g., `/admin/emails`): Protected by `requireAuth` + `requireSuperAdmin`. There is no organization context, so `requireSuperAdmin` strictly enforces access for super admins only.
+*   **Organization-Level Routes** (e.g., `/orgs/:organizationId/members`): Protected by `requireAuth` + `requireOrgMembership` (+ optional `requirePermission`). Super admins can access these routes using the **super admin bypass** inside `requireOrgMembership`, which automatically treats them as an org owner.
 
 ### Middleware Chain
 
@@ -308,6 +314,26 @@ export const requireAuth = async (c: AppContext, next: Next) => {
 - Checks for valid session using Better Auth
 - Stores `userId` and `isSuperAdmin` in context
 - Throws `UnauthorizedError` (401) if no valid session
+
+---
+
+### Platform Layer: requireSuperAdmin
+
+Validates that the authenticated user is a platform-level super admin. Used for `/admin/*` routes that are not scoped to any specific organization.
+
+**File**: `api/middleware/require-super-admin.middleware.ts`
+
+```typescript
+export const requireSuperAdmin = async (ctx: AppContext, next: Next) => {
+    if (!ctx.get('isSuperAdmin')) {
+        throw new ForbiddenError("Super admin access required");
+    }
+    await next();
+};
+```
+
+**When to use**:
+Apply this middleware to routes that manage the platform as a whole (e.g., viewing global email logs, system settings) where the `requireOrgMembership` middleware does not apply because there is no `organizationId` parameter.
 
 ---
 
