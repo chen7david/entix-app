@@ -1,10 +1,10 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { organization } from "better-auth/plugins";
 import { ac, member, owner, admin } from "@shared/auth/permissions";
-import { Mailer } from "@api/lib/mail/mailer.lib";
+import { MailService } from "@api/services/mailer.service";
 import { links } from "@web/src/constants/links";
 
-export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: Mailer) => organization({
+export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: MailService) => organization({
     ac,
     roles: {
         member,

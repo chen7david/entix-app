@@ -1,8 +1,9 @@
 import React from 'react';
-import { Typography, Card, Statistic, Row, Col, Button, Table, message, Dropdown, type MenuProps } from 'antd';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { Typography, Card, Statistic, Row, Col } from 'antd';
+import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@web/src/lib/auth-client';
-import { TeamOutlined, SafetyOutlined, StopOutlined, MoreOutlined, LoginOutlined } from '@ant-design/icons';
+import { TeamOutlined, SafetyOutlined, StopOutlined } from '@ant-design/icons';
+import { UserTable } from '@web/src/components/admin/UserTable';
 
 const { Title, Text } = Typography;
 
@@ -18,72 +19,9 @@ export const GlobalUsersPage: React.FC = () => {
         },
     });
 
-    const { mutateAsync: impersonateUser, isPending: isImpersonating } = useMutation({
-        mutationFn: async (userId: string) => {
-            const res = await authClient.admin.impersonateUser({
-                userId,
-            });
-            if (res.error) throw res.error;
-            return res.data;
-        },
-        onSuccess: () => {
-            message.success('Successfully impersonating user');
-            // Navigate to root to refresh the app state and let GuestGuard compute the user's org routing
-            window.location.href = '/';
-        },
-        onError: (err: any) => {
-            message.error(err.message || 'Failed to impersonate user');
-        }
-    });
-
     const totalUsers = users?.length || 0;
     const adminUsers = users?.filter((u: any) => u.role === 'admin').length || 0;
     const bannedUsers = users?.filter((u: any) => u.banned).length || 0;
-
-    const columns = [
-        {
-            title: 'Name',
-            dataIndex: 'name',
-            key: 'name',
-        },
-        {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
-        },
-        {
-            title: 'Role',
-            dataIndex: 'role',
-            key: 'role',
-            render: (role: string) => (
-                <Text type={role === 'admin' ? 'warning' : 'secondary'}>
-                    {role || 'user'}
-                </Text>
-            )
-        },
-        {
-            title: 'Actions',
-            key: 'actions',
-            align: 'right' as const,
-            render: (_: any, record: any) => {
-                const items: MenuProps['items'] = [
-                    {
-                        key: 'impersonate',
-                        label: 'Impersonate User',
-                        icon: <LoginOutlined />,
-                        onClick: () => impersonateUser(record.id),
-                        disabled: isImpersonating
-                    }
-                ];
-
-                return (
-                    <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-                        <Button type="text" icon={<MoreOutlined />} />
-                    </Dropdown>
-                );
-            }
-        }
-    ];
 
     return (
         <div className="p-8">
@@ -125,15 +63,7 @@ export const GlobalUsersPage: React.FC = () => {
                 </Col>
             </Row>
 
-            <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <Table
-                    dataSource={users}
-                    columns={columns}
-                    rowKey="id"
-                    loading={isLoading}
-                    pagination={{ pageSize: 20 }}
-                />
-            </div>
+            <UserTable />
         </div>
     );
 };

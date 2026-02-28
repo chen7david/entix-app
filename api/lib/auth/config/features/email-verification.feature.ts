@@ -1,8 +1,8 @@
 import { AppContext } from "@api/helpers/types.helpers";
-import { Mailer } from "../../../mail/mailer.lib";
+import { MailService } from "@api/services/mailer.service";
 import { BetterAuthOptions } from "better-auth";
 
-export const getEmailVerificationConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => {
+export const getEmailVerificationConfig = (ctx?: AppContext, mailer?: MailService): Partial<BetterAuthOptions> => {
     // Skip email verification if the environment variable is set (for tests)
     if (ctx?.env.SKIP_EMAIL_VERIFICATION === "true") {
         return {};

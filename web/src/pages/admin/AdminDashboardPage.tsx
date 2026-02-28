@@ -1,10 +1,9 @@
 import React from 'react';
 import { Typography, Statistic, Row, Col, Card, Tag } from 'antd';
-import { UserTable } from '@web/src/components/admin/UserTable';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useQuery } from '@tanstack/react-query';
 import { authClient } from '@web/src/lib/auth-client';
-import { TeamOutlined, SafetyOutlined, StopOutlined } from '@ant-design/icons';
+import { TeamOutlined, SafetyOutlined, StopOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
 
 const { Title, Text } = Typography;
@@ -72,7 +71,13 @@ export const AdminDashboardPage: React.FC = () => {
                     </Col>
                 </Row>
 
-                <UserTable />
+                <Card className="mt-8 border-dashed border-2 bg-gray-50/50">
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+                        <BarChartOutlined className="text-4xl mb-4 text-gray-300" />
+                        <Title level={4} className="text-gray-400 m-0">More Metrics Coming Soon</Title>
+                        <Text type="secondary">This space is reserved for administrative analytics and future charts.</Text>
+                    </div>
+                </Card>
             </div>
         </>
     );
