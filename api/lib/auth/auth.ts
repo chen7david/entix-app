@@ -2,14 +2,14 @@ import { betterAuth } from "better-auth";
 import { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { getDbClient } from "@api/factories/db.factory";
-import { Mailer } from "../mail/mailer.lib";
+import { MailService } from "@api/services/mailer.service";
 import { betterAuthGlobalOptions } from "./config/global.config";
 import { getEmailAndPasswordConfig } from "./config/features/email-and-password.feature";
 import { getEmailVerificationConfig } from "./config/features/email-verification.feature";
 
 export const auth = (ctx: AppContext) => {
     const db = getDbClient(ctx);
-    const mailer = new Mailer(ctx.env.RESEND_API_KEY);
+    const mailer = new MailService(ctx.env.RESEND_API_KEY);
 
     return betterAuth({
         database: drizzleAdapter(db, { provider: "sqlite" }),

@@ -1,10 +1,10 @@
 import { openAPI, admin } from 'better-auth/plugins';
 import { AppContext } from '@api/helpers/types.helpers';
-import { Mailer } from '@api/lib/mail/mailer.lib';
+import { MailService } from '@api/services/mailer.service';
 import { getOrganizationPluginConfig } from './plugins/organization.plugin';
 
 
-export const getBetterAuthPluginsConfig = (ctx?: AppContext, mailer?: Mailer) => [
+export const getBetterAuthPluginsConfig = (ctx?: AppContext, mailer?: MailService) => [
     getOrganizationPluginConfig(ctx, mailer),
     openAPI(),
     admin({

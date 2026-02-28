@@ -28,6 +28,7 @@ export const links = {
     admin: {
         index: '/admin',
         users: '/admin/users',
+        emails: '/admin/emails',
     },
     onboarding: {
         index: '/onboarding',

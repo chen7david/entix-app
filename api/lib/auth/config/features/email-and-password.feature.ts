@@ -1,10 +1,10 @@
 import { AppContext } from "@api/helpers/types.helpers";
-import { Mailer } from "../../../mail/mailer.lib";
+import { MailService } from "@api/services/mailer.service";
 import { BetterAuthOptions } from "better-auth";
 import { UserRepository } from "@api/repositories/user.repository";
 import { getFrontendUrl } from "@api/helpers/url.helpers";
 
-export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: Mailer): Partial<BetterAuthOptions> => {
+export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: MailService): Partial<BetterAuthOptions> => {
     // Disable email verification requirement in tests
     const requireEmailVerification = ctx?.env.SKIP_EMAIL_VERIFICATION !== "true";
 

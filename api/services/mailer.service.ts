@@ -18,12 +18,31 @@ type SendPasswordResetParams = {
     resetUrl: string;
 }
 
-export class Mailer {
+export class MailService {
     private $client: Resend;
     private sender: string = 'Entix <donotreply@entix.org>';
 
     constructor(apiKey: string) {
         this.$client = new Resend(apiKey);
+    }
+
+    // Expose methods to list/retrieve emails as requested by the user
+    public async listEmails(options: { limit?: number; after?: string; before?: string }) {
+        // Resend's PaginationOptions uses mutually exclusive after/before
+        const paginationParam = options.after
+            ? { after: options.after }
+            : options.before
+                ? { before: options.before }
+                : {};
+
+        return this.$client.emails.list({
+            limit: options.limit ?? 20,
+            ...paginationParam,
+        });
+    }
+
+    public async getEmail(emailId: string) {
+        return this.$client.emails.get(emailId);
     }
 
     public async sendHtml({ to, subject, html }: SendHtmlParams) {
