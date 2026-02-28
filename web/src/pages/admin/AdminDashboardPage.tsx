@@ -1,8 +1,7 @@
 import React from 'react';
 import { Typography, Statistic, Row, Col, Card, Tag } from 'antd';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
-import { useQuery } from '@tanstack/react-query';
-import { authClient } from '@web/src/lib/auth-client';
+import { useAdminUsers } from '@web/src/hooks/admin/useAdminUsers';
 import { TeamOutlined, SafetyOutlined, StopOutlined, BarChartOutlined } from '@ant-design/icons';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
 
@@ -10,17 +9,7 @@ const { Title, Text } = Typography;
 
 export const AdminDashboardPage: React.FC = () => {
     const { session } = useAuth();
-
-    const { data: users } = useQuery({
-        queryKey: ['admin', 'users'],
-        queryFn: async () => {
-            const res = await authClient.admin.listUsers({
-                query: { limit: 100 },
-            });
-            if (res.error) throw res.error;
-            return res.data.users;
-        },
-    });
+    const { data: users } = useAdminUsers();
 
     const totalUsers = users?.length || 0;
     const adminUsers = users?.filter((u: any) => u.role === 'admin').length || 0;

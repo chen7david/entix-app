@@ -1,74 +1,51 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Table, Tag, Button, Input, Modal, message, Dropdown } from 'antd';
+import { useAdminUsers, useBanUser, useUnbanUser, useSetUserRole, useImpersonateUser } from '@web/src/hooks/admin/useAdminUsers';
 import type { MenuProps } from 'antd';
 import { SearchOutlined, MoreOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined } from '@ant-design/icons';
-import { authClient } from '@web/src/lib/auth-client';
 import dayjs from 'dayjs';
 
 export const UserTable: React.FC = () => {
     const [searchText, setSearchText] = useState('');
-    const {
-        data: users,
-        isPending,
-        refetch
-    } = useQuery({
-        queryKey: ['admin', 'users'],
-        queryFn: async () => {
-            const res = await authClient.admin.listUsers({
-                query: {
-                    limit: 100,
-                }
-            });
-            if (res.error) throw res.error;
-            return res.data.users;
-        }
-    });
+    const { data: users, isPending } = useAdminUsers();
 
-    const handleImpersonate = async (userId: string) => {
-        await authClient.admin.impersonateUser({
-            userId,
-        }, {
-            onSuccess: () => {
-                message.success('Impersonation started');
-                window.location.href = '/'; // Redirect to root, auth flow will route to correct dashboard
-            },
-            onError: (ctx) => {
-                message.error(ctx.error.message);
-            }
+    const { mutate: impersonate } = useImpersonateUser();
+    const { mutate: banUser } = useBanUser();
+    const { mutate: unbanUser } = useUnbanUser();
+    const { mutate: setRole } = useSetUserRole();
+
+    const handleImpersonate = (userId: string) => {
+        impersonate(userId, {
+            onSuccess: () => message.success('Impersonation started'),
+            onError: (error) => message.error(error.message)
         });
     };
 
-    const handleBanUser = async (userId: string) => {
+    const handleBanUser = (userId: string) => {
         Modal.confirm({
             title: 'Ban User',
             content: 'Are you sure you want to ban this user?',
-            onOk: async () => {
-                await authClient.admin.banUser({
-                    userId,
-                    banReason: 'Admin action',
+            onOk: () => {
+                banUser({ userId, banReason: 'Admin action' }, {
+                    onSuccess: () => message.success('User banned'),
+                    onError: (error) => message.error(error.message)
                 });
-                message.success('User banned');
-                refetch();
             }
         });
     };
 
-    const handleUnbanUser = async (userId: string) => {
-        await authClient.admin.unbanUser({
-            userId,
+    const handleUnbanUser = (userId: string) => {
+        unbanUser(userId, {
+            onSuccess: () => message.success('User unbanned'),
+            onError: (error) => message.error(error.message)
         });
-        message.success('User unbanned');
-        refetch();
     };
 
-    const handleSetRole = async (userId: string, role: string) => {
-        await authClient.admin.setRole({
-            userId,
-            role: role as "user" | "admin",
+    const handleSetRole = (userId: string, role: string) => {
+        setRole({ userId, role: role as "user" | "admin" }, {
+            onSuccess: () => message.success('Role updated'),
+            onError: (error) => message.error(error.message)
         });
-        message.success('Role updated');
-        refetch();
     };
 
     const columns = [

@@ -1,6 +1,7 @@
 import { Outlet } from "react-router";
 import { Layout, theme } from "antd";
 import { AdminDesktopSidebar } from "./AdminDesktopSidebar";
+import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 
 const { Sider, Content } = Layout;
 
@@ -15,11 +16,12 @@ export const AdminLayout: React.FC = () => {
             </Sider>
             <Layout hasSider>
                 <Content
-                    className="overflow-auto"
+                    className="overflow-auto relative"
                     style={{
                         backgroundColor: token.colorBgLayout
                     }}
                 >
+                    <ImpersonationBanner />
                     <Outlet />
                 </Content>
             </Layout>
