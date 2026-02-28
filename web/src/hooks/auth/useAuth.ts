@@ -1,4 +1,4 @@
-import { useSession, signIn, signUp, signOut, verifyEmail, sendVerificationEmail, requestPasswordReset, resetPassword, changePassword } from "@web/src/lib/auth-client";
+import { useSession, signIn, signUp, signOut, verifyEmail, sendVerificationEmail, requestPasswordReset, resetPassword, changePassword, authClient } from "@web/src/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
 
 export const useAuth = () => {
@@ -163,5 +163,23 @@ export const useChangePassword = () => {
 
             return response;
         },
+    });
+};
+
+export const useStopImpersonating = () => {
+    return useMutation({
+        mutationFn: async () => {
+            const response = await authClient.admin.stopImpersonating();
+
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to stop impersonation");
+            }
+
+            return response;
+        },
+        onSuccess: () => {
+            // Force a deep reload to clear all contexts and fetch the correct user session
+            window.location.href = '/admin/users';
+        }
     });
 };

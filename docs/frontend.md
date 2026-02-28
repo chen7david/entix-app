@@ -180,6 +180,88 @@ const response = await fetch('/api/v1/protected-route', {
 
 The `credentials: 'include'` option ensures cookies are sent with the request.
 
+### Auth Mutations: Hooks vs Direct Client
+
+When performing authentication actions (like signing in, resetting passwords, or stopping impersonation) using the Better Auth `authClient`, you should **always wrap the client calls inside a custom React hook** instead of calling the client directly from UI components.
+
+#### Why?
+
+1. **Separation of Concerns**: Components should focus solely on rendering UI, not managing asynchronous side-effects and API payloads.
+2. **Centralized Error Handling**: Better Auth endpoints often return `{ data, error }` objects or throw standard errors. A unified hook ensures that errors (e.g., via `antd`'s `message.error`) are handled correctly and consistently without repeating boilerplate across the app.
+3. **Loading States**: Managing `isLoading` state locally inside every component violates DRY principles.
+
+#### Example: The Anti-Pattern (Direct Client Call)
+
+```tsx
+// ❌ INCORRECT: direct mutation inside component
+import { authClient } from '@web/src/lib/auth-client';
+import { useState } from 'react';
+import { Button, message } from 'antd';
+
+export const ImpersonationBanner = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleStop = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await authClient.admin.stopImpersonating();
+      if (error) {
+         message.error(error.message);
+         return;
+      }
+      window.location.href = '/admin/users';
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return <Button loading={isLoading} onClick={handleStop}>Stop</Button>;
+};
+```
+
+#### Example: The Best Practice (Hook Wrapper)
+
+```tsx
+// ✅ CORRECT: extraction to a hook
+// hooks/useStopImpersonating.ts
+import { useMutation } from '@tanstack/react-query';
+import { authClient } from '@web/src/lib/auth-client';
+
+export const useStopImpersonating = () => {
+    return useMutation({
+        mutationFn: async () => {
+            const response = await authClient.admin.stopImpersonating();
+            
+            if (response.error) {
+                throw new Error(response.error.message || "Failed to stop impersonation");
+            }
+            
+            return response;
+        },
+        onSuccess: () => {
+            // Force a deep reload to clear all contexts and fetch the correct user session
+            window.location.href = '/admin/users';
+        }
+    });
+};
+
+// components/ImpersonationBanner.tsx
+import { useStopImpersonating } from '../hooks/useStopImpersonating';
+import { Button, message } from 'antd';
+
+export const ImpersonationBanner = () => {
+  const { mutate: stopImpersonating, isPending } = useStopImpersonating();
+  
+  const handleStop = () => {
+      stopImpersonating(undefined, {
+          onError: (error) => message.error(error.message)
+      });
+  };
+  
+  return <Button loading={isPending} onClick={handleStop}>Stop</Button>;
+};
+```
+
 ## Build Process
 
 ### Development Build

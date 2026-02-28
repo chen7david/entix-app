@@ -1,30 +1,27 @@
-import React, { useState } from 'react';
-import { Button, Alert } from 'antd';
+import React from 'react';
+import { Button, Alert, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
-import { authClient, useSession } from '@web/src/lib/auth-client';
+import { useSession } from '@web/src/lib/auth-client';
+import { useStopImpersonating } from '@web/src/hooks/auth/useAuth';
 
 export const ImpersonationBanner: React.FC = () => {
-    const { data, isPending } = useSession();
-    const [isLoading, setIsLoading] = useState(false);
+    const { data, isPending: isSessionPending } = useSession();
+    const { mutate: stopImpersonating, isPending: isStopping } = useStopImpersonating();
 
     // Better Auth injects `impersonatedBy` into the session object during impersonation
     const session = data?.session as any;
 
-    if (isPending || !session || !session.impersonatedBy) {
+    if (isSessionPending || !session || !session.impersonatedBy) {
         return null; // Don't render if not impersonating
     }
 
-    const handleStopImpersonation = async () => {
-        setIsLoading(true);
-        try {
-            await authClient.admin.stopImpersonating();
-            // Force a deep reload to clear all contexts and fetch the correct user session
-            window.location.href = '/admin/users';
-        } catch (error) {
-            console.error('Failed to stop impersonation', error);
-        } finally {
-            setIsLoading(false);
-        }
+    const handleStopImpersonation = () => {
+        stopImpersonating(undefined, {
+            onError: (error) => {
+                message.error(error.message);
+                console.error('Failed to stop impersonation', error);
+            }
+        });
     };
 
     return (
@@ -39,7 +36,7 @@ export const ImpersonationBanner: React.FC = () => {
                         type="primary"
                         danger
                         size="small"
-                        loading={isLoading}
+                        loading={isStopping}
                         onClick={handleStopImpersonation}
                         className="font-semibold"
                     >
