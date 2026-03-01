@@ -8,7 +8,7 @@ import { useOrganization } from "./useOrganization";
 export const useMembers = () => {
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
-    const { session } = useAuth();
+    const { session, isSuperAdmin } = useAuth();
     const userId = session.data?.user?.id;
 
     const { data: members = [], isLoading: loadingMembers } = useQuery({
@@ -29,6 +29,8 @@ export const useMembers = () => {
 
     // Helper to check permissions client-side using better-auth pattern
     const checkPermission = useCallback((permission: { permissions: Record<string, string[]> }) => {
+        if (isSuperAdmin) return true; // Platform super admins bypass org permission checks
+
         if (!userRoles.length) return false;
 
         return userRoles.some((role: string) => {
@@ -37,7 +39,7 @@ export const useMembers = () => {
                 permissions: permission.permissions
             });
         });
-    }, [userRoles]);
+    }, [userRoles, isSuperAdmin]);
 
     const { mutateAsync: updateMemberRoleMutation, isPending: isUpdatingRole } = useMutation({
         mutationFn: async ({ memberId, roles }: { memberId: string; roles: string[] }) => {

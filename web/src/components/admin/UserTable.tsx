@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Table, Tag, Button, Input, Modal, message, Dropdown } from 'antd';
 import { useAdminUsers, useBanUser, useUnbanUser, useSetUserRole, useImpersonateUser } from '@web/src/hooks/admin/useAdminUsers';
+import { requestPasswordReset, sendVerificationEmail } from '@web/src/lib/auth-client';
 import type { MenuProps } from 'antd';
-import { SearchOutlined, MoreOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined } from '@ant-design/icons';
+import { SearchOutlined, MoreOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined, MailOutlined, KeyOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 export const UserTable: React.FC = () => {
@@ -46,6 +47,26 @@ export const UserTable: React.FC = () => {
             onSuccess: () => message.success('Role updated'),
             onError: (error) => message.error(error.message)
         });
+    };
+
+    const handleResendPassword = async (email: string) => {
+        if (!email) return;
+        const { error } = await requestPasswordReset({ email, redirectTo: window.location.origin + '/auth/reset-password' });
+        if (error) {
+            message.error('Failed to send password reset: ' + error.message);
+        } else {
+            message.success('Password reset email sent');
+        }
+    };
+
+    const handleResendVerification = async (email: string) => {
+        if (!email) return;
+        const { error } = await sendVerificationEmail({ email, callbackURL: window.location.origin });
+        if (error) {
+            message.error('Failed to send verification email: ' + error.message);
+        } else {
+            message.success('Verification email sent');
+        }
     };
 
     const columns = [
@@ -101,7 +122,23 @@ export const UserTable: React.FC = () => {
                     {
                         key: 'role',
                         label: record.role === 'admin' ? 'Demote to User' : 'Promote to Admin',
+                        icon: record.role === 'admin' ? <UserOutlined /> : <CrownOutlined />,
                         onClick: () => handleSetRole(record.id, record.role === 'admin' ? 'user' : 'admin'),
+                    },
+                    {
+                        key: 'verify',
+                        label: 'Resend Verification Email',
+                        icon: <MailOutlined />,
+                        onClick: () => handleResendVerification(record.email),
+                    },
+                    {
+                        key: 'password',
+                        label: 'Resend Password Reset',
+                        icon: <KeyOutlined />,
+                        onClick: () => handleResendPassword(record.email),
+                    },
+                    {
+                        type: 'divider',
                     },
                     {
                         key: 'ban',
