@@ -80,12 +80,14 @@ describe('BucketService', () => {
 
     describe('getPresignedUploadUrl', () => {
         it('should generate a signed PUT url using aws4fetch', async () => {
-            // AwsClient.sign only structures the URL and signs it, it doesn't make a fetch call
+            // AwsClient.sign configured with signQuery: true will inject auth directly into the URL query parameters
             const signedUrl = await service.getPresignedUploadUrl('raw/data.csv', 3600);
 
             expect(signedUrl).toContain('https://test-account-id.r2.cloudflarestorage.com/test-bucket/raw/data.csv');
             expect(signedUrl).toContain('X-Amz-Expires=3600');
-            // If the environment/mocking strips AWS headers, at least verify the base URL and our custom expire parameter are present
+            expect(signedUrl).toContain('X-Amz-Algorithm=AWS4-HMAC-SHA256');
+            expect(signedUrl).toContain('X-Amz-Credential=test-access-key');
+            expect(signedUrl).toContain('X-Amz-Signature=');
         });
     });
 });

@@ -94,6 +94,7 @@ export class BucketService {
 
         const signedRequest = await this.client.sign(url.toString(), {
             method: "PUT",
+            aws: { signQuery: true }
         });
 
         return signedRequest.url;
