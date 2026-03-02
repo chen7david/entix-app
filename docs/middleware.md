@@ -411,31 +411,33 @@ Permissions are defined statically in `shared/auth/permissions.ts`:
 
 ```typescript
 export const statement = {
-    project: ["create", "share", "update", "delete"],
+    organization: ["update", "delete"],
     invitation: ["create", "cancel"],
-    member: ["create", "update", "delete"],
+    member: ["read", "create", "update", "delete"],
 } as const;
 
 export const ac = createAccessControl(statement);
 
 export const roles = {
     member: ac.newRole({
-        project: ["create"],
+        member: ["read"],
     }),
     admin: ac.newRole({
-        project: ["create", "update"],
+        organization: ["update"],
         invitation: ["create", "cancel"],
-        member: ["create", "update", "delete"],
+        member: ["read", "create", "update", "delete"],
     }),
     owner: ac.newRole({
-        project: ["create", "update", "delete"],
+        organization: ["update", "delete"],
         invitation: ["create", "cancel"],
-        member: ["create", "update", "delete"],
+        member: ["read", "create", "update", "delete"],
     }),
 } as const;
 ```
 
 **Performance**: These are static objects — permission checks are simple in-memory lookups with **zero database queries**.
+
+For the full breakdown of permissions per role and per route, see [authorization.md](./authorization.md).
 
 ---
 
@@ -446,9 +448,9 @@ Here's how to protect routes with different levels of authorization:
 #### Basic: Auth + org membership only
 
 ```typescript
-// Any org member can access
+// Any org member can access — no requirePermission needed
 const orgRoutes = createRouter()
-    .openapi(MyRoutes.listProjects, MyHandler.listProjects);
+    .openapi(MyRoutes.listItems, MyHandler.listItems);
 // requireAuth + requireOrgMembership are applied globally via mountAuthMiddleware
 ```
 
@@ -465,19 +467,11 @@ const createMember = createRoute({
     // ...
 });
 
-// Only users with 'project:update' permission (admin, owner)
-const updateProject = createRoute({
-    method: 'put',
-    path: '/orgs/{organizationId}/projects/{projectId}',
-    middleware: [requirePermission('project', ['update'])] as const,
-    // ...
-});
-
-// Only users with 'project:delete' permission (owner only)
-const deleteProject = createRoute({
-    method: 'delete',
-    path: '/orgs/{organizationId}/projects/{projectId}',
-    middleware: [requirePermission('project', ['delete'])] as const,
+// Only users with 'member:read' permission (all org roles)
+const listUsers = createRoute({
+    method: 'get',
+    path: '/orgs/{organizationId}/users',
+    middleware: [requirePermission('member', ['read'])] as const,
     // ...
 });
 ```
@@ -485,12 +479,17 @@ const deleteProject = createRoute({
 #### Permission matrix by role
 
 | Resource | Action | Member | Admin | Owner | Super Admin |
-|----------|--------|--------|-------|-------|-------------|
-| project | create | ✅ | ✅ | ✅ | ✅ (bypass) |
-| project | update | ❌ | ✅ | ✅ | ✅ (bypass) |
-| project | delete | ❌ | ❌ | ✅ | ✅ (bypass) |
-| invitation | create | ❌ | ✅ | ✅ | ✅ (bypass) |
-| member | create | ❌ | ✅ | ✅ | ✅ (bypass) |
+|---|---|:---:|:---:|:---:|:---:|
+| `organization` | `update` | ❌ | ✅ | ✅ | ✅ bypass |
+| `organization` | `delete` | ❌ | ❌ | ✅ | ✅ bypass |
+| `invitation` | `create` | ❌ | ✅ | ✅ | ✅ bypass |
+| `invitation` | `cancel` | ❌ | ✅ | ✅ | ✅ bypass |
+| `member` | `read` | ✅ | ✅ | ✅ | ✅ bypass |
+| `member` | `create` | ❌ | ✅ | ✅ | ✅ bypass |
+| `member` | `update` | ❌ | ✅ | ✅ | ✅ bypass |
+| `member` | `delete` | ❌ | ✅ | ✅ | ✅ bypass |
+
+See [authorization.md](./authorization.md) for the complete per-route breakdown.
 
 ---
 

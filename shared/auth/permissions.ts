@@ -1,6 +1,8 @@
 import { createAccessControl } from "better-auth/plugins/access";
+import { defaultStatements } from 'better-auth/plugins/organization/access'
 
 export const statement = {
+    ...defaultStatements,
     organization: ["update", "delete"],
     invitation: ["create", "cancel"],
     member: ["read", "create", "update", "delete"],
