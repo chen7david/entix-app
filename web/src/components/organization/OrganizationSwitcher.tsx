@@ -3,16 +3,11 @@ import { Select, message } from "antd";
 import { useNavigate } from "react-router";
 import { links } from "@web/src/constants/links";
 
-export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allowCreate?: boolean; afterSelect?: () => void }) => {
+export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void }) => {
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();
     const navigate = useNavigate();
 
     const handleChange = async (value: string) => {
-        if (value === 'create_new') {
-            navigate('/orgs'); // Navigate to list to create new
-            return;
-        }
-
         const { error } = await setActive(value);
         if (error) {
             message.error("Failed to switch organization");
@@ -37,12 +32,6 @@ export const OrganizationSwitcher = ({ allowCreate = true, afterSelect }: { allo
         })) || [])
     ];
 
-    if (allowCreate) {
-        options.push({
-            label: "+ Create New Organization",
-            value: "create_new",
-        });
-    }
 
     return (
         <Select

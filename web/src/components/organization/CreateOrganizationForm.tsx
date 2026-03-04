@@ -1,20 +1,20 @@
 import { useState } from "react";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useAdminCreateOrganization } from "@web/src/hooks/admin/useAdminOrganizations";
 import { Button, Form, Input, Alert, message } from "antd";
 
 
 export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
-    const { createOrganization, isCreating } = useOrganization();
+    const { mutateAsync: createOrganization, isPending: isCreating } = useAdminCreateOrganization();
     const [error, setError] = useState<string | null>(null);
 
     const onFinish = async (values: { name: string; slug: string }) => {
         setError(null);
-        const { error } = await createOrganization(values.name, values.slug);
-        if (error) {
-            setError(error.message || "Failed to create organization");
-        } else {
+        try {
+            await createOrganization({ name: values.name, slug: values.slug });
             message.success("Organization created successfully");
             onSuccess?.();
+        } catch (err: any) {
+            setError(err.message || "Failed to create organization");
         }
     };
 

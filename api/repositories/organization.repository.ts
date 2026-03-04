@@ -1,8 +1,7 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { getDbClient } from "@api/factories/db.factory";
 import * as schema from "@api/db/schema.db";
-import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
+import { eq, desc } from "drizzle-orm";
 
 export interface CreateOrganizationInput {
     name: string;
@@ -24,6 +23,16 @@ export class OrganizationRepository {
         return await db.query.organization.findFirst({
             where: eq(schema.organization.slug, slug),
         });
+    }
+
+    /**
+     * Get all organizations
+     */
+    async findAll(): Promise<schema.Organization[]> {
+        const db = getDbClient(this.ctx);
+        return await db.select()
+            .from(schema.organization)
+            .orderBy(desc(schema.organization.createdAt));
     }
 
     /**

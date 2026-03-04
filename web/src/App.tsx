@@ -22,6 +22,7 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { GlobalUsersPage } from './pages/admin/GlobalUsersPage';
 import { EmailInsightsPage } from './pages/admin/EmailInsightsPage';
+import { GlobalOrganizationsPage } from './pages/admin/GlobalOrganizationsPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
@@ -120,6 +121,7 @@ export default function App() {
                 <Route element={<AdminLayout />}>
                   <Route path="admin" element={<AdminDashboardPage />} />
                   <Route path="admin/users" element={<GlobalUsersPage />} />
+                  <Route path="admin/organizations" element={<GlobalOrganizationsPage />} />
                   <Route path="admin/emails" element={<EmailInsightsPage />} />
                 </Route>
               </Route>
