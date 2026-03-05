@@ -1,0 +1,62 @@
+import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import { AppHandler } from "@api/helpers/types.helpers";
+import { OrgUploadsRoutes } from "./uploads.routes";
+import { getUploadService } from "@api/factories/upload.factory";
+
+export class OrgUploadsHandler {
+    static requestPresignedUrl: AppHandler<typeof OrgUploadsRoutes.requestPresignedUrl> = async (ctx) => {
+        const { organizationId } = ctx.req.valid("param");
+        const { originalName, contentType, fileSize } = ctx.req.valid("json");
+        const userId = ctx.var.userId!;
+
+        const uploadService = getUploadService(ctx);
+        const result = await uploadService.createPresignedUrl(organizationId, userId, originalName, contentType, fileSize);
+
+        ctx.var.logger.info({ uploadId: result.uploadId, organizationId }, "Presigned URL requested");
+
+        return ctx.json(result, HttpStatusCodes.CREATED);
+    };
+
+    static completeUpload: AppHandler<typeof OrgUploadsRoutes.completeUpload> = async (ctx) => {
+        const { organizationId, uploadId } = ctx.req.valid("param");
+
+        const uploadService = getUploadService(ctx);
+        const record = await uploadService.completeUpload(uploadId, organizationId);
+
+        ctx.var.logger.info({ uploadId, organizationId }, "Upload marked as completed");
+
+        return ctx.json({
+            ...record,
+            createdAt: record.createdAt.getTime(),
+            updatedAt: record.updatedAt.getTime(),
+        }, HttpStatusCodes.OK);
+    };
+
+    static listUploads: AppHandler<typeof OrgUploadsRoutes.listUploads> = async (ctx) => {
+        const { organizationId } = ctx.req.valid("param");
+
+        const uploadService = getUploadService(ctx);
+        const uploads = await uploadService.listUploads(organizationId);
+
+        return ctx.json(uploads.map(u => ({
+            ...u,
+            createdAt: u.createdAt.getTime(),
+            updatedAt: u.updatedAt.getTime(),
+        })), HttpStatusCodes.OK);
+    };
+
+    static deleteUpload: AppHandler<typeof OrgUploadsRoutes.deleteUpload> = async (ctx) => {
+        const { organizationId, uploadId } = ctx.req.valid("param");
+
+        const uploadService = getUploadService(ctx);
+        const deleted = await uploadService.deleteUpload(uploadId, organizationId);
+
+        if (!deleted) {
+            return ctx.body(null, HttpStatusCodes.NOT_FOUND);
+        }
+
+        ctx.var.logger.info({ uploadId, organizationId }, "Upload deleted");
+
+        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
+}

@@ -50,6 +50,13 @@
       "when": 1770912724624,
       "tag": "0006_loose_hellion",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1772742480869,
+      "tag": "0007_tricky_synch",
+      "breakpoints": true
     }
   ]
 }
