@@ -1,11 +1,10 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { Table, Button, Typography, Skeleton, Modal, Statistic, Row, Col, Card, Tag, Input, Dropdown } from "antd";
+import { Table, Button, Typography, Skeleton, Statistic, Row, Col, Card, Tag, Input, Dropdown } from "antd";
 import type { MenuProps } from "antd";
-import { PlusOutlined, TeamOutlined, MailOutlined, AppstoreOutlined, SearchOutlined, MoreOutlined, EyeOutlined } from "@ant-design/icons";
+import { TeamOutlined, MailOutlined, AppstoreOutlined, SearchOutlined, MoreOutlined, EyeOutlined } from "@ant-design/icons";
 import { useState } from "react";
-import { CreateOrganizationForm } from "@web/src/components/organization/CreateOrganizationForm";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import dayjs from "dayjs";
 
@@ -15,7 +14,6 @@ export const OrganizationListPage = () => {
     const { organizations, loading, activeOrganization } = useOrganization();
     const { members } = useMembers();
     const { invitations } = useInvitations();
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');
 
     // Sort: active org on top
@@ -115,13 +113,6 @@ export const OrganizationListPage = () => {
                         <Title level={2} style={{ marginBottom: 4 }}>Manage Organizations</Title>
                         <Text type="secondary">View and manage your organizations</Text>
                     </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => setIsCreateModalOpen(true)}
-                    >
-                        Create Organization
-                    </Button>
                 </div>
 
                 {/* Stats Cards */}
@@ -174,15 +165,7 @@ export const OrganizationListPage = () => {
                     pagination={{ pageSize: 10 }}
                 />
 
-                {/* Create Organization Modal */}
-                <Modal
-                    title="Create Organization"
-                    open={isCreateModalOpen}
-                    onCancel={() => setIsCreateModalOpen(false)}
-                    footer={null}
-                >
-                    <CreateOrganizationForm onSuccess={() => setIsCreateModalOpen(false)} />
-                </Modal>
+
             </div>
         </>
     );

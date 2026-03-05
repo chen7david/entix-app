@@ -46,7 +46,6 @@ export const SelectOrganizationPage: React.FC = () => {
 
                 <div className="flex justify-center">
                     <OrganizationSwitcher
-                        allowCreate={false}
                         afterSelect={() => checkOrganizationStatus()}
                     />
                 </div>

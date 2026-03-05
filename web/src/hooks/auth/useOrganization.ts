@@ -34,18 +34,6 @@ export const useOrganization = () => {
     const activeOrganization = contextVal?.activeOrganization || null;
     const loadingActiveOrg = contextVal?.loading || false;
 
-    const { mutateAsync: createOrganizationMutation, isPending: isCreating } = useMutation({
-        mutationFn: async (vars: { name: string; slug: string }) => {
-            return await authClient.organization.create(vars);
-        },
-        onSuccess: async (result) => {
-            if (result.data) {
-                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-                navigate(links.dashboard.index(result.data.slug));
-            }
-        }
-    });
-
     const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
         mutationFn: async (organizationId: string) => {
             return await authClient.organization.setActive({ organizationId });
@@ -109,10 +97,6 @@ export const useOrganization = () => {
         navigate(links.onboarding.selectOrganization);
     };
 
-    const createOrganization = useCallback(async (name: string, slug: string) => {
-        return createOrganizationMutation({ name, slug });
-    }, [createOrganizationMutation]);
-
     const setActive = useCallback(async (organizationId: string) => {
         return setActiveMutation(organizationId);
     }, [setActiveMutation]);
@@ -122,10 +106,8 @@ export const useOrganization = () => {
         activeOrganization,
         loading: loadingOrganizations || loadingActiveOrg,
         isFetching: fetchingOrganizations,
-        isCreating,
         isSwitching,
         listOrganizations,
-        createOrganization,
         setActive,
         getOrgLink,
         checkOrganizationStatus,

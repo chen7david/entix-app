@@ -1,6 +1,6 @@
 import React from 'react';
 import { Avatar, Typography, type MenuProps, Menu, Dropdown, Button } from 'antd';
-import { UserOutlined, LogoutOutlined, SafetyOutlined, TeamOutlined, DashboardOutlined, ArrowLeftOutlined, MoreOutlined, MailOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, SafetyOutlined, TeamOutlined, DashboardOutlined, ArrowLeftOutlined, MoreOutlined, MailOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate, useLocation } from 'react-router';
@@ -56,6 +56,11 @@ export const AdminSidebarContent: React.FC = () => {
             label: 'Global Users',
             key: links.admin.users,
             icon: <TeamOutlined />
+        },
+        {
+            label: 'Global Organizations',
+            key: links.admin.organizations,
+            icon: <ApartmentOutlined />
         },
         {
             label: 'Email Insights',

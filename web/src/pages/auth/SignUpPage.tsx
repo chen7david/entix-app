@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
 import { message, Card, Typography } from 'antd';
-import { SignUpForm, type SignUpValues } from '@web/src/components/auth/SignUpForm';
+import { SignUpWithOrgForm, type SignUpWithOrgValues } from '@web/src/components/auth/SignUpWithOrgForm';
 import { useSignUpWithOrg } from '@web/src/hooks/auth/useAuth';
 import { links } from '@web/src/constants/links';
 
@@ -11,7 +11,7 @@ export const SignUpPage: React.FC = () => {
     const navigate = useNavigate();
     const { mutate: signUp, isPending } = useSignUpWithOrg();
 
-    const handleSignUp = (values: SignUpValues) => {
+    const handleSignUp = (values: SignUpWithOrgValues) => {
         signUp({
             email: values.email,
             password: values.password,
@@ -36,7 +36,7 @@ export const SignUpPage: React.FC = () => {
                 <Title level={2}>Sign Up</Title>
                 <Text type="secondary">Create your account to get started</Text>
             </div>
-            <SignUpForm onSubmit={handleSignUp} isLoading={isPending} />
+            <SignUpWithOrgForm onSubmit={handleSignUp} isLoading={isPending} />
         </Card>
     );
 };
