@@ -19,6 +19,10 @@ export default defineWorkersConfig({
                         BETTER_AUTH_SECRET: "12345678901234567890123456789012",
                         SKIP_EMAIL_VERIFICATION: "true",
                         FRONTEND_URL: "http://localhost:8000",
+                        R2_ACCESS_KEY_ID: "mock_r2_access_key",
+                        R2_SECRET_ACCESS_KEY: "mock_r2_secret_key",
+                        R2_ACCOUNT_ID: "mock_account_id",
+                        R2_BUCKET_NAME: "mock-bucket",
                     }
                 },
             },
