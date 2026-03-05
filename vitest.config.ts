@@ -8,6 +8,8 @@ export default defineWorkersConfig({
     test: {
         poolOptions: {
             workers: {
+                isolate: false,
+                singleWorker: true,
                 wrangler: { configPath: "./wrangler.jsonc" },
                 miniflare: {
                     d1Databases: ["DB"],
