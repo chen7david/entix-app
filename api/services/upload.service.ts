@@ -1,6 +1,7 @@
 import { BucketService } from "./bucket.service";
 import { UploadRepository } from "@api/repositories/upload.repository";
 import { nanoid } from "nanoid";
+import { NotFoundError } from "@api/errors/app.error";
 
 export class UploadService {
     constructor(
@@ -47,7 +48,7 @@ export class UploadService {
     async completeUpload(uploadId: string, organizationId: string) {
         const record = await this.uploadRepo.updateStatus(uploadId, organizationId, "completed");
         if (!record) {
-            throw new Error("Upload not found");
+            throw new NotFoundError("Upload not found");
         }
         return record;
     }
@@ -57,7 +58,11 @@ export class UploadService {
         if (!record) return false;
 
         // delete from R2
-        await this.bucketService.delete(record.bucketKey);
+        const s3DeleteSuccess = await this.bucketService.delete(record.bucketKey);
+
+        if (!s3DeleteSuccess) {
+            throw new Error(`Failed to delete object from storage: ${record.bucketKey}`);
+        }
 
         // delete from DB
         return await this.uploadRepo.delete(uploadId, organizationId);

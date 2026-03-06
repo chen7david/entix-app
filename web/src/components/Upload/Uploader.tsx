@@ -72,9 +72,13 @@ export const Uploader = ({
                 onProgress?.({ percent: 100 });
 
                 // 3. Mark as complete
-                await fetch(`/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`, {
+                const completeResponse = await fetch(`/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`, {
                     method: 'POST',
                 });
+
+                if (!completeResponse.ok) {
+                    throw new Error('Failed to complete upload registration');
+                }
 
                 queryClient.invalidateQueries({ queryKey: ["organizationUploads", organizationId] });
                 onUploadSuccess?.();
