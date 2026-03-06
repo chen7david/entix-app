@@ -4,20 +4,7 @@ import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 
-export const uploadSchema = z.object({
-    id: z.string(),
-    originalName: z.string(),
-    bucketKey: z.string(),
-    url: z.string(),
-    fileSize: z.number(),
-    contentType: z.string(),
-    status: z.enum(["pending", "completed", "failed"]),
-    organizationId: z.string(),
-    uploadedBy: z.string(),
-    createdAt: z.number().or(z.date()).transform(d => new Date(d).getTime()),
-    updatedAt: z.number().or(z.date()).transform(d => new Date(d).getTime()),
-});
-
+import { UploadResponseSchema } from "@shared/schemas/dto/upload.dto";
 export const OrgUploadsRoutes = {
     requestPresignedUrl: createRoute({
         method: "post",
@@ -79,7 +66,7 @@ export const OrgUploadsRoutes = {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: uploadSchema,
+                        schema: UploadResponseSchema,
                     },
                 },
                 description: "Upload marked as completed",
@@ -104,7 +91,7 @@ export const OrgUploadsRoutes = {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: z.array(uploadSchema),
+                        schema: z.array(UploadResponseSchema),
                     },
                 },
                 description: "Uploads retrieved successfully",

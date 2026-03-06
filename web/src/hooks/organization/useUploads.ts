@@ -1,19 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { message } from "antd";
-
-export interface Upload {
-    id: string;
-    originalName: string;
-    bucketKey: string;
-    url: string;
-    fileSize: number;
-    contentType: string;
-    status: "pending" | "completed" | "failed";
-    organizationId: string;
-    uploadedBy: string;
-    createdAt: number;
-    updatedAt: number;
-}
+import type { UploadDto } from "@shared/schemas/dto/upload.dto";
 
 export const useOrganizationUploads = (organizationId: string | undefined) => {
     return useQuery({
@@ -27,7 +14,7 @@ export const useOrganizationUploads = (organizationId: string | undefined) => {
                 throw new Error(error.message || "Failed to fetch uploads");
             }
 
-            return response.json() as Promise<Upload[]>;
+            return response.json() as Promise<UploadDto[]>;
         },
         enabled: !!organizationId,
     });
