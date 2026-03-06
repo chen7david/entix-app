@@ -3,6 +3,7 @@ import { authRoutes } from "./auth/auth.index";
 import { memberRoutes } from "./orgs/members.index";
 import { emailInsightsRoutes } from "./admin/email-insights.index";
 import { adminOrgsRoutes } from "./admin/orgs.index";
+import { uploadRoutes } from "./orgs/uploads.index";
 
 export const routes = [
     userRoutes,
@@ -10,4 +11,5 @@ export const routes = [
     memberRoutes,
     emailInsightsRoutes,
     adminOrgsRoutes,
+    uploadRoutes,
 ]

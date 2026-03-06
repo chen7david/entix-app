@@ -170,11 +170,44 @@ export const invitation = sqliteTable(
 
 export type Invitation = typeof invitation.$inferSelect;
 
+export const upload = sqliteTable(
+    "upload",
+    {
+        id: text("id").primaryKey(),
+        originalName: text("original_name").notNull(),
+        bucketKey: text("bucket_key").notNull(),
+        url: text("url").notNull(),
+        fileSize: integer("file_size").notNull(),
+        contentType: text("content_type").notNull(),
+        status: text("status", { enum: ["pending", "completed", "failed"] }).default("pending").notNull(),
+        organizationId: text("organization_id")
+            .notNull()
+            .references(() => organization.id, { onDelete: "cascade" }),
+        uploadedBy: text("uploaded_by")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("upload_organizationId_idx").on(table.organizationId),
+        index("upload_uploadedBy_idx").on(table.uploadedBy),
+    ]
+);
+
+export type Upload = typeof upload.$inferSelect;
+
 export const userRelations = relations(user, ({ many }) => ({
     sessions: many(session),
     accounts: many(account),
     members: many(member),
     invitations: many(invitation),
+    uploads: many(upload),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -194,6 +227,7 @@ export const accountRelations = relations(account, ({ one }) => ({
 export const organizationRelations = relations(organization, ({ many }) => ({
     members: many(member),
     invitations: many(invitation),
+    uploads: many(upload),
 }));
 
 export const memberRelations = relations(member, ({ one }) => ({
@@ -214,6 +248,17 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
     }),
     user: one(user, {
         fields: [invitation.inviterId],
+        references: [user.id],
+    }),
+}));
+
+export const uploadRelations = relations(upload, ({ one }) => ({
+    organization: one(organization, {
+        fields: [upload.organizationId],
+        references: [organization.id],
+    }),
+    user: one(user, {
+        fields: [upload.uploadedBy],
         references: [user.id],
     }),
 }));

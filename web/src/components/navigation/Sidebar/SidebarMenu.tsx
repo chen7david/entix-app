@@ -69,6 +69,10 @@ export const SidebarMenu: React.FC = () => {
             {
                 label: 'Invitations',
                 key: getOrgLink('/invitations'),
+            },
+            {
+                label: 'Files & Uploads',
+                key: getOrgLink('/uploads'),
             }
         ] : [])
 
