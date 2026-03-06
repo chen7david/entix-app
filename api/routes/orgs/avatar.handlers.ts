@@ -11,7 +11,8 @@ import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
  * Checks if the requesting user is allowed to modify the target user's avatar.
  * A user can update their own avatar, or an admin/owner can update any member's.
  */
-function canModifyAvatar(currentUserId: string, targetUserId: string, membershipRole?: string): boolean {
+function canModifyAvatar(currentUserId: string, targetUserId: string, membershipRole?: string, isSuperAdmin?: boolean): boolean {
+    if (isSuperAdmin) return true;
     if (currentUserId === targetUserId) return true;
 
     const roles = (membershipRole || "").split(",").map(r => r.trim());
@@ -29,9 +30,10 @@ export class AvatarHandler {
         const { organizationId, userId: targetUserId } = ctx.req.valid("param");
         const { uploadId } = ctx.req.valid("json");
         const currentUserId = ctx.var.userId!;
+        const isSuperAdmin = ctx.get('isSuperAdmin');
 
-        // Authorization: self-update or admin/owner
-        if (!canModifyAvatar(currentUserId, targetUserId, ctx.var.membershipRole)) {
+        // Authorization: super-admin, self-update or admin/owner
+        if (!canModifyAvatar(currentUserId, targetUserId, ctx.var.membershipRole, isSuperAdmin)) {
             throw new ForbiddenError("You do not have permission to update this member's avatar");
         }
 
@@ -50,19 +52,24 @@ export class AvatarHandler {
             throw new NotFoundError("Upload not found or not yet completed");
         }
 
-        // If user already has an avatar, attempt to delete the old file from R2
+        // Enforce that only images can be set as avatars
+        if (!upload.contentType.startsWith("image/")) {
+            throw new ForbiddenError("Only image files can be used as profile pictures");
+        }
+
+        // If user already has an avatar, attempt to delete the old file & db record
         const userRepo = new UserRepository(ctx);
         const userRecord = await userRepo.findUserById(targetUserId);
         if (userRecord?.image) {
             const oldUpload = uploads.find(u => u.url === userRecord.image);
             if (oldUpload) {
                 try {
-                    const bucketService = getBucketClient(ctx);
-                    await bucketService.delete(oldUpload.bucketKey);
-                    ctx.var.logger.info({ oldBucketKey: oldUpload.bucketKey }, "Deleted old avatar from R2");
+                    // This deletes BOTH from R2 and the database
+                    await uploadService.deleteUpload(oldUpload.id, organizationId);
+                    ctx.var.logger.info({ oldUploadId: oldUpload.id }, "Deleted old avatar upload");
                 } catch (err) {
                     // Non-blocking: log and continue
-                    ctx.var.logger.warn({ error: err }, "Failed to delete old avatar from R2");
+                    ctx.var.logger.warn({ error: err }, "Failed to delete old avatar upload");
                 }
             }
         }
@@ -83,9 +90,10 @@ export class AvatarHandler {
     static removeAvatar: AppHandler<typeof AvatarRoutes.removeAvatar> = async (ctx) => {
         const { organizationId, userId: targetUserId } = ctx.req.valid("param");
         const currentUserId = ctx.var.userId!;
+        const isSuperAdmin = ctx.get('isSuperAdmin');
 
-        // Authorization: self-update or admin/owner
-        if (!canModifyAvatar(currentUserId, targetUserId, ctx.var.membershipRole)) {
+        // Authorization: super-admin, self-update or admin/owner
+        if (!canModifyAvatar(currentUserId, targetUserId, ctx.var.membershipRole, isSuperAdmin)) {
             throw new ForbiddenError("You do not have permission to remove this member's avatar");
         }
 
@@ -103,21 +111,17 @@ export class AvatarHandler {
             throw new NotFoundError("No avatar to remove");
         }
 
-        // Try to find the upload record to delete from R2
+        // Try to find the upload record to delete from R2 & DB
         const uploadService = getUploadService(ctx);
         const uploads = await uploadService.listUploads(organizationId);
         const avatarUpload = uploads.find(u => u.url === userRecord.image);
 
         if (avatarUpload) {
             try {
-                const bucketService = getBucketClient(ctx);
-                const deleted = await bucketService.delete(avatarUpload.bucketKey);
-                if (!deleted) {
-                    ctx.var.logger.warn({ bucketKey: avatarUpload.bucketKey }, "R2 delete returned false for avatar");
-                }
+                await uploadService.deleteUpload(avatarUpload.id, organizationId);
             } catch (err) {
-                // Non-blocking: proceed to clear the DB even if R2 fails
-                ctx.var.logger.warn({ error: err }, "Failed to delete avatar from R2");
+                // Non-blocking: proceed to clear the DB even if deletion fails
+                ctx.var.logger.warn({ error: err }, "Failed to delete avatar upload record");
             }
         }
 

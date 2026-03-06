@@ -81,7 +81,7 @@ function buildFullUrl(pathOrUrl: string): string {
 export function getImageUrl(
     pathOrUrl: string,
     options?: ImageTransformOptions,
-    enableTransformations = true
+    enableTransformations: boolean = import.meta.env?.VITE_ENABLE_CF_IMAGES === "true"
 ): string {
     if (!pathOrUrl) return "";
 
@@ -130,7 +130,7 @@ export function getAssetUrl(pathOrUrl: string): string {
 export function getAvatarUrl(
     baseUrl: string | null | undefined,
     preset: keyof typeof AVATAR_PRESETS = "md",
-    enableTransformations = true
+    enableTransformations: boolean = import.meta.env?.VITE_ENABLE_CF_IMAGES === "true"
 ): string {
     if (!baseUrl) return "";
     return getImageUrl(baseUrl, AVATAR_PRESETS[preset], enableTransformations);
