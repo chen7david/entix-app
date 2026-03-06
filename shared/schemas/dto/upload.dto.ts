@@ -4,7 +4,7 @@ export const UploadResponseSchema = z.object({
     id: z.string(),
     originalName: z.string(),
     bucketKey: z.string(),
-    url: z.string().url(),
+    url: z.string(),
     fileSize: z.number(),
     contentType: z.string(),
     status: z.enum(["pending", "completed", "failed"]),

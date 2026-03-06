@@ -7,6 +7,7 @@ import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
 import { links } from '@web/src/constants/links';
+import { getAvatarUrl } from '@shared/utils/image-url';
 
 const { Text } = Typography;
 
@@ -78,7 +79,7 @@ export const SidebarContent: React.FC = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={40}
-                            src={session.data?.user?.image}
+                            src={getAvatarUrl(session.data?.user?.image, 'sm')}
                             icon={<UserOutlined />}
                             className="flex-shrink-0 border border-gray-200"
                         />

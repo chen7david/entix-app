@@ -4,9 +4,9 @@ import type { ColumnsType } from "antd/es/table";
 import { CloudUploadOutlined, DeleteOutlined, FileOutlined, DatabaseOutlined, PlaySquareOutlined, PictureOutlined, SearchOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useOrganizationUploads, useDeleteUpload } from "@web/src/hooks/organization/useUploads";
-import type { UploadDto } from "@shared/schemas/dto/upload.dto";
+import { useOrganizationUploads, useDeleteUpload, type Upload } from "@web/src/hooks/organization/useUploads";
 import { Uploader } from "@web/src/components/Upload/Uploader";
+import { getAssetUrl } from "@shared/utils/image-url";
 
 const { Title, Text } = Typography;
 
@@ -49,15 +49,15 @@ export const OrganizationUploadsPage = () => {
         return <FileOutlined className="text-gray-500" />;
     };
 
-    const columns: ColumnsType<UploadDto> = [
+    const columns: ColumnsType<Upload> = [
         {
             title: 'File Name',
             dataIndex: 'originalName',
             key: 'originalName',
-            render: (name: string, record: UploadDto) => (
+            render: (name: string, record: Upload) => (
                 <div className="flex items-center gap-3">
                     {getFileIcon(record.contentType)}
-                    <a href={record.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium">
+                    <a href={getAssetUrl(record.url)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium">
                         {name}
                     </a>
                 </div>
@@ -94,7 +94,7 @@ export const OrganizationUploadsPage = () => {
         {
             title: 'Actions',
             key: 'actions',
-            render: (_: unknown, record: UploadDto) => (
+            render: (_: unknown, record: Upload) => (
                 <Tooltip title="Delete File">
                     <Button
                         type="text"

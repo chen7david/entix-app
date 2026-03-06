@@ -29,7 +29,7 @@ export class UploadService {
             id: uploadId,
             originalName,
             bucketKey,
-            url: `${this.publicUrlPrefix}/${bucketKey}`,
+            url: bucketKey,
             fileSize,
             contentType,
             organizationId,
@@ -40,7 +40,7 @@ export class UploadService {
         return {
             uploadId: uploadRecord.id,
             presignedUrl,
-            url: uploadRecord.url,
+            url: `${this.publicUrlPrefix}/${bucketKey}`,
             bucketKey: uploadRecord.bucketKey
         };
     }
@@ -50,7 +50,10 @@ export class UploadService {
         if (!record) {
             throw new NotFoundError("Upload not found");
         }
-        return record;
+        return {
+            ...record,
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+        };
     }
 
     async deleteUpload(uploadId: string, organizationId: string) {
@@ -69,6 +72,10 @@ export class UploadService {
     }
 
     async listUploads(organizationId: string) {
-        return this.uploadRepo.findAllByOrganization(organizationId);
+        const uploads = await this.uploadRepo.findAllByOrganization(organizationId);
+        return uploads.map(u => ({
+            ...u,
+            url: `${this.publicUrlPrefix}/${u.bucketKey}`
+        }));
     }
 }

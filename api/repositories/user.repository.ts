@@ -60,6 +60,16 @@ export class UserRepository {
     }
 
     /**
+     * Find user by ID
+     */
+    async findUserById(userId: string): Promise<schema.User | undefined> {
+        const db = getDbClient(this.ctx);
+        return await db.query.user.findFirst({
+            where: eq(schema.user.id, userId),
+        });
+    }
+
+    /**
      * Update an existing user's data
      */
     async updateUser(userId: string, data: Partial<typeof schema.user.$inferInsert>): Promise<void> {
