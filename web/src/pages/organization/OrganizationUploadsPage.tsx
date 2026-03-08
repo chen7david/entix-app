@@ -7,6 +7,7 @@ import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useOrganizationUploads, useDeleteUpload } from "@web/src/hooks/organization/useUploads";
 import type { UploadDto } from "@shared/schemas/dto/upload.dto";
 import { Uploader } from "@web/src/components/Upload/Uploader";
+import { getAssetUrl } from "@shared/utils/image-url";
 
 const { Title, Text } = Typography;
 
@@ -57,7 +58,7 @@ export const OrganizationUploadsPage = () => {
             render: (name: string, record: UploadDto) => (
                 <div className="flex items-center gap-3">
                     {getFileIcon(record.contentType)}
-                    <a href={record.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium">
+                    <a href={getAssetUrl(record.url)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium">
                         {name}
                     </a>
                 </div>

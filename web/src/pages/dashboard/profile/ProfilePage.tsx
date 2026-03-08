@@ -5,6 +5,7 @@ import { useSession, signOut } from '../../../lib/auth-client';
 import { useNavigate } from 'react-router';
 import { links } from '../../../constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { getAvatarUrl } from "@shared/utils/image-url";
 const { Title } = Typography;
 
 export const ProfilePage: React.FC = () => {
@@ -59,7 +60,7 @@ export const ProfilePage: React.FC = () => {
                     ]}
                 >
                     <Card.Meta
-                        avatar={<Avatar size={64} icon={<UserOutlined />} src={session.user.image} />}
+                        avatar={<Avatar size={64} icon={<UserOutlined />} src={getAvatarUrl(session.user.image, 'lg')} />}
                         title={<Title level={3}>{session.user.name}</Title>}
                         description={session.user.email}
                     />

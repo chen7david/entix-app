@@ -2,12 +2,15 @@ import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card, Dropdown, type MenuProps } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MoreOutlined, MailOutlined, KeyOutlined } from "@ant-design/icons";
+import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MoreOutlined, MailOutlined, KeyOutlined, CameraOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
+import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
+import { AvatarUploader } from "@web/src/components/Upload/AvatarUploader";
 import { useState } from "react";
+import { getAvatarUrl } from "@shared/utils/image-url";
 
 const { Title, Text } = Typography;
 
@@ -15,6 +18,8 @@ export const OrganizationMembersPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [createForm] = Form.useForm();
+    // Avatar upload state: tracks which member's avatar is being updated
+    const [avatarTarget, setAvatarTarget] = useState<{ userId: string } | null>(null);
     const { activeOrganization } = useOrganization();
 
     const {
@@ -30,6 +35,7 @@ export const OrganizationMembersPage = () => {
     const currentUserId = session.data?.user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
+    const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
 
 
     const handleCreateMember = async (values: any) => {
@@ -96,7 +102,7 @@ export const OrganizationMembersPage = () => {
             key: 'user',
             render: (user: Record<string, unknown>) => (
                 <div className="flex items-center gap-2">
-                    <Avatar src={user.image as string | undefined} icon={<UserOutlined />} />
+                    <Avatar src={getAvatarUrl(user.image as string | undefined, 'sm')} icon={<UserOutlined />} />
                     <div className="flex flex-col">
                         <span>{user.name as string}</span>
                         <span className="text-xs text-gray-500">{user.email as string}</span>
@@ -166,7 +172,39 @@ export const OrganizationMembersPage = () => {
             const user = record.user as Record<string, unknown> | undefined;
             const email = (user?.email as string) || '';
 
+            const hasAvatar = !!(user?.image);
+
             const items: MenuProps['items'] = [
+                {
+                    key: 'avatar',
+                    label: 'Update Profile Picture',
+                    icon: <CameraOutlined />,
+                    onClick: () => setAvatarTarget({ userId: record.userId as string }),
+                },
+                ...(hasAvatar ? [{
+                    key: 'removeAvatar',
+                    label: 'Remove Profile Picture',
+                    icon: <CloseCircleOutlined />,
+                    onClick: () => {
+                        Modal.confirm({
+                            title: 'Remove Profile Picture',
+                            content: `Remove ${user?.name || 'this member'}'s profile picture?`,
+                            okText: 'Yes, Remove',
+                            okType: 'danger' as const,
+                            cancelText: 'Cancel',
+                            onOk: async () => {
+                                try {
+                                    await removeAvatarMutation.mutateAsync(record.userId as string);
+                                } catch {
+                                    // error handled in hook
+                                }
+                            },
+                        });
+                    },
+                }] : []),
+                {
+                    type: 'divider' as const,
+                },
                 {
                     key: 'verify',
                     label: 'Resend Verification Email',
@@ -180,7 +218,7 @@ export const OrganizationMembersPage = () => {
                     onClick: () => handleResendPassword(email),
                 },
                 {
-                    type: 'divider',
+                    type: 'divider' as const,
                 },
                 {
                     key: 'remove',
@@ -356,6 +394,16 @@ export const OrganizationMembersPage = () => {
                         </Form.Item>
                     </Form>
                 </Modal>
+
+                {/* Avatar Uploader Modal */}
+                {avatarTarget && activeOrganization && (
+                    <AvatarUploader
+                        organizationId={activeOrganization.id}
+                        userId={avatarTarget.userId}
+                        open={!!avatarTarget}
+                        onClose={() => setAvatarTarget(null)}
+                    />
+                )}
             </div>
         </>
     );
