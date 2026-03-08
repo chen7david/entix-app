@@ -46,9 +46,8 @@ export class AvatarHandler {
 
         // Find the completed upload
         const uploadService = getUploadService(ctx);
-        const uploads = await uploadService.listUploads(organizationId);
-        const upload = uploads.find(u => u.id === uploadId && u.status === "completed");
-        if (!upload) {
+        const upload = await uploadService.getUploadById(uploadId, organizationId);
+        if (!upload || upload.status !== "completed") {
             throw new NotFoundError("Upload not found or not yet completed");
         }
 
@@ -61,7 +60,7 @@ export class AvatarHandler {
         const userRepo = new UserRepository(ctx);
         const userRecord = await userRepo.findUserById(targetUserId);
         if (userRecord?.image) {
-            const oldUpload = uploads.find(u => u.url === userRecord.image);
+            const oldUpload = await uploadService.getUploadByUrl(userRecord.image, organizationId);
             if (oldUpload) {
                 try {
                     // This deletes BOTH from R2 and the database
@@ -113,8 +112,7 @@ export class AvatarHandler {
 
         // Try to find the upload record to delete from R2 & DB
         const uploadService = getUploadService(ctx);
-        const uploads = await uploadService.listUploads(organizationId);
-        const avatarUpload = uploads.find(u => u.url === userRecord.image);
+        const avatarUpload = await uploadService.getUploadByUrl(userRecord.image, organizationId);
 
         if (avatarUpload) {
             try {

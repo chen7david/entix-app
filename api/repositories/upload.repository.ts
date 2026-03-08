@@ -34,6 +34,16 @@ export class UploadRepository {
         });
     }
 
+    async findByUrl(url: string, organizationId: string): Promise<schema.Upload | undefined> {
+        const db = getDbClient(this.ctx);
+        return await db.query.upload.findFirst({
+            where: and(
+                eq(schema.upload.url, url),
+                eq(schema.upload.organizationId, organizationId)
+            ),
+        });
+    }
+
     async updateStatus(id: string, organizationId: string, status: "pending" | "completed" | "failed"): Promise<schema.Upload | undefined> {
         const db = getDbClient(this.ctx);
         const [upload] = await db.update(schema.upload)
