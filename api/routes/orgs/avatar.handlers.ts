@@ -7,17 +7,7 @@ import { MemberRepository } from "@api/repositories/member.repository";
 import { getBucketClient } from "@api/factories/bucket.factory";
 import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
 
-/**
- * Checks if the requesting user is allowed to modify the target user's avatar.
- * A user can update their own avatar, or an admin/owner can update any member's.
- */
-function canModifyAvatar(currentUserId: string, targetUserId: string, membershipRole?: string, isSuperAdmin?: boolean): boolean {
-    if (isSuperAdmin) return true;
-    if (currentUserId === targetUserId) return true;
 
-    const roles = (membershipRole || "").split(",").map(r => r.trim());
-    return roles.some(r => r === "admin" || r === "owner");
-}
 
 export class AvatarHandler {
     /**
@@ -29,13 +19,6 @@ export class AvatarHandler {
     static updateAvatar: AppHandler<typeof AvatarRoutes.updateAvatar> = async (ctx) => {
         const { organizationId, userId: targetUserId } = ctx.req.valid("param");
         const { uploadId } = ctx.req.valid("json");
-        const currentUserId = ctx.var.userId!;
-        const isSuperAdmin = ctx.get('isSuperAdmin');
-
-        // Authorization: super-admin, self-update or admin/owner
-        if (!canModifyAvatar(currentUserId, targetUserId, ctx.var.membershipRole, isSuperAdmin)) {
-            throw new ForbiddenError("You do not have permission to update this member's avatar");
-        }
 
         // Verify the target user is a member of this organization
         const memberRepo = new MemberRepository(ctx);
@@ -88,13 +71,6 @@ export class AvatarHandler {
      */
     static removeAvatar: AppHandler<typeof AvatarRoutes.removeAvatar> = async (ctx) => {
         const { organizationId, userId: targetUserId } = ctx.req.valid("param");
-        const currentUserId = ctx.var.userId!;
-        const isSuperAdmin = ctx.get('isSuperAdmin');
-
-        // Authorization: super-admin, self-update or admin/owner
-        if (!canModifyAvatar(currentUserId, targetUserId, ctx.var.membershipRole, isSuperAdmin)) {
-            throw new ForbiddenError("You do not have permission to remove this member's avatar");
-        }
 
         // Verify target is a member
         const memberRepo = new MemberRepository(ctx);

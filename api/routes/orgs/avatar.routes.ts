@@ -2,12 +2,13 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { HttpStatusCodes, HttpMethods } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
+import { requirePermission } from "@api/middleware/require-permission.middleware";
 
 /**
  * Avatar routes for updating/removing member profile pictures.
  *
- * Both endpoints require org membership. Authorization logic for
- * self-update vs admin-update is handled in the handler layer.
+ * Both endpoints require org membership and member 'update' permissions,
+ * but users can bypass the RBAC check to update their own avatar via the 'userId' param.
  */
 export const AvatarRoutes = {
     /**
@@ -16,12 +17,13 @@ export const AvatarRoutes = {
      * - If the user already has an avatar, the old file is deleted from R2.
      */
     updateAvatar: createRoute({
+        tags: ["Member Avatars"],
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/members/{userId}/avatar",
-        tags: ["Member Avatars"],
         middleware: [
             requireAuth,
             requireOrgMembership,
+            requirePermission('member', ['update'], 'userId')
         ] as const,
         request: {
             params: z.object({
@@ -68,6 +70,7 @@ export const AvatarRoutes = {
         middleware: [
             requireAuth,
             requireOrgMembership,
+            requirePermission('member', ['update'], 'userId')
         ] as const,
         request: {
             params: z.object({

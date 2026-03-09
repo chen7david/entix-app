@@ -17,19 +17,21 @@ import { roles, type statement } from "@shared/auth/permissions";
  * 
  * @param resource - The resource to check (e.g. 'member', 'invitation', 'project')
  * @param actions  - The action(s) required (e.g. 'create', 'delete')
+ * @param allowSelfTargetParam - (Optional) If provided, bypasses RBAC if ctx.req.param(allowSelfTargetParam) === ctx.get('userId'). Useful for profile updates.
  * @returns Middleware function
  * 
  * Usage:
- * app.post('/api/v1/orgs/:organizationId/members',
+ * app.post('/api/v1/orgs/:organizationId/members/:userId',
  *   requireAuth,
  *   requireOrgMembership,
- *   requirePermission('member', ['create']),
+ *   requirePermission('member', ['update'], 'userId'),
  *   handler
  * );
  */
 export const requirePermission = (
     resource: keyof typeof statement,
-    actions: (typeof statement)[keyof typeof statement][number][]
+    actions: (typeof statement)[keyof typeof statement][number][],
+    allowSelfTargetParam?: string
 ) => {
     return async (ctx: AppContext, next: Next) => {
         // Super admins bypass all permission checks
@@ -40,6 +42,15 @@ export const requirePermission = (
             );
             await next();
             return;
+        }
+
+        // Allow bypass if the route targets the user themselves
+        if (allowSelfTargetParam) {
+            const targetId = ctx.req.param(allowSelfTargetParam);
+            if (targetId && targetId === ctx.get('userId')) {
+                await next();
+                return;
+            }
         }
 
         const currentRoleString = ctx.get('membershipRole') as string | undefined;
