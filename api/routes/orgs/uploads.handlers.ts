@@ -7,48 +7,86 @@ export class OrgUploadsHandler {
     static requestPresignedUrl: AppHandler<typeof OrgUploadsRoutes.requestPresignedUrl> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const { originalName, contentType, fileSize } = ctx.req.valid("json");
-        const userId = ctx.var.userId!;
+        const userId = ctx.var.userId;
 
-        const uploadService = getUploadService(ctx);
-        const result = await uploadService.createPresignedUrl(organizationId, userId, originalName, contentType, fileSize);
+        if (!userId) {
+            ctx.var.logger.error({ organizationId }, "UserId missing from context in requestPresignedUrl");
+            throw new Error("Unauthorized");
+        }
 
-        ctx.var.logger.info({ uploadId: result.uploadId, organizationId }, "Presigned URL requested");
+        try {
+            const uploadService = getUploadService(ctx);
+            const result = await uploadService.createPresignedUrl(organizationId, userId, originalName, contentType, fileSize);
 
-        return ctx.json(result, HttpStatusCodes.CREATED);
+            ctx.var.logger.info({ uploadId: result.uploadId, organizationId }, "Presigned URL requested");
+
+            return ctx.json(result, HttpStatusCodes.CREATED);
+        } catch (error: any) {
+            ctx.var.logger.error({ error, organizationId, userId }, "Failed to request presigned URL");
+            throw error;
+        }
     };
 
     static completeUpload: AppHandler<typeof OrgUploadsRoutes.completeUpload> = async (ctx) => {
         const { organizationId, uploadId } = ctx.req.valid("param");
 
-        const uploadService = getUploadService(ctx);
-        const record = await uploadService.completeUpload(uploadId, organizationId);
+        try {
+            const uploadService = getUploadService(ctx);
+            const record = await uploadService.completeUpload(uploadId, organizationId);
 
-        ctx.var.logger.info({ uploadId, organizationId }, "Upload marked as completed");
+            ctx.var.logger.info({ uploadId, organizationId }, "Upload marked as completed");
 
-        return ctx.json(record, HttpStatusCodes.OK);
+            return ctx.json({
+                ...record,
+                createdAt: record.createdAt ? new Date(record.createdAt).getTime() : Date.now(),
+                updatedAt: record.updatedAt ? new Date(record.updatedAt).getTime() : Date.now(),
+            } as any, HttpStatusCodes.OK);
+        } catch (error: any) {
+            ctx.var.logger.error({ error, uploadId, organizationId }, "Failed to complete upload");
+            throw error;
+        }
     };
 
     static listUploads: AppHandler<typeof OrgUploadsRoutes.listUploads> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
 
-        const uploadService = getUploadService(ctx);
-        const uploads = await uploadService.listUploads(organizationId);
+        try {
+            const uploadService = getUploadService(ctx);
+            const uploads = await uploadService.listUploads(organizationId);
 
-        return ctx.json(uploads, HttpStatusCodes.OK);
+            ctx.var.logger.info({ organizationId, count: uploads.length }, "Uploads retrieved");
+
+            // Manually map to DTO format to ensure numbers are returned and satisfy TS
+            const result = uploads.map(u => ({
+                ...u,
+                createdAt: u.createdAt ? new Date(u.createdAt).getTime() : Date.now(),
+                updatedAt: u.updatedAt ? new Date(u.updatedAt).getTime() : Date.now(),
+            }));
+
+            return ctx.json(result, HttpStatusCodes.OK);
+        } catch (error: any) {
+            ctx.var.logger.error({ error, organizationId }, "Failed to list uploads");
+            throw error;
+        }
     };
 
     static deleteUpload: AppHandler<typeof OrgUploadsRoutes.deleteUpload> = async (ctx) => {
         const { organizationId, uploadId } = ctx.req.valid("param");
 
-        const uploadService = getUploadService(ctx);
-        const deleted = await uploadService.deleteUpload(uploadId, organizationId);
+        try {
+            const uploadService = getUploadService(ctx);
+            const deleted = await uploadService.deleteUpload(uploadId, organizationId);
 
-        if (!deleted) {
-            return ctx.body(null, HttpStatusCodes.NOT_FOUND);
+            if (!deleted) {
+                return ctx.body(null, HttpStatusCodes.NOT_FOUND);
+            }
+
+            ctx.var.logger.info({ uploadId, organizationId }, "Upload deleted");
+
+            return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+        } catch (error: any) {
+            ctx.var.logger.error({ error, uploadId, organizationId }, "Failed to delete upload");
+            throw error;
         }
-
-        ctx.var.logger.info({ uploadId, organizationId }, "Upload deleted");
-
-        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
 }
