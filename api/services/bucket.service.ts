@@ -37,10 +37,10 @@ export class BucketService {
         // Fallback to the R2 dev endpoint if no custom domain is provided
         this.publicUrl = config.publicUrl || `${this.endpoint}/${this.bucketName}`;
 
-        if (config.accessKeyId && config.secretAccessKey) {
+        if (config.accessKeyId?.trim() && config.secretAccessKey?.trim()) {
             this.client = new AwsClient({
-                accessKeyId: config.accessKeyId,
-                secretAccessKey: config.secretAccessKey,
+                accessKeyId: config.accessKeyId.trim(),
+                secretAccessKey: config.secretAccessKey.trim(),
                 service: "s3",
                 region: "auto",
             });
