@@ -23,7 +23,8 @@
 				"CORS_ORIGINS": "http://localhost:8000",
 				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-development",
-				"PUBLIC_ASSET_URL": "http://localhost:3000"
+				"PUBLIC_ASSET_URL": "http://localhost:3000",
+				"SKIP_EMAIL_VERIFICATION": "true"
 			},
 			"d1_databases": [
 				{
@@ -42,7 +43,8 @@
 				"CORS_ORIGINS": "https://staging.entix.org",
 				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-staging",
-				"PUBLIC_ASSET_URL": "https://staging.entix.org"
+				"PUBLIC_ASSET_URL": "https://staging.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "false"
 			},
 			"assets": {
 				"binding": "ASSETS",
@@ -69,7 +71,8 @@
 				"CORS_ORIGINS": "https://entix.org",
 				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-production",
-				"PUBLIC_ASSET_URL": "https://cdn.entix.org"
+				"PUBLIC_ASSET_URL": "https://cdn.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "false"
 			},
 			"assets": {
 				"binding": "ASSETS",
