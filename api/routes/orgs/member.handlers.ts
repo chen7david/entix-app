@@ -2,7 +2,7 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { MemberRoutes } from './member.routes';
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { getRegistrationService, getUserService } from "@api/factories/service.factory";
+import { getRegistrationService } from "@api/factories/service.factory";
 import { getUserRepository } from "@api/factories/repository.factory";
 
 export class MemberHandler {

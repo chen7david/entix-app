@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import app from "@api/app";
 import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
-import { createSuperAdmin, getAuthCookie, createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
+import { getAuthCookie, createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
 import { parseJson } from "../lib/api-request.helper";
 

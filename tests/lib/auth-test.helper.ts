@@ -1,7 +1,7 @@
 import type { Hono } from "hono";
 import type { AppEnv } from "@api/helpers/types.helpers";
 import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
-import type { OrgRole } from "@shared/auth/permissions";
+
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createMockMember } from "../factories/member.factory";
 import { drizzle } from "drizzle-orm/d1";

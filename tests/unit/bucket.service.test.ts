@@ -17,7 +17,7 @@ describe('BucketService', () => {
         service = new BucketService(config);
 
         // Mock global fetch globally for the AwsClient internal calls
-        fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (input, init) => {
+        fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (_input, _init) => {
             return new Response('Mock response', { status: 200, statusText: 'OK' });
         });
     });

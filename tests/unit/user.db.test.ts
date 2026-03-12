@@ -4,8 +4,6 @@ import { user } from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { UserRepository } from "@api/repositories/user.repository";
-import { AppContext } from "@api/helpers/types.helpers";
-import { env } from "cloudflare:test";
 
 describe("User Integration Test", () => {
     let db: TestDb;
