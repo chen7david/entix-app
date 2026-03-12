@@ -25,11 +25,7 @@ export class OrgUploadsHandler {
 
         ctx.var.logger.info({ uploadId, organizationId }, "Upload marked as completed");
 
-        return ctx.json({
-            ...record,
-            createdAt: record.createdAt.getTime(),
-            updatedAt: record.updatedAt.getTime(),
-        }, HttpStatusCodes.OK);
+        return ctx.json(record, HttpStatusCodes.OK);
     };
 
     static listUploads: AppHandler<typeof OrgUploadsRoutes.listUploads> = async (ctx) => {
@@ -38,11 +34,7 @@ export class OrgUploadsHandler {
         const uploadService = getUploadService(ctx);
         const uploads = await uploadService.listUploads(organizationId);
 
-        return ctx.json(uploads.map((u: any) => ({
-            ...u,
-            createdAt: u.createdAt.getTime(),
-            updatedAt: u.updatedAt.getTime(),
-        })), HttpStatusCodes.OK);
+        return ctx.json(uploads, HttpStatusCodes.OK);
     };
 
     static deleteUpload: AppHandler<typeof OrgUploadsRoutes.deleteUpload> = async (ctx) => {
