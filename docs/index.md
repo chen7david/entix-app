@@ -6,13 +6,13 @@ Get the project running on your machine in under 5 minutes.
 ```bash
 git clone https://github.com/chen7david/entix-app
 cd entix-app
-npm install
+npm run dev:init
 ```
 
 ## 2. Local Setup
 Copy the environment variables template:
 ```bash
-cp .dev.vars.example .dev.vars
+cp .example.dev.vars .dev.vars
 ```
 
 ## 3. Run Development Server

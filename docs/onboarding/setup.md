@@ -11,7 +11,7 @@ We use `.dev.vars` for local secrets.
 
 1. Copy the example:
    ```bash
-   cp .dev.vars.example .dev.vars
+   cp example.dev.vars .dev.vars
 1. Fill in the values:
    - `BETTER_AUTH_SECRET`: Generate a random string.
    - `RESEND_API_KEY`: Get from Resend dashboard.
