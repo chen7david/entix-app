@@ -1,7 +1,7 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { UploadService } from "@api/services/upload.service";
-import { UploadRepository } from "@api/repositories/upload.repository";
 import { getBucketClient } from "./bucket.factory";
+import { getUploadRepository } from "./repository.factory";
 
 /**
  * Factory for creating an UploadService instance from the request context.
@@ -11,7 +11,7 @@ import { getBucketClient } from "./bucket.factory";
  */
 export const getUploadService = (ctx: AppContext): UploadService => {
     const bucketService = getBucketClient(ctx);
-    const uploadRepo = new UploadRepository(ctx);
+    const uploadRepo = getUploadRepository(ctx);
 
     const accountId = ctx.env.R2_ACCOUNT_ID;
     const bucketName = ctx.env.R2_BUCKET_NAME;

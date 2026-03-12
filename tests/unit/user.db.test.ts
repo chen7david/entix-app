@@ -40,11 +40,7 @@ describe("User Integration Test", () => {
 
         await db.insert(user).values(newUser);
 
-        const mockCtx = {
-            env: { DB: env.DB }
-        } as unknown as AppContext;
-
-        const repo = new UserRepository(mockCtx);
+        const repo = new UserRepository(db, {} as any);
         await repo.updateUser(newUser.id, { emailVerified: true });
 
         const updatedUser = await db.query.user.findFirst({

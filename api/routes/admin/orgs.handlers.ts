@@ -1,14 +1,14 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from "@api/helpers/types.helpers";
 import { AdminOrgsRoutes } from "./orgs.routes";
-import { OrganizationRepository } from "@api/repositories/organization.repository";
+import { getOrganizationService } from "@api/factories/service.factory";
 
 export class AdminOrgsHandler {
     static list: AppHandler<typeof AdminOrgsRoutes.list> = async (ctx) => {
         ctx.var.logger.info("Fetching global list of all organizations");
 
-        const orgRepo = new OrganizationRepository(ctx);
-        const orgs = await orgRepo.findAll();
+        const orgService = getOrganizationService(ctx);
+        const orgs = await orgService.findAll();
 
         const mappedOrgs = orgs.map(org => ({
             ...org,

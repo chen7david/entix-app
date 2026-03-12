@@ -53,14 +53,13 @@ describe("Auth Integration Test", () => {
         const payload1 = createMockSignUpWithOrgPayload();
         const payload2 = createMockSignUpWithOrgPayload();
 
-        // Use same org name for both payloads
-        payload2.organizationName = payload1.organizationName;
-
         // First request to create organization
         const setupRes = await client.auth.signUpWithOrg(payload1);
         expect(setupRes.status).toBe(201);
 
-        // Second request with same organization name
+        // Second request with same organization name but DIFFERENT email
+        payload2.email = `other.${Date.now()}.${Math.random()}@example.com`;
+        payload2.organizationName = payload1.organizationName;
         const res = await client.auth.signUpWithOrg(payload2);
 
         expect(res.status).toBe(409);
@@ -103,8 +102,7 @@ describe("Auth Integration Test", () => {
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
         const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
-            const getDbClient = require("@api/factories/db.factory").getDbClient;
-            return getDbClient((this as any).ctx).insert(schema.member).values({
+            return this.db.insert(schema.member).values({
                 id: "pre-existing-conflict", // Will conflict
                 organizationId: "dummy-org", // Must match foreign key
                 userId: "dummy-user", // Must match foreign key 

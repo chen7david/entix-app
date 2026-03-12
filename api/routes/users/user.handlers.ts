@@ -1,7 +1,7 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { UserRoutes } from './user.routes';
-import { UserRepository } from '@api/repositories/user.repository';
+import { getUserService } from '@api/factories/service.factory';
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (ctx) => {
@@ -9,8 +9,8 @@ export class UserHandler {
 
         ctx.var.logger.info({ organizationId }, `Fetching users for organization`);
 
-        const userRepo = new UserRepository(ctx);
-        const users = await userRepo.findUsersByOrganization(organizationId);
+        const userService = getUserService(ctx);
+        const users = await userService.findUsersByOrganization(organizationId);
 
         ctx.var.logger.info({ count: users.length, organizationId }, "Users fetched for organization");
 

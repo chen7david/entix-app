@@ -38,7 +38,7 @@ export class OrgUploadsHandler {
         const uploadService = getUploadService(ctx);
         const uploads = await uploadService.listUploads(organizationId);
 
-        return ctx.json(uploads.map(u => ({
+        return ctx.json(uploads.map((u: any) => ({
             ...u,
             createdAt: u.createdAt.getTime(),
             updatedAt: u.updatedAt.getTime(),

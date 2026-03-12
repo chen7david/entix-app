@@ -34,25 +34,18 @@ export const AcceptInvitationPage: React.FC = () => {
         // Auto-accept if authenticated and not already processed
         if (!success && !error && !isAcceptingInvitation && !hasAcceptedRef.current) {
             hasAcceptedRef.current = true; // Mark as accepted immediately to prevent double-invocation
-            handleAccept();
+            acceptInvitation(invitationId).then(result => {
+                if (result.error) {
+                    setError(result.error.message || "Failed to accept invitation");
+                } else {
+                    setSuccess(true);
+                    message.success("Invitation accepted successfully!");
+                }
+            }).catch((err: unknown) => {
+                setError(err instanceof Error ? err.message : "An unexpected error occurred");
+            });
         }
-    }, [invitationId, isAuthenticated, isAuthLoading]);
-
-    const handleAccept = async () => {
-        if (!invitationId) return;
-
-        try {
-            const result = await acceptInvitation(invitationId);
-            if (result.error) {
-                setError(result.error.message || "Failed to accept invitation");
-            } else {
-                setSuccess(true);
-                message.success("Invitation accepted successfully!");
-            }
-        } catch (err: any) {
-            setError(err.message || "An unexpected error occurred");
-        }
-    };
+    }, [invitationId, isAuthenticated, isAuthLoading, acceptInvitation, navigate, success, error, isAcceptingInvitation]);
 
     const handleGoToDashboard = () => {
         // Check status to determine best redirection (likely the new org)

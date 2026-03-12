@@ -18,7 +18,7 @@
  * // => "https://media.example.com/org123/avatar.jpg"
  */
 
-export interface ImageTransformOptions {
+export type ImageTransformOptions = {
     /** Target width in pixels */
     width?: number;
     /** Target height in pixels */
@@ -31,7 +31,7 @@ export interface ImageTransformOptions {
     format?: "webp" | "avif" | "jpeg" | "png";
     /** DPR (device pixel ratio) multiplier */
     dpr?: number;
-}
+};
 
 /**
  * Common avatar size presets for consistent caching.

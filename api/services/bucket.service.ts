@@ -1,21 +1,21 @@
 import { AwsClient } from "aws4fetch";
 
-export interface BucketConfig {
+export type BucketConfig = {
     accountId: string;
     accessKeyId: string;
     secretAccessKey: string;
     bucketName: string;
     publicUrl?: string; // e.g., https://media.example.com
-}
+};
 
-export interface UploadOptions {
+export type UploadOptions = {
     folder?: string;
     fileName?: string;
     contentType?: string;
     isPrivate?: boolean;
-}
+};
 
-export interface UploadResponse {
+export type UploadResponse = {
     asset_id: string;
     public_id: string;
     version: number;
@@ -23,7 +23,7 @@ export interface UploadResponse {
     bytes: number;
     secure_url: string;
     created_at: string;
-}
+};
 
 export class BucketService {
     private client: AwsClient;

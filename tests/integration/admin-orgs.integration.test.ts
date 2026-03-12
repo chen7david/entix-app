@@ -39,11 +39,10 @@ describe("Admin Organizations Integration", () => {
     describe("Super Admin Access", () => {
         it("returns 200 OK and lists all organizations for super admin", async () => {
             // Seed a few organizations into the db directly
-            const reqUrl = new Request("http://localhost");
             const ctxMock: any = { env };
             const { getDbClient } = await import("@api/factories/db.factory");
             const db = getDbClient(ctxMock);
-            const repo = new OrganizationRepository(ctxMock);
+            const repo = new OrganizationRepository(db);
 
             await repo.prepareCreate(nanoid(), "Test Org 1", "test-org-1").execute();
             await repo.prepareCreate(nanoid(), "Test Org 2", "test-org-2").execute();

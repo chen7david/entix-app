@@ -2,7 +2,7 @@ import { AuthRoutes } from "./auth.routes";
 import { AppHandler } from '@api/helpers/types.helpers';
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { RegistrationService } from "@api/services/registration.service";
+import { getRegistrationService } from "@api/factories/service.factory";
 
 export class AuthHandler {
     static signupWithOrg: AppHandler<typeof AuthRoutes.signupWithOrg> = async (ctx) => {
@@ -10,7 +10,7 @@ export class AuthHandler {
 
         ctx.var.logger.info({ email, organizationName }, "Signup with organization request");
 
-        const registrationService = new RegistrationService(ctx);
+        const registrationService = getRegistrationService(ctx);
 
         try {
             const result = await registrationService.signupWithOrg({
@@ -23,7 +23,7 @@ export class AuthHandler {
             ctx.var.logger.info({ userId: result.user.id, orgId: result.organization.id }, "Signup with organization completed");
 
             return ctx.json(result, HttpStatusCodes.CREATED);
-        } catch (error: any) {
+        } catch (error: unknown) {
             ctx.var.logger.error({ error }, "Error during organization setup, rolling back");
 
             if (error instanceof ConflictError) {
