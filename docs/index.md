@@ -11,6 +11,9 @@ hero:
       text: Get Started
       link: /setup
     - theme: alt
+      text: Development Guide
+      link: /feature-guide
+    - theme: alt
       text: API Reference
       link: /api
 
