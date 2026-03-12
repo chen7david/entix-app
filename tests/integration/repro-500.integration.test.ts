@@ -34,8 +34,8 @@ describe("Reproduction of 500 Error in GET /uploads", () => {
         const data = await res.json() as any[];
         expect(Array.isArray(data)).toBe(true);
         expect(data[0].id).toBe(uploadId);
-        // Verify it returned a truthful value (the fallback Date.now() should trigger)
-        expect(data[0].createdAt).toBeDefined();
+        // Verify it returned null for the invalid date 'INVALID_DATE'
+        expect(data[0].createdAt).toBe(null);
     });
 
     it("should return 200 even if R2 environment variables are partially missing", async () => {

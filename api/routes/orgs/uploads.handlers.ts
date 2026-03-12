@@ -2,6 +2,7 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { AppHandler } from "@api/helpers/types.helpers";
 import { OrgUploadsRoutes } from "./uploads.routes";
 import { getUploadService } from "@api/factories/upload.factory";
+import { stableTimestamp } from "@shared/schemas/dto/upload.dto";
 
 export class OrgUploadsHandler {
     static requestPresignedUrl: AppHandler<typeof OrgUploadsRoutes.requestPresignedUrl> = async (ctx) => {
@@ -38,8 +39,8 @@ export class OrgUploadsHandler {
 
             return ctx.json({
                 ...record,
-                createdAt: record.createdAt ? new Date(record.createdAt).getTime() : Date.now(),
-                updatedAt: record.updatedAt ? new Date(record.updatedAt).getTime() : Date.now(),
+                createdAt: stableTimestamp(record.createdAt),
+                updatedAt: stableTimestamp(record.updatedAt),
             } as any, HttpStatusCodes.OK);
         } catch (error: any) {
             ctx.var.logger.error({ error, uploadId, organizationId }, "Failed to complete upload");
@@ -59,8 +60,8 @@ export class OrgUploadsHandler {
             // Manually map to DTO format to ensure numbers are returned and satisfy TS
             const result = uploads.map(u => ({
                 ...u,
-                createdAt: u.createdAt ? new Date(u.createdAt).getTime() : Date.now(),
-                updatedAt: u.updatedAt ? new Date(u.updatedAt).getTime() : Date.now(),
+                createdAt: stableTimestamp(u.createdAt),
+                updatedAt: stableTimestamp(u.updatedAt),
             }));
 
             return ctx.json(result, HttpStatusCodes.OK);
