@@ -145,10 +145,10 @@ Path aliases are configured in:
 
 ```typescript
 // Instead of relative paths
-import { user } from '../../../api/db/schema.db';
+import { user } from '@shared/db/schema.db';
 
 // Use path alias
-import { user } from '@api/db/schema.db';
+import { user } from '@shared/db/schema.db';
 ```
 
 ```typescript

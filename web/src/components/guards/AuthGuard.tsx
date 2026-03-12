@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 import { CenteredSpin } from '@web/src/components/common/CenteredView';
 
 import { Outlet } from 'react-router';

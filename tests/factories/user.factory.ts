@@ -1,4 +1,4 @@
-import { User } from "@api/db/schema.db";
+import { User } from "@shared/db/schema.db";
 
 export function createMockUser(overrides: Partial<User> = {}): User {
     const now = new Date();

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { drizzle } from "drizzle-orm/d1";
-import { user, member, organization } from "../../api/db/schema.db";
+import { user, member, organization } from "@shared/db/schema.db";
 import { eq, and } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { createMockOrganization } from "../factories/organization.factory";

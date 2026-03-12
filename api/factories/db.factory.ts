@@ -1,6 +1,6 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { drizzle, DrizzleD1Database } from 'drizzle-orm/d1';
-import * as schema from '../db/schema.db';
+import * as schema from '@shared/db/schema.db';
 
 export type AppDb = DrizzleD1Database<typeof schema>;
 

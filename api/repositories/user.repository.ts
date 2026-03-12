@@ -1,6 +1,6 @@
 import { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
-import * as schema from "@api/db/schema.db";
+import * as schema from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 
 // Better Auth server instance type is complex and internal-only. 

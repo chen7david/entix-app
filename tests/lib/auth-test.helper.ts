@@ -5,7 +5,7 @@ import type { OrgRole } from "@shared/auth/permissions";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createMockMember } from "../factories/member.factory";
 import { drizzle } from "drizzle-orm/d1";
-import { user as userTable, member as memberTable } from "@api/db/schema.db";
+import { user as userTable, member as memberTable } from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 
 /**

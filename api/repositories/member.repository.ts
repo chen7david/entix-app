@@ -1,5 +1,5 @@
 import { AppDb } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
+import * as schema from "@shared/db/schema.db";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";

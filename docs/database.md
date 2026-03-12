@@ -126,7 +126,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { drizzle } from "drizzle-orm/d1";
 import { betterAuthOptions } from "./options";
-import * as schema from "./../../db/schema.db";
+import * as schema from "@shared/db/schema.db";
 
 export const auth = (env: CloudflareBindings) => {
     const db = drizzle(env.DB, { schema });

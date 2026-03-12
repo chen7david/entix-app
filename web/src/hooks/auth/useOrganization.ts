@@ -1,7 +1,7 @@
 import { authClient } from "@web/src/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
-import { links } from "@web/src/constants/links";
+import { links } from "@shared/constants/links";
 import { useCallback } from "react";
 import { useOrgContext } from "@web/src/context/OrgContext";
 

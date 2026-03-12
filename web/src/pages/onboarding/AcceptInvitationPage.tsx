@@ -4,7 +4,7 @@ import { Card, Button, Spin, Result, message } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useInvitations } from '@web/src/hooks/auth/useInvitations';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 
 export const AcceptInvitationPage: React.FC = () => {
     const [searchParams] = useSearchParams();

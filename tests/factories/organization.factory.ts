@@ -1,4 +1,4 @@
-import { organization } from "@api/db/schema.db";
+import { organization } from "@shared/db/schema.db";
 import { nanoid } from "nanoid";
 
 export function createMockOrganization(overrides: Partial<typeof organization.$inferInsert> = {}): typeof organization.$inferInsert {

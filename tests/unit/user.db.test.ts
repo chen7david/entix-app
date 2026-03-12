@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, TestDb } from "../lib/utils";
-import { user } from "@api/db/schema.db";
+import { user } from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { UserRepository } from "@api/repositories/user.repository";

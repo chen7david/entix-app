@@ -1,7 +1,7 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Select, message } from "antd";
 import { useNavigate } from "react-router";
-import { links } from "@web/src/constants/links";
+import { links } from "@shared/constants/links";
 
 export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void }) => {
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();

@@ -6,7 +6,7 @@ import { SidebarOrgSwitcher } from './SidebarOrgSwitcher';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 import { getAvatarUrl } from '@shared/utils/image-url';
 
 const { Text } = Typography;

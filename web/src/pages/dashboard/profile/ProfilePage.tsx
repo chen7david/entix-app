@@ -3,7 +3,7 @@ import { Card, Avatar, Typography, Button, Descriptions, Spin, message } from 'a
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useSession, signOut } from '../../../lib/auth-client';
 import { useNavigate } from 'react-router';
-import { links } from '../../../constants/links';
+import { links } from '@shared/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { getAvatarUrl } from "@shared/utils/image-url";
 const { Title } = Typography;

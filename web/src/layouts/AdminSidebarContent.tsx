@@ -5,7 +5,7 @@ import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate, useLocation } from 'react-router';
 import { getAvatarUrl } from '@shared/utils/image-url';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 
 const { Text } = Typography;
 

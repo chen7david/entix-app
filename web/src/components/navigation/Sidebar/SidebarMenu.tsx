@@ -2,7 +2,7 @@ import React from 'react';
 import { Menu, type MenuProps } from "antd";
 import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
-import { links } from "@web/src/constants/links";
+import { links } from "@shared/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 

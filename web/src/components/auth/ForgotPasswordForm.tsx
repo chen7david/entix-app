@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Button, Typography, Alert } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 
 const { Text } = Typography;
 

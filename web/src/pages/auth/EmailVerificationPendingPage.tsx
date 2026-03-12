@@ -3,7 +3,7 @@ import { Card, Typography, Button, message } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { useResendVerification } from '@web/src/hooks/auth/useAuth';
 import { useLocation, useNavigate } from 'react-router';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 
 const { Title, Text } = Typography;
 
