@@ -1,33 +1,31 @@
-import { AppContext } from "@api/helpers/types.helpers";
-import { getDbClient } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
+import { AppDb } from "@api/factories/db.factory";
+import * as schema from "@shared/db/schema.db";
 import { eq, and } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";
 
-export interface AddMemberInput {
+export type AddMemberInput = {
     userId: string;
     organizationId: string;
     role: OrgRole;
-}
+};
 
 /**
  * Repository for member-related database operations
  * Provides type-safe methods for organization membership management
  */
 export class MemberRepository {
-    constructor(private ctx: AppContext) { }
+    constructor(private db: AppDb) { }
 
     /**
      * Add a user as a member to an organization
      * Uses direct DB insertion since server-side auth doesn't expose organization methods
      */
     async addMember(input: AddMemberInput): Promise<schema.Member> {
-        const db = getDbClient(this.ctx);
         const memberId = nanoid();
         const now = new Date();
 
-        await db.insert(schema.member).values({
+        await this.db.insert(schema.member).values({
             id: memberId,
             organizationId: input.organizationId,
             userId: input.userId,
@@ -48,8 +46,7 @@ export class MemberRepository {
      * Check if a user is already a member of an organization
      */
     async isMember(userId: string, organizationId: string): Promise<boolean> {
-        const db = getDbClient(this.ctx);
-        const member = await db.query.member.findFirst({
+        const member = await this.db.query.member.findFirst({
             where: and(
                 eq(schema.member.userId, userId),
                 eq(schema.member.organizationId, organizationId)
@@ -63,8 +60,7 @@ export class MemberRepository {
      * Returns null if user is not a member
      */
     async findMembership(userId: string, organizationId: string): Promise<schema.Member | null> {
-        const db = getDbClient(this.ctx);
-        const member = await db.query.member.findFirst({
+        const member = await this.db.query.member.findFirst({
             where: and(
                 eq(schema.member.userId, userId),
                 eq(schema.member.organizationId, organizationId)
@@ -88,9 +84,8 @@ export class MemberRepository {
      * Prepare a query to add a member for batching
      */
     prepareAdd(id: string, organizationId: string, userId: string, role: string) {
-        const db = getDbClient(this.ctx);
         const now = new Date();
-        return db.insert(schema.member).values({
+        return this.db.insert(schema.member).values({
             id,
             organizationId,
             userId,

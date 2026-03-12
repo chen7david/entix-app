@@ -1,24 +1,29 @@
----
-# https://vitepress.dev/reference/default-theme-home-page
-layout: home
+# Quick Start
 
-hero:
-  name: "Entix-App"
-  text: "Full-stack Cloudflare Workers + React"
-  tagline: Documentation and Guides
-  actions:
-    - theme: brand
-      text: Get Started
-      link: /setup
-    - theme: alt
-      text: API Reference
-      link: /api
+Get the project running on your machine in under 5 minutes.
 
-features:
-  - title: Cloudflare Workers
-    details: High-performance API running on the edge.
-  - title: Vite + React
-    details: Fast, modern frontend development experience.
-  - title: D1 Database
-    details: Serverless SQLite database at the edge.
----
+## 1. Clone & Install
+```bash
+git clone https://github.com/chen7david/entix-app
+cd entix-app
+npm run dev:init
+```
+
+## 2. Local Setup
+Copy the environment variables template:
+```bash
+cp .example.dev.vars .dev.vars
+```
+
+## 3. Run Development Server
+Start the API and Web frontend concurrently:
+```bash
+npm run dev
+```
+
+## Next Steps
+- [Onboarding: Environment Setup](./onboarding/setup.md)
+- [How to: Create a new feature](./features/create-new.md)
+
+Last updated: 2026-03-12
+[Back to Documentation Guide](./how-to-write-docs.md)

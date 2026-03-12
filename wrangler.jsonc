@@ -18,8 +18,6 @@
 		"development": {
 			"name": "entix-app",
 			"vars": {
-				"SECRET_KEY": "value",
-				"API_TOKEN": "value",
 				"FRONTEND_URL": "http://localhost:8000",
 				"BETTER_AUTH_URL": "http://localhost:3000",
 				"CORS_ORIGINS": "http://localhost:8000"
@@ -36,8 +34,6 @@
 		"staging": {
 			"name": "entix-app",
 			"vars": {
-				"SECRET_KEY": "value",
-				"API_TOKEN": "value",
 				"FRONTEND_URL": "https://staging.entix.org",
 				"BETTER_AUTH_URL": "https://staging.entix.org",
 				"CORS_ORIGINS": "https://staging.entix.org"
@@ -62,8 +58,6 @@
 		"production": {
 			"name": "entix-app",
 			"vars": {
-				"SECRET_KEY": "value",
-				"API_TOKEN": "value",
 				"FRONTEND_URL": "https://entix.org",
 				"BETTER_AUTH_URL": "https://entix.org",
 				"CORS_ORIGINS": "https://entix.org"

@@ -1,7 +1,29 @@
-# Deployment
+## Deployment Workflow
 
+Our deployment process is governed by strict GitHub branch protection rules and Cloudflare Pages integration to ensure stability and code quality.
 
+### Branch Protection (main branch)
 
+The `main` branch is protected to prevent unstable code from reaching production:
+
+*   **Direct Pushes Blocked**: Direct pushes to `main` are strictly prohibited. All changes must be made via Pull Requests.
+*   **PR Requirement**: Every change must originate from a feature or staging branch (e.g., `staging`) and be merged via a PR.
+*   **Approval Policy**:
+    *   Requires at least **1 approval** before a merge is permitted.
+    *   **Self-approval** is allowed to facilitate small, non-breaking changes by the primary maintainer.
+    *   **Dismiss Stale Approvals**: Approvals are automatically dismissed when new commits are pushed to a PR, requiring a fresh review.
+*   **Status Checks**:
+    *   Merging is blocked until the **Cloudflare Pages** status check passes (turns green).
+
+### Cloudflare Integration
+
+We utilize Cloudflare Pages for automated builds and previews:
+
+1.  **Preview Builds**: On every push to a branch or creation of a PR, Cloudflare Pages automatically triggers a build.
+2.  **Deployment Comments**: Once the build is successful, Cloudflare posts a comment on the PR with a unique **Preview URL**.
+3.  **Status Reporting**: Cloudflare reports a status check named "Cloudflare Pages" directly to the GitHub PR.
+
+---
 
 ## Environments
 

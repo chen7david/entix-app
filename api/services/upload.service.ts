@@ -29,7 +29,7 @@ export class UploadService {
             id: uploadId,
             originalName,
             bucketKey,
-            url: `${this.publicUrlPrefix}/${bucketKey}`,
+            url: bucketKey,
             fileSize,
             contentType,
             organizationId,
@@ -40,8 +40,35 @@ export class UploadService {
         return {
             uploadId: uploadRecord.id,
             presignedUrl,
-            url: uploadRecord.url,
+            url: `${this.publicUrlPrefix}/${bucketKey}`,
             bucketKey: uploadRecord.bucketKey
+        };
+    }
+
+    async getUploadById(uploadId: string, organizationId: string) {
+        const record = await this.uploadRepo.findById(uploadId, organizationId);
+        if (!record) return undefined;
+        return {
+            ...record,
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+        };
+    }
+
+    async getUploadByUrl(absoluteUrl: string, organizationId: string) {
+        let relativeUrl = absoluteUrl;
+        const prefixWithSlash = `${this.publicUrlPrefix}/`;
+        if (absoluteUrl.startsWith(prefixWithSlash)) {
+            relativeUrl = absoluteUrl.substring(prefixWithSlash.length);
+        } else if (absoluteUrl.startsWith(this.publicUrlPrefix)) {
+            relativeUrl = absoluteUrl.substring(this.publicUrlPrefix.length);
+        }
+
+        const record = await this.uploadRepo.findByUrl(relativeUrl, organizationId);
+        if (!record) return undefined;
+
+        return {
+            ...record,
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`
         };
     }
 
@@ -50,7 +77,10 @@ export class UploadService {
         if (!record) {
             throw new NotFoundError("Upload not found");
         }
-        return record;
+        return {
+            ...record,
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+        };
     }
 
     async deleteUpload(uploadId: string, organizationId: string) {
@@ -69,6 +99,10 @@ export class UploadService {
     }
 
     async listUploads(organizationId: string) {
-        return this.uploadRepo.findAllByOrganization(organizationId);
+        const uploads = await this.uploadRepo.findAllByOrganization(organizationId);
+        return uploads.map(u => ({
+            ...u,
+            url: `${this.publicUrlPrefix}/${u.bucketKey}`
+        }));
     }
 }

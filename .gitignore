@@ -33,7 +33,7 @@ lerna-debug.log*
 .DS_Store
 
 .dev.vars*
-!.dev.vars.example
+!example.dev.vars
 !.env.example
 
 # VitePress

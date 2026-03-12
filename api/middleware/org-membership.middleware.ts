@@ -1,7 +1,7 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
 import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
-import { MemberRepository } from "@api/repositories/member.repository";
+import { getMemberRepository } from "@api/factories/repository.factory";
 
 /**
  * Middleware to verify user is a member of the organization
@@ -39,8 +39,8 @@ export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
         return;
     }
 
-    // Use repository pattern for consistency
-    const memberRepo = new MemberRepository(ctx);
+    // Use repository pattern via factory
+    const memberRepo = getMemberRepository(ctx);
     const membership = await memberRepo.findMembership(userId, organizationId);
 
     if (!membership) {

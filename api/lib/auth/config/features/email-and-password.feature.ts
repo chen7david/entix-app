@@ -1,7 +1,7 @@
 import { AppContext } from "@api/helpers/types.helpers";
 import { MailService } from "@api/services/mailer.service";
 import { BetterAuthOptions } from "better-auth";
-import { UserRepository } from "@api/repositories/user.repository";
+import { getUserRepository } from "@api/factories/repository.factory";
 import { getFrontendUrl } from "@api/helpers/url.helpers";
 
 export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: MailService): Partial<BetterAuthOptions> => {
@@ -39,7 +39,7 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: MailService
 
                 ctx.var.logger.info({ userId: user.id, email: user.email }, "Password reset successful, ensuring email is verified");
 
-                const userRepo = new UserRepository(ctx);
+                const userRepo = getUserRepository(ctx);
                 await userRepo.updateUser(user.id, { emailVerified: true });
             },
         },

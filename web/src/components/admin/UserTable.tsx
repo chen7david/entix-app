@@ -4,6 +4,7 @@ import { useAdminUsers, useBanUser, useUnbanUser, useSetUserRole, useImpersonate
 import { requestPasswordReset, sendVerificationEmail } from '@web/src/lib/auth-client';
 import type { MenuProps } from 'antd';
 import { SearchOutlined, MoreOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined, MailOutlined, KeyOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
+import { getAvatarUrl } from '@shared/utils/image-url';
 import dayjs from 'dayjs';
 
 export const UserTable: React.FC = () => {
@@ -75,7 +76,7 @@ export const UserTable: React.FC = () => {
             key: 'user',
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
-                    {record.image && <img src={record.image} alt={record.name} className="w-8 h-8 rounded-full" />}
+                    {record.image && <img src={getAvatarUrl(record.image, 'sm')} alt={record.name} className="w-8 h-8 rounded-full" />}
                     <div>
                         <div className="font-medium">{record.name}</div>
                         <div className="text-xs text-gray-500">{record.email}</div>

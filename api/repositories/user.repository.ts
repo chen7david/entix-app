@@ -1,40 +1,44 @@
-import { AppContext } from "@api/helpers/types.helpers";
-import { getDbClient } from "@api/factories/db.factory";
-import { auth } from "@api/lib/auth/auth";
+import { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
-import * as schema from "@api/db/schema.db";
+import * as schema from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 
-export interface CreateUserInput {
+// Better Auth server instance type is complex and internal-only. 
+// We use unknown for the instance to ensure zero any, and type cast locally in methods.
+type AuthInstance = unknown;
+
+export type CreateUserInput = {
     email: string;
     name: string;
     password: string;
-}
+};
 
-export interface CreateUserResult {
+export type CreateUserResult = {
     user: {
         id: string;
         email: string;
         name: string;
         emailVerified: boolean;
     };
-}
+};
 
 /**
  * Repository for user-related database operations
  * Provides type-safe methods for user management via BetterAuth
  */
 export class UserRepository {
-    constructor(private ctx: AppContext) { }
+    constructor(
+        private db: AppDb,
+        private auth: AuthInstance
+    ) { }
 
     /**
      * Create a new user via BetterAuth
      * Email verification is automatically sent if sendOnSignUp is enabled in config
      */
     async createUser(input: CreateUserInput): Promise<CreateUserResult> {
-        const authClient = auth(this.ctx);
-
-        const result = await authClient.api.signUpEmail({
+        const auth = (this.auth as any); // Type cast for internal library call
+        const result = await auth.api.signUpEmail({
             body: {
                 email: input.email,
                 password: input.password,
@@ -53,9 +57,17 @@ export class UserRepository {
      * Find user by email address
      */
     async findUserByEmail(email: string): Promise<schema.User | undefined> {
-        const db = getDbClient(this.ctx);
-        return await db.query.user.findFirst({
+        return await this.db.query.user.findFirst({
             where: eq(schema.user.email, email),
+        });
+    }
+
+    /**
+     * Find user by ID
+     */
+    async findUserById(userId: string): Promise<schema.User | undefined> {
+        return await this.db.query.user.findFirst({
+            where: eq(schema.user.id, userId),
         });
     }
 
@@ -63,8 +75,7 @@ export class UserRepository {
      * Update an existing user's data
      */
     async updateUser(userId: string, data: Partial<typeof schema.user.$inferInsert>): Promise<void> {
-        const db = getDbClient(this.ctx);
-        await db.update(schema.user)
+        await this.db.update(schema.user)
             .set(data)
             .where(eq(schema.user.id, userId));
     }
@@ -74,9 +85,8 @@ export class UserRepository {
      * Uses BetterAuth's built-in password reset functionality
      */
     async sendPasswordResetEmail(email: string, redirectTo: string): Promise<void> {
-        const authClient = auth(this.ctx);
-
-        await authClient.api.requestPasswordReset({
+        const auth = (this.auth as any); // Type cast for internal library call
+        await auth.api.requestPasswordReset({
             body: { email, redirectTo }
         });
     }
@@ -86,8 +96,7 @@ export class UserRepository {
      * Queries via the member table to scope results to the given org
      */
     async findUsersByOrganization(organizationId: string): Promise<schema.User[]> {
-        const db = getDbClient(this.ctx);
-        const members = await db.query.member.findMany({
+        const members = await this.db.query.member.findMany({
             where: eq(schema.member.organizationId, organizationId),
             with: {
                 user: true,
@@ -97,15 +106,12 @@ export class UserRepository {
         return members.map((m) => m.user);
     }
 
-
-
     /**
      * Prepare a query to create a user for batching
      */
     prepareCreateUser(id: string, email: string, name: string, emailVerified: boolean) {
-        const db = getDbClient(this.ctx);
         const now = new Date();
-        return db.insert(schema.user).values({
+        return this.db.insert(schema.user).values({
             id,
             email,
             name,
@@ -121,9 +127,8 @@ export class UserRepository {
      * Prepare a query to create an account for batching
      */
     prepareCreateAccount(id: string, userId: string, providerId: string, passwordHash: string) {
-        const db = getDbClient(this.ctx);
         const now = new Date();
-        return db.insert(schema.account).values({
+        return this.db.insert(schema.account).values({
             id,
             accountId: providerId === "credential" ? userId : id,
             providerId,
@@ -132,5 +137,12 @@ export class UserRepository {
             createdAt: now,
             updatedAt: now,
         });
+    }
+
+    /**
+     * Execute multiple prepared queries atomically
+     */
+    async executeBatch(queries: unknown[]) {
+        return await this.db.batch(queries as any);
     }
 }

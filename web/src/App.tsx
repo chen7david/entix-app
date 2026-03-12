@@ -11,7 +11,7 @@ import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
 import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
 import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
 import { AuthLayout } from "./layouts/AuthLayout";
-import { links } from "./constants/links";
+import { links } from "@shared/constants/links";
 
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { AdminLayout } from "./layouts/AdminLayout";

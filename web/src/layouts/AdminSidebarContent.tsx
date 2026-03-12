@@ -4,7 +4,8 @@ import { UserOutlined, LogoutOutlined, SafetyOutlined, TeamOutlined, DashboardOu
 import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate, useLocation } from 'react-router';
-import { links } from '@web/src/constants/links';
+import { getAvatarUrl } from '@shared/utils/image-url';
+import { links } from '@shared/constants/links';
 
 const { Text } = Typography;
 
@@ -104,7 +105,7 @@ export const AdminSidebarContent: React.FC = () => {
                     <div style={{ flex: 1, minWidth: 0, paddingLeft: 8 }} className="flex items-center gap-3">
                         <Avatar
                             size={32}
-                            src={session.data?.user?.image}
+                            src={getAvatarUrl(session.data?.user?.image, 'sm')}
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
                         />

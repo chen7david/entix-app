@@ -1,11 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, TestDb } from "../lib/utils";
-import { user } from "@api/db/schema.db";
+import { user } from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { UserRepository } from "@api/repositories/user.repository";
-import { AppContext } from "@api/helpers/types.helpers";
-import { env } from "cloudflare:test";
 
 describe("User Integration Test", () => {
     let db: TestDb;
@@ -40,11 +38,7 @@ describe("User Integration Test", () => {
 
         await db.insert(user).values(newUser);
 
-        const mockCtx = {
-            env: { DB: env.DB }
-        } as unknown as AppContext;
-
-        const repo = new UserRepository(mockCtx);
+        const repo = new UserRepository(db, {} as any);
         await repo.updateUser(newUser.id, { emailVerified: true });
 
         const updatedUser = await db.query.user.findFirst({

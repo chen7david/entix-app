@@ -10,41 +10,43 @@ export default defineConfig({
         // https://vitepress.dev/reference/default-theme-config
         nav: [
             { text: 'Home', link: '/' },
-            { text: 'Setup', link: '/setup' },
-            { text: 'API', link: '/api' }
+            { text: 'How to Write Docs', link: '/how-to-write-docs' }
         ],
 
         sidebar: [
             {
-                text: 'Getting Started',
+                text: 'Onboarding',
                 items: [
-                    { text: 'Setup & Development', link: '/setup' },
-                    { text: 'Architecture', link: '/architecture' }
+                    { text: 'Quick Start', link: '/' },
+                    { text: 'Environment Setup', link: '/onboarding/setup' },
+                    { text: 'Project Workflow', link: '/onboarding/workflow' }
                 ]
             },
             {
-                text: 'Backend',
+                text: 'Development',
                 items: [
-                    { text: 'Database', link: '/database' },
-                    { text: 'Authentication', link: '/authentication' },
-                    { text: 'Authorization', link: '/authorization' },
-                    { text: 'Security', link: '/security' },
-                    { text: 'API & Errors', link: '/api' },
-                    { text: 'Middleware', link: '/middleware' }
-                ]
-            },
-            {
-                text: 'Frontend',
-                items: [
-                    { text: 'Frontend', link: '/frontend' }
+                    { text: 'Create a Feature', link: '/features/create-new' },
+                    { text: 'Naming Rules', link: '/naming/conventions' },
+                    { text: 'Middleware & Guards', link: '/middleware/flow' }
                 ]
             },
             {
                 text: 'Operations',
                 items: [
-                    { text: 'Testing', link: '/testing' },
-                    { text: 'Deployment', link: '/deployment' },
-                    { text: 'Troubleshooting', link: '/troubleshooting' }
+                    { text: 'Testing Guide', link: '/testing/guide' },
+                    { text: 'Cloudflare Deployment', link: '/deployment/cloudflare' }
+                ]
+            },
+            {
+                text: 'Principles (Why?)',
+                items: [
+                    { text: 'Why .dev.vars?', link: '/why/dev-vars' },
+                    { text: 'Why Protection?', link: '/why/branch-protection' },
+                    { text: 'Why Service-Repo?', link: '/why/service-repository' },
+                    { text: 'Why Strict Naming?', link: '/why/naming' },
+                    { text: 'Why Guards?', link: '/why/guards' },
+                    { text: 'Why Cloudflare Testing?', link: '/why/cloudflare-testing' },
+                    { text: 'Why Cloudflare Pages?', link: '/why/cloudflare-pages' }
                 ]
             }
         ],

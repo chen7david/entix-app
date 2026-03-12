@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { message, Card, Typography } from 'antd';
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from '@web/src/components/auth/SignUpWithOrgForm';
 import { useSignUpWithOrg } from '@web/src/hooks/auth/useAuth';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 
 const { Title, Text } = Typography;
 

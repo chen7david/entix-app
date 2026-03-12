@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { Card, Typography, Divider, Button, Space } from 'antd';
 import { LockOutlined, RightOutlined, LogoutOutlined } from '@ant-design/icons';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';

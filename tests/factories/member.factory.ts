@@ -1,4 +1,4 @@
-import { member } from "@api/db/schema.db";
+import { member } from "@shared/db/schema.db";
 import { nanoid } from "nanoid";
 
 export function createMockMember(

@@ -6,7 +6,7 @@ import { createTestClient } from "../lib/test-client";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
 import { createMockUserDbRecord } from "../factories/auth.factory";
-import * as schema from "@api/db/schema.db";
+import * as schema from "@shared/db/schema.db";
 import { eq } from "drizzle-orm";
 
 describe("User & Member Creation Atomicity", () => {

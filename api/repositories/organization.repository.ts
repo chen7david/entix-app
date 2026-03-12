@@ -1,26 +1,24 @@
-import { AppContext } from "@api/helpers/types.helpers";
-import { getDbClient } from "@api/factories/db.factory";
-import * as schema from "@api/db/schema.db";
+import { AppDb } from "@api/factories/db.factory";
+import * as schema from "@shared/db/schema.db";
 import { eq, desc } from "drizzle-orm";
 
-export interface CreateOrganizationInput {
+export type CreateOrganizationInput = {
     name: string;
     slug: string;
-}
+};
 
 /**
  * Repository for organization-related database operations
  * Provides type-safe methods for organization management
  */
 export class OrganizationRepository {
-    constructor(private ctx: AppContext) { }
+    constructor(private db: AppDb) { }
 
     /**
      * Find organization by slug
      */
     async findBySlug(slug: string): Promise<schema.Organization | undefined> {
-        const db = getDbClient(this.ctx);
-        return await db.query.organization.findFirst({
+        return await this.db.query.organization.findFirst({
             where: eq(schema.organization.slug, slug),
         });
     }
@@ -29,8 +27,7 @@ export class OrganizationRepository {
      * Get all organizations
      */
     async findAll(): Promise<schema.Organization[]> {
-        const db = getDbClient(this.ctx);
-        return await db.select()
+        return await this.db.select()
             .from(schema.organization)
             .orderBy(desc(schema.organization.createdAt));
     }
@@ -39,8 +36,7 @@ export class OrganizationRepository {
      * Find organization by ID
      */
     async findById(id: string): Promise<schema.Organization | undefined> {
-        const db = getDbClient(this.ctx);
-        return await db.query.organization.findFirst({
+        return await this.db.query.organization.findFirst({
             where: eq(schema.organization.id, id),
         });
     }
@@ -48,9 +44,8 @@ export class OrganizationRepository {
     /** Prepare a query to create an organization for batching
         */
     prepareCreate(id: string, name: string, slug: string) {
-        const db = getDbClient(this.ctx);
         const now = new Date();
-        return db.insert(schema.organization).values({
+        return this.db.insert(schema.organization).values({
             id,
             name,
             slug,

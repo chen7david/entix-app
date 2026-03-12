@@ -3,7 +3,7 @@ import { Typography, Popover } from 'antd';
 import { SwapOutlined, CheckOutlined, PlusOutlined } from '@ant-design/icons';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 
 const { Text } = Typography;
 

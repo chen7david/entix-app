@@ -2,7 +2,7 @@ import { AppContext } from "@api/helpers/types.helpers";
 import { organization } from "better-auth/plugins";
 import { ac, member, owner, admin } from "@shared/auth/permissions";
 import { MailService } from "@api/services/mailer.service";
-import { links } from "@web/src/constants/links";
+import { links } from "@shared/constants/links";
 
 export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: MailService) => organization({
     ac,

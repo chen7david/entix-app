@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, useParams, Outlet } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authClient } from '@web/src/lib/auth-client';
-import { links } from '@web/src/constants/links';
+import { links } from '@shared/constants/links';
 import { Button } from 'antd';
 import { CenteredSpin, CenteredResult } from '@web/src/components/common/CenteredView';
 import { OrgProvider } from '@web/src/context/OrgContext';
