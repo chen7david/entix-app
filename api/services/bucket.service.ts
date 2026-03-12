@@ -2,9 +2,9 @@ import { AwsClient } from "aws4fetch";
 
 export type BucketConfig = {
     accountId: string;
-    accessKeyId: string;
-    secretAccessKey: string;
     bucketName: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
     publicUrl?: string; // e.g., https://media.example.com
 };
 
@@ -26,7 +26,7 @@ export type UploadResponse = {
 };
 
 export class BucketService {
-    private client: AwsClient;
+    private client?: AwsClient;
     private endpoint: string;
     private bucketName: string;
     private publicUrl: string;
@@ -37,12 +37,21 @@ export class BucketService {
         // Fallback to the R2 dev endpoint if no custom domain is provided
         this.publicUrl = config.publicUrl || `${this.endpoint}/${this.bucketName}`;
 
-        this.client = new AwsClient({
-            accessKeyId: config.accessKeyId,
-            secretAccessKey: config.secretAccessKey,
-            service: "s3",
-            region: "auto",
-        });
+        if (config.accessKeyId && config.secretAccessKey) {
+            this.client = new AwsClient({
+                accessKeyId: config.accessKeyId,
+                secretAccessKey: config.secretAccessKey,
+                service: "s3",
+                region: "auto",
+            });
+        }
+    }
+
+    private getClient(): AwsClient {
+        if (!this.client) {
+            throw new Error("R2 Credentials missing (R2_ACCESS_KEY_ID or R2_SECRET_ACCESS_KEY). Check your environment variables.");
+        }
+        return this.client;
     }
 
     /**
@@ -61,7 +70,7 @@ export class BucketService {
         const key = folder ? `${folder}/${fileName}` : fileName;
         const url = `${this.endpoint}/${this.bucketName}/${key}`;
 
-        const response = await this.client.fetch(url, {
+        const response = await this.getClient().fetch(url, {
             method: "PUT",
             headers: {
                 "Content-Type": contentType,
@@ -92,7 +101,7 @@ export class BucketService {
         const url = new URL(`${this.endpoint}/${this.bucketName}/${key}`);
         url.searchParams.set("X-Amz-Expires", expiresIn.toString());
 
-        const signedRequest = await this.client.sign(url.toString(), {
+        const signedRequest = await this.getClient().sign(url.toString(), {
             method: "PUT",
             aws: { signQuery: true }
         });
@@ -102,7 +111,7 @@ export class BucketService {
 
     async delete(key: string): Promise<boolean> {
         const url = `${this.endpoint}/${this.bucketName}/${key}`;
-        const response = await this.client.fetch(url, { method: "DELETE" });
+        const response = await this.getClient().fetch(url, { method: "DELETE" });
         return response.ok;
     }
 }
