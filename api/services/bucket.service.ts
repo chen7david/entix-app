@@ -44,12 +44,22 @@ export class BucketService {
                 service: "s3",
                 region: "auto",
             });
+        } else {
+            // Log a warning in the constructor (non-blocking for read operations)
+            // but helpful for debugging why POST/PUT requests fail.
+            const missing = [];
+            if (!config.accessKeyId?.trim()) missing.push("R2_ACCESS_KEY_ID");
+            if (!config.secretAccessKey?.trim()) missing.push("R2_SECRET_ACCESS_KEY");
+            console.warn(`[BucketService] Initialization warning: Missing credentials (${missing.join(", ")}). Write operations will fail.`);
         }
     }
 
     private getClient(): AwsClient {
         if (!this.client) {
-            throw new Error("R2 Credentials missing (R2_ACCESS_KEY_ID or R2_SECRET_ACCESS_KEY). Check your environment variables.");
+            const missing = [];
+            // We check the original source of truth indirectly via lack of client
+            // This error is thrown only when a write/signed-url operation is attempted.
+            throw new Error(`R2 Credentials missing. Please ensure R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY are set as secrets in your Cloudflare environment.`);
         }
         return this.client;
     }
