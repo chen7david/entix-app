@@ -25,16 +25,34 @@ export class OrgUploadsHandler {
 
         ctx.var.logger.info({ uploadId, organizationId }, "Upload marked as completed");
 
-        return ctx.json(record, HttpStatusCodes.OK);
+        return ctx.json({
+            ...record,
+            createdAt: record.createdAt ? new Date(record.createdAt).getTime() : Date.now(),
+            updatedAt: record.updatedAt ? new Date(record.updatedAt).getTime() : Date.now(),
+        } as any, HttpStatusCodes.OK);
     };
 
     static listUploads: AppHandler<typeof OrgUploadsRoutes.listUploads> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
 
-        const uploadService = getUploadService(ctx);
-        const uploads = await uploadService.listUploads(organizationId);
+        try {
+            const uploadService = getUploadService(ctx);
+            const uploads = await uploadService.listUploads(organizationId);
 
-        return ctx.json(uploads, HttpStatusCodes.OK);
+            ctx.var.logger.info({ organizationId, count: uploads.length }, "Uploads retrieved");
+
+            // Manually map to DTO format to ensure numbers are returned and satisfy TS
+            const result = uploads.map(u => ({
+                ...u,
+                createdAt: u.createdAt ? new Date(u.createdAt).getTime() : Date.now(),
+                updatedAt: u.updatedAt ? new Date(u.updatedAt).getTime() : Date.now(),
+            }));
+
+            return ctx.json(result, HttpStatusCodes.OK);
+        } catch (error: any) {
+            ctx.var.logger.error({ error, organizationId }, "Failed to list uploads");
+            throw error;
+        }
     };
 
     static deleteUpload: AppHandler<typeof OrgUploadsRoutes.deleteUpload> = async (ctx) => {
