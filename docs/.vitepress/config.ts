@@ -43,7 +43,7 @@ export default defineConfig({
                 text: 'Operations',
                 items: [
                     { text: 'Testing', link: '/testing' },
-                    { text: 'Deployment', link: '/deployment' },
+                    { text: 'Deployments', link: '/deployment' },
                     { text: 'Troubleshooting', link: '/troubleshooting' }
                 ]
             }

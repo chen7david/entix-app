@@ -16,6 +16,9 @@ hero:
     - theme: alt
       text: API Reference
       link: /api
+    - theme: alt
+      text: Deployment Guide
+      link: /deployment
 
 features:
   - title: Cloudflare Workers
