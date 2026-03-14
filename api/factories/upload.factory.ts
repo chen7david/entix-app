@@ -15,7 +15,7 @@ export const getUploadService = (ctx: AppContext): UploadService => {
 
     const accountId = ctx.env.R2_ACCOUNT_ID;
     const bucketName = ctx.env.R2_BUCKET_NAME;
-    const publicUrlPrefix = (ctx.env.PUBLIC_ASSET_URL
+    const publicUrlPrefix = (ctx.env.PUBLIC_CDN_URL
         || `https://${accountId}.r2.cloudflarestorage.com/${bucketName}`).replace(/\/+$/, "");
 
     return new UploadService(bucketService, uploadRepo, publicUrlPrefix);

@@ -10,7 +10,7 @@ describe('BucketFactory', () => {
             R2_ACCESS_KEY_ID: 'test-access-key',
             R2_SECRET_ACCESS_KEY: 'test-secret-key',
             R2_BUCKET_NAME: 'test-bucket',
-            PUBLIC_ASSET_URL: 'https://assets.test.com',
+            PUBLIC_CDN_URL: 'https://assets.test.com',
         };
 
         const mockCtx = {
@@ -26,13 +26,13 @@ describe('BucketFactory', () => {
         expect((bucketClient as any).publicUrl).toBe('https://assets.test.com');
     });
 
-    it('should fallback to R2 dev endpoint if PUBLIC_ASSET_URL is missing', () => {
+    it('should fallback to R2 dev endpoint if PUBLIC_CDN_URL is missing', () => {
         const mockEnv = {
             R2_ACCOUNT_ID: 'test-account-id',
             R2_ACCESS_KEY_ID: 'test-access-key',
             R2_SECRET_ACCESS_KEY: 'test-secret-key',
             R2_BUCKET_NAME: 'test-bucket',
-            // PUBLIC_ASSET_URL is omitted
+            // PUBLIC_CDN_URL is omitted
         };
 
         const mockCtx = {

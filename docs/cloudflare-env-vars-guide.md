@@ -30,7 +30,7 @@ These are public or non-sensitive configuration values. They must be hardcoded u
 | `CORS_ORIGINS` | Allowed origins for the API. | `https://entix.org` |
 | `R2_ACCOUNT_ID` | Cloudflare Account ID for routing the bucket. | `a90c...` |
 | `R2_BUCKET_NAME` | The name of the specific environment's bucket. | `entix-app-production` |
-| `PUBLIC_ASSET_URL` | The custom domain attached to the public bucket. | `https://cdn.entix.org` |
+| `PUBLIC_CDN_URL` | The custom domain attached to the public bucket. | `https://cdn.entix.org` |
 | `SKIP_EMAIL_VERIFICATION` | Optional flag to bypass email during testing. | `true` or empty |
 
 *Action needed: If any of these are missing in `wrangler.jsonc` but present in your Cloudflare dashboard, they will be deleted on the next deploy. Add them to `wrangler.jsonc` immediately to fix the overwrite issue.*
@@ -56,6 +56,22 @@ npx wrangler secret put R2_ACCESS_KEY_ID --env production
 npx wrangler secret put R2_SECRET_ACCESS_KEY --env production
 ```
 *(You will be prompted to paste the secret value after running each command).*
+
+---
+
+## 🏗️ Architectural Note: R2 Native Bindings vs S3 Presigned URLs
+You might wonder: *Why are we using `aws4fetch` and S3 Access Keys instead of Cloudflare's frictionless Native R2 Bindings (`env.BUCKET.put()`)?*
+
+### The 100MB Worker Limit
+Cloudflare Workers have a **hard limit of 100MB per request**. If we proxy file uploads through our Worker API (using Native R2 Bindings), users will be strictly limited to uploading files smaller than 100MB.
+
+### The Presigned URL Solution
+To support large file uploads (e.g., 5GB files), we **must bypass the Worker**. We do this by having the Worker generate a "Presigned URL". 
+1. The frontend asks the Worker for permission to upload.
+2. The Worker uses the `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` to cryptographically sign a temporary URL using the `aws4fetch` library.
+3. The frontend uploads the 5GB file **directly to the R2 Storage Bucket** using this URL.
+
+This approach bypasses the 100MB Worker limit entirely and **drastically reduces CPU/Duration billing costs**, as the Worker is only invoked for a few milliseconds to sign the request, rather than staying alive to stream a 5GB file.
 
 ---
 

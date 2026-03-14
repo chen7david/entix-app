@@ -4,8 +4,8 @@ A full-stack monorepo optimized for **Cloudflare Workers** (Hono) and **React 19
 
 ## Quick Start
 ```bash
-npm install     # Install dependencies
-npm run dev     # Start API and Web concurrently
+npm run dev:init     # Install dependencies for both API and Web
+npm run dev          # Start API and Web concurrently
 ```
 
 ## Documentation
