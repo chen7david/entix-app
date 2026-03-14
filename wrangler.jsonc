@@ -21,7 +21,7 @@
 				"FRONTEND_URL": "http://localhost:8000",
 				"BETTER_AUTH_URL": "http://localhost:3000",
 				"CORS_ORIGINS": "http://localhost:8000",
-				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-development",
 				"PUBLIC_CDN_URL": "https://development-cdn.entix.org",
 				"SKIP_EMAIL_VERIFICATION": "true"
@@ -41,7 +41,7 @@
 				"FRONTEND_URL": "https://staging.entix.org",
 				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
 				"SKIP_EMAIL_VERIFICATION": "false",
-				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-staging",
 			},
 			"assets": {
@@ -67,7 +67,7 @@
 				"FRONTEND_URL": "https://entix.org",
 				"PUBLIC_CDN_URL": "https://cdn.entix.org",
 				"SKIP_EMAIL_VERIFICATION": "false",
-				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-production",
 			},
 			"assets": {

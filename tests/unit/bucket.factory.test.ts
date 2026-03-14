@@ -6,7 +6,7 @@ import type { AppContext } from '@api/helpers/types.helpers';
 describe('BucketFactory', () => {
     it('should create a BucketService instance with correct env vars', () => {
         const mockEnv = {
-            R2_ACCOUNT_ID: 'test-account-id',
+            CLOUDFLARE_ACCOUNT_ID: 'test-account-id',
             R2_ACCESS_KEY_ID: 'test-access-key',
             R2_SECRET_ACCESS_KEY: 'test-secret-key',
             R2_BUCKET_NAME: 'test-bucket',
@@ -28,7 +28,7 @@ describe('BucketFactory', () => {
 
     it('should fallback to R2 dev endpoint if PUBLIC_CDN_URL is missing', () => {
         const mockEnv = {
-            R2_ACCOUNT_ID: 'test-account-id',
+            CLOUDFLARE_ACCOUNT_ID: 'test-account-id',
             R2_ACCESS_KEY_ID: 'test-access-key',
             R2_SECRET_ACCESS_KEY: 'test-secret-key',
             R2_BUCKET_NAME: 'test-bucket',

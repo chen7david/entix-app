@@ -21,7 +21,7 @@ export default defineWorkersConfig({
                         FRONTEND_URL: "http://localhost:8000",
                         R2_ACCESS_KEY_ID: "mock_r2_access_key",
                         R2_SECRET_ACCESS_KEY: "mock_r2_secret_key",
-                        R2_ACCOUNT_ID: "mock_account_id",
+                        CLOUDFLARE_ACCOUNT_ID: "mock_account_id",
                         R2_BUCKET_NAME: "mock-bucket",
                     }
                 },

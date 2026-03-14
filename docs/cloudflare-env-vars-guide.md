@@ -28,7 +28,7 @@ These are public or non-sensitive configuration values. They must be hardcoded u
 | `FRONTEND_URL` | Used for CORS and email links. | `https://entix.org` |
 | `BETTER_AUTH_URL` | The base URL for the auth server routes. | `https://entix.org` |
 | `CORS_ORIGINS` | Allowed origins for the API. | `https://entix.org` |
-| `R2_ACCOUNT_ID` | Cloudflare Account ID for routing the bucket. | `a90c...` |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare Account ID for routing the bucket. | `a90c...` |
 | `R2_BUCKET_NAME` | The name of the specific environment's bucket. | `entix-app-production` |
 | `PUBLIC_CDN_URL` | The custom domain attached to the public bucket. | `https://cdn.entix.org` |
 | `SKIP_EMAIL_VERIFICATION` | Optional flag to bypass email during testing. | `true` or empty |
