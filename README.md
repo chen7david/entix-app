@@ -1,7 +1,12 @@
-# Entix-App
+# Entix-App Project
 
-A full-stack monorepo optimized for **Cloudflare Workers** (Hono) and **React 19**. Built for speed, type-safety, and scalability at the edge.
-
+> **Welcome to the Entix-App Project!** 🚀
+> 
+> This repository is an open-source **example project** built to showcase and establish **best practices** for developers working within the modern **Cloudflare Ecosystem**. 
+> 
+> Designed with a strict Controller-Service-Repository architecture, it demonstrates how to build a high-performance, fully type-safe, and infinitely scalable full-stack monorepo at the edge using **Cloudflare Workers (Hono)**, **D1 (Drizzle ORM)**, **R2 Storage (Presigned URLs)**, and **React 19**.
+>
+🤝 *To the Community:* Learning and improving is a continuous process. If you spot a potential architectural improvement, a cleaner pattern, or a bug, **I invite you to open a Pull Request (PR)**! Contributions and discussions are highly appreciated.
 ## Quick Start
 ```bash
 npm run dev:init     # Install dependencies for both API and Web
