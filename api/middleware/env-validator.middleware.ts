@@ -14,7 +14,7 @@ const envSchema = z.object({
     R2_ACCESS_KEY_ID: z.string().min(10, "R2_ACCESS_KEY_ID is required"),
     R2_SECRET_ACCESS_KEY: z.string().min(10, "R2_SECRET_ACCESS_KEY is required"),
     R2_BUCKET_NAME: z.string().min(3, "R2_BUCKET_NAME is required"),
-    PUBLIC_CDN_URL: z.string().url(),
+    PUBLIC_CDN_URL: z.url(),
     SKIP_EMAIL_VERIFICATION: z.enum(["true", "false", ""]).optional(),
     CORS_ORIGINS: z.string().optional(),
 });
@@ -26,10 +26,10 @@ export const envValidatorMiddleware = () => {
         if (!parsed.success) {
             // Flatten the error to get exactly which keys are missing or invalid
             const flattened = parsed.error.flatten();
-            
+
             // Format a highly visible error for the Cloudflare Dashboard logs
             const missingVars = Object.keys(flattened.fieldErrors).join(', ');
-            
+
             // Ensure we log this massively critical error so it is impossible to miss during deployment
             if (c.var.logger) {
                 c.var.logger.fatal({ errors: flattened.fieldErrors }, `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`);

@@ -17,7 +17,7 @@ const db = drizzle(sqlite);
 
 export const auth = betterAuth({
     ...betterAuthGlobalOptions(),
-    baseURL: process.env.BETTER_AUTH_URL!,
+    baseURL: process.env.FRONTEND_URL!,
     secret: process.env.BETTER_AUTH_SECRET!,
     database: drizzleAdapter(db, { provider: "sqlite" }),
 });
