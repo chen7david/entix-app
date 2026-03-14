@@ -98,3 +98,124 @@ SKIP_EMAIL_VERIFICATION=true
 1. **Move all urls and bucket names into `wrangler.jsonc`**. When you deploy, Wrangler makes the Cloudflare Dashboard match `wrangler.jsonc`.
 2. **Move all API keys and tokens into Secrets** via the Dashboard UI or `npx wrangler secret put`.
 3. Check `.example.dev.vars` and ensure your local teammates know what to put in `.dev.vars`.
+
+---
+
+## How to Add a New Environment Variable
+
+Every new environment variable touches **four places**. Miss one and either your deployment or your tests will break.
+
+```
+┌─ wrangler.jsonc          ← production/staging/dev plaintext vars
+├─ .dev.vars               ← local development secrets + overrides
+├─ env-validator.middleware.ts  ← Zod schema enforces presence at runtime
+└─ vitest.config.ts        ← mock values for the test environment
+```
+
+### Step 1 — Decide: Plaintext or Secret?
+
+| Type | Example | Where |
+| --- | --- | --- |
+| **Plaintext** (non-sensitive config) | `PUBLIC_CDN_URL`, `FRONTEND_URL` | `wrangler.jsonc` `vars` block |
+| **Secret** (credentials, keys) | `RESEND_API_KEY`, `R2_SECRET_ACCESS_KEY` | `wrangler secret put` + `.dev.vars` |
+
+---
+
+### Step 2 — Add it to `wrangler.jsonc` (plaintext only)
+
+Add the variable to **all three** environment blocks: `development`, `staging`, and `production`.
+
+```jsonc
+// wrangler.jsonc — add to each env's "vars" block
+{
+  "env": {
+    "development": { "vars": { "MY_NEW_VAR": "http://localhost:1234" } },
+    "staging":     { "vars": { "MY_NEW_VAR": "https://staging.example.com" } },
+    "production":  { "vars": { "MY_NEW_VAR": "https://example.com" } }
+  }
+}
+```
+
+Then **regenerate the TypeScript bindings** so the type system knows the variable exists:
+```bash
+npm run cf-typegen
+```
+
+This updates `worker-configuration.d.ts` with the new key inside `CloudflareBindings`.
+
+---
+
+### Step 3 — Add it to `.dev.vars` (all variables)
+
+Both plaintext vars and secrets must be present locally for `wrangler dev` to inject them:
+
+```env
+# .dev.vars
+MY_NEW_VAR=http://localhost:1234
+```
+
+Also update `.example.dev.vars` so other developers know this variable is required:
+
+```env
+# .example.dev.vars
+MY_NEW_VAR=
+```
+
+---
+
+### Step 4 — Add it to the Zod validator
+
+Open `api/middleware/env-validator.middleware.ts` and add your variable to `envSchema`:
+
+```typescript
+const envSchema = z.object({
+  // ...existing fields...
+  MY_NEW_VAR: z.string().url(),  // ← add here with the appropriate Zod rule
+});
+```
+
+This guarantees the Worker fails immediately with a clear error if the variable is missing in any environment — rather than silently failing later at runtime inside a service.
+
+> [!IMPORTANT]
+> The Zod validator is the application's "bootstrap guard". Every required variable **must** be added here. If you omit it, a misconfigured deployment will only fail when the specific code path using the variable is first reached.
+
+---
+
+### Step 5 — Add a mock value to `vitest.config.ts`
+
+The integration test environment runs with mock bindings defined in `vitest.config.ts`, completely separate from `wrangler.jsonc`. Add a mock value to the `miniflare.bindings` block:
+
+```typescript
+// vitest.config.ts
+miniflare: {
+  bindings: {
+    // ...existing mocks...
+    MY_NEW_VAR: "http://localhost:1234", // ← safe mock value for tests
+  }
+}
+```
+
+> [!WARNING]
+> If you add a variable to the Zod schema but forget to add it here, **every integration test will fail with a 500 error** — including tests that have nothing to do with your new variable — because the app refuses to boot without it. This is the correct behaviour by design; it's the validator doing its job.
+
+---
+
+### Step 6 — Add it as a Wrangler Secret (secrets only)
+
+If the variable is a secret, set it in each environment via the CLI:
+```bash
+npx wrangler secret put MY_NEW_VAR --env staging
+npx wrangler secret put MY_NEW_VAR --env production
+```
+
+---
+
+### Quick Checklist
+
+- [ ] Added to `wrangler.jsonc` (plaintext) or set via `wrangler secret put` (secret)
+- [ ] Run `npm run cf-typegen` to regenerate `worker-configuration.d.ts`
+- [ ] Added to `.dev.vars` (locally) and `.example.dev.vars` (for teammates)
+- [ ] Added to `envSchema` in `api/middleware/env-validator.middleware.ts`
+- [ ] Added a mock value to `vitest.config.ts` → `miniflare.bindings`
+- [ ] Run `npm run test` locally to confirm all tests still pass
+
