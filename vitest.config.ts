@@ -22,6 +22,7 @@ export default defineWorkersConfig({
                         R2_SECRET_ACCESS_KEY: "mock_r2_secret_key",
                         CLOUDFLARE_ACCOUNT_ID: "mock_account_id",
                         R2_BUCKET_NAME: "mock-bucket",
+                        PUBLIC_CDN_URL: "https://mock-cdn.example.com",
                     }
                 },
             },
