@@ -15,10 +15,10 @@ import { BucketService } from "@api/services/bucket.service";
  */
 export const getBucketClient = (ctx: AppContext): BucketService => {
     return new BucketService({
-        accountId: ctx.env.R2_ACCOUNT_ID,
+        accountId: ctx.env.CLOUDFLARE_ACCOUNT_ID,
         accessKeyId: ctx.env.R2_ACCESS_KEY_ID,
         secretAccessKey: ctx.env.R2_SECRET_ACCESS_KEY,
         bucketName: ctx.env.R2_BUCKET_NAME,
-        publicUrl: ctx.env.PUBLIC_ASSET_URL,
+        publicUrl: ctx.env.PUBLIC_CDN_URL,
     });
 };

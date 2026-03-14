@@ -1,6 +1,6 @@
 /**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
+ * Wrangler configuration optimized for local dev and secure staging/production
+ * Secrets and sensitive credentials are stored in Cloudflare Workers dashboard.
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
@@ -19,11 +19,11 @@
 			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "http://localhost:8000",
-				"BETTER_AUTH_URL": "http://localhost:3000",
 				"CORS_ORIGINS": "http://localhost:8000",
-				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-development",
-				"PUBLIC_ASSET_URL": "http://localhost:3000"
+				"PUBLIC_CDN_URL": "https://development-cdn.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "true"
 			},
 			"d1_databases": [
 				{
@@ -38,11 +38,10 @@
 			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "https://staging.entix.org",
-				"BETTER_AUTH_URL": "https://staging.entix.org",
-				"CORS_ORIGINS": "https://staging.entix.org",
-				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "false",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-staging",
-				"PUBLIC_ASSET_URL": "https://staging.entix.org"
 			},
 			"assets": {
 				"binding": "ASSETS",
@@ -65,11 +64,10 @@
 			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "https://entix.org",
-				"BETTER_AUTH_URL": "https://entix.org",
-				"CORS_ORIGINS": "https://entix.org",
-				"R2_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"PUBLIC_CDN_URL": "https://cdn.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "false",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-production",
-				"PUBLIC_ASSET_URL": "https://cdn.entix.org"
 			},
 			"assets": {
 				"binding": "ASSETS",
@@ -86,7 +84,7 @@
 					"database_id": "6995f6f6-deb5-4ec8-a008-574465e5fc04",
 					"migrations_dir": "api/db/migrations"
 				}
-			],
-		},
+			]
+		}
 	}
 }
