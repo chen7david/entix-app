@@ -37,21 +37,12 @@ export class BucketService {
         // Fallback to the R2 dev endpoint if no custom domain is provided
         this.publicUrl = config.publicUrl || `${this.endpoint}/${this.bucketName}`;
 
-        if (config.accessKeyId?.trim() && config.secretAccessKey?.trim()) {
-            this.client = new AwsClient({
-                accessKeyId: config.accessKeyId.trim(),
-                secretAccessKey: config.secretAccessKey.trim(),
-                service: "s3",
-                region: "auto",
-            });
-        } else {
-            // Log a warning in the constructor (non-blocking for read operations)
-            // but helpful for debugging why POST/PUT requests fail.
-            const missing = [];
-            if (!config.accessKeyId?.trim()) missing.push("R2_ACCESS_KEY_ID");
-            if (!config.secretAccessKey?.trim()) missing.push("R2_SECRET_ACCESS_KEY");
-            console.warn(`[BucketService] Initialization warning: Missing credentials (${missing.join(", ")}). Write operations will fail.`);
-        }
+        this.client = new AwsClient({
+            accessKeyId: config.accessKeyId?.trim() || "",
+            secretAccessKey: config.secretAccessKey?.trim() || "",
+            service: "s3",
+            region: "auto",
+        });
     }
 
     private getClient(): AwsClient {
