@@ -2,12 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Hono } from 'hono';
 import { envValidatorMiddleware } from '@api/middleware/env-validator.middleware';
 import type { AppEnv } from '@api/helpers/types.helpers';
-
-type ApiResponseBody = {
-    ok?: boolean;
-    success: boolean;
-    message: string;
-};
+import { parseJson, type ErrorResponse } from '../lib/api-request.helper';
 
 /**
  * Builds a minimal mock Hono app with a test route for env validation testing.
@@ -39,7 +34,7 @@ describe('envValidatorMiddleware', () => {
     it('should allow requests through when all required env vars are present', async () => {
         const res = await buildTestApp(validEnv)('/health');
         expect(res.status).toBe(200);
-        const body = await res.json();
+        const body = await parseJson<{ ok: boolean }>(res);
         expect(body).toEqual({ ok: true });
     });
 
@@ -47,7 +42,7 @@ describe('envValidatorMiddleware', () => {
         const { FRONTEND_URL: _, ...missingFrontend } = validEnv;
         const res = await buildTestApp(missingFrontend)('/health');
         expect(res.status).toBe(500);
-        const body = await res.json() as ApiResponseBody;
+        const body = await parseJson<ErrorResponse>(res);
         expect(body.success).toBe(false);
         expect(body.message).toContain('Configuration Error');
     });
@@ -55,7 +50,7 @@ describe('envValidatorMiddleware', () => {
     it('should return 500 when BETTER_AUTH_SECRET is too short', async () => {
         const res = await buildTestApp({ ...validEnv, BETTER_AUTH_SECRET: 'tooshort' })('/health');
         expect(res.status).toBe(500);
-        const body = await res.json() as ApiResponseBody;
+        const body = await parseJson<ErrorResponse>(res);
         expect(body.success).toBe(false);
     });
 
@@ -63,14 +58,14 @@ describe('envValidatorMiddleware', () => {
         const { R2_ACCESS_KEY_ID: _1, R2_SECRET_ACCESS_KEY: _2, ...missingR2 } = validEnv;
         const res = await buildTestApp(missingR2)('/health');
         expect(res.status).toBe(500);
-        const body = await res.json() as ApiResponseBody;
+        const body = await parseJson<ErrorResponse>(res);
         expect(body.success).toBe(false);
     });
 
     it('should return 500 when RESEND_API_KEY does not start with re_', async () => {
         const res = await buildTestApp({ ...validEnv, RESEND_API_KEY: 'invalid_key_format' })('/health');
         expect(res.status).toBe(500);
-        const body = await res.json() as ApiResponseBody;
+        const body = await parseJson<ErrorResponse>(res);
         expect(body.success).toBe(false);
     });
 });
