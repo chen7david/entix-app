@@ -37,8 +37,12 @@
 		"staging": {
 			"name": "entix-app",
 			"vars": {
-				"SKIP_EMAIL_VERIFICATION": "false",
-				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04"
+				"FRONTEND_URL": "https://staging.entix.org",
+				"CORS_ORIGINS": "https://staging.entix.org",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"R2_BUCKET_NAME": "entix-app-staging",
+				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "false"
 			},
 			"assets": {
 				"binding": "ASSETS",
@@ -60,8 +64,12 @@
 		"production": {
 			"name": "entix-app",
 			"vars": {
-				"SKIP_EMAIL_VERIFICATION": "false",
-				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04"
+				"FRONTEND_URL": "https://entix.org",
+				"CORS_ORIGINS": "https://entix.org",
+				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+				"R2_BUCKET_NAME": "entix-app-production",
+				"PUBLIC_CDN_URL": "https://cdn.entix.org",
+				"SKIP_EMAIL_VERIFICATION": "false"
 			},
 			"assets": {
 				"binding": "ASSETS",
