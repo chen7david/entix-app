@@ -7,7 +7,7 @@ import { globalErrorHandler } from "@api/middleware/global-error.middleware";
 import { frontendUrlMiddleware } from "@api/middleware/frontend-url.middleware";
 import { logger } from "@api/middleware/logger.middleware";
 import { getCorsOrigins } from "@api/helpers/cors.helpers";
-import { envValidatorMiddleware } from "@api/middleware/env-validator.middleware";
+// import { envValidatorMiddleware } from "@api/middleware/env-validator.middleware";
 
 export const createRouter = () => {
     const router = new OpenAPIHono<AppEnv>({
