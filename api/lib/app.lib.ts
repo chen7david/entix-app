@@ -44,7 +44,7 @@ export const createApp = () => {
     }));
 
     app.use(logger());
-    app.use('*', envValidatorMiddleware());
+    // app.use('*', envValidatorMiddleware());
 
     app.notFound(notFoundHandler);
     app.onError(globalErrorHandler);
