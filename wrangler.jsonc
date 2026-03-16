@@ -16,7 +16,6 @@
 	},
 	"env": {
 		"development": {
-			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "http://localhost:8000",
 				"CORS_ORIGINS": "http://localhost:8000",
@@ -35,7 +34,6 @@
 			]
 		},
 		"staging": {
-			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "https://staging.entix.org",
 				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
@@ -61,7 +59,6 @@
 			]
 		},
 		"production": {
-			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "https://entix.org",
 				"PUBLIC_CDN_URL": "https://cdn.entix.org",
