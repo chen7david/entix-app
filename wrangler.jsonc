@@ -81,7 +81,7 @@
 					"database_id": "6995f6f6-deb5-4ec8-a008-574465e5fc04",
 					"migrations_dir": "api/db/migrations"
 				}
-			]
+			],"name": "entix-app"
 		}
 	}
 }
