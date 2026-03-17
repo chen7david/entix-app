@@ -17,6 +17,7 @@
 	},
 	"env": {
 		"development": {
+			"name": "entix-app-development",
 			"vars": {
 				"FRONTEND_URL": "http://localhost:8000",
 				"CORS_ORIGINS": "http://localhost:8000",
@@ -35,6 +36,7 @@
 			]
 		},
 		"staging": {
+			"name": "entix-app-staging",
 			"vars": {
 				"FRONTEND_URL": "https://staging.entix.org",
 				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
@@ -61,6 +63,7 @@
 			]
 		},
 		"production": {
+			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "https://entix.org",
 				"PUBLIC_CDN_URL": "https://cdn.entix.org",
@@ -84,8 +87,7 @@
 					"database_id": "6995f6f6-deb5-4ec8-a008-574465e5fc04",
 					"migrations_dir": "api/db/migrations"
 				}
-			],
-			"name": "entix-app"
+			]
 		}
 	}
 }
