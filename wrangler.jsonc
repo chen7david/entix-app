@@ -6,6 +6,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "entix-app",
 	"main": "api/main.ts",
+	"keep_vars": true,
 	"preview_urls": true,
 	"compatibility_date": "2025-12-10",
 	"compatibility_flags": [
@@ -16,6 +17,7 @@
 	},
 	"env": {
 		"development": {
+			"name": "entix-app-development",
 			"vars": {
 				"FRONTEND_URL": "http://localhost:8000",
 				"CORS_ORIGINS": "http://localhost:8000",
@@ -34,12 +36,14 @@
 			]
 		},
 		"staging": {
+			"name": "entix-app-staging",
 			"vars": {
 				"FRONTEND_URL": "https://staging.entix.org",
 				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
 				"SKIP_EMAIL_VERIFICATION": "false",
 				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-staging",
+				"R2_ACCESS_KEY_ID": "fcab42d0ac6d7603c4256e4cd26aaa75",
 			},
 			"assets": {
 				"binding": "ASSETS",
@@ -59,12 +63,14 @@
 			]
 		},
 		"production": {
+			"name": "entix-app",
 			"vars": {
 				"FRONTEND_URL": "https://entix.org",
 				"PUBLIC_CDN_URL": "https://cdn.entix.org",
 				"SKIP_EMAIL_VERIFICATION": "false",
 				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
 				"R2_BUCKET_NAME": "entix-app-production",
+				"R2_ACCESS_KEY_ID": "50840d1a09535a68ffe2084a39e1742c",
 			},
 			"assets": {
 				"binding": "ASSETS",
