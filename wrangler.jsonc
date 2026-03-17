@@ -17,7 +17,6 @@
 	},
 	"env": {
 		"development": {
-			"name": "entix-app-development", // does not serve any purpose since we are not deploying to cloudflare
 			"vars": {
 				"FRONTEND_URL": "http://localhost:8000",
 				"CORS_ORIGINS": "http://localhost:8000",
