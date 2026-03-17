@@ -109,9 +109,18 @@ export class BucketService {
         return signedRequest.url;
     }
 
-    async delete(key: string): Promise<boolean> {
+    async delete(key: string): Promise<void> {
         const url = `${this.endpoint}/${this.bucketName}/${key}`;
         const response = await this.getClient().fetch(url, { method: "DELETE" });
-        return response.ok;
+
+        if (response.ok || response.status === 404) {
+            return;
+        }
+
+        const errorText = await response.text().catch(() => "Unknown error");
+        const error: any = new Error(`R2 Delete Error: ${response.statusText}`);
+        error.status = response.status;
+        error.body = errorText;
+        throw error;
     }
 }

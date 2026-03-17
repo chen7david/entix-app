@@ -87,12 +87,9 @@ export class UploadService {
         const record = await this.uploadRepo.findById(uploadId, organizationId);
         if (!record) return false;
 
-        // delete from R2
-        const s3DeleteSuccess = await this.bucketService.delete(record.bucketKey);
-
-        if (!s3DeleteSuccess) {
-            throw new Error(`Failed to delete object from storage: ${record.bucketKey}`);
-        }
+        // delete from R2 - will throw on critical failures
+        // Success (2xx) or Ghost Object (404) will proceed
+        await this.bucketService.delete(record.bucketKey);
 
         // delete from DB
         return await this.uploadRepo.delete(uploadId, organizationId);

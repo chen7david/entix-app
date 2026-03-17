@@ -37,7 +37,7 @@
 		"staging": {
 			"name": "entix-app-staging",
 			"vars": {
-				"FRONTEND_URL": "https://staging.entix.org",
+				"FRONTEND_URL": "https://bug-en-250-uploads-is-returning-cors-in-entix-app.chen7david.workers.dev",
 				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
 				"SKIP_EMAIL_VERIFICATION": "false",
 				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
