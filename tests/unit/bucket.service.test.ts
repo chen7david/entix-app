@@ -1,16 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BucketService, type BucketConfig } from '@api/services/bucket.service';
-import { AwsClient } from 'aws4fetch';
-
-// Mock the entire aws4fetch module
-vi.mock('aws4fetch', () => {
-    return {
-        AwsClient: vi.fn().mockImplementation(() => ({
-            fetch: vi.fn(),
-            sign: vi.fn()
-        }))
-    };
-});
 
 describe('BucketService', () => {
     const config: BucketConfig = {
