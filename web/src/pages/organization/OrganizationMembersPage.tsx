@@ -1,14 +1,15 @@
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Tooltip, Space, Modal, Form, Input, Statistic, Row, Col, Card, Dropdown, type MenuProps } from "antd";
+import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip } from "antd";
+import { formatDistanceToNow } from "date-fns";
 import type { ColumnsType } from "antd/es/table";
-import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MoreOutlined, MailOutlined, KeyOutlined, CameraOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MailOutlined, KeyOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
-import { AvatarUploader } from "@web/src/components/Upload/AvatarUploader";
+import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
 import { useState } from "react";
 import { getAvatarUrl } from "@shared/utils/image-url";
 
@@ -18,8 +19,7 @@ export const OrganizationMembersPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');
     const [createForm] = Form.useForm();
-    // Avatar upload state: tracks which member's avatar is being updated
-    const [avatarTarget, setAvatarTarget] = useState<{ userId: string } | null>(null);
+    const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
     const { activeOrganization } = useOrganization();
 
     const {
@@ -31,7 +31,7 @@ export const OrganizationMembersPage = () => {
         userRoles: currentUserRoles,
     } = useMembers();
 
-    const { session } = useAuth();
+    const { session, refetch } = useAuth();
     const currentUserId = session.data?.user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
@@ -100,12 +100,15 @@ export const OrganizationMembersPage = () => {
             title: 'User',
             dataIndex: 'user',
             key: 'user',
-            render: (user: Record<string, unknown>) => (
-                <div className="flex items-center gap-2">
+            render: (user: Record<string, unknown>, record: any) => (
+                <div 
+                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                    onClick={() => setSelectedMember(record)}
+                >
                     <Avatar src={getAvatarUrl(user.image as string | undefined, 'sm')} icon={<UserOutlined />} />
                     <div className="flex flex-col">
-                        <span>{user.name as string}</span>
-                        <span className="text-xs text-gray-500">{user.email as string}</span>
+                        <Typography.Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{user.name as string}</Typography.Text>
+                        <Typography.Text type="secondary" className="text-xs">{user.email as string}</Typography.Text>
                     </div>
                 </div>
             ),
@@ -120,38 +123,16 @@ export const OrganizationMembersPage = () => {
             title: 'Role',
             dataIndex: 'role',
             key: 'role',
-            render: (role, record) => {
-                const isSelf = record.userId === currentUserId;
+            render: (role) => {
                 const memberRoles = (String(role || "")).split(",").map(r => r.trim()).filter(Boolean);
-
-                const canEdit = canUpdateMember && !isSelf;
-
-                if (!canEdit) {
-                    return (
-                        <Tooltip title={isSelf ? "You cannot change your own role here" : "You do not have permission to change this role"}>
-                            <Space wrap>
-                                {memberRoles.map(r => (
-                                    <Tag key={r} color={r === 'owner' ? 'gold' : r === 'admin' ? 'blue' : 'default'} style={{ cursor: 'not-allowed' }}>
-                                        {r.toUpperCase()}
-                                    </Tag>
-                                ))}
-                            </Space>
-                        </Tooltip>
-                    );
-                }
-
                 return (
-                    <Select
-                        mode="multiple"
-                        defaultValue={memberRoles}
-                        style={{ width: 180 }}
-                        onChange={(values) => handleRoleChange(record.id as string, values)}
-                        options={[
-                            { value: 'member', label: 'Member' },
-                            { value: 'admin', label: 'Admin' },
-                            { value: 'owner', label: 'Owner' },
-                        ]}
-                    />
+                    <Space wrap>
+                        {memberRoles.map(r => (
+                            <Tag key={r} color={r === 'owner' ? 'purple' : r === 'admin' ? '#646cff' : 'default'}>
+                                {r.toUpperCase()}
+                            </Tag>
+                        ))}
+                    </Space>
                 );
             },
         },
@@ -159,93 +140,18 @@ export const OrganizationMembersPage = () => {
             title: 'Joined At',
             dataIndex: 'createdAt',
             key: 'createdAt',
-            render: (date: string) => new Date(date).toLocaleDateString(),
+            render: (date: string) => {
+                const d = new Date(date);
+                return (
+                    <Tooltip title={d.toLocaleString()}>
+                        {formatDistanceToNow(d, { addSuffix: true })}
+                    </Tooltip>
+                );
+            },
         },
     ];
 
-    columns.push({
-        title: 'Actions',
-        key: 'actions',
-        render: (_: unknown, record: Record<string, unknown>) => {
-            const isSelf = record.userId === currentUserId;
-            const canRemove = canDeleteMember && !isSelf;
-            const user = record.user as Record<string, unknown> | undefined;
-            const email = (user?.email as string) || '';
 
-            const hasAvatar = !!(user?.image);
-
-            const items: MenuProps['items'] = [
-                {
-                    key: 'avatar',
-                    label: 'Update Profile Picture',
-                    icon: <CameraOutlined />,
-                    onClick: () => setAvatarTarget({ userId: record.userId as string }),
-                },
-                ...(hasAvatar ? [{
-                    key: 'removeAvatar',
-                    label: 'Remove Profile Picture',
-                    icon: <CloseCircleOutlined />,
-                    onClick: () => {
-                        Modal.confirm({
-                            title: 'Remove Profile Picture',
-                            content: `Remove ${user?.name || 'this member'}'s profile picture?`,
-                            okText: 'Yes, Remove',
-                            okType: 'danger' as const,
-                            cancelText: 'Cancel',
-                            onOk: async () => {
-                                try {
-                                    await removeAvatarMutation.mutateAsync(record.userId as string);
-                                } catch {
-                                    // error handled in hook
-                                }
-                            },
-                        });
-                    },
-                }] : []),
-                {
-                    type: 'divider' as const,
-                },
-                {
-                    key: 'verify',
-                    label: 'Resend Verification Email',
-                    icon: <MailOutlined />,
-                    onClick: () => handleResendVerification(email),
-                },
-                {
-                    key: 'password',
-                    label: 'Resend Password Reset',
-                    icon: <KeyOutlined />,
-                    onClick: () => handleResendPassword(email),
-                },
-                {
-                    type: 'divider' as const,
-                },
-                {
-                    key: 'remove',
-                    label: 'Remove Member',
-                    icon: <DeleteOutlined />,
-                    danger: true,
-                    disabled: !canRemove,
-                    onClick: () => {
-                        Modal.confirm({
-                            title: 'Remove Member',
-                            content: `Are you sure you want to remove ${user?.name || 'this member'}?`,
-                            okText: 'Yes, Remove',
-                            okType: 'danger',
-                            cancelText: 'Cancel',
-                            onOk: () => handleRemoveMember(record.id as string),
-                        });
-                    }
-                }
-            ];
-
-            return (
-                <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
-                    <Button type="text" icon={<MoreOutlined />} />
-                </Dropdown>
-            );
-        }
-    });
 
     if (loading) {
         return <Skeleton active />;
@@ -395,15 +301,141 @@ export const OrganizationMembersPage = () => {
                     </Form>
                 </Modal>
 
-                {/* Avatar Uploader Modal */}
-                {avatarTarget && activeOrganization && (
-                    <AvatarUploader
-                        organizationId={activeOrganization.id}
-                        userId={avatarTarget.userId}
-                        open={!!avatarTarget}
-                        onClose={() => setAvatarTarget(null)}
-                    />
-                )}
+                {/* Member Details Drawer */}
+                <Drawer
+                    title="Member Details"
+                    placement="right"
+                    onClose={() => setSelectedMember(null)}
+                    open={!!selectedMember}
+                    width={400}
+                >
+                    {selectedMember && (() => {
+                        const activeMember = members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
+                        const user = activeMember.user as Record<string, unknown> | undefined;
+                        const isSelf = activeMember.userId === currentUserId;
+                        const canEdit = canUpdateMember && !isSelf;
+                        const memberRoles = (String(activeMember.role || "")).split(",").map(r => r.trim()).filter(Boolean);
+
+                        return (
+                            <div className="flex flex-col gap-6 mt-4">
+                                <div className="flex flex-col items-center gap-4 text-center">
+                                    {activeOrganization ? (
+                                        <AvatarDropzone
+                                            organizationId={activeOrganization.id}
+                                            userId={activeMember.userId as string}
+                                            currentImageUrl={getAvatarUrl(user?.image as string, 'xl')}
+                                            size={120}
+                                            className="mx-auto"
+                                        />
+                                    ) : (
+                                        <Avatar size={120} icon={<UserOutlined />} src={getAvatarUrl(user?.image as string, 'xl')} className="mx-auto" />
+                                    )}
+                                    <div>
+                                        <Title level={4} style={{ margin: 0 }}>{user?.name as string}</Title>
+                                        <Text type="secondary">{user?.email as string}</Text>
+                                    </div>
+                                    <Space>
+                                        {memberRoles.map(r => (
+                                            <Tag key={r} color={r === 'owner' ? 'purple' : r === 'admin' ? '#646cff' : 'default'} style={{ margin: 0 }}>
+                                                {r.toUpperCase()}
+                                            </Tag>
+                                        ))}
+                                    </Space>
+                                </div>
+
+                                <Card size="small" title="Role Management" type="inner">
+                                    {canEdit ? (
+                                        <div className="flex flex-col gap-2">
+                                            <Text>Select roles for this member:</Text>
+                                            <Select
+                                                mode="multiple"
+                                                value={memberRoles}
+                                                style={{ width: '100%' }}
+                                                onChange={(values) => handleRoleChange(activeMember.id as string, values)}
+                                                options={[
+                                                    { value: 'member', label: 'Member' },
+                                                    { value: 'admin', label: 'Admin' },
+                                                    { value: 'owner', label: 'Owner' },
+                                                ]}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Text type="secondary">{isSelf ? "You cannot change your own role." : "You do not have permission to change this member's roles."}</Text>
+                                    )}
+                                </Card>
+
+                                <div className="flex flex-col gap-3">
+                                    <Title level={5} style={{ margin: 0 }}>Actions</Title>
+                                    <Button 
+                                        icon={<MailOutlined />} 
+                                        onClick={() => handleResendVerification((user?.email as string) || '')}
+                                        block
+                                    >
+                                        Resend Verification Email
+                                    </Button>
+                                    <Button 
+                                        icon={<KeyOutlined />} 
+                                        onClick={() => handleResendPassword((user?.email as string) || '')}
+                                        block
+                                    >
+                                        Resend Password Reset
+                                    </Button>
+                                    
+                                    {!!user?.image && (
+                                        <Button 
+                                            danger 
+                                            icon={<CloseCircleOutlined />} 
+                                            onClick={() => {
+                                                Modal.confirm({
+                                                    title: 'Remove Profile Picture',
+                                                    content: `Remove profile picture?`,
+                                                    okText: 'Yes, Remove',
+                                                    okType: 'danger' as const,
+                                                    cancelText: 'Cancel',
+                                                    onOk: async () => {
+                                                        try {
+                                                            await removeAvatarMutation.mutateAsync(activeMember.userId as string);
+                                                            if (session.data?.user?.id === activeMember.userId) {
+                                                                await refetch();
+                                                            }
+                                                        } catch {}
+                                                    },
+                                                });
+                                            }}
+                                            block
+                                        >
+                                            Remove Profile Picture
+                                        </Button>
+                                    )}
+
+                                    <Button 
+                                        danger 
+                                        type="primary"
+                                        icon={<DeleteOutlined />} 
+                                        disabled={!canDeleteMember || isSelf}
+                                        onClick={() => {
+                                            Modal.confirm({
+                                                title: 'Remove Member',
+                                                content: `Are you sure you want to remove ${user?.name || 'this member'}?`,
+                                                okText: 'Yes, Remove',
+                                                okType: 'danger',
+                                                cancelText: 'Cancel',
+                                                onOk: () => {
+                                                    handleRemoveMember(activeMember.id as string).then(() => {
+                                                        setSelectedMember(null);
+                                                    });
+                                                },
+                                            });
+                                        }}
+                                        block
+                                    >
+                                        Remove Member
+                                    </Button>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </Drawer>
             </div>
         </>
     );
