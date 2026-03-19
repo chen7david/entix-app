@@ -1,5 +1,6 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { message } from "antd";
+import { authClient } from "@web/src/lib/auth-client";
 
 /**
  * Hook for updating a member's avatar via the avatar API endpoint.
@@ -26,8 +27,12 @@ export const useUpdateAvatar = (organizationId: string | undefined) => {
 
             return response.json() as Promise<{ imageUrl: string }>;
         },
-        onSuccess: () => {
+        onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
+            
+            // Globally refresh the active session to sync Sidebar and Top Nav
+            await authClient.getSession();
+
             message.success("Profile picture updated successfully");
         },
         onError: (error: Error) => {
@@ -58,8 +63,12 @@ export const useRemoveAvatar = (organizationId: string | undefined) => {
 
             return true;
         },
-        onSuccess: () => {
+        onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
+            
+            // Globally refresh the active session to sync Sidebar and Top Nav
+            await authClient.getSession();
+
             message.success("Profile picture removed");
         },
         onError: (error: Error) => {

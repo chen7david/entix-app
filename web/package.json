@@ -21,6 +21,7 @@
     "antd-zod": "^8.0.0",
     "axios": "^1.13.2",
     "better-auth": "^1.4.9",
+    "date-fns": "^4.1.0",
     "jotai": "^2.16.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

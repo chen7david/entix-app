@@ -6,11 +6,14 @@ import { useNavigate } from 'react-router';
 import { links } from '@shared/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { getAvatarUrl } from "@shared/utils/image-url";
+import { AvatarDropzone } from '@web/src/components/Upload/AvatarDropzone';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 const { Title } = Typography;
 
 export const ProfilePage: React.FC = () => {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
+    const { activeOrganization } = useOrganization();
 
     const handleLogout = async () => {
         try {
@@ -60,7 +63,16 @@ export const ProfilePage: React.FC = () => {
                     ]}
                 >
                     <Card.Meta
-                        avatar={<Avatar size={64} icon={<UserOutlined />} src={getAvatarUrl(session.user.image, 'lg')} />}
+                        avatar={activeOrganization ? (
+                            <AvatarDropzone 
+                                organizationId={activeOrganization.id} 
+                                userId={session.user.id} 
+                                currentImageUrl={getAvatarUrl(session.user.image, 'lg')} 
+                                size={64} 
+                            />
+                        ) : (
+                            <Avatar size={64} icon={<UserOutlined />} src={getAvatarUrl(session.user.image, 'lg')} />
+                        )}
                         title={<Title level={3}>{session.user.name}</Title>}
                         description={session.user.email}
                     />

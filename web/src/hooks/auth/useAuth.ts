@@ -8,6 +8,7 @@ export const useAuth = () => {
         isAuthenticated: !!session.data,
         isLoading: session.isPending,
         isSuperAdmin: session.data?.user?.role === 'admin',
+        refetch: session.refetch,
     };
 };
 

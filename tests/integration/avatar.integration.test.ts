@@ -56,7 +56,7 @@ describe("Avatar Integration", () => {
             // Mock BucketService
             const { BucketService } = await import("@api/services/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
-            vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(true);
+            vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
 
             // 1. Create an upload
             const uploadRes = await client.request(`/api/v1/orgs/${orgId}/uploads`, {
@@ -84,7 +84,7 @@ describe("Avatar Integration", () => {
             expect(avatarRes.status).toBe(200);
             const avatarBody = await parseJson<any>(avatarRes);
             expect(avatarBody.imageUrl).toBeDefined();
-            expect(avatarBody.imageUrl).toContain("avatar.jpg");
+            expect(avatarBody.imageUrl).toMatch(/\.jpg$/);
         });
 
         it("returns 404 for a non-existent upload", async () => {
@@ -120,7 +120,7 @@ describe("Avatar Integration", () => {
             // Mock BucketService
             const { BucketService } = await import("@api/services/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
-            vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(true);
+            vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
 
             // 1. Create and complete an upload
             const uploadRes = await client.request(`/api/v1/orgs/${orgId}/uploads`, {

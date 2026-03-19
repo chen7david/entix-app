@@ -1,6 +1,5 @@
 import { BucketService } from "./bucket.service";
 import { UploadRepository } from "@api/repositories/upload.repository";
-import { nanoid } from "nanoid";
 import { NotFoundError } from "@api/errors/app.error";
 
 export class UploadService {
@@ -17,10 +16,11 @@ export class UploadService {
         contentType: string,
         fileSize: number
     ) {
-        // bucket key format: {organizationId}/{uploadId}-{safeName}
-        const uploadId = nanoid();
-        const safeName = originalName.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const bucketKey = `${organizationId}/${uploadId}-${safeName}`;
+        // Use UUID for security and scalability, hide original name
+        const uploadId = crypto.randomUUID();
+        const extMatch = originalName.match(/\.[0-9a-z]+$/i);
+        const ext = extMatch ? extMatch[0].toLowerCase() : '';
+        const bucketKey = `${organizationId}/${uploadId}${ext}`;
 
         // expiresIn defaults to 3600 internally
         const presignedUrl = await this.bucketService.getPresignedUploadUrl(bucketKey);
