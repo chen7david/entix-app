@@ -5,6 +5,9 @@ import { createTestDb } from "../lib/utils";
 import { createAuthenticatedOrg, getAuthCookie, createOrgMemberWithRole } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
 import { parseJson } from "../lib/api-request.helper";
+import { drizzle } from "drizzle-orm/d1";
+import { member as memberTable } from "@shared/db/schema.db";
+import { createMockMember } from "../factories/member.factory";
 
 describe("Avatar Integration", () => {
     beforeEach(async () => {
@@ -163,6 +166,59 @@ describe("Avatar Integration", () => {
                 method: "DELETE",
             });
             expect(removeRes.status).toBe(404);
+        });
+        it("does not delete an avatar from R2 if removed by an admin in a different org", async () => {
+            // Setup Org A and Org B
+            const { orgId: orgAId } = await createAuthenticatedOrg({ app, env });
+            const { orgId: orgBId, cookie: orgBCookie } = await createAuthenticatedOrg({ app, env });
+            
+            const userEmail = `crossorg.${Date.now()}@test.com`;
+
+            // User A is added to Org A
+            const { cookie: cookieA, userId: userIdA } = await createOrgMemberWithRole({
+                app, env, orgId: orgAId, role: "member", email: userEmail
+            });
+            
+            // User A is also added to Org B via direct DB insert to bypass duplicate sign-up rejection
+            const db = drizzle(env.DB);
+            await db.insert(memberTable).values(createMockMember({
+                organizationId: orgBId,
+                userId: userIdA,
+                role: "member",
+            }));
+
+            // Mock BucketService
+            const { BucketService } = await import("@api/services/bucket.service");
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
+            const deleteSpy = vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
+
+            const clientA = createTestClient(app, env, cookieA);
+            const clientBAdmin = createTestClient(app, env, orgBCookie); // Org B Owner/Admin
+
+            // 1. User A uploads avatar in Org A
+            const uploadRes = await clientA.request(`/api/v1/orgs/${orgAId}/uploads`, {
+                method: "POST",
+                body: { originalName: "avatar.png", contentType: "image/png", fileSize: 30000 },
+            });
+            const { uploadId } = await parseJson<any>(uploadRes);
+            await clientA.request(`/api/v1/orgs/${orgAId}/uploads/${uploadId}/complete`, { method: "POST" });
+
+            // 2. User A sets it as avatar in Org A
+            await clientA.request(`/api/v1/orgs/${orgAId}/members/${userIdA}/avatar`, {
+                method: "PATCH",
+                body: { uploadId },
+            });
+
+            deleteSpy.mockClear();
+
+            // 3. Admin of Org B removes User A's avatar
+            const removeRes = await clientBAdmin.request(`/api/v1/orgs/${orgBId}/members/${userIdA}/avatar`, {
+                method: "DELETE",
+            });
+            expect(removeRes.status).toBe(204);
+
+            // 4. Assert BucketService.delete was NOT called because Admin B is not the owner and upload belongs to Org A
+            expect(deleteSpy).not.toHaveBeenCalled();
         });
     });
 });

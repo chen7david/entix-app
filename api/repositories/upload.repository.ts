@@ -61,4 +61,23 @@ export class UploadRepository {
             .returning();
         return result.length > 0;
     }
+
+    async findByIdGlobal(id: string): Promise<schema.Upload | undefined> {
+        return await this.db.query.upload.findFirst({
+            where: eq(schema.upload.id, id),
+        });
+    }
+
+    async findByUrlGlobal(url: string): Promise<schema.Upload | undefined> {
+        return await this.db.query.upload.findFirst({
+            where: eq(schema.upload.url, url),
+        });
+    }
+
+    async deleteGlobal(id: string): Promise<boolean> {
+        const result = await this.db.delete(schema.upload)
+            .where(eq(schema.upload.id, id))
+            .returning();
+        return result.length > 0;
+    }
 }
