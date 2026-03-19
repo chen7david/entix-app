@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Typography, Button, List, Avatar, Space, Modal, Form, Input, Drawer, Popconfirm } from 'antd';
-import { PlusOutlined, DeleteOutlined, OrderedListOutlined, EditOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { Typography, Button, Table, Avatar, Space, Modal, Form, Input, Drawer, Popconfirm, List } from 'antd';
+import { PlusOutlined, DeleteOutlined, OrderedListOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 
@@ -12,7 +12,6 @@ export const PlaylistManager: React.FC = () => {
         isLoadingPlaylists, 
         createPlaylist, 
         deletePlaylist, 
-        updatePlaylist, 
         getSequence, 
         updateSequence 
     } = usePlaylists();
@@ -67,6 +66,53 @@ export const PlaylistManager: React.FC = () => {
         }
     };
 
+    const columns = [
+        {
+            title: 'Playlist',
+            key: 'title',
+            render: (_: any, record: any) => (
+                <div className="flex items-center gap-3">
+                    <Avatar 
+                        shape="square" 
+                        size="large"
+                        className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 border border-indigo-100 dark:border-indigo-800/30"
+                    >
+                        {record.title.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <div className="flex flex-col">
+                        <span className="font-semibold text-gray-900 dark:text-gray-100">{record.title}</span>
+                        <Text type="secondary" className="text-xs">{record.description || 'No description'}</Text>
+                    </div>
+                </div>
+            )
+        },
+        {
+            title: 'Actions',
+            key: 'actions',
+            align: 'right' as const,
+            render: (_: any, record: any) => (
+                <Space size="middle">
+                    <Button 
+                        type="default" 
+                        icon={<OrderedListOutlined />} 
+                        onClick={() => openSequenceManager(record)}
+                    >
+                        Manage Sequence
+                    </Button>
+                    <Popconfirm
+                        title="Delete Playlist"
+                        description="Are you sure you want to delete this playlist?"
+                        onConfirm={() => deletePlaylist(record.id)}
+                        okText="Delete"
+                        okButtonProps={{ danger: true }}
+                    >
+                        <Button danger type="text" icon={<DeleteOutlined />} />
+                    </Popconfirm>
+                </Space>
+            )
+        }
+    ];
+
     return (
         <div className="flex flex-col gap-6 pt-4">
             <div className="flex justify-between items-center">
@@ -76,34 +122,12 @@ export const PlaylistManager: React.FC = () => {
                 </Button>
             </div>
 
-            <List
-                loading={isLoadingPlaylists}
+            <Table
                 dataSource={playlists}
-                renderItem={(item) => (
-                    <List.Item
-                        className="bg-white dark:bg-[#141414] rounded-lg border border-gray-100 dark:border-zinc-800 p-4 mb-4 hover:border-gray-200 dark:hover:border-zinc-700 transition-colors"
-                        actions={[
-                            <Button type="default" icon={<OrderedListOutlined />} onClick={() => openSequenceManager(item)}>
-                                Arrange Media
-                            </Button>,
-                            <Popconfirm
-                                title="Delete Playlist"
-                                description="Are you sure you want to delete this playlist? The media will remain untouched."
-                                onConfirm={() => deletePlaylist(item.id)}
-                                okText="Delete"
-                                okButtonProps={{ danger: true }}
-                            >
-                                <Button danger type="text" icon={<DeleteOutlined />} />
-                            </Popconfirm>
-                        ]}
-                    >
-                        <List.Item.Meta
-                            avatar={<Avatar shape="square" size={64} className="bg-gradient-to-br from-indigo-500 to-purple-500 rounded-lg">{item.title.charAt(0)}</Avatar>}
-                            title={<span className="text-lg font-semibold">{item.title}</span>}
-                            description={item.description || "No description provided."}
-                        />
-                    </List.Item>
-                )}
+                columns={columns}
+                rowKey="id"
+                loading={isLoadingPlaylists}
+                pagination={{ pageSize: 10 }}
             />
 
             {/* Create Modal */}
@@ -154,12 +178,12 @@ export const PlaylistManager: React.FC = () => {
                                     
                                     return (
                                         <List.Item
-                                            className="bg-gray-50 dark:bg-zinc-800/50 rounded flex items-center p-3 mb-2"
+                                            className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg flex items-center p-3 mb-2 shadow-sm"
                                             actions={[
                                                 <Space direction="horizontal" size="small">
-                                                    <Button size="small" icon={<ArrowUpOutlined />} disabled={index === 0} onClick={() => handleMoveUp(index)} />
-                                                    <Button size="small" icon={<ArrowDownOutlined />} disabled={index === sequenceItems.length - 1} onClick={() => handleMoveDown(index)} />
-                                                    <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleRemoveFromSequence(mediaId)} />
+                                                    <Button type="text" size="small" icon={<ArrowUpOutlined />} disabled={index === 0} onClick={() => handleMoveUp(index)} />
+                                                    <Button type="text" size="small" icon={<ArrowDownOutlined />} disabled={index === sequenceItems.length - 1} onClick={() => handleMoveDown(index)} />
+                                                    <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveFromSequence(mediaId)} />
                                                 </Space>
                                             ]}
                                         >
@@ -167,7 +191,7 @@ export const PlaylistManager: React.FC = () => {
                                                 <Avatar shape="square" src={mediaItem.coverArtUrl} />
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-sm">{mediaItem.title}</span>
-                                                    <span className="text-xs text-secondary">{mediaItem.mimeType}</span>
+                                                    <span className="text-xs text-secondary capitalize">{mediaItem.mimeType.split('/')[0]}</span>
                                                 </div>
                                             </div>
                                         </List.Item>

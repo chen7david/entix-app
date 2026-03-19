@@ -166,7 +166,6 @@ export const OrganizationMediaPage: React.FC = () => {
                                 coverArtUrl={activeMedia.coverArtUrl || undefined}
                                 mimeType={activeMedia.mimeType}
                                 onPlay={handleOnPlay}
-                                autoPlay
                             />
                         </div>
 
