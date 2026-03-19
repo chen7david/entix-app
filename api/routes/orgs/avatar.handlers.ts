@@ -14,11 +14,12 @@ export class AvatarHandler {
     static updateAvatar: AppHandler<typeof AvatarRoutes.updateAvatar> = async (ctx) => {
         const { organizationId, userId: targetUserId } = ctx.req.valid("param");
         const { uploadId } = ctx.req.valid("json");
+        const callerId = ctx.get("userId")!;
 
         const avatarService = getAvatarService(ctx);
-        const result = await avatarService.updateAvatar(organizationId, targetUserId, uploadId);
+        const result = await avatarService.updateAvatar(organizationId, targetUserId, uploadId, callerId);
 
-        ctx.var.logger.info({ targetUserId, uploadId, organizationId }, "Avatar updated");
+        ctx.var.logger.info({ targetUserId, uploadId, organizationId, callerId }, "Avatar updated");
 
         return ctx.json(result, HttpStatusCodes.OK);
     };
@@ -31,11 +32,12 @@ export class AvatarHandler {
      */
     static removeAvatar: AppHandler<typeof AvatarRoutes.removeAvatar> = async (ctx) => {
         const { organizationId, userId: targetUserId } = ctx.req.valid("param");
+        const callerId = ctx.get("userId")!;
 
         const avatarService = getAvatarService(ctx);
-        await avatarService.removeAvatar(organizationId, targetUserId);
+        await avatarService.removeAvatar(organizationId, targetUserId, callerId);
 
-        ctx.var.logger.info({ targetUserId, organizationId }, "Avatar removed");
+        ctx.var.logger.info({ targetUserId, organizationId, callerId }, "Avatar removed");
 
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
