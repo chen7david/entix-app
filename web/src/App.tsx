@@ -27,6 +27,7 @@ import { OrganizationListPage } from "./pages/organization/OrganizationListPage"
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
 import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
+import { OrganizationMediaPage } from "./pages/organization/OrganizationMediaPage";
 import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/onboarding/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/onboarding/AcceptInvitationPage";
@@ -111,6 +112,7 @@ export default function App() {
                   </Route>
 
                   {/* Organization Management */}
+                  <Route path="media" element={<OrganizationMediaPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />
                   <Route path="invitations" element={<OrganizationInvitationsPage />} />
                   <Route path="uploads" element={<OrganizationUploadsPage />} />
