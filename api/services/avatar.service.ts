@@ -10,7 +10,7 @@ export class AvatarService {
         private uploadService: UploadService
     ) { }
 
-    async updateAvatar(organizationId: string, targetUserId: string, uploadId: string) {
+    async updateAvatar(organizationId: string, targetUserId: string, uploadId: string, callerId: string) {
         // Verify the target user is a member of this organization
         const membership = await this.memberRepo.findMembership(targetUserId, organizationId);
         if (!membership) {
@@ -32,14 +32,20 @@ export class AvatarService {
         const userRecord = await this.userRepo.findUserById(targetUserId);
         if (userRecord?.image) {
             const oldUpload = await this.uploadService.getUploadByUrlGlobal(userRecord.image);
-            if (oldUpload && oldUpload.uploadedBy === targetUserId) {
-                try {
-                    // This deletes BOTH from R2 and the database organically across any organization boundaries!
-                    await this.uploadService.deleteUploadGlobal(oldUpload.id);
-                } catch (err: unknown) {
-                    // Log handled upstream or by wrapper if needed, 
-                    // or we could pass a logger if we wanted to keeps it strictly DI.
-                    // For now keeping business logic clean.
+            
+            if (oldUpload) {
+                const isUploader = oldUpload.uploadedBy === callerId;
+                const isSameOrg = oldUpload.organizationId === organizationId;
+
+                if (isUploader || isSameOrg) {
+                    try {
+                        // This deletes BOTH from R2 and the database organically across any organization boundaries!
+                        await this.uploadService.deleteUploadGlobal(oldUpload.id);
+                    } catch (err: unknown) {
+                        // Log handled upstream or by wrapper if needed, 
+                        // or we could pass a logger if we wanted to keeps it strictly DI.
+                        // For now keeping business logic clean.
+                    }
                 }
             }
         }
@@ -50,7 +56,7 @@ export class AvatarService {
         return { imageUrl: upload.url };
     }
 
-    async removeAvatar(organizationId: string, targetUserId: string) {
+    async removeAvatar(organizationId: string, targetUserId: string, callerId: string) {
         // Verify target is a member
         const membership = await this.memberRepo.findMembership(targetUserId, organizationId);
         if (!membership) {
@@ -66,11 +72,16 @@ export class AvatarService {
         // Try to find the upload record to delete from R2 & DB across any organization boundary
         const avatarUpload = await this.uploadService.getUploadByUrlGlobal(userRecord.image);
 
-        if (avatarUpload && avatarUpload.uploadedBy === targetUserId) {
-            try {
-                await this.uploadService.deleteUploadGlobal(avatarUpload.id);
-            } catch (err: unknown) {
-                // Non-blocking
+        if (avatarUpload) {
+            const isUploader = avatarUpload.uploadedBy === callerId;
+            const isSameOrg = avatarUpload.organizationId === organizationId;
+
+            if (isUploader || isSameOrg) {
+                try {
+                    await this.uploadService.deleteUploadGlobal(avatarUpload.id);
+                } catch (err: unknown) {
+                    // Non-blocking
+                }
             }
         }
 
