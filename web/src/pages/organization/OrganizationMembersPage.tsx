@@ -31,7 +31,7 @@ export const OrganizationMembersPage = () => {
         userRoles: currentUserRoles,
     } = useMembers();
 
-    const { session } = useAuth();
+    const { session, refetch } = useAuth();
     const currentUserId = session.data?.user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
@@ -310,10 +310,11 @@ export const OrganizationMembersPage = () => {
                     width={400}
                 >
                     {selectedMember && (() => {
-                        const user = selectedMember.user as Record<string, unknown> | undefined;
-                        const isSelf = selectedMember.userId === currentUserId;
+                        const activeMember = members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
+                        const user = activeMember.user as Record<string, unknown> | undefined;
+                        const isSelf = activeMember.userId === currentUserId;
                         const canEdit = canUpdateMember && !isSelf;
-                        const memberRoles = (String(selectedMember.role || "")).split(",").map(r => r.trim()).filter(Boolean);
+                        const memberRoles = (String(activeMember.role || "")).split(",").map(r => r.trim()).filter(Boolean);
 
                         return (
                             <div className="flex flex-col gap-6 mt-4">
@@ -321,7 +322,7 @@ export const OrganizationMembersPage = () => {
                                     {activeOrganization ? (
                                         <AvatarDropzone
                                             organizationId={activeOrganization.id}
-                                            userId={selectedMember.userId as string}
+                                            userId={activeMember.userId as string}
                                             currentImageUrl={getAvatarUrl(user?.image as string, 'xl')}
                                             size={120}
                                             className="mx-auto"
@@ -350,7 +351,7 @@ export const OrganizationMembersPage = () => {
                                                 mode="multiple"
                                                 value={memberRoles}
                                                 style={{ width: '100%' }}
-                                                onChange={(values) => handleRoleChange(selectedMember.id as string, values)}
+                                                onChange={(values) => handleRoleChange(activeMember.id as string, values)}
                                                 options={[
                                                     { value: 'member', label: 'Member' },
                                                     { value: 'admin', label: 'Admin' },
@@ -391,7 +392,14 @@ export const OrganizationMembersPage = () => {
                                                     okText: 'Yes, Remove',
                                                     okType: 'danger' as const,
                                                     cancelText: 'Cancel',
-                                                    onOk: () => removeAvatarMutation.mutateAsync(selectedMember.userId as string).catch(() => {}),
+                                                    onOk: async () => {
+                                                        try {
+                                                            await removeAvatarMutation.mutateAsync(activeMember.userId as string);
+                                                            if (session.data?.user?.id === activeMember.userId) {
+                                                                await refetch();
+                                                            }
+                                                        } catch {}
+                                                    },
                                                 });
                                             }}
                                             block
@@ -413,7 +421,7 @@ export const OrganizationMembersPage = () => {
                                                 okType: 'danger',
                                                 cancelText: 'Cancel',
                                                 onOk: () => {
-                                                    handleRemoveMember(selectedMember.id as string).then(() => {
+                                                    handleRemoveMember(activeMember.id as string).then(() => {
                                                         setSelectedMember(null);
                                                     });
                                                 },

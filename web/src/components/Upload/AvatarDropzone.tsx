@@ -4,6 +4,7 @@ import ImgCrop from "antd-img-crop";
 import type { UploadProps } from "antd";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { UserOutlined, CloudUploadOutlined } from "@ant-design/icons";
 
 interface AvatarDropzoneProps {
@@ -29,6 +30,7 @@ export const AvatarDropzone = ({
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
     const updateAvatarMutation = useUpdateAvatar(organizationId);
+    const { session, refetch } = useAuth();
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {
         const { file, onSuccess, onError, onProgress } = options;
@@ -92,6 +94,10 @@ export const AvatarDropzone = ({
 
             // 4. Link upload to user avatar
             await updateAvatarMutation.mutateAsync({ userId, uploadId });
+
+            if (session.data?.user?.id === userId) {
+                await refetch();
+            }
 
             onProgress?.({ percent: 100 });
             onSuccess?.("ok");
