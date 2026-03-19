@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineWorkersConfig({
     test: {
+        setupFiles: ['./tests/setup.ts'],
         poolOptions: {
             workers: {
                 isolate: false,

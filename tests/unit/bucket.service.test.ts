@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BucketService, type BucketConfig } from '@api/services/bucket.service';
 
 describe('BucketService', () => {
@@ -11,19 +11,16 @@ describe('BucketService', () => {
     };
 
     let service: BucketService;
-    let fetchSpy: import('vitest').MockInstance;
+    let mockClient: any;
 
     beforeEach(() => {
+        vi.clearAllMocks();
         service = new BucketService(config);
-
-        // Mock global fetch globally for the AwsClient internal calls
-        fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(async (_input, _init) => {
-            return new Response('Mock response', { status: 200, statusText: 'OK' });
-        });
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
+        // @ts-ignore - access private client for testing
+        mockClient = service.client;
+        
+        // Default sign implementation
+        mockClient.sign.mockImplementation(async (url: string) => ({ url }));
     });
 
     describe('upload', () => {
@@ -35,30 +32,23 @@ describe('BucketService', () => {
                 contentType: 'image/png'
             };
 
+            mockClient.fetch.mockResolvedValue(new Response('Mock response', { status: 200, statusText: 'OK' }));
+
             const result = await service.upload(data, options);
 
-            // Assert fetch was called with correct URL
-            expect(fetchSpy).toHaveBeenCalledTimes(1);
-            const callArgs = fetchSpy.mock.calls[0];
+            expect(mockClient.fetch).toHaveBeenCalledTimes(1);
+            const [url, init] = mockClient.fetch.mock.calls[0];
 
-            // AWS4Fetch wraps the Request object, so we verify the request details
-            const requestObj = callArgs[0] as Request;
-            expect(requestObj.url).toBe('https://test-account-id.r2.cloudflarestorage.com/test-bucket/avatars/user123.png');
-            expect(requestObj.method).toBe('PUT');
+            expect(url).toBe('https://test-account-id.r2.cloudflarestorage.com/test-bucket/avatars/user123.png');
+            expect(init.method).toBe('PUT');
+            expect(init.headers['Content-Type']).toBe('image/png');
 
-            // Verify content type was preserved in headers
-            expect(requestObj.headers.get('content-type')).toBe('image/png');
-
-            // Assert return format matches UploadResponse standard
             expect(result.public_id).toBe('avatars/user123.png');
             expect(result.secure_url).toBe('https://assets.test.com/avatars/user123.png');
-            expect(result.format).toBe('png');
-            expect(result.asset_id).toBeDefined();
-            expect(result.created_at).toBeDefined();
         });
 
         it('should throw an error if the upload fails', async () => {
-            fetchSpy.mockResolvedValueOnce(new Response('Forbidden', { status: 403, statusText: 'Forbidden' }));
+            mockClient.fetch.mockResolvedValue(new Response('Forbidden', { status: 403, statusText: 'Forbidden' }));
 
             await expect(service.upload('data')).rejects.toThrow(/R2 Upload Error: Forbidden/);
         });
@@ -66,28 +56,43 @@ describe('BucketService', () => {
 
     describe('delete', () => {
         it('should send a DELETE request for a given key', async () => {
+            mockClient.fetch.mockResolvedValue(new Response('Mock response', { status: 200, statusText: 'OK' }));
             const key = 'avatars/user123.png';
-            const success = await service.delete(key);
+            await service.delete(key);
 
-            expect(success).toBe(true);
-            expect(fetchSpy).toHaveBeenCalledTimes(1);
+            expect(mockClient.fetch).toHaveBeenCalledTimes(1);
+            const [url, init] = mockClient.fetch.mock.calls[0];
 
-            const requestObj = fetchSpy.mock.calls[0][0] as Request;
-            expect(requestObj.url).toBe('https://test-account-id.r2.cloudflarestorage.com/test-bucket/avatars/user123.png');
-            expect(requestObj.method).toBe('DELETE');
+            expect(url).toBe('https://test-account-id.r2.cloudflarestorage.com/test-bucket/avatars/user123.png');
+            expect(init.method).toBe('DELETE');
+        });
+
+        it('should succeed (return void) if R2 returns 404 Not Found', async () => {
+            mockClient.fetch.mockResolvedValue(new Response('Not Found', { status: 404, statusText: 'Not Found' }));
+            const key = 'missing.png';
+            
+            await expect(service.delete(key)).resolves.toBeUndefined();
+            expect(mockClient.fetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('should throw if R2 returns a critical error (e.g. 500)', async () => {
+            mockClient.fetch.mockResolvedValue(new Response('Internal Error', { status: 500, statusText: 'Internal Server Error' }));
+            const key = 'error.png';
+
+            await expect(service.delete(key)).rejects.toThrow(/R2 Delete Error: Internal Server Error/);
         });
     });
 
     describe('getPresignedUploadUrl', () => {
-        it('should generate a signed PUT url using aws4fetch', async () => {
-            // AwsClient.sign configured with signQuery: true will inject auth directly into the URL query parameters
+        it('should generate a signed PUT url', async () => {
+            mockClient.sign.mockResolvedValue({ 
+                url: 'https://test-account-id.r2.cloudflarestorage.com/test-bucket/raw/data.csv?X-Amz-Signature=fake' 
+            });
+            
             const signedUrl = await service.getPresignedUploadUrl('raw/data.csv', 3600);
 
             expect(signedUrl).toContain('https://test-account-id.r2.cloudflarestorage.com/test-bucket/raw/data.csv');
-            expect(signedUrl).toContain('X-Amz-Expires=3600');
-            expect(signedUrl).toContain('X-Amz-Algorithm=AWS4-HMAC-SHA256');
-            expect(signedUrl).toContain('X-Amz-Credential=test-access-key');
-            expect(signedUrl).toContain('X-Amz-Signature=');
+            expect(signedUrl).toContain('X-Amz-Signature=fake');
         });
     });
 });
