@@ -102,4 +102,33 @@ export class UploadService {
             url: `${this.publicUrlPrefix}/${u.bucketKey}`
         }));
     }
+
+    async getUploadByUrlGlobal(absoluteUrl: string) {
+        let relativeUrl = absoluteUrl;
+        const prefixWithSlash = `${this.publicUrlPrefix}/`;
+        if (absoluteUrl.startsWith(prefixWithSlash)) {
+            relativeUrl = absoluteUrl.substring(prefixWithSlash.length);
+        } else if (absoluteUrl.startsWith(this.publicUrlPrefix)) {
+            relativeUrl = absoluteUrl.substring(this.publicUrlPrefix.length);
+        }
+
+        const record = await this.uploadRepo.findByUrlGlobal(relativeUrl);
+        if (!record) return undefined;
+
+        return {
+            ...record,
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+        };
+    }
+
+    async deleteUploadGlobal(uploadId: string) {
+        const record = await this.uploadRepo.findByIdGlobal(uploadId);
+        if (!record) return false;
+
+        // delete from R2
+        await this.bucketService.delete(record.bucketKey);
+
+        // delete from DB
+        return await this.uploadRepo.deleteGlobal(uploadId);
+    }
 }
