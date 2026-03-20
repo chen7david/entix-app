@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, List, Switch, Button, Skeleton, Tooltip } from 'antd';
-import { AudioOutlined, VideoCameraOutlined, MenuUnfoldOutlined, InteractionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { AudioOutlined, PlaySquareOutlined, MenuUnfoldOutlined, InteractionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
@@ -44,11 +44,8 @@ export const PlaylistPlayerPage: React.FC = () => {
         }
     }, [playlistId]);
 
-    const handleMediaEnd = () => {
-        if (!isAutoPlay) return;
-        
+    const handleNext = () => {
         if (isShuffle) {
-            // Pick random next
             if (sequence.length > 1) {
                 let nextIdx = currentIndex;
                 while (nextIdx === currentIndex) {
@@ -57,12 +54,25 @@ export const PlaylistPlayerPage: React.FC = () => {
                 setCurrentIndex(nextIdx);
             }
         } else {
-            // Pick next linear
             if (currentIndex < sequence.length - 1) {
                 setCurrentIndex(currentIndex + 1);
             }
         }
     };
+
+    const handlePrev = () => {
+        if (currentIndex > 0) {
+            setCurrentIndex(currentIndex - 1);
+        }
+    };
+
+    const handleMediaEnd = () => {
+        if (!isAutoPlay) return;
+        handleNext();
+    };
+
+    const hasNext = isShuffle ? sequence.length > 1 : currentIndex < sequence.length - 1;
+    const hasPrev = currentIndex > 0;
 
     const activeMediaId = sequence[currentIndex];
     const activeMedia = media.find(m => m.id === activeMediaId);
@@ -84,9 +94,9 @@ export const PlaylistPlayerPage: React.FC = () => {
                         className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-l-4 ${isPlaying ? 'bg-blue-50/50 border-blue-500' : 'border-transparent hover:bg-gray-50'}`}
                     >
                         {item.mimeType.startsWith('video/') ? (
-                            <VideoCameraOutlined className={`text-lg transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
+                            <PlaySquareOutlined className={`transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
                         ) : (
-                            <AudioOutlined className={`text-lg transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
+                            <AudioOutlined className={`transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
                         )}
                         <div className="flex flex-col flex-1 min-w-0">
                             <Tooltip title={item.title} placement="topLeft" mouseEnterDelay={0.5}>
@@ -129,11 +139,12 @@ export const PlaylistPlayerPage: React.FC = () => {
                 <div className="flex flex-col lg:flex-row gap-8">
                     {/* Left Pane (Player 70%) */}
                     <div className="w-full lg:w-[70%] flex flex-col">
-                        <div className="aspect-video w-full bg-black flex items-center justify-center overflow-hidden border border-gray-200 rounded-none shadow-sm z-10">
+                        <div className="aspect-video w-full bg-black flex items-center justify-center overflow-hidden z-10">
                             {isLoading ? (
                                 <Skeleton.Image className="w-full h-full opacity-20" active />
                             ) : activeMedia ? (
                                 <MediaPlayer
+                                    key={activeMedia.id}
                                     title={activeMedia.title}
                                     description={activeMedia.description || undefined}
                                     mediaUrl={activeMedia.mediaUrl}
@@ -141,6 +152,8 @@ export const PlaylistPlayerPage: React.FC = () => {
                                     mimeType={activeMedia.mimeType}
                                     onEnd={handleMediaEnd}
                                     autoPlay={isAutoPlay}
+                                    onNext={hasNext ? handleNext : undefined}
+                                    onPrevious={hasPrev ? handlePrev : undefined}
                                 />
                             ) : (
                                 <Text className="text-white opacity-50">No media found in sequence</Text>
@@ -154,7 +167,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                     </div>
 
                     {/* Right Pane (Queue 30%) */}
-                    <div className="w-full lg:w-[30%] flex flex-col border border-gray-200 bg-white rounded-none shadow-sm h-fit max-h-[700px]">
+                    <div className="w-full lg:w-[30%] flex flex-col border border-gray-200 bg-white rounded-none shadow-sm h-[calc(100vh-240px)]">
                         <div className="px-5 py-4 flex flex-col border-b border-gray-200">
                             <div className="flex items-center justify-between mb-4">
                                 <Title level={5} className="!mb-0 flex items-center gap-2">

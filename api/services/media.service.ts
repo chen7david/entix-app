@@ -53,8 +53,8 @@ export class MediaService {
         return media;
     }
 
-    async listMedia(organizationId: string) {
-        return await this.mediaRepo.findAllByOrganization(organizationId);
+    async listMedia(organizationId: string, type?: "video" | "audio") {
+        return await this.mediaRepo.findAllByOrganization(organizationId, type);
     }
 
     async updateMedia(

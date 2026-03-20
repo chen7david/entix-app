@@ -28,6 +28,9 @@ export const MediaRoutes = {
             params: z.object({
                 organizationId: z.string(),
             }),
+            query: z.object({
+                type: z.enum(["video", "audio"]).optional(),
+            }),
         },
         responses: {
             [HttpStatusCodes.OK]: {
