@@ -1,0 +1,194 @@
+import React, { useState, useEffect } from 'react';
+import { Typography, List, Switch, Button, Skeleton, Tooltip } from 'antd';
+import { AudioOutlined, VideoCameraOutlined, MenuUnfoldOutlined, InteractionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
+import { useNavigate, useParams } from 'react-router';
+import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
+import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
+import { useMedia } from '@web/src/hooks/organization/useMedia';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+
+const { Title, Text } = Typography;
+
+export const PlaylistPlayerPage: React.FC = () => {
+    const { playlistId } = useParams<{ playlistId: string }>();
+    const navigate = useNavigate();
+    
+    // Core Data Context
+    const { activeOrganization } = useOrganization();
+    const { getSequence, playlists } = usePlaylists();
+    const { media } = useMedia();
+    
+    // Page State
+    const [sequence, setSequence] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    
+    // Player State
+    const [currentIndex, setCurrentIndex] = useState<number>(0);
+    const [isAutoPlay, setIsAutoPlay] = useState(true);
+    const [isShuffle, setIsShuffle] = useState(false);
+
+    const activePlaylist = playlists.find(p => p.id === playlistId);
+
+    useEffect(() => {
+        if (playlistId) {
+            setIsLoading(true);
+            getSequence(playlistId).then(items => {
+                // sort by position
+                const sorted = items.sort((a, b) => a.position - b.position).map(item => item.mediaId);
+                setSequence(sorted);
+                setCurrentIndex(0);
+            }).finally(() => {
+                setIsLoading(false);
+            });
+        }
+    }, [playlistId]);
+
+    const handleMediaEnd = () => {
+        if (!isAutoPlay) return;
+        
+        if (isShuffle) {
+            // Pick random next
+            if (sequence.length > 1) {
+                let nextIdx = currentIndex;
+                while (nextIdx === currentIndex) {
+                    nextIdx = Math.floor(Math.random() * sequence.length);
+                }
+                setCurrentIndex(nextIdx);
+            }
+        } else {
+            // Pick next linear
+            if (currentIndex < sequence.length - 1) {
+                setCurrentIndex(currentIndex + 1);
+            }
+        }
+    };
+
+    const activeMediaId = sequence[currentIndex];
+    const activeMedia = media.find(m => m.id === activeMediaId);
+
+    // Render the Sidebar queue
+    const queueList = (
+        <List
+            className="w-full"
+            dataSource={sequence}
+            renderItem={(mediaId, index) => {
+                const item = media.find(m => m.id === mediaId);
+                if (!item) return <></>;
+                
+                const isPlaying = index === currentIndex;
+                
+                return (
+                    <div 
+                        onClick={() => setCurrentIndex(index)}
+                        className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-l-4 ${isPlaying ? 'bg-blue-50/50 border-blue-500' : 'border-transparent hover:bg-gray-50'}`}
+                    >
+                        {item.mimeType.startsWith('video/') ? (
+                            <VideoCameraOutlined className={`text-lg transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
+                        ) : (
+                            <AudioOutlined className={`text-lg transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
+                        )}
+                        <div className="flex flex-col flex-1 min-w-0">
+                            <Tooltip title={item.title} placement="topLeft" mouseEnterDelay={0.5}>
+                                <Text className={`truncate block font-medium transition-colors ${isPlaying ? 'text-blue-600' : ''}`}>{item.title}</Text>
+                            </Tooltip>
+                            {item.description ? (
+                                <Text type="secondary" className="text-xs truncate block mt-0.5">{item.description}</Text>
+                            ) : (
+                                <Text type="secondary" className="text-xs truncate block mt-0.5 italic opacity-50">No description</Text>
+                            )}
+                        </div>
+                    </div>
+                );
+            }}
+        />
+    );
+
+    return (
+        <>
+            <Toolbar />
+
+            <div className="p-6">
+                <div className="flex flex-col mb-6">
+                    <Button 
+                        type="text" 
+                        icon={<ArrowLeftOutlined />} 
+                        onClick={() => navigate(`/org/${activeOrganization?.slug}/media`)}
+                        className="self-start !px-0 !mb-2 text-gray-500"
+                    >
+                        Back to Playlists
+                    </Button>
+                    <Title level={2} className="!mb-1">
+                        {activePlaylist?.title || 'Playlist Player'}
+                    </Title>
+                    <Text type="secondary">
+                        {activePlaylist?.description || 'Seamless edge delivery playback sequence.'}
+                    </Text>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Left Pane (Player 70%) */}
+                    <div className="w-full lg:w-[70%] flex flex-col">
+                        <div className="aspect-video w-full bg-black flex items-center justify-center overflow-hidden border border-gray-200 rounded-none shadow-sm z-10">
+                            {isLoading ? (
+                                <Skeleton.Image className="w-full h-full opacity-20" active />
+                            ) : activeMedia ? (
+                                <MediaPlayer
+                                    title={activeMedia.title}
+                                    description={activeMedia.description || undefined}
+                                    mediaUrl={activeMedia.mediaUrl}
+                                    coverArtUrl={activeMedia.coverArtUrl || undefined}
+                                    mimeType={activeMedia.mimeType}
+                                    onEnd={handleMediaEnd}
+                                    autoPlay={isAutoPlay}
+                                />
+                            ) : (
+                                <Text className="text-white opacity-50">No media found in sequence</Text>
+                            )}
+                        </div>
+                        {/* Metadata below player */}
+                        <div className="mt-5 px-1">
+                            <Title level={4} className="!mb-1">{activeMedia?.title || 'Unknown Asset'}</Title>
+                            <Text type="secondary">{activeMedia?.description || 'No description provided.'}</Text>
+                        </div>
+                    </div>
+
+                    {/* Right Pane (Queue 30%) */}
+                    <div className="w-full lg:w-[30%] flex flex-col border border-gray-200 bg-white rounded-none shadow-sm h-fit max-h-[700px]">
+                        <div className="px-5 py-4 flex flex-col border-b border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                                <Title level={5} className="!mb-0 flex items-center gap-2">
+                                    <MenuUnfoldOutlined className="text-gray-500" />
+                                    Up Next
+                                </Title>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Text type="secondary" className="text-xs font-semibold uppercase tracking-wider">Auto-Play</Text>
+                                    <Switch size="small" checked={isAutoPlay} onChange={setIsAutoPlay} />
+                                </div>
+                                <Button 
+                                    type={isShuffle ? "primary" : "default"} 
+                                    size="small" 
+                                    icon={<InteractionOutlined />} 
+                                    onClick={() => setIsShuffle(!isShuffle)}
+                                    className={`rounded-none ${isShuffle ? "" : "text-gray-500"}`}
+                                >
+                                    Shuffle
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto bg-transparent">
+                            {isLoading ? (
+                                <div className="p-4"><Skeleton active paragraph={{ rows: 6 }} /></div>
+                            ) : (
+                                queueList
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+};

@@ -24,6 +24,7 @@ npm run dev
 ## Next Steps
 - [Onboarding: Environment Setup](./onboarding/setup.md)
 - [How to: Create a new feature](./features/create-new.md)
+- [Architecture: UI Design Language](./design-language.md)
 
 Last updated: 2026-03-12
 [Back to Documentation Guide](./how-to-write-docs.md)

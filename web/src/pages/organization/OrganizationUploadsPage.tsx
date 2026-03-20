@@ -56,11 +56,13 @@ export const OrganizationUploadsPage = () => {
             dataIndex: 'originalName',
             key: 'originalName',
             render: (name: string, record: UploadDto) => (
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 min-w-0 max-w-[400px]">
                     {getFileIcon(record.contentType)}
-                    <a href={getAssetUrl(record.url)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium">
-                        {name}
-                    </a>
+                    <Tooltip title={name} placement="topLeft" mouseEnterDelay={0.5}>
+                        <a href={getAssetUrl(record.url)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium truncate block">
+                            {name}
+                        </a>
+                    </Tooltip>
                 </div>
             ),
         },

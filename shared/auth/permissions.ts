@@ -7,6 +7,7 @@ export const statement = {
     invitation: ["create", "cancel"],
     member: ["read", "create", "update", "delete"],
     upload: ["read", "create", "delete"],
+    media: ["read", "create", "update", "delete"],
 } as const;
 
 export const ac = createAccessControl(statement);
@@ -15,18 +16,21 @@ export const roles = {
     member: ac.newRole({
         member: ["read"],
         upload: ["read", "create"],
+        media: ["read"],
     }),
     admin: ac.newRole({
         organization: ["update"],
         invitation: ["create", "cancel"],
         member: ["read", "create", "update", "delete"],
         upload: ["read", "create", "delete"],
+        media: ["read", "create", "update", "delete"],
     }),
     owner: ac.newRole({
         organization: ["update", "delete"],
         invitation: ["create", "cancel"],
         member: ["read", "create", "update", "delete"],
         upload: ["read", "create", "delete"],
+        media: ["read", "create", "update", "delete"],
     }),
 } as const;
 

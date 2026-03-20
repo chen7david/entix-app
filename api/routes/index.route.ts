@@ -5,6 +5,8 @@ import { emailInsightsRoutes } from "./admin/email-insights.index";
 import { adminOrgsRoutes } from "./admin/orgs.index";
 import { uploadRoutes } from "./orgs/uploads.index";
 import { avatarRoutes } from "./orgs/avatar.index";
+import { mediaRoutes } from "./orgs/media.index";
+import { playlistRoutes } from "./orgs/playlist.index";
 
 export const routes = [
     userRoutes,
@@ -14,4 +16,6 @@ export const routes = [
     adminOrgsRoutes,
     uploadRoutes,
     avatarRoutes,
+    mediaRoutes,
+    playlistRoutes,
 ]
