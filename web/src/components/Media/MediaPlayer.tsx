@@ -38,7 +38,7 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
             onPlay={onPlay}
             autoPlay={autoPlay}
             playsInline
-            className="w-full h-full bg-black overflow-hidden shadow-xl"
+            className="w-full h-full overflow-hidden"
         >
             <MediaProvider>
                 {coverArtUrl && (

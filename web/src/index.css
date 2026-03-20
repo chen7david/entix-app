@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+/* 
+ * Globally enforce Entix Design Language: Zero Rounding on cinematic media players 
+ * Overrides @vidstack/react inner component default shadow DOM styling
+ */
+media-player,
+[data-media-player] {
+    --video-border-radius: 0px !important;
+    --audio-border-radius: 0px !important;
+    --media-border-radius: 0px !important;
+    border-radius: 0px !important;
+}
+
+media-player::part(video),
+media-player::part(provider) {
+    border-radius: 0px !important;
+}

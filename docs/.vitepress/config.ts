@@ -38,6 +38,12 @@ export default defineConfig({
                 ]
             },
             {
+                text: 'Architecture & Design',
+                items: [
+                    { text: 'Design Language', link: '/design-language' }
+                ]
+            },
+            {
                 text: 'Principles (Why?)',
                 items: [
                     { text: 'Why .dev.vars?', link: '/why/dev-vars' },

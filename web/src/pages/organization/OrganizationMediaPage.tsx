@@ -1,11 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { Typography, Table, Tag, Button, Space, Popconfirm, Drawer, Input, Form, Tabs, Tooltip } from 'antd';
-import { VideoCameraOutlined, AudioOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { AudioOutlined, DeleteOutlined, SearchOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { MediaDropzone } from './components/MediaDropzone';
 import { PlaylistManager } from './components/PlaylistManager';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
-import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 import type { Media } from '@shared/db/schema.db';
@@ -41,11 +40,11 @@ export const OrganizationMediaPage: React.FC = () => {
             key: 'title',
             render: (text: string, record: Media) => (
                 <div className="flex items-center gap-3">
-                    <EntityAvatar
-                        imageUrl={record.coverArtUrl || undefined}
-                        icon={record.mimeType.startsWith('video/') ? <VideoCameraOutlined /> : <AudioOutlined />}
-                        fontSize={16}
-                    />
+                    {record.mimeType.startsWith('video/') ? (
+                        <PlaySquareOutlined className="text-purple-500 text-2xl flex-shrink-0" />
+                    ) : (
+                        <AudioOutlined className="text-blue-500 text-2xl flex-shrink-0" />
+                    )}
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={text} placement="topLeft" mouseEnterDelay={0.5}>
                             <span className="font-semibold text-sm truncate text-[#646cff] hover:text-[#747bff] transition-colors block">{text}</span>

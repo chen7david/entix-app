@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty, Tooltip } from 'antd';
-import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, VideoCameraOutlined, AudioOutlined, PlayCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, VideoCameraOutlined, AudioOutlined, PlayCircleOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
+import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { useNavigate } from 'react-router';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 
 const { Title, Text } = Typography;
@@ -65,6 +66,8 @@ export const PlaylistManager: React.FC = () => {
     } = usePlaylists();
     
     const { media } = useMedia();
+    const { activeOrganization } = useOrganization();
+    const navigate = useNavigate();
 
     const [searchText, setSearchText] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -152,10 +155,7 @@ export const PlaylistManager: React.FC = () => {
             key: 'title',
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
-                    <EntityAvatar 
-                        icon={<PlayCircleOutlined />} 
-                        fontSize={16}
-                    />
+                    <PlaySquareOutlined className="text-purple-500 text-2xl flex-shrink-0" />
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={record.title} placement="topLeft" mouseEnterDelay={0.5}>
                             <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">{record.title}</span>
@@ -173,6 +173,17 @@ export const PlaylistManager: React.FC = () => {
             align: 'right' as const,
             render: (_: any, record: any) => (
                 <Space size="middle">
+                    <Button 
+                        type="primary" 
+                        shape="circle"
+                        icon={<PlayCircleOutlined />} 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeOrganization) {
+                                navigate(`/org/${activeOrganization.slug}/playlists/${record.id}`);
+                            }
+                        }}
+                    />
                     <Button 
                         type="default" 
                         icon={<OrderedListOutlined />} 
