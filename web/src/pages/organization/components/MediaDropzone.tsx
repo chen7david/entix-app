@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, message, Typography } from 'antd';
+import { Upload, message } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { useMedia } from '@web/src/hooks/organization/useMedia';

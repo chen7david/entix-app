@@ -1,6 +1,6 @@
 import { PlaylistRepository } from "@api/repositories/playlist.repository";
 import { UploadService } from "@api/services/upload.service";
-import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
+import { NotFoundError } from "@api/errors/app.error";
 
 export class PlaylistService {
     constructor(
@@ -20,14 +20,7 @@ export class PlaylistService {
         let coverArtUrl: string | undefined;
 
         if (input.coverArtUploadId) {
-            const coverUpload = await this.uploadService.getUploadById(input.coverArtUploadId, organizationId);
-            if (!coverUpload || coverUpload.status !== "completed") {
-                throw new NotFoundError("Cover art upload not found or not yet completed");
-            }
-            if (!coverUpload.contentType.startsWith("image/")) {
-                throw new ForbiddenError("Cover art must be an image");
-            }
-            coverArtUrl = coverUpload.url;
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(input.coverArtUploadId, organizationId);
         }
 
         return await this.playlistRepo.create({
@@ -60,16 +53,11 @@ export class PlaylistService {
         const currentPlaylist = await this.getPlaylist(playlistId, organizationId);
 
         if (updates.coverArtUploadId) {
-            const coverUpload = await this.uploadService.getUploadById(updates.coverArtUploadId, organizationId);
-            if (!coverUpload || coverUpload.status !== "completed") throw new NotFoundError("Cover art upload missing");
-            coverArtUrl = coverUpload.url;
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(updates.coverArtUploadId, organizationId);
 
             // Clean up old cover artifact globally if replaced
             if (currentPlaylist.coverArtUrl) {
-                const oldCover = await this.uploadService.getUploadByUrlGlobal(currentPlaylist.coverArtUrl);
-                if (oldCover) {
-                    try { await this.uploadService.deleteUploadGlobal(oldCover.id); } catch {}
-                }
+                await this.uploadService.deleteUploadByUrlGlobalSafely(currentPlaylist.coverArtUrl);
             }
         }
 
@@ -84,10 +72,7 @@ export class PlaylistService {
         const playlist = await this.getPlaylist(playlistId, organizationId);
 
         if (playlist.coverArtUrl) {
-            const coverUpload = await this.uploadService.getUploadByUrlGlobal(playlist.coverArtUrl);
-            if (coverUpload) {
-                try { await this.uploadService.deleteUploadGlobal(coverUpload.id); } catch {}
-            }
+            await this.uploadService.deleteUploadByUrlGlobalSafely(playlist.coverArtUrl);
         }
 
         await this.playlistRepo.delete(playlist.id, organizationId);

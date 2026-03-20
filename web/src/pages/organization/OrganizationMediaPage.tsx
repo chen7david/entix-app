@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Typography, Table, Tag, Button, Space, Popconfirm, Drawer, Avatar, Input, Form, Tabs } from 'antd';
-import { PlayCircleOutlined, AudioOutlined, DeleteOutlined, PlaySquareOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, AudioOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { MediaDropzone } from './components/MediaDropzone';
 import { PlaylistManager } from './components/PlaylistManager';
@@ -74,13 +74,6 @@ export const OrganizationMediaPage: React.FC = () => {
             key: 'actions',
             render: (_: any, record: Media) => (
                 <Space size="middle">
-                    <Button 
-                        icon={<PlaySquareOutlined />} 
-                        type="primary" 
-                        onClick={() => handlePlayMedia(record)}
-                    >
-                        Play
-                    </Button>
                     <Popconfirm 
                         title="Delete Media" 
                         description="This will permanently delete the file from Cloudflare R2."

@@ -32,14 +32,7 @@ export class MediaService {
         let coverArtUrl: string | undefined;
 
         if (input.coverArtUploadId) {
-            const coverUpload = await this.uploadService.getUploadById(input.coverArtUploadId, organizationId);
-            if (!coverUpload || coverUpload.status !== "completed") {
-                throw new NotFoundError("Cover art upload not found or not yet completed");
-            }
-            if (!coverUpload.contentType.startsWith("image/")) {
-                throw new ForbiddenError("Cover art must be an image");
-            }
-            coverArtUrl = coverUpload.url;
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(input.coverArtUploadId, organizationId);
         }
 
         return await this.mediaRepo.create({
@@ -74,16 +67,11 @@ export class MediaService {
         const currentMedia = await this.getMedia(mediaId, organizationId);
 
         if (updates.coverArtUploadId) {
-            const coverUpload = await this.uploadService.getUploadById(updates.coverArtUploadId, organizationId);
-            if (!coverUpload || coverUpload.status !== "completed") throw new NotFoundError("Cover art upload missing");
-            coverArtUrl = coverUpload.url;
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(updates.coverArtUploadId, organizationId);
 
             // Delete old cover art if it existed
             if (currentMedia.coverArtUrl) {
-                const oldCover = await this.uploadService.getUploadByUrlGlobal(currentMedia.coverArtUrl);
-                if (oldCover) {
-                    try { await this.uploadService.deleteUploadGlobal(oldCover.id); } catch {}
-                }
+                await this.uploadService.deleteUploadByUrlGlobalSafely(currentMedia.coverArtUrl);
             }
         }
 
@@ -103,17 +91,11 @@ export class MediaService {
         const media = await this.getMedia(mediaId, organizationId);
 
         // Discard the actual video/audio file permanently via global bucket wipe
-        const mediaUpload = await this.uploadService.getUploadByUrlGlobal(media.mediaUrl);
-        if (mediaUpload) {
-            try { await this.uploadService.deleteUploadGlobal(mediaUpload.id); } catch {}
-        }
+        await this.uploadService.deleteUploadByUrlGlobalSafely(media.mediaUrl);
 
         // Delete cover art permanently
         if (media.coverArtUrl) {
-            const coverUpload = await this.uploadService.getUploadByUrlGlobal(media.coverArtUrl);
-            if (coverUpload) {
-                try { await this.uploadService.deleteUploadGlobal(coverUpload.id); } catch {}
-            }
+            await this.uploadService.deleteUploadByUrlGlobalSafely(media.coverArtUrl);
         }
 
         // Delete from Drizzle

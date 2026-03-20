@@ -1,10 +1,51 @@
 import React, { useState } from 'react';
-import { Typography, Button, Table, Avatar, Space, Modal, Form, Input, Drawer, Popconfirm, List } from 'antd';
-import { PlusOutlined, DeleteOutlined, OrderedListOutlined, ArrowUpOutlined, ArrowDownOutlined } from '@ant-design/icons';
+import { Typography, Button, Table, Avatar, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty } from 'antd';
+import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const { Title, Text } = Typography;
+
+const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any; onRemove: () => void }) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 100 : 'auto',
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
+                isDragging 
+                    ? 'border-[#646cff] bg-white dark:bg-zinc-800/80 opacity-95 shadow-xl ring-2 ring-[#646cff]/20' 
+                    : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors'
+            } transition-all group`}
+        >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div 
+                    {...attributes} 
+                    {...listeners} 
+                    className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                    <HolderOutlined />
+                </div>
+                <Avatar shape="square" src={mediaItem.coverArtUrl} className="flex-shrink-0 bg-gray-200 dark:bg-zinc-700" />
+                <div className="flex flex-col flex-1 min-w-0">
+                    <span className="font-semibold text-sm truncate text-[#646cff] dark:text-[#747bff] transition-colors">{mediaItem.title}</span>
+                    <span className="text-xs text-gray-500 capitalize truncate mt-0.5">{mediaItem.mimeType.split('/')[0]}</span>
+                </div>
+            </div>
+            <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={onRemove} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+    );
+};
 
 export const PlaylistManager: React.FC = () => {
     const { 
@@ -18,10 +59,18 @@ export const PlaylistManager: React.FC = () => {
     
     const { media } = useMedia();
 
+    const [searchText, setSearchText] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [activePlaylist, setActivePlaylist] = useState<any>(null);
     const [isSequenceDrawerOpen, setIsSequenceDrawerOpen] = useState(false);
     const [sequenceItems, setSequenceItems] = useState<string[]>([]);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     const handleCreateFinish = async (values: any) => {
         await createPlaylist(values);
@@ -35,34 +84,39 @@ export const PlaylistManager: React.FC = () => {
         setIsSequenceDrawerOpen(true);
     };
 
-    const handleMoveUp = (index: number) => {
-        if (index === 0) return;
-        const newSeq = [...sequenceItems];
-        [newSeq[index - 1], newSeq[index]] = [newSeq[index], newSeq[index - 1]];
-        setSequenceItems(newSeq);
-    };
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
 
-    const handleMoveDown = (index: number) => {
-        if (index === sequenceItems.length - 1) return;
-        const newSeq = [...sequenceItems];
-        [newSeq[index + 1], newSeq[index]] = [newSeq[index], newSeq[index + 1]];
-        setSequenceItems(newSeq);
+        if (over && active.id !== over.id) {
+            setSequenceItems((items) => {
+                const oldIndex = items.indexOf(active.id as string);
+                const newIndex = items.indexOf(over.id as string);
+                const newArray = arrayMove(items, oldIndex, newIndex);
+                
+                if (activePlaylist) {
+                    updateSequence(activePlaylist.id, newArray).catch(console.error);
+                }
+                
+                return newArray;
+            });
+        }
     };
 
     const handleRemoveFromSequence = (mediaIdToRemove: string) => {
-        setSequenceItems(prev => prev.filter(id => id !== mediaIdToRemove));
+        const newItems = sequenceItems.filter(id => id !== mediaIdToRemove);
+        setSequenceItems(newItems);
+        if (activePlaylist) {
+            updateSequence(activePlaylist.id, newItems).catch(console.error);
+        }
     };
 
     const handleAddMedia = (mediaId: string) => {
         if (!sequenceItems.includes(mediaId)) {
-            setSequenceItems(prev => [...prev, mediaId]);
-        }
-    };
-
-    const handleSaveSequence = async () => {
-        if (activePlaylist) {
-            await updateSequence(activePlaylist.id, sequenceItems);
-            setIsSequenceDrawerOpen(false);
+            const newItems = [...sequenceItems, mediaId];
+            setSequenceItems(newItems);
+            if (activePlaylist) {
+                updateSequence(activePlaylist.id, newItems).catch(console.error);
+            }
         }
     };
 
@@ -80,8 +134,8 @@ export const PlaylistManager: React.FC = () => {
                         {record.title.charAt(0).toUpperCase()}
                     </Avatar>
                     <div className="flex flex-col">
-                        <span className="font-semibold text-gray-900 dark:text-gray-100">{record.title}</span>
-                        <Text type="secondary" className="text-xs">{record.description || 'No description'}</Text>
+                        <Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{record.title}</Text>
+                        <Text type="secondary" className="text-xs font-medium mt-0.5">{record.description || 'No description'}</Text>
                     </div>
                 </div>
             )
@@ -116,14 +170,20 @@ export const PlaylistManager: React.FC = () => {
     return (
         <div className="flex flex-col gap-6 pt-4">
             <div className="flex justify-between items-center">
-                <Text type="secondary">Curate your media into stunning, sequenced playlists.</Text>
+                <Input
+                    placeholder="Search playlists..."
+                    prefix={<SearchOutlined />}
+                    className="max-w-xs"
+                    onChange={e => setSearchText(e.target.value)}
+                    allowClear
+                />
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalOpen(true)}>
                     New Playlist
                 </Button>
             </div>
 
             <Table
-                dataSource={playlists}
+                dataSource={playlists?.filter((p: any) => p.title.toLowerCase().includes(searchText.toLowerCase()))}
                 columns={columns}
                 rowKey="id"
                 loading={isLoadingPlaylists}
@@ -151,7 +211,6 @@ export const PlaylistManager: React.FC = () => {
                 </Form>
             </Modal>
 
-            {/* Sequence Drawer */}
             <Drawer
                 title={`Sequencing: ${activePlaylist?.title}`}
                 placement="right"
@@ -159,69 +218,60 @@ export const PlaylistManager: React.FC = () => {
                 open={isSequenceDrawerOpen}
                 width={600}
                 destroyOnClose
-                extra={
-                    <Button type="primary" onClick={handleSaveSequence}>Save Order</Button>
-                }
             >
-                <div className="flex flex-col gap-8">
-                    {/* Current Sequence */}
+                <div className="flex flex-col gap-8 h-full">
+                    {/* Add Media AutoComplete Block */}
                     <div>
-                        <Title level={5} className="!mb-4">Current Sequence</Title>
-                        {sequenceItems.length === 0 ? (
-                            <Text type="secondary">No media added yet.</Text>
-                        ) : (
-                            <List
-                                dataSource={sequenceItems}
-                                renderItem={(mediaId, index) => {
-                                    const mediaItem = media.find(m => m.id === mediaId);
-                                    if (!mediaItem) return null;
-                                    
-                                    return (
-                                        <List.Item
-                                            className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-lg flex items-center p-3 mb-2 shadow-sm"
-                                            actions={[
-                                                <Space direction="horizontal" size="small">
-                                                    <Button type="text" size="small" icon={<ArrowUpOutlined />} disabled={index === 0} onClick={() => handleMoveUp(index)} />
-                                                    <Button type="text" size="small" icon={<ArrowDownOutlined />} disabled={index === sequenceItems.length - 1} onClick={() => handleMoveDown(index)} />
-                                                    <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={() => handleRemoveFromSequence(mediaId)} />
-                                                </Space>
-                                            ]}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <Avatar shape="square" src={mediaItem.coverArtUrl} />
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-sm">{mediaItem.title}</span>
-                                                    <span className="text-xs text-secondary capitalize">{mediaItem.mimeType.split('/')[0]}</span>
-                                                </div>
-                                            </div>
-                                        </List.Item>
-                                    );
-                                }}
-                            />
-                        )}
+                        <Title level={5} className="!mb-4">Quick Add Media</Title>
+                        <Select
+                            showSearch
+                            placeholder="Type to search and add media to this playlist..."
+                            style={{ width: '100%' }}
+
+                            allowClear
+                            size="large"
+                            onChange={(value) => handleAddMedia(value as string)}
+                            filterOption={(input, option) =>
+                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                            }
+                            options={media?.filter((m: any) => !sequenceItems.includes(m.id))?.map((m: any) => ({ 
+                                value: m.id, 
+                                label: `${m.title} (${m.mimeType.split('/')[0]})` 
+                            }))}
+                        />
                     </div>
 
-                    {/* Available Media Block */}
-                    <div>
-                        <Title level={5} className="!mb-4">Available Library</Title>
-                        <List
-                            dataSource={media.filter(m => !sequenceItems.includes(m.id))}
-                            renderItem={(item) => (
-                                <List.Item
-                                    className="p-3 border-b border-gray-100 dark:border-zinc-800"
-                                    actions={[
-                                        <Button size="small" type="dashed" icon={<PlusOutlined />} onClick={() => handleAddMedia(item.id)}>
-                                            Add to sequence
-                                        </Button>
-                                    ]}
+                    {/* Current Sequence Drag and Drop */}
+                    <div className="flex-1 overflow-y-auto pr-2 pb-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <Title level={5} className="!mb-0">Current Sequence</Title>
+                            <Text type="secondary" className="text-xs">{sequenceItems.length} items</Text>
+                        </div>
+                        
+                        {sequenceItems.length === 0 ? (
+                            <div className="py-12">
+                                <Empty description={<>No media added yet.<br/>Use the search bar above to add content.</>} />
+                            </div>
+                        ) : (
+                            <DndContext
+                                sensors={sensors}
+                                collisionDetection={closestCenter}
+                                onDragEnd={handleDragEnd}
+                            >
+                                <SortableContext
+                                    items={sequenceItems}
+                                    strategy={verticalListSortingStrategy}
                                 >
-                                    <List.Item.Meta
-                                        avatar={<Avatar shape="square" src={item.coverArtUrl} />}
-                                        title={<span className="text-sm font-medium">{item.title}</span>}
-                                    />
-                                </List.Item>
-                            )}
-                        />
+                                    {sequenceItems.map((mediaId) => {
+                                        const mediaItem = media.find(m => m.id === mediaId);
+                                        if (!mediaItem) return null;
+                                        return (
+                                            <SortableItem key={mediaId} id={mediaId} mediaItem={mediaItem} onRemove={() => handleRemoveFromSequence(mediaId)} />
+                                        );
+                                    })}
+                                </SortableContext>
+                            </DndContext>
+                        )}
                     </div>
                 </div>
             </Drawer>

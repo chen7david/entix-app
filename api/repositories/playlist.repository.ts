@@ -56,21 +56,19 @@ export class PlaylistRepository {
 
     // Playlist Media Association Logic
     async setMediaSequence(playlistId: string, mediaIds: string[]): Promise<void> {
-        // Run in a transaction to atomic sweep and rewrite the sequence
-        await this.db.transaction(async (tx) => {
-            // Drop existing mappings
-            await tx.delete(schema.playlistMedia).where(eq(schema.playlistMedia.playlistId, playlistId));
-            
-            // Insert new mappings sequentially based on array order
-            if (mediaIds.length > 0) {
-                const mappings = mediaIds.map((mediaId, index) => ({
-                    playlistId,
-                    mediaId,
-                    position: index,
-                }));
-                await tx.insert(schema.playlistMedia).values(mappings);
-            }
-        });
+        const deleteStmt = this.db.delete(schema.playlistMedia).where(eq(schema.playlistMedia.playlistId, playlistId));
+        
+        if (mediaIds.length > 0) {
+            const mappings = mediaIds.map((mediaId, index) => ({
+                playlistId,
+                mediaId,
+                position: index,
+            }));
+            const insertStmt = this.db.insert(schema.playlistMedia).values(mappings);
+            await this.db.batch([deleteStmt, insertStmt]);
+        } else {
+            await deleteStmt;
+        }
     }
 
     async getMediaSequence(playlistId: string): Promise<schema.PlaylistMedia[]> {
