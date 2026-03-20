@@ -336,8 +336,8 @@ export const PlaylistManager: React.FC = () => {
                             organizationId={activePlaylist.organizationId}
                             currentImageUrl={activePlaylist.coverArtUrl}
                             onUploadSuccess={async (uploadId) => {
-                                await updatePlaylist(activePlaylist.id, { coverArtUploadId: uploadId });
-                                // Local state is mutated seamlessly after query cache invalidation finishes
+                                const updatedPlaylist = await updatePlaylist(activePlaylist.id, { coverArtUploadId: uploadId });
+                                setActivePlaylist(updatedPlaylist);
                             }}
                         />
                     )}

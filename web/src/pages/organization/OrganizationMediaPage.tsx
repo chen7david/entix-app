@@ -185,9 +185,8 @@ export const OrganizationMediaPage: React.FC = () => {
                                             organizationId={activeMedia.organizationId}
                                             currentImageUrl={activeMedia.coverArtUrl}
                                             onUploadSuccess={async (uploadId) => {
-                                                await updateMedia(activeMedia.id, { coverArtUploadId: uploadId });
-                                                // The query invalidation will sync the data across the app.
-                                                // To reflect immediately locally, we trigger a close or we can let React Query refetch sync it on the next render
+                                                const updatedMedia = await updateMedia(activeMedia.id, { coverArtUploadId: uploadId });
+                                                setActiveMedia(updatedMedia);
                                             }}
                                         />
                                     </div>

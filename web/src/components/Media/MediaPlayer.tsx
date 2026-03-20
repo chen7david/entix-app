@@ -37,7 +37,6 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
             onEnd={onEnd}
             onPlay={onPlay}
             autoPlay={autoPlay}
-            crossOrigin="anonymous"
             playsInline
             className="w-full h-full bg-black overflow-hidden shadow-xl"
         >
