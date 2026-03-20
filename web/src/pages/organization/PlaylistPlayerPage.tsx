@@ -123,7 +123,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                     <Button 
                         type="text" 
                         icon={<ArrowLeftOutlined />} 
-                        onClick={() => navigate(`/org/${activeOrganization?.slug}/media`)}
+                        onClick={() => navigate(`/org/${activeOrganization?.slug}/playlists`)}
                         className="self-start !px-0 !mb-2 text-gray-500"
                     >
                         Back to Playlists

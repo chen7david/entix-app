@@ -4,6 +4,8 @@ import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
 
 import { MediaSubtitleRepository } from "@api/repositories/media-subtitle.repository";
 import { MediaMetadataRepository } from "@api/repositories/media-metadata.repository";
+// @ts-expect-error Temporary workaround for inner types.d.ts error inside ytdl-core-enhanced
+import ytdl from "ytdl-core-enhanced";
 
 export class MediaService {
     constructor(
@@ -159,17 +161,154 @@ export class MediaService {
 
     async updateMetadata(organizationId: string, mediaId: string, metadata: {
         source?: string;
-        externalId?: string;
+        externalId?: string | null;
         externalLikeCount?: number;
         externalViewCount?: number;
-        channelName?: string;
-        channelId?: string;
+        channelName?: string | null;
+        channelId?: string | null;
         tags?: string[];
+        resolution?: string | null;
+        fileSize?: number | null;
     }) {
         await this.getMedia(mediaId, organizationId);
         return await this.metadataRepo.upsert(mediaId, {
             ...metadata,
             tags: metadata.tags ? JSON.stringify(metadata.tags) : undefined
         });
+    }
+
+    // ---------------------------------------------------------------------------
+    // YouTube YTDL-Core Importer Pipeline
+    // ---------------------------------------------------------------------------
+
+    async analyzeYouTubeUrl(url: string) {
+        try {
+            const info = await ytdl.getInfo(url);
+            
+            const formats = info.formats.map(f => ({
+                itag: f.itag,
+                qualityLabel: f.qualityLabel || null,
+                bitrate: f.bitrate || null,
+                audioBitrate: f.audioBitrate || null,
+                container: f.container || 'unknown',
+                contentLength: f.contentLength || null,
+                hasVideo: f.hasVideo,
+                hasAudio: f.hasAudio
+            }));
+
+            const videoDetails = info.videoDetails;
+
+            return {
+                title: videoDetails.title,
+                description: videoDetails.description || null,
+                channelName: videoDetails.author.name || null,
+                channelId: videoDetails.author.id || null,
+                coverArtUrl: videoDetails.thumbnails.length > 0 ? videoDetails.thumbnails[videoDetails.thumbnails.length - 1].url : null,
+                externalId: videoDetails.videoId,
+                externalLikeCount: videoDetails.likes || 0,
+                externalViewCount: Number(videoDetails.viewCount) || 0,
+                formats
+            };
+        } catch (error: any) {
+            if (error.message.includes("playable formats")) {
+                throw new ForbiddenError("YouTube Edge CDN temporarily blocked this extraction request (IP ban or Cipher shift). Please try another video or await upstream patches for ytdl-core.");
+            }
+            throw new Error(`Failed to safely map YouTube metadata manifest: ${error.message}`);
+        }
+    }
+
+    async executeYouTubeImport(
+        organizationId: string,
+        userId: string,
+        url: string,
+        formatItag: number,
+        analyzedMetadata?: any
+    ) {
+        // 1. Fetch manifest
+        const info = await ytdl.getInfo(url);
+        const format = ytdl.chooseFormat(info.formats, { quality: formatItag });
+
+        if (!format || !format.url) {
+            throw new Error("The requested media format was immediately entirely unavailable on YouTube's Edge CDN.");
+        }
+
+        // 2. Generate UUID mapping for R2
+        const mediaId = crypto.randomUUID();
+        const extension = format.hasVideo && format.hasAudio ? 'mp4' : (format.hasVideo ? 'mp4' : 'mp3');
+        const bucketKey = `${organizationId}/media/imports/${mediaId}.${extension}`;
+        
+        // 3. Open ReadStream from YouTube Edge (Fetch)
+        const response = await fetch(format.url);
+        
+        if (!response.body) {
+            throw new Error("YouTube Edge CDN failed to return a valid readable stream buffer.");
+        }
+
+        const exactMime = format.hasVideo ? 'video/mp4' : 'audio/mpeg';
+        const exactSize = format.contentLength ? parseInt(format.contentLength, 10) : 0;
+
+        // 4. Pipe instantly to R2 using Native WebStream Wrapper
+        const uploadObj = await this.uploadService.uploadStreamToR2(
+            bucketKey,
+            response.body,
+            exactMime,
+            exactSize,
+            organizationId,
+            userId
+        );
+
+        // 5. Build Cover Art
+        let finalCoverArtUrl: string | undefined = undefined;
+        
+        const bestThumb = info.videoDetails.thumbnails.length > 0 
+            ? info.videoDetails.thumbnails[info.videoDetails.thumbnails.length - 1] 
+            : null;
+
+        if (bestThumb) {
+            try {
+                const thumbRes = await fetch(bestThumb.url);
+                if (thumbRes.body) {
+                    const thumbKey = `${organizationId}/media/covers/${mediaId}.jpg`;
+                    const thumbUpload = await this.uploadService.uploadStreamToR2(
+                        thumbKey,
+                        thumbRes.body,
+                        'image/jpeg',
+                        0,
+                        organizationId,
+                        userId
+                    );
+                    finalCoverArtUrl = thumbUpload.url;
+                }
+            } catch (e) {
+                // Safely ignore cover art failures
+            }
+        }
+
+        // 6. Register Media Row
+        const media = await this.mediaRepo.create({
+            id: mediaId,
+            organizationId,
+            title: analyzedMetadata?.title || info.videoDetails.title || 'Unknown Import',
+            description: analyzedMetadata?.description || info.videoDetails.description || null,
+            mimeType: exactMime,
+            mediaUrl: uploadObj.url,
+            coverArtUrl: finalCoverArtUrl,
+            uploadedBy: userId,
+        });
+
+        // 7. Inject YouTube analytics payload
+        await this.metadataRepo.upsert(media.id, {
+            source: 'youtube',
+            externalId: info.videoDetails.videoId,
+            externalLikeCount: info.videoDetails.likes || 0,
+            externalViewCount: Number(info.videoDetails.viewCount) || 0,
+            channelName: info.videoDetails.author.name || null,
+            channelId: info.videoDetails.author.id || null,
+            resolution: format.qualityLabel || null,
+            fileSize: exactSize
+        });
+
+        // 8. Eager fetch final assembled entity
+        return await this.getMedia(media.id, organizationId);
     }
 }

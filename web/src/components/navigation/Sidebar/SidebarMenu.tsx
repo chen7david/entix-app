@@ -1,7 +1,7 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
+import { CloudDownloadOutlined, HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined } from "@ant-design/icons";
 import { links } from "@shared/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
@@ -75,6 +75,11 @@ export const SidebarMenu: React.FC = () => {
                         label: 'Audio Library',
                         key: getOrgLink('/audio'),
                         icon: <AudioOutlined />,
+                    },
+                    {
+                        label: 'Import Media',
+                        key: getOrgLink('/imports'),
+                        icon: <CloudDownloadOutlined />,
                     },
                     {
                         label: 'Playlists',

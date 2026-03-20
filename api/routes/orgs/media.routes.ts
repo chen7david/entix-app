@@ -12,6 +12,8 @@ const MediaMetadataSchema = z.object({
     channelName: z.string().nullable(),
     channelId: z.string().nullable(),
     tags: z.string().nullable(),
+    resolution: z.string().nullable().optional(),
+    fileSize: z.number().nullable().optional(),
 });
 
 const MediaSubtitleSchema = z.object({
@@ -38,6 +40,29 @@ const MediaResponseSchema = z.object({
     subtitles: z.array(MediaSubtitleSchema).optional(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
+});
+
+const YouTubeFormatSchema = z.object({
+    itag: z.number(),
+    qualityLabel: z.string().nullable(),
+    bitrate: z.number().nullable(),
+    audioBitrate: z.number().nullable(),
+    container: z.string(),
+    contentLength: z.string().nullable(),
+    hasVideo: z.boolean(),
+    hasAudio: z.boolean(),
+});
+
+const AnalyzeImportResponseSchema = z.object({
+    title: z.string(),
+    description: z.string().nullable(),
+    channelName: z.string().nullable(),
+    channelId: z.string().nullable(),
+    coverArtUrl: z.string().nullable(),
+    externalId: z.string(),
+    externalLikeCount: z.number(),
+    externalViewCount: z.number(),
+    formats: z.array(YouTubeFormatSchema),
 });
 
 export const MediaRoutes = {
@@ -256,6 +281,8 @@ export const MediaRoutes = {
                             channelName: z.string().nullable().optional(),
                             channelId: z.string().nullable().optional(),
                             tags: z.array(z.string()).optional(),
+                            resolution: z.string().nullable().optional(),
+                            fileSize: z.number().nullable().optional(),
                         }),
                     },
                 },
@@ -269,6 +296,68 @@ export const MediaRoutes = {
                     },
                 },
                 description: "Metadata updated successfully",
+            },
+        },
+    }),
+
+    analyzeImport: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/media/imports/analyze",
+        tags: ["Media Imports"],
+        middleware: [requireAuth, requireOrgMembership, requirePermission('media', ['create'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+            }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({ url: z.string().url() }),
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: AnalyzeImportResponseSchema,
+                    },
+                },
+                description: "Analysis complete",
+            },
+        },
+    }),
+
+    executeImport: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/media/imports/execute",
+        tags: ["Media Imports"],
+        middleware: [requireAuth, requireOrgMembership, requirePermission('media', ['create'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+            }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({ 
+                            url: z.string().url(),
+                            formatItag: z.number(),
+                            metadata: z.any().optional(),
+                        }),
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.CREATED]: {
+                content: {
+                    "application/json": {
+                        schema: MediaResponseSchema,
+                    },
+                },
+                description: "Media imported synchronously",
             },
         },
     }),

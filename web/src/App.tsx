@@ -29,6 +29,7 @@ import { OrganizationInvitationsPage } from "./pages/organization/OrganizationIn
 import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
 import { OrganizationVideoPage } from "./pages/organization/OrganizationVideoPage";
 import { OrganizationAudioPage } from "./pages/organization/OrganizationAudioPage";
+import { ImportMediaPage } from "./pages/organization/ImportMediaPage";
 import { OrganizationPlaylistsPage } from "./pages/organization/OrganizationPlaylistsPage";
 import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
 import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
@@ -117,6 +118,7 @@ export default function App() {
                   {/* Organization Management */}
                   <Route path="video" element={<OrganizationVideoPage />} />
                   <Route path="audio" element={<OrganizationAudioPage />} />
+                  <Route path="imports" element={<ImportMediaPage />} />
                   <Route path="playlists" element={<OrganizationPlaylistsPage />} />
                   <Route path="playlists/:playlistId" element={<PlaylistPlayerPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />

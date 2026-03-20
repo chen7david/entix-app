@@ -132,6 +132,31 @@ export class UploadService {
         return await this.uploadRepo.deleteGlobal(uploadId);
     }
 
+    async uploadStreamToR2(bucketKey: string, stream: ReadableStream, contentType: string, fileSize: number, organizationId: string, userId: string) {
+        await this.bucketService.upload(stream, {
+            folder: "",
+            fileName: bucketKey,
+            contentType
+        });
+
+        const uploadRecord = await this.uploadRepo.create({
+            id: crypto.randomUUID(),
+            originalName: bucketKey.split('/').pop() || 'import.mp4',
+            bucketKey,
+            url: bucketKey,
+            fileSize,
+            contentType,
+            organizationId,
+            uploadedBy: userId,
+            status: "completed"
+        });
+
+        return {
+            ...uploadRecord,
+            url: `${this.publicUrlPrefix}/${uploadRecord.bucketKey}`
+        };
+    }
+
     // Abstraction Helpers to DRY up business services
     async getVerifiedImageUploadUrl(uploadId: string, organizationId: string): Promise<string> {
         const upload = await this.getUploadById(uploadId, organizationId);

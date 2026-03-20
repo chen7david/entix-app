@@ -85,4 +85,24 @@ export class MediaHandlers {
         
         return ctx.json(updated, HttpStatusCodes.OK);
     };
+
+    static analyzeImport: AppHandler<typeof MediaRoutes.analyzeImport> = async (ctx) => {
+        const { url } = ctx.req.valid("json");
+        const mediaService = getMediaService(ctx);
+        
+        const analysis = await mediaService.analyzeYouTubeUrl(url);
+        return ctx.json(analysis, HttpStatusCodes.OK);
+    };
+
+    static executeImport: AppHandler<typeof MediaRoutes.executeImport> = async (ctx) => {
+        const { organizationId } = ctx.req.valid("param");
+        const { url, formatItag, metadata } = ctx.req.valid("json");
+        const userId = ctx.get("userId")!;
+        const mediaService = getMediaService(ctx);
+        
+        const media = await mediaService.executeYouTubeImport(organizationId, userId, url, formatItag, metadata);
+        ctx.var.logger.info({ organizationId, mediaId: media.id, formatItag }, "YouTube Media Imported");
+        
+        return ctx.json(media, HttpStatusCodes.CREATED);
+    };
 }

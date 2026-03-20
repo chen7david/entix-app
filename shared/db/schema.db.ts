@@ -300,6 +300,8 @@ export const mediaMetadata = sqliteTable(
         channelName: text("channel_name"),
         channelId: text("channel_id"),
         tags: text("tags"), // Stringified JSON array
+        resolution: text("resolution"),
+        fileSize: integer("file_size"),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
