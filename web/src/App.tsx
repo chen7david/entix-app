@@ -27,7 +27,9 @@ import { OrganizationListPage } from "./pages/organization/OrganizationListPage"
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
 import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
-import { OrganizationMediaPage } from "./pages/organization/OrganizationMediaPage";
+import { OrganizationVideoPage } from "./pages/organization/OrganizationVideoPage";
+import { OrganizationAudioPage } from "./pages/organization/OrganizationAudioPage";
+import { OrganizationPlaylistsPage } from "./pages/organization/OrganizationPlaylistsPage";
 import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
 import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/onboarding/SelectOrganizationPage";
@@ -113,7 +115,9 @@ export default function App() {
                   </Route>
 
                   {/* Organization Management */}
-                  <Route path="media" element={<OrganizationMediaPage />} />
+                  <Route path="video" element={<OrganizationVideoPage />} />
+                  <Route path="audio" element={<OrganizationAudioPage />} />
+                  <Route path="playlists" element={<OrganizationPlaylistsPage />} />
                   <Route path="playlists/:playlistId" element={<PlaylistPlayerPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />
                   <Route path="invitations" element={<OrganizationInvitationsPage />} />

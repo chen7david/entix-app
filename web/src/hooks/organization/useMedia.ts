@@ -17,17 +17,18 @@ type UpdateMediaInput = {
     coverArtUploadId?: string;
 };
 
-export const useMedia = () => {
+export const useMedia = (type?: "video" | "audio") => {
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
     // List Media
     const { data: media = [], isLoading: isLoadingMedia } = useQuery({
-        queryKey: ["media", orgId],
+        queryKey: ["media", orgId, type],
         queryFn: async () => {
             if (!orgId) return [];
-            const res = await fetch(`/api/v1/orgs/${orgId}/media`);
+            const url = type ? `/api/v1/orgs/${orgId}/media?type=${type}` : `/api/v1/orgs/${orgId}/media`;
+            const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch media");
             return await res.json() as Media[];
         },
