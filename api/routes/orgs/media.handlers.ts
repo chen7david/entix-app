@@ -6,8 +6,9 @@ import { getMediaService } from "@api/factories/service.factory";
 export class MediaHandlers {
     static listMedia: AppHandler<typeof MediaRoutes.listMedia> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
+        const { type } = ctx.req.valid("query");
         const mediaService = getMediaService(ctx);
-        const media = await mediaService.listMedia(organizationId);
+        const media = await mediaService.listMedia(organizationId, type);
         return ctx.json(media, HttpStatusCodes.OK);
     };
 

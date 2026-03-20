@@ -21,6 +21,9 @@ export const links = {
     },
     organization: {
         index: (slug: string) => `/org/${slug}/organizations`,
+        video: (slug: string) => `/org/${slug}/video`,
+        audio: (slug: string) => `/org/${slug}/audio`,
+        playlists: (slug: string) => `/org/${slug}/playlists`,
         edit: (slug: string) => `/org/${slug}/settings`,
         invitations: (slug: string) => `/org/${slug}/invitations`,
         members: (slug: string) => `/org/${slug}/members`,

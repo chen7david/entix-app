@@ -1,6 +1,6 @@
 import { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema.db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, like } from "drizzle-orm";
 
 export type CreateMediaInput = {
     id: string;
@@ -30,10 +30,18 @@ export class MediaRepository {
         });
     }
 
-    async findAllByOrganization(organizationId: string): Promise<schema.Media[]> {
+    async findAllByOrganization(organizationId: string, type?: "video" | "audio"): Promise<schema.Media[]> {
+        const filters = [eq(schema.media.organizationId, organizationId)];
+        
+        if (type === "video") {
+            filters.push(like(schema.media.mimeType, 'video/%'));
+        } else if (type === "audio") {
+            filters.push(like(schema.media.mimeType, 'audio/%'));
+        }
+
         return await this.db.select()
             .from(schema.media)
-            .where(eq(schema.media.organizationId, organizationId))
+            .where(and(...filters))
             .orderBy(desc(schema.media.createdAt));
     }
 

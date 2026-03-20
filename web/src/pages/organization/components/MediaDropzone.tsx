@@ -7,7 +7,7 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 const { Dragger } = Upload;
 
-export const MediaDropzone: React.FC = () => {
+export const MediaDropzone: React.FC<{ type: 'video' | 'audio' }> = ({ type }) => {
     const { activeOrganization } = useOrganization();
     const { createMedia } = useMedia();
     const [isUploading, setIsUploading] = useState(false);
@@ -17,7 +17,7 @@ export const MediaDropzone: React.FC = () => {
     const props: UploadProps = {
         name: 'file',
         multiple: true,
-        accept: 'video/mp4,audio/mpeg',
+        accept: type === 'video' ? 'video/mp4' : 'audio/mpeg',
         showUploadList: { showRemoveIcon: false },
         customRequest: async (options) => {
             if (!organizationId) {
@@ -88,7 +88,9 @@ export const MediaDropzone: React.FC = () => {
                 </p>
                 <p className="ant-upload-text">Click or drag file to this area to upload</p>
                 <p className="ant-upload-hint">
-                    Allowed types: video/mp4, audio/mpeg. Your media will be automatically processed for web streaming.
+                    {type === 'video' 
+                        ? 'Allowed type: video/mp4. Your cinematic assets will be processed for web streaming.' 
+                        : 'Allowed type: audio/mpeg. Your sonic assets will be processed for web streaming.'}
                 </p>
             </Dragger>
         </div>
