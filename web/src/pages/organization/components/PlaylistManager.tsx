@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Typography, Button, Table, Avatar, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty } from 'antd';
-import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined } from '@ant-design/icons';
+import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty } from 'antd';
+import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, VideoCameraOutlined, AudioOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 
 const { Title, Text } = Typography;
 
@@ -36,10 +37,12 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
                 >
                     <HolderOutlined />
                 </div>
-                <Avatar shape="square" src={mediaItem.coverArtUrl} className="flex-shrink-0 bg-gray-200 dark:bg-zinc-700" />
                 <div className="flex flex-col flex-1 min-w-0">
                     <span className="font-semibold text-sm truncate text-[#646cff] dark:text-[#747bff] transition-colors">{mediaItem.title}</span>
-                    <span className="text-xs text-gray-500 capitalize truncate mt-0.5">{mediaItem.mimeType.split('/')[0]}</span>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        {mediaItem.mimeType.startsWith('audio') ? <AudioOutlined /> : <VideoCameraOutlined />}
+                        <span className="capitalize">{mediaItem.mimeType.split('/')[0]}</span>
+                    </div>
                 </div>
             </div>
             <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={onRemove} className="opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -146,13 +149,10 @@ export const PlaylistManager: React.FC = () => {
             key: 'title',
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
-                    <Avatar 
-                        shape="square" 
-                        size="large"
-                        className="bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 border border-indigo-100 dark:border-indigo-800/30"
-                    >
-                        {record.title.charAt(0).toUpperCase()}
-                    </Avatar>
+                    <EntityAvatar 
+                        icon={<PlayCircleOutlined />} 
+                        fontSize={16}
+                    />
                     <div className="flex flex-col">
                         <Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{record.title}</Text>
                         <Text type="secondary" className="text-xs font-medium mt-0.5">{record.description || 'No description'}</Text>

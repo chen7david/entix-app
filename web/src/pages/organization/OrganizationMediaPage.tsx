@@ -1,10 +1,11 @@
 import React, { useState, useRef } from 'react';
-import { Typography, Table, Tag, Button, Space, Popconfirm, Drawer, Avatar, Input, Form, Tabs } from 'antd';
-import { PlayCircleOutlined, AudioOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
+import { Typography, Table, Tag, Button, Space, Popconfirm, Drawer, Input, Form, Tabs } from 'antd';
+import { VideoCameraOutlined, AudioOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { MediaDropzone } from './components/MediaDropzone';
 import { PlaylistManager } from './components/PlaylistManager';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
+import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 import type { Media } from '@shared/db/schema.db';
 
@@ -39,12 +40,10 @@ export const OrganizationMediaPage: React.FC = () => {
             key: 'title',
             render: (text: string, record: Media) => (
                 <div className="flex items-center gap-3">
-                    <Avatar 
-                        shape="square" 
-                        size="large"
-                        src={record.coverArtUrl} 
-                        icon={record.mimeType.startsWith('video/') ? <PlayCircleOutlined /> : <AudioOutlined />}
-                        className={record.mimeType.startsWith('video/') ? "bg-blue-50 dark:bg-blue-900/20 text-blue-500" : "bg-purple-50 dark:bg-purple-900/20 text-purple-500"}
+                    <EntityAvatar 
+                        imageUrl={record.coverArtUrl || undefined}
+                        icon={record.mimeType.startsWith('video/') ? <VideoCameraOutlined /> : <AudioOutlined />}
+                        fontSize={16}
                     />
                     <div className="flex flex-col">
                         <Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{text}</Text>

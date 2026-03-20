@@ -5,6 +5,7 @@ import { Table, Button, Typography, Skeleton, Statistic, Row, Col, Card, Tag, In
 import type { MenuProps } from "antd";
 import { TeamOutlined, MailOutlined, AppstoreOutlined, SearchOutlined, MoreOutlined, EyeOutlined } from "@ant-design/icons";
 import { useState } from "react";
+import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import dayjs from "dayjs";
 
@@ -29,21 +30,7 @@ export const OrganizationListPage = () => {
             key: 'name',
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
-                    <div style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        background: record.id === activeOrganization?.id ? '#646cff' : '#e8e8e8',
-                        color: record.id === activeOrganization?.id ? '#fff' : '#666',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 14,
-                        fontWeight: 700,
-                        flexShrink: 0,
-                    }}>
-                        {record.name?.charAt(0)?.toUpperCase() || '?'}
-                    </div>
+                    <EntityAvatar active={record.id === activeOrganization?.id} text={record.name} />
                     <div>
                         <div className="font-medium flex items-center gap-2">
                             {record.name}
