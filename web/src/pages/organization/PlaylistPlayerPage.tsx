@@ -144,6 +144,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 <Skeleton.Image className="w-full h-full opacity-20" active />
                             ) : activeMedia ? (
                                 <MediaPlayer
+                                    key={activeMedia.id}
                                     title={activeMedia.title}
                                     description={activeMedia.description || undefined}
                                     mediaUrl={activeMedia.mediaUrl}

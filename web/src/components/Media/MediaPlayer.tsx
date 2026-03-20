@@ -2,9 +2,8 @@ import React from 'react';
 import { MediaPlayer as VidstackPlayer, MediaProvider, Poster, Track } from '@vidstack/react';
 import '../../../node_modules/@vidstack/react/player/styles/default/theme.css';
 import '../../../node_modules/@vidstack/react/player/styles/default/layouts/video.css';
-import '../../../node_modules/@vidstack/react/player/styles/default/layouts/audio.css';
-import { defaultLayoutIcons, DefaultVideoLayout, DefaultAudioLayout } from '@vidstack/react/player/layouts/default';
-import { StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
+import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
+import { StepBackwardOutlined, StepForwardOutlined, AudioOutlined } from '@ant-design/icons';
 
 interface MediaPlayerProps {
     title: string;
@@ -56,13 +55,21 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
         <VidstackPlayer
             title={title}
             src={mediaUrl}
-            viewType={isAudio ? 'audio' : 'video'}
+            viewType="video" /* Force video view so audio tracks can use the cinematic layout */
             onEnd={onEnd}
             onPlay={onPlay}
             autoPlay={autoPlay}
             playsInline
-            className="w-full h-full overflow-hidden"
+            className="w-full h-full overflow-hidden relative"
         >
+            {isAudio && !coverArtUrl && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 pointer-events-none px-6 text-center -z-10">
+                    <AudioOutlined className="text-5xl text-blue-500 mb-4 opacity-50" />
+                    <h3 className="text-white text-2xl font-semibold truncate w-full opacity-80">{title}</h3>
+                    <p className="text-gray-400 text-sm mt-2 opacity-60">Audio Playback</p>
+                </div>
+            )}
+
             <MediaProvider>
                 {coverArtUrl && (
                     <Poster
@@ -82,11 +89,7 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
                 )}
             </MediaProvider>
 
-            {isAudio ? (
-                <DefaultAudioLayout icons={defaultLayoutIcons} slots={layoutSlots} />
-            ) : (
-                <DefaultVideoLayout icons={defaultLayoutIcons} slots={layoutSlots} />
-            )}
+            <DefaultVideoLayout icons={defaultLayoutIcons} slots={layoutSlots} />
         </VidstackPlayer>
     );
 };
