@@ -6,6 +6,7 @@ import { MediaDropzone } from './components/MediaDropzone';
 import { PlaylistManager } from './components/PlaylistManager';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
+import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 import type { Media } from '@shared/db/schema.db';
 
@@ -165,6 +166,21 @@ export const OrganizationMediaPage: React.FC = () => {
                         <div className="flex flex-col gap-2">
                             <Title level={5} className="!mb-0">Edit Metadata</Title>
                             <Text type="secondary" className="mb-4">Update the details of this media asset seamlessly.</Text>
+
+                            {/* Inline Cover Art Upload Zone */}
+                            <div className="flex flex-col mb-4">
+                                <Text className="mb-2 font-medium">Cover Thumbnail</Text>
+                                <CoverArtUploader
+                                    organizationId={activeMedia.organizationId}
+                                    currentImageUrl={activeMedia.coverArtUrl}
+                                    onUploadSuccess={async (uploadId) => {
+                                        await updateMedia(activeMedia.id, { coverArtUploadId: uploadId });
+                                        // The query invalidation will sync the data across the app.
+                                        // To reflect immediately locally, we trigger a close or we can let React Query refetch sync it on the next render
+                                    }}
+                                />
+                            </div>
+
                             <Form
                                 layout="vertical"
                                 initialValues={{

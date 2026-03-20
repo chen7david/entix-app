@@ -7,6 +7,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
+import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 
 const { Title, Text } = Typography;
 
@@ -309,7 +310,7 @@ export const PlaylistManager: React.FC = () => {
 
             {/* Playlist Edit Drawer */}
             <Drawer
-                title={`Edit Playlist: ${activePlaylist?.title}`}
+                title={`Edit Playlist`}
                 placement="right"
                 onClose={() => setIsEditDrawerOpen(false)}
                 open={isEditDrawerOpen}
@@ -321,7 +322,22 @@ export const PlaylistManager: React.FC = () => {
                     </Button>
                 }
             >
-                <Form form={editForm} layout="vertical" onFinish={handleEditSave} className="mt-4">
+                {/* Frictionless Cover Art Upload Zone */}
+                <div className="flex flex-col mb-6">
+                    <Text type="secondary" className="mb-2">Playlist Cover</Text>
+                    {activePlaylist && (
+                        <CoverArtUploader
+                            organizationId={activePlaylist.organizationId}
+                            currentImageUrl={activePlaylist.coverArtUrl}
+                            onUploadSuccess={async (uploadId) => {
+                                await updatePlaylist(activePlaylist.id, { coverArtUploadId: uploadId });
+                                // Local state is mutated seamlessly after query cache invalidation finishes
+                            }}
+                        />
+                    )}
+                </div>
+
+                <Form form={editForm} layout="vertical" onFinish={handleEditSave} className="mt-2">
                     <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Please input the title' }]}>
                         <Input size="large" />
                     </Form.Item>
