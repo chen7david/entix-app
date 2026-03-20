@@ -1,6 +1,6 @@
 import { BucketService } from "./bucket.service";
 import { UploadRepository } from "@api/repositories/upload.repository";
-import { NotFoundError } from "@api/errors/app.error";
+import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
 
 export class UploadService {
     constructor(
@@ -130,5 +130,28 @@ export class UploadService {
 
         // delete from DB
         return await this.uploadRepo.deleteGlobal(uploadId);
+    }
+
+    // Abstraction Helpers to DRY up business services
+    async getVerifiedImageUploadUrl(uploadId: string, organizationId: string): Promise<string> {
+        const upload = await this.getUploadById(uploadId, organizationId);
+        if (!upload || upload.status !== "completed") {
+            throw new NotFoundError("Cover art upload not found or not yet completed");
+        }
+        if (!upload.contentType.startsWith("image/")) {
+            throw new ForbiddenError("Cover art must be an image");
+        }
+        return upload.url;
+    }
+
+    async deleteUploadByUrlGlobalSafely(url: string): Promise<void> {
+        const uploadRecord = await this.getUploadByUrlGlobal(url);
+        if (uploadRecord) {
+            try { 
+                await this.deleteUploadGlobal(uploadRecord.id); 
+            } catch (err) {
+                // Silently swallow cascade deletion errors on R2 hooks
+            }
+        }
     }
 }

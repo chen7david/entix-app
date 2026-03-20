@@ -10,7 +10,7 @@ export const MoviesPage: React.FC = () => {
             <Toolbar />
             <div className="p-6">
                 <Title level={2}>Movies</Title>
-                <p>Welcome to the Movies page.</p>
+                <p>Welcome to the Movies dashboard module.</p>
             </div>
         </>
     );
