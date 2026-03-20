@@ -174,8 +174,7 @@ export const PlaylistManager: React.FC = () => {
             render: (_: any, record: any) => (
                 <Space size="middle">
                     <Button 
-                        type="primary" 
-                        shape="circle"
+                        type="default" 
                         icon={<PlayCircleOutlined />} 
                         onClick={(e) => {
                             e.stopPropagation();

@@ -92,8 +92,10 @@ export const PlaylistPlayerPage: React.FC = () => {
                             <Tooltip title={item.title} placement="topLeft" mouseEnterDelay={0.5}>
                                 <Text className={`truncate block font-medium transition-colors ${isPlaying ? 'text-blue-600' : ''}`}>{item.title}</Text>
                             </Tooltip>
-                            {item.description && (
+                            {item.description ? (
                                 <Text type="secondary" className="text-xs truncate block mt-0.5">{item.description}</Text>
+                            ) : (
+                                <Text type="secondary" className="text-xs truncate block mt-0.5 italic opacity-50">No description</Text>
                             )}
                         </div>
                     </div>

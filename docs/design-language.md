@@ -38,7 +38,7 @@ const { Title, Text } = Typography;
     </div>
 </div>
 ```
-- **Title Margins:** Ant Design aggressively injects bottom margins into `<Title>`. Always normalize this with structural Tailwind (`!mb-1` or `style={{ marginBottom: 4 }}`).
+- **Title Margins:** Ant Design aggressively injects bottom margins into `<Title>`. Always normalize this with structural Tailwind (`!mb-1`).
 - **Subtitles:** Always use `<Text type="secondary">` to inherit the native light/dark contrast gray string mapping. Do NOT manually apply Tailwind gray constants to primary reading text.
 
 ## 3. Light / Dark Container Colors
@@ -71,5 +71,5 @@ Never deploy bulky box/img representations for pure data-grid associations. Use 
 - **Audio Elements:** `<AudioOutlined className="text-blue-500 text-2xl" />`
 
 ### Members Page References
-- **Data Tables:** When rendering lists of entities (like the Members table), wrap clickable list items with `{ cursor: pointer, hover:bg-gray-50 }` in light mode to provide user interaction feedback.
+- **Data Tables:** When rendering lists of entities (like the Members table), wrap clickable list items with Tailwind classes like `cursor-pointer hover:bg-gray-50` in light mode to provide user interaction feedback.
 - **Avatars:** Display user data structurally with a clear `<Typography.Text strong>` name and a `<Typography.Text type="secondary">` email stacked underneath.
