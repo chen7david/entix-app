@@ -24,7 +24,7 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
             style={style}
             className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
                 isDragging 
-                    ? 'border-[#646cff] bg-white dark:bg-zinc-800/80 opacity-95 shadow-xl ring-2 ring-[#646cff]/20' 
+                    ? 'border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20' 
                     : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors'
             } transition-all group`}
         >
@@ -52,6 +52,7 @@ export const PlaylistManager: React.FC = () => {
         playlists, 
         isLoadingPlaylists, 
         createPlaylist, 
+        updatePlaylist,
         deletePlaylist, 
         getSequence, 
         updateSequence 
@@ -63,7 +64,10 @@ export const PlaylistManager: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [activePlaylist, setActivePlaylist] = useState<any>(null);
     const [isSequenceDrawerOpen, setIsSequenceDrawerOpen] = useState(false);
+    const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
     const [sequenceItems, setSequenceItems] = useState<string[]>([]);
+    
+    const [editForm] = Form.useForm();
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -82,6 +86,22 @@ export const PlaylistManager: React.FC = () => {
         const seq = await getSequence(playlist.id);
         setSequenceItems(seq.map(item => item.mediaId));
         setIsSequenceDrawerOpen(true);
+    };
+
+    const openEditDrawer = (playlist: any) => {
+        setActivePlaylist(playlist);
+        editForm.setFieldsValue({
+            title: playlist.title,
+            description: playlist.description,
+        });
+        setIsEditDrawerOpen(true);
+    };
+
+    const handleEditSave = async (values: any) => {
+        if (activePlaylist) {
+            await updatePlaylist(activePlaylist.id, values);
+            setIsEditDrawerOpen(false);
+        }
     };
 
     const handleDragEnd = (event: DragEndEvent) => {
@@ -149,18 +169,25 @@ export const PlaylistManager: React.FC = () => {
                     <Button 
                         type="default" 
                         icon={<OrderedListOutlined />} 
-                        onClick={() => openSequenceManager(record)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openSequenceManager(record);
+                        }}
                     >
                         Manage Sequence
                     </Button>
                     <Popconfirm
                         title="Delete Playlist"
                         description="Are you sure you want to delete this playlist?"
-                        onConfirm={() => deletePlaylist(record.id)}
+                        onConfirm={(e) => {
+                            e?.stopPropagation();
+                            deletePlaylist(record.id);
+                        }}
+                        onCancel={(e) => e?.stopPropagation()}
                         okText="Delete"
                         okButtonProps={{ danger: true }}
                     >
-                        <Button danger type="text" icon={<DeleteOutlined />} />
+                        <Button danger type="text" icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()} />
                     </Popconfirm>
                 </Space>
             )
@@ -188,6 +215,10 @@ export const PlaylistManager: React.FC = () => {
                 rowKey="id"
                 loading={isLoadingPlaylists}
                 pagination={{ pageSize: 10 }}
+                rowClassName="cursor-pointer"
+                onRow={(record) => ({
+                    onClick: () => openEditDrawer(record)
+                })}
             />
 
             {/* Create Modal */}
@@ -274,6 +305,30 @@ export const PlaylistManager: React.FC = () => {
                         )}
                     </div>
                 </div>
+            </Drawer>
+
+            {/* Playlist Edit Drawer */}
+            <Drawer
+                title={`Edit Playlist: ${activePlaylist?.title}`}
+                placement="right"
+                onClose={() => setIsEditDrawerOpen(false)}
+                open={isEditDrawerOpen}
+                width={400}
+                destroyOnClose
+                extra={
+                    <Button type="primary" onClick={() => editForm.submit()}>
+                        Save Settings
+                    </Button>
+                }
+            >
+                <Form form={editForm} layout="vertical" onFinish={handleEditSave} className="mt-4">
+                    <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Please input the title' }]}>
+                        <Input size="large" />
+                    </Form.Item>
+                    <Form.Item name="description" label="Description">
+                        <Input.TextArea rows={4} />
+                    </Form.Item>
+                </Form>
             </Drawer>
         </div>
     );
