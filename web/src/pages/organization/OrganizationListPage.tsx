@@ -1,7 +1,7 @@
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { Table, Button, Typography, Skeleton, Statistic, Row, Col, Card, Tag, Input, Dropdown } from "antd";
+import { Table, Button, Typography, Skeleton, Statistic, Row, Col, Card, Tag, Input, Dropdown, Tooltip } from "antd";
 import type { MenuProps } from "antd";
 import { TeamOutlined, MailOutlined, AppstoreOutlined, SearchOutlined, MoreOutlined, EyeOutlined } from "@ant-design/icons";
 import { useState } from "react";
@@ -31,14 +31,18 @@ export const OrganizationListPage = () => {
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
                     <EntityAvatar active={record.id === activeOrganization?.id} text={record.name} />
-                    <div>
+                    <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <div className="font-medium flex items-center gap-2">
-                            {record.name}
+                            <Tooltip title={record.name} placement="topLeft" mouseEnterDelay={0.5}>
+                                <span className="truncate block max-w-[200px]">{record.name}</span>
+                            </Tooltip>
                             {record.id === activeOrganization?.id && (
-                                <Tag color="purple" style={{ fontSize: 11 }}>Active</Tag>
+                                <Tag color="purple" style={{ fontSize: 11 }} className="flex-shrink-0">Active</Tag>
                             )}
                         </div>
-                        <div className="text-xs text-gray-500">{record.slug}</div>
+                        <Tooltip title={record.slug} placement="topLeft" mouseEnterDelay={0.5}>
+                            <div className="text-xs text-gray-500 truncate block">{record.slug}</div>
+                        </Tooltip>
                     </div>
                 </div>
             ),

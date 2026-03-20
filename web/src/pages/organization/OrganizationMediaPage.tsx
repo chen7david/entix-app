@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Typography, Table, Tag, Button, Space, Popconfirm, Drawer, Input, Form, Tabs } from 'antd';
+import { Typography, Table, Tag, Button, Space, Popconfirm, Drawer, Input, Form, Tabs, Tooltip } from 'antd';
 import { VideoCameraOutlined, AudioOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { MediaDropzone } from './components/MediaDropzone';
@@ -46,9 +46,13 @@ export const OrganizationMediaPage: React.FC = () => {
                         icon={record.mimeType.startsWith('video/') ? <VideoCameraOutlined /> : <AudioOutlined />}
                         fontSize={16}
                     />
-                    <div className="flex flex-col">
-                        <Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{text}</Text>
-                        <Text type="secondary" className="text-xs font-mono">{record.id.split('-')[0]}</Text>
+                    <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
+                        <Tooltip title={text} placement="topLeft" mouseEnterDelay={0.5}>
+                            <span className="font-semibold text-sm truncate text-[#646cff] hover:text-[#747bff] transition-colors block">{text}</span>
+                        </Tooltip>
+                        <Tooltip title={record.description} placement="topLeft" mouseEnterDelay={0.5}>
+                            <span className="text-xs text-gray-500 truncate mt-0.5 block">{record.description || 'No description provided'}</span>
+                        </Tooltip>
                     </div>
                 </div>
             )
@@ -73,17 +77,23 @@ export const OrganizationMediaPage: React.FC = () => {
             title: 'Actions',
             key: 'actions',
             render: (_: any, record: Media) => (
-                <Space size="middle">
-                    <Popconfirm
-                        title="Delete Media"
-                        description="This will permanently delete the file from Cloudflare R2."
-                        onConfirm={() => deleteMedia(record.id)}
-                        okText="Delete"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Button icon={<DeleteOutlined />} danger type="text" />
-                    </Popconfirm>
-                </Space>
+                <div onClick={(e) => e.stopPropagation()}>
+                    <Space size="middle">
+                        <Popconfirm
+                            title="Delete Media"
+                            description="This will permanently delete the file from Cloudflare R2."
+                            onConfirm={(e) => {
+                                e?.stopPropagation();
+                                deleteMedia(record.id);
+                            }}
+                            onCancel={(e) => e?.stopPropagation()}
+                            okText="Delete"
+                            okButtonProps={{ danger: true }}
+                        >
+                            <Button icon={<DeleteOutlined />} danger type="text" onClick={(e) => e.stopPropagation()} />
+                        </Popconfirm>
+                    </Space>
+                </div>
             )
         }
     ];

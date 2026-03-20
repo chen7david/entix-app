@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty } from 'antd';
+import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty, Tooltip } from 'antd';
 import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, VideoCameraOutlined, AudioOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
@@ -38,8 +38,10 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
                 >
                     <HolderOutlined />
                 </div>
-                <div className="flex flex-col flex-1 min-w-0">
-                    <span className="font-semibold text-sm truncate text-[#646cff] dark:text-[#747bff] transition-colors">{mediaItem.title}</span>
+                <div className="flex flex-col flex-1 min-w-0 max-w-[280px]">
+                    <Tooltip title={mediaItem.title} placement="topLeft" mouseEnterDelay={0.5}>
+                        <span className="font-semibold text-sm truncate block text-[#646cff] dark:text-[#747bff] transition-colors">{mediaItem.title}</span>
+                    </Tooltip>
                     <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                         {mediaItem.mimeType.startsWith('audio') ? <AudioOutlined /> : <VideoCameraOutlined />}
                         <span className="capitalize">{mediaItem.mimeType.split('/')[0]}</span>
@@ -154,9 +156,13 @@ export const PlaylistManager: React.FC = () => {
                         icon={<PlayCircleOutlined />} 
                         fontSize={16}
                     />
-                    <div className="flex flex-col">
-                        <Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{record.title}</Text>
-                        <Text type="secondary" className="text-xs font-medium mt-0.5">{record.description || 'No description'}</Text>
+                    <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
+                        <Tooltip title={record.title} placement="topLeft" mouseEnterDelay={0.5}>
+                            <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">{record.title}</span>
+                        </Tooltip>
+                        <Tooltip title={record.description} placement="topLeft" mouseEnterDelay={0.5}>
+                            <span className="text-xs font-medium mt-0.5 text-gray-500 truncate block">{record.description || 'No description'}</span>
+                        </Tooltip>
                     </div>
                 </div>
             )
