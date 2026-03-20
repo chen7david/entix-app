@@ -2,10 +2,15 @@ import { MediaRepository } from "@api/repositories/media.repository";
 import { UploadService } from "@api/services/upload.service";
 import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
 
+import { MediaSubtitleRepository } from "@api/repositories/media-subtitle.repository";
+import { MediaMetadataRepository } from "@api/repositories/media-metadata.repository";
+
 export class MediaService {
     constructor(
         private mediaRepo: MediaRepository,
-        private uploadService: UploadService
+        private uploadService: UploadService,
+        private subtitleRepo: MediaSubtitleRepository,
+        private metadataRepo: MediaMetadataRepository
     ) { }
 
     async createMedia(
@@ -100,5 +105,71 @@ export class MediaService {
 
         // Delete from Drizzle
         await this.mediaRepo.delete(media.id, organizationId);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Subtitle Management
+    // ---------------------------------------------------------------------------
+
+    async addSubtitle(
+        organizationId: string,
+        mediaId: string,
+        payload: { uploadId: string; language: string; label: string }
+    ) {
+        // Authenticate media ownership
+        await this.getMedia(mediaId, organizationId);
+
+        // Verify the VTT upload
+        const vttUpload = await this.uploadService.getUploadById(payload.uploadId, organizationId);
+        if (!vttUpload || vttUpload.status !== "completed") {
+            throw new NotFoundError("Subtitle upload not found or not yet completed");
+        }
+        
+        // Strict VTT enforcement
+        if (!vttUpload.contentType.includes("vtt")) {
+            throw new ForbiddenError("Subtitles must be strictly in text/vtt format.");
+        }
+
+        return await this.subtitleRepo.create({
+            id: crypto.randomUUID(),
+            mediaId,
+            language: payload.language,
+            label: payload.label,
+            mimeType: "text/vtt",
+            url: vttUpload.url
+        });
+    }
+
+    async deleteSubtitle(organizationId: string, mediaId: string, subtitleId: string) {
+        await this.getMedia(mediaId, organizationId);
+        const subtitle = await this.subtitleRepo.getById(subtitleId);
+        if (!subtitle || subtitle.mediaId !== mediaId) {
+            throw new NotFoundError("Subtitle not found");
+        }
+        
+        // Wipe from Cloudflare R2
+        await this.uploadService.deleteUploadByUrlGlobalSafely(subtitle.url);
+        // Wipe from D1
+        await this.subtitleRepo.delete(subtitleId);
+    }
+
+    // ---------------------------------------------------------------------------
+    // Metadata Analytics Mapping
+    // ---------------------------------------------------------------------------
+
+    async updateMetadata(organizationId: string, mediaId: string, metadata: {
+        source?: string;
+        externalId?: string;
+        externalLikeCount?: number;
+        externalViewCount?: number;
+        channelName?: string;
+        channelId?: string;
+        tags?: string[];
+    }) {
+        await this.getMedia(mediaId, organizationId);
+        return await this.metadataRepo.upsert(mediaId, {
+            ...metadata,
+            tags: metadata.tags ? JSON.stringify(metadata.tags) : undefined
+        });
     }
 }

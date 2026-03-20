@@ -2,13 +2,18 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { message } from "antd";
-import type { Media } from "@shared/db/schema.db";
+import type { Media, MediaMetadata, MediaSubtitle } from "@shared/db/schema.db";
 
 type CreateMediaInput = {
     title: string;
     description?: string;
     uploadId: string;
     coverArtUploadId?: string;
+};
+
+export type MediaWithRelations = Media & {
+    metadata?: MediaMetadata | null;
+    subtitles?: MediaSubtitle[];
 };
 
 type UpdateMediaInput = {
@@ -30,7 +35,7 @@ export const useMedia = (type?: "video" | "audio") => {
             const url = type ? `/api/v1/orgs/${orgId}/media?type=${type}` : `/api/v1/orgs/${orgId}/media`;
             const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch media");
-            return await res.json() as Media[];
+            return await res.json() as MediaWithRelations[];
         },
         enabled: !!orgId,
     });
@@ -114,6 +119,62 @@ export const useMedia = (type?: "video" | "audio") => {
         }
     });
 
+    // ---------------------------------------------------------------------------
+    // Advanced Relations (Subtitles & Metadata)
+    // ---------------------------------------------------------------------------
+
+    const addSubtitleMutation = useMutation({
+        mutationFn: async ({ mediaId, payload }: { mediaId: string; payload: { uploadId: string; language: string; label: string } }) => {
+            if (!orgId) throw new Error("Organization ID missing");
+            const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}/subtitles`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) throw new Error("Failed to add subtitle");
+            return await res.json();
+        },
+        onSuccess: () => {
+            message.success("Subtitle track attached successfully");
+            queryClient.invalidateQueries({ queryKey: ["media", orgId] });
+            queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
+        },
+        onError: () => message.error("Failed to attach subtitle track.")
+    });
+
+    const deleteSubtitleMutation = useMutation({
+        mutationFn: async ({ mediaId, subtitleId }: { mediaId: string; subtitleId: string }) => {
+            if (!orgId) throw new Error("Organization ID missing");
+            const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}/subtitles/${subtitleId}`, {
+                method: "DELETE",
+            });
+            if (!res.ok) throw new Error("Failed to delete subtitle");
+        },
+        onSuccess: () => {
+            message.success("Subtitle track permanently removed");
+            queryClient.invalidateQueries({ queryKey: ["media", orgId] });
+        },
+        onError: () => message.error("Failed to remove subtitle track.")
+    });
+
+    const updateMetadataMutation = useMutation({
+        mutationFn: async ({ mediaId, metadata }: { mediaId: string; metadata: any }) => {
+            if (!orgId) throw new Error("Organization ID missing");
+            const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}/metadata`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(metadata),
+            });
+            if (!res.ok) throw new Error("Failed to update metadata");
+            return await res.json();
+        },
+        onSuccess: () => {
+            message.success("Media metadata securely saved");
+            queryClient.invalidateQueries({ queryKey: ["media", orgId] });
+        },
+        onError: () => message.error("Failed to update media metadata.")
+    });
+
     return {
         media,
         isLoadingMedia,
@@ -122,8 +183,14 @@ export const useMedia = (type?: "video" | "audio") => {
         deleteMedia: useCallback((mediaId: string) => deleteMediaMutation.mutateAsync(mediaId), [deleteMediaMutation]),
         recordPlay: useCallback((mediaId: string) => recordPlayMutation.mutateAsync(mediaId), [recordPlayMutation]),
         
+        addSubtitle: useCallback((mediaId: string, payload: { uploadId: string; language: string; label: string }) => addSubtitleMutation.mutateAsync({ mediaId, payload }), [addSubtitleMutation]),
+        deleteSubtitle: useCallback((mediaId: string, subtitleId: string) => deleteSubtitleMutation.mutateAsync({ mediaId, subtitleId }), [deleteSubtitleMutation]),
+        updateMetadata: useCallback((mediaId: string, metadata: any) => updateMetadataMutation.mutateAsync({ mediaId, metadata }), [updateMetadataMutation]),
+        
         isCreating: createMediaMutation.isPending,
         isUpdating: updateMediaMutation.isPending,
         isDeleting: deleteMediaMutation.isPending,
+        isAddingSubtitle: addSubtitleMutation.isPending,
+        isUpdatingMetadata: updateMetadataMutation.isPending,
     };
 };

@@ -287,6 +287,53 @@ export const playlistMedia = sqliteTable(
 
 export type PlaylistMedia = typeof playlistMedia.$inferSelect;
 
+export const mediaMetadata = sqliteTable(
+    "media_metadata",
+    {
+        mediaId: text("media_id")
+            .primaryKey()
+            .references(() => media.id, { onDelete: "cascade" }),
+        source: text("source").default("manual").notNull(), // 'youtube', 'manual'
+        externalId: text("external_id"),
+        externalLikeCount: integer("external_like_count").default(0).notNull(),
+        externalViewCount: integer("external_view_count").default(0).notNull(),
+        channelName: text("channel_name"),
+        channelId: text("channel_id"),
+        tags: text("tags"), // Stringified JSON array
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    }
+);
+
+export type MediaMetadata = typeof mediaMetadata.$inferSelect;
+
+export const mediaSubtitles = sqliteTable(
+    "media_subtitles",
+    {
+        id: text("id").primaryKey(),
+        mediaId: text("media_id")
+            .notNull()
+            .references(() => media.id, { onDelete: "cascade" }),
+        language: text("language").notNull(), // 'en', 'es', 'fr'
+        label: text("label").notNull(), // 'English', 'Spanish'
+        mimeType: text("mime_type").notNull(), // 'text/vtt'
+        url: text("url").notNull(),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+    },
+    (table) => [
+        index("media_subtitles_mediaId_idx").on(table.mediaId),
+    ]
+);
+
+export type MediaSubtitle = typeof mediaSubtitles.$inferSelect;
+
 export const userRelations = relations(user, ({ many }) => ({
     sessions: many(session),
     accounts: many(account),
@@ -362,6 +409,11 @@ export const mediaRelations = relations(media, ({ one, many }) => ({
         references: [user.id],
     }),
     playlistMedia: many(playlistMedia),
+    metadata: one(mediaMetadata, {
+        fields: [media.id],
+        references: [mediaMetadata.mediaId],
+    }),
+    subtitles: many(mediaSubtitles),
 }));
 
 export const playlistRelations = relations(playlist, ({ one, many }) => ({
@@ -383,6 +435,20 @@ export const playlistMediaRelations = relations(playlistMedia, ({ one }) => ({
     }),
     media: one(media, {
         fields: [playlistMedia.mediaId],
+        references: [media.id],
+    }),
+}));
+
+export const mediaMetadataRelations = relations(mediaMetadata, ({ one }) => ({
+    media: one(media, {
+        fields: [mediaMetadata.mediaId],
+        references: [media.id],
+    }),
+}));
+
+export const mediaSubtitlesRelations = relations(mediaSubtitles, ({ one }) => ({
+    media: one(media, {
+        fields: [mediaSubtitles.mediaId],
         references: [media.id],
     }),
 }));

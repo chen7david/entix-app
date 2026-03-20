@@ -53,4 +53,36 @@ export class MediaHandlers {
         await mediaService.recordPlay(mediaId, organizationId);
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
+
+    static addSubtitle: AppHandler<typeof MediaRoutes.addSubtitle> = async (ctx) => {
+        const { organizationId, mediaId } = ctx.req.valid("param");
+        const payload = ctx.req.valid("json");
+        const mediaService = getMediaService(ctx);
+        
+        const subtitle = await mediaService.addSubtitle(organizationId, mediaId, payload);
+        ctx.var.logger.info({ organizationId, mediaId, subtitleId: subtitle.id }, "Subtitle added to media");
+        
+        return ctx.json(subtitle, HttpStatusCodes.CREATED);
+    };
+
+    static deleteSubtitle: AppHandler<typeof MediaRoutes.deleteSubtitle> = async (ctx) => {
+        const { organizationId, mediaId, subtitleId } = ctx.req.valid("param");
+        const mediaService = getMediaService(ctx);
+        
+        await mediaService.deleteSubtitle(organizationId, mediaId, subtitleId);
+        ctx.var.logger.info({ organizationId, mediaId, subtitleId }, "Subtitle deleted from media");
+        
+        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
+
+    static updateMetadata: AppHandler<typeof MediaRoutes.updateMetadata> = async (ctx) => {
+        const { organizationId, mediaId } = ctx.req.valid("param");
+        const metadata = ctx.req.valid("json");
+        const mediaService = getMediaService(ctx);
+        
+        const updated = await mediaService.updateMetadata(organizationId, mediaId, metadata);
+        ctx.var.logger.info({ organizationId, mediaId }, "Media metadata updated");
+        
+        return ctx.json(updated, HttpStatusCodes.OK);
+    };
 }

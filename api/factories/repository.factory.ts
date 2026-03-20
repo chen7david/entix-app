@@ -5,6 +5,8 @@ import { MemberRepository } from "@api/repositories/member.repository";
 import { UploadRepository } from "@api/repositories/upload.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { PlaylistRepository } from "@api/repositories/playlist.repository";
+import { MediaSubtitleRepository } from "@api/repositories/media-subtitle.repository";
+import { MediaMetadataRepository } from "@api/repositories/media-metadata.repository";
 import { getDbClient } from "./db.factory";
 import { auth } from "@api/lib/auth/auth";
 
@@ -30,4 +32,12 @@ export const getMediaRepository = (ctx: AppContext) => {
 
 export const getPlaylistRepository = (ctx: AppContext) => {
     return new PlaylistRepository(getDbClient(ctx));
+};
+
+export const getMediaSubtitleRepository = (ctx: AppContext) => {
+    return new MediaSubtitleRepository(getDbClient(ctx));
+};
+
+export const getMediaMetadataRepository = (ctx: AppContext) => {
+    return new MediaMetadataRepository(getDbClient(ctx));
 };

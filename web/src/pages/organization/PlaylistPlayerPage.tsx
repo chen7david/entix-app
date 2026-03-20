@@ -149,6 +149,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                                     description={activeMedia.description || undefined}
                                     mediaUrl={activeMedia.mediaUrl}
                                     coverArtUrl={activeMedia.coverArtUrl || undefined}
+                                    subtitles={activeMedia.subtitles}
                                     mimeType={activeMedia.mimeType}
                                     onEnd={handleMediaEnd}
                                     autoPlay={isAutoPlay}

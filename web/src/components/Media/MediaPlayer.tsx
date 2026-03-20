@@ -10,7 +10,7 @@ interface MediaPlayerProps {
     description?: string;
     mediaUrl: string;
     coverArtUrl?: string;
-    subtitlesUrl?: string;
+    subtitles?: { id: string; url: string; language: string; label: string }[];
     mimeType: string;
     onEnd?: () => void;
     onPlay?: () => void;
@@ -23,7 +23,7 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
     title,
     mediaUrl,
     coverArtUrl,
-    subtitlesUrl,
+    subtitles,
     mimeType,
     onEnd,
     onPlay,
@@ -78,15 +78,16 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
                         alt={`${title} Cover Art`}
                     />
                 )}
-                {subtitlesUrl && (
+                {subtitles?.map((subtitle, index) => (
                     <Track
-                        src={subtitlesUrl}
+                        key={subtitle.id}
+                        src={subtitle.url}
                         kind="subtitles"
-                        label="English"
-                        lang="en"
-                        default
+                        label={subtitle.label}
+                        lang={subtitle.language}
+                        default={index === 0}
                     />
-                )}
+                ))}
             </MediaProvider>
 
             <DefaultVideoLayout icons={defaultLayoutIcons} slots={layoutSlots} />

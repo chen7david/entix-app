@@ -12,6 +12,8 @@ import {
     getMemberRepository,
     getMediaRepository,
     getPlaylistRepository,
+    getMediaSubtitleRepository,
+    getMediaMetadataRepository,
 } from "./repository.factory";
 import { getUploadService } from "./upload.factory";
 
@@ -44,7 +46,12 @@ export const getMailService = (ctx: AppContext) => {
 };
 
 export const getMediaService = (ctx: AppContext) => {
-    return new MediaService(getMediaRepository(ctx), getUploadService(ctx));
+    return new MediaService(
+        getMediaRepository(ctx), 
+        getUploadService(ctx),
+        getMediaSubtitleRepository(ctx),
+        getMediaMetadataRepository(ctx)
+    );
 };
 
 export const getPlaylistService = (ctx: AppContext) => {

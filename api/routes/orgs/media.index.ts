@@ -7,4 +7,7 @@ export const mediaRoutes = createRouter()
     .openapi(MediaRoutes.createMedia, MediaHandlers.createMedia)
     .openapi(MediaRoutes.updateMedia, MediaHandlers.updateMedia)
     .openapi(MediaRoutes.deleteMedia, MediaHandlers.deleteMedia)
-    .openapi(MediaRoutes.recordPlay, MediaHandlers.recordPlay);
+    .openapi(MediaRoutes.recordPlay, MediaHandlers.recordPlay)
+    .openapi(MediaRoutes.addSubtitle, MediaHandlers.addSubtitle)
+    .openapi(MediaRoutes.deleteSubtitle, MediaHandlers.deleteSubtitle)
+    .openapi(MediaRoutes.updateMetadata, MediaHandlers.updateMetadata);

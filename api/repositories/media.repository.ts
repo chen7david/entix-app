@@ -21,16 +21,21 @@ export class MediaRepository {
         return media;
     }
 
-    async findById(id: string, organizationId: string): Promise<schema.Media | undefined> {
-        return await this.db.query.media.findFirst({
+    async findById(id: string, organizationId: string): Promise<(schema.Media & { metadata: schema.MediaMetadata | null, subtitles: schema.MediaSubtitle[] }) | undefined> {
+        const result = await this.db.query.media.findFirst({
             where: and(
                 eq(schema.media.id, id),
                 eq(schema.media.organizationId, organizationId)
             ),
+            with: {
+                metadata: true,
+                subtitles: true,
+            }
         });
+        return result as any;
     }
 
-    async findAllByOrganization(organizationId: string, type?: "video" | "audio"): Promise<schema.Media[]> {
+    async findAllByOrganization(organizationId: string, type?: "video" | "audio"): Promise<(schema.Media & { metadata: schema.MediaMetadata | null, subtitles: schema.MediaSubtitle[] })[]> {
         const filters = [eq(schema.media.organizationId, organizationId)];
         
         if (type === "video") {
@@ -39,10 +44,16 @@ export class MediaRepository {
             filters.push(like(schema.media.mimeType, 'audio/%'));
         }
 
-        return await this.db.select()
-            .from(schema.media)
-            .where(and(...filters))
-            .orderBy(desc(schema.media.createdAt));
+        const results = await this.db.query.media.findMany({
+            where: and(...filters),
+            orderBy: [desc(schema.media.createdAt)],
+            with: {
+                metadata: true,
+                subtitles: true,
+            }
+        });
+        
+        return results as any;
     }
 
     async update(

@@ -4,6 +4,26 @@ import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 
+const MediaMetadataSchema = z.object({
+    source: z.string(),
+    externalId: z.string().nullable(),
+    externalLikeCount: z.number(),
+    externalViewCount: z.number(),
+    channelName: z.string().nullable(),
+    channelId: z.string().nullable(),
+    tags: z.string().nullable(),
+});
+
+const MediaSubtitleSchema = z.object({
+    id: z.string(),
+    mediaId: z.string(),
+    language: z.string(),
+    label: z.string(),
+    mimeType: z.string(),
+    url: z.string(),
+    createdAt: z.coerce.date(),
+});
+
 const MediaResponseSchema = z.object({
     id: z.string(),
     organizationId: z.string(),
@@ -14,6 +34,8 @@ const MediaResponseSchema = z.object({
     coverArtUrl: z.string().nullable(),
     playCount: z.number(),
     uploadedBy: z.string(),
+    metadata: MediaMetadataSchema.nullable().optional(),
+    subtitles: z.array(MediaSubtitleSchema).optional(),
     createdAt: z.coerce.date(),
     updatedAt: z.coerce.date(),
 });
@@ -156,6 +178,97 @@ export const MediaRoutes = {
         responses: {
             [HttpStatusCodes.NO_CONTENT]: {
                 description: "Play count incremented successfully",
+            },
+        },
+    }),
+
+    addSubtitle: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/media/{mediaId}/subtitles",
+        tags: ["Media Subtitles"],
+        middleware: [requireAuth, requireOrgMembership, requirePermission('media', ['update'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                mediaId: z.string(),
+            }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            uploadId: z.string(),
+                            language: z.string().min(2).max(10), // e.g. "en", "en-US"
+                            label: z.string().min(1).max(50), // e.g. "English", "Spanish (Latin)"
+                        }),
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.CREATED]: {
+                content: {
+                    "application/json": {
+                        schema: MediaSubtitleSchema,
+                    },
+                },
+                description: "Subtitle track added successfully",
+            },
+        },
+    }),
+
+    deleteSubtitle: createRoute({
+        method: HttpMethods.DELETE,
+        path: "/orgs/{organizationId}/media/{mediaId}/subtitles/{subtitleId}",
+        tags: ["Media Subtitles"],
+        middleware: [requireAuth, requireOrgMembership, requirePermission('media', ['update'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                mediaId: z.string(),
+                subtitleId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.NO_CONTENT]: {
+                description: "Subtitle track deleted successfully",
+            },
+        },
+    }),
+
+    updateMetadata: createRoute({
+        method: HttpMethods.PATCH,
+        path: "/orgs/{organizationId}/media/{mediaId}/metadata",
+        tags: ["Media Metadata"],
+        middleware: [requireAuth, requireOrgMembership, requirePermission('media', ['update'])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                mediaId: z.string(),
+            }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            source: z.string().optional(),
+                            externalId: z.string().nullable().optional(),
+                            externalLikeCount: z.number().optional(),
+                            externalViewCount: z.number().optional(),
+                            channelName: z.string().nullable().optional(),
+                            channelId: z.string().nullable().optional(),
+                            tags: z.array(z.string()).optional(),
+                        }),
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: MediaMetadataSchema,
+                    },
+                },
+                description: "Metadata updated successfully",
             },
         },
     }),
