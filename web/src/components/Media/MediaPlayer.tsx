@@ -4,6 +4,7 @@ import '../../../node_modules/@vidstack/react/player/styles/default/theme.css';
 import '../../../node_modules/@vidstack/react/player/styles/default/layouts/video.css';
 import '../../../node_modules/@vidstack/react/player/styles/default/layouts/audio.css';
 import { defaultLayoutIcons, DefaultVideoLayout, DefaultAudioLayout } from '@vidstack/react/player/layouts/default';
+import { StepBackwardOutlined, StepForwardOutlined } from '@ant-design/icons';
 
 interface MediaPlayerProps {
     title: string;
@@ -15,6 +16,8 @@ interface MediaPlayerProps {
     onEnd?: () => void;
     onPlay?: () => void;
     autoPlay?: boolean;
+    onNext?: () => void;
+    onPrevious?: () => void;
 }
 
 export const MediaPlayer: React.FC<MediaPlayerProps> = ({
@@ -25,9 +28,29 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
     mimeType,
     onEnd,
     onPlay,
-    autoPlay = false
+    autoPlay = false,
+    onNext,
+    onPrevious
 }) => {
     const isAudio = mimeType.startsWith('audio/');
+
+    // Helper to generate the exact native skip-buttons
+    const prevButton = onPrevious ? (
+        <button type="button" className="vds-button" onClick={onPrevious} aria-label="Previous Track">
+            <StepBackwardOutlined className="text-xl" />
+        </button>
+    ) : null;
+
+    const nextButton = onNext ? (
+        <button type="button" className="vds-button" onClick={onNext} aria-label="Next Track">
+            <StepForwardOutlined className="text-xl" />
+        </button>
+    ) : null;
+
+    const layoutSlots = {
+        beforePlayButton: prevButton,
+        afterPlayButton: nextButton,
+    };
 
     return (
         <VidstackPlayer
@@ -60,9 +83,9 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
             </MediaProvider>
 
             {isAudio ? (
-                <DefaultAudioLayout icons={defaultLayoutIcons} />
+                <DefaultAudioLayout icons={defaultLayoutIcons} slots={layoutSlots} />
             ) : (
-                <DefaultVideoLayout icons={defaultLayoutIcons} />
+                <DefaultVideoLayout icons={defaultLayoutIcons} slots={layoutSlots} />
             )}
         </VidstackPlayer>
     );
