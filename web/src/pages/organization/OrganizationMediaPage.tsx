@@ -41,7 +41,7 @@ export const OrganizationMediaPage: React.FC = () => {
             key: 'title',
             render: (text: string, record: Media) => (
                 <div className="flex items-center gap-3">
-                    <EntityAvatar 
+                    <EntityAvatar
                         imageUrl={record.coverArtUrl || undefined}
                         icon={record.mimeType.startsWith('video/') ? <VideoCameraOutlined /> : <AudioOutlined />}
                         fontSize={16}
@@ -74,8 +74,8 @@ export const OrganizationMediaPage: React.FC = () => {
             key: 'actions',
             render: (_: any, record: Media) => (
                 <Space size="middle">
-                    <Popconfirm 
-                        title="Delete Media" 
+                    <Popconfirm
+                        title="Delete Media"
                         description="This will permanently delete the file from Cloudflare R2."
                         onConfirm={() => deleteMedia(record.id)}
                         okText="Delete"
@@ -140,85 +140,87 @@ export const OrganizationMediaPage: React.FC = () => {
 
                 <Tabs defaultActiveKey="1" items={items} />
 
-            <Drawer
-                title="Media Details"
-                placement="right"
-                onClose={handleCloseModal}
-                open={!!activeMedia}
-                width={500}
-                destroyOnClose
-            >
-                {activeMedia && (
-                    <div className="flex flex-col gap-6">
-                        {/* Player */}
-                        <div className="aspect-video w-full bg-black rounded-lg overflow-hidden shadow-sm ring-1 ring-gray-200 dark:ring-zinc-800">
-                            <MediaPlayer
-                                title={activeMedia.title}
-                                description={activeMedia.description || undefined}
-                                mediaUrl={activeMedia.mediaUrl}
-                                coverArtUrl={activeMedia.coverArtUrl || undefined}
-                                mimeType={activeMedia.mimeType}
-                                onPlay={handleOnPlay}
-                            />
-                        </div>
-
-                        {/* Interactive Edit Form */}
-                        <div className="flex flex-col gap-2">
-                            <Title level={5} className="!mb-0">Edit Metadata</Title>
-                            <Text type="secondary" className="mb-4">Update the details of this media asset seamlessly.</Text>
-
-                            {/* Inline Cover Art Upload Zone */}
-                            <div className="flex flex-col mb-4">
-                                <Text className="mb-2 font-medium">Cover Thumbnail</Text>
-                                <CoverArtUploader
-                                    organizationId={activeMedia.organizationId}
-                                    currentImageUrl={activeMedia.coverArtUrl}
-                                    onUploadSuccess={async (uploadId) => {
-                                        await updateMedia(activeMedia.id, { coverArtUploadId: uploadId });
-                                        // The query invalidation will sync the data across the app.
-                                        // To reflect immediately locally, we trigger a close or we can let React Query refetch sync it on the next render
-                                    }}
+                <Drawer
+                    title="Media Details"
+                    placement="right"
+                    onClose={handleCloseModal}
+                    open={!!activeMedia}
+                    width={500}
+                    destroyOnClose
+                >
+                    {activeMedia && (
+                        <div className="flex flex-col pb-6">
+                            {/* Edge-to-Edge Cinematic Player */}
+                            <div className="-mx-6 -mt-6 mb-6 aspect-video bg-black overflow-hidden shadow-md z-10 border-b border-gray-200 dark:border-zinc-800">
+                                <MediaPlayer
+                                    title={activeMedia.title}
+                                    description={activeMedia.description || undefined}
+                                    mediaUrl={activeMedia.mediaUrl}
+                                    coverArtUrl={activeMedia.coverArtUrl || undefined}
+                                    mimeType={activeMedia.mimeType}
+                                    onPlay={handleOnPlay}
                                 />
                             </div>
 
-                            <Form
-                                layout="vertical"
-                                initialValues={{
-                                    title: activeMedia.title,
-                                    description: activeMedia.description || '',
-                                }}
-                                onFinish={(values) => {
-                                    updateMedia(activeMedia.id, values).then(() => {
-                                        setActiveMedia({ ...activeMedia, ...values });
-                                    });
-                                }}
-                            >
-                                <Form.Item
-                                    name="title"
-                                    label="Title"
-                                    rules={[{ required: true, message: 'A title is required' }]}
-                                >
-                                    <Input placeholder="Epic Trailer..." />
-                                </Form.Item>
+                            {/* Interactive Edit Form Container */}
+                            <div className="flex flex-col gap-6 px-1">
+                                <div className="flex flex-col gap-2">
+                                    <Title level={5} className="!mb-0">Edit Metadata</Title>
+                                    <Text type="secondary" className="mb-4">Update the details of this media asset seamlessly.</Text>
 
-                                <Form.Item
-                                    name="description"
-                                    label="Description"
-                                >
-                                    <Input.TextArea placeholder="Add a description for your viewers..." rows={4} />
-                                </Form.Item>
+                                    {/* Inline Cover Art Upload Zone */}
+                                    <div className="flex flex-col mb-4">
+                                        <Text className="mb-2 font-medium">Cover Thumbnail</Text>
+                                        <CoverArtUploader
+                                            organizationId={activeMedia.organizationId}
+                                            currentImageUrl={activeMedia.coverArtUrl}
+                                            onUploadSuccess={async (uploadId) => {
+                                                await updateMedia(activeMedia.id, { coverArtUploadId: uploadId });
+                                                // The query invalidation will sync the data across the app.
+                                                // To reflect immediately locally, we trigger a close or we can let React Query refetch sync it on the next render
+                                            }}
+                                        />
+                                    </div>
+                                </div>
 
-                                <Form.Item className="mb-0 flex justify-end">
-                                    <Button type="primary" htmlType="submit" loading={isUpdating}>
-                                        Save Changes
-                                    </Button>
-                                </Form.Item>
-                            </Form>
+                                <Form
+                                    layout="vertical"
+                                    initialValues={{
+                                        title: activeMedia.title,
+                                        description: activeMedia.description || '',
+                                    }}
+                                    onFinish={(values) => {
+                                        updateMedia(activeMedia.id, values).then(() => {
+                                            setActiveMedia({ ...activeMedia, ...values });
+                                        });
+                                    }}
+                                >
+                                    <Form.Item
+                                        name="title"
+                                        label="Title"
+                                        rules={[{ required: true, message: 'A title is required' }]}
+                                    >
+                                        <Input placeholder="Epic Trailer..." />
+                                    </Form.Item>
+
+                                    <Form.Item
+                                        name="description"
+                                        label="Description"
+                                    >
+                                        <Input.TextArea placeholder="Add a description for your viewers..." rows={4} />
+                                    </Form.Item>
+
+                                    <Form.Item className="mb-0 flex justify-end">
+                                        <Button type="primary" htmlType="submit" loading={isUpdating}>
+                                            Save Changes
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </Drawer>
-        </div>
+                    )}
+                </Drawer>
+            </div>
         </>
     );
 };

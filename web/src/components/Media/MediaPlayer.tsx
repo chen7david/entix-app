@@ -39,7 +39,7 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
             autoPlay={autoPlay}
             crossOrigin="anonymous"
             playsInline
-            className="w-full h-full bg-black rounded-lg overflow-hidden shadow-xl border border-gray-800"
+            className="w-full h-full bg-black overflow-hidden shadow-xl"
         >
             <MediaProvider>
                 {coverArtUrl && (
