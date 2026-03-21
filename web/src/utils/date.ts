@@ -18,27 +18,27 @@ export const DateUtils = {
     now: () => Date.now(),
     
     // Boundary calculations (always returning Epoch ms for generic interoperability)
-    startOf: (unit: DateUnit, date?: number | string | Date) => dayjs(date).startOf(unit).valueOf(),
-    endOf: (unit: DateUnit, date?: number | string | Date) => dayjs(date).endOf(unit).valueOf(),
+    startOf: (unit: DateUnit, date?: number | string | Date) => dayjs.tz(date).startOf(unit).valueOf(),
+    endOf: (unit: DateUnit, date?: number | string | Date) => dayjs.tz(date).endOf(unit).valueOf(),
     
     // Shift calculations (e.g. "Tomorrow" = offsetStartOf(1, 'day', 'day'))
     offsetStartOf: (amount: number, unit: DateUnit, startUnit: DateUnit, date?: number | string | Date) => 
-        dayjs(date).add(amount, unit).startOf(startUnit).valueOf(),
+        dayjs.tz(date).add(amount, unit).startOf(startUnit).valueOf(),
     offsetEndOf: (amount: number, unit: DateUnit, endUnit: DateUnit, date?: number | string | Date) => 
-        dayjs(date).add(amount, unit).endOf(endUnit).valueOf(),
+        dayjs.tz(date).add(amount, unit).endOf(endUnit).valueOf(),
 
     // Math 
-    addMinutes: (date: number | string | Date, minutes: number) => dayjs(date).add(minutes, 'minute').valueOf(),
+    addMinutes: (date: number | string | Date, minutes: number) => dayjs.tz(date).add(minutes, 'minute').valueOf(),
 
     // Formatting rules
-    format: (date: number | string | Date, template: string) => dayjs(date).format(template),
-    fromNow: (date: number | string | Date) => dayjs(date).fromNow(),
-    toDate: (date: number | string | Date) => dayjs(date).toDate(),
+    format: (date: number | string | Date, template: string) => dayjs.tz(date).format(template),
+    fromNow: (date: number | string | Date) => dayjs.tz(date).fromNow(),
+    toDate: (date: number | string | Date) => dayjs.tz(date).toDate(),
 
     // Timezone 
     setTimezone: (tz: string) => dayjs.tz.setDefault(tz),
     getTimezoneOffset: (tz: string) => dayjs().tz(tz).format('Z'), // Returns generic offsets like "-04:00"
 
     // Component-level GUI integration hooks preventing leaks directly into library core structures
-    toLibDate: (date: number | string | Date) => dayjs(date),
+    toLibDate: (date: number | string | Date) => dayjs.tz(date),
 };

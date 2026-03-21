@@ -19,7 +19,6 @@ export const NoOrganizationPage: React.FC = () => {
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-50">
             <Card className="w-full max-w-md text-center shadow-lg">
                 <Title level={3}>No Organization Found</Title>
                 <Paragraph className="mb-6 text-gray-600">
@@ -29,6 +28,5 @@ export const NoOrganizationPage: React.FC = () => {
                     Sign Out
                 </Button>
             </Card>
-        </div>
     );
 };

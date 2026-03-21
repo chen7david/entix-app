@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Avatar, Typography, Button, Spin, message, Row, Col, Divider, Tooltip } from 'antd';
-import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
+import { Card, Avatar, Typography, Button, Spin, App, Row, Col, Divider, Tooltip } from 'antd';
+import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useSession, signOut } from '../../../lib/auth-client';
 import { useNavigate } from 'react-router';
 import { links } from '@shared/constants/links';
@@ -10,13 +10,12 @@ import { AvatarDropzone } from '@web/src/components/Upload/AvatarDropzone';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { DateUtils } from '@web/src/utils/date';
 
-import { TimezoneSelector } from '@web/src/components/profile/TimezoneSelector';
-import { ThemeSelector } from '@web/src/components/profile/ThemeSelector';
 import { PasswordUpdateForm } from '@web/src/components/profile/PasswordUpdateForm';
 
 const { Title, Text } = Typography;
 
 export const ProfilePage: React.FC = () => {
+    const { message } = App.useApp();
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
     const { activeOrganization } = useOrganization();
@@ -104,30 +103,7 @@ export const ProfilePage: React.FC = () => {
                     
                     <Col xs={24} md={16}>
                         <div className="flex flex-col gap-6">
-                            <Card bordered={false} className="shadow-sm">
-                                <div className="flex items-center gap-2 mb-6">
-                                    <SettingOutlined className="text-blue-500 text-xl" />
-                                    <h3 className="text-lg font-medium m-0">Preferences</h3>
-                                </div>
-                                <Row gutter={[16, 16]}>
-                                    <Col xs={24} md={12}>
-                                        <div className="mb-2">
-                                            <Text strong>Timezone</Text>
-                                            <div className="text-gray-500 text-xs mt-1 mb-2">Configure default bounds for analytics scopes.</div>
-                                        </div>
-                                        <TimezoneSelector />
-                                    </Col>
-                                    <Col xs={24} md={12}>
-                                        <div className="mb-2">
-                                            <Text strong>Theme</Text>
-                                            <div className="text-gray-500 text-xs mt-1 mb-2">Toggle interface coloring behavior.</div>
-                                        </div>
-                                        <ThemeSelector />
-                                    </Col>
-                                </Row>
-                            </Card>
-
-                            <PasswordUpdateForm />
+                              <PasswordUpdateForm />
                         </div>
                     </Col>
                 </Row>

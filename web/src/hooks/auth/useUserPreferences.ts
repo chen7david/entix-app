@@ -1,10 +1,12 @@
 import { useEffect, useCallback } from 'react';
 import { useSession, authClient } from '@web/src/lib/auth-client';
 import { DateUtils } from '@web/src/utils/date';
+import { App } from 'antd';
 
 export type AppTheme = 'light' | 'dark' | 'system';
 
 export function useUserPreferences() {
+    const { message } = App.useApp();
     const { data: session, refetch } = useSession();
     
     // Fallback securely capturing native OS context if unconfigured statically tracking configurations.
@@ -27,17 +29,27 @@ export function useUserPreferences() {
     }, [theme]);
 
     const updateTimezone = useCallback(async (newTimezone: string) => {
-        await authClient.updateUser({
-            timezone: newTimezone,
-        });
-        await refetch();
+        try {
+            await authClient.updateUser({
+                timezone: newTimezone,
+            } as any);
+            await refetch();
+            message.success('Timezone preferrence synced successfully');
+        } catch (error) {
+            message.error('Failed to update timezone');
+        }
     }, [refetch]);
 
     const updateTheme = useCallback(async (newTheme: AppTheme) => {
-        await authClient.updateUser({
-            theme: newTheme,
-        });
-        await refetch();
+        try {
+            await authClient.updateUser({
+                theme: newTheme,
+            } as any);
+            await refetch();
+            message.success('Theme updated successfully');
+        } catch (error) {
+            message.error('Failed to update theme');
+        }
     }, [refetch]);
 
     return {

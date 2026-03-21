@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Tag, Button, Input, Modal, message, Dropdown } from 'antd';
+import { Table, Tag, Button, Input, Modal, App, Dropdown } from 'antd';
 import { useAdminUsers, useBanUser, useUnbanUser, useSetUserRole, useImpersonateUser } from '@web/src/hooks/admin/useAdminUsers';
 import { requestPasswordReset, sendVerificationEmail } from '@web/src/lib/auth-client';
 import type { MenuProps } from 'antd';
@@ -8,6 +8,7 @@ import { getAvatarUrl } from '@shared/utils/image-url';
 import dayjs from 'dayjs';
 
 export const UserTable: React.FC = () => {
+    const { message } = App.useApp();
     const [searchText, setSearchText] = useState('');
     const { data: users, isPending } = useAdminUsers();
 

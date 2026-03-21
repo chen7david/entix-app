@@ -1,5 +1,5 @@
 import React from 'react';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, App as AntApp } from 'antd';
 import { getThemeConfig } from '../theme/tokens';
 import { useUserPreferences } from '@web/src/hooks/auth/useUserPreferences';
 
@@ -13,7 +13,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     return (
         <ConfigProvider theme={getThemeConfig(isDark)}>
-            {children}
+            <AntApp>
+                {children}
+            </AntApp>
         </ConfigProvider>
     );
 };

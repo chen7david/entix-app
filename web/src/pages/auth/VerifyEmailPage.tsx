@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
-import { Typography, Spin, Button, Result, Card, message } from 'antd';
+import { Typography, Spin, Button, Result, Card, App } from 'antd';
 import { useVerifyEmail } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { links } from '@shared/constants/links';
@@ -8,6 +8,7 @@ import { links } from '@shared/constants/links';
 const { Text } = Typography;
 
 export const VerifyEmailPage: React.FC = () => {
+    const { message } = App.useApp();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get('token');

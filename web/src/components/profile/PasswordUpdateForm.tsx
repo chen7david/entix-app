@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Form, Input, Button, Card, message, Alert } from 'antd';
+import { Form, Input, Button, Card, App, Alert } from 'antd';
 import { KeyOutlined } from '@ant-design/icons';
 import { changePassword } from '@web/src/lib/auth-client';
 
 export const PasswordUpdateForm = () => {
+    const { message } = App.useApp();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
