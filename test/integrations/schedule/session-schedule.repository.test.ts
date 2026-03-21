@@ -9,7 +9,7 @@ describe('SessionScheduleRepository Unit test', () => {
         mockDb = {
             query: {
                 scheduledSession: {
-                    findMany: vi.fn().mockResolvedValue([{ id: "sess_1" }])
+                    findMany: vi.fn().mockResolvedValue([{ id: "sess_1", startTime: new Date() }])
                 }
             },
         };
