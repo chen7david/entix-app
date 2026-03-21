@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, message } from 'antd';
+import { Upload, App } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
@@ -8,6 +8,7 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 const { Dragger } = Upload;
 
 export const MediaDropzone: React.FC<{ type: 'video' | 'audio' }> = ({ type }) => {
+    const { message } = App.useApp();
     const { activeOrganization } = useOrganization();
     const { createMedia } = useMedia();
     const [isUploading, setIsUploading] = useState(false);

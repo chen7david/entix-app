@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
-import { message, Card, Typography, Result, Button } from 'antd';
+import { App, Card, Typography, Result, Button } from 'antd';
 import { ResetPasswordForm, type ResetPasswordValues } from '@web/src/components/auth/ResetPasswordForm';
 import { useResetPassword } from '@web/src/hooks/auth/useAuth';
 import { links } from '@shared/constants/links';
@@ -8,6 +8,7 @@ import { links } from '@shared/constants/links';
 const { Title, Text } = Typography;
 
 export const ResetPasswordPage: React.FC = () => {
+    const { message } = App.useApp();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get('token');

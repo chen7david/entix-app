@@ -1,7 +1,8 @@
 import { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
 import * as schema from "@shared/db/schema.db";
-import { eq } from "drizzle-orm";
+import { eq, and, like, or } from "drizzle-orm";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
 // Better Auth server instance type is complex and internal-only. 
 // We use unknown for the instance to ensure zero any, and type cast locally in methods.
@@ -95,15 +96,44 @@ export class UserRepository {
      * Find all users belonging to an organization
      * Queries via the member table to scope results to the given org
      */
-    async findUsersByOrganization(organizationId: string): Promise<schema.User[]> {
-        const members = await this.db.query.member.findMany({
-            where: eq(schema.member.organizationId, organizationId),
-            with: {
-                user: true,
-            },
-        });
+    async findUsersByOrganization(organizationId: string, limit: number, cursor?: string, direction: 'next' | 'prev' = 'next', search?: string) {
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            schema.member.createdAt,
+            schema.member.id,
+            cursor,
+            direction
+        );
 
-        return members.map((m) => m.user);
+        const conditions = [eq(schema.member.organizationId, organizationId)];
+        if (cursorWhere) conditions.push(cursorWhere);
+        
+        if (search) {
+            // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
+            conditions.push(or(
+                like(schema.user.name, `%${search}%`),
+                like(schema.user.email, `%${search}%`)
+            )!);
+        }
+
+        const membersJoined = await this.db
+            .select({ member: schema.member, user: schema.user })
+            .from(schema.member)
+            .innerJoin(schema.user, eq(schema.member.userId, schema.user.id))
+            .where(and(...conditions))
+            .orderBy(...(orderBy as any))
+            .limit(limit + 1);
+        
+        const result = processPaginatedResult(
+            membersJoined,
+            limit,
+            direction,
+            (row) => ({ primary: row.member.createdAt.getTime(), secondary: row.member.id })
+        );
+
+        return {
+            ...result,
+            items: result.items.map((row) => ({ ...row.member, user: row.user })),
+        };
     }
 
     /**

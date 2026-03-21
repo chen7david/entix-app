@@ -16,4 +16,25 @@ export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService):
         disableCSRFCheck: true
     },
     trustedOrigins: ctx ? [ctx.env.FRONTEND_URL, ctx.var.frontendUrl] : undefined,
+    user: {
+        additionalFields: {
+            role: {
+                type: "string",
+                required: false,
+                defaultValue: "user",
+                input: false,
+            },
+            theme: {
+                type: "string",
+                required: false,
+                defaultValue: "system",
+                input: true,
+            },
+            timezone: {
+                type: "string",
+                required: false,
+                input: true,
+            },
+        }
+    },
 });

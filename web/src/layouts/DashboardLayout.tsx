@@ -12,7 +12,7 @@ export const DashboardLayout: React.FC = () => {
     return (
         <Layout className="min-h-screen">
             <MobileSidebar />
-            <Sider className="hidden md:block" width={240} theme="light">
+            <Sider className="hidden md:block" width={240}>
                 <DesktopSidebar />
             </Sider>
             <Layout hasSider>

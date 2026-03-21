@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Typography, Button, message } from 'antd';
+import { Card, Typography, Button, App } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { useResendVerification } from '@web/src/hooks/auth/useAuth';
 import { useLocation, useNavigate } from 'react-router';
@@ -8,6 +8,7 @@ import { links } from '@shared/constants/links';
 const { Title, Text } = Typography;
 
 export const EmailVerificationPendingPage: React.FC = () => {
+    const { message } = App.useApp();
     const location = useLocation();
     const navigate = useNavigate();
     const email = location.state?.email; // Expect email to be passed in state

@@ -25,6 +25,8 @@ import { EmailInsightsPage } from './pages/admin/EmailInsightsPage';
 import { GlobalOrganizationsPage } from './pages/admin/GlobalOrganizationsPage';
 import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
 import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
+import { OrganizationSchedulePage } from "./pages/organization/OrganizationSchedulePage";
+import { OrganizationAnalyticsPage } from "./pages/organization/OrganizationAnalyticsPage";
 import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
 import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
 import { OrganizationVideoPage } from "./pages/organization/OrganizationVideoPage";
@@ -119,6 +121,8 @@ export default function App() {
                   <Route path="audio" element={<OrganizationAudioPage />} />
                   <Route path="playlists" element={<OrganizationPlaylistsPage />} />
                   <Route path="playlists/:playlistId" element={<PlaylistPlayerPage />} />
+                  <Route path="schedule" element={<OrganizationSchedulePage />} />
+                  <Route path="analytics" element={<OrganizationAnalyticsPage />} />
                   <Route path="members" element={<OrganizationMembersPage />} />
                   <Route path="invitations" element={<OrganizationInvitationsPage />} />
                   <Route path="uploads" element={<OrganizationUploadsPage />} />

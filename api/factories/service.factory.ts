@@ -6,12 +6,14 @@ import { OrganizationService } from "@api/services/organization.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
 import { PlaylistService } from "@api/services/playlist.service";
+import { SessionScheduleService } from "@api/services/session-schedule.service";
 import {
     getUserRepository,
     getOrganizationRepository,
     getMemberRepository,
     getMediaRepository,
     getPlaylistRepository,
+    getSessionScheduleRepository,
 } from "./repository.factory";
 import { getUploadService } from "./upload.factory";
 
@@ -49,4 +51,8 @@ export const getMediaService = (ctx: AppContext) => {
 
 export const getPlaylistService = (ctx: AppContext) => {
     return new PlaylistService(getPlaylistRepository(ctx), getUploadService(ctx));
+};
+
+export const getSessionScheduleService = (ctx: AppContext) => {
+    return new SessionScheduleService(getSessionScheduleRepository(ctx));
 };

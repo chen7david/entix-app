@@ -1,36 +1,57 @@
 import { authClient } from "@web/src/lib/auth-client";
 import type { OrgRole } from "@shared/auth/permissions";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
 
-export const useMembers = () => {
+const API_BASE = '/api/v1';
+
+export const useMembers = (searchQuery?: string) => {
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const { session, isSuperAdmin } = useAuth();
     const userId = session.data?.user?.id;
 
-    const { data: members = [], isLoading: loadingMembers } = useQuery({
-        queryKey: ['organizationMembers', activeOrganization?.id],
-        queryFn: async () => {
-            if (!activeOrganization?.id) return [];
-            const { data } = await authClient.organization.listMembers({
-                query: {
-                    organizationId: activeOrganization.id,
-                }
-            });
-            return data?.members || [];
+    const queryKey = ['organizationMembers', activeOrganization?.id, searchQuery];
+
+    const { 
+        data: membersPages, 
+        isLoading: loadingMembers,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
+        queryKey,
+        queryFn: async ({ pageParam = undefined }) => {
+            if (!activeOrganization?.id) return { items: [], nextCursor: null, prevCursor: null };
+            
+            const params = new URLSearchParams({ limit: '10' }); // UI prefers small pages
+            if (pageParam) params.set('cursor', pageParam);
+            if (searchQuery) params.set('search', searchQuery);
+
+            const res = await fetch(`${API_BASE}/orgs/${activeOrganization.id}/users?${params.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch members");
+            
+            return res.json();
         },
+        getNextPageParam: (lastPage: any) => lastPage.nextCursor ?? undefined,
+        initialPageParam: undefined,
         enabled: !!activeOrganization?.id
     });
 
-    const userRoles = (members?.find((m: any) => m.userId === userId)?.role || "").split(",").map((r: string) => r.trim()).filter(Boolean);
+    // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.
+    const members = useMemo(() => {
+        if (!membersPages) return [];
+        return membersPages.pages.flatMap((p: any) => p.items);
+    }, [membersPages]);
 
-    // Helper to check permissions client-side using better-auth pattern
+    const userRoles = useMemo(() => {
+        return (members.find((m: any) => m.userId === userId)?.role || "").split(",").map((r: string) => r.trim()).filter(Boolean);
+    }, [members, userId]);
+
     const checkPermission = useCallback((permission: { permissions: Record<string, string[]> }) => {
-        if (isSuperAdmin) return true; // Platform super admins bypass org permission checks
-
+        if (isSuperAdmin) return true;
         if (!userRoles.length) return false;
 
         return userRoles.some((role: string) => {
@@ -43,11 +64,9 @@ export const useMembers = () => {
 
     const { mutateAsync: updateMemberRoleMutation, isPending: isUpdatingRole } = useMutation({
         mutationFn: async ({ memberId, roles }: { memberId: string; roles: string[] }) => {
-            // Join roles with comma
             return await authClient.organization.updateMemberRole({ memberId, role: roles.join(",") });
         },
         onSuccess: async () => {
-            // Invalidate generically to ensuring list refresh
             await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
         }
     });
@@ -57,9 +76,7 @@ export const useMembers = () => {
             return await authClient.organization.removeMember({ memberIdOrEmail: memberId });
         },
         onSuccess: async () => {
-            // Invalidate generically to ensuring list refresh
             await queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
-            // Also invalidate active organization in case the removed member was the current user (edge case)
             await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
         }
     });
@@ -86,5 +103,8 @@ export const useMembers = () => {
         listMembers,
         isUpdatingRole,
         isRemovingMember,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
     };
 };

@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router';
-import { Card, Button, Spin, Result, message } from 'antd';
+import { Card, Button, Spin, Result, App } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useInvitations } from '@web/src/hooks/auth/useInvitations';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
 import { links } from '@shared/constants/links';
 
 export const AcceptInvitationPage: React.FC = () => {
+    const { message } = App.useApp();
     const [searchParams] = useSearchParams();
     const invitationId = searchParams.get('id');
     const navigate = useNavigate();
@@ -54,14 +55,11 @@ export const AcceptInvitationPage: React.FC = () => {
 
     if (isAuthLoading || (isAuthenticated && isAcceptingInvitation && !success && !error)) {
         return (
-            <div className="flex justify-center items-center min-h-screen bg-gray-50">
                 <Spin size="large" tip="Accepting invitation..." />
-            </div>
         );
     }
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
             <Card className="w-full max-w-md shadow-lg">
                 {error ? (
                     <Result
@@ -92,6 +90,5 @@ export const AcceptInvitationPage: React.FC = () => {
                     </div>
                 )}
             </Card>
-        </div>
     );
 };

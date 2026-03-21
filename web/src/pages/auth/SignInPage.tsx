@@ -1,5 +1,5 @@
 import React from 'react';
-import { message, Card, Typography } from 'antd';
+import { App, Card, Typography } from 'antd';
 import { SignInForm, type SignInValues } from '@web/src/components/auth/SignInForm';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useSignIn } from '@web/src/hooks/auth/useAuth';
@@ -7,6 +7,7 @@ import { useSignIn } from '@web/src/hooks/auth/useAuth';
 const { Title, Text } = Typography;
 
 export const SignInPage: React.FC = () => {
+    const { message } = App.useApp();
 
     const { mutate: signIn, isPending } = useSignIn();
     const { checkOrganizationStatus } = useOrganization();

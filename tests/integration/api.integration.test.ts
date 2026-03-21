@@ -31,14 +31,12 @@ describe("API Integration Test", () => {
 
         expect(res.status).toBe(200);
 
-        const body = await parseJson<UserDTO[]>(res);
+        const body = await parseJson<{ items: UserDTO[]; nextCursor: string | null }>(res);
 
-        expect(body).toBeInstanceOf(Array);
+        expect(body.items).toBeInstanceOf(Array);
         // At least the owner user should be present
-        expect(body.length).toBeGreaterThanOrEqual(1);
-        expect(body[0]).toHaveProperty("id");
-        expect(body[0]).toHaveProperty("email");
-        expect(body[0]).toHaveProperty("name");
+        expect(body.items.length).toBeGreaterThanOrEqual(1);
+        expect(body.items[0]).toHaveProperty("id");
     });
 
     it("GET /api/v1/orgs/:orgId/users should allow super admin access", async () => {
@@ -48,7 +46,7 @@ describe("API Integration Test", () => {
 
         const res = await superAdminClient.orgs.users.list(orgId);
         expect(res.status).toBe(200);
-        const body = await parseJson<UserDTO[]>(res);
-        expect(body).toBeInstanceOf(Array);
+        const body = await parseJson<{ items: UserDTO[]; nextCursor: string | null }>(res);
+        expect(body.items).toBeInstanceOf(Array);
     });
 });

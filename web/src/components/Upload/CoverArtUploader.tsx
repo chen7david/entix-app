@@ -103,7 +103,7 @@ export const CoverArtUploader = ({
             >
                 <Upload {...uploadProps} className="w-full block !mb-0 cover-art-uploader">
                     <div className="w-full aspect-video relative rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 group-hover:border-[#646cff] transition-colors p-[4px] cursor-pointer group">
-                    <div className="w-full h-full relative rounded-xl overflow-hidden bg-gray-50 flex items-center justify-center">
+                    <div className="w-full h-full relative rounded-xl overflow-hidden bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center">
                         {/* Display existing cover or placeholder */}
                         {currentImageUrl ? (
                             <img src={currentImageUrl} alt="Cover Art" className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-60" />
