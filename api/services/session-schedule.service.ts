@@ -8,7 +8,7 @@ export type CreateSessionDTO = {
     description?: string | null;
     startTime: number;
     durationMinutes: number;
-    memberIds: string[];
+    userIds: string[];
     recurrence?: {
         frequency: "weekly";
         count: number;
@@ -20,7 +20,7 @@ export type UpdateSessionDTO = {
     description?: string | null;
     startTime: number;
     durationMinutes: number;
-    memberIds: string[];
+    userIds: string[];
     updateForward: boolean;
     status?: "scheduled" | "completed" | "cancelled";
 };
@@ -48,15 +48,16 @@ export class SessionScheduleService {
 
         const createdSessions = await this.sessionRepo.createSessions(sessionsToInsert);
 
-        const participantsToInsert = createdSessions.flatMap(session => 
-            data.memberIds.map(memberId => ({
+        const attendancesToInsert = createdSessions.flatMap(session => 
+            data.userIds.map(userId => ({
                 sessionId: session.id,
-                memberId,
+                organizationId,
+                userId,
             }))
         );
 
-        if (participantsToInsert.length > 0) {
-            await this.sessionRepo.addParticipants(participantsToInsert);
+        if (attendancesToInsert.length > 0) {
+            await this.sessionRepo.addAttendances(attendancesToInsert);
         }
 
         return createdSessions;
@@ -93,10 +94,10 @@ export class SessionScheduleService {
                 durationMinutes: data.durationMinutes,
             });
 
-            // Patch Participants
-            await this.sessionRepo.deleteAllSessionParticipants(sessionId);
-            if (data.memberIds.length > 0) {
-                await this.sessionRepo.addParticipants(data.memberIds.map(memberId => ({ sessionId, memberId })));
+            // Patch Attendances
+            await this.sessionRepo.deleteAllSessionAttendances(sessionId);
+            if (data.userIds.length > 0) {
+                await this.sessionRepo.addAttendances(data.userIds.map(userId => ({ sessionId, organizationId, userId })));
             }
 
             // Sync Database Status if specifically updated through UI overrides mappings bounds
@@ -136,19 +137,20 @@ export class SessionScheduleService {
                 // 3. Batch re-insert
                 const createdSessions = await this.sessionRepo.createSessions(sessionsToInsert);
 
-                // 4. Batch mapping of participants
-                const participantsToInsert = [];
+                // 4. Batch mapping of attendances
+                const attendancesToInsert = [];
                 for (const session of createdSessions) {
-                    for (const memberId of data.memberIds) {
-                        participantsToInsert.push({
+                    for (const userId of data.userIds) {
+                        attendancesToInsert.push({
                             sessionId: session.id,
-                            memberId,
+                            organizationId,
+                            userId,
                         });
                     }
                 }
 
-                if (participantsToInsert.length > 0) {
-                    await this.sessionRepo.addParticipants(participantsToInsert);
+                if (attendancesToInsert.length > 0) {
+                    await this.sessionRepo.addAttendances(attendancesToInsert);
                 }
             }
 
@@ -160,10 +162,10 @@ export class SessionScheduleService {
         return { success: true };
     }
 
-    async updateParticipantAttendance(
+    async updateAttendance(
         organizationId: string, 
         sessionId: string, 
-        participants: { memberId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
+        attendances: { userId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
     ) {
         // Enforce boundary check before applying the patch structurally
         const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
@@ -171,8 +173,8 @@ export class SessionScheduleService {
             throw new HTTPException(404, { message: "Session not found" });
         }
 
-        if (participants.length > 0) {
-            await this.sessionRepo.updateParticipantAttendance(sessionId, participants);
+        if (attendances.length > 0) {
+            await this.sessionRepo.updateAttendance(sessionId, attendances);
         }
 
         return { success: true };

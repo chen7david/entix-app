@@ -9,7 +9,7 @@ export type SessionSubmitPayload = {
     description?: string;
     startTime: number;
     durationMinutes: number;
-    memberIds: string[];
+    userIds: string[];
     updateForward?: boolean;
     recurrence?: { frequency: "weekly", count: number };
     status?: "scheduled" | "completed" | "cancelled";
@@ -21,7 +21,7 @@ type Props = {
     session: any | null;
     onSave: (payload: SessionSubmitPayload) => Promise<void>;
     onUpdateStatus?: (sessionId: string, status: "scheduled" | "completed" | "cancelled") => Promise<void>;
-    onSaveAttendance?: (sessionId: string, participants: any[]) => Promise<void>;
+    onSaveAttendance?: (sessionId: string, attendances: any[]) => Promise<void>;
     onDelete?: (sessionId: string, deleteForward: boolean) => Promise<void>;
 };
 
@@ -46,17 +46,17 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                 time: dayjs(session.startTime),
                 durationMinutes: session.durationMinutes,
                 status: session.status || "scheduled",
-                memberIds: session.participants?.map((p: any) => p.memberId) || [],
+                userIds: session.attendances?.map((p: any) => p.userId) || [],
             });
             setIsRecurring(false);
             setEnableDelete(false);
 
             // Hydrate attendance dictionary map
             const att: Record<string, any> = {};
-            if (session.participants) {
-                session.participants.forEach((p: any) => {
+            if (session.attendances) {
+                session.attendances.forEach((p: any) => {
                     const isPreset = ['Sick', 'Personal', 'Emergency', 'Exams', 'Holiday'].includes(p.absenceReason);
-                    att[p.memberId] = {
+                    att[p.userId] = {
                         absent: p.absent ?? false,
                         absenceType: p.absenceReason ? (isPreset ? p.absenceReason : 'Custom') : undefined,
                         absenceReason: p.absenceReason || "",
@@ -86,7 +86,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                 description: values.description,
                 startTime: startDateTime,
                 durationMinutes: values.durationMinutes,
-                memberIds: values.memberIds || [],
+                userIds: values.userIds || [],
                 updateForward,
             };
 
@@ -105,8 +105,8 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
         if (!session || !onSaveAttendance) return;
         setIsSubmitting(true);
         try {
-            const partsMapping = Object.entries(attendanceDict).map(([memberId, data]) => ({
-                memberId,
+            const partsMapping = Object.entries(attendanceDict).map(([userId, data]) => ({
+                userId,
                 ...data
             }));
             if (partsMapping.length > 0) {
@@ -230,14 +230,14 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                 </Form.Item>
             </Space>
 
-            <Form.Item name="memberIds" label="Assign Members">
+            <Form.Item name="userIds" label="Assign Members">
                 <Select
                     mode="multiple"
                     placeholder="Select teachers or participants"
                     loading={loadingMembers}
                     options={(members || []).map((m: any) => ({
                         label: m.user?.name || m.user?.email,
-                        value: m.id
+                        value: m.user?.id
                     }))}
                     showSearch
                     optionFilterProp="label"
@@ -297,16 +297,16 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
         <div style={{ marginTop: 16 }}>
             <Alert type="info" message="Log student presence and private behavior notes below before marking the session completed." showIcon style={{ marginBottom: 16 }} />
             <List
-                dataSource={session.participants || []}
+                dataSource={session.attendances || []}
                 renderItem={(item: any) => {
-                    const memberName = item.member?.user?.name || item.member?.user?.email || item.memberId;
-                    const log = attendanceDict[item.memberId] || { absent: false, absenceReason: "", notes: "" };
+                    const memberName = item.user?.name || item.user?.email || item.userId;
+                    const log = attendanceDict[item.userId] || { absent: false, absenceReason: "", notes: "" };
                     return (
                         <List.Item style={{ display: 'block' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                    <Avatar src={item.member?.user?.image ? getAvatarUrl(item.member.user.image, 'sm') : undefined}>
-                                        {!item.member?.user?.image && memberName.charAt(0).toUpperCase()}
+                                    <Avatar src={item.user?.image ? getAvatarUrl(item.user.image, 'sm') : undefined}>
+                                        {!item.user?.image && typeof memberName === 'string' && memberName.charAt(0).toUpperCase()}
                                     </Avatar>
                                     <strong style={{ fontSize: 16 }}>{memberName}</strong>
                                 </div>
@@ -319,7 +319,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                                         const defaultType = log.absenceType || 'Sick';
                                         setAttendanceDict({
                                             ...attendanceDict,
-                                            [item.memberId]: {
+                                            [item.userId]: {
                                                 ...log,
                                                 absent: checked,
                                                 absenceType: checked ? defaultType : undefined,
@@ -336,7 +336,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                                         value={log.absenceType || 'Sick'}
                                         onChange={(val) => setAttendanceDict({
                                             ...attendanceDict,
-                                            [item.memberId]: {
+                                            [item.userId]: {
                                                 ...log,
                                                 absenceType: val,
                                                 absenceReason: val === 'Custom' ? '' : val
@@ -355,7 +355,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                                         <Input
                                             placeholder="Specify custom reason..."
                                             value={log.absenceReason}
-                                            onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, absenceReason: e.target.value } })}
+                                            onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.userId]: { ...log, absenceReason: e.target.value } })}
                                         />
                                     )}
                                 </div>
@@ -364,13 +364,13 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
                                 placeholder="Student performance notes..."
                                 rows={2}
                                 value={log.notes}
-                                onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, notes: e.target.value } })}
+                                onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.userId]: { ...log, notes: e.target.value } })}
                             />
                         </List.Item>
                     );
                 }}
             />
-            {(!session.participants || session.participants.length === 0) && (
+            {(!session.attendances || session.attendances.length === 0) && (
                 <Alert type="warning" message="No students assigned to record attendance." />
             )}
             <div style={{ marginTop: 24, textAlign: 'right' }}>
@@ -405,7 +405,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
     ) : null;
 
     return (
-        <Drawer title={session ? "Edit Session" : "Schedule New Session"} width={500} onClose={onClose} open={open} destroyOnClose>
+        <Drawer title={session ? "Edit Session" : "Schedule New Session"} size="large" onClose={onClose} open={open} destroyOnClose>
             {session ? (
                 <Tabs defaultActiveKey="1" items={[
                     { key: "1", label: "Details", children: detailsForm },

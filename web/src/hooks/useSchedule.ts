@@ -14,20 +14,20 @@ export type SessionDTO = {
     status: "scheduled" | "completed" | "cancelled";
     seriesId: string | null;
     recurrenceRule: string | null;
-    participants: {
+    attendances: {
         sessionId: string;
-        memberId: string;
+        organizationId: string;
+        userId: string;
         joinedAt?: number;
         absent?: boolean;
         absenceReason?: string | null;
         notes?: string | null;
-        member?: {
-            user?: {
-                id: string;
-                name: string;
-                email: string;
-                image: string | null;
-            }
+        paidAt?: number | null;
+        user?: {
+            id: string;
+            name: string;
+            email: string;
+            image: string | null;
         }
     }[];
 };
@@ -76,7 +76,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
             description?: string;
             startTime: number;
             durationMinutes: number;
-            memberIds: string[];
+            userIds: string[];
             recurrence?: { frequency: "weekly", count: number };
         }) => {
             const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule`, {
@@ -104,7 +104,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
                 description?: string | null, 
                 startTime: number, 
                 durationMinutes: number, 
-                memberIds: string[], 
+                userIds: string[], 
                 updateForward: boolean,
                 status?: "scheduled" | "completed" | "cancelled"
             } 
@@ -163,15 +163,15 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         }
     });
 
-    const updateParticipantAttendance = useMutation({
-        mutationFn: async ({ sessionId, participants }: { 
+    const updateAttendance = useMutation({
+        mutationFn: async ({ sessionId, attendances }: { 
             sessionId: string; 
-            participants: { memberId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
+            attendances: { userId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
         }) => {
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}/participants`, {
+            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}/attendances`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ participants })
+                body: JSON.stringify({ attendances })
             });
 
             if (!res.ok) throw new Error("Failed to update participation states");
@@ -194,7 +194,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         updateSession,
         updateSessionStatus,
         deleteSession,
-        updateParticipantAttendance,
+        updateAttendance,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage

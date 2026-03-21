@@ -297,6 +297,7 @@ export const userRelations = relations(user, ({ many }) => ({
     uploads: many(upload),
     media: many(media),
     playlists: many(playlist),
+    attendances: many(sessionAttendance),
 }));
 
 export const sessionRelations = relations(session, ({ one }) => ({
@@ -419,46 +420,55 @@ export const scheduledSession = sqliteTable(
 
 export type ScheduledSession = typeof scheduledSession.$inferSelect;
 
-export const scheduledSessionParticipant = sqliteTable(
-    "scheduled_session_participant",
+export const sessionAttendance = sqliteTable(
+    "session_attendance",
     {
         sessionId: text("session_id")
             .notNull()
             .references(() => scheduledSession.id, { onDelete: "cascade" }),
-        memberId: text("member_id")
+        organizationId: text("organization_id")
             .notNull()
-            .references(() => member.id, { onDelete: "cascade" }),
+            .references(() => organization.id, { onDelete: "cascade" }),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
         joinedAt: integer("joined_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
         absent: integer("absent", { mode: "boolean" }).default(false).notNull(),
         absenceReason: text("absence_reason"),
         notes: text("notes"),
+        paidAt: integer("paid_at", { mode: "timestamp_ms" }),
     },
     (table) => [
-        primaryKey({ columns: [table.sessionId, table.memberId] }),
-        index("scheduled_session_participant_sessionId_idx").on(table.sessionId),
-        index("scheduled_session_participant_memberId_idx").on(table.memberId),
+        primaryKey({ columns: [table.sessionId, table.userId] }),
+        index("session_attendance_sessionId_idx").on(table.sessionId),
+        index("session_attendance_userId_idx").on(table.userId),
+        index("session_attendance_orgId_idx").on(table.organizationId),
     ]
 );
 
-export type ScheduledSessionParticipant = typeof scheduledSessionParticipant.$inferSelect;
+export type SessionAttendance = typeof sessionAttendance.$inferSelect;
 
 export const scheduledSessionRelations = relations(scheduledSession, ({ one, many }) => ({
     organization: one(organization, {
         fields: [scheduledSession.organizationId],
         references: [organization.id],
     }),
-    participants: many(scheduledSessionParticipant),
+    attendances: many(sessionAttendance),
 }));
 
-export const scheduledSessionParticipantRelations = relations(scheduledSessionParticipant, ({ one }) => ({
+export const sessionAttendanceRelations = relations(sessionAttendance, ({ one }) => ({
     session: one(scheduledSession, {
-        fields: [scheduledSessionParticipant.sessionId],
+        fields: [sessionAttendance.sessionId],
         references: [scheduledSession.id],
     }),
-    member: one(member, {
-        fields: [scheduledSessionParticipant.memberId],
-        references: [member.id],
+    organization: one(organization, {
+        fields: [sessionAttendance.organizationId],
+        references: [organization.id],
+    }),
+    user: one(user, {
+        fields: [sessionAttendance.userId],
+        references: [user.id],
     }),
 }));

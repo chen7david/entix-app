@@ -9,10 +9,10 @@ describe('SessionScheduleService Architecture Bounds', () => {
     beforeEach(() => {
         mockRepo = {
             createSessions: vi.fn().mockImplementation((sessions) => Promise.resolve(sessions.map((s: any) => ({ ...s, id: "mock_uuid_" + Math.random().toString(36).slice(2) })))),
-            addParticipants: vi.fn().mockResolvedValue([]),
+            addAttendances: vi.fn().mockResolvedValue([]),
             getSessionById: vi.fn(),
             updateSessionDetails: vi.fn(),
-            deleteAllSessionParticipants: vi.fn(),
+            deleteAllSessionAttendances: vi.fn(),
             deleteFollowingSessions: vi.fn(),
         };
         service = new SessionScheduleService(mockRepo);
@@ -23,16 +23,17 @@ describe('SessionScheduleService Architecture Bounds', () => {
             title: "Physics 101",
             startTime: Date.now(),
             durationMinutes: 60,
-            memberIds: ["mem_123"],
+            userIds: ["usr_123"],
         };
 
         const result = await service.createSession("org_1", payload);
         expect(result).toHaveLength(1);
         expect(mockRepo.createSessions).toHaveBeenCalledTimes(1);
-        expect(mockRepo.addParticipants).toHaveBeenCalledTimes(1);
-        expect(mockRepo.addParticipants).toHaveBeenCalledWith([{
+        expect(mockRepo.addAttendances).toHaveBeenCalledTimes(1);
+        expect(mockRepo.addAttendances).toHaveBeenCalledWith([{
             sessionId: result[0].id,
-            memberId: "mem_123"
+            organizationId: "org_1",
+            userId: "usr_123"
         }]);
     });
 
@@ -41,7 +42,7 @@ describe('SessionScheduleService Architecture Bounds', () => {
             title: "Advanced Mathematics",
             startTime: new Date("2026-03-20T10:00:00Z").getTime(),
             durationMinutes: 45,
-            memberIds: ["mem_abc", "mem_xyz"],
+            userIds: ["usr_abc", "usr_xyz"],
             recurrence: { frequency: "weekly" as const, count: 4 }
         };
 
@@ -55,10 +56,10 @@ describe('SessionScheduleService Architecture Bounds', () => {
         const timeDiff = result[1].startTime.getTime() - result[0].startTime.getTime();
         expect(timeDiff).toBe(7 * 24 * 60 * 60 * 1000); 
         
-        // 8 total participant maps securely batched (4 occurrences * 2 members)
-        expect(mockRepo.addParticipants).toHaveBeenCalledWith(expect.arrayContaining([
-            expect.objectContaining({ memberId: "mem_abc" }),
-            expect.objectContaining({ memberId: "mem_xyz" })
+        // 8 total attendance maps securely batched (4 occurrences * 2 users)
+        expect(mockRepo.addAttendances).toHaveBeenCalledWith(expect.arrayContaining([
+            expect.objectContaining({ userId: "usr_abc" }),
+            expect.objectContaining({ userId: "usr_xyz" })
         ]));
     });
 
@@ -82,7 +83,7 @@ describe('SessionScheduleService Architecture Bounds', () => {
             title: "Advanced Math Revamped",
             startTime: NEW_START_TIME,
             durationMinutes: 90,
-            memberIds: ["mem_abc"],
+            userIds: ["usr_abc"],
             updateForward: true
         };
 
