@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { message, Card, Typography, Result, Button } from 'antd';
+import { App, Card, Typography, Result, Button } from 'antd';
 import { ForgotPasswordForm, type ForgotPasswordValues } from '@web/src/components/auth/ForgotPasswordForm';
 import { useForgotPassword } from '@web/src/hooks/auth/useAuth';
 import { links } from '@shared/constants/links';
@@ -8,6 +8,7 @@ import { links } from '@shared/constants/links';
 const { Title, Text } = Typography;
 
 export const ForgotPasswordPage: React.FC = () => {
+    const { message } = App.useApp();
     const navigate = useNavigate();
     const { mutate: forgotPassword, isPending } = useForgotPassword();
     const [emailSent, setEmailSent] = useState(false);

@@ -6,14 +6,15 @@ import { getUserService } from '@api/factories/service.factory';
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (ctx) => {
         const organizationId = ctx.get('organizationId')!;
+        const { limit, cursor, direction, search } = ctx.req.valid('query');
 
         ctx.var.logger.info({ organizationId }, `Fetching users for organization`);
 
         const userService = getUserService(ctx);
-        const users = await userService.findUsersByOrganization(organizationId);
+        const paginatedResult = await userService.findUsersByOrganization(organizationId, limit, cursor, direction, search);
 
-        ctx.var.logger.info({ count: users.length, organizationId }, "Users fetched for organization");
+        ctx.var.logger.info({ count: paginatedResult.items.length, organizationId }, "Users fetched for organization");
 
-        return ctx.json(users, HttpStatusCodes.OK);
+        return ctx.json(paginatedResult, HttpStatusCodes.OK);
     }
 }

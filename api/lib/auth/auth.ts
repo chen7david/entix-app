@@ -18,16 +18,6 @@ export const auth = (ctx: AppContext) => {
         ...betterAuthGlobalOptions(ctx, mailer),
         ...getEmailAndPasswordConfig(ctx, mailer),
         ...getEmailVerificationConfig(ctx, mailer),
-        user: {
-            additionalFields: {
-                role: {
-                    type: "string",
-                    required: false,
-                    defaultValue: "user",
-                    input: false,
-                },
-            }
-        },
     });
 };
 

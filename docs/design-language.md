@@ -52,7 +52,18 @@ Entix utilizes a highly customized mix of Ant Design core components combined wi
 - System active states (such as active playlist sequence tracks) should NOT use heavy `#646cff` hard-coded blocks.
 - Soft active highlights (e.g., active queue borders) should use `bg-blue-50/50 dark:bg-blue-900/10 border-blue-500` and utilize tailwind's semantic text coloring (`text-blue-600 dark:text-blue-400`).
 
-## 4. Specific Component Architectures
+## 4. Data Visualization & Charts
+When building charts (e.g., `recharts` or `visx`), utilize the following strict color palette to ensure premium aesthetic harmony across all analytical dashes:
+- **Primary / Scheduled (Blue):** `#1677FF` (Ant Design Blue-6)
+- **Success / Completed (Green):** `#52C41A` (Ant Design Green-6)
+- **Warning / Pending (Orange):** `#FAAD14` (Ant Design Gold-6)
+- **Danger / Cancelled (Red):** `#FF4D4F` (Ant Design Red-6)
+- **Auxiliary Info (Purple):** `#722ED1` (Ant Design Purple-6)
+- **Inactive / Absent (Gray/Neutral):** `#E2E8F0` or `#BFBFBF` (Tailwind Slate-200 / Ant Design Gray-5)
+
+*Chart Tooltips & Backgrounds:* Tooltips must be distinctly elevated with `shadow-md`, `border-radius: 8px`, and clean internal padding, avoiding browser-default aesthetics.
+
+## 5. Specific Component Architectures
 
 ### Edge-to-Edge Media Rendering
 Cinematic Video players (Vidstack `MediaPlayer`) rendering inside forms, sidebars, or content blocks should NOT contain rounded CSS borders directly wrapping the `video` tag. 

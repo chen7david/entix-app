@@ -1,10 +1,11 @@
 import React from 'react';
-import { Button, Alert, message } from 'antd';
+import { Button, Alert, App } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useSession } from '@web/src/lib/auth-client';
 import { useStopImpersonating } from '@web/src/hooks/auth/useAuth';
 
 export const ImpersonationBanner: React.FC = () => {
+    const { message } = App.useApp();
     const { data, isPending: isSessionPending } = useSession();
     const { mutate: stopImpersonating, isPending: isStopping } = useStopImpersonating();
 

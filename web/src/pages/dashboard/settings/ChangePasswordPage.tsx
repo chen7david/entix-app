@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
-import { Card, Typography, message } from 'antd';
+import { Card, Typography, App } from 'antd';
 import { ChangePasswordForm, type ChangePasswordValues } from '@web/src/components/auth/ChangePasswordForm';
 import { useChangePassword } from '@web/src/hooks/auth/useAuth';
 import { links } from '@shared/constants/links';
@@ -10,6 +10,7 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 const { Title, Text } = Typography;
 
 export const ChangePasswordPage: React.FC = () => {
+    const { message } = App.useApp();
     const navigate = useNavigate();
     const { activeOrganization } = useOrganization();
     const { mutate: changePassword, isPending } = useChangePassword();

@@ -21,14 +21,11 @@ export const SelectOrganizationPage: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
                 <Spin size="large" />
-            </div>
         );
     }
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
             <div className="w-full max-w-md text-center">
                 <div className="mb-8 flex justify-center">
                     <div className="flex items-center gap-2">
@@ -50,6 +47,5 @@ export const SelectOrganizationPage: React.FC = () => {
                     />
                 </div>
             </div>
-        </div>
     );
 };

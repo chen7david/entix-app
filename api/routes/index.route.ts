@@ -7,6 +7,7 @@ import { uploadRoutes } from "./orgs/uploads.index";
 import { avatarRoutes } from "./orgs/avatar.index";
 import { mediaRoutes } from "./orgs/media.index";
 import { playlistRoutes } from "./orgs/playlist.index";
+import { scheduleRoutes } from "./orgs/schedule.index";
 
 export const routes = [
     userRoutes,
@@ -18,4 +19,5 @@ export const routes = [
     avatarRoutes,
     mediaRoutes,
     playlistRoutes,
+    scheduleRoutes,
 ]

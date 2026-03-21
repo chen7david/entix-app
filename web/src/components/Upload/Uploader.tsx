@@ -1,4 +1,4 @@
-import { Upload, message } from 'antd';
+import { Upload, App } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { useQueryClient } from '@tanstack/react-query';
@@ -20,6 +20,7 @@ export const Uploader = ({
     maxNumberOfFiles = 10,
     maxFileSize = 1024 * 1024 * 500, // 500MB limit
 }: UploaderProps) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
 
     const props: UploadProps = {

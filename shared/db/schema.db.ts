@@ -27,6 +27,8 @@ export const user = sqliteTable("user", {
     banned: integer("banned", { mode: "boolean" }).default(false).notNull(),
     banReason: text("ban_reason"),
     banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
+    theme: text("theme").default("system"),
+    timezone: text("timezone"),
 });
 
 export type User = typeof user.$inferSelect;
@@ -317,6 +319,7 @@ export const organizationRelations = relations(organization, ({ many }) => ({
     uploads: many(upload),
     media: many(media),
     playlists: many(playlist),
+    scheduledSessions: many(scheduledSession),
 }));
 
 export const memberRelations = relations(member, ({ one }) => ({
@@ -384,5 +387,78 @@ export const playlistMediaRelations = relations(playlistMedia, ({ one }) => ({
     media: one(media, {
         fields: [playlistMedia.mediaId],
         references: [media.id],
+    }),
+}));
+
+export const scheduledSession = sqliteTable(
+    "scheduled_session",
+    {
+        id: text("id").primaryKey(),
+        organizationId: text("organization_id")
+            .notNull()
+            .references(() => organization.id, { onDelete: "cascade" }),
+        title: text("title").notNull(),
+        description: text("description"),
+        startTime: integer("start_time", { mode: "timestamp_ms" }).notNull(),
+        durationMinutes: integer("duration_minutes").notNull(),
+        status: text("status", { enum: ["scheduled", "completed", "cancelled"] }).default("scheduled").notNull(),
+        seriesId: text("series_id"),
+        recurrenceRule: text("recurrence_rule"),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("scheduled_session_organizationId_idx").on(table.organizationId),
+        index("scheduled_session_seriesId_idx").on(table.seriesId)
+    ]
+);
+
+export type ScheduledSession = typeof scheduledSession.$inferSelect;
+
+export const scheduledSessionParticipant = sqliteTable(
+    "scheduled_session_participant",
+    {
+        sessionId: text("session_id")
+            .notNull()
+            .references(() => scheduledSession.id, { onDelete: "cascade" }),
+        memberId: text("member_id")
+            .notNull()
+            .references(() => member.id, { onDelete: "cascade" }),
+        joinedAt: integer("joined_at", { mode: "timestamp_ms" })
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .notNull(),
+        absent: integer("absent", { mode: "boolean" }).default(false).notNull(),
+        absenceReason: text("absence_reason"),
+        notes: text("notes"),
+    },
+    (table) => [
+        primaryKey({ columns: [table.sessionId, table.memberId] }),
+        index("scheduled_session_participant_sessionId_idx").on(table.sessionId),
+        index("scheduled_session_participant_memberId_idx").on(table.memberId),
+    ]
+);
+
+export type ScheduledSessionParticipant = typeof scheduledSessionParticipant.$inferSelect;
+
+export const scheduledSessionRelations = relations(scheduledSession, ({ one, many }) => ({
+    organization: one(organization, {
+        fields: [scheduledSession.organizationId],
+        references: [organization.id],
+    }),
+    participants: many(scheduledSessionParticipant),
+}));
+
+export const scheduledSessionParticipantRelations = relations(scheduledSessionParticipant, ({ one }) => ({
+    session: one(scheduledSession, {
+        fields: [scheduledSessionParticipant.sessionId],
+        references: [scheduledSession.id],
+    }),
+    member: one(member, {
+        fields: [scheduledSessionParticipant.memberId],
+        references: [member.id],
     }),
 }));

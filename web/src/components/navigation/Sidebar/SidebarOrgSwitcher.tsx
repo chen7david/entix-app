@@ -81,8 +81,8 @@ export const SidebarOrgSwitcher: React.FC = () => {
                                 flex: 1,
                                 fontSize: 13,
                                 fontWeight: isActive ? 600 : 400,
-                                color: isActive ? '#646cff' : '#333',
                             }}
+                            type={isActive ? undefined : 'secondary'}
                             ellipsis
                         >
                             {org.name}
@@ -111,7 +111,7 @@ export const SidebarOrgSwitcher: React.FC = () => {
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
                 >
                     <PlusOutlined style={{ fontSize: 12 }} />
-                    <Text style={{ fontSize: 13, color: '#666' }}>Manage Organizations</Text>
+                    <Text type="secondary" style={{ fontSize: 13 }}>Manage Organizations</Text>
                 </div>
             </div>
         </div>
@@ -157,7 +157,7 @@ export const SidebarOrgSwitcher: React.FC = () => {
                     {activeOrganization?.name?.charAt(0)?.toUpperCase() || 'E'}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
-                    <Text strong style={{ fontSize: 13, lineHeight: '18px', color: '#1a1a1a' }} ellipsis>
+                    <Text strong style={{ fontSize: 13, lineHeight: '18px' }} ellipsis>
                         Entix
                     </Text>
                     <Text type="secondary" style={{ fontSize: 11, lineHeight: '14px' }} ellipsis>

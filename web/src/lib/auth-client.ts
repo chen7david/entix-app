@@ -17,6 +17,12 @@ export const authClient = createAuthClient({
         adminClient(),
     ],
     basePath: '/api/v1/auth',
+    user: {
+        additionalFields: {
+            theme: { type: "string", required: false },
+            timezone: { type: "string", required: false },
+        }
+    }
 });
 
 export const { useSession, signIn, signUp, signOut, sendVerificationEmail, verifyEmail, requestPasswordReset, resetPassword, changePassword } = authClient;

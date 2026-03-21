@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Typography, Card, Statistic, Row, Col, Button, Table, Modal, Tag, Input, Dropdown, message } from 'antd';
+import { Typography, Card, Statistic, Row, Col, Button, Table, Modal, Tag, Input, Dropdown, App } from 'antd';
 import type { MenuProps } from 'antd';
 import {
     ApartmentOutlined,
@@ -18,6 +18,7 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 
 export const GlobalOrganizationsPage: React.FC = () => {
+    const { message } = App.useApp();
     const { data: organizations = [], isLoading, refetch } = useAdminOrganizations();
     const { mutate: createUserWithOrg, isPending: isCreatingUserWithOrg } = useAdminCreateUserWithOrg();
 

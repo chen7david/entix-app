@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, List, Switch, Button, Skeleton, Tooltip } from 'antd';
+import { Typography, List, Switch, Button, Skeleton, Tooltip, theme } from 'antd';
 import { AudioOutlined, PlaySquareOutlined, MenuUnfoldOutlined, InteractionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useNavigate, useParams } from 'react-router';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
@@ -18,6 +18,7 @@ export const PlaylistPlayerPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const { getSequence, playlists } = usePlaylists();
     const { media } = useMedia();
+    const { token } = theme.useToken();
     
     // Page State
     const [sequence, setSequence] = useState<string[]>([]);
@@ -91,16 +92,22 @@ export const PlaylistPlayerPage: React.FC = () => {
                 return (
                     <div 
                         onClick={() => setCurrentIndex(index)}
-                        className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-l-4 ${isPlaying ? 'bg-blue-50/50 border-blue-500' : 'border-transparent hover:bg-gray-50'}`}
+                        className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-l-4`}
+                        style={{
+                            backgroundColor: isPlaying ? token.controlItemBgActive : 'transparent',
+                            borderColor: isPlaying ? token.colorPrimary : 'transparent',
+                        }}
+                        onMouseEnter={(e) => { if (!isPlaying) e.currentTarget.style.backgroundColor = token.colorBgTextHover }}
+                        onMouseLeave={(e) => { if (!isPlaying) e.currentTarget.style.backgroundColor = 'transparent' }}
                     >
                         {item.mimeType.startsWith('video/') ? (
-                            <PlaySquareOutlined className={`transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
+                            <PlaySquareOutlined className={`transition-colors`} style={{ color: isPlaying ? token.colorPrimary : token.colorTextSecondary }} />
                         ) : (
-                            <AudioOutlined className={`transition-colors ${isPlaying ? 'text-blue-500' : 'text-gray-400'}`} />
+                            <AudioOutlined className={`transition-colors`} style={{ color: isPlaying ? token.colorPrimary : token.colorTextSecondary }} />
                         )}
                         <div className="flex flex-col flex-1 min-w-0">
                             <Tooltip title={item.title} placement="topLeft" mouseEnterDelay={0.5}>
-                                <Text className={`truncate block font-medium transition-colors ${isPlaying ? 'text-blue-600' : ''}`}>{item.title}</Text>
+                                <Text className={`truncate block font-medium transition-colors`} style={{ color: isPlaying ? token.colorPrimary : undefined }}>{item.title}</Text>
                             </Tooltip>
                             {item.description ? (
                                 <Text type="secondary" className="text-xs truncate block mt-0.5">{item.description}</Text>
@@ -167,8 +174,17 @@ export const PlaylistPlayerPage: React.FC = () => {
                     </div>
 
                     {/* Right Pane (Queue 30%) */}
-                    <div className="w-full lg:w-[30%] flex flex-col border border-gray-200 bg-white rounded-none shadow-sm h-[calc(100vh-240px)]">
-                        <div className="px-5 py-4 flex flex-col border-b border-gray-200">
+                    <div 
+                        className="w-full lg:w-[30%] flex flex-col shadow-sm h-[calc(100vh-240px)]"
+                        style={{ 
+                            backgroundColor: token.colorBgContainer,
+                            border: `1px solid ${token.colorSplit}`,
+                        }}
+                    >
+                        <div 
+                            className="px-5 py-4 flex flex-col"
+                            style={{ borderBottom: `1px solid ${token.colorSplit}` }}
+                        >
                             <div className="flex items-center justify-between mb-4">
                                 <Title level={5} className="!mb-0 flex items-center gap-2">
                                     <MenuUnfoldOutlined className="text-gray-500" />
