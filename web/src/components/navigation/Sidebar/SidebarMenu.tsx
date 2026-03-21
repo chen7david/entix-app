@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined } from "@ant-design/icons";
+import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined, CalendarOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
 import { links } from "@shared/constants/links";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
@@ -82,6 +82,11 @@ export const SidebarMenu: React.FC = () => {
                         icon: <OrderedListOutlined />,
                     },
                 ]
+            },
+            {
+                label: 'Schedule',
+                key: getOrgLink('/schedule'),
+                icon: <CalendarOutlined />,
             },
             {
                 label: 'Members',
