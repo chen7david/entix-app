@@ -112,7 +112,7 @@ export const OrganizationMembersPage = () => {
             key: 'user',
             render: (user: Record<string, unknown>, record: any) => (
                 <div 
-                    className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
+                    className="flex items-center gap-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded transition-colors"
                     onClick={() => setSelectedMember(record)}
                 >
                     <Avatar src={user?.image ? getAvatarUrl(user.image as string, 'sm') : undefined} icon={<UserOutlined />} />

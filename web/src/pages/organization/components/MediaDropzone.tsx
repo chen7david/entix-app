@@ -7,8 +7,8 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
 const { Dragger } = Upload;
 
-export const MediaDropzone: React.FC<{
-    const { message } = App.useApp(); type: 'video' | 'audio' }> = ({ type }) => {
+export const MediaDropzone: React.FC<{ type: 'video' | 'audio' }> = ({ type }) => {
+    const { message } = App.useApp();
     const { activeOrganization } = useOrganization();
     const { createMedia } = useMedia();
     const [isUploading, setIsUploading] = useState(false);

@@ -1,7 +1,8 @@
-import { Drawer, Form, Input, DatePicker, TimePicker, Select, Button, Switch, InputNumber, Modal, Space, Tabs, List, Checkbox, Alert } from "antd";
+import { Drawer, Form, Input, DatePicker, TimePicker, Select, Button, Switch, InputNumber, Modal, Space, Tabs, List, Avatar, Alert } from "antd";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { useMembers } from "@web/src/hooks/auth/useMembers";
+import { getAvatarUrl } from "@shared/utils/image-url";
 
 export type SessionSubmitPayload = {
     title: string;
@@ -29,7 +30,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAtt
     const [isRecurring, setIsRecurring] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [recurrenceMode, setRecurrenceMode] = useState<'preset' | 'custom'>('preset');
-    const [attendanceDict, setAttendanceDict] = useState<Record<string, { absent: boolean; absenceReason: string; notes: string }>>({});
+    const [attendanceDict, setAttendanceDict] = useState<Record<string, { absent: boolean; absenceType?: string; absenceReason: string; notes: string }>>({});
 
     useEffect(() => {
         if (open && session) {
@@ -48,8 +49,10 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAtt
             const att: Record<string, any> = {};
             if (session.participants) {
                 session.participants.forEach((p: any) => {
+                    const isPreset = ['Sick', 'Personal', 'Emergency', 'Exams', 'Holiday'].includes(p.absenceReason);
                     att[p.memberId] = {
                         absent: p.absent ?? false,
+                        absenceType: p.absenceReason ? (isPreset ? p.absenceReason : 'Custom') : undefined,
                         absenceReason: p.absenceReason || "",
                         notes: p.notes || ""
                     }
@@ -275,22 +278,62 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAtt
                     const log = attendanceDict[item.memberId] || { absent: false, absenceReason: "", notes: "" };
                     return (
                         <List.Item style={{ display: 'block' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                                <strong>{memberName}</strong>
-                                <Checkbox 
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                    <Avatar src={item.member?.user?.image ? getAvatarUrl(item.member.user.image, 'sm') : undefined}>
+                                        {!item.member?.user?.image && memberName.charAt(0).toUpperCase()}
+                                    </Avatar>
+                                    <strong style={{ fontSize: 16 }}>{memberName}</strong>
+                                </div>
+                                <Switch 
+                                    checkedChildren="Absent" 
+                                    unCheckedChildren="Present"
                                     checked={log.absent} 
-                                    onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, absent: e.target.checked } })}
-                                >
-                                    Absent
-                                </Checkbox>
+                                    style={{ backgroundColor: log.absent ? '#ff4d4f' : '#52c41a' }}
+                                    onChange={(checked) => {
+                                        const defaultType = log.absenceType || 'Sick';
+                                        setAttendanceDict({ 
+                                            ...attendanceDict, 
+                                            [item.memberId]: { 
+                                                ...log, 
+                                                absent: checked, 
+                                                absenceType: checked ? defaultType : undefined, 
+                                                absenceReason: checked ? (defaultType === 'Custom' ? '' : defaultType) : '' 
+                                            } 
+                                        });
+                                    }}
+                                />
                             </div>
                             {log.absent && (
-                                <Input 
-                                    placeholder="Reason for absence (optional)" 
-                                    value={log.absenceReason} 
-                                    onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, absenceReason: e.target.value } })}
-                                    style={{ marginBottom: 8 }}
-                                />
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
+                                    <Select 
+                                        placeholder="Reason for absence"
+                                        value={log.absenceType || 'Sick'}
+                                        onChange={(val) => setAttendanceDict({ 
+                                            ...attendanceDict, 
+                                            [item.memberId]: { 
+                                                ...log, 
+                                                absenceType: val, 
+                                                absenceReason: val === 'Custom' ? '' : val 
+                                            } 
+                                        })}
+                                        options={[
+                                            { label: 'Sick', value: 'Sick' },
+                                            { label: 'Personal Leave', value: 'Personal' },
+                                            { label: 'Emergency', value: 'Emergency' },
+                                            { label: 'Exams', value: 'Exams' },
+                                            { label: 'Holiday', value: 'Holiday' },
+                                            { label: 'Custom...', value: 'Custom' }
+                                        ]}
+                                    />
+                                    {log.absenceType === 'Custom' && (
+                                        <Input 
+                                            placeholder="Specify custom reason..." 
+                                            value={log.absenceReason} 
+                                            onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, absenceReason: e.target.value } })}
+                                        />
+                                    )}
+                                </div>
                             )}
                             <Input.TextArea 
                                 placeholder="Student performance notes..." 
