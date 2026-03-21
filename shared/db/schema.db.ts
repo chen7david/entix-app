@@ -27,6 +27,7 @@ export const user = sqliteTable("user", {
     banned: integer("banned", { mode: "boolean" }).default(false).notNull(),
     banReason: text("ban_reason"),
     banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
+    theme: text("theme").default("system"),
     timezone: text("timezone"),
 });
 

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, Avatar, Typography, Button, Descriptions, Spin, message } from 'antd';
-import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Card, Avatar, Typography, Button, Spin, message, Row, Col, Divider, Tooltip } from 'antd';
+import { UserOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { useSession, signOut } from '../../../lib/auth-client';
 import { useNavigate } from 'react-router';
 import { links } from '@shared/constants/links';
@@ -8,7 +8,13 @@ import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { AvatarDropzone } from '@web/src/components/Upload/AvatarDropzone';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-const { Title } = Typography;
+import { DateUtils } from '@web/src/utils/date';
+
+import { TimezoneSelector } from '@web/src/components/profile/TimezoneSelector';
+import { ThemeSelector } from '@web/src/components/profile/ThemeSelector';
+import { PasswordUpdateForm } from '@web/src/components/profile/PasswordUpdateForm';
+
+const { Title, Text } = Typography;
 
 export const ProfilePage: React.FC = () => {
     const { data: session, isPending } = useSession();
@@ -54,43 +60,77 @@ export const ProfilePage: React.FC = () => {
     return (
         <>
             <Toolbar />
-            <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
-                <Card
-                    actions={[
-                        <Button type="text" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-                            Logout
-                        </Button>
-                    ]}
-                >
-                    <Card.Meta
-                        avatar={activeOrganization ? (
-                            <AvatarDropzone 
-                                organizationId={activeOrganization.id} 
-                                userId={session.user.id} 
-                                currentImageUrl={getAvatarUrl(session.user.image, 'lg')} 
-                                size={64} 
-                            />
-                        ) : (
-                            <Avatar size={64} icon={<UserOutlined />} src={getAvatarUrl(session.user.image, 'lg')} />
-                        )}
-                        title={<Title level={3}>{session.user.name}</Title>}
-                        description={session.user.email}
-                    />
-                    <div style={{ marginTop: '24px' }}>
-                        <Descriptions title="User Information" bordered column={1}>
-                            <Descriptions.Item label="ID">{session.user.id}</Descriptions.Item>
-                            <Descriptions.Item label="Email">{session.user.email}</Descriptions.Item>
-                            <Descriptions.Item label="Name">{session.user.name}</Descriptions.Item>
-                            <Descriptions.Item label="Verified">
-                                {session.user.emailVerified ? 'Yes' : 'No'}
-                            </Descriptions.Item>
-                            <Descriptions.Item label="Created At">
-                                {new Date(session.user.createdAt).toLocaleString()}
-                            </Descriptions.Item>
-                        </Descriptions>
-                    </div>
-                </Card>
+            <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+                <Row gutter={[24, 24]}>
+                    <Col xs={24} md={8}>
+                        <Card
+                            className="shadow-sm"
+                            actions={[
+                                <Button type="text" danger icon={<LogoutOutlined />} onClick={handleLogout}>
+                                    Logout
+                                </Button>
+                            ]}
+                        >
+                            <div className="flex flex-col items-center mb-6 text-center">
+                                {activeOrganization ? (
+                                    <AvatarDropzone 
+                                        organizationId={activeOrganization.id} 
+                                        userId={session.user.id} 
+                                        currentImageUrl={getAvatarUrl(session.user.image, 'lg')} 
+                                        size={96} 
+                                    />
+                                ) : (
+                                    <Avatar size={96} icon={<UserOutlined />} src={getAvatarUrl(session.user.image, 'lg')} />
+                                )}
+                                <Title level={4} style={{ marginTop: '16px', marginBottom: '4px' }}>{session.user.name}</Title>
+                                <Text type="secondary">{session.user.email}</Text>
+                            </div>
 
+                            <Divider />
+
+                            <div className="flex justify-between items-center py-2">
+                                <Text type="secondary">Status</Text>
+                                <Text>{session.user.emailVerified ? 'Verified' : 'Unverified'}</Text>
+                            </div>
+                            
+                            <div className="flex justify-between items-center py-2">
+                                <Text type="secondary">Joined</Text>
+                                <Tooltip title={DateUtils.format(new Date(session.user.createdAt).getTime(), 'LLL')}>
+                                    <Text>{DateUtils.fromNow(new Date(session.user.createdAt).getTime())}</Text>
+                                </Tooltip>
+                            </div>
+                        </Card>
+                    </Col>
+                    
+                    <Col xs={24} md={16}>
+                        <div className="flex flex-col gap-6">
+                            <Card bordered={false} className="shadow-sm">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <SettingOutlined className="text-blue-500 text-xl" />
+                                    <h3 className="text-lg font-medium m-0">Preferences</h3>
+                                </div>
+                                <Row gutter={[16, 16]}>
+                                    <Col xs={24} md={12}>
+                                        <div className="mb-2">
+                                            <Text strong>Timezone</Text>
+                                            <div className="text-gray-500 text-xs mt-1 mb-2">Configure default bounds for analytics scopes.</div>
+                                        </div>
+                                        <TimezoneSelector />
+                                    </Col>
+                                    <Col xs={24} md={12}>
+                                        <div className="mb-2">
+                                            <Text strong>Theme</Text>
+                                            <div className="text-gray-500 text-xs mt-1 mb-2">Toggle interface coloring behavior.</div>
+                                        </div>
+                                        <ThemeSelector />
+                                    </Col>
+                                </Row>
+                            </Card>
+
+                            <PasswordUpdateForm />
+                        </div>
+                    </Col>
+                </Row>
             </div>
         </>
     );

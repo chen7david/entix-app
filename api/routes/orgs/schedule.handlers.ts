@@ -46,6 +46,26 @@ export class ScheduleHandlers {
         return ctx.json(result, HttpStatusCodes.OK);
     };
 
+    static getAnalyticsSessions: AppHandler<typeof ScheduleRoutes.getAnalyticsSessions> = async (ctx) => {
+        const organizationId = ctx.req.valid("param").organizationId;
+        const { startDate, endDate, tzOffset } = ctx.req.valid("query");
+
+        const service = getSessionScheduleService(ctx);
+        const result = await service.getAnalyticsSessions(organizationId, startDate, endDate, tzOffset);
+
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
+    static getAnalyticsAttendance: AppHandler<typeof ScheduleRoutes.getAnalyticsAttendance> = async (ctx) => {
+        const organizationId = ctx.req.valid("param").organizationId;
+        const { startDate, endDate, tzOffset } = ctx.req.valid("query");
+
+        const service = getSessionScheduleService(ctx);
+        const result = await service.getAnalyticsAttendance(organizationId, startDate, endDate, tzOffset);
+
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
     static updateSession: AppHandler<typeof ScheduleRoutes.updateSession> = async (ctx) => {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");

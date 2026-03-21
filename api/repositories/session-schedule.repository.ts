@@ -135,6 +135,42 @@ export class SessionScheduleRepository {
         };
     }
 
+    async getSessionTrendsForOrg(organizationId: string, startDate?: number, endDate?: number, tzOffset: string = "+00:00") {
+        let conditions: any[] = [eq(scheduledSession.organizationId, organizationId)];
+        if (startDate) conditions.push(sql`${scheduledSession.startTime} >= ${startDate}`);
+        if (endDate) conditions.push(sql`${scheduledSession.startTime} <= ${endDate}`);
+
+        return this.db.select({
+            date: sql<string>`strftime('%Y-%m-%d', datetime(${scheduledSession.startTime} / 1000, 'unixepoch', ${tzOffset}))`,
+            total: sql<number>`cast(count(*) as int)`,
+            scheduled: sql<number>`cast(sum(case when ${scheduledSession.status} = 'scheduled' then 1 else 0 end) as int)`,
+            completed: sql<number>`cast(sum(case when ${scheduledSession.status} = 'completed' then 1 else 0 end) as int)`,
+            cancelled: sql<number>`cast(sum(case when ${scheduledSession.status} = 'cancelled' then 1 else 0 end) as int)`
+        })
+        .from(scheduledSession)
+        .where(and(...conditions))
+        .groupBy(sql`1`)
+        .orderBy(sql`1`);
+    }
+
+    async getAttendanceTrendsForOrg(organizationId: string, startDate?: number, endDate?: number, tzOffset: string = "+00:00") {
+        let conditions: any[] = [eq(scheduledSession.organizationId, organizationId)];
+        if (startDate) conditions.push(sql`${scheduledSession.startTime} >= ${startDate}`);
+        if (endDate) conditions.push(sql`${scheduledSession.startTime} <= ${endDate}`);
+
+        return this.db.select({
+            date: sql<string>`strftime('%Y-%m-%d', datetime(${scheduledSession.startTime} / 1000, 'unixepoch', ${tzOffset}))`,
+            totalExpected: sql<number>`cast(count(${scheduledSessionParticipant.memberId}) as int)`,
+            present: sql<number>`cast(sum(case when ${scheduledSessionParticipant.absent} = 0 then 1 else 0 end) as int)`,
+            absent: sql<number>`cast(sum(case when ${scheduledSessionParticipant.absent} = 1 then 1 else 0 end) as int)`
+        })
+        .from(scheduledSession)
+        .leftJoin(scheduledSessionParticipant, eq(scheduledSession.id, scheduledSessionParticipant.sessionId))
+        .where(and(...conditions))
+        .groupBy(sql`1`)
+        .orderBy(sql`1`);
+    }
+
     async updateSessionStatus(organizationId: string, sessionId: string, status: "scheduled" | "completed" | "cancelled") {
         const [updated] = await this.db.update(scheduledSession)
             .set({ status })

@@ -66,6 +66,14 @@ export class SessionScheduleService {
         return this.sessionRepo.getScheduleMetricsForOrg(organizationId, startDate, endDate);
     }
 
+    async getAnalyticsSessions(organizationId: string, startDate?: number, endDate?: number, tzOffset?: string) {
+        return this.sessionRepo.getSessionTrendsForOrg(organizationId, startDate, endDate, tzOffset);
+    }
+
+    async getAnalyticsAttendance(organizationId: string, startDate?: number, endDate?: number, tzOffset?: string) {
+        return this.sessionRepo.getAttendanceTrendsForOrg(organizationId, startDate, endDate, tzOffset);
+    }
+
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
         const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
         if (!currentSession) {

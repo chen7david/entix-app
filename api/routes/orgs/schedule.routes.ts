@@ -45,6 +45,7 @@ export const ScheduleRoutes = {
             query: z.object({
                 startDate: z.coerce.number().optional(),
                 endDate: z.coerce.number().optional(),
+                tzOffset: z.string().optional(),
             }).merge(PaginationQuerySchema),
         },
         responses: {
@@ -71,6 +72,7 @@ export const ScheduleRoutes = {
             query: z.object({
                 startDate: z.coerce.number().optional(),
                 endDate: z.coerce.number().optional(),
+                tzOffset: z.string().optional(),
             }),
         },
         responses: {
@@ -85,6 +87,71 @@ export const ScheduleRoutes = {
                     },
                 },
                 description: "Aggregate summary of scheduled sessions across date boundaries",
+            },
+        },
+    }),
+
+    getAnalyticsSessions: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/analytics/sessions",
+        tags: ["Schedule", "Analytics"],
+        middleware: [requireAuth, requireOrgMembership] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+            }),
+            query: z.object({
+                startDate: z.coerce.number().optional(),
+                endDate: z.coerce.number().optional(),
+                tzOffset: z.string().optional(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.array(z.object({
+                            date: z.string(),
+                            total: z.number(),
+                            scheduled: z.number(),
+                            completed: z.number(),
+                            cancelled: z.number(),
+                        })),
+                    },
+                },
+                description: "Daily aggregates of scheduled sessions",
+            },
+        },
+    }),
+
+    getAnalyticsAttendance: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/analytics/attendance",
+        tags: ["Schedule", "Analytics"],
+        middleware: [requireAuth, requireOrgMembership] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+            }),
+            query: z.object({
+                startDate: z.coerce.number().optional(),
+                endDate: z.coerce.number().optional(),
+                tzOffset: z.string().optional(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.array(z.object({
+                            date: z.string(),
+                            totalExpected: z.number(),
+                            present: z.number(),
+                            absent: z.number(),
+                        })),
+                    },
+                },
+                description: "Daily aggregates of session attendance",
             },
         },
     }),

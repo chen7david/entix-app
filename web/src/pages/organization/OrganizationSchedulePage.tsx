@@ -8,8 +8,7 @@ import { useDebounce } from "@web/src/hooks/useDebounce";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { SessionDetailsDrawer } from "@web/src/components/schedule/SessionDetailsDrawer";
 import type { SessionSubmitPayload } from "@web/src/components/schedule/SessionDetailsDrawer";
-import dayjs from "dayjs";
-import { startOfToday, formatDistanceToNow } from "date-fns";
+import { DateUtils } from "@web/src/utils/date";
 const { RangePicker } = DatePicker;
 
 const { Title, Text } = Typography;
@@ -19,8 +18,8 @@ export const OrganizationSchedulePage = () => {
     
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const defaultStart = startOfToday().getTime();
-    const defaultEnd = dayjs().endOf('day').valueOf();
+    const defaultStart = DateUtils.startOf('day');
+    const defaultEnd = DateUtils.endOf('day');
 
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
@@ -81,8 +80,8 @@ export const OrganizationSchedulePage = () => {
     const handleRangeChange = (dates: any) => {
         const params = new URLSearchParams(searchParams);
         if (dates && dates[0] && dates[1]) {
-            params.set("startDate", dates[0].startOf('day').valueOf().toString());
-            params.set("endDate", dates[1].endOf('day').valueOf().toString());
+            params.set("startDate", DateUtils.startOf('day', dates[0]).toString());
+            params.set("endDate", DateUtils.endOf('day', dates[1]).toString());
         } else {
             params.delete("startDate");
             params.delete("endDate");
@@ -136,61 +135,7 @@ export const OrganizationSchedulePage = () => {
                         <Title level={2} style={{ marginBottom: 4 }}>Schedule</Title>
                         <Text type="secondary">Manage and track organization sessions</Text>
                     </div>
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <Input
-                            placeholder="Search sessions..."
-                            prefix={<SearchOutlined />}
-                            style={{ maxWidth: 200 }}
-                            value={localSearch}
-                            onChange={(e) => setLocalSearch(e.target.value)}
-                            allowClear
-                        />
-                        <Select 
-                            value={
-                                (queryStart === dayjs().startOf('day').valueOf() && queryEnd === dayjs().endOf('day').valueOf()) ? 'Today' : 
-                                (queryStart === dayjs().add(1, 'day').startOf('day').valueOf() && queryEnd === dayjs().add(1, 'day').endOf('day').valueOf()) ? 'Tomorrow' : 
-                                (queryStart === dayjs().subtract(1, 'week').startOf('week').valueOf() && queryEnd === dayjs().subtract(1, 'week').endOf('week').valueOf()) ? 'Last Week' : 
-                                (queryStart === dayjs().add(1, 'week').startOf('week').valueOf() && queryEnd === dayjs().add(1, 'week').endOf('week').valueOf()) ? 'Next Week' : 
-                                (queryStart === dayjs().startOf('month').valueOf() && queryEnd === dayjs().endOf('month').valueOf()) ? 'This Month' : 
-                                'Custom'
-                            }
-                            onChange={(val) => {
-                                if (val === 'Today') handleRangeChange([dayjs().startOf('day'), dayjs().endOf('day')]);
-                                else if (val === 'Tomorrow') handleRangeChange([dayjs().add(1, 'day').startOf('day'), dayjs().add(1, 'day').endOf('day')]);
-                                else if (val === 'Last Week') handleRangeChange([dayjs().subtract(1, 'week').startOf('week'), dayjs().subtract(1, 'week').endOf('week')]);
-                                else if (val === 'Next Week') handleRangeChange([dayjs().add(1, 'week').startOf('week'), dayjs().add(1, 'week').endOf('week')]);
-                                else if (val === 'This Month') handleRangeChange([dayjs().startOf('month'), dayjs().endOf('month')]);
-                            }}
-                            style={{ minWidth: 130 }}
-                            options={[
-                                { label: 'Today', value: 'Today' },
-                                { label: 'Tomorrow', value: 'Tomorrow' },
-                                { label: 'Last Week', value: 'Last Week' },
-                                { label: 'Next Week', value: 'Next Week' },
-                                { label: 'This Month', value: 'This Month' },
-                                { label: 'Custom', value: 'Custom', disabled: true }
-                            ]}
-                        />
-                        <Select
-                            value={timeline}
-                            onChange={setTimeline}
-                            style={{ minWidth: 120 }}
-                            options={[
-                                { label: 'All Time', value: 'All' },
-                                { label: 'Upcoming', value: 'Upcoming' },
-                                { label: 'Past', value: 'Past' },
-                                { label: 'Next 5 Hours', value: 'Next 5 Hours' },
-                                { label: 'Last 5 Hours', value: 'Last 5 Hours' }
-                            ]}
-                        />
-                        <RangePicker 
-                            onChange={handleRangeChange} 
-                            value={[
-                                queryStart ? dayjs(queryStart) : null, 
-                                queryEnd ? dayjs(queryEnd) : null
-                            ] as any}
-                            allowClear={false}
-                        />
+                    <div className="flex items-center gap-4">
                         <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
                             Schedule Session
                         </Button>
@@ -228,6 +173,63 @@ export const OrganizationSchedulePage = () => {
                     </Col>
                 </Row>
 
+                <div className="flex items-center gap-4 flex-wrap mb-6">
+                    <Input
+                        placeholder="Search sessions..."
+                        prefix={<SearchOutlined />}
+                        style={{ maxWidth: 200 }}
+                        value={localSearch}
+                        onChange={(e) => setLocalSearch(e.target.value)}
+                        allowClear
+                    />
+                    <Select 
+                        value={
+                            (queryStart === DateUtils.startOf('day') && queryEnd === DateUtils.endOf('day')) ? 'Today' : 
+                            (queryStart === DateUtils.offsetStartOf(1, 'day', 'day') && queryEnd === DateUtils.offsetEndOf(1, 'day', 'day')) ? 'Tomorrow' : 
+                            (queryStart === DateUtils.offsetStartOf(-1, 'week', 'week') && queryEnd === DateUtils.offsetEndOf(-1, 'week', 'week')) ? 'Last Week' : 
+                            (queryStart === DateUtils.offsetStartOf(1, 'week', 'week') && queryEnd === DateUtils.offsetEndOf(1, 'week', 'week')) ? 'Next Week' : 
+                            (queryStart === DateUtils.startOf('month') && queryEnd === DateUtils.endOf('month')) ? 'This Month' : 
+                            null
+                        }
+                        placeholder="Custom Range"
+                        onChange={(val) => {
+                            if (val === 'Today') handleRangeChange([DateUtils.toLibDate(DateUtils.startOf('day')), DateUtils.toLibDate(DateUtils.endOf('day'))]);
+                            else if (val === 'Tomorrow') handleRangeChange([DateUtils.toLibDate(DateUtils.offsetStartOf(1, 'day', 'day')), DateUtils.toLibDate(DateUtils.offsetEndOf(1, 'day', 'day'))]);
+                            else if (val === 'Last Week') handleRangeChange([DateUtils.toLibDate(DateUtils.offsetStartOf(-1, 'week', 'week')), DateUtils.toLibDate(DateUtils.offsetEndOf(-1, 'week', 'week'))]);
+                            else if (val === 'Next Week') handleRangeChange([DateUtils.toLibDate(DateUtils.offsetStartOf(1, 'week', 'week')), DateUtils.toLibDate(DateUtils.offsetEndOf(1, 'week', 'week'))]);
+                            else if (val === 'This Month') handleRangeChange([DateUtils.toLibDate(DateUtils.startOf('month')), DateUtils.toLibDate(DateUtils.endOf('month'))]);
+                        }}
+                        style={{ minWidth: 130 }}
+                        options={[
+                            { label: 'Today', value: 'Today' },
+                            { label: 'Tomorrow', value: 'Tomorrow' },
+                            { label: 'Last Week', value: 'Last Week' },
+                            { label: 'Next Week', value: 'Next Week' },
+                            { label: 'This Month', value: 'This Month' }
+                        ]}
+                    />
+                    <Select
+                        value={timeline}
+                        onChange={setTimeline}
+                        style={{ minWidth: 120 }}
+                        options={[
+                            { label: 'All Time', value: 'All' },
+                            { label: 'Upcoming', value: 'Upcoming' },
+                            { label: 'Past', value: 'Past' },
+                            { label: 'Next 5 Hours', value: 'Next 5 Hours' },
+                            { label: 'Last 5 Hours', value: 'Last 5 Hours' }
+                        ]}
+                    />
+                    <RangePicker 
+                        onChange={handleRangeChange} 
+                        value={[
+                            queryStart ? DateUtils.toLibDate(queryStart) : null, 
+                            queryEnd ? DateUtils.toLibDate(queryEnd) : null
+                        ] as any}
+                        allowClear={false}
+                    />
+                </div>
+
                     {isLoading && displaySessions.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: 50 }}>
                             <Spin size="large" />
@@ -250,8 +252,8 @@ export const OrganizationSchedulePage = () => {
                                                 alignItems: 'center', justifyContent: 'center',
                                                 border: '1px solid #d9d9d9'
                                             }}>
-                                                <Text strong style={{ fontSize: 16, lineHeight: 1 }}>{dayjs(session.startTime).format("MMM")}</Text>
-                                                <Title level={4} style={{ margin: 0, lineHeight: 1 }}>{dayjs(session.startTime).format("DD")}</Title>
+                                                <Text strong style={{ fontSize: 16, lineHeight: 1 }}>{DateUtils.format(session.startTime, "MMM")}</Text>
+                                                <Title level={4} style={{ margin: 0, lineHeight: 1 }}>{DateUtils.format(session.startTime, "DD")}</Title>
                                             </div>
                                         }
                                         title={
@@ -266,7 +268,7 @@ export const OrganizationSchedulePage = () => {
                                             <div>
                                                 <div style={{ marginBottom: 4 }}>
                                                     <Text type="secondary">
-                                                        {dayjs(session.startTime).format("h:mm A")} - {dayjs(session.startTime).add(session.durationMinutes, 'minute').format("h:mm A")} ({session.durationMinutes} min)
+                                                        {DateUtils.format(session.startTime, "h:mm A")} - {DateUtils.format(DateUtils.addMinutes(session.startTime, session.durationMinutes), "h:mm A")} ({session.durationMinutes} min)
                                                     </Text>
                                                 </div>
                                                 <Space style={{ rowGap: 0, marginTop: 4 }}>
@@ -276,7 +278,7 @@ export const OrganizationSchedulePage = () => {
                                                         </Tag>
                                                     )}
                                                     <Text type="secondary" italic style={{ marginLeft: 8 }}>
-                                                        {formatDistanceToNow(session.startTime, { addSuffix: true })}
+                                                        {DateUtils.fromNow(session.startTime)}
                                                     </Text>
                                                 </Space>
                                             </div>

@@ -1,7 +1,7 @@
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip } from "antd";
-import { formatDistanceToNow } from "date-fns";
+import { DateUtils } from "@web/src/utils/date";
 import type { ColumnsType } from "antd/es/table";
 import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MailOutlined, KeyOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
@@ -115,7 +115,7 @@ export const OrganizationMembersPage = () => {
                     className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded transition-colors"
                     onClick={() => setSelectedMember(record)}
                 >
-                    <Avatar src={getAvatarUrl(user.image as string | undefined, 'sm')} icon={<UserOutlined />} />
+                    <Avatar src={user?.image ? getAvatarUrl(user.image as string, 'sm') : undefined} icon={<UserOutlined />} />
                     <div className="flex flex-col">
                         <Typography.Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{user.name as string}</Typography.Text>
                         <Typography.Text type="secondary" className="text-xs">{user.email as string}</Typography.Text>
@@ -145,10 +145,9 @@ export const OrganizationMembersPage = () => {
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (date: string) => {
-                const d = new Date(date);
                 return (
-                    <Tooltip title={d.toLocaleString()}>
-                        {formatDistanceToNow(d, { addSuffix: true })}
+                    <Tooltip title={DateUtils.toDate(date).toLocaleString()}>
+                        {DateUtils.fromNow(date)}
                     </Tooltip>
                 );
             },

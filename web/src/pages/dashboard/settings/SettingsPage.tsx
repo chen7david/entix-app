@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router';
-import { Card, Typography, Divider, Button, Space } from 'antd';
-import { LockOutlined, RightOutlined, LogoutOutlined } from '@ant-design/icons';
+import { Card, Typography, Divider, Button, Space, Row, Col } from 'antd';
+import { LockOutlined, RightOutlined, LogoutOutlined, SettingOutlined } from '@ant-design/icons';
 import { links } from '@shared/constants/links';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { TimezoneSelector } from '@web/src/components/profile/TimezoneSelector';
+import { ThemeSelector } from '@web/src/components/profile/ThemeSelector';
 
 const { Title, Text } = Typography;
 
@@ -32,6 +34,34 @@ export const SettingsPage = () => { // Changed from React.FC
                     <Divider />
 
                     <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                        {/* Preferences Section */}
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                                <SettingOutlined style={{ fontSize: 20, marginRight: 12, color: '#646cff' }} />
+                                <Title level={4} style={{ margin: 0 }}>Preferences</Title>
+                            </div>
+                            <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+                                Configure default environment settings like local timezone and interface theme matching your workflows natively.
+                            </Text>
+                            <Row gutter={[16, 16]}>
+                                <Col xs={24} md={12}>
+                                    <div className="mb-2">
+                                        <Text strong>Timezone</Text>
+                                    </div>
+                                    <TimezoneSelector />
+                                </Col>
+                                <Col xs={24} md={12}>
+                                    <div className="mb-2">
+                                        <Text strong>Theme</Text>
+                                    </div>
+                                    <ThemeSelector />
+                                </Col>
+                            </Row>
+                        </div>
+
+                        <Divider />
+
+                        {/* Password Section */}
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
                                 <LockOutlined style={{ fontSize: 20, marginRight: 12 }} />

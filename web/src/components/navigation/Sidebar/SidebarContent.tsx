@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps } from 'antd';
+import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps, theme } from 'antd';
 import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined, SafetyOutlined } from '@ant-design/icons';
 import { SidebarMenu } from './SidebarMenu';
 import { SidebarOrgSwitcher } from './SidebarOrgSwitcher';
@@ -17,6 +17,7 @@ export const SidebarContent: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
     const slug = activeOrganization?.slug || '';
+    const { token } = theme.useToken();
 
     const handleMenuClick: MenuProps['onClick'] = (e) => {
         if (e.key === 'logout') {
@@ -84,7 +85,7 @@ export const SidebarContent: React.FC = () => {
                             className="flex-shrink-0 border border-gray-200"
                         />
                         <div className="flex flex-col min-w-0">
-                            <Text strong className="truncate text-sm text-gray-900">
+                            <Text strong className="truncate text-sm">
                                 {session.data?.user?.name}
                             </Text>
                             <Text type="secondary" className="truncate text-xs">
@@ -101,13 +102,13 @@ export const SidebarContent: React.FC = () => {
             </div>
 
             {/* Footer: Org Switcher & User Menu */}
-            <div className="border-t border-gray-100">
+            <div style={{ borderTop: `1px solid ${token.colorSplit}` }}>
                 <div className="flex items-center gap-1 p-2">
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <SidebarOrgSwitcher />
                     </div>
                     <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
-                        <Button type="text" icon={<MoreOutlined />} className="text-gray-500 hover:text-gray-700 flex-shrink-0" />
+                        <Button type="text" icon={<MoreOutlined />} className="flex-shrink-0" />
                     </Dropdown>
                 </div>
             </div>
