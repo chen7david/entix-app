@@ -12,5 +12,5 @@ scheduleRoutes.openapi(ScheduleRoutes.getAnalyticsAttendance, ScheduleHandlers.g
 scheduleRoutes.openapi(ScheduleRoutes.createSession, ScheduleHandlers.createSession);
 scheduleRoutes.openapi(ScheduleRoutes.updateSession, ScheduleHandlers.updateSession);
 scheduleRoutes.openapi(ScheduleRoutes.updateSessionStatus, ScheduleHandlers.updateSessionStatus);
-scheduleRoutes.openapi(ScheduleRoutes.updateParticipantAttendance, ScheduleHandlers.updateParticipantAttendance);
+scheduleRoutes.openapi(ScheduleRoutes.updateAttendance, ScheduleHandlers.updateAttendance);
 scheduleRoutes.openapi(ScheduleRoutes.deleteSession, ScheduleHandlers.deleteSession);

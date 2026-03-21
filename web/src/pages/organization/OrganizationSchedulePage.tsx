@@ -62,7 +62,7 @@ export const OrganizationSchedulePage = () => {
         updateSession, 
         updateSessionStatus,
         deleteSession,
-        updateParticipantAttendance,
+        updateAttendance,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
@@ -147,7 +147,7 @@ export const OrganizationSchedulePage = () => {
                 {/* Metrics Layer */}
                 <Row gutter={16} style={{ marginBottom: 24 }}>
                     <Col span={8}>
-                        <Card bordered={false} className="shadow-sm">
+                        <Card variant="borderless" className="shadow-sm">
                             <Statistic
                                 title="Total Sessions"
                                 value={metrics?.total || 0}
@@ -156,7 +156,7 @@ export const OrganizationSchedulePage = () => {
                         </Card>
                     </Col>
                     <Col span={8}>
-                        <Card bordered={false} className="shadow-sm">
+                        <Card variant="borderless" className="shadow-sm">
                             <Statistic
                                 title="Completed"
                                 value={metrics?.completed || 0}
@@ -165,7 +165,7 @@ export const OrganizationSchedulePage = () => {
                         </Card>
                     </Col>
                     <Col span={8}>
-                        <Card bordered={false} className="shadow-sm">
+                        <Card variant="borderless" className="shadow-sm">
                             <Statistic
                                 title="Cancelled"
                                 value={metrics?.cancelled || 0}
@@ -280,9 +280,9 @@ export const OrganizationSchedulePage = () => {
                                                     </Text>
                                                 </div>
                                                 <Space style={{ rowGap: 0, marginTop: 4 }}>
-                                                    {session.participants && session.participants.length > 0 && (
+                                                    {session.attendances && session.attendances.length > 0 && (
                                                         <Tag icon={<TeamOutlined />}>
-                                                            {session.participants.length} Member{session.participants.length > 1 ? 's' : ''}
+                                                            {session.attendances.length} Member{session.attendances.length > 1 ? 's' : ''}
                                                         </Tag>
                                                     )}
                                                     <Text type="secondary" italic style={{ marginLeft: 8 }}>
@@ -321,8 +321,8 @@ export const OrganizationSchedulePage = () => {
                         payload: { status } 
                     });
                 }}
-                onSaveAttendance={async (sessionId, participants) => {
-                    await updateParticipantAttendance.mutateAsync({ sessionId, participants });
+                onSaveAttendance={async (sessionId, attendances) => {
+                    await updateAttendance.mutateAsync({ sessionId, attendances });
                 }}
                 onDelete={handleDelete}
             />

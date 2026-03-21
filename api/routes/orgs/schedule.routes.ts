@@ -173,7 +173,7 @@ export const ScheduleRoutes = {
                             description: z.string().nullable().optional(),
                             startTime: z.number(),
                             durationMinutes: z.number().min(15),
-                            memberIds: z.array(z.string()),
+                            userIds: z.array(z.string()),
                             recurrence: z.object({
                                 frequency: z.literal("weekly"),
                                 count: z.number().min(2).max(52)
@@ -209,7 +209,7 @@ export const ScheduleRoutes = {
                             description: z.string().nullable().optional(),
                             startTime: z.number(),
                             durationMinutes: z.number().min(15),
-                            memberIds: z.array(z.string()),
+                            userIds: z.array(z.string()),
                             updateForward: z.boolean().default(false),
                             status: z.enum(["scheduled", "completed", "cancelled"]).optional()
                         }),
@@ -253,9 +253,9 @@ export const ScheduleRoutes = {
         },
     }),
 
-    updateParticipantAttendance: createRoute({
+    updateAttendance: createRoute({
         method: HttpMethods.PATCH,
-        path: "/orgs/{organizationId}/schedule/{sessionId}/participants",
+        path: "/orgs/{organizationId}/schedule/{sessionId}/attendances",
         tags: ["Schedule"],
         middleware: [requireAuth, requireOrgMembership] as const,
         request: {
@@ -267,8 +267,8 @@ export const ScheduleRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            participants: z.array(z.object({
-                                memberId: z.string(),
+                            attendances: z.array(z.object({
+                                userId: z.string(),
                                 absent: z.boolean(),
                                 absenceReason: z.string().nullable().optional(),
                                 notes: z.string().nullable().optional(),
