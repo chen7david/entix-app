@@ -28,6 +28,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAtt
     const { members, loadingMembers } = useMembers();
     const [isRecurring, setIsRecurring] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [recurrenceMode, setRecurrenceMode] = useState<'preset' | 'custom'>('preset');
     const [attendanceDict, setAttendanceDict] = useState<Record<string, { absent: boolean; absenceReason: string; notes: string }>>({});
 
     useEffect(() => {
@@ -59,6 +60,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAtt
         } else if (open) {
             form.resetFields();
             setIsRecurring(false);
+            setRecurrenceMode('preset');
             setAttendanceDict({});
             form.setFieldsValue({ durationMinutes: 60, status: "scheduled" });
         }
@@ -213,10 +215,37 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAtt
                     </Form.Item>
                 )}
 
-                {!session && isRecurring && (
-                    <Form.Item name="recurrenceCount" label="Total Occurrences (Weeks)" rules={[{ required: true, message: "Please enter count (between 2 and 52)" }]}>
-                        <InputNumber min={2} max={52} />
+                {!session && isRecurring && recurrenceMode === 'preset' && (
+                    <Form.Item name="recurrenceCount" label="Total Occurrences (Weeks)" rules={[{ required: true, message: "Please select bound count" }]}>
+                        <Select
+                            options={[
+                                { label: "5 Weeks", value: 5 },
+                                { label: "10 Weeks", value: 10 },
+                                { label: "15 Weeks", value: 15 },
+                                { label: "20 Weeks", value: 20 },
+                                { label: "30 Weeks", value: 30 },
+                                { label: "52 Weeks (1 Year)", value: 52 },
+                                { label: "Custom...", value: "custom" }
+                            ]}
+                            onChange={(val) => {
+                                if (val === "custom") {
+                                    setRecurrenceMode("custom");
+                                    form.setFieldsValue({ recurrenceCount: 8 });
+                                }
+                            }}
+                        />
                     </Form.Item>
+                )}
+
+                {!session && isRecurring && recurrenceMode === 'custom' && (
+                    <>
+                        <Form.Item name="recurrenceCount" label="Total Occurrences (Weeks) [Custom]" rules={[{ required: true, message: "Please enter count (between 2 and 100)" }]}>
+                            <InputNumber min={2} max={100} style={{ width: '100%' }} />
+                        </Form.Item>
+                        <Button type="link" size="small" onClick={() => { setRecurrenceMode('preset'); form.setFieldsValue({ recurrenceCount: 5 }); }} style={{ marginTop: -16, marginBottom: 16, padding: 0 }}>
+                            Back to Presets
+                        </Button>
+                    </>
                 )}
 
                 <div style={{ marginTop: 32, display: 'flex', justifyContent: 'space-between', gap: 8 }}>

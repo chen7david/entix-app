@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { message } from "antd";
 
@@ -177,5 +177,30 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
+    };
+}
+
+export function useScheduleMetrics(organizationId?: string, startDate?: number, endDate?: number) {
+    const { data: metrics, isLoading, error } = useQuery({
+        queryKey: ["scheduleMetrics", organizationId, startDate, endDate],
+        queryFn: async () => {
+            if (!organizationId) return { total: 0, completed: 0, cancelled: 0 };
+            
+            const params = new URLSearchParams();
+            if (startDate) params.set("startDate", startDate.toString());
+            if (endDate) params.set("endDate", endDate.toString());
+
+            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/metrics?${params.toString()}`);
+            if (!res.ok) throw new Error("Failed to fetch schedule metrics");
+            return res.json() as Promise<{ total: number, completed: number, cancelled: number }>;
+        },
+        enabled: !!organizationId,
+        refetchOnWindowFocus: false,
+    });
+
+    return {
+        metrics,
+        isLoading,
+        error
     };
 };

@@ -62,6 +62,10 @@ export class SessionScheduleService {
         return createdSessions;
     }
 
+    async getScheduleMetrics(organizationId: string, startDate?: number, endDate?: number) {
+        return this.sessionRepo.getScheduleMetricsForOrg(organizationId, startDate, endDate);
+    }
+
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
         const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
         if (!currentSession) {

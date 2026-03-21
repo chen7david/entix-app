@@ -36,6 +36,16 @@ export class ScheduleHandlers {
         return ctx.json(normalized, HttpStatusCodes.CREATED);
     };
 
+    static getScheduleMetrics: AppHandler<typeof ScheduleRoutes.getScheduleMetrics> = async (ctx) => {
+        const organizationId = ctx.req.valid("param").organizationId;
+        const { startDate, endDate } = ctx.req.valid("query");
+
+        const service = getSessionScheduleService(ctx);
+        const result = await service.getScheduleMetrics(organizationId, startDate, endDate);
+
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
     static updateSession: AppHandler<typeof ScheduleRoutes.updateSession> = async (ctx) => {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");

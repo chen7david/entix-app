@@ -59,6 +59,36 @@ export const ScheduleRoutes = {
         },
     }),
 
+    getScheduleMetrics: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/metrics",
+        tags: ["Schedule"],
+        middleware: [requireAuth, requireOrgMembership] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+            }),
+            query: z.object({
+                startDate: z.coerce.number().optional(),
+                endDate: z.coerce.number().optional(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            total: z.number(),
+                            completed: z.number(),
+                            cancelled: z.number(),
+                        }),
+                    },
+                },
+                description: "Aggregate summary of scheduled sessions across date boundaries",
+            },
+        },
+    }),
+
     createSession: createRoute({
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule",

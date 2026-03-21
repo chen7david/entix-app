@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router";
-import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, Select, Input } from "antd";
-import { PlusOutlined, CalendarOutlined, TeamOutlined, SearchOutlined } from "@ant-design/icons";
+import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, Select, Input, Card, Row, Col, Statistic } from "antd";
+import { PlusOutlined, CalendarOutlined, TeamOutlined, SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useSchedule } from "@web/src/hooks/useSchedule";
+import { useSchedule, useScheduleMetrics } from "@web/src/hooks/useSchedule";
 import { useDebounce } from "@web/src/hooks/useDebounce";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { SessionDetailsDrawer } from "@web/src/components/schedule/SessionDetailsDrawer";
@@ -29,8 +29,20 @@ export const OrganizationSchedulePage = () => {
     const queryStart = startDateParam ? parseInt(startDateParam, 10) : defaultStart;
     const queryEnd = endDateParam ? parseInt(endDateParam, 10) : defaultEnd;
 
+    // Force strict "Today" bounds routing URL syncing visually naturally
+    useEffect(() => {
+        if (!startDateParam || !endDateParam) {
+            const params = new URLSearchParams(searchParams);
+            params.set("startDate", queryStart.toString());
+            params.set("endDate", queryEnd.toString());
+            setSearchParams(params, { replace: true });
+        }
+    }, [startDateParam, endDateParam, searchParams, setSearchParams]);
+
     const [localSearch, setLocalSearch] = useState(searchParams.get('q') || '');
     const debouncedSearch = useDebounce(localSearch, 500);
+
+    const [timeline, setTimeline] = useState('All');
 
     // Sync debounced search to URL cleanly without breaking histories naturally
     useEffect(() => {
@@ -39,6 +51,8 @@ export const OrganizationSchedulePage = () => {
         else params.delete('q');
         setSearchParams(params, { replace: true });
     }, [debouncedSearch]);
+
+    const { metrics } = useScheduleMetrics(activeOrganization?.id, queryStart, queryEnd);
 
     const { 
         sessions, 
@@ -57,6 +71,12 @@ export const OrganizationSchedulePage = () => {
         queryEnd,
         debouncedSearch
     );
+
+    let displaySessions = sessions || [];
+    if (timeline === 'Upcoming') displaySessions = displaySessions.filter(s => s.startTime >= Date.now());
+    if (timeline === 'Past') displaySessions = displaySessions.filter(s => s.startTime < Date.now());
+    if (timeline === 'Next 5 Hours') displaySessions = displaySessions.filter(s => s.startTime >= Date.now() && s.startTime <= Date.now() + 5 * 3600000);
+    if (timeline === 'Last 5 Hours') displaySessions = displaySessions.filter(s => s.startTime < Date.now() && s.startTime >= Date.now() - 5 * 3600000);
 
     const handleRangeChange = (dates: any) => {
         const params = new URLSearchParams(searchParams);
@@ -151,6 +171,18 @@ export const OrganizationSchedulePage = () => {
                                 { label: 'Custom', value: 'Custom', disabled: true }
                             ]}
                         />
+                        <Select
+                            value={timeline}
+                            onChange={setTimeline}
+                            style={{ minWidth: 120 }}
+                            options={[
+                                { label: 'All Time', value: 'All' },
+                                { label: 'Upcoming', value: 'Upcoming' },
+                                { label: 'Past', value: 'Past' },
+                                { label: 'Next 5 Hours', value: 'Next 5 Hours' },
+                                { label: 'Last 5 Hours', value: 'Last 5 Hours' }
+                            ]}
+                        />
                         <RangePicker 
                             onChange={handleRangeChange} 
                             value={[
@@ -165,15 +197,46 @@ export const OrganizationSchedulePage = () => {
                     </div>
                 </div>
 
-                    {isLoading && sessions.length === 0 ? (
+                {/* Metrics Layer */}
+                <Row gutter={16} style={{ marginBottom: 24 }}>
+                    <Col span={8}>
+                        <Card bordered={false} className="shadow-sm">
+                            <Statistic
+                                title="Total Sessions"
+                                value={metrics?.total || 0}
+                                prefix={<ClockCircleOutlined style={{ color: '#1890ff' }} />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col span={8}>
+                        <Card bordered={false} className="shadow-sm">
+                            <Statistic
+                                title="Completed"
+                                value={metrics?.completed || 0}
+                                prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                            />
+                        </Card>
+                    </Col>
+                    <Col span={8}>
+                        <Card bordered={false} className="shadow-sm">
+                            <Statistic
+                                title="Cancelled"
+                                value={metrics?.cancelled || 0}
+                                prefix={<CloseCircleOutlined style={{ color: '#ff4d4f' }} />}
+                            />
+                        </Card>
+                    </Col>
+                </Row>
+
+                    {isLoading && displaySessions.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: 50 }}>
                             <Spin size="large" />
                         </div>
                     ) : (
                         <List
                             itemLayout="horizontal"
-                            dataSource={sessions || []}
-                            locale={{ emptyText: <Empty description="No upcoming sessions found" /> }}
+                            dataSource={displaySessions}
+                            locale={{ emptyText: <Empty description="No upcoming sessions found matching criteria" /> }}
                             renderItem={(session) => (
                                 <List.Item
                                     className="bg-white hover:bg-gray-50 transition-colors shadow-sm rounded-lg mb-4 cursor-pointer border border-gray-100! p-4!"

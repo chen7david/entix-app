@@ -117,6 +117,24 @@ export class SessionScheduleRepository {
         });
     }
 
+    async getScheduleMetricsForOrg(organizationId: string, startDate?: number, endDate?: number) {
+        let conditions: any[] = [eq(scheduledSession.organizationId, organizationId)];
+        if (startDate) conditions.push(sql`${scheduledSession.startTime} >= ${startDate}`);
+        if (endDate) conditions.push(sql`${scheduledSession.startTime} <= ${endDate}`);
+
+        const result = await this.db.select({
+            total: sql<number>`cast(count(*) as int)`,
+            completed: sql<number>`cast(sum(case when ${scheduledSession.status} = 'completed' then 1 else 0 end) as int)`,
+            cancelled: sql<number>`cast(sum(case when ${scheduledSession.status} = 'cancelled' then 1 else 0 end) as int)`
+        }).from(scheduledSession).where(and(...conditions));
+
+        return {
+            total: result[0]?.total || 0,
+            completed: result[0]?.completed || 0,
+            cancelled: result[0]?.cancelled || 0
+        };
+    }
+
     async updateSessionStatus(organizationId: string, sessionId: string, status: "scheduled" | "completed" | "cancelled") {
         const [updated] = await this.db.update(scheduledSession)
             .set({ status })
