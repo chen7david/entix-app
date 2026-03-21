@@ -133,4 +133,31 @@ describe("Auth Integration Test", () => {
 
         spy.mockRestore();
     });
+    it("POST /api/v1/auth/sign-in/email should successfully authenticate user and create session", async () => {
+        const payload = createMockSignUpWithOrgPayload();
+
+        // Register the user first
+        await client.auth.signUpWithOrg(payload);
+
+        // Attempt login via sign-in/email POST natively testing Better Auth Drizzle bindings
+        const signInPayload = {
+            email: payload.email,
+            password: payload.password
+        };
+
+        const req = new Request("http://localhost/api/v1/auth/sign-in/email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(signInPayload),
+        });
+
+        const res = await app.request(req, {}, env);
+
+        expect(res.status).toBe(200);
+        
+        const body = await res.json() as any;
+        expect(body).toHaveProperty("user");
+        expect(body).toHaveProperty("token");
+        expect(body.user.email).toBe(payload.email);
+    });
 });

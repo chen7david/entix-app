@@ -1,6 +1,6 @@
 import { eq, and, sql, like } from "drizzle-orm";
 import { DrizzleD1Database } from "drizzle-orm/d1";
-import { scheduledSession, scheduledSessionParticipant } from "@shared/db/schema.db";
+import { scheduledSession, sessionAttendance } from "@shared/db/schema.db";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
 export class SessionScheduleRepository {
@@ -10,9 +10,9 @@ export class SessionScheduleRepository {
         return this.db.insert(scheduledSession).values(sessions).returning();
     }
 
-    async addParticipants(participants: (typeof scheduledSessionParticipant.$inferInsert)[]) {
-        if (participants.length === 0) return [];
-        return this.db.insert(scheduledSessionParticipant).values(participants).returning();
+    async addAttendances(attendances: (typeof sessionAttendance.$inferInsert)[]) {
+        if (attendances.length === 0) return [];
+        return this.db.insert(sessionAttendance).values(attendances).returning();
     }
 
     async deleteFollowingSessions(seriesId: string, fromTime: Date) {
@@ -27,9 +27,9 @@ export class SessionScheduleRepository {
             .returning();
     }
     
-    async deleteAllSessionParticipants(sessionId: string) {
-        return this.db.delete(scheduledSessionParticipant)
-            .where(eq(scheduledSessionParticipant.sessionId, sessionId));
+    async deleteAllSessionAttendances(sessionId: string) {
+        return this.db.delete(sessionAttendance)
+            .where(eq(sessionAttendance.sessionId, sessionId));
     }
 
     async getSessionsForOrg(
@@ -63,18 +63,14 @@ export class SessionScheduleRepository {
             orderBy: (orderBy as any),
             limit: limit + 1,
             with: {
-                participants: {
+                attendances: {
                     with: {
-                        member: {
-                            with: {
-                                user: {
-                                    columns: {
-                                        id: true,
-                                        name: true,
-                                        image: true,
-                                        email: true
-                                    }
-                                }
+                        user: {
+                            columns: {
+                                id: true,
+                                name: true,
+                                image: true,
+                                email: true
                             }
                         }
                     }
@@ -97,18 +93,14 @@ export class SessionScheduleRepository {
         return this.db.query.scheduledSession.findFirst({
             where: and(eq(scheduledSession.organizationId, organizationId), eq(scheduledSession.id, sessionId)),
             with: {
-                participants: {
+                attendances: {
                     with: {
-                        member: {
-                            with: {
-                                user: {
-                                    columns: {
-                                        id: true,
-                                        name: true,
-                                        image: true,
-                                        email: true
-                                    }
-                                }
+                        user: {
+                            columns: {
+                                id: true,
+                                name: true,
+                                image: true,
+                                email: true
                             }
                         }
                     }
@@ -160,12 +152,12 @@ export class SessionScheduleRepository {
 
         return this.db.select({
             date: sql<string>`strftime('%Y-%m-%d', datetime(${scheduledSession.startTime} / 1000, 'unixepoch', ${tzOffset}))`,
-            totalExpected: sql<number>`cast(count(${scheduledSessionParticipant.memberId}) as int)`,
-            present: sql<number>`cast(sum(case when ${scheduledSessionParticipant.absent} = 0 then 1 else 0 end) as int)`,
-            absent: sql<number>`cast(sum(case when ${scheduledSessionParticipant.absent} = 1 then 1 else 0 end) as int)`
+            totalExpected: sql<number>`cast(count(${sessionAttendance.userId}) as int)`,
+            present: sql<number>`cast(sum(case when ${sessionAttendance.absent} = 0 then 1 else 0 end) as int)`,
+            absent: sql<number>`cast(sum(case when ${sessionAttendance.absent} = 1 then 1 else 0 end) as int)`
         })
         .from(scheduledSession)
-        .leftJoin(scheduledSessionParticipant, eq(scheduledSession.id, scheduledSessionParticipant.sessionId))
+        .leftJoin(sessionAttendance, eq(scheduledSession.id, sessionAttendance.sessionId))
         .where(and(...conditions))
         .groupBy(sql`1`)
         .orderBy(sql`1`);
@@ -179,17 +171,17 @@ export class SessionScheduleRepository {
         return updated;
     }
 
-    async updateParticipantAttendance(sessionId: string, participants: { memberId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]) {
-        const updates = participants.map((p) => 
-            this.db.update(scheduledSessionParticipant)
+    async updateAttendance(sessionId: string, attendances: { userId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]) {
+        const updates = attendances.map((p) => 
+            this.db.update(sessionAttendance)
                 .set({
                     absent: p.absent,
                     absenceReason: p.absenceReason || null,
                     notes: p.notes || null
                 })
                 .where(and(
-                    eq(scheduledSessionParticipant.sessionId, sessionId),
-                    eq(scheduledSessionParticipant.memberId, p.memberId)
+                    eq(sessionAttendance.sessionId, sessionId),
+                    eq(sessionAttendance.userId, p.userId)
                 ))
         );
         return this.db.batch(updates as any);
