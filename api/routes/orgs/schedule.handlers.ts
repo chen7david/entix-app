@@ -75,6 +75,15 @@ export class ScheduleHandlers {
         return ctx.json(result, HttpStatusCodes.OK);
     };
 
+    static updateSessionStatus: AppHandler<typeof ScheduleRoutes.updateSessionStatus> = async (ctx) => {
+        const { organizationId, sessionId } = ctx.req.valid("param");
+        const { status } = ctx.req.valid("json");
+        const service = getSessionScheduleService(ctx);
+        
+        await service.updateSessionStatus(organizationId, sessionId, status);
+        return ctx.json({ success: true }, HttpStatusCodes.OK);
+    };
+
     static updateParticipantAttendance: AppHandler<typeof ScheduleRoutes.updateParticipantAttendance> = async (ctx) => {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");

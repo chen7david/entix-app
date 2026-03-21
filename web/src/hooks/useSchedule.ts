@@ -124,6 +124,26 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         onError: () => message.error("Failed to update session")
     });
 
+    const updateSessionStatus = useMutation({
+        mutationFn: async ({ sessionId, payload }: { 
+            sessionId: string; 
+            payload: { status: "scheduled" | "completed" | "cancelled" } 
+        }) => {
+            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}/status`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error("Failed to update status");
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
+            // Let the UI handle the actual toast message so we avoid double rendering.
+        },
+        onError: () => message.error("Failed to update status")
+    });
+
     const deleteSession = useMutation({
         mutationFn: async ({ sessionId, deleteForward }: { sessionId: string; deleteForward: boolean }) => {
             const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}`, {
@@ -172,6 +192,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         error,
         createSession,
         updateSession,
+        updateSessionStatus,
         deleteSession,
         updateParticipantAttendance,
         fetchNextPage,

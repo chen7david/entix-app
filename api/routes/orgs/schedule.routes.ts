@@ -225,6 +225,34 @@ export const ScheduleRoutes = {
         },
     }),
 
+    updateSessionStatus: createRoute({
+        method: HttpMethods.PATCH,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/status",
+        tags: ["Schedule"],
+        middleware: [requireAuth, requireOrgMembership] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            status: z.enum(["scheduled", "completed", "cancelled"])
+                        }),
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: { "application/json": { schema: z.object({ success: z.boolean() }) } },
+                description: "Session status updated",
+            },
+        },
+    }),
+
     updateParticipantAttendance: createRoute({
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}/participants",

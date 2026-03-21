@@ -74,6 +74,10 @@ export class SessionScheduleService {
         return this.sessionRepo.getAttendanceTrendsForOrg(organizationId, startDate, endDate, tzOffset);
     }
 
+    async updateSessionStatus(organizationId: string, sessionId: string, status: "scheduled" | "completed" | "cancelled") {
+        return this.sessionRepo.updateSessionStatus(organizationId, sessionId, status);
+    }
+
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
         const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
         if (!currentSession) {

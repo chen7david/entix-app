@@ -60,6 +60,7 @@ export const OrganizationSchedulePage = () => {
         error, 
         createSession, 
         updateSession, 
+        updateSessionStatus,
         deleteSession,
         updateParticipantAttendance,
         fetchNextPage,
@@ -314,6 +315,12 @@ export const OrganizationSchedulePage = () => {
                 onClose={() => setDrawerOpen(false)}
                 session={selectedSession}
                 onSave={handleSave}
+                onUpdateStatus={async (sessionId, status) => {
+                    await updateSessionStatus.mutateAsync({ 
+                        sessionId, 
+                        payload: { status } 
+                    });
+                }}
                 onSaveAttendance={async (sessionId, participants) => {
                     await updateParticipantAttendance.mutateAsync({ sessionId, participants });
                 }}
