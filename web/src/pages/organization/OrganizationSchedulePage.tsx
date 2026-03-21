@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router";
-import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, Select, Input, Card, Row, Col, Statistic } from "antd";
+import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, Select, Input, Card, Row, Col, Statistic, theme } from "antd";
 import { PlusOutlined, CalendarOutlined, TeamOutlined, SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useSchedule, useScheduleMetrics } from "@web/src/hooks/useSchedule";
@@ -15,6 +15,7 @@ const { Title, Text } = Typography;
 
 export const OrganizationSchedulePage = () => {
     const { activeOrganization } = useOrganization();
+    const { token } = theme.useToken();
     
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -241,16 +242,22 @@ export const OrganizationSchedulePage = () => {
                             locale={{ emptyText: <Empty description="No upcoming sessions found matching criteria" /> }}
                             renderItem={(session) => (
                                 <List.Item
-                                    className="bg-white hover:bg-gray-50 transition-colors shadow-sm rounded-lg mb-4 cursor-pointer border border-gray-100! p-4!"
+                                    className="transition-colors shadow-sm rounded-lg mb-4 cursor-pointer p-4!"
+                                    style={{
+                                        backgroundColor: token.colorBgContainer,
+                                        border: `1px solid ${token.colorBorderSecondary}`,
+                                    }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = token.colorFillAlter }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = token.colorBgContainer }}
                                     onClick={() => handleEdit(session)}
                                 >
                                     <List.Item.Meta
                                         avatar={
                                             <div style={{ 
                                                 width: 60, height: 60, borderRadius: 8, 
-                                                background: '#f0f2f5', display: 'flex', flexDirection: 'column',
+                                                background: token.colorFillQuaternary, display: 'flex', flexDirection: 'column',
                                                 alignItems: 'center', justifyContent: 'center',
-                                                border: '1px solid #d9d9d9'
+                                                border: `1px solid ${token.colorBorderSecondary}`
                                             }}>
                                                 <Text strong style={{ fontSize: 16, lineHeight: 1 }}>{DateUtils.format(session.startTime, "MMM")}</Text>
                                                 <Title level={4} style={{ margin: 0, lineHeight: 1 }}>{DateUtils.format(session.startTime, "DD")}</Title>
