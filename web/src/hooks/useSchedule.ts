@@ -1,10 +1,10 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { message } from "antd";
 
 const API_BASE = "/api/v1";
 
-type SessionDTO = {
+export type SessionDTO = {
     id: string;
     organizationId: string;
     title: string;
@@ -17,6 +17,10 @@ type SessionDTO = {
     participants: {
         sessionId: string;
         memberId: string;
+        joinedAt?: number;
+        absent?: boolean;
+        absenceReason?: string | null;
+        notes?: string | null;
         member?: {
             user?: {
                 id: string;
@@ -28,28 +32,43 @@ type SessionDTO = {
     }[];
 };
 
-export const useSchedule = (organizationId?: string, startDate?: number, endDate?: number) => {
+export const useSchedule = (organizationId?: string, startDate?: number, endDate?: number, searchQuery?: string) => {
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuth();
     
-    const queryKey = ["schedule", organizationId, startDate, endDate];
+    const queryKey = ["schedule", organizationId, startDate, endDate, searchQuery];
 
-    const { data: sessions, isLoading, error } = useQuery({
+    const { 
+        data: sessionsPages, 
+        isLoading, 
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useInfiniteQuery({
         queryKey,
-        queryFn: async () => {
-            if (!organizationId) return [];
+        queryFn: async ({ pageParam = undefined }) => {
+            if (!organizationId) return { items: [], nextCursor: null, prevCursor: null };
             let url = `${API_BASE}/orgs/${organizationId}/schedule`;
-            const params = new URLSearchParams();
+            const params = new URLSearchParams({ limit: '50' }); // Fetch generously for calendar maps natively
             if (startDate) params.append("startDate", startDate.toString());
             if (endDate) params.append("endDate", endDate.toString());
+            if (pageParam) params.append("cursor", pageParam);
+            if (searchQuery) params.append("search", searchQuery);
+            
             if (params.toString()) url += `?${params.toString()}`;
 
             const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch sessions");
-            return res.json() as Promise<SessionDTO[]>;
+            return res.json();
         },
+        getNextPageParam: (lastPage: any) => lastPage.nextCursor ?? undefined,
+        initialPageParam: undefined,
         enabled: !!organizationId && isAuthenticated,
     });
+    
+    // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.
+    const sessions = (sessionsPages?.pages.flatMap((p: any) => p.items) || []) as SessionDTO[];
 
     const createSession = useMutation({
         mutationFn: async (payload: {
@@ -78,23 +97,22 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
     });
 
     const updateSession = useMutation({
-        mutationFn: async ({ sessionId, payload }: {
-            sessionId: string;
-            payload: {
-                title: string;
-                description?: string;
-                startTime: number;
-                durationMinutes: number;
-                memberIds: string[];
-                updateForward: boolean;
-            }
+        mutationFn: async ({ sessionId, payload }: { 
+            sessionId: string; 
+            payload: { 
+                title: string, 
+                description?: string | null, 
+                startTime: number, 
+                durationMinutes: number, 
+                memberIds: string[], 
+                updateForward: boolean,
+                status?: "scheduled" | "completed" | "cancelled"
+            } 
         }) => {
             const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}`, {
                 method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error("Failed to update session");
             return res.json();
@@ -117,10 +135,35 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
             return res.json();
         },
         onSuccess: () => {
-            message.success("Session deleted successfully");
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
+            message.success("Session deleted securely");
         },
-        onError: () => message.error("Failed to delete session")
+        onError: (err: any) => {
+            message.error(err.message || "Failed to delete session");
+        }
+    });
+
+    const updateParticipantAttendance = useMutation({
+        mutationFn: async ({ sessionId, participants }: { 
+            sessionId: string; 
+            participants: { memberId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
+        }) => {
+            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}/participants`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ participants })
+            });
+
+            if (!res.ok) throw new Error("Failed to update participation states");
+            return res.json();
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
+            message.success("Attendance maps saved properly");
+        },
+        onError: (err: any) => {
+            message.error(err.message || "Attendance save failed");
+        }
     });
 
     return {
@@ -129,6 +172,10 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         error,
         createSession,
         updateSession,
-        deleteSession
+        deleteSession,
+        updateParticipantAttendance,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
     };
 };

@@ -10,14 +10,22 @@ import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-c
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
 import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
-import { useState } from "react";
+import { useDeferredValue, useState } from "react";
+import { useSearchParams } from "react-router";
 import { getAvatarUrl } from "@shared/utils/image-url";
 
 const { Title, Text } = Typography;
 
 export const OrganizationMembersPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState('');
+    
+    // Bind search state generically to url string matching native architecture persistence
+    const [searchParams, setSearchParams] = useSearchParams();
+    const searchText = searchParams.get('q') || '';
+    
+    // Defer pushing expensive re-renders and network bounds rapidly on keystroke loops
+    const deferredSearchText = useDeferredValue(searchText);
+    
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
     const { activeOrganization } = useOrganization();
@@ -29,14 +37,16 @@ export const OrganizationMembersPage = () => {
         removeMember,
         checkPermission,
         userRoles: currentUserRoles,
-    } = useMembers();
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useMembers(deferredSearchText);
 
     const { session, refetch } = useAuth();
     const currentUserId = session.data?.user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
-
 
     const handleCreateMember = async (values: any) => {
         try {
@@ -111,13 +121,7 @@ export const OrganizationMembersPage = () => {
                         <Typography.Text type="secondary" className="text-xs">{user.email as string}</Typography.Text>
                     </div>
                 </div>
-            ),
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (value, record) => {
-                const user = record.user as Record<string, string> | undefined;
-                const v = String(value).toLowerCase();
-                return (user?.name?.toLowerCase().includes(v) || user?.email?.toLowerCase().includes(v)) ?? false;
-            },
+            )
         },
         {
             title: 'Role',
@@ -151,9 +155,7 @@ export const OrganizationMembersPage = () => {
         },
     ];
 
-
-
-    if (loading) {
+    if (loading && members.length === 0) {
         return <Skeleton active />;
     }
 
@@ -231,7 +233,16 @@ export const OrganizationMembersPage = () => {
                         placeholder="Search members..."
                         prefix={<SearchOutlined />}
                         className="max-w-xs"
-                        onChange={e => setSearchText(e.target.value)}
+                        value={searchText}
+                        onChange={(e) => {
+                            const newParams = new URLSearchParams(searchParams);
+                            if (e.target.value) {
+                                newParams.set('q', e.target.value);
+                            } else {
+                                newParams.delete('q');
+                            }
+                            setSearchParams(newParams, { replace: true });
+                        }}
                         allowClear
                     />
                 </div>
@@ -240,8 +251,21 @@ export const OrganizationMembersPage = () => {
                     dataSource={members}
                     columns={columns}
                     rowKey={(record: any) => record.id || record.userId}
-                    pagination={{ pageSize: 10 }}
+                    pagination={false}
+                    loading={loading && !isFetchingNextPage}
                 />
+
+                {hasNextPage && (
+                    <div className="flex justify-center mt-6">
+                        <Button 
+                            onClick={() => fetchNextPage()} 
+                            loading={isFetchingNextPage}
+                            type="dashed"
+                        >
+                            Load More Members
+                        </Button>
+                    </div>
+                )}
 
 
                 {/* Create New Member Modal */}

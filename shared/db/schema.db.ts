@@ -430,6 +430,9 @@ export const scheduledSessionParticipant = sqliteTable(
         joinedAt: integer("joined_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
+        absent: integer("absent", { mode: "boolean" }).default(false).notNull(),
+        absenceReason: text("absence_reason"),
+        notes: text("notes"),
     },
     (table) => [
         primaryKey({ columns: [table.sessionId, table.memberId] }),

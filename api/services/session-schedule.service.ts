@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 
 export type CreateSessionDTO = {
     title: string;
-    description?: string;
+    description?: string | null;
     startTime: number;
     durationMinutes: number;
     memberIds: string[];
@@ -17,11 +17,12 @@ export type CreateSessionDTO = {
 
 export type UpdateSessionDTO = {
     title: string;
-    description?: string;
+    description?: string | null;
     startTime: number;
     durationMinutes: number;
     memberIds: string[];
     updateForward: boolean;
+    status?: "scheduled" | "completed" | "cancelled";
 };
 
 export class SessionScheduleService {
@@ -81,6 +82,11 @@ export class SessionScheduleService {
             if (data.memberIds.length > 0) {
                 await this.sessionRepo.addParticipants(data.memberIds.map(memberId => ({ sessionId, memberId })));
             }
+
+            // Sync Database Status if specifically updated through UI overrides mappings bounds
+            if (data.status) {
+                await this.sessionRepo.updateSessionStatus(organizationId, sessionId, data.status);
+            }
         } else {
             // Recurrence Cascade "Update Forward" Algorithm
             // 1. How many sessions were scheduled to happen AFTER or ON this specific session's old time?
@@ -129,8 +135,30 @@ export class SessionScheduleService {
                     await this.sessionRepo.addParticipants(participantsToInsert);
                 }
             }
+
+            if (data.status) {
+                await this.sessionRepo.updateSessionStatus(organizationId, sessionId, data.status);
+            }
         }
         
+        return { success: true };
+    }
+
+    async updateParticipantAttendance(
+        organizationId: string, 
+        sessionId: string, 
+        participants: { memberId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
+    ) {
+        // Enforce boundary check before applying the patch structurally
+        const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
+        if (!currentSession) {
+            throw new HTTPException(404, { message: "Session not found" });
+        }
+
+        if (participants.length > 0) {
+            await this.sessionRepo.updateParticipantAttendance(sessionId, participants);
+        }
+
         return { success: true };
     }
 

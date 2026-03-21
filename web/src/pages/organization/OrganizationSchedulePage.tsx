@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router";
-import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, Select } from "antd";
-import { PlusOutlined, CalendarOutlined, TeamOutlined } from "@ant-design/icons";
+import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, Select, Input } from "antd";
+import { PlusOutlined, CalendarOutlined, TeamOutlined, SearchOutlined } from "@ant-design/icons";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useSchedule } from "@web/src/hooks/useSchedule";
+import { useDebounce } from "@web/src/hooks/useDebounce";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { SessionDetailsDrawer } from "@web/src/components/schedule/SessionDetailsDrawer";
 import type { SessionSubmitPayload } from "@web/src/components/schedule/SessionDetailsDrawer";
@@ -19,7 +20,7 @@ export const OrganizationSchedulePage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const defaultStart = startOfToday().getTime();
-    const defaultEnd = dayjs().add(1, 'month').endOf('day').valueOf();
+    const defaultEnd = dayjs().endOf('day').valueOf();
 
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
@@ -28,10 +29,33 @@ export const OrganizationSchedulePage = () => {
     const queryStart = startDateParam ? parseInt(startDateParam, 10) : defaultStart;
     const queryEnd = endDateParam ? parseInt(endDateParam, 10) : defaultEnd;
 
-    const { sessions, isLoading, error, createSession, updateSession, deleteSession } = useSchedule(
+    const [localSearch, setLocalSearch] = useState(searchParams.get('q') || '');
+    const debouncedSearch = useDebounce(localSearch, 500);
+
+    // Sync debounced search to URL cleanly without breaking histories naturally
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams);
+        if (debouncedSearch) params.set('q', debouncedSearch);
+        else params.delete('q');
+        setSearchParams(params, { replace: true });
+    }, [debouncedSearch]);
+
+    const { 
+        sessions, 
+        isLoading, 
+        error, 
+        createSession, 
+        updateSession, 
+        deleteSession,
+        updateParticipantAttendance,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    } = useSchedule(
         activeOrganization?.id,
         queryStart,
-        queryEnd
+        queryEnd,
+        debouncedSearch
     );
 
     const handleRangeChange = (dates: any) => {
@@ -93,6 +117,14 @@ export const OrganizationSchedulePage = () => {
                         <Text type="secondary">Manage and track organization sessions</Text>
                     </div>
                     <div className="flex items-center gap-4 flex-wrap">
+                        <Input
+                            placeholder="Search sessions..."
+                            prefix={<SearchOutlined />}
+                            style={{ maxWidth: 200 }}
+                            value={localSearch}
+                            onChange={(e) => setLocalSearch(e.target.value)}
+                            allowClear
+                        />
                         <Select 
                             value={
                                 (queryStart === dayjs().startOf('day').valueOf() && queryEnd === dayjs().endOf('day').valueOf()) ? 'Today' : 
@@ -133,7 +165,7 @@ export const OrganizationSchedulePage = () => {
                     </div>
                 </div>
 
-                    {isLoading ? (
+                    {isLoading && sessions.length === 0 ? (
                         <div style={{ textAlign: 'center', padding: 50 }}>
                             <Spin size="large" />
                         </div>
@@ -191,6 +223,18 @@ export const OrganizationSchedulePage = () => {
                             )}
                         />
                     )}
+                    
+                    {hasNextPage && (
+                        <div className="flex justify-center mt-6">
+                            <Button 
+                                onClick={() => fetchNextPage()} 
+                                loading={isFetchingNextPage}
+                                type="dashed"
+                            >
+                                Load More Sessions
+                            </Button>
+                        </div>
+                    )}
             </div>
 
             <SessionDetailsDrawer
@@ -198,6 +242,9 @@ export const OrganizationSchedulePage = () => {
                 onClose={() => setDrawerOpen(false)}
                 session={selectedSession}
                 onSave={handleSave}
+                onSaveAttendance={async (sessionId, participants) => {
+                    await updateParticipantAttendance.mutateAsync({ sessionId, participants });
+                }}
                 onDelete={handleDelete}
             />
         </>

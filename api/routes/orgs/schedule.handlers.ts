@@ -7,18 +7,19 @@ import { getSessionScheduleRepository } from "@api/factories/repository.factory"
 export class ScheduleHandlers {
     static listSessions: AppHandler<typeof ScheduleRoutes.listSessions> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
-        const { startDate, endDate } = ctx.req.valid("query");
+        const { startDate, endDate, limit, cursor, direction, search } = ctx.req.valid("query");
+        
         // We can just grab the Repository directly if listSessions is mapped there
         const repo = getSessionScheduleRepository(ctx);
-        const sessions = await repo.getSessionsForOrg(organizationId, startDate, endDate);
+        const paginatedResult = await repo.getSessionsForOrg(organizationId, startDate, endDate, limit, cursor, direction, search);
         
         // Zod output parsing workaround: SQLite Date objects back to numbers
-        const normalized = sessions.map((s: any) => ({
+        const normalizedItems = paginatedResult.items.map((s: any) => ({
             ...s,
             startTime: new Date(s.startTime).getTime(),
         }));
         
-        return ctx.json(normalized, HttpStatusCodes.OK);
+        return ctx.json({ ...paginatedResult, items: normalizedItems }, HttpStatusCodes.OK);
     };
 
     static createSession: AppHandler<typeof ScheduleRoutes.createSession> = async (ctx) => {
@@ -41,6 +42,15 @@ export class ScheduleHandlers {
         const service = getSessionScheduleService(ctx);
         
         const result = await service.updateSession(organizationId, sessionId, input);
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
+    static updateParticipantAttendance: AppHandler<typeof ScheduleRoutes.updateParticipantAttendance> = async (ctx) => {
+        const { organizationId, sessionId } = ctx.req.valid("param");
+        const input = ctx.req.valid("json");
+        const service = getSessionScheduleService(ctx);
+        
+        const result = await service.updateParticipantAttendance(organizationId, sessionId, input.participants);
         return ctx.json(result, HttpStatusCodes.OK);
     };
 

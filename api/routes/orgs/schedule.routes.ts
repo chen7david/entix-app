@@ -2,6 +2,7 @@ import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
+import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
 
 const SessionResponseSchema = z.object({
     id: z.string(),
@@ -16,6 +17,10 @@ const SessionResponseSchema = z.object({
     participants: z.array(z.object({
         sessionId: z.string(),
         memberId: z.string(),
+        joinedAt: z.coerce.number().optional(),
+        absent: z.boolean().optional().default(false),
+        absenceReason: z.string().nullable().optional(),
+        notes: z.string().nullable().optional(),
         member: z.object({
             user: z.object({
                 id: z.string(),
@@ -40,13 +45,13 @@ export const ScheduleRoutes = {
             query: z.object({
                 startDate: z.coerce.number().optional(),
                 endDate: z.coerce.number().optional(),
-            }),
+            }).merge(PaginationQuerySchema),
         },
         responses: {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: z.array(SessionResponseSchema),
+                        schema: createPaginatedResponseSchema(SessionResponseSchema),
                     },
                 },
                 description: "List of scheduled sessions",
@@ -108,7 +113,8 @@ export const ScheduleRoutes = {
                             startTime: z.number(),
                             durationMinutes: z.number().min(15),
                             memberIds: z.array(z.string()),
-                            updateForward: z.boolean().default(false)
+                            updateForward: z.boolean().default(false),
+                            status: z.enum(["scheduled", "completed", "cancelled"]).optional()
                         }),
                     },
                 },
@@ -118,6 +124,39 @@ export const ScheduleRoutes = {
             [HttpStatusCodes.OK]: {
                 content: { "application/json": { schema: z.object({ success: z.boolean() }) } },
                 description: "Session(s) mutated securely",
+            },
+        },
+    }),
+
+    updateParticipantAttendance: createRoute({
+        method: HttpMethods.PATCH,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/participants",
+        tags: ["Schedule"],
+        middleware: [requireAuth, requireOrgMembership] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            participants: z.array(z.object({
+                                memberId: z.string(),
+                                absent: z.boolean(),
+                                absenceReason: z.string().nullable().optional(),
+                                notes: z.string().nullable().optional(),
+                            }))
+                        }),
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: { "application/json": { schema: z.object({ success: z.boolean() }) } },
+                description: "Attendance metrics mutated securely",
             },
         },
     }),

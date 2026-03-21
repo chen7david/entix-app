@@ -1,6 +1,7 @@
-import { eq, and, asc, sql } from "drizzle-orm";
+import { eq, and, sql, like } from "drizzle-orm";
 import { DrizzleD1Database } from "drizzle-orm/d1";
 import { scheduledSession, scheduledSessionParticipant } from "@shared/db/schema.db";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
 export class SessionScheduleRepository {
     constructor(private db: DrizzleD1Database<any>) {}
@@ -31,15 +32,36 @@ export class SessionScheduleRepository {
             .where(eq(scheduledSessionParticipant.sessionId, sessionId));
     }
 
-    async getSessionsForOrg(organizationId: string, startDate?: number, endDate?: number) {
+    async getSessionsForOrg(
+        organizationId: string, 
+        startDate?: number, 
+        endDate?: number,
+        limit: number = 25,
+        cursor?: string,
+        direction: 'next' | 'prev' = 'next',
+        search?: string
+    ) {
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            scheduledSession.startTime,
+            scheduledSession.id,
+            cursor,
+            direction
+        );
+
         let conditions: any[] = [eq(scheduledSession.organizationId, organizationId)];
         if (startDate) conditions.push(sql`${scheduledSession.startTime} >= ${startDate}`);
         if (endDate) conditions.push(sql`${scheduledSession.startTime} <= ${endDate}`);
+        if (cursorWhere) conditions.push(cursorWhere);
+        
+        if (search) {
+            conditions.push(like(scheduledSession.title, `%${search}%`));
+        }
 
         // @ts-expect-error Types map out correctly natively
-        return this.db.query.scheduledSession.findMany({
+        const sessions = await this.db.query.scheduledSession.findMany({
             where: and(...conditions),
-            orderBy: [asc(scheduledSession.startTime)],
+            orderBy: (orderBy as any),
+            limit: limit + 1,
             with: {
                 participants: {
                     with: {
@@ -59,6 +81,15 @@ export class SessionScheduleRepository {
                 }
             }
         });
+        
+        const result = processPaginatedResult(
+            sessions,
+            limit,
+            direction,
+            (row: any) => ({ primary: row.startTime.getTime(), secondary: row.id })
+        );
+
+        return result;
     }
 
     async getSessionById(organizationId: string, sessionId: string) {
@@ -92,6 +123,22 @@ export class SessionScheduleRepository {
             .where(and(eq(scheduledSession.organizationId, organizationId), eq(scheduledSession.id, sessionId)))
             .returning();
         return updated;
+    }
+
+    async updateParticipantAttendance(sessionId: string, participants: { memberId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]) {
+        const updates = participants.map((p) => 
+            this.db.update(scheduledSessionParticipant)
+                .set({
+                    absent: p.absent,
+                    absenceReason: p.absenceReason || null,
+                    notes: p.notes || null
+                })
+                .where(and(
+                    eq(scheduledSessionParticipant.sessionId, sessionId),
+                    eq(scheduledSessionParticipant.memberId, p.memberId)
+                ))
+        );
+        return this.db.batch(updates as any);
     }
 
     async updateSessionDetails(organizationId: string, sessionId: string, data: { title: string, description?: string | null, startTime: Date, durationMinutes: number }) {

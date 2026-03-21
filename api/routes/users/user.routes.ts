@@ -1,5 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { userSchema } from "@shared/index";
+import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
 import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { z } from "zod";
@@ -14,9 +15,10 @@ export class UserRoutes {
         middleware: [requirePermission('member', ['read'])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
+            query: PaginationQuerySchema
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(userSchema.array(), 'List of users in organization'),
+            [HttpStatusCodes.OK]: jsonContent(createPaginatedResponseSchema(userSchema), 'Paginated list of users in organization'),
         },
     });
 }

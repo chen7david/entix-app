@@ -1,4 +1,4 @@
-import { Drawer, Form, Input, DatePicker, TimePicker, Select, Button, Switch, InputNumber, Modal, Space } from "antd";
+import { Drawer, Form, Input, DatePicker, TimePicker, Select, Button, Switch, InputNumber, Modal, Space, Tabs, List, Checkbox, Alert } from "antd";
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import { useMembers } from "@web/src/hooks/auth/useMembers";
@@ -11,6 +11,7 @@ export type SessionSubmitPayload = {
     memberIds: string[];
     updateForward?: boolean;
     recurrence?: { frequency: "weekly", count: number };
+    status?: "scheduled" | "completed" | "cancelled";
 };
 
 type Props = {
@@ -18,14 +19,16 @@ type Props = {
     onClose: () => void;
     session: any | null;
     onSave: (payload: SessionSubmitPayload) => Promise<void>;
+    onSaveAttendance?: (sessionId: string, participants: any[]) => Promise<void>;
     onDelete?: (sessionId: string, deleteForward: boolean) => Promise<void>;
 };
 
-export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onDelete }: Props) => {
+export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onSaveAttendance, onDelete }: Props) => {
     const [form] = Form.useForm();
     const { members, loadingMembers } = useMembers();
     const [isRecurring, setIsRecurring] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [attendanceDict, setAttendanceDict] = useState<Record<string, { absent: boolean; absenceReason: string; notes: string }>>({});
 
     useEffect(() => {
         if (open && session) {
@@ -35,13 +38,29 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onDelete 
                 date: dayjs(session.startTime),
                 time: dayjs(session.startTime),
                 durationMinutes: session.durationMinutes,
+                status: session.status || "scheduled",
                 memberIds: session.participants?.map((p: any) => p.memberId) || [],
             });
             setIsRecurring(false);
+            
+            // Hydrate attendance dictionary map
+            const att: Record<string, any> = {};
+            if (session.participants) {
+                session.participants.forEach((p: any) => {
+                    att[p.memberId] = {
+                        absent: p.absent ?? false,
+                        absenceReason: p.absenceReason || "",
+                        notes: p.notes || ""
+                    }
+                });
+            }
+            setAttendanceDict(att);
+
         } else if (open) {
             form.resetFields();
             setIsRecurring(false);
-            form.setFieldsValue({ durationMinutes: 60 });
+            setAttendanceDict({});
+            form.setFieldsValue({ durationMinutes: 60, status: "scheduled" });
         }
     }, [open, session, form]);
 
@@ -57,6 +76,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onDelete 
                 durationMinutes: values.durationMinutes,
                 memberIds: values.memberIds || [],
                 updateForward,
+                status: values.status,
             };
 
             if (!session && isRecurring) {
@@ -64,6 +84,23 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onDelete 
             }
 
             await onSave(payload);
+            setIsSubmitting(false);
+        } catch {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSaveAttendance = async () => {
+        if (!session || !onSaveAttendance) return;
+        setIsSubmitting(true);
+        try {
+            const partsMapping = Object.entries(attendanceDict).map(([memberId, data]) => ({
+                memberId,
+                ...data
+            }));
+            if (partsMapping.length > 0) {
+                await onSaveAttendance(session.id, partsMapping);
+            }
             setIsSubmitting(false);
         } catch {
             setIsSubmitting(false);
@@ -110,9 +147,25 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onDelete 
         }
     };
 
-    return (
-        <Drawer title={session ? "Edit Session" : "Schedule New Session"} width={500} onClose={onClose} open={open} destroyOnClose>
-            <Form form={form} layout="vertical" onFinish={handleFinish}>
+    const detailsForm = (
+            <Form form={form} layout="vertical" onFinish={handleFinish} id="session-form">
+                {session && (
+                    <Form.Item name="status" label="Session Status">
+                        <Select options={[
+                            { label: "Scheduled", value: "scheduled" },
+                            { label: "Completed", value: "completed" },
+                            { label: "Cancelled", value: "cancelled" }
+                        ]} />
+                    </Form.Item>
+                )}
+                {session && form.getFieldValue("status") === "completed" && (
+                    <Alert 
+                        type="info" 
+                        showIcon 
+                        message="Marking as completed will trigger student billing for present attendees based on future invoicing logic." 
+                        style={{ marginBottom: 16 }}
+                    />
+                )}
                 <Form.Item name="title" label="Title" rules={[{ required: true, message: "Please input title" }]}>
                     <Input placeholder="Session Title" />
                 </Form.Item>
@@ -175,12 +228,70 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onDelete 
                         )}
                     </div>
                     <Space>
-                        <Button type="primary" htmlType="submit" loading={isSubmitting}>
+                        <Button type="primary" htmlType="submit" form="session-form" loading={isSubmitting}>
                             {session ? "Update Session" : "Schedule"}
                         </Button>
                     </Space>
                 </div>
             </Form>
+    );
+
+    const attendanceTab = session ? (
+        <div style={{ marginTop: 16 }}>
+            <Alert type="info" message="Log student presence and private behavior notes below before marking the session completed." showIcon style={{ marginBottom: 16 }}/>
+            <List
+                dataSource={session.participants || []}
+                renderItem={(item: any) => {
+                    const memberName = item.member?.user?.name || item.member?.user?.email || item.memberId;
+                    const log = attendanceDict[item.memberId] || { absent: false, absenceReason: "", notes: "" };
+                    return (
+                        <List.Item style={{ display: 'block' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                                <strong>{memberName}</strong>
+                                <Checkbox 
+                                    checked={log.absent} 
+                                    onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, absent: e.target.checked } })}
+                                >
+                                    Absent
+                                </Checkbox>
+                            </div>
+                            {log.absent && (
+                                <Input 
+                                    placeholder="Reason for absence (optional)" 
+                                    value={log.absenceReason} 
+                                    onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, absenceReason: e.target.value } })}
+                                    style={{ marginBottom: 8 }}
+                                />
+                            )}
+                            <Input.TextArea 
+                                placeholder="Student performance notes..." 
+                                rows={2} 
+                                value={log.notes}
+                                onChange={(e) => setAttendanceDict({ ...attendanceDict, [item.memberId]: { ...log, notes: e.target.value } })}
+                            />
+                        </List.Item>
+                    );
+                }}
+            />
+            {(!session.participants || session.participants.length === 0) && (
+                <Alert type="warning" message="No students assigned to record attendance." />
+            )}
+            <div style={{ marginTop: 24, textAlign: 'right' }}>
+               <Button type="primary" onClick={handleSaveAttendance} loading={isSubmitting}>Save Attendance</Button>
+            </div>
+        </div>
+    ) : null;
+
+    return (
+        <Drawer title={session ? "Edit Session" : "Schedule New Session"} width={500} onClose={onClose} open={open} destroyOnClose>
+            {session ? (
+                <Tabs defaultActiveKey="1" items={[
+                    { key: "1", label: "Details", children: detailsForm },
+                    { key: "2", label: "Attendance", children: attendanceTab }
+                ]} />
+            ) : (
+                detailsForm
+            )}
         </Drawer>
     );
 };

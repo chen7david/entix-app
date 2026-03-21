@@ -85,6 +85,13 @@
       "when": 1774064092247,
       "tag": "0011_hard_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1774072172137,
+      "tag": "0012_opposite_sugar_man",
+      "breakpoints": true
     }
   ]
 }
