@@ -1,5 +1,5 @@
 import { AppDb } from "@api/factories/db.factory";
-import * as schema from "@shared/db/schema.db";
+import * as schema from "@shared/db/schema";
 import { eq, and, desc, like } from "drizzle-orm";
 
 export type CreateMediaInput = {

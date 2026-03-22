@@ -5,106 +5,15 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1766539438212,
-      "tag": "0000_slimy_tana_nile",
+      "when": 1774194855380,
+      "tag": "0000_fearless_kulan_gath",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1766968888182,
-      "tag": "0001_faithful_nomad",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1768750393745,
-      "tag": "0002_flaky_monster_badoon",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1768750885527,
-      "tag": "0003_goofy_johnny_storm",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1768786796027,
-      "tag": "0004_productive_silverclaw",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1768786866612,
-      "tag": "0005_polite_jack_power",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1770912724624,
-      "tag": "0006_loose_hellion",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1772742480869,
-      "tag": "0007_tricky_synch",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1773958897051,
-      "tag": "0008_naive_mongoose",
-      "breakpoints": true
-    },
-    {
-      "idx": 9,
-      "version": "6",
-      "when": 1773962195588,
-      "tag": "0009_melodic_human_fly",
-      "breakpoints": true
-    },
-    {
-      "idx": 10,
-      "version": "6",
-      "when": 1774051938016,
-      "tag": "0010_melodic_blizzard",
-      "breakpoints": true
-    },
-    {
-      "idx": 11,
-      "version": "6",
-      "when": 1774064092247,
-      "tag": "0011_hard_madame_masque",
-      "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "6",
-      "when": 1774072172137,
-      "tag": "0012_opposite_sugar_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 13,
-      "version": "6",
-      "when": 1774102214069,
-      "tag": "0013_fluffy_zeigeist",
-      "breakpoints": true
-    },
-    {
-      "idx": 14,
-      "version": "6",
-      "when": 1774135059470,
-      "tag": "0014_absurd_zarda",
+      "when": 1774197088413,
+      "tag": "0001_seed_root",
       "breakpoints": true
     }
   ]

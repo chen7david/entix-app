@@ -11,6 +11,17 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: MailServi
         admin,
         owner,
     },
+    schema: {
+        organization: {
+            modelName: "authOrganizations",
+        },
+        member: {
+            modelName: "authMembers",
+        },
+        invitation: {
+            modelName: "authInvitations",
+        }
+    },
     async sendInvitationEmail(data) {
         if (!ctx || !mailer) {
             return

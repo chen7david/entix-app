@@ -1,5 +1,5 @@
 import { AppDb } from "@api/factories/db.factory";
-import * as schema from "@shared/db/schema.db";
+import * as schema from "@shared/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
 export type CreatePlaylistInput = {
@@ -15,24 +15,24 @@ export class PlaylistRepository {
     constructor(private db: AppDb) { }
 
     async create(input: CreatePlaylistInput): Promise<schema.Playlist> {
-        const [playlist] = await this.db.insert(schema.playlist).values(input).returning();
+        const [playlist] = await this.db.insert(schema.playlists).values(input).returning();
         return playlist;
     }
 
     async findById(id: string, organizationId: string): Promise<schema.Playlist | undefined> {
-        return await this.db.query.playlist.findFirst({
+        return await this.db.query.playlists.findFirst({
             where: and(
-                eq(schema.playlist.id, id),
-                eq(schema.playlist.organizationId, organizationId)
+                eq(schema.playlists.id, id),
+                eq(schema.playlists.organizationId, organizationId)
             ),
         });
     }
 
     async findAllByOrganization(organizationId: string): Promise<schema.Playlist[]> {
         return await this.db.select()
-            .from(schema.playlist)
-            .where(eq(schema.playlist.organizationId, organizationId))
-            .orderBy(desc(schema.playlist.createdAt));
+            .from(schema.playlists)
+            .where(eq(schema.playlists.organizationId, organizationId))
+            .orderBy(desc(schema.playlists.createdAt));
     }
 
     async update(
@@ -40,16 +40,16 @@ export class PlaylistRepository {
         organizationId: string,
         updates: Partial<Pick<schema.Playlist, "title" | "description" | "coverArtUrl">>
     ): Promise<schema.Playlist | undefined> {
-        const [updated] = await this.db.update(schema.playlist)
+        const [updated] = await this.db.update(schema.playlists)
             .set({ ...updates, updatedAt: new Date() })
-            .where(and(eq(schema.playlist.id, id), eq(schema.playlist.organizationId, organizationId)))
+            .where(and(eq(schema.playlists.id, id), eq(schema.playlists.organizationId, organizationId)))
             .returning();
         return updated;
     }
 
     async delete(id: string, organizationId: string): Promise<boolean> {
-        const result = await this.db.delete(schema.playlist)
-            .where(and(eq(schema.playlist.id, id), eq(schema.playlist.organizationId, organizationId)))
+        const result = await this.db.delete(schema.playlists)
+            .where(and(eq(schema.playlists.id, id), eq(schema.playlists.organizationId, organizationId)))
             .returning();
         return result.length > 0;
     }

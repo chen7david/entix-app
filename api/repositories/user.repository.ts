@@ -1,6 +1,6 @@
 import { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
-import * as schema from "@shared/db/schema.db";
+import * as schema from "@shared/db/schema";
 import { eq, and, like, or } from "drizzle-orm";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
@@ -57,28 +57,28 @@ export class UserRepository {
     /**
      * Find user by email address
      */
-    async findUserByEmail(email: string): Promise<schema.User | undefined> {
-        return await this.db.query.user.findFirst({
-            where: eq(schema.user.email, email),
+    async findUserByEmail(email: string): Promise<schema.AuthUser | undefined> {
+        return await this.db.query.authUsers.findFirst({
+            where: eq(schema.authUsers.email, email),
         });
     }
 
     /**
      * Find user by ID
      */
-    async findUserById(userId: string): Promise<schema.User | undefined> {
-        return await this.db.query.user.findFirst({
-            where: eq(schema.user.id, userId),
+    async findUserById(userId: string): Promise<schema.AuthUser | undefined> {
+        return await this.db.query.authUsers.findFirst({
+            where: eq(schema.authUsers.id, userId),
         });
     }
 
     /**
      * Update an existing user's data
      */
-    async updateUser(userId: string, data: Partial<typeof schema.user.$inferInsert>): Promise<void> {
-        await this.db.update(schema.user)
+    async updateUser(userId: string, data: Partial<typeof schema.authUsers.$inferInsert>): Promise<void> {
+        await this.db.update(schema.authUsers)
             .set(data)
-            .where(eq(schema.user.id, userId));
+            .where(eq(schema.authUsers.id, userId));
     }
 
     /**
@@ -98,27 +98,27 @@ export class UserRepository {
      */
     async findUsersByOrganization(organizationId: string, limit: number, cursor?: string, direction: 'next' | 'prev' = 'next', search?: string) {
         const { where: cursorWhere, orderBy } = buildCursorPagination(
-            schema.member.createdAt,
-            schema.member.id,
+            schema.authMembers.createdAt,
+            schema.authMembers.id,
             cursor,
             direction
         );
 
-        const conditions = [eq(schema.member.organizationId, organizationId)];
+        const conditions = [eq(schema.authMembers.organizationId, organizationId)];
         if (cursorWhere) conditions.push(cursorWhere);
         
         if (search) {
             // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
             conditions.push(or(
-                like(schema.user.name, `%${search}%`),
-                like(schema.user.email, `%${search}%`)
+                like(schema.authUsers.name, `%${search}%`),
+                like(schema.authUsers.email, `%${search}%`)
             )!);
         }
 
         const membersJoined = await this.db
-            .select({ member: schema.member, user: schema.user })
-            .from(schema.member)
-            .innerJoin(schema.user, eq(schema.member.userId, schema.user.id))
+            .select({ member: schema.authMembers, user: schema.authUsers })
+            .from(schema.authMembers)
+            .innerJoin(schema.authUsers, eq(schema.authMembers.userId, schema.authUsers.id))
             .where(and(...conditions))
             .orderBy(...(orderBy as any))
             .limit(limit + 1);
@@ -141,7 +141,7 @@ export class UserRepository {
      */
     prepareCreateUser(id: string, email: string, name: string, emailVerified: boolean) {
         const now = new Date();
-        return this.db.insert(schema.user).values({
+        return this.db.insert(schema.authUsers).values({
             id,
             email,
             name,
@@ -158,7 +158,7 @@ export class UserRepository {
      */
     prepareCreateAccount(id: string, userId: string, providerId: string, passwordHash: string) {
         const now = new Date();
-        return this.db.insert(schema.account).values({
+        return this.db.insert(schema.authAccounts).values({
             id,
             accountId: providerId === "credential" ? userId : id,
             providerId,

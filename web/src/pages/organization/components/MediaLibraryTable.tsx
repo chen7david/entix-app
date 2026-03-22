@@ -5,7 +5,7 @@ import { MediaDropzone } from './MediaDropzone';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
 import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 import { useMedia } from '@web/src/hooks/organization/useMedia';
-import type { Media } from '@shared/db/schema.db';
+import type { Media } from '@shared/db/schema';
 
 const { Title, Text } = Typography;
 

@@ -6,7 +6,7 @@ import { createAuthenticatedOrg, getAuthCookie, createOrgMemberWithRole } from "
 import { createTestClient } from "../lib/test-client";
 import { parseJson } from "../lib/api-request.helper";
 import { drizzle } from "drizzle-orm/d1";
-import { member as memberTable } from "@shared/db/schema.db";
+import { authMembers as memberTable } from "@shared/db/schema";
 import { createMockMember } from "../factories/member.factory";
 
 describe("Avatar Integration", () => {
@@ -31,7 +31,7 @@ describe("Avatar Integration", () => {
                 user: {
                     email: `outsider.${Date.now()}@example.com`,
                     password: "Password123!",
-                    name: "Outsider User",
+                    name: "Outsider AuthUser",
                 },
             });
             const client = createTestClient(app, env, regularCookie);
@@ -174,12 +174,12 @@ describe("Avatar Integration", () => {
             
             const userEmail = `crossorg.${Date.now()}@test.com`;
 
-            // User A is added to Org A
+            // AuthUser A is added to Org A
             const { cookie: cookieA, userId: userIdA } = await createOrgMemberWithRole({
                 app, env, orgId: orgAId, role: "member", email: userEmail
             });
             
-            // User A is also added to Org B via direct DB insert to bypass duplicate sign-up rejection
+            // AuthUser A is also added to Org B via direct DB insert to bypass duplicate sign-up rejection
             const db = drizzle(env.DB);
             await db.insert(memberTable).values(createMockMember({
                 organizationId: orgBId,
@@ -195,7 +195,7 @@ describe("Avatar Integration", () => {
             const clientA = createTestClient(app, env, cookieA);
             const clientBAdmin = createTestClient(app, env, orgBCookie); // Org B Owner/Admin
 
-            // 1. User A uploads avatar in Org A
+            // 1. AuthUser A uploads avatar in Org A
             const uploadRes = await clientA.request(`/api/v1/orgs/${orgAId}/uploads`, {
                 method: "POST",
                 body: { originalName: "avatar.png", contentType: "image/png", fileSize: 30000 },
@@ -203,7 +203,7 @@ describe("Avatar Integration", () => {
             const { uploadId } = await parseJson<any>(uploadRes);
             await clientA.request(`/api/v1/orgs/${orgAId}/uploads/${uploadId}/complete`, { method: "POST" });
 
-            // 2. User A sets it as avatar in Org A
+            // 2. AuthUser A sets it as avatar in Org A
             await clientA.request(`/api/v1/orgs/${orgAId}/members/${userIdA}/avatar`, {
                 method: "PATCH",
                 body: { uploadId },
@@ -211,7 +211,7 @@ describe("Avatar Integration", () => {
 
             deleteSpy.mockClear();
 
-            // 3. Admin of Org B removes User A's avatar
+            // 3. Admin of Org B removes AuthUser A's avatar
             const removeRes = await clientBAdmin.request(`/api/v1/orgs/${orgBId}/members/${userIdA}/avatar`, {
                 method: "DELETE",
             });

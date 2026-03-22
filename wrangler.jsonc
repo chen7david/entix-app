@@ -57,7 +57,7 @@
 				{
 					"binding": "DB",
 					"database_name": "entix-app-staging",
-					"database_id": "5b4c24ea-7c1a-4ca2-9d11-3666795412cc",
+					"database_id": "8900bc69-07fe-4c7f-9f47-3fa48492fe82",
 					"migrations_dir": "api/db/migrations"
 				}
 			]
@@ -84,7 +84,7 @@
 				{
 					"binding": "DB",
 					"database_name": "entix-app-production",
-					"database_id": "6995f6f6-deb5-4ec8-a008-574465e5fc04",
+					"database_id": "b4a5b85f-ac21-4f5a-842a-30424f61199c",
 					"migrations_dir": "api/db/migrations"
 				}
 			]

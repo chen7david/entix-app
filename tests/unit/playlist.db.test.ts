@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, TestDb } from "../lib/utils";
-import { media, user, organization } from "@shared/db/schema.db";
+import { media, authUsers as user, authOrganizations as organization } from "@shared/db/schema";
 import { PlaylistRepository } from "@api/repositories/playlist.repository";
 import { createMockUser } from "../factories/user.factory";
 

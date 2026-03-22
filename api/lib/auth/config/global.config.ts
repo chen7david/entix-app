@@ -17,6 +17,7 @@ export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService):
     },
     trustedOrigins: ctx ? [ctx.env.FRONTEND_URL, ctx.var.frontendUrl] : undefined,
     user: {
+        modelName: "authUsers",
         additionalFields: {
             role: {
                 type: "string",
@@ -37,4 +38,13 @@ export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService):
             },
         }
     },
+    session: {
+        modelName: "authSessions"
+    },
+    account: {
+        modelName: "authAccounts"
+    },
+    verification: {
+        modelName: "authVerifications"
+    }
 });

@@ -6,7 +6,7 @@ import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 
-import * as schema from "@shared/db/schema.db";
+import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 
 describe("Auth Integration Test", () => {
@@ -71,7 +71,7 @@ describe("Auth Integration Test", () => {
         const payload = createMockSignUpWithOrgPayload();
 
         // Seed valid user and org to satisfy Foreign Key constraints
-        await db.insert(schema.user).values({
+        await db.insert(schema.authUsers).values({
             id: "dummy-user",
             name: "Dummy",
             email: "dummy@example.com",
@@ -82,7 +82,7 @@ describe("Auth Integration Test", () => {
             banned: false,
         });
 
-        await db.insert(schema.organization).values({
+        await db.insert(schema.authOrganizations).values({
             id: "dummy-org",
             name: "Dummy Org",
             slug: "dummy-org",
@@ -90,7 +90,7 @@ describe("Auth Integration Test", () => {
         });
 
         // Seed a member explicitly to trigger a UNIQUE constraint violation later
-        await db.insert(schema.member).values({
+        await db.insert(schema.authMembers).values({
             id: "pre-existing-conflict",
             organizationId: "dummy-org",
             userId: "dummy-user",
@@ -102,7 +102,7 @@ describe("Auth Integration Test", () => {
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
         const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
-            return this.db.insert(schema.member).values({
+            return this.db.insert(schema.authMembers).values({
                 id: "pre-existing-conflict", // Will conflict
                 organizationId: "dummy-org", // Must match foreign key
                 userId: "dummy-user", // Must match foreign key 
@@ -119,15 +119,15 @@ describe("Auth Integration Test", () => {
         expect(body.message).toBe("Failed to setup organization, please try again");
 
         // Verify the user was NOT created (rolled back atomically)
-        const user = await db.query.user.findFirst({
-            where: eq(schema.user.email, payload.email)
+        const user = await db.query.authUsers.findFirst({
+            where: eq(schema.authUsers.email, payload.email)
         });
         expect(user).toBeUndefined();
 
         // Verify the organization was NOT created (rolled back atomically)
         const slug = payload.organizationName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-        const org = await db.query.organization.findFirst({
-            where: eq(schema.organization.slug, slug)
+        const org = await db.query.authOrganizations.findFirst({
+            where: eq(schema.authOrganizations.slug, slug)
         });
         expect(org).toBeUndefined();
 
