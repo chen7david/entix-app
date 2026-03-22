@@ -1,7 +1,7 @@
 import { authClient } from "@web/src/lib/auth-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
-import { links } from "@shared/constants/links";
+import { AppRoutes } from "@shared/constants/routes";
 import { useCallback } from "react";
 import { useOrgContext } from "@web/src/context/OrgContext";
 
@@ -77,24 +77,24 @@ export const useOrganization = () => {
         });
 
         if (activeOrg?.slug) {
-            navigate(links.dashboard.index(activeOrg.slug));
+            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`);
             return;
         }
 
         if (!orgs || orgs.length === 0) {
-            navigate(links.onboarding.noOrganization);
+            navigate(AppRoutes.onboarding.noOrganization);
             return;
         }
 
         if (orgs.length === 1 && orgs[0].slug) {
             // 3. Set active organization
             await setActive(orgs[0].id);
-            navigate(links.dashboard.index(orgs[0].slug));
+            navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`);
             return;
         }
 
         // More than 1 organization and no active one
-        navigate(links.onboarding.selectOrganization);
+        navigate(AppRoutes.onboarding.selectOrganization);
     };
 
     const setActive = useCallback(async (organizationId: string) => {

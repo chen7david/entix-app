@@ -5,7 +5,7 @@ import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate, useLocation } from 'react-router';
 import { getAvatarUrl } from '@shared/utils/image-url';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Text } = Typography;
 
@@ -20,7 +20,7 @@ export const AdminSidebarContent: React.FC = () => {
     const handleMenuClick: MenuProps['onClick'] = (e) => {
         if (e.key === 'logout') {
             signOut(undefined, {
-                onSuccess: () => navigate(links.auth.signIn)
+                onSuccess: () => navigate(AppRoutes.auth.signIn)
             });
         } else if (e.key === 'exit') {
             checkOrganizationStatus();
@@ -50,22 +50,22 @@ export const AdminSidebarContent: React.FC = () => {
 
         {
             label: 'System Dashboard',
-            key: links.admin.index,
+            key: AppRoutes.admin.index,
             icon: <DashboardOutlined />
         },
         {
             label: 'Global Users',
-            key: links.admin.users,
+            key: AppRoutes.admin.users,
             icon: <TeamOutlined />
         },
         {
             label: 'Global Organizations',
-            key: links.admin.organizations,
+            key: AppRoutes.admin.organizations,
             icon: <ApartmentOutlined />
         },
         {
             label: 'Email Insights',
-            key: links.admin.emails,
+            key: AppRoutes.admin.emails,
             icon: <MailOutlined />
         },
     ];

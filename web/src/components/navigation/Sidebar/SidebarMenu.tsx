@@ -2,7 +2,7 @@ import React from 'react';
 import { Menu, type MenuProps } from "antd";
 import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined, CalendarOutlined, AreaChartOutlined } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router";
-import { links } from "@shared/constants/links";
+import { AppRoutes } from "@shared/constants/routes";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 
@@ -17,37 +17,37 @@ export const SidebarMenu: React.FC = () => {
     const menuItems: MenuProps['items'] = [
         {
             label: 'Home',
-            key: slug ? links.dashboard.index(slug) : 'home-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.dashboard.index) : 'home-disabled',
             icon: <HomeOutlined />,
             disabled: !slug,
         },
         {
             label: 'Lessons',
-            key: slug ? links.dashboard.lessons(slug) : 'lessons-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.dashboard.lessons) : 'lessons-disabled',
             icon: <BookOutlined />,
             disabled: !slug,
         },
         {
             label: 'Shop',
-            key: slug ? links.dashboard.shop(slug) : 'shop-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.dashboard.shop) : 'shop-disabled',
             icon: <ShoppingOutlined />,
             disabled: !slug,
         },
         {
             label: 'Wallet',
-            key: slug ? links.dashboard.wallet(slug) : 'wallet-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.dashboard.wallet) : 'wallet-disabled',
             icon: <WalletOutlined />,
             disabled: !slug,
         },
         {
             label: 'Movies',
-            key: slug ? links.dashboard.movies(slug) : 'movies-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.dashboard.movies) : 'movies-disabled',
             icon: <YoutubeOutlined />,
             disabled: !slug,
         },
         {
             label: 'Orders',
-            key: slug ? links.dashboard.orders(slug) : 'orders-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.dashboard.orders) : 'orders-disabled',
             icon: <TruckOutlined />,
             disabled: !slug,
         },
@@ -56,7 +56,7 @@ export const SidebarMenu: React.FC = () => {
         },
         {
             label: 'Organizations',
-            key: slug ? links.organization.index(slug) : 'orgs-disabled',
+            key: slug ? getOrgLink(AppRoutes.org.manage.index) : 'orgs-disabled',
             icon: <BankOutlined />,
             disabled: !slug,
         },

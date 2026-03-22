@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Typography, List, Switch, Button, Skeleton, Tooltip, theme } from 'antd';
 import { AudioOutlined, PlaySquareOutlined, MenuUnfoldOutlined, InteractionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
+import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
+import { AppRoutes } from '@shared/constants/routes';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+// useOrganization import removed
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 
 const { Title, Text } = Typography;
 
 export const PlaylistPlayerPage: React.FC = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
-    const navigate = useNavigate();
+    const navigateOrg = useOrgNavigate();
 
-    // Core Data Context
-    const { activeOrganization } = useOrganization();
+    // Core Data Context removed
     const { getSequence, playlists } = usePlaylists();
     const { media } = useMedia();
     const { token } = theme.useToken();
@@ -130,7 +131,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                     <Button
                         type="text"
                         icon={<ArrowLeftOutlined />}
-                        onClick={() => navigate(`/org/${activeOrganization?.slug}/playlists`)}
+                        onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}
                         className="self-start !px-0 !mb-2 text-gray-500"
                     >
                         Back to Playlists

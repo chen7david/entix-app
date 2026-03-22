@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Button, Typography, Alert } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Text } = Typography;
 
@@ -54,7 +54,7 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSubmit
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text>Remember your password? <Link to={links.auth.signIn}>Sign in</Link></Text>
+                    <Text>Remember your password? <Link to={AppRoutes.auth.signIn}>Sign in</Link></Text>
                 </div>
             </Form>
         </>

@@ -1,43 +1,14 @@
+import { AppRoutes } from './routes';
+
+/**
+ * @deprecated Use `AppRoutes` from `@shared/constants/routes` and `useOrgNavigate()` instead.
+ * This object is maintained strictly for legacy compatibility with Authentication and Admin routes.
+ * 
+ * NOTE: Multi-tenant organization routes (`links.dashboard`, `links.organization`) have been REMOVED
+ * to enforce Type Safety. You MUST migrate those components to use `useOrgNavigate`!
+ */
 export const links = {
-    auth: {
-        signIn: '/auth/sign-in',
-        signUp: '/auth/sign-up',
-        verifyEmail: '/auth/verify-email',
-        emailVerificationPending: '/auth/email-verification-pending',
-        forgotPassword: '/auth/forgot-password',
-        resetPassword: '/auth/reset-password',
-    },
-    dashboard: {
-        index: (slug: string) => `/org/${slug}/dashboard`,
-        profile: (slug: string) => `/org/${slug}/dashboard/profile`,
-        sessions: (slug: string) => `/org/${slug}/dashboard/sessions`,
-        settings: (slug: string) => `/org/${slug}/dashboard/settings`,
-        changePassword: (slug: string) => `/org/${slug}/dashboard/change-password`,
-        lessons: (slug: string) => `/org/${slug}/dashboard/lessons`,
-        shop: (slug: string) => `/org/${slug}/dashboard/shop`,
-        wallet: (slug: string) => `/org/${slug}/dashboard/wallet`,
-        movies: (slug: string) => `/org/${slug}/dashboard/movies`,
-        orders: (slug: string) => `/org/${slug}/dashboard/orders`,
-    },
-    organization: {
-        index: (slug: string) => `/org/${slug}/organizations`,
-        video: (slug: string) => `/org/${slug}/video`,
-        audio: (slug: string) => `/org/${slug}/audio`,
-        playlists: (slug: string) => `/org/${slug}/playlists`,
-        edit: (slug: string) => `/org/${slug}/settings`,
-        invitations: (slug: string) => `/org/${slug}/invitations`,
-        members: (slug: string) => `/org/${slug}/members`,
-    },
-    admin: {
-        index: '/admin',
-        users: '/admin/users',
-        emails: '/admin/emails',
-        organizations: '/admin/organizations',
-    },
-    onboarding: {
-        index: '/onboarding',
-        noOrganization: '/onboarding/no-organization',
-        selectOrganization: '/onboarding/select-organization',
-        acceptInvitation: '/onboarding/accept-invitation',
-    }
+    auth: AppRoutes.auth,
+    admin: AppRoutes.admin,
+    onboarding: AppRoutes.onboarding
 } as const;

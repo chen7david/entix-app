@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Button, Typography, Alert } from 'antd';
 import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Text } = Typography;
 
@@ -57,7 +57,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                 </Form.Item>
 
                 <div style={{ marginBottom: 24, textAlign: 'right' }}>
-                    <Link to={links.auth.forgotPassword}>Forgot password?</Link>
+                    <Link to={AppRoutes.auth.forgotPassword}>Forgot password?</Link>
                 </div>
 
                 <Form.Item>
@@ -67,7 +67,7 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text>Don't have an account? <Link to={links.auth.signUp}>Sign up</Link></Text>
+                    <Text>Don't have an account? <Link to={AppRoutes.auth.signUp}>Sign up</Link></Text>
                 </div>
             </Form>
         </>
