@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { drizzle } from "drizzle-orm/d1";
-import { user, member, organization } from "@shared/db/schema.db";
+import { authUsers as user, authMembers as member, authOrganizations as organization } from "@shared/db/schema";
 import { eq, and } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { createMockOrganization } from "../factories/organization.factory";
 import { createMockMember } from "../factories/member.factory";
 
-describe("Member Unique Constraint Test", () => {
+describe("AuthMember Unique Constraint Test", () => {
 
     beforeEach(async () => {
         await createTestDb();

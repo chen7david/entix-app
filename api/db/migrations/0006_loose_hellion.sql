@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `member_org_user_uidx` ON `member` (`organization_id`,`user_id`);

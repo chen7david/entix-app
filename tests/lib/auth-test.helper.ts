@@ -5,7 +5,7 @@ import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createMockMember } from "../factories/member.factory";
 import { drizzle } from "drizzle-orm/d1";
-import { user as userTable, member as memberTable } from "@shared/db/schema.db";
+import { authUsers as userTable, authMembers as memberTable } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -52,7 +52,7 @@ export async function getAuthCookie(params: {
             body: JSON.stringify({
                 email: user.email,
                 password: user.password,
-                name: user.name ?? "Test User",
+                name: user.name ?? "Test AuthUser",
             }),
         },
         env,
@@ -157,7 +157,7 @@ export async function createOrgMemberWithRole(params: {
         .from(userTable)
         .where(eq(userTable.email, email));
 
-    if (!dbUser) throw new Error(`User ${email} not found in DB after sign-up`);
+    if (!dbUser) throw new Error(`AuthUser ${email} not found in DB after sign-up`);
 
     // 3. Insert membership directly (bypasses invite flow)
     const mockMember = createMockMember({
