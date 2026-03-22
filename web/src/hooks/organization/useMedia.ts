@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { message } from "antd";
-import type { Media } from "@shared/db/schema.db";
+import type { Media } from "@shared/db/schema";
 
 type CreateMediaInput = {
     title: string;
@@ -38,7 +38,7 @@ export const useMedia = (type?: "video" | "audio") => {
     // Create Media
     const createMediaMutation = useMutation({
         mutationFn: async (input: CreateMediaInput) => {
-            if (!orgId) throw new Error("Organization ID missing");
+            if (!orgId) throw new Error("AuthOrganization ID missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/media`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -61,7 +61,7 @@ export const useMedia = (type?: "video" | "audio") => {
     // Update Media
     const updateMediaMutation = useMutation({
         mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: UpdateMediaInput }) => {
-            if (!orgId) throw new Error("Organization ID missing");
+            if (!orgId) throw new Error("AuthOrganization ID missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
@@ -82,7 +82,7 @@ export const useMedia = (type?: "video" | "audio") => {
     // Delete Media
     const deleteMediaMutation = useMutation({
         mutationFn: async (mediaId: string) => {
-            if (!orgId) throw new Error("Organization ID missing");
+            if (!orgId) throw new Error("AuthOrganization ID missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}`, {
                 method: "DELETE",
             });
@@ -100,7 +100,7 @@ export const useMedia = (type?: "video" | "audio") => {
     // Record Play
     const recordPlayMutation = useMutation({
         mutationFn: async (mediaId: string) => {
-            if (!orgId) throw new Error("Organization ID missing");
+            if (!orgId) throw new Error("AuthOrganization ID missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}/play`, {
                 method: "POST",
             });

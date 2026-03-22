@@ -1,12 +1,12 @@
-import { User } from "@shared/db/schema.db";
+import { AuthUser } from "@shared/db/schema";
 
-export function createMockUser(overrides: Partial<User> = {}): User {
+export function createMockUser(overrides: Partial<AuthUser> = {}): AuthUser {
     const now = new Date();
     const id = crypto.randomUUID();
 
     return {
         id: id,
-        name: `User ${id.substring(0, 8)}`,
+        name: `AuthUser ${id.substring(0, 8)}`,
         email: `user.${id.substring(0, 8)}@example.com`,
         emailVerified: false,
         image: null,

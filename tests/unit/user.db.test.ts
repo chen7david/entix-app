@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, TestDb } from "../lib/utils";
-import { user } from "@shared/db/schema.db";
+import { authUsers as user } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
 import { UserRepository } from "@api/repositories/user.repository";
 
-describe("User Integration Test", () => {
+describe("AuthUser Integration Test", () => {
     let db: TestDb;
 
     beforeEach(async () => {
@@ -14,7 +14,7 @@ describe("User Integration Test", () => {
 
     it("should create and retrieve a user", async () => {
         const newUser = createMockUser({
-            name: "Test User",
+            name: "Test AuthUser",
             email: "test@example.com"
         });
 
@@ -31,7 +31,7 @@ describe("User Integration Test", () => {
 
     it("should update user data via UserRepository.updateUser", async () => {
         const newUser = createMockUser({
-            name: "Update Test User",
+            name: "Update Test AuthUser",
             email: "update@example.com",
             emailVerified: false,
         });
@@ -41,7 +41,7 @@ describe("User Integration Test", () => {
         const repo = new UserRepository(db, {} as any);
         await repo.updateUser(newUser.id, { emailVerified: true });
 
-        const updatedUser = await db.query.user.findFirst({
+        const updatedUser = await db.query.authUsers.findFirst({
             where: eq(user.id, newUser.id),
         });
 
