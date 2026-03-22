@@ -31,9 +31,9 @@ npm run db:migrate:development
 > - **Password**: `password`
 >
 > ### Securing Your Environment:
-> 1. In the sidebar, navigate to the **[Admin Organizations](http://localhost:8000/admin/organizations)** page.
+> 1. In the sidebar, navigate to the **Admin Organizations** (`http://localhost:8000/admin/organizations`) page.
 > 2. Click **Create Org + User** to provision your permanent organization and personal user account.
-> 3. Go to the **Admin Users** page, locate the user you just created, and **promote them to `admin`**.
+> 3. Go to the **Admin Users** page (`http://localhost:8000/admin/users`), locate the user you just created, and **promote them to `admin`**.
 > 4. **Retrieve Setup Link:**
 >    - *Staging/Production*: Check your email inbox for the activation link.
 >    - *Development*: Email sending is mocked. Check your active local terminal logs for the printed activation URL, and paste it into your browser.
