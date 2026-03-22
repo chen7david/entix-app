@@ -15,16 +15,7 @@ export const auth = (ctx: AppContext) => {
     return betterAuth({
         database: drizzleAdapter(db, {
             provider: "sqlite",
-            schema: {
-                ...schema,
-                auth_users: schema.authUsers,
-                auth_sessions: schema.authSessions,
-                auth_accounts: schema.authAccounts,
-                auth_verifications: schema.authVerifications,
-                auth_organizations: schema.authOrganizations,
-                auth_members: schema.authMembers,
-                auth_invitations: schema.authInvitations,
-            }
+            schema
         }),
         baseURL: ctx.env.FRONTEND_URL,
         secret: ctx.env.BETTER_AUTH_SECRET,

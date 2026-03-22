@@ -8,6 +8,13 @@
       "when": 1774194855380,
       "tag": "0000_fearless_kulan_gath",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774197088413,
+      "tag": "0001_seed_root",
+      "breakpoints": true
     }
   ]
 }
