@@ -13,17 +13,17 @@ const { Title, Text } = Typography;
 export const PlaylistPlayerPage: React.FC = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigate = useNavigate();
-    
+
     // Core Data Context
     const { activeOrganization } = useOrganization();
     const { getSequence, playlists } = usePlaylists();
     const { media } = useMedia();
     const { token } = theme.useToken();
-    
+
     // Page State
     const [sequence, setSequence] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     // Player State
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [isAutoPlay, setIsAutoPlay] = useState(true);
@@ -86,11 +86,11 @@ export const PlaylistPlayerPage: React.FC = () => {
             renderItem={(mediaId, index) => {
                 const item = media.find(m => m.id === mediaId);
                 if (!item) return <></>;
-                
+
                 const isPlaying = index === currentIndex;
-                
+
                 return (
-                    <div 
+                    <div
                         onClick={() => setCurrentIndex(index)}
                         className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-l-4`}
                         style={{
@@ -127,10 +127,10 @@ export const PlaylistPlayerPage: React.FC = () => {
 
             <div className="p-6">
                 <div className="flex flex-col mb-6">
-                    <Button 
-                        type="text" 
-                        icon={<ArrowLeftOutlined />} 
-                        onClick={() => navigate(`/org/${activeOrganization?.slug}/media`)}
+                    <Button
+                        type="text"
+                        icon={<ArrowLeftOutlined />}
+                        onClick={() => navigate(`/org/${activeOrganization?.slug}/playlist`)}
                         className="self-start !px-0 !mb-2 text-gray-500"
                     >
                         Back to Playlists
@@ -174,14 +174,14 @@ export const PlaylistPlayerPage: React.FC = () => {
                     </div>
 
                     {/* Right Pane (Queue 30%) */}
-                    <div 
+                    <div
                         className="w-full lg:w-[30%] flex flex-col shadow-sm h-[calc(100vh-240px)]"
-                        style={{ 
+                        style={{
                             backgroundColor: token.colorBgContainer,
                             border: `1px solid ${token.colorSplit}`,
                         }}
                     >
-                        <div 
+                        <div
                             className="px-5 py-4 flex flex-col"
                             style={{ borderBottom: `1px solid ${token.colorSplit}` }}
                         >
@@ -196,10 +196,10 @@ export const PlaylistPlayerPage: React.FC = () => {
                                     <Text type="secondary" className="text-xs font-semibold uppercase tracking-wider">Auto-Play</Text>
                                     <Switch size="small" checked={isAutoPlay} onChange={setIsAutoPlay} />
                                 </div>
-                                <Button 
-                                    type={isShuffle ? "primary" : "default"} 
-                                    size="small" 
-                                    icon={<InteractionOutlined />} 
+                                <Button
+                                    type={isShuffle ? "primary" : "default"}
+                                    size="small"
+                                    icon={<InteractionOutlined />}
                                     onClick={() => setIsShuffle(!isShuffle)}
                                     className={`rounded-none ${isShuffle ? "" : "text-gray-500"}`}
                                 >
