@@ -37,6 +37,7 @@
 		},
 		"staging": {
 			"name": "entix-app-staging",
+			"preview_urls": true,
 			"vars": {
 				"FRONTEND_URL": "https://staging.entix.org",
 				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
