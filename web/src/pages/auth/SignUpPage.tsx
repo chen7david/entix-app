@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { App, Card, Typography } from 'antd';
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from '@web/src/components/auth/SignUpWithOrgForm';
 import { useSignUpWithOrg } from '@web/src/hooks/auth/useAuth';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Title, Text } = Typography;
 
@@ -23,7 +23,7 @@ export const SignUpPage: React.FC = () => {
                 message.success('Account and Organization created!');
                 // Navigate to dashboard or email verification depending on flow
                 // For now, let's assume dashboard or email verification
-                navigate(links.auth.emailVerificationPending, { state: { email: values.email } });
+                navigate(AppRoutes.auth.emailVerificationPending, { state: { email: values.email } });
             },
             onError: (error) => {
                 message.error(error.message || "Failed to create account");

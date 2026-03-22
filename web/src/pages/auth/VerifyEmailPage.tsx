@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router';
 import { Typography, Spin, Button, Result, Card, App } from 'antd';
 import { useVerifyEmail } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Text } = Typography;
 
@@ -36,7 +36,7 @@ export const VerifyEmailPage: React.FC = () => {
                 } else {
                     setStatus('success');
                     setTimeout(() => {
-                        navigate(links.auth.signIn);
+                        navigate(AppRoutes.auth.signIn);
                     }, 3000);
                 }
             },
@@ -84,7 +84,7 @@ export const VerifyEmailPage: React.FC = () => {
                 title="Verification Failed"
                 subTitle="The verification link is invalid or has expired."
                 extra={[
-                    <Button type="primary" key="signin" onClick={() => navigate(links.auth.signIn)} block>
+                    <Button type="primary" key="signin" onClick={() => navigate(AppRoutes.auth.signIn)} block>
                         Go to Sign In
                     </Button>,
                 ]}

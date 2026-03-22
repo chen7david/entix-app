@@ -55,7 +55,32 @@ todoHandler.openapi(getTodosRoute, async (c) => {
 });
 ```
 
+## 6. Frontend Navigation (Strict)
+When building navigation on the Frontend (`web/src`), **never use hardcoded `/org/:slug/` routes**. 
+
+Instead, strictly utilize the contextual `useOrgNavigate()` hook alongside the `AppRoutes` dictionary. This enforces Type Safety and natively handles dynamic multi-tenant routes for you!
+
+```tsx
+import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
+import { AppRoutes } from '@shared/constants/routes';
+
+export const MyComponent = () => {
+    // ❌ BAD: Hardcoding strings and manual React Router bindings
+    // const navigate = useNavigate();
+    // navigate(`/org/${slug}/playlists`);
+
+    // ✅ GOOD: Abstracted context resolving the tenant universally
+    const navigateOrg = useOrgNavigate();
+    
+    return (
+        <Button onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}>
+            Go To Playlists
+        </Button>
+    )
+}
+```
+
 [Why use the Service-Repository pattern?](../why/service-repository.md)
 
-Last updated: 2026-03-12
+Last updated: {Date: current}
 [Back to Documentation Guide](../how-to-write-docs.md)

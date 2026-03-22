@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router';
 import { App, Card, Typography, Result, Button } from 'antd';
 import { ResetPasswordForm, type ResetPasswordValues } from '@web/src/components/auth/ResetPasswordForm';
 import { useResetPassword } from '@web/src/hooks/auth/useAuth';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Title, Text } = Typography;
 
@@ -36,7 +36,7 @@ export const ResetPasswordPage: React.FC = () => {
                 setStatus('success');
                 message.success('Password reset successfully!');
                 setTimeout(() => {
-                    navigate(links.auth.signIn);
+                    navigate(AppRoutes.auth.signIn);
                 }, 3000);
             },
             onError: (error) => {
@@ -53,10 +53,10 @@ export const ResetPasswordPage: React.FC = () => {
                     title="Invalid Reset Link"
                     subTitle="The password reset link is invalid or has expired."
                     extra={[
-                        <Button type="primary" key="forgot" onClick={() => navigate(links.auth.forgotPassword)}>
+                        <Button type="primary" key="forgot" onClick={() => navigate(AppRoutes.auth.forgotPassword)}>
                             Request New Link
                         </Button>,
-                        <Button key="signin" onClick={() => navigate(links.auth.signIn)}>
+                        <Button key="signin" onClick={() => navigate(AppRoutes.auth.signIn)}>
                             Back to Sign In
                         </Button>,
                     ]}
@@ -73,7 +73,7 @@ export const ResetPasswordPage: React.FC = () => {
                     title="Password Reset Successfully!"
                     subTitle="Redirecting you to sign in..."
                     extra={[
-                        <Button type="primary" key="signin" onClick={() => navigate(links.auth.signIn)}>
+                        <Button type="primary" key="signin" onClick={() => navigate(AppRoutes.auth.signIn)}>
                             Go to Sign In
                         </Button>,
                     ]}

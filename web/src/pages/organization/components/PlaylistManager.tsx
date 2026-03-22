@@ -3,8 +3,9 @@ import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfir
 import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, AudioOutlined, PlayCircleOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { useNavigate } from 'react-router';
+// useOrganization import removed
+import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
+import { AppRoutes } from '@shared/constants/routes';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -66,8 +67,8 @@ export const PlaylistManager: React.FC = () => {
     } = usePlaylists();
     
     const { media } = useMedia();
-    const { activeOrganization } = useOrganization();
-    const navigate = useNavigate();
+    const navigateOrg = useOrgNavigate();
+    // Legacy definition removed since we merged the hook calls
 
     const [searchText, setSearchText] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -178,9 +179,7 @@ export const PlaylistManager: React.FC = () => {
                         icon={<PlayCircleOutlined />} 
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (activeOrganization) {
-                                navigate(`/org/${activeOrganization.slug}/playlists/${record.id}`);
-                            }
+                            navigateOrg(AppRoutes.org.manage.playlistDetail(record.id));
                         }}
                     />
                     <Button 

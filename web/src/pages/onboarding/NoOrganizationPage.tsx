@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, Typography, Button } from 'antd';
 import { useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useNavigate } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Title, Paragraph } = Typography;
 
@@ -13,7 +13,7 @@ export const NoOrganizationPage: React.FC = () => {
     const handleSignOut = () => {
         signOut(undefined, {
             onSuccess: () => {
-                navigate(links.auth.signIn);
+                navigate(AppRoutes.auth.signIn);
             }
         });
     };

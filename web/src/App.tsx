@@ -11,7 +11,7 @@ import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
 import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
 import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
 import { AuthLayout } from "./layouts/AuthLayout";
-import { links } from "@shared/constants/links";
+import { AppRoutes } from '@shared/constants/routes';
 
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
@@ -69,7 +69,7 @@ export default function App() {
       <QueryClientProvider client={queryClient}>
         <div className="flex h-[calc(100dvh)] m-0 p-0">
           <Routes>
-            <Route path="/" element={<Navigate to={links.auth.signIn} replace />} />
+            <Route path="/" element={<Navigate to={AppRoutes.auth.signIn} replace />} />
 
             {/* Public routes (no guard) */}
             <Route path="/auth" element={<AuthLayout />}>
@@ -91,7 +91,7 @@ export default function App() {
             <Route element={<AuthGuard />}>
 
               {/* Onboarding Routes (Authenticated but no active org required) */}
-              <Route path={links.onboarding.index} element={<AuthLayout />}>
+              <Route path={AppRoutes.onboarding.index} element={<AuthLayout />}>
                 <Route path="no-organization" element={<NoOrganizationPage />} />
                 <Route path="select-organization" element={<SelectOrganizationPage />} />
                 <Route path="accept-invitation" element={<AcceptInvitationPage />} />

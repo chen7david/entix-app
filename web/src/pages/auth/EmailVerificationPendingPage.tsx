@@ -3,7 +3,7 @@ import { Card, Typography, Button, App } from 'antd';
 import { MailOutlined } from '@ant-design/icons';
 import { useResendVerification } from '@web/src/hooks/auth/useAuth';
 import { useLocation, useNavigate } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Title, Text } = Typography;
 
@@ -61,7 +61,7 @@ export const EmailVerificationPendingPage: React.FC = () => {
                     </Button>
                     <Button
                         type="default"
-                        onClick={() => navigate(links.auth.signIn)}
+                        onClick={() => navigate(AppRoutes.auth.signIn)}
                         block
                     >
                         Go to Sign In

@@ -6,7 +6,7 @@ import { SidebarOrgSwitcher } from './SidebarOrgSwitcher';
 import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 import { getAvatarUrl } from '@shared/utils/image-url';
 
 const { Text } = Typography;
@@ -23,7 +23,7 @@ export const SidebarContent: React.FC = () => {
         if (e.key === 'logout') {
             signOut(undefined, {
                 onSuccess: () => {
-                    navigate(links.auth.signIn);
+                    navigate(AppRoutes.auth.signIn);
                 }
             });
         } else {
@@ -34,7 +34,7 @@ export const SidebarContent: React.FC = () => {
     const userMenuItems: MenuProps['items'] = [
         ...(isSuperAdmin ? [
             {
-                key: links.admin.index,
+                key: AppRoutes.admin.index,
                 label: 'Admin Management',
                 icon: <SafetyOutlined style={{ color: '#faad14' }} />,
             },
@@ -44,17 +44,17 @@ export const SidebarContent: React.FC = () => {
         ] : []),
         ...(slug ? [
             {
-                key: links.dashboard.profile(slug),
+                key: slug ? `/org/${slug}${AppRoutes.org.dashboard.profile}` : 'profile-disabled',
                 label: 'Profile',
                 icon: <UserOutlined />,
             },
             {
-                key: links.dashboard.sessions(slug),
+                key: slug ? `/org/${slug}${AppRoutes.org.dashboard.sessions}` : 'sessions-disabled',
                 label: 'Sessions',
                 icon: <SafetyOutlined />,
             },
             {
-                key: links.dashboard.settings(slug),
+                key: slug ? `/org/${slug}${AppRoutes.org.dashboard.settings}` : 'settings-disabled',
                 label: 'Settings',
                 icon: <SettingOutlined />,
             },
