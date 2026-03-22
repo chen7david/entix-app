@@ -7,7 +7,6 @@
 	"name": "entix-app",
 	"main": "api/main.ts",
 	"keep_vars": true,
-	"preview_urls": true,
 	"compatibility_date": "2025-12-10",
 	"compatibility_flags": [
 		"nodejs_compat"
