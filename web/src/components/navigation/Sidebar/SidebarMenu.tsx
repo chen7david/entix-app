@@ -1,53 +1,61 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
 import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined, CalendarOutlined, AreaChartOutlined } from "@ant-design/icons";
-import { useNavigate, useLocation } from "react-router";
-import { links } from "@shared/constants/links";
+import { useLocation } from "react-router";
+import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
+import { AppRoutes } from "@shared/constants/routes";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 
 export const SidebarMenu: React.FC = () => {
-    const navigate = useNavigate();
+    const navigateOrg = useOrgNavigate();
     const location = useLocation();
     const { close } = useSidebar();
 
-    const { getOrgLink, activeOrganization } = useOrganization();
+    const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || '';
+
+    // Strip the org slug prefix from the current pathname to find the matching menu key naturally
+    const orgPrefix = slug ? `/org/${slug}` : '';
+    let activeKey = location.pathname;
+    if (orgPrefix && activeKey.startsWith(orgPrefix)) {
+        activeKey = activeKey.replace(orgPrefix, '') || '/';
+    }
 
     const menuItems: MenuProps['items'] = [
         {
             label: 'Home',
-            key: slug ? links.dashboard.index(slug) : 'home-disabled',
+            key: AppRoutes.org.dashboard.index,
             icon: <HomeOutlined />,
             disabled: !slug,
         },
         {
             label: 'Lessons',
-            key: slug ? links.dashboard.lessons(slug) : 'lessons-disabled',
+            key: AppRoutes.org.dashboard.lessons,
             icon: <BookOutlined />,
             disabled: !slug,
         },
         {
             label: 'Shop',
-            key: slug ? links.dashboard.shop(slug) : 'shop-disabled',
+            key: AppRoutes.org.dashboard.shop,
             icon: <ShoppingOutlined />,
             disabled: !slug,
         },
         {
             label: 'Wallet',
-            key: slug ? links.dashboard.wallet(slug) : 'wallet-disabled',
+            key: AppRoutes.org.dashboard.wallet,
             icon: <WalletOutlined />,
             disabled: !slug,
         },
         {
             label: 'Movies',
-            key: slug ? links.dashboard.movies(slug) : 'movies-disabled',
+            key: AppRoutes.org.dashboard.movies,
             icon: <YoutubeOutlined />,
             disabled: !slug,
         },
         {
             label: 'Orders',
-            key: slug ? links.dashboard.orders(slug) : 'orders-disabled',
+            key: AppRoutes.org.dashboard.orders,
             icon: <TruckOutlined />,
             disabled: !slug,
         },
@@ -56,7 +64,7 @@ export const SidebarMenu: React.FC = () => {
         },
         {
             label: 'Organizations',
-            key: slug ? links.organization.index(slug) : 'orgs-disabled',
+            key: AppRoutes.org.manage.index,
             icon: <BankOutlined />,
             disabled: !slug,
         },
@@ -68,60 +76,61 @@ export const SidebarMenu: React.FC = () => {
                 children: [
                     {
                         label: 'Video Library',
-                        key: getOrgLink('/video'),
+                        key: AppRoutes.org.manage.video,
                         icon: <VideoCameraOutlined />,
                     },
                     {
                         label: 'Audio Library',
-                        key: getOrgLink('/audio'),
+                        key: AppRoutes.org.manage.audio,
                         icon: <AudioOutlined />,
                     },
                     {
                         label: 'Playlists',
-                        key: getOrgLink('/playlists'),
+                        key: AppRoutes.org.manage.playlists,
                         icon: <OrderedListOutlined />,
                     },
                 ]
             },
             {
                 label: 'Analytics',
-                key: getOrgLink('/analytics'),
+                key: '/analytics',
                 icon: <AreaChartOutlined />,
             },
             {
                 label: 'Schedule',
-                key: getOrgLink('/schedule'),
+                key: '/schedule',
                 icon: <CalendarOutlined />,
             },
             {
                 label: 'Members',
-                key: getOrgLink('/members'),
+                key: AppRoutes.org.manage.members,
                 icon: <TeamOutlined />,
             },
             {
                 label: 'Invitations',
-                key: getOrgLink('/invitations'),
+                key: AppRoutes.org.manage.invitations,
                 icon: <UserAddOutlined />,
             },
             {
                 label: 'Files & Uploads',
-                key: getOrgLink('/uploads'),
+                key: '/uploads',
                 icon: <CloudUploadOutlined />,
             }
         ] : [])
-
-
     ];
 
     const handleMenuClick = (e: { key: string }) => {
-        navigate(e.key);
+        // Disregard non-routable group keys
+        if (e.key === 'media_collection') return;
+        
+        navigateOrg(e.key);
         close();
     };
 
     return (
         <Menu
             mode="inline"
-            selectedKeys={[location.pathname]}
+            selectedKeys={[activeKey]}
             style={{ height: "100%", borderRight: 0 }}
             onClick={handleMenuClick}
             items={menuItems}

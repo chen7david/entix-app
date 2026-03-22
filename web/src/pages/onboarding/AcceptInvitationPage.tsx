@@ -4,7 +4,7 @@ import { Card, Button, Spin, Result, App } from 'antd';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useInvitations } from '@web/src/hooks/auth/useInvitations';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 export const AcceptInvitationPage: React.FC = () => {
     const { message } = App.useApp();
@@ -28,7 +28,7 @@ export const AcceptInvitationPage: React.FC = () => {
 
         if (!isAuthenticated) {
             // Redirect to sign in and preserve return URL
-            navigate(`${links.auth.signIn}?returnUrl=${encodeURIComponent(`/auth/accept-invitation?id=${invitationId}`)}`);
+            navigate(`${AppRoutes.auth.signIn}?returnUrl=${encodeURIComponent(`/auth/accept-invitation?id=${invitationId}`)}`);
             return;
         }
 

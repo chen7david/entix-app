@@ -3,7 +3,7 @@ import { Typography, Popover } from 'antd';
 import { SwapOutlined, CheckOutlined, PlusOutlined } from '@ant-design/icons';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { useNavigate } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Text } = Typography;
 
@@ -19,14 +19,14 @@ export const SidebarOrgSwitcher: React.FC = () => {
         }
         await setActive(org.id);
         setOpen(false);
-        navigate(links.dashboard.index(org.slug));
+        navigate(`/org/${org.slug}${AppRoutes.org.dashboard.index}`);
     };
 
     const handleManageOrgs = () => {
         const slug = activeOrganization?.slug;
         if (slug) {
             setOpen(false);
-            navigate(links.organization.index(slug));
+            navigate(`/org/${slug}${AppRoutes.org.manage.index}`);
         }
     };
 

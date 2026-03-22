@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate, useParams, Outlet } from 'react-router';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { authClient } from '@web/src/lib/auth-client';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 import { Button } from 'antd';
 import { CenteredSpin, CenteredResult } from '@web/src/components/common/CenteredView';
 import { OrgProvider } from '@web/src/context/OrgContext';
@@ -82,7 +82,7 @@ export const OrgGuard: React.FC = () => {
                 status="403"
                 title="Access Denied"
                 subTitle="You do not have access to this organization, or it does not exist."
-                extra={<Button type="primary" onClick={() => navigate(links.onboarding.selectOrganization)}>Switch Organization</Button>}
+                extra={<Button type="primary" onClick={() => navigate(AppRoutes.onboarding.selectOrganization)}>Switch Organization</Button>}
             />
         );
     }

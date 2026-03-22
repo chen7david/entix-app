@@ -1,9 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router';
+// Removed useNavigate
 import { Card, Typography, App } from 'antd';
 import { ChangePasswordForm, type ChangePasswordValues } from '@web/src/components/auth/ChangePasswordForm';
 import { useChangePassword } from '@web/src/hooks/auth/useAuth';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
+import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 
@@ -11,7 +12,7 @@ const { Title, Text } = Typography;
 
 export const ChangePasswordPage: React.FC = () => {
     const { message } = App.useApp();
-    const navigate = useNavigate();
+    const navigateOrg = useOrgNavigate();
     const { activeOrganization } = useOrganization();
     const { mutate: changePassword, isPending } = useChangePassword();
 
@@ -25,9 +26,9 @@ export const ChangePasswordPage: React.FC = () => {
                 message.success('Password changed successfully!');
                 setTimeout(() => {
                     if (activeOrganization?.slug) {
-                        navigate(links.dashboard.settings(activeOrganization.slug));
+                        navigateOrg(AppRoutes.org.dashboard.settings);
                     } else {
-                        navigate(-1); // Fallback
+                        navigateOrg(-1); // Fallback
                     }
                 }, 1500);
             },

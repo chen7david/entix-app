@@ -3,7 +3,7 @@ import { Card, Avatar, Typography, Button, Spin, App, Row, Col, Divider, Tooltip
 import { UserOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useSession, signOut } from '../../../lib/auth-client';
 import { useNavigate } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { AvatarDropzone } from '@web/src/components/Upload/AvatarDropzone';
@@ -26,7 +26,7 @@ export const ProfilePage: React.FC = () => {
                 fetchOptions: {
                     onSuccess: () => {
                         message.success('Logged out successfully');
-                        navigate(links.auth.signIn);
+                        navigate(AppRoutes.auth.signIn);
                     },
                 },
             });
@@ -48,7 +48,7 @@ export const ProfilePage: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <Card style={{ textAlign: 'center' }}>
                     <Title level={4}>You are not logged in</Title>
-                    <Button type="primary" onClick={() => navigate(links.auth.signIn)}>
+                    <Button type="primary" onClick={() => navigate(AppRoutes.auth.signIn)}>
                         Go to Sign In
                     </Button>
                 </Card>

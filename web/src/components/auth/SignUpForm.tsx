@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Button, Typography, Alert } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { Link } from 'react-router';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Text } = Typography;
 
@@ -81,7 +81,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
                 </Form.Item>
 
                 <div style={{ textAlign: 'center' }}>
-                    <Text>Already have an account? <Link to={links.auth.signIn}>Sign in</Link></Text>
+                    <Text>Already have an account? <Link to={AppRoutes.auth.signIn}>Sign in</Link></Text>
                 </div>
             </Form>
         </>

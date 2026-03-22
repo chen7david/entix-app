@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router';
 import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 import { CenteredSpin } from '@web/src/components/common/CenteredView';
 
 import { Outlet } from 'react-router';
@@ -13,7 +13,7 @@ export const AuthGuard: React.FC = () => {
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            navigate(`${links.auth.signIn}?returnUrl=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
+            navigate(`${AppRoutes.auth.signIn}?returnUrl=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
         }
     }, [isLoading, isAuthenticated, navigate, location]);
 

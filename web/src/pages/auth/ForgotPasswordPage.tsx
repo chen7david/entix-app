@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { App, Card, Typography, Result, Button } from 'antd';
 import { ForgotPasswordForm, type ForgotPasswordValues } from '@web/src/components/auth/ForgotPasswordForm';
 import { useForgotPassword } from '@web/src/hooks/auth/useAuth';
-import { links } from '@shared/constants/links';
+import { AppRoutes } from '@shared/constants/routes';
 
 const { Title, Text } = Typography;
 
@@ -17,7 +17,7 @@ export const ForgotPasswordPage: React.FC = () => {
     const handleForgotPassword = (values: ForgotPasswordValues) => {
         forgotPassword({
             email: values.email,
-            redirectTo: `${window.location.origin}${links.auth.resetPassword}`,
+            redirectTo: `${window.location.origin}${AppRoutes.auth.resetPassword}`,
         }, {
             onSuccess: () => {
                 setEmailSent(true);
@@ -43,7 +43,7 @@ export const ForgotPasswordPage: React.FC = () => {
                         </div>
                     }
                     extra={[
-                        <Button key="signin" onClick={() => navigate(links.auth.signIn)} block>
+                        <Button key="signin" onClick={() => navigate(AppRoutes.auth.signIn)} block>
                             Back to Sign In
                         </Button>,
                     ]}
