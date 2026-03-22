@@ -1,5 +1,5 @@
 import { useNavigate, type NavigateOptions, type To } from 'react-router';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { useOrgContext } from '@web/src/context/OrgContext';
 import { useCallback } from 'react';
 
 /**
@@ -11,7 +11,7 @@ import { useCallback } from 'react';
  */
 export const useOrgNavigate = () => {
     const navigate = useNavigate();
-    const { activeOrganization } = useOrganization();
+    const { activeOrganization } = useOrgContext();
 
     return useCallback((to: To | number, options?: NavigateOptions) => {
         // Only map strings dynamically. If navigating via numerical history (e.g. `navigate(-1)`), process organically

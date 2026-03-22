@@ -50,12 +50,7 @@ export const useOrganization = () => {
         return queryClient.refetchQueries({ queryKey: ['organizations'] });
     }, [queryClient]);
 
-    const getOrgLink = useCallback((path: string) => {
-        if (activeOrganization?.slug) {
-            return `/org/${activeOrganization.slug}${path.startsWith('/') ? path : `/${path}`}`;
-        }
-        return path;
-    }, [activeOrganization?.slug]);
+    // getOrgLink removed as per AppRoutes enforcing abstract context natively
 
     const checkOrganizationStatus = async () => {
         // 1. Fetch and cache organizations
@@ -109,7 +104,6 @@ export const useOrganization = () => {
         isSwitching,
         listOrganizations,
         setActive,
-        getOrgLink,
         checkOrganizationStatus,
     };
 };

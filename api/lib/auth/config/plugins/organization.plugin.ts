@@ -2,7 +2,7 @@ import { AppContext } from "@api/helpers/types.helpers";
 import { organization } from "better-auth/plugins";
 import { ac, member, owner, admin } from "@shared/auth/permissions";
 import { MailService } from "@api/services/mailer.service";
-import { links } from "@shared/constants/links";
+import { AppRoutes } from "@shared/constants/routes";
 
 export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: MailService) => organization({
     ac,
@@ -15,7 +15,7 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: MailServi
         if (!ctx || !mailer) {
             return
         }
-        const inviteLink = `${ctx.var.frontendUrl}${links.onboarding.acceptInvitation}?id=${data.id}`;
+        const inviteLink = `${ctx.var.frontendUrl}${AppRoutes.onboarding.acceptInvitation}?id=${data.id}`;
 
         await mailer.sendTemplate({
             to: data.email,
