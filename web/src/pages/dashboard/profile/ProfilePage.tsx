@@ -11,6 +11,8 @@ import { useOrganization } from '@web/src/hooks/auth/useOrganization';
 import { DateUtils } from '@web/src/utils/date';
 
 import { PasswordUpdateForm } from '@web/src/components/profile/PasswordUpdateForm';
+import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
+import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
 
 const { Title, Text } = Typography;
 
@@ -60,6 +62,12 @@ export const ProfilePage: React.FC = () => {
         <>
             <Toolbar />
             <div style={{ padding: '24px', maxWidth: '1000px', margin: '0 auto' }}>
+                <div className="flex justify-between items-center mb-6">
+                    <div>
+                        <Title level={2} style={{ marginBottom: 4 }}>My Profile</Title>
+                        <Text type="secondary">Manage your personal information and security settings</Text>
+                    </div>
+                </div>
                 <Row gutter={[24, 24]}>
                     <Col xs={24} md={8}>
                         <Card
@@ -103,6 +111,10 @@ export const ProfilePage: React.FC = () => {
                     
                     <Col xs={24} md={16}>
                         <div className="flex flex-col gap-6">
+                              <Card title="Personal Information" className="shadow-sm">
+                                  <UserProfileForm userId={session.user.id} />
+                              </Card>
+                              <UserContactList userId={session.user.id} hideSocial hideCopy />
                               <PasswordUpdateForm />
                         </div>
                     </Col>

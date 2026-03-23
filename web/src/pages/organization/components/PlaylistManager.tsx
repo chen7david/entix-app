@@ -26,16 +26,15 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
         <div
             ref={setNodeRef}
             style={style}
-            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
-                isDragging 
-                    ? 'border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20' 
+            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${isDragging
+                    ? 'border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20'
                     : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors'
-            } transition-all group`}
+                } transition-all group`}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div 
-                    {...attributes} 
-                    {...listeners} 
+                <div
+                    {...attributes}
+                    {...listeners}
                     className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                 >
                     <HolderOutlined />
@@ -56,16 +55,16 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
 };
 
 export const PlaylistManager: React.FC = () => {
-    const { 
-        playlists, 
-        isLoadingPlaylists, 
-        createPlaylist, 
+    const {
+        playlists,
+        isLoadingPlaylists,
+        createPlaylist,
         updatePlaylist,
-        deletePlaylist, 
-        getSequence, 
-        updateSequence 
+        deletePlaylist,
+        getSequence,
+        updateSequence
     } = usePlaylists();
-    
+
     const { media } = useMedia();
     const navigateOrg = useOrgNavigate();
     // Legacy definition removed since we merged the hook calls
@@ -76,7 +75,7 @@ export const PlaylistManager: React.FC = () => {
     const [isSequenceDrawerOpen, setIsSequenceDrawerOpen] = useState(false);
     const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
     const [sequenceItems, setSequenceItems] = useState<string[]>([]);
-    
+
     const [editForm] = Form.useForm();
 
     const sensors = useSensors(
@@ -122,11 +121,11 @@ export const PlaylistManager: React.FC = () => {
                 const oldIndex = items.indexOf(active.id as string);
                 const newIndex = items.indexOf(over.id as string);
                 const newArray = arrayMove(items, oldIndex, newIndex);
-                
+
                 if (activePlaylist) {
                     updateSequence(activePlaylist.id, newArray).catch(console.error);
                 }
-                
+
                 return newArray;
             });
         }
@@ -174,17 +173,17 @@ export const PlaylistManager: React.FC = () => {
             align: 'right' as const,
             render: (_: any, record: any) => (
                 <Space size="middle">
-                    <Button 
-                        type="default" 
-                        icon={<PlayCircleOutlined />} 
+                    <Button
+                        type="default"
+                        icon={<PlayCircleOutlined />}
                         onClick={(e) => {
                             e.stopPropagation();
                             navigateOrg(AppRoutes.org.manage.playlistDetail(record.id));
                         }}
                     />
-                    <Button 
-                        type="default" 
-                        icon={<OrderedListOutlined />} 
+                    <Button
+                        type="default"
+                        icon={<OrderedListOutlined />}
                         onClick={(e) => {
                             e.stopPropagation();
                             openSequenceManager(record);
@@ -263,7 +262,7 @@ export const PlaylistManager: React.FC = () => {
                 placement="right"
                 onClose={() => setIsSequenceDrawerOpen(false)}
                 open={isSequenceDrawerOpen}
-                width={600}
+                width={400}
                 destroyOnClose
             >
                 <div className="flex flex-col gap-8 h-full">
@@ -281,9 +280,9 @@ export const PlaylistManager: React.FC = () => {
                             filterOption={(input, option) =>
                                 (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
                             }
-                            options={media?.filter((m: any) => !sequenceItems.includes(m.id))?.map((m: any) => ({ 
-                                value: m.id, 
-                                label: `${m.title} (${m.mimeType.split('/')[0]})` 
+                            options={media?.filter((m: any) => !sequenceItems.includes(m.id))?.map((m: any) => ({
+                                value: m.id,
+                                label: `${m.title} (${m.mimeType.split('/')[0]})`
                             }))}
                         />
                     </div>
@@ -294,10 +293,10 @@ export const PlaylistManager: React.FC = () => {
                             <Title level={5} className="!mb-0">Current Sequence</Title>
                             <Text type="secondary" className="text-xs">{sequenceItems.length} items</Text>
                         </div>
-                        
+
                         {sequenceItems.length === 0 ? (
                             <div className="py-12">
-                                <Empty description={<>No media added yet.<br/>Use the search bar above to add content.</>} />
+                                <Empty description={<>No media added yet.<br />Use the search bar above to add content.</>} />
                             </div>
                         ) : (
                             <DndContext

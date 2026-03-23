@@ -120,7 +120,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ type }) =>
                 placement="right"
                 onClose={handleCloseModal}
                 open={!!activeMedia}
-                width={500}
+                width={400}
                 destroyOnClose
             >
                 {activeMedia && (
