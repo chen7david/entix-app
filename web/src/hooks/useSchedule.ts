@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { message } from "antd";
 
@@ -65,6 +65,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         getNextPageParam: (lastPage: any) => lastPage.nextCursor ?? undefined,
         initialPageParam: undefined,
         enabled: !!organizationId && isAuthenticated,
+        placeholderData: keepPreviousData,
     });
     
     // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.

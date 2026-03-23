@@ -4,7 +4,8 @@ import { Typography, Button, List, Tag, Result, Empty, Spin, Space, DatePicker, 
 import { PlusOutlined, CalendarOutlined, TeamOutlined, SearchOutlined, CheckCircleOutlined, CloseCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useSchedule, useScheduleMetrics } from "@web/src/hooks/useSchedule";
-import { useDebounce } from "@web/src/hooks/useDebounce";
+import { useDebouncedValue } from "@tanstack/react-pacer";
+import { UI_CONSTANTS } from '@web/src/utils/constants';
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { SessionDetailsDrawer } from "@web/src/components/schedule/SessionDetailsDrawer";
 import type { SessionSubmitPayload } from "@web/src/components/schedule/SessionDetailsDrawer";
@@ -40,7 +41,11 @@ export const OrganizationSchedulePage = () => {
     }, [startDateParam, endDateParam, searchParams, setSearchParams]);
 
     const [localSearch, setLocalSearch] = useState(searchParams.get('q') || '');
-    const debouncedSearch = useDebounce(localSearch, 500);
+    const [debouncedSearch, control] = useDebouncedValue(
+        localSearch,
+        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
+        (state) => ({ isPending: state.isPending })
+    );
 
     const [timeline, setTimeline] = useState('All');
 
@@ -183,6 +188,7 @@ export const OrganizationSchedulePage = () => {
                         value={localSearch}
                         onChange={(e) => setLocalSearch(e.target.value)}
                         allowClear
+                        suffix={control.state.isPending ? <span className="text-xs text-gray-400 italic">typing...</span> : null}
                     />
                     <Select 
                         value={

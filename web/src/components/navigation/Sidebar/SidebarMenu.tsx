@@ -1,6 +1,6 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, VideoCameraOutlined, AudioOutlined, OrderedListOutlined, CalendarOutlined, AreaChartOutlined } from "@ant-design/icons";
+import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, OrderedListOutlined, CalendarOutlined, AreaChartOutlined } from "@ant-design/icons";
 import { useLocation } from "react-router";
 import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
 import { AppRoutes } from "@shared/constants/routes";
@@ -70,19 +70,14 @@ export const SidebarMenu: React.FC = () => {
         },
         ...(activeOrganization ? [
             {
-                label: 'Media Collection',
-                key: 'media_collection',
+                label: 'Media',
+                key: 'media_collection', // using group wrapper
                 icon: <PlaySquareOutlined />,
                 children: [
                     {
-                        label: 'Video Library',
-                        key: AppRoutes.org.manage.video,
-                        icon: <VideoCameraOutlined />,
-                    },
-                    {
-                        label: 'Audio Library',
-                        key: AppRoutes.org.manage.audio,
-                        icon: <AudioOutlined />,
+                        label: 'Media Library',
+                        key: AppRoutes.org.manage.media,
+                        icon: <PlaySquareOutlined />,
                     },
                     {
                         label: 'Playlists',

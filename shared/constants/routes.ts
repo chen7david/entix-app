@@ -22,8 +22,7 @@ export const AppRoutes = {
         },
         manage: {
             index: '/organizations',
-            video: '/video',
-            audio: '/audio',
+            media: '/media',
             playlists: '/playlists',
             playlistDetail: (id: string | number) => `/playlists/${id}`,
             edit: '/settings',

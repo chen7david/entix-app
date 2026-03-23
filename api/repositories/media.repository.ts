@@ -1,6 +1,7 @@
 import { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and, desc, like } from "drizzle-orm";
+import { eq, and, like, or } from "drizzle-orm";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
 export type CreateMediaInput = {
     id: string;
@@ -30,8 +31,23 @@ export class MediaRepository {
         });
     }
 
-    async findAllByOrganization(organizationId: string, type?: "video" | "audio"): Promise<schema.Media[]> {
+    async findAllByOrganization(
+        organizationId: string, 
+        limit: number, 
+        cursor?: string, 
+        direction: 'next' | 'prev' = 'next', 
+        search?: string, 
+        type?: "video" | "audio"
+    ) {
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            schema.media.createdAt,
+            schema.media.id,
+            cursor,
+            direction
+        );
+
         const filters = [eq(schema.media.organizationId, organizationId)];
+        if (cursorWhere) filters.push(cursorWhere);
         
         if (type === "video") {
             filters.push(like(schema.media.mimeType, 'video/%'));
@@ -39,10 +55,25 @@ export class MediaRepository {
             filters.push(like(schema.media.mimeType, 'audio/%'));
         }
 
-        return await this.db.select()
+        if (search) {
+            filters.push(or(
+                like(schema.media.title, `%${search}%`),
+                like(schema.media.description, `%${search}%`)
+            )!);
+        }
+
+        const items = await this.db.select()
             .from(schema.media)
             .where(and(...filters))
-            .orderBy(desc(schema.media.createdAt));
+            .orderBy(...(orderBy as any))
+            .limit(limit + 1);
+
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (row) => ({ primary: row.createdAt.getTime(), secondary: row.id })
+        );
     }
 
     async update(
