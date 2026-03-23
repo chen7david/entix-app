@@ -10,8 +10,10 @@ import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-c
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
 import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
 import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
-import { useDeferredValue, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router";
+import { useDebouncedValue } from '@tanstack/react-pacer';
+import { UI_CONSTANTS } from '@web/src/utils/constants';
 import { getAvatarUrl } from "@shared/utils/image-url";
 
 const { Title, Text } = Typography;
@@ -21,10 +23,25 @@ export const OrganizationMembersPage = () => {
     
     // Bind search state generically to url string matching native architecture persistence
     const [searchParams, setSearchParams] = useSearchParams();
-    const searchText = searchParams.get('q') || '';
+    const [searchText, setSearchText] = useState(searchParams.get('q') || '');
     
     // Defer pushing expensive re-renders and network bounds rapidly on keystroke loops
-    const deferredSearchText = useDeferredValue(searchText);
+    const [debouncedSearch, control] = useDebouncedValue(
+        searchText,
+        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
+        (state) => ({ isPending: state.isPending })
+    );
+
+    // Sync to URL safely automatically reliably neatly explicitly
+    useEffect(() => {
+        const newParams = new URLSearchParams(searchParams);
+        if (debouncedSearch) {
+            newParams.set('q', debouncedSearch);
+        } else {
+            newParams.delete('q');
+        }
+        setSearchParams(newParams, { replace: true });
+    }, [debouncedSearch, setSearchParams]);
     
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
@@ -40,7 +57,7 @@ export const OrganizationMembersPage = () => {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage
-    } = useMembers(deferredSearchText);
+    } = useMembers(debouncedSearch);
 
     const { session, refetch } = useAuth();
     const currentUserId = session.data?.user?.id;
@@ -226,23 +243,15 @@ export const OrganizationMembersPage = () => {
                     </Col>
                 </Row>
 
-                {/* Search */}
                 <div className="mb-4">
                     <Input
                         placeholder="Search members..."
                         prefix={<SearchOutlined />}
                         className="max-w-xs"
                         value={searchText}
-                        onChange={(e) => {
-                            const newParams = new URLSearchParams(searchParams);
-                            if (e.target.value) {
-                                newParams.set('q', e.target.value);
-                            } else {
-                                newParams.delete('q');
-                            }
-                            setSearchParams(newParams, { replace: true });
-                        }}
+                        onChange={(e) => setSearchText(e.target.value)}
                         allowClear
+                        suffix={control.state.isPending ? <span className="text-xs text-gray-400 italic">typing...</span> : null}
                     />
                 </div>
 

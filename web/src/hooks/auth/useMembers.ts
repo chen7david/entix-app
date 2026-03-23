@@ -1,6 +1,6 @@
 import { authClient } from "@web/src/lib/auth-client";
 import type { OrgRole } from "@shared/auth/permissions";
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
@@ -37,7 +37,8 @@ export const useMembers = (searchQuery?: string) => {
         },
         getNextPageParam: (lastPage: any) => lastPage.nextCursor ?? undefined,
         initialPageParam: undefined,
-        enabled: !!activeOrganization?.id
+        enabled: !!activeOrganization?.id,
+        placeholderData: keepPreviousData,
     });
 
     // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.

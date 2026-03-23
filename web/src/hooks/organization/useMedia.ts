@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { message } from "antd";
@@ -56,6 +56,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         enabled: !!orgId,
         initialPageParam: null as string | null,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
+        placeholderData: keepPreviousData,
     });
 
     const media = mediaPages?.pages.flatMap(page => page.items) ?? [];

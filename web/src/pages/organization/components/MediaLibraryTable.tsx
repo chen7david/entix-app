@@ -6,6 +6,8 @@ import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
 import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 import type { Media } from '@shared/db/schema';
+import { useDebouncedValue } from '@tanstack/react-pacer';
+import { UI_CONSTANTS } from '@web/src/utils/constants';
 
 const { Title, Text } = Typography;
 
@@ -16,7 +18,14 @@ interface MediaLibraryTableProps {
 export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultType = "all" }) => {
     const [filterType, setFilterType] = useState<"all" | "video" | "audio">(defaultType);
     const [searchText, setSearchText] = useState('');
-    const { media, isLoadingMedia, deleteMedia, recordPlay, updateMedia, isUpdating, fetchNextPage, hasNextPage, isFetchingNextPage } = useMedia(filterType === "all" ? undefined : filterType, searchText);
+    
+    const [debouncedSearch, control] = useDebouncedValue(
+        searchText,
+        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
+        (state) => ({ isPending: state.isPending })
+    );
+
+    const { media, isLoadingMedia, deleteMedia, recordPlay, updateMedia, isUpdating, fetchNextPage, hasNextPage, isFetchingNextPage } = useMedia(filterType === "all" ? undefined : filterType, debouncedSearch);
     
     const [activeMedia, setActiveMedia] = useState<Media | null>(null);
     const hasRecordedPlay = useRef<boolean>(false);
@@ -103,6 +112,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                     allowClear
+                    suffix={control.state.isPending ? <span className="text-xs text-gray-400 italic">typing...</span> : null}
                 />
                 
                 <Radio.Group value={filterType} onChange={e => setFilterType(e.target.value)} optionType="button" buttonStyle="solid">

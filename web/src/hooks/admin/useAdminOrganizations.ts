@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
 
 export const useAdminOrganizations = () => {
@@ -12,6 +12,7 @@ export const useAdminOrganizations = () => {
             }
             return response.json();
         },
+        placeholderData: keepPreviousData,
     });
 };
 
