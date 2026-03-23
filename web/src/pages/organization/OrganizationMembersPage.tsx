@@ -11,6 +11,7 @@ import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
+import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
 import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
 import { useDeferredValue, useState } from "react";
 import { useSearchParams } from "react-router";
@@ -48,6 +49,7 @@ export const OrganizationMembersPage = () => {
     const currentUserId = session.data?.user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
+    const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
 
     const handleCreateMember = async (values: any) => {
         try {
@@ -56,6 +58,15 @@ export const OrganizationMembersPage = () => {
             createForm.resetFields();
         } catch {
             // Error handling is done in the hook
+        }
+    };
+
+    const handleRemoveAvatar = async (memberUserId: string) => {
+        try {
+            await removeAvatarMutation.mutateAsync(memberUserId);
+            message.success('Profile picture removed successfully');
+        } catch {
+            message.error('Failed to remove profile picture');
         }
     };
 
@@ -176,6 +187,17 @@ export const OrganizationMembersPage = () => {
                         onClick: (e) => {
                             e.domEvent.stopPropagation();
                             handleResendPassword(record.user?.email);
+                        }
+                    },
+                    {
+                        key: 'remove-picture',
+                        label: 'Remove Picture',
+                        icon: <DeleteOutlined />,
+                        danger: true,
+                        disabled: !record.user?.image,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            handleRemoveAvatar(record.user?.id as string);
                         }
                     }
                 ];

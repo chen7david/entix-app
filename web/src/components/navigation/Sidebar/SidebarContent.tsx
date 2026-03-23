@@ -80,9 +80,9 @@ export const SidebarContent: React.FC = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={40}
-                            src={getAvatarUrl(session.data?.user?.image, 'sm')}
+                            src={session.data?.user?.image ? getAvatarUrl(session.data?.user?.image, 'sm') : undefined}
                             icon={<UserOutlined />}
-                            className="flex-shrink-0 border border-gray-200"
+                            className="flex-shrink-0"
                         />
                         <div className="flex flex-col min-w-0">
                             <Text strong className="truncate text-sm">
