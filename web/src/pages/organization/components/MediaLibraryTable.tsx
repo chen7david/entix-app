@@ -1,22 +1,33 @@
 import React, { useState, useRef } from 'react';
-import { Typography, Table, Button, Space, Popconfirm, Drawer, Input, Form, Tooltip } from 'antd';
+import { Typography, Table, Button, Space, Popconfirm, Drawer, Input, Form, Tooltip, Radio } from 'antd';
 import { AudioOutlined, DeleteOutlined, SearchOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { MediaDropzone } from './MediaDropzone';
 import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
 import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 import type { Media } from '@shared/db/schema';
+import { useDebouncedValue } from '@tanstack/react-pacer';
+import { UI_CONSTANTS } from '@web/src/utils/constants';
 
 const { Title, Text } = Typography;
 
 interface MediaLibraryTableProps {
-    type: "video" | "audio";
+    defaultType?: "all" | "video" | "audio";
 }
 
-export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ type }) => {
-    const { media, isLoadingMedia, deleteMedia, recordPlay, updateMedia, isUpdating } = useMedia(type);
-    const [activeMedia, setActiveMedia] = useState<Media | null>(null);
+export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultType = "all" }) => {
+    const [filterType, setFilterType] = useState<"all" | "video" | "audio">(defaultType);
     const [searchText, setSearchText] = useState('');
+    
+    const [debouncedSearch, control] = useDebouncedValue(
+        searchText,
+        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
+        (state) => ({ isPending: state.isPending })
+    );
+
+    const { media, isLoadingMedia, deleteMedia, recordPlay, updateMedia, isUpdating, fetchNextPage, hasNextPage, isFetchingNextPage } = useMedia(filterType === "all" ? undefined : filterType, debouncedSearch);
+    
+    const [activeMedia, setActiveMedia] = useState<Media | null>(null);
     const hasRecordedPlay = useRef<boolean>(false);
 
     const handlePlayMedia = (record: Media) => {
@@ -72,7 +83,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ type }) =>
                     <Space size="middle">
                         <Popconfirm
                             title="Delete Media"
-                            description="This will permanently delete the file from Cloudflare R2."
+                            description="This will permanently delete the file."
                             onConfirm={(e) => {
                                 e?.stopPropagation();
                                 deleteMedia(record.id);
@@ -91,29 +102,48 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ type }) =>
 
     return (
         <div className="flex flex-col gap-4 mt-2">
-            <MediaDropzone type={type} />
+            <MediaDropzone type="all" />
 
-            <div className="mb-2">
+            <div className="mb-2 flex items-center justify-between">
                 <Input
-                    placeholder={`Search ${type}...`}
+                    placeholder={`Search media...`}
                     prefix={<SearchOutlined />}
-                    className="max-w-xs"
-                    onChange={e => setSearchText(e.target.value)}
+                    className="max-w-xs block"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
                     allowClear
+                    suffix={control.state.isPending ? <span className="text-xs text-gray-400 italic">typing...</span> : null}
                 />
+                
+                <Radio.Group value={filterType} onChange={e => setFilterType(e.target.value)} optionType="button" buttonStyle="solid">
+                     <Radio.Button value="all">All Media</Radio.Button>
+                     <Radio.Button value="video">Video</Radio.Button>
+                     <Radio.Button value="audio">Audio</Radio.Button>
+                </Radio.Group>
             </div>
 
             <Table
-                dataSource={media?.filter((m: Media) => m.title.toLowerCase().includes(searchText.toLowerCase()))}
+                dataSource={media}
                 columns={columns}
                 rowKey="id"
                 loading={isLoadingMedia}
-                pagination={{ pageSize: 15 }}
+                pagination={false}
                 onRow={(record) => ({
                     onClick: () => handlePlayMedia(record),
                     className: "cursor-pointer"
                 })}
             />
+            
+            {hasNextPage && (
+                <div className="flex justify-center mt-4 mb-8">
+                    <Button 
+                        onClick={() => fetchNextPage()} 
+                        loading={isFetchingNextPage}
+                    >
+                        Load More
+                    </Button>
+                </div>
+            )}
 
             <Drawer
                 title="Media Details"

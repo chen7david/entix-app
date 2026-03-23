@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty, Tooltip } from 'antd';
-import { PlusOutlined, DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, AudioOutlined, PlayCircleOutlined, PlaySquareOutlined } from '@ant-design/icons';
+import { DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, AudioOutlined, PlayCircleOutlined, PlaySquareOutlined } from '@ant-design/icons';
 import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
 import { useMedia } from '@web/src/hooks/organization/useMedia';
 // useOrganization import removed
@@ -55,7 +55,7 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
     );
 };
 
-export const PlaylistManager: React.FC = () => {
+export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, onCloseCreateModal?: () => void }> = ({ externalIsCreateModalOpen, onCloseCreateModal }) => {
     const { 
         playlists, 
         isLoadingPlaylists, 
@@ -71,7 +71,12 @@ export const PlaylistManager: React.FC = () => {
     // Legacy definition removed since we merged the hook calls
 
     const [searchText, setSearchText] = useState('');
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [internalIsCreateModalOpen, setInternalIsCreateModalOpen] = useState(false);
+    const isCreateModalOpen = externalIsCreateModalOpen ?? internalIsCreateModalOpen;
+    const setIsCreateModalOpen = (val: boolean) => {
+        setInternalIsCreateModalOpen(val);
+        if (!val && onCloseCreateModal) onCloseCreateModal();
+    };
     const [activePlaylist, setActivePlaylist] = useState<any>(null);
     const [isSequenceDrawerOpen, setIsSequenceDrawerOpen] = useState(false);
     const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
@@ -212,7 +217,7 @@ export const PlaylistManager: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-6 pt-4">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-2">
                 <Input
                     placeholder="Search playlists..."
                     prefix={<SearchOutlined />}
@@ -220,9 +225,6 @@ export const PlaylistManager: React.FC = () => {
                     onChange={e => setSearchText(e.target.value)}
                     allowClear
                 />
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsCreateModalOpen(true)}>
-                    New Playlist
-                </Button>
             </div>
 
             <Table

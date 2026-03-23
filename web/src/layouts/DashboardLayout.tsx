@@ -3,6 +3,7 @@ import { Layout, theme } from "antd";
 import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
 import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
+import { GlobalUploadManager } from "@web/src/components/Upload/GlobalUploadManager";
 
 const { Sider, Content } = Layout;
 
@@ -26,6 +27,7 @@ export const DashboardLayout: React.FC = () => {
                     <Outlet />
                 </Content>
             </Layout>
+            <GlobalUploadManager />
         </Layout>
     );
 };

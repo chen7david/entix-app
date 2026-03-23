@@ -4,6 +4,7 @@ import { createRequester } from "./base-requester";
 import { createAuthClient } from "./auth.client";
 import { createMembersClient } from "./members.client";
 import { createUsersClient } from "./users.client";
+import { createMediaClient } from "./media.client";
 
 /**
  * Create a domain-specific test client for the API.
@@ -35,6 +36,7 @@ export function createTestClient(
         orgs: {
             members: createMembersClient(request),
             users: createUsersClient(request),
+            media: createMediaClient(request),
         },
         /**
          * Low-level escape hatch for one-off requests
@@ -51,4 +53,5 @@ export type { Requester } from "./base-requester";
 export type { AuthClient } from "./auth.client";
 export type { MembersClient } from "./members.client";
 export type { UsersClient } from "./users.client";
+export type { MediaClient } from "./media.client";
 
