@@ -6,10 +6,10 @@ import { getMediaService } from "@api/factories/service.factory";
 export class MediaHandlers {
     static listMedia: AppHandler<typeof MediaRoutes.listMedia> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
-        const { type } = ctx.req.valid("query");
+        const { type, limit, cursor, direction, search } = ctx.req.valid("query");
         const mediaService = getMediaService(ctx);
-        const media = await mediaService.listMedia(organizationId, type);
-        return ctx.json(media, HttpStatusCodes.OK);
+        const paginatedResult = await mediaService.listMedia(organizationId, limit, cursor, direction, search, type);
+        return ctx.json(paginatedResult, HttpStatusCodes.OK);
     };
 
     static createMedia: AppHandler<typeof MediaRoutes.createMedia> = async (ctx) => {

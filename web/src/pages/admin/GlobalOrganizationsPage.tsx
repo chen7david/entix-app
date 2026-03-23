@@ -14,6 +14,8 @@ import { CreateOrganizationForm } from '@web/src/components/organization/CreateO
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from '@web/src/components/auth/SignUpWithOrgForm';
 import { useAdminOrganizations, useAdminCreateUserWithOrg } from '@web/src/hooks/admin/useAdminOrganizations';
 import dayjs from 'dayjs';
+import { useDebouncedValue } from '@tanstack/react-pacer';
+import { UI_CONSTANTS } from '@web/src/utils/constants';
 
 const { Title, Text } = Typography;
 
@@ -26,9 +28,15 @@ export const GlobalOrganizationsPage: React.FC = () => {
     const [isCreateUserWithOrgModalOpen, setIsCreateUserWithOrgModalOpen] = useState(false);
     const [searchText, setSearchText] = useState('');
 
+    const [debouncedSearch, control] = useDebouncedValue(
+        searchText,
+        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
+        (state) => ({ isPending: state.isPending })
+    );
+
     const filteredOrgs = organizations.filter((org: any) =>
-        org.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-        org.slug?.toLowerCase().includes(searchText.toLowerCase())
+        org.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        org.slug?.toLowerCase().includes(debouncedSearch.toLowerCase())
     );
 
     const handleCreateUserWithOrg = (values: SignUpWithOrgValues) => {
@@ -153,8 +161,10 @@ export const GlobalOrganizationsPage: React.FC = () => {
                         placeholder="Search organizations by name or slug..."
                         prefix={<SearchOutlined />}
                         className="max-w-sm"
+                        value={searchText}
                         onChange={e => setSearchText(e.target.value)}
                         allowClear
+                        suffix={control.state.isPending ? <span className="text-xs text-gray-400 italic">typing...</span> : null}
                     />
                 </div>
 

@@ -3,6 +3,7 @@ import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
+import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
 
 const MediaResponseSchema = z.object({
     id: z.string(),
@@ -30,13 +31,13 @@ export const MediaRoutes = {
             }),
             query: z.object({
                 type: z.enum(["video", "audio"]).optional(),
-            }),
+            }).merge(PaginationQuerySchema),
         },
         responses: {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: z.array(MediaResponseSchema),
+                        schema: createPaginatedResponseSchema(MediaResponseSchema),
                     },
                 },
                 description: "List of media files",
