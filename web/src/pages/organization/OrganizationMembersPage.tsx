@@ -397,6 +397,7 @@ export const OrganizationMembersPage = () => {
                     onClose={() => setSelectedMember(null)}
                     open={!!selectedMember}
                     width={400}
+                    push={false}
                 >
                     {selectedMember && (() => {
                         const activeMember = members?.find((m: any) => m.id === selectedMember.id) || selectedMember;

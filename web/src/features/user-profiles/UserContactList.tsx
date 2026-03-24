@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Form, Input, Select, Button, message, List, Card, Tag, Popconfirm, Drawer, Space, Spin, Typography } from "antd";
+import { Form, Input, Select, Button, message, List, Card, Tag, Popconfirm, Drawer, Space, Spin, Typography, AutoComplete } from "antd";
 import { useUserProfile } from "@web/src/hooks/api/user-profiles.hooks";
 import { useSocialMediaTypes } from "@web/src/hooks/api/social-media.hooks";
 import { PhoneOutlined, HomeOutlined, DeleteOutlined, LinkOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { Country, State, City } from 'country-state-city';
+import { AsYouType, type CountryCode } from 'libphonenumber-js';
 
 export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: string, hideSocial?: boolean, hideCopy?: boolean }) => {
     const { 
@@ -24,11 +26,17 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
 
     const handlePhoneSubmit = async (values: any) => {
         try {
+            const payload = { ...values };
+            if (payload.label === 'Custom') {
+                payload.label = payload.customLabel;
+            }
+            delete payload.customLabel;
+
             if (phoneModalState.editId) {
-                await updatePhone.mutateAsync({ id: phoneModalState.editId, payload: values });
+                await updatePhone.mutateAsync({ id: phoneModalState.editId, payload });
                 message.success("Phone updated successfully");
             } else {
-                await addPhone.mutateAsync(values);
+                await addPhone.mutateAsync(payload);
                 message.success("Phone added successfully");
             }
             setPhoneModalState({ isOpen: false });
@@ -72,7 +80,13 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
 
     const openPhoneModal = (p?: any) => {
         if (p) {
-            phoneForm.setFieldsValue(p);
+            let labelValue = p.label;
+            let customLabelValue = '';
+            if (!['Mobile', 'Home', 'Work'].includes(p.label)) {
+                labelValue = 'Custom';
+                customLabelValue = p.label;
+            }
+            phoneForm.setFieldsValue({ ...p, label: labelValue, customLabel: customLabelValue });
             setPhoneModalState({ isOpen: true, editId: p.id });
         } else {
             phoneForm.resetFields();
@@ -100,6 +114,21 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
         }
     };
 
+    const phoneLabelWatch = Form.useWatch('label', phoneForm);
+    const addressCountryWatch = Form.useWatch('country', addressForm);
+    const addressStateWatch = Form.useWatch('state', addressForm);
+
+    const getIsoCodeFromName = (name: string) => Country.getAllCountries().find(c => c.name === name || c.isoCode === name)?.isoCode || '';
+    const addressCountryIso = getIsoCodeFromName(addressCountryWatch);
+    
+    const statesData = addressCountryIso ? State.getStatesOfCountry(addressCountryIso) : [];
+    const states = statesData.map(s => ({ value: s.name }));
+
+    const addressStateIso = statesData.find(s => s.name === addressStateWatch)?.isoCode || '';
+    const cities = (addressCountryIso && addressStateIso)
+        ? City.getCitiesOfState(addressCountryIso, addressStateIso).map(c => ({ value: c.name }))
+        : [];
+
     if (isLoading) return <div className="p-4 flex justify-center"><Spin /></div>;
 
     const phones = aggregate?.phoneNumbers || [];
@@ -123,16 +152,14 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
                                 <List.Item.Meta
                                     avatar={<PhoneOutlined className="text-gray-400 mt-1" />}
                                     title={
-                                        <Typography.Text copyable={!hideCopy} ellipsis={{ tooltip: true }} className="font-medium block w-full">
-                                            {`${p.countryCode} ${p.number} ${p.extension ? `x${p.extension}` : ''}`}
-                                        </Typography.Text>
-                                    }
-                                    description={
-                                        <div>
-                                            <Typography.Text type="secondary" ellipsis={{ tooltip: true }} className="w-full">
+                                        <div className="flex items-center gap-2 flex-wrap w-full">
+                                            <Typography.Text copyable={!hideCopy} className="font-medium">
+                                                {`${p.countryCode} ${p.number} ${p.extension ? `x${p.extension}` : ''}`}
+                                            </Typography.Text>
+                                            <Typography.Text type="secondary" className="text-xs">
                                                 {p.label}
                                             </Typography.Text>
-                                            {p.isPrimary && <Tag color="blue" className="ml-1 text-[10px] leading-tight px-1">Primary</Tag>}
+                                            {p.isPrimary && <Tag color="blue" className="text-[10px] leading-tight px-1 m-0">Primary</Tag>}
                                         </div>
                                     }
                                 />
@@ -148,12 +175,33 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
                 />
             </Card>
 
-            <Drawer title={phoneModalState.editId ? "Edit Phone" : "Add Phone"} placement="right" width={400} open={phoneModalState.isOpen} onClose={() => setPhoneModalState({ isOpen: false })} destroyOnClose>
+            <Drawer title={phoneModalState.editId ? "Edit Phone" : "Add Phone"} placement="right" width={400} open={phoneModalState.isOpen} onClose={() => setPhoneModalState({ isOpen: false })} destroyOnClose push={false}>
                 <Form form={phoneForm} layout="vertical" onFinish={handlePhoneSubmit}>
                     <Form.Item name="countryCode" label="Country Code" rules={[{ required: true }]} initialValue="+1"><Input /></Form.Item>
-                    <Form.Item name="number" label="Number" rules={[{ required: true }]}><Input /></Form.Item>
+                    <Form.Item name="number" label="Number" rules={[{ required: true }]}>
+                        <Input onChange={(e) => {
+                            // Extract possible 2-letter country code or default to US
+                            const parsedCountry = phoneForm.getFieldValue('countryCode') === '+1' ? 'US' : undefined;
+                            const formatted = new AsYouType(parsedCountry as CountryCode).input(e.target.value);
+                            phoneForm.setFieldValue('number', formatted);
+                        }} />
+                    </Form.Item>
                     <Form.Item name="extension" label="Extension"><Input /></Form.Item>
-                    <Form.Item name="label" label="Label" rules={[{ required: true }]} initialValue="Mobile"><Input /></Form.Item>
+                    <Form.Item name="label" label="Label" rules={[{ required: true }]} initialValue="Mobile">
+                        <Select
+                            options={[
+                                { label: 'Mobile', value: 'Mobile' },
+                                { label: 'Home', value: 'Home' },
+                                { label: 'Work', value: 'Work' },
+                                { label: 'Custom', value: 'Custom' }
+                            ]}
+                        />
+                    </Form.Item>
+                    {phoneLabelWatch === 'Custom' && (
+                        <Form.Item name="customLabel" label="Custom Label" rules={[{ required: true }]}>
+                            <Input placeholder="Enter custom label" />
+                        </Form.Item>
+                    )}
                     <Form.Item name="isPrimary" label="Primary Identity" initialValue={false}>
                         <Select options={[{label: 'Primary', value: true}, {label: 'Secondary', value: false}]} />
                     </Form.Item>
@@ -213,11 +261,29 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
                 />
             </Card>
 
-            <Drawer title={addressModalState.editId ? "Edit Address" : "Add Address"} placement="right" width={400} open={addressModalState.isOpen} onClose={() => setAddressModalState({ isOpen: false })} destroyOnClose>
+            <Drawer title={addressModalState.editId ? "Edit Address" : "Add Address"} placement="right" width={400} open={addressModalState.isOpen} onClose={() => setAddressModalState({ isOpen: false })} destroyOnClose push={false}>
                 <Form form={addressForm} layout="vertical" onFinish={handleAddressSubmit}>
-                    <Form.Item name="country" label="Country" rules={[{ required: true }]} initialValue="USA"><Input /></Form.Item>
-                    <Form.Item name="state" label="State" rules={[{ required: true }]}><Input /></Form.Item>
-                    <Form.Item name="city" label="City" rules={[{ required: true }]}><Input /></Form.Item>
+                    <Form.Item name="country" label="Country" rules={[{ required: true }]} initialValue="United States">
+                        <Select
+                            showSearch
+                            options={Country.getAllCountries().map(c => ({ label: c.name, value: c.name }))}
+                            filterOption={(input, option) => (option?.label as string).toLowerCase().includes(input.toLowerCase())}
+                        />
+                    </Form.Item>
+                    <Form.Item name="state" label="State / Province" rules={[{ required: true }]}>
+                        <AutoComplete
+                            options={states}
+                            filterOption={(inputValue, option) => (option?.value || '').toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
+                            placeholder="Select or enter state/province"
+                        />
+                    </Form.Item>
+                    <Form.Item name="city" label="City" rules={[{ required: true }]}>
+                        <AutoComplete
+                            options={cities}
+                            filterOption={(inputValue, option) => (option?.value || '').toUpperCase().indexOf(inputValue.toUpperCase()) !== -1}
+                            placeholder="Select or enter city"
+                        />
+                    </Form.Item>
                     <Form.Item name="zip" label="Zip" rules={[{ required: true }]}><Input /></Form.Item>
                     <Form.Item name="address" label="Street Address" rules={[{ required: true }]}><Input /></Form.Item>
                     <Form.Item name="label" label="Label" rules={[{ required: true }]} initialValue="Home"><Input /></Form.Item>
@@ -270,7 +336,7 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
 
             )}
 
-            <Drawer title={socialModalState.editId ? "Update Identity" : "Bind Social Account"} placement="right" width={400} open={socialModalState.isOpen} onClose={() => setSocialModalState({ isOpen: false })} destroyOnClose>
+            <Drawer title={socialModalState.editId ? "Update Identity" : "Bind Social Account"} placement="right" width={400} open={socialModalState.isOpen} onClose={() => setSocialModalState({ isOpen: false })} destroyOnClose push={false}>
                 <Form form={socialForm} layout="vertical" onFinish={handleSocialSubmit}>
                     <Form.Item name="socialMediaTypeId" label="Social Platform" rules={[{ required: true }]}>
                         <Select placeholder="Select Platform">
