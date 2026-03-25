@@ -35,7 +35,7 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
             overflow: 'hidden',
             transition: 'all 0.2s ease',
         }}>
-            {imageUrl ? (
+            {imageUrl && imageUrl.trim() !== "" ? (
                 <img src={imageUrl} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : icon ? (
                 icon

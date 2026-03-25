@@ -8,6 +8,7 @@ import { avatarRoutes } from "./orgs/avatar.index";
 import { mediaRoutes } from "./orgs/media.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
+import { socialMediaRoutes } from "./social-media/social-media.index";
 
 export const routes = [
     userRoutes,
@@ -20,4 +21,5 @@ export const routes = [
     mediaRoutes,
     playlistRoutes,
     scheduleRoutes,
+    socialMediaRoutes,
 ]

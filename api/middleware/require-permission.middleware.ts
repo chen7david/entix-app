@@ -55,13 +55,13 @@ export const requirePermission = (
 
         const currentRoleString = ctx.get('membershipRole') as string | undefined;
 
-        if (!currentRoleString) {
+        if (!currentRoleString && !allowSelfTargetParam) {
             throw new InternalServerError(
-                "membershipRole not found in context. Ensure requireOrgMembership middleware runs first."
+                "membershipRole not found in context and no self-target bypass enabled. Ensure requireOrgMembership middleware runs first or use for global resources cautiously."
             );
         }
 
-        const userRoles = currentRoleString.split(',').map((r) => r.trim());
+        const userRoles = currentRoleString ? currentRoleString.split(',').map((r) => r.trim()) : [];
         let hasPermission = false;
         let lastError = "";
 

@@ -1,7 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { requireAuth } from "@api/middleware/auth.middleware";
-import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 
 import { UploadResponseSchema } from "@shared/schemas/dto/upload.dto";
@@ -11,8 +9,6 @@ export const OrgUploadsRoutes = {
         path: "/orgs/{organizationId}/uploads",
         tags: ["Organization Uploads"],
         middleware: [
-            requireAuth,
-            requireOrgMembership,
             requirePermission("upload", ["create"]),
         ] as const,
         request: {
@@ -53,8 +49,7 @@ export const OrgUploadsRoutes = {
         path: "/orgs/{organizationId}/uploads/{uploadId}/complete",
         tags: ["Organization Uploads"],
         middleware: [
-            requireAuth,
-            requireOrgMembership,
+            requirePermission("upload", ["update"]),
         ] as const,
         request: {
             params: z.object({
@@ -78,10 +73,7 @@ export const OrgUploadsRoutes = {
         method: "get",
         path: "/orgs/{organizationId}/uploads",
         tags: ["Organization Uploads"],
-        middleware: [
-            requireAuth,
-            requireOrgMembership,
-        ] as const,
+        middleware: [] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -104,8 +96,6 @@ export const OrgUploadsRoutes = {
         path: "/orgs/{organizationId}/uploads/{uploadId}",
         tags: ["Organization Uploads"],
         middleware: [
-            requireAuth,
-            requireOrgMembership,
             requirePermission("upload", ["delete"]),
         ] as const,
         request: {

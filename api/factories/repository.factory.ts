@@ -9,8 +9,19 @@ import { SessionScheduleRepository } from "@api/repositories/session-schedule.re
 import { getDbClient } from "./db.factory";
 import { auth } from "@api/lib/auth/auth";
 
+import { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import { SocialMediaRepository } from "@api/repositories/social-media.repository";
+
 export const getUserRepository = (ctx: AppContext) => {
     return new UserRepository(getDbClient(ctx), auth(ctx));
+};
+
+export const getUserProfileRepository = (ctx: AppContext) => {
+    return new UserProfileRepository(getDbClient(ctx));
+};
+
+export const getSocialMediaRepository = (ctx: AppContext) => {
+    return new SocialMediaRepository(getDbClient(ctx));
 };
 
 export const getOrganizationRepository = (ctx: AppContext) => {

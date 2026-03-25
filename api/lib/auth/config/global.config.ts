@@ -19,6 +19,11 @@ export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService):
     user: {
         modelName: "authUsers",
         additionalFields: {
+            xid: {
+                type: "string",
+                required: false,
+                input: false,
+            },
             role: {
                 type: "string",
                 required: false,

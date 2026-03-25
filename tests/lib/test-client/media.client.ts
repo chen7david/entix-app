@@ -18,7 +18,11 @@ export function createMediaClient(request: Requester) {
             const url = queryString ? `/api/v1/orgs/${orgId}/media?${queryString}` : `/api/v1/orgs/${orgId}/media`;
             
             return request(url, { method: "GET" });
-        }
+        },
+
+        /** DELETE /api/v1/orgs/:orgId/media/:mediaId */
+        delete: (orgId: string, mediaId: string) =>
+            request(`/api/v1/orgs/${orgId}/media/${mediaId}`, { method: "DELETE" }),
     };
 }
 

@@ -7,6 +7,8 @@ import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
 import { PlaylistService } from "@api/services/playlist.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
+import { UserProfileService } from "@api/services/user-profile.service";
+import { SocialMediaService } from "@api/services/social-media.service";
 import {
     getUserRepository,
     getOrganizationRepository,
@@ -14,11 +16,21 @@ import {
     getMediaRepository,
     getPlaylistRepository,
     getSessionScheduleRepository,
+    getUserProfileRepository,
+    getSocialMediaRepository,
 } from "./repository.factory";
 import { getUploadService } from "./upload.factory";
 
 export const getUserService = (ctx: AppContext) => {
     return new UserService(getUserRepository(ctx));
+};
+
+export const getUserProfileService = (ctx: AppContext) => {
+    return new UserProfileService(getUserProfileRepository(ctx));
+};
+
+export const getSocialMediaService = (ctx: AppContext) => {
+    return new SocialMediaService(getSocialMediaRepository(ctx));
 };
 
 export const getAvatarService = (ctx: AppContext) => {
