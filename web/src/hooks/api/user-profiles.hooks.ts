@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-const API_BASE = '/api/v1';
+import { API_V1 } from "@web/src/lib/api";
 
 export const useUserProfile = (userId?: string) => {
     const queryClient = useQueryClient();
@@ -8,7 +7,7 @@ export const useUserProfile = (userId?: string) => {
     const { data: aggregate, isLoading } = useQuery({
         queryKey: ['userProfile', userId],
         queryFn: async () => {
-            const res = await fetch(`${API_BASE}/users/${userId}/profile`);
+            const res = await fetch(`${API_V1}/users/${userId}/profile`);
             if (!res.ok) throw new Error("Failed to fetch profile");
             return res.json();
         },
@@ -17,7 +16,7 @@ export const useUserProfile = (userId?: string) => {
 
     const buildMutation = (method: 'POST' | 'PUT' | 'DELETE', pathSuffix: string) => {
         return async (payload?: any) => {
-            const res = await fetch(`${API_BASE}/users/${userId}/profile${pathSuffix}`, {
+            const res = await fetch(`${API_V1}/users/${userId}/profile${pathSuffix}`, {
                 method,
                 headers: payload ? { 'Content-Type': 'application/json' } : undefined,
                 body: payload ? JSON.stringify(payload) : undefined

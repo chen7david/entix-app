@@ -1,11 +1,10 @@
 import { authClient } from "@web/src/lib/auth-client";
+import { API_V1 } from "@web/src/lib/api";
 import type { OrgRole } from "@shared/auth/permissions";
 import { useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "./useAuth";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
-
-const API_BASE = '/api/v1';
 
 export const useMembers = (searchQuery?: string) => {
     const queryClient = useQueryClient();
@@ -30,7 +29,7 @@ export const useMembers = (searchQuery?: string) => {
             if (pageParam) params.set('cursor', pageParam);
             if (searchQuery) params.set('search', searchQuery);
 
-            const res = await fetch(`${API_BASE}/orgs/${activeOrganization.id}/users?${params.toString()}`);
+            const res = await fetch(`${API_V1}/orgs/${activeOrganization.id}/users?${params.toString()}`);
             if (!res.ok) throw new Error("Failed to fetch members");
             
             return res.json();
