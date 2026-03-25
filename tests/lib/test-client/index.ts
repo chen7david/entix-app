@@ -5,6 +5,7 @@ import { createAuthClient } from "./auth.client";
 import { createMembersClient } from "./members.client";
 import { createUsersClient } from "./users.client";
 import { createMediaClient } from "./media.client";
+import { createScheduleClient } from "./schedule.client";
 
 /**
  * Create a domain-specific test client for the API.
@@ -37,6 +38,7 @@ export function createTestClient(
             members: createMembersClient(request),
             users: createUsersClient(request),
             media: createMediaClient(request),
+            schedule: createScheduleClient(request),
         },
         /**
          * Low-level escape hatch for one-off requests

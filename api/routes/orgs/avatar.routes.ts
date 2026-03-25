@@ -1,7 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { HttpStatusCodes, HttpMethods } from "@api/helpers/http.helpers";
-import { requireAuth } from "@api/middleware/auth.middleware";
-import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 
 /**
@@ -21,8 +19,6 @@ export const AvatarRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/members/{userId}/avatar",
         middleware: [
-            requireAuth,
-            requireOrgMembership,
             requirePermission('member', ['update'], 'userId')
         ] as const,
         request: {
@@ -68,8 +64,6 @@ export const AvatarRoutes = {
         path: "/orgs/{organizationId}/members/{userId}/avatar",
         tags: ["Member Avatars"],
         middleware: [
-            requireAuth,
-            requireOrgMembership,
             requirePermission('member', ['update'], 'userId')
         ] as const,
         request: {

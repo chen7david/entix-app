@@ -9,6 +9,12 @@ export function createUsersClient(request: Requester) {
         /** GET /api/v1/orgs/:orgId/users */
         list: (orgId: string) =>
             request(`/api/v1/orgs/${orgId}/users`),
+
+        /** GET /api/v1/users/:userId/profile */
+        profile: {
+            get: (userId: string) =>
+                request(`/api/v1/users/${userId}/profile`),
+        }
     };
 }
 

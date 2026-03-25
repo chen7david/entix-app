@@ -1,7 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
-import { requireAuth } from "@api/middleware/auth.middleware";
-import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
 
@@ -24,7 +22,7 @@ export const MediaRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/media",
         tags: ["Media"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('media', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -50,8 +48,6 @@ export const MediaRoutes = {
         path: "/orgs/{organizationId}/media",
         tags: ["Media"],
         middleware: [
-            requireAuth, 
-            requireOrgMembership, 
             requirePermission('media', ['create'])
         ] as const,
         request: {
@@ -88,8 +84,6 @@ export const MediaRoutes = {
         path: "/orgs/{organizationId}/media/{mediaId}",
         tags: ["Media"],
         middleware: [
-            requireAuth, 
-            requireOrgMembership, 
             requirePermission('media', ['update'])
         ] as const,
         request: {
@@ -126,8 +120,6 @@ export const MediaRoutes = {
         path: "/orgs/{organizationId}/media/{mediaId}",
         tags: ["Media"],
         middleware: [
-            requireAuth, 
-            requireOrgMembership, 
             requirePermission('media', ['delete'])
         ] as const,
         request: {
@@ -147,7 +139,7 @@ export const MediaRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/media/{mediaId}/play",
         tags: ["Media"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('media', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),

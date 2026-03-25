@@ -1,6 +1,8 @@
 import { createRoute } from "@hono/zod-openapi";
 import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
 import { z } from "zod";
+import { requireAuth } from "@api/middleware/auth.middleware";
+import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { 
     profileBaseSchema, 
     phoneSchema, 
@@ -16,7 +18,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.GET,
         path: '/users/{userId}/profile',
-        // Require auth, assuming self or admin. We can use requirePermission or assume standard auth.
+        middleware: [requireAuth, requirePermission('user-profile', ['read'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() })
         },
@@ -29,6 +31,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(profileBaseSchema, 'Profile Upsert')
@@ -42,6 +45,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.POST,
         path: '/users/{userId}/profile/phones',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(phoneSchema, 'Phone Input')
@@ -55,6 +59,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile/phones/{id}',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
             body: jsonContent(phoneSchema, 'Phone Update Input')
@@ -68,6 +73,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.DELETE,
         path: '/users/{userId}/profile/phones/{id}',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
@@ -80,6 +86,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.POST,
         path: '/users/{userId}/profile/addresses',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(addressSchema, 'Address Input')
@@ -93,6 +100,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile/addresses/{id}',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
             body: jsonContent(addressSchema, 'Address Update Input')
@@ -106,6 +114,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.DELETE,
         path: '/users/{userId}/profile/addresses/{id}',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
@@ -118,6 +127,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.POST,
         path: '/users/{userId}/profile/socials',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(socialSchema, 'Social Input')
@@ -131,6 +141,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile/socials/{id}',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
             body: jsonContent(socialSchema, 'Social Update Input')
@@ -144,6 +155,7 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.DELETE,
         path: '/users/{userId}/profile/socials/{id}',
+        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
