@@ -1,8 +1,7 @@
 import { useInfiniteQuery, useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { API_V1 } from "@web/src/lib/api";
 import { message } from "antd";
-
-const API_BASE = "/api/v1";
 
 export type SessionDTO = {
     id: string;
@@ -49,7 +48,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
         queryKey,
         queryFn: async ({ pageParam = undefined }) => {
             if (!organizationId) return { items: [], nextCursor: null, prevCursor: null };
-            let url = `${API_BASE}/orgs/${organizationId}/schedule`;
+            let url = `${API_V1}/orgs/${organizationId}/schedule`;
             const params = new URLSearchParams({ limit: '50' }); // Fetch generously for calendar maps natively
             if (startDate) params.append("startDate", startDate.toString());
             if (endDate) params.append("endDate", endDate.toString());
@@ -80,7 +79,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
             userIds: string[];
             recurrence?: { frequency: "weekly", count: number };
         }) => {
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule`, {
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -110,7 +109,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
                 status?: "scheduled" | "completed" | "cancelled"
             } 
         }) => {
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}`, {
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/${sessionId}`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
@@ -130,7 +129,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
             sessionId: string; 
             payload: { status: "scheduled" | "completed" | "cancelled" } 
         }) => {
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}/status`, {
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/${sessionId}/status`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
@@ -147,7 +146,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
 
     const deleteSession = useMutation({
         mutationFn: async ({ sessionId, deleteForward }: { sessionId: string; deleteForward: boolean }) => {
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}`, {
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/${sessionId}`, {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ deleteForward })
@@ -169,7 +168,7 @@ export const useSchedule = (organizationId?: string, startDate?: number, endDate
             sessionId: string; 
             attendances: { userId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
         }) => {
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/${sessionId}/attendances`, {
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/${sessionId}/attendances`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ attendances })
@@ -212,7 +211,7 @@ export function useScheduleMetrics(organizationId?: string, startDate?: number, 
             if (startDate) params.set("startDate", startDate.toString());
             if (endDate) params.set("endDate", endDate.toString());
 
-            const res = await fetch(`${API_BASE}/orgs/${organizationId}/schedule/metrics?${params.toString()}`);
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/metrics?${params.toString()}`);
             if (!res.ok) throw new Error("Failed to fetch schedule metrics");
             return res.json() as Promise<{ total: number, completed: number, cancelled: number }>;
         },

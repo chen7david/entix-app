@@ -1,7 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
-import { requireAuth } from "@api/middleware/auth.middleware";
-import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 
 const PlaylistResponseSchema = z.object({
@@ -27,7 +25,7 @@ export const PlaylistRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/playlists",
         tags: ["Playlist"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('playlist', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -50,9 +48,7 @@ export const PlaylistRoutes = {
         path: "/orgs/{organizationId}/playlists",
         tags: ["Playlist"],
         middleware: [
-            requireAuth, 
-            requireOrgMembership, 
-            requirePermission('media', ['create']) // piggy backing media clearance here
+            requirePermission('playlist', ['create'])
         ] as const,
         request: {
             params: z.object({
@@ -87,9 +83,7 @@ export const PlaylistRoutes = {
         path: "/orgs/{organizationId}/playlists/{playlistId}",
         tags: ["Playlist"],
         middleware: [
-            requireAuth, 
-            requireOrgMembership, 
-            requirePermission('media', ['update'])
+            requirePermission('playlist', ['update'])
         ] as const,
         request: {
             params: z.object({
@@ -125,9 +119,7 @@ export const PlaylistRoutes = {
         path: "/orgs/{organizationId}/playlists/{playlistId}",
         tags: ["Playlist"],
         middleware: [
-            requireAuth, 
-            requireOrgMembership, 
-            requirePermission('media', ['delete'])
+            requirePermission('playlist', ['delete'])
         ] as const,
         request: {
             params: z.object({
@@ -146,7 +138,7 @@ export const PlaylistRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/playlists/{playlistId}/sequence",
         tags: ["Playlist"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('playlist', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -169,7 +161,7 @@ export const PlaylistRoutes = {
         method: HttpMethods.PUT,
         path: "/orgs/{organizationId}/playlists/{playlistId}/sequence",
         tags: ["Playlist"],
-        middleware: [requireAuth, requireOrgMembership, requirePermission('media', ['update'])] as const,
+        middleware: [requirePermission('playlist', ['update'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),

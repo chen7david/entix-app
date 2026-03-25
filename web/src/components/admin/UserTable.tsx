@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Table, Tag, Button, Input, Modal, App, Dropdown } from 'antd';
+import { Table, Tag, Button, Input, Modal, App, Dropdown, Drawer, Tabs, Typography, Card, Select, Avatar } from 'antd';
+import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
+import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
 import { useAdminUsers, useBanUser, useUnbanUser, useSetUserRole, useImpersonateUser } from '@web/src/hooks/admin/useAdminUsers';
 import { requestPasswordReset, sendVerificationEmail } from '@web/src/lib/auth-client';
 import type { MenuProps } from 'antd';
-import { SearchOutlined, MoreOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined, MailOutlined, KeyOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
+import { SearchOutlined, MoreOutlined, StopOutlined, CheckCircleOutlined, UserSwitchOutlined, MailOutlined, LockOutlined, UserOutlined, CrownOutlined } from '@ant-design/icons';
 import { getAvatarUrl } from '@shared/utils/image-url';
 import dayjs from 'dayjs';
 
@@ -11,6 +13,7 @@ export const UserTable: React.FC = () => {
     const { message } = App.useApp();
     const [searchText, setSearchText] = useState('');
     const { data: users, isPending } = useAdminUsers();
+    const [selectedUser, setSelectedUser] = useState<any>(null);
 
     const { mutate: impersonate } = useImpersonateUser();
     const { mutate: banUser } = useBanUser();
@@ -77,7 +80,7 @@ export const UserTable: React.FC = () => {
             key: 'user',
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
-                    {record.image && <img src={getAvatarUrl(record.image, 'sm')} alt={record.name} className="w-8 h-8 rounded-full" />}
+                    <Avatar src={record.image ? getAvatarUrl(record.image, 'sm') : undefined} icon={<UserOutlined />} className="flex-shrink-0" />
                     <div>
                         <div className="font-medium">{record.name}</div>
                         <div className="text-xs text-gray-500">{record.email}</div>
@@ -136,7 +139,7 @@ export const UserTable: React.FC = () => {
                     {
                         key: 'password',
                         label: 'Resend Password Reset',
-                        icon: <KeyOutlined />,
+                        icon: <LockOutlined />,
                         onClick: () => handleResendPassword(record.email),
                     },
                     {
@@ -152,9 +155,11 @@ export const UserTable: React.FC = () => {
                 ];
 
                 return (
-                    <Dropdown menu={{ items }} trigger={['click']}>
-                        <Button type="text" icon={<MoreOutlined />} />
-                    </Dropdown>
+                    <div onClick={e => e.stopPropagation()}>
+                        <Dropdown menu={{ items }} trigger={['click']}>
+                            <Button type="text" icon={<MoreOutlined />} />
+                        </Dropdown>
+                    </div>
                 );
             },
         },
@@ -174,7 +179,81 @@ export const UserTable: React.FC = () => {
                 rowKey="id"
                 loading={isPending}
                 pagination={{ pageSize: 10 }}
+                onRow={(record) => ({
+                    onClick: () => setSelectedUser(record),
+                    className: "cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                })}
             />
+
+            <Drawer
+                title={`${selectedUser?.name || 'User'} Details`}
+                placement="right"
+                onClose={() => setSelectedUser(null)}
+                open={!!selectedUser}
+                width={400}
+                destroyOnClose
+            >
+                {selectedUser && (
+                    <div className="flex flex-col h-full">
+                        <div className="text-center mb-6">
+                            {selectedUser.image ? (
+                                <img src={getAvatarUrl(selectedUser.image, 'xl')} alt={selectedUser.name} className="mx-auto w-24 h-24 rounded-full object-cover" />
+                            ) : (
+                                <Avatar size={96} icon={<UserOutlined />} className="mx-auto" />
+                            )}
+                            <Typography.Title level={4} style={{ marginTop: '16px', marginBottom: '4px' }}>{selectedUser.name}</Typography.Title>
+                            <Typography.Text type="secondary">{selectedUser.email}</Typography.Text>
+                            <div className="mt-2">
+                                <Tag color={selectedUser.emailVerified ? 'success' : 'warning'}>
+                                    {selectedUser.emailVerified ? 'Verified' : 'Unverified'}
+                                </Tag>
+                            </div>
+                        </div>
+
+                        <Tabs defaultActiveKey="1" className="flex-1">
+                            <Tabs.TabPane tab="Personal Info" key="1">
+                                <UserProfileForm userId={selectedUser.id} />
+                            </Tabs.TabPane>
+                            <Tabs.TabPane tab="Contact Details" key="2">
+                                <UserContactList userId={selectedUser.id} />
+                            </Tabs.TabPane>
+                            <Tabs.TabPane tab="Platform Roles" key="3">
+                                <Card size="small" title="Global Security Settings" className="mb-4 shadow-sm border-gray-200 dark:border-gray-800">
+                                    <div className="flex flex-col gap-2">
+                                        <Typography.Text type="secondary">Manage top-level system access</Typography.Text>
+                                        <Select
+                                            value={selectedUser.role}
+                                            style={{ width: '100%' }}
+                                            onChange={(val) => {
+                                                handleSetRole(selectedUser.id, val);
+                                                setSelectedUser({ ...selectedUser, role: val });
+                                            }}
+                                            options={[
+                                                { value: 'user', label: 'Platform User' },
+                                                { value: 'admin', label: 'Platform Admin' },
+                                            ]}
+                                        />
+                                    </div>
+                                    <div className="mt-4">
+                                        <Typography.Text className="block mb-2">Account Status: {selectedUser.banned ? <Tag color="error">Banned</Tag> : <Tag color="success">Active</Tag>}</Typography.Text>
+                                        <Button 
+                                            danger={!selectedUser.banned} 
+                                            icon={selectedUser.banned ? <CheckCircleOutlined /> : <StopOutlined />}
+                                            onClick={() => {
+                                                selectedUser.banned ? handleUnbanUser(selectedUser.id) : handleBanUser(selectedUser.id);
+                                                setSelectedUser({ ...selectedUser, banned: !selectedUser.banned });
+                                            }}
+                                            block
+                                        >
+                                            {selectedUser.banned ? 'Restore Access' : 'Suspend Account'}
+                                        </Button>
+                                    </div>
+                                </Card>
+                            </Tabs.TabPane>
+                        </Tabs>
+                    </div>
+                )}
+            </Drawer>
         </div>
     );
 };

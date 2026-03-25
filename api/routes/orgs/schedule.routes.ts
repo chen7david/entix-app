@@ -1,7 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
-import { requireAuth } from "@api/middleware/auth.middleware";
-import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
+import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
 
 const SessionResponseSchema = z.object({
@@ -37,7 +36,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -64,7 +63,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/metrics",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -95,7 +94,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/analytics/sessions",
         tags: ["Schedule", "Analytics"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -128,7 +127,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/analytics/attendance",
         tags: ["Schedule", "Analytics"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['read'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -160,7 +159,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['create'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -195,7 +194,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['update'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -229,7 +228,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}/status",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['update'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -257,7 +256,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}/attendances",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['update'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -290,7 +289,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.DELETE,
         path: "/orgs/{organizationId}/schedule/{sessionId}",
         tags: ["Schedule"],
-        middleware: [requireAuth, requireOrgMembership] as const,
+        middleware: [requirePermission('schedule', ['delete'])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),

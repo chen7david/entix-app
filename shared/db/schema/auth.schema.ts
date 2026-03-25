@@ -8,6 +8,7 @@ import {
 
 export const authUsers = sqliteTable("auth_users", {
     id: text("id").primaryKey(),
+    xid: text("xid").$defaultFn(() => Math.random().toString(36).substring(2, 10).toUpperCase()).unique().notNull(),
     name: text("name").notNull(),
     email: text("email").notNull().unique(),
     emailVerified: integer("email_verified", { mode: "boolean" })

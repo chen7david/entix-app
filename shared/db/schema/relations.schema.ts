@@ -3,8 +3,10 @@ import { authUsers, authSessions, authAccounts } from "./auth.schema";
 import { authOrganizations, authMembers, authInvitations } from "./organization.schema";
 import { uploads, media, playlists, playlistMedia } from "./media.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
+import { userProfiles, userPhoneNumbers, userAddresses } from "./user-profiles.schema";
+import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
 
-export const authUsersRelations = relations(authUsers, ({ many }) => ({
+export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     sessions: many(authSessions),
     accounts: many(authAccounts),
     members: many(authMembers),
@@ -13,6 +15,10 @@ export const authUsersRelations = relations(authUsers, ({ many }) => ({
     media: many(media),
     playlists: many(playlists),
     attendances: many(sessionAttendances),
+    profile: one(userProfiles),
+    phoneNumbers: many(userPhoneNumbers),
+    addresses: many(userAddresses),
+    socialMedias: many(userSocialMedias),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -126,5 +132,41 @@ export const sessionAttendancesRelations = relations(sessionAttendances, ({ one 
     user: one(authUsers, {
         fields: [sessionAttendances.userId],
         references: [authUsers.id],
+    }),
+}));
+
+export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [userProfiles.userId],
+        references: [authUsers.id],
+    }),
+}));
+
+export const userPhoneNumbersRelations = relations(userPhoneNumbers, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [userPhoneNumbers.userId],
+        references: [authUsers.id],
+    }),
+}));
+
+export const userAddressesRelations = relations(userAddresses, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [userAddresses.userId],
+        references: [authUsers.id],
+    }),
+}));
+
+export const socialMediaTypesRelations = relations(socialMediaTypes, ({ many }) => ({
+    userSocialMedias: many(userSocialMedias),
+}));
+
+export const userSocialMediasRelations = relations(userSocialMedias, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [userSocialMedias.userId],
+        references: [authUsers.id],
+    }),
+    socialMediaType: one(socialMediaTypes, {
+        fields: [userSocialMedias.socialMediaTypeId],
+        references: [socialMediaTypes.id],
     }),
 }));

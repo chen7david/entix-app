@@ -405,7 +405,7 @@ export const SessionDetailsDrawer = ({ open, onClose, session, onSave, onUpdateS
     ) : null;
 
     return (
-        <Drawer title={session ? "Edit Session" : "Schedule New Session"} size="large" onClose={onClose} open={open} destroyOnClose>
+        <Drawer title={session ? "Edit Session" : "Schedule New Session"} width={400} onClose={onClose} open={open} destroyOnClose>
             {session ? (
                 <Tabs defaultActiveKey="1" items={[
                     { key: "1", label: "Details", children: detailsForm },

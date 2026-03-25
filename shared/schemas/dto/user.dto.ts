@@ -1,13 +1,15 @@
 import { z } from '@hono/zod-openapi'
+import { baseSchema } from './base.dto';
 
-export const userSchema = z.object({
-    id: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }).openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),
+export const userSchema = baseSchema.extend({
     name: z.string().openapi({ example: "name" }),
     email: z.string().openapi({ example: "email@example.com" }),
     emailVerified: z.boolean().openapi({ example: false }),
     image: z.string().openapi({ example: "image" }).nullable().optional(),
-    createdAt: z.date().openapi({ example: new Date().toISOString() }),
-    updatedAt: z.date().openapi({ example: new Date().toISOString() }),
+    role: z.string().openapi({ example: "user" }),
+    xid: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),
+    theme: z.string().openapi({ example: "system" }).nullable().optional(),
+    timezone: z.string().openapi({ example: "UTC" }).nullable().optional(),
 });
 
 export type UserDTO = z.infer<typeof userSchema>;

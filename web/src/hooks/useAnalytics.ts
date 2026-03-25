@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-const API_BASE = "/api/v1";
+import { API_V1 } from '@web/src/lib/api';
 
 export interface SessionTrend {
     date: string;
@@ -30,7 +30,7 @@ export function useAnalytics(
             if (endDate) params.append('endDate', endDate.toString());
             
             const queryString = params.toString();
-            const url = `${API_BASE}/orgs/${organizationId}/analytics/sessions${queryString ? `?${queryString}` : ''}`;
+            const url = `${API_V1}/orgs/${organizationId}/analytics/sessions${queryString ? `?${queryString}` : ''}`;
             
             const res = await fetch(url);
             if (!res.ok) throw new Error('Failed to fetch session analytics');
@@ -47,7 +47,7 @@ export function useAnalytics(
             if (endDate) params.append('endDate', endDate.toString());
             
             const queryString = params.toString();
-            const url = `${API_BASE}/orgs/${organizationId}/analytics/attendance${queryString ? `?${queryString}` : ''}`;
+            const url = `${API_V1}/orgs/${organizationId}/analytics/attendance${queryString ? `?${queryString}` : ''}`;
             
             const res = await fetch(url);
             if (!res.ok) throw new Error('Failed to fetch attendance analytics');

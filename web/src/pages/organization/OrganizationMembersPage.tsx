@@ -1,9 +1,12 @@
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip } from "antd";
+import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip, Dropdown, Tabs, Popconfirm } from "antd";
+import type { MenuProps } from "antd";
 import { DateUtils } from "@web/src/utils/date";
 import type { ColumnsType } from "antd/es/table";
-import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MailOutlined, KeyOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MailOutlined, LockOutlined, MoreOutlined } from "@ant-design/icons";
+import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
+import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
@@ -20,7 +23,7 @@ const { Title, Text } = Typography;
 
 export const OrganizationMembersPage = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    
+
     // Bind search state generically to url string matching native architecture persistence
     const [searchParams, setSearchParams] = useSearchParams();
     const [searchText, setSearchText] = useState(searchParams.get('q') || '');
@@ -42,7 +45,6 @@ export const OrganizationMembersPage = () => {
         }
         setSearchParams(newParams, { replace: true });
     }, [debouncedSearch, setSearchParams]);
-    
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
     const { activeOrganization } = useOrganization();
@@ -59,7 +61,7 @@ export const OrganizationMembersPage = () => {
         isFetchingNextPage
     } = useMembers(debouncedSearch);
 
-    const { session, refetch } = useAuth();
+    const { session } = useAuth();
     const currentUserId = session.data?.user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
@@ -72,6 +74,15 @@ export const OrganizationMembersPage = () => {
             createForm.resetFields();
         } catch {
             // Error handling is done in the hook
+        }
+    };
+
+    const handleRemoveAvatar = async (memberUserId: string) => {
+        try {
+            await removeAvatarMutation.mutateAsync(memberUserId);
+            message.success('Profile picture removed successfully');
+        } catch {
+            message.error('Failed to remove profile picture');
         }
     };
 
@@ -128,7 +139,7 @@ export const OrganizationMembersPage = () => {
             dataIndex: 'user',
             key: 'user',
             render: (user: Record<string, unknown>, record: any) => (
-                <div 
+                <div
                     className="flex items-center gap-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded transition-colors"
                     onClick={() => setSelectedMember(record)}
                 >
@@ -144,7 +155,7 @@ export const OrganizationMembersPage = () => {
             title: 'Role',
             dataIndex: 'role',
             key: 'role',
-            render: (role) => {
+            render: (role: unknown) => {
                 const memberRoles = (String(role || "")).split(",").map(r => r.trim()).filter(Boolean);
                 return (
                     <Space wrap>
@@ -169,6 +180,52 @@ export const OrganizationMembersPage = () => {
                 );
             },
         },
+        {
+            title: '',
+            key: 'actions',
+            align: 'right',
+            width: 50,
+            render: (_: any, record: any) => {
+                const items: MenuProps['items'] = [
+                    {
+                        key: 'resend-verification',
+                        label: 'Resend Verification Email',
+                        icon: <MailOutlined />,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            handleResendVerification(record.user?.email);
+                        }
+                    },
+                    {
+                        key: 'resend-password',
+                        label: 'Resend Password Reset',
+                        icon: <LockOutlined />,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            handleResendPassword(record.user?.email);
+                        }
+                    },
+                    {
+                        key: 'remove-picture',
+                        label: 'Remove Picture',
+                        icon: <DeleteOutlined />,
+                        danger: true,
+                        disabled: !record.user?.image,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            handleRemoveAvatar(record.user?.id as string);
+                        }
+                    }
+                ];
+                return (
+                    <div onClick={e => e.stopPropagation()}>
+                        <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+                            <Button type="text" icon={<MoreOutlined />} />
+                        </Dropdown>
+                    </div>
+                );
+            }
+        }
     ];
 
     if (loading && members.length === 0) {
@@ -265,8 +322,8 @@ export const OrganizationMembersPage = () => {
 
                 {hasNextPage && (
                     <div className="flex justify-center mt-6">
-                        <Button 
-                            onClick={() => fetchNextPage()} 
+                        <Button
+                            onClick={() => fetchNextPage()}
                             loading={isFetchingNextPage}
                             type="dashed"
                         >
@@ -340,6 +397,7 @@ export const OrganizationMembersPage = () => {
                     onClose={() => setSelectedMember(null)}
                     open={!!selectedMember}
                     width={400}
+                    push={false}
                 >
                     {selectedMember && (() => {
                         const activeMember = members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
@@ -349,121 +407,79 @@ export const OrganizationMembersPage = () => {
                         const memberRoles = (String(activeMember.role || "")).split(",").map(r => r.trim()).filter(Boolean);
 
                         return (
-                            <div className="flex flex-col gap-6 mt-4">
-                                <div className="flex flex-col items-center gap-4 text-center">
+                            <div className="flex flex-col gap-6 pt-2 pb-6">
+                                <div className="text-center mb-6">
                                     {activeOrganization ? (
                                         <AvatarDropzone
                                             organizationId={activeOrganization.id}
                                             userId={activeMember.userId as string}
                                             currentImageUrl={getAvatarUrl(user?.image as string, 'xl')}
-                                            size={120}
+                                            size={96}
                                             className="mx-auto"
                                         />
                                     ) : (
-                                        <Avatar size={120} icon={<UserOutlined />} src={getAvatarUrl(user?.image as string, 'xl')} className="mx-auto" />
+                                        <Avatar size={96} icon={<UserOutlined />} src={getAvatarUrl(user?.image as string, 'xl')} className="mx-auto" />
                                     )}
-                                    <div>
-                                        <Title level={4} style={{ margin: 0 }}>{user?.name as string}</Title>
-                                        <Text type="secondary">{user?.email as string}</Text>
+                                    <Title level={4} style={{ marginTop: '16px', marginBottom: '4px' }}>{user?.name as string}</Title>
+                                    <Text type="secondary">{user?.email as string}</Text>
+                                    <div className="mt-2">
+                                        <Tag color={user?.emailVerified ? 'success' : 'warning'}>
+                                            {user?.emailVerified ? 'Verified' : 'Unverified'}
+                                        </Tag>
                                     </div>
-                                    <Space>
-                                        {memberRoles.map(r => (
-                                            <Tag key={r} color={r === 'owner' ? 'purple' : r === 'admin' ? '#646cff' : 'default'} style={{ margin: 0 }}>
-                                                {r.toUpperCase()}
-                                            </Tag>
-                                        ))}
-                                    </Space>
                                 </div>
+                                
+                                <Tabs defaultActiveKey="1" className="flex-1">
+                                    <Tabs.TabPane tab="Personal Info" key="1">
+                                        <UserProfileForm userId={activeMember.userId as string} />
+                                    </Tabs.TabPane>
+                                    <Tabs.TabPane tab="Contact Details" key="2">
+                                        <UserContactList userId={activeMember.userId as string} />
+                                    </Tabs.TabPane>
+                                    <Tabs.TabPane tab="Roles" key="3">
+                                        <Card size="small" title="Role Management" className="mb-4 shadow-sm border-gray-200 dark:border-gray-800">
+                                            {canEdit ? (
+                                                <div className="flex flex-col gap-2">
+                                                    <Text type="secondary">Assign roles for this organization</Text>
+                                                    <Select
+                                                        mode="multiple"
+                                                        value={memberRoles}
+                                                        style={{ width: '100%' }}
+                                                        placeholder="Select roles"
+                                                        onChange={(values) => handleRoleChange(activeMember.id as string, values)}
+                                                        options={[
+                                                            { value: 'member', label: 'Member' },
+                                                            { value: 'admin', label: 'Admin' },
+                                                            { value: 'owner', label: 'Owner' },
+                                                        ]}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <Text type="secondary">{isSelf ? "You cannot change your own role." : "You do not have permission to change this member's roles."}</Text>
+                                            )}
+                                        </Card>
 
-                                <Card size="small" title="Role Management" type="inner">
-                                    {canEdit ? (
-                                        <div className="flex flex-col gap-2">
-                                            <Text>Select roles for this member:</Text>
-                                            <Select
-                                                mode="multiple"
-                                                value={memberRoles}
-                                                style={{ width: '100%' }}
-                                                onChange={(values) => handleRoleChange(activeMember.id as string, values)}
-                                                options={[
-                                                    { value: 'member', label: 'Member' },
-                                                    { value: 'admin', label: 'Admin' },
-                                                    { value: 'owner', label: 'Owner' },
-                                                ]}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <Text type="secondary">{isSelf ? "You cannot change your own role." : "You do not have permission to change this member's roles."}</Text>
-                                    )}
-                                </Card>
-
-                                <div className="flex flex-col gap-3">
-                                    <Title level={5} style={{ margin: 0 }}>Actions</Title>
-                                    <Button 
-                                        icon={<MailOutlined />} 
-                                        onClick={() => handleResendVerification((user?.email as string) || '')}
-                                        block
-                                    >
-                                        Resend Verification Email
-                                    </Button>
-                                    <Button 
-                                        icon={<KeyOutlined />} 
-                                        onClick={() => handleResendPassword((user?.email as string) || '')}
-                                        block
-                                    >
-                                        Resend Password Reset
-                                    </Button>
-                                    
-                                    {!!user?.image && (
-                                        <Button 
-                                            danger 
-                                            icon={<CloseCircleOutlined />} 
-                                            onClick={() => {
-                                                Modal.confirm({
-                                                    title: 'Remove Profile Picture',
-                                                    content: `Remove profile picture?`,
-                                                    okText: 'Yes, Remove',
-                                                    okType: 'danger' as const,
-                                                    cancelText: 'Cancel',
-                                                    onOk: async () => {
-                                                        try {
-                                                            await removeAvatarMutation.mutateAsync(activeMember.userId as string);
-                                                            if (session.data?.user?.id === activeMember.userId) {
-                                                                await refetch();
-                                                            }
-                                                        } catch {}
-                                                    },
-                                                });
-                                            }}
-                                            block
-                                        >
-                                            Remove Profile Picture
-                                        </Button>
-                                    )}
-
-                                    <Button 
-                                        danger 
-                                        type="primary"
-                                        icon={<DeleteOutlined />} 
-                                        disabled={!canDeleteMember || isSelf}
-                                        onClick={() => {
-                                            Modal.confirm({
-                                                title: 'Remove Member',
-                                                content: `Are you sure you want to remove ${user?.name || 'this member'}?`,
-                                                okText: 'Yes, Remove',
-                                                okType: 'danger',
-                                                cancelText: 'Cancel',
-                                                onOk: () => {
-                                                    handleRemoveMember(activeMember.id as string).then(() => {
-                                                        setSelectedMember(null);
-                                                    });
-                                                },
-                                            });
-                                        }}
-                                        block
-                                    >
-                                        Remove Member
-                                    </Button>
-                                </div>
+                                        {canDeleteMember && !isSelf && (
+                                              <Card size="small" title="Danger Zone" className="border-red-200 dark:border-red-900 shadow-sm mt-4">
+                                                  <Text type="secondary" className="block mb-3">
+                                                      Remove this member from the organization entirely.
+                                                  </Text>
+                                                  <Popconfirm
+                                                      title="Remove Member"
+                                                      description="Are you sure you want to remove this user from the organization? This action cannot be undone."
+                                                      onConfirm={() => handleRemoveMember(activeMember.id as string).then(() => setSelectedMember(null))}
+                                                      okText="Yes"
+                                                      cancelText="No"
+                                                      okButtonProps={{ danger: true }}
+                                                  >
+                                                      <Button danger icon={<DeleteOutlined />} block>
+                                                          Remove Member
+                                                      </Button>
+                                                  </Popconfirm>
+                                              </Card>
+                                        )}
+                                    </Tabs.TabPane>
+                                </Tabs>
                             </div>
                         );
                     })()}

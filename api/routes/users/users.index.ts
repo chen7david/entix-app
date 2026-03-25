@@ -1,6 +1,19 @@
 import { createRouter } from "@api/lib/app.lib";
 import { UserHandler } from "./user.handlers";
-import { UserRoutes } from './user.routes'
+import { UserRoutes } from './user.routes';
+import { UserProfileHandler } from "./user-profiles.handlers";
+import { UserProfileRoutes } from "./user-profiles.routes";
 
 export const userRoutes = createRouter()
-    .openapi(UserRoutes.findAll, UserHandler.findAll);
+    .openapi(UserRoutes.findAll, UserHandler.findAll)
+    .openapi(UserProfileRoutes.getAggregate, UserProfileHandler.getAggregate)
+    .openapi(UserProfileRoutes.upsertProfile, UserProfileHandler.upsertProfile)
+    .openapi(UserProfileRoutes.addPhone, UserProfileHandler.addPhone)
+    .openapi(UserProfileRoutes.updatePhone, UserProfileHandler.updatePhone)
+    .openapi(UserProfileRoutes.deletePhone, UserProfileHandler.deletePhone)
+    .openapi(UserProfileRoutes.addAddress, UserProfileHandler.addAddress)
+    .openapi(UserProfileRoutes.updateAddress, UserProfileHandler.updateAddress)
+    .openapi(UserProfileRoutes.deleteAddress, UserProfileHandler.deleteAddress)
+    .openapi(UserProfileRoutes.addSocial, UserProfileHandler.addSocial)
+    .openapi(UserProfileRoutes.updateSocial, UserProfileHandler.updateSocial)
+    .openapi(UserProfileRoutes.deleteSocial, UserProfileHandler.deleteSocial);
