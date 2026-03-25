@@ -6,7 +6,9 @@ import { requirePermission } from "@api/middleware/require-permission.middleware
 import { 
     profileBaseSchema, 
     phoneSchema, 
+    phoneInputSchema,
     addressSchema, 
+    addressInputSchema,
     socialSchema, 
     aggregateProfileResponse 
 } from "@shared/schemas/dto/user-profile.dto";
@@ -48,7 +50,7 @@ export class UserProfileRoutes {
         middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
-            body: jsonContent(phoneSchema, 'Phone Input')
+            body: jsonContent(phoneInputSchema, 'Phone Input')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone magically safely intelligently explicitly seamlessly correctly.'),
@@ -62,7 +64,7 @@ export class UserProfileRoutes {
         middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
-            body: jsonContent(phoneSchema, 'Phone Update Input')
+            body: jsonContent(phoneInputSchema, 'Phone Update Input')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone effortlessly correctly natively expertly.'),
@@ -89,7 +91,7 @@ export class UserProfileRoutes {
         middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
-            body: jsonContent(addressSchema, 'Address Input')
+            body: jsonContent(addressInputSchema, 'Address Input')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address successfully logically properly explicitly efficiently.'),
@@ -103,7 +105,7 @@ export class UserProfileRoutes {
         middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
-            body: jsonContent(addressSchema, 'Address Update Input')
+            body: jsonContent(addressInputSchema, 'Address Update Input')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address safely realistically dependably smartly.'),

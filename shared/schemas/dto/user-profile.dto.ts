@@ -13,7 +13,7 @@ export const profileSchema = baseSchema.extend({
     userId: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),
 }).merge(profileBaseSchema);
 
-export const phoneSchema = baseSchema.extend({
+export const phoneInputSchema = z.object({
     countryCode: z.string().openapi({ example: "+1" }),
     number: z.string().openapi({ example: "5551234567" }),
     extension: z.string().nullable().optional().openapi({ example: "123" }),
@@ -21,7 +21,9 @@ export const phoneSchema = baseSchema.extend({
     isPrimary: z.boolean().optional().default(false).openapi({ example: true }),
 });
 
-export const addressSchema = baseSchema.extend({
+export const phoneSchema = baseSchema.merge(phoneInputSchema);
+
+export const addressInputSchema = z.object({
     country: z.string().openapi({ example: "USA" }),
     state: z.string().openapi({ example: "NY" }),
     city: z.string().openapi({ example: "New York" }),
@@ -30,6 +32,8 @@ export const addressSchema = baseSchema.extend({
     label: z.string().openapi({ example: "Home" }),
     isPrimary: z.boolean().optional().default(false).openapi({ example: true }),
 });
+
+export const addressSchema = baseSchema.merge(addressInputSchema);
 
 export const socialSchema = baseSchema.extend({
     socialMediaTypeId: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Form, Input, Select, Button, message, List, Card, Tag, Popconfirm, Drawer, Space, Spin, Typography, AutoComplete } from "antd";
+import { Form, Input, Select, Button, message, List, Card, Tag, Popconfirm, Drawer, Space, Spin, Typography, AutoComplete, Switch } from "antd";
 import { useUserProfile } from "@web/src/hooks/api/user-profiles.hooks";
 import { useSocialMediaTypes } from "@web/src/hooks/api/social-media.hooks";
 import { PhoneOutlined, HomeOutlined, DeleteOutlined, LinkOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
@@ -202,8 +202,8 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
                             <Input placeholder="Enter custom label" />
                         </Form.Item>
                     )}
-                    <Form.Item name="isPrimary" label="Primary Identity" initialValue={false}>
-                        <Select options={[{label: 'Primary', value: true}, {label: 'Secondary', value: false}]} />
+                    <Form.Item name="isPrimary" label="Primary Identity" valuePropName="checked" initialValue={false}>
+                        <Switch />
                     </Form.Item>
                     <Form.Item className="mb-0 flex justify-end">
                         <Space>
@@ -287,8 +287,8 @@ export const UserContactList = ({ userId, hideSocial, hideCopy }: { userId: stri
                     <Form.Item name="zip" label="Zip" rules={[{ required: true }]}><Input /></Form.Item>
                     <Form.Item name="address" label="Street Address" rules={[{ required: true }]}><Input /></Form.Item>
                     <Form.Item name="label" label="Label" rules={[{ required: true }]} initialValue="Home"><Input /></Form.Item>
-                    <Form.Item name="isPrimary" label="Primary Config" initialValue={false}>
-                        <Select options={[{label: 'Primary', value: true}, {label: 'Secondary', value: false}]} />
+                    <Form.Item name="isPrimary" label="Primary Identity" valuePropName="checked" initialValue={false}>
+                        <Switch />
                     </Form.Item>
                     <Form.Item className="mb-0 flex justify-end">
                         <Space>
