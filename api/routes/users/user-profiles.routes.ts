@@ -5,11 +5,9 @@ import { requireAuth } from "@api/middleware/auth.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { 
     profileBaseSchema, 
-    phoneSchema, 
     phoneInputSchema,
-    addressSchema, 
     addressInputSchema,
-    socialSchema, 
+    socialInputSchema,
     aggregateProfileResponse 
 } from "@shared/schemas/dto/user-profile.dto";
 
@@ -132,7 +130,7 @@ export class UserProfileRoutes {
         middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
-            body: jsonContent(socialSchema, 'Social Input')
+            body: jsonContent(socialInputSchema, 'Social Input')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social Linked!'),
@@ -146,7 +144,7 @@ export class UserProfileRoutes {
         middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
-            body: jsonContent(socialSchema, 'Social Update Input')
+            body: jsonContent(socialInputSchema, 'Social Update Input')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social realistically smartly beautifully smoothly natively.'),

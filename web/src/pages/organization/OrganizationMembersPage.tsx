@@ -1,12 +1,13 @@
 import { useMembers } from "@web/src/hooks/auth/useMembers";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip, Dropdown, Tabs, Popconfirm } from "antd";
+import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip, Dropdown, Tabs } from "antd";
 import type { MenuProps } from "antd";
 import { DateUtils } from "@web/src/utils/date";
 import type { ColumnsType } from "antd/es/table";
 import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MailOutlined, LockOutlined, MoreOutlined } from "@ant-design/icons";
 import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
 import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
+import { MemberRolesForm } from "@web/src/features/user-profiles/MemberRolesForm";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
@@ -402,10 +403,6 @@ export const OrganizationMembersPage = () => {
                     {selectedMember && (() => {
                         const activeMember = members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
                         const user = activeMember.user as Record<string, unknown> | undefined;
-                        const isSelf = activeMember.userId === currentUserId;
-                        const canEdit = canUpdateMember && !isSelf;
-                        const memberRoles = (String(activeMember.role || "")).split(",").map(r => r.trim()).filter(Boolean);
-
                         return (
                             <div className="flex flex-col gap-6 pt-2 pb-6">
                                 <div className="text-center mb-6">
@@ -429,57 +426,37 @@ export const OrganizationMembersPage = () => {
                                     </div>
                                 </div>
                                 
-                                <Tabs defaultActiveKey="1" className="flex-1">
-                                    <Tabs.TabPane tab="Personal Info" key="1">
-                                        <UserProfileForm userId={activeMember.userId as string} />
-                                    </Tabs.TabPane>
-                                    <Tabs.TabPane tab="Contact Details" key="2">
-                                        <UserContactList userId={activeMember.userId as string} />
-                                    </Tabs.TabPane>
-                                    <Tabs.TabPane tab="Roles" key="3">
-                                        <Card size="small" title="Role Management" className="mb-4 shadow-sm border-gray-200 dark:border-gray-800">
-                                            {canEdit ? (
-                                                <div className="flex flex-col gap-2">
-                                                    <Text type="secondary">Assign roles for this organization</Text>
-                                                    <Select
-                                                        mode="multiple"
-                                                        value={memberRoles}
-                                                        style={{ width: '100%' }}
-                                                        placeholder="Select roles"
-                                                        onChange={(values) => handleRoleChange(activeMember.id as string, values)}
-                                                        options={[
-                                                            { value: 'member', label: 'Member' },
-                                                            { value: 'admin', label: 'Admin' },
-                                                            { value: 'owner', label: 'Owner' },
-                                                        ]}
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <Text type="secondary">{isSelf ? "You cannot change your own role." : "You do not have permission to change this member's roles."}</Text>
-                                            )}
-                                        </Card>
-
-                                        {canDeleteMember && !isSelf && (
-                                              <Card size="small" title="Danger Zone" className="border-red-200 dark:border-red-900 shadow-sm mt-4">
-                                                  <Text type="secondary" className="block mb-3">
-                                                      Remove this member from the organization entirely.
-                                                  </Text>
-                                                  <Popconfirm
-                                                      title="Remove Member"
-                                                      description="Are you sure you want to remove this user from the organization? This action cannot be undone."
-                                                      onConfirm={() => handleRemoveMember(activeMember.id as string).then(() => setSelectedMember(null))}
-                                                      okText="Yes"
-                                                      cancelText="No"
-                                                      okButtonProps={{ danger: true }}
-                                                  >
-                                                      <Button danger icon={<DeleteOutlined />} block>
-                                                          Remove Member
-                                                      </Button>
-                                                  </Popconfirm>
-                                              </Card>
-                                        )}
-                                    </Tabs.TabPane>
-                                </Tabs>
+                                <Tabs 
+                                    defaultActiveKey="1" 
+                                    className="flex-1"
+                                    items={[
+                                        {
+                                            key: "1",
+                                            label: "Personal Info",
+                                            children: <UserProfileForm userId={activeMember.userId as string} />
+                                        },
+                                        {
+                                            key: "2",
+                                            label: "Contact Details",
+                                            children: <UserContactList userId={activeMember.userId as string} />
+                                        },
+                                        {
+                                            key: "3",
+                                            label: "Roles",
+                                            children: (
+                                                <MemberRolesForm 
+                                                    member={activeMember}
+                                                    currentUserId={currentUserId as string}
+                                                    canUpdateMember={canUpdateMember}
+                                                    canDeleteMember={canDeleteMember}
+                                                    handleRoleChange={handleRoleChange}
+                                                    handleRemoveMember={handleRemoveMember}
+                                                    onRemoveSuccess={() => setSelectedMember(null)}
+                                                />
+                                            )
+                                        }
+                                    ]}
+                                />
                             </div>
                         );
                     })()}

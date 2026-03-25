@@ -35,10 +35,12 @@ export const addressInputSchema = z.object({
 
 export const addressSchema = baseSchema.merge(addressInputSchema);
 
-export const socialSchema = baseSchema.extend({
+export const socialInputSchema = z.object({
     socialMediaTypeId: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),
     urlOrHandle: z.string().openapi({ example: "@johndoe" }),
 });
+
+export const socialSchema = baseSchema.merge(socialInputSchema);
 
 export const aggregateProfileResponse = z.object({
     profile: profileSchema.nullable(),
