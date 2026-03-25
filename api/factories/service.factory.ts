@@ -9,6 +9,8 @@ import { PlaylistService } from "@api/services/playlist.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { UserProfileService } from "@api/services/user-profile.service";
 import { SocialMediaService } from "@api/services/social-media.service";
+import { BulkMemberService } from "@api/services/bulk-member.service";
+import { getDbClient } from "./db.factory";
 import {
     getUserRepository,
     getOrganizationRepository,
@@ -67,4 +69,8 @@ export const getPlaylistService = (ctx: AppContext) => {
 
 export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(getSessionScheduleRepository(ctx));
+};
+
+export const getBulkMemberService = (ctx: AppContext) => {
+    return new BulkMemberService(getDbClient(ctx));
 };

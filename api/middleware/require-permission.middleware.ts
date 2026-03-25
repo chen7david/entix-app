@@ -56,8 +56,15 @@ export const requirePermission = (
         const currentRoleString = ctx.get('membershipRole') as string | undefined;
 
         if (!currentRoleString && !allowSelfTargetParam) {
+            ctx.var.logger.error({ 
+                method: ctx.req.method, 
+                url: ctx.req.url,
+                resource,
+                actions
+            }, "membershipRole not found in context for protected route");
+
             throw new InternalServerError(
-                "membershipRole not found in context and no self-target bypass enabled. Ensure requireOrgMembership middleware runs first or use for global resources cautiously."
+                `membershipRole not found in context for ${ctx.req.method} ${ctx.req.url}. Ensure requireOrgMembership middleware runs first or use for global resources cautiously.`
             );
         }
 
