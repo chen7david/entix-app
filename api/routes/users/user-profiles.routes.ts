@@ -1,59 +1,13 @@
 import { createRoute } from "@hono/zod-openapi";
 import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
 import { z } from "zod";
-
-// Schemas
-export const profileBaseSchema = z.object({
-    firstName: z.string(),
-    lastName: z.string(),
-    displayName: z.string().nullable(),
-    sex: z.enum(["male", "female", "other"]),
-    birthDate: z.coerce.date().nullable(),
-});
-
-export const phoneSchema = z.object({
-    id: z.string().optional(),
-    countryCode: z.string(),
-    number: z.string(),
-    extension: z.string().nullable().optional(),
-    label: z.string(),
-    isPrimary: z.boolean().optional().default(false),
-});
-
-export const addressSchema = z.object({
-    id: z.string().optional(),
-    country: z.string(),
-    state: z.string(),
-    city: z.string(),
-    zip: z.string(),
-    address: z.string(),
-    label: z.string(),
-    isPrimary: z.boolean().optional().default(false),
-});
-
-export const socialSchema = z.object({
-    id: z.string().optional(),
-    socialMediaTypeId: z.string(),
-    urlOrHandle: z.string(),
-});
-
-export const aggregateProfileResponse = z.object({
-    profile: profileBaseSchema.extend({
-        id: z.string(),
-        userId: z.string(),
-        createdAt: z.date(),
-        updatedAt: z.date()
-    }).nullable(),
-    phoneNumbers: z.array(phoneSchema),
-    addresses: z.array(addressSchema),
-    socialMedias: z.array(socialSchema.extend({
-        socialMediaType: z.object({
-            id: z.string(),
-            name: z.string(),
-            image: z.string().nullable()
-        }).optional()
-    })).optional()
-});
+import { 
+    profileBaseSchema, 
+    phoneSchema, 
+    addressSchema, 
+    socialSchema, 
+    aggregateProfileResponse 
+} from "@shared/schemas/dto/user-profile.dto";
 
 export class UserProfileRoutes {
     static tags = ['User Profiles'];
