@@ -79,7 +79,7 @@ export class MemberImportService {
             const uniqueEmails = [...new Set(validMembers.map(m => m.email.trim()))];
 
             // Pre-fetch existing data (chunked to avoid D1 parameter limits)
-            const QUERY_CHUNK_SIZE = 100;
+            const QUERY_CHUNK_SIZE = 50;
             const existingUsers: (typeof schema.authUsers.$inferSelect)[] = [];
             for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = uniqueEmails.slice(i, i + QUERY_CHUNK_SIZE);
@@ -261,7 +261,7 @@ export class MemberImportService {
             }
 
             // Execute in batches to respect D1 statement limits
-            const BATCH_CHUNK_SIZE = 100;
+            const BATCH_CHUNK_SIZE = 10;
             for (let i = 0; i < batch.length; i += BATCH_CHUNK_SIZE) {
                 const chunk = batch.slice(i, i + BATCH_CHUNK_SIZE);
                 if (chunk.length > 0) {
