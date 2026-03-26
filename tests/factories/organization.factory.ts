@@ -1,7 +1,7 @@
 import { authOrganizations } from "@shared/db/schema";
 import { nanoid } from "nanoid";
 
-export function createMockOrganization(overrides: Partial<typeof organization.$inferInsert> = {}): typeof organization.$inferInsert {
+export function createMockOrganization(overrides: Partial<typeof authOrganizations.$inferInsert> = {}): typeof authOrganizations.$inferInsert {
     const id = nanoid();
     const now = new Date();
 

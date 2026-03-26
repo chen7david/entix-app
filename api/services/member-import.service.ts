@@ -1,6 +1,7 @@
 import { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
+import { BatchItem } from "drizzle-orm/batch";
 import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";
 
@@ -110,7 +111,7 @@ export class MemberImportService {
 
             // FORCE ROLE TO MEMBER — imported users are always non-privileged
             const enforcedRole: OrgRole = "member";
-            const batch: any[] = [];
+            const batch: BatchItem<"sqlite">[] = [];
 
             for (const input of validMembers) {
                 let userId = input.id || userMapByEmail.get(input.email);
@@ -263,7 +264,9 @@ export class MemberImportService {
             const BATCH_CHUNK_SIZE = 100;
             for (let i = 0; i < batch.length; i += BATCH_CHUNK_SIZE) {
                 const chunk = batch.slice(i, i + BATCH_CHUNK_SIZE);
-                await this.db.batch(chunk as [any, ...any[]]);
+                if (chunk.length > 0) {
+                    await this.db.batch(chunk as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+                }
             }
 
         } catch (err: unknown) {

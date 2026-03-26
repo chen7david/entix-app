@@ -1,8 +1,8 @@
-import { asc, desc, gt, lt, SQL, sql } from "drizzle-orm";
+import { asc, desc, gt, lt, SQL, sql, AnyColumn } from "drizzle-orm";
 
 export interface CursorPayload {
-    primary: any; // e.g., timestamp or id
-    secondary?: any; // e.g., id for tie-breaking
+    primary: string | number | boolean; 
+    secondary?: string | number | boolean; 
 }
 
 export function encodeCursor(payload: CursorPayload): string {
@@ -27,8 +27,8 @@ export function decodeCursor(cursor: string): CursorPayload | null {
  * @param direction 'next' or 'prev'. 
  */
 export function buildCursorPagination(
-    primaryColumn: any,
-    secondaryColumn: any,
+    primaryColumn: AnyColumn,
+    secondaryColumn: AnyColumn,
     cursorPayload: string | undefined,
     direction: 'next' | 'prev' = 'next'
 ) {

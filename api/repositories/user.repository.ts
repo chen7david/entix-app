@@ -4,9 +4,9 @@ import * as schema from "@shared/db/schema";
 import { eq, and, like, or } from "drizzle-orm";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
-// Better Auth server instance type is complex and internal-only. 
-// We use unknown for the instance to ensure zero any, and type cast locally in methods.
-type AuthInstance = unknown;
+// Better Auth instance is complex and dynamic, so we use 'any' to avoid brittle type-narrowing 
+// that breaks across the factory layer.
+type BetterAuthInstance = any;
 
 export type CreateUserInput = {
     email: string;
@@ -30,7 +30,7 @@ export type CreateUserResult = {
 export class UserRepository {
     constructor(
         private db: AppDb,
-        private auth: AuthInstance
+        private auth: BetterAuthInstance
     ) { }
 
     /**
@@ -38,8 +38,7 @@ export class UserRepository {
      * Email verification is automatically sent if sendOnSignUp is enabled in config
      */
     async createUser(input: CreateUserInput): Promise<CreateUserResult> {
-        const auth = (this.auth as any); // Type cast for internal library call
-        const result = await auth.api.signUpEmail({
+        const result = await this.auth.api.signUpEmail({
             body: {
                 email: input.email,
                 password: input.password,
@@ -86,8 +85,7 @@ export class UserRepository {
      * Uses BetterAuth's built-in password reset functionality
      */
     async sendPasswordResetEmail(email: string, redirectTo: string): Promise<void> {
-        const auth = (this.auth as any); // Type cast for internal library call
-        await auth.api.requestPasswordReset({
+        await this.auth.api.requestPasswordReset({
             body: { email, redirectTo }
         });
     }
@@ -120,7 +118,7 @@ export class UserRepository {
             .from(schema.authMembers)
             .innerJoin(schema.authUsers, eq(schema.authMembers.userId, schema.authUsers.id))
             .where(and(...conditions))
-            .orderBy(...(orderBy as any))
+            .orderBy(...orderBy)
             .limit(limit + 1);
         
         const result = processPaginatedResult(
@@ -132,7 +130,15 @@ export class UserRepository {
 
         return {
             ...result,
-            items: result.items.map((row) => ({ ...row.member, user: row.user })),
+            items: result.items.map((row) => ({ 
+                ...row.user,
+                // Override user-level fields with organization-specific ones if necessary
+                // e.g., the member's role in this specific org
+                role: row.member.role,
+                createdAt: row.member.createdAt,
+                updatedAt: row.user.updatedAt,
+                id: row.user.id // Keep user's ID as the primary ID for the UserDTO
+            })),
         };
     }
 
@@ -172,7 +178,7 @@ export class UserRepository {
     /**
      * Execute multiple prepared queries atomically
      */
-    async executeBatch(queries: unknown[]) {
-        return await this.db.batch(queries as any);
+    async executeBatch(queries: Parameters<AppDb["batch"]>[0]) {
+        return await this.db.batch(queries);
     }
 }

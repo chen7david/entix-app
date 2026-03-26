@@ -1,6 +1,6 @@
 import { BucketService } from "./bucket.service";
 import { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
-import { NotFoundError } from "@api/errors/app.error";
+import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
 
 export class UploadService {
     constructor(
@@ -146,5 +146,26 @@ export class UploadService {
             return await this.userUploadRepo.delete(uploadId, userId);
         }
         return false;
+    }
+
+    // --- Helper / Validation Methods ---
+
+    async getVerifiedImageUploadUrl(uploadId: string, organizationId: string): Promise<string> {
+        const upload = await this.getUploadById(uploadId, organizationId);
+        if (!upload || upload.status !== "completed") {
+            throw new NotFoundError("Image upload not found or not completed");
+        }
+        if (!upload.contentType.startsWith("image/")) {
+            throw new ForbiddenError("Upload must be an image");
+        }
+        return upload.url;
+    }
+
+    async deleteUploadByUrlGlobalSafely(url: string): Promise<void> {
+        const key = url.replace(`${this.publicUrlPrefix}/`, "");
+        await this.bucketService.delete(key);
+        // We delete from both repos just in case it belongs to either
+        await this.uploadRepo.deleteByBucketKey(key);
+        await this.userUploadRepo.deleteByBucketKey(key);
     }
 }

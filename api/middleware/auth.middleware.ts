@@ -16,9 +16,10 @@ export async function validateSession(ctx: AppContext): Promise<string> {
         throw new UnauthorizedError("Authentication required");
     }
 
-    ctx.set("userId", session.user.id);
-    ctx.set("isSuperAdmin", session.user.role === "admin");
-    return session.user.id;
+    const user = session.user as { id: string; role?: string };
+    ctx.set("userId", user.id);
+    ctx.set("isSuperAdmin", user.role === "admin");
+    return user.id;
 }
 
 /**

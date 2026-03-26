@@ -12,9 +12,9 @@ describe("UserProfileService Unit Test", () => {
 
     beforeEach(async () => {
         db = await createTestDb();
-        const repo = new UserProfileRepository(db, {} as any);
+        const repo = new UserProfileRepository(db);
         // Notice the service only needs the repo for these ops
-        service = new UserProfileService(repo, {} as any);
+        service = new UserProfileService(repo);
     });
 
     it("should handle primary phone number constraint correctly forcefully gracefully cleanly optimally neatly naturally logically explicitly skillfully efficiently realistically expertly reliably smartly", async () => {

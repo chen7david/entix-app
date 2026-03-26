@@ -1,10 +1,11 @@
-import { eq, and, sql, like } from "drizzle-orm";
-import { DrizzleD1Database } from "drizzle-orm/d1";
+import { eq, and, sql, like, SQL } from "drizzle-orm";
+import { AppDb } from "@api/factories/db.factory";
+import { BatchItem } from "drizzle-orm/batch";
 import { scheduledSessions, sessionAttendances } from "@shared/db/schema";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
 export class SessionScheduleRepository {
-    constructor(private db: DrizzleD1Database<any>) {}
+    constructor(private db: AppDb) {}
 
     async createSessions(sessions: (typeof scheduledSessions.$inferInsert)[]) {
         return this.db.insert(scheduledSessions).values(sessions).returning();
@@ -48,7 +49,7 @@ export class SessionScheduleRepository {
             direction
         );
 
-        let conditions: any[] = [eq(scheduledSessions.organizationId, organizationId)];
+        const conditions: SQL[] = [eq(scheduledSessions.organizationId, organizationId)];
         if (startDate) conditions.push(sql`${scheduledSessions.startTime} >= ${startDate}`);
         if (endDate) conditions.push(sql`${scheduledSessions.startTime} <= ${endDate}`);
         if (cursorWhere) conditions.push(cursorWhere);
@@ -57,10 +58,9 @@ export class SessionScheduleRepository {
             conditions.push(like(scheduledSessions.title, `%${search}%`));
         }
 
-        // @ts-expect-error Types map out correctly natively
         const sessions = await this.db.query.scheduledSessions.findMany({
             where: and(...conditions),
-            orderBy: (orderBy as any),
+            orderBy: orderBy,
             limit: limit + 1,
             with: {
                 attendances: {
@@ -82,14 +82,13 @@ export class SessionScheduleRepository {
             sessions,
             limit,
             direction,
-            (row: any) => ({ primary: row.startTime.getTime(), secondary: row.id })
+            (row) => ({ primary: row.startTime.getTime(), secondary: row.id })
         );
 
         return result;
     }
 
     async getSessionById(organizationId: string, sessionId: string) {
-        // @ts-expect-error Drizzle inference resolution
         return this.db.query.scheduledSessions.findFirst({
             where: and(eq(scheduledSessions.organizationId, organizationId), eq(scheduledSessions.id, sessionId)),
             with: {
@@ -110,7 +109,7 @@ export class SessionScheduleRepository {
     }
 
     async getScheduleMetricsForOrg(organizationId: string, startDate?: number, endDate?: number) {
-        let conditions: any[] = [eq(scheduledSessions.organizationId, organizationId)];
+        const conditions: SQL[] = [eq(scheduledSessions.organizationId, organizationId)];
         if (startDate) conditions.push(sql`${scheduledSessions.startTime} >= ${startDate}`);
         if (endDate) conditions.push(sql`${scheduledSessions.startTime} <= ${endDate}`);
 
@@ -128,7 +127,7 @@ export class SessionScheduleRepository {
     }
 
     async getSessionTrendsForOrg(organizationId: string, startDate?: number, endDate?: number, tzOffset: string = "+00:00") {
-        let conditions: any[] = [eq(scheduledSessions.organizationId, organizationId)];
+        const conditions: SQL[] = [eq(scheduledSessions.organizationId, organizationId)];
         if (startDate) conditions.push(sql`${scheduledSessions.startTime} >= ${startDate}`);
         if (endDate) conditions.push(sql`${scheduledSessions.startTime} <= ${endDate}`);
 
@@ -146,7 +145,7 @@ export class SessionScheduleRepository {
     }
 
     async getAttendanceTrendsForOrg(organizationId: string, startDate?: number, endDate?: number, tzOffset: string = "+00:00") {
-        let conditions: any[] = [eq(scheduledSessions.organizationId, organizationId)];
+        const conditions: SQL[] = [eq(scheduledSessions.organizationId, organizationId)];
         if (startDate) conditions.push(sql`${scheduledSessions.startTime} >= ${startDate}`);
         if (endDate) conditions.push(sql`${scheduledSessions.startTime} <= ${endDate}`);
 
@@ -183,8 +182,8 @@ export class SessionScheduleRepository {
                     eq(sessionAttendances.sessionId, sessionId),
                     eq(sessionAttendances.userId, p.userId)
                 ))
-        );
-        return this.db.batch(updates as any);
+        ) as BatchItem<"sqlite">[];
+        return this.db.batch(updates as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
     }
 
     async updateSessionDetails(organizationId: string, sessionId: string, data: { title: string, description?: string | null, startTime: Date, durationMinutes: number }) {

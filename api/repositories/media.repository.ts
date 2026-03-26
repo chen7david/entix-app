@@ -65,7 +65,7 @@ export class MediaRepository {
         const items = await this.db.select()
             .from(schema.media)
             .where(and(...filters))
-            .orderBy(...(orderBy as any))
+            .orderBy(...orderBy)
             .limit(limit + 1);
 
         return processPaginatedResult(

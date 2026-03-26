@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { AnyColumn } from 'drizzle-orm';
 import { 
     encodeCursor, 
     decodeCursor, 
@@ -24,7 +25,7 @@ describe('Cursor Pagination Helpers', () => {
 
     describe('buildCursorPagination AST Logic', () => {
         it('builds standard descending ordered ASTs for initial page loads (no cursor given)', () => {
-            const result = buildCursorPagination("table.createdAt", "table.id", undefined, "next");
+            const result = buildCursorPagination("table.createdAt" as unknown as AnyColumn, "table.id" as unknown as AnyColumn, undefined, "next");
             
             expect(result.where).toBeUndefined(); // no bounds yet
             expect(result.orderBy).toHaveLength(2); // Should have primary/secondary descendant mapping

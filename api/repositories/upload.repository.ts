@@ -72,6 +72,13 @@ export class UploadRepository {
             .returning();
         return result.length > 0;
     }
+
+    async deleteByBucketKey(bucketKey: string): Promise<boolean> {
+        const result = await this.db.delete(schema.uploads)
+            .where(eq(schema.uploads.bucketKey, bucketKey))
+            .returning();
+        return result.length > 0;
+    }
 }
 
 export class UserUploadRepository {
@@ -111,6 +118,13 @@ export class UserUploadRepository {
     async delete(id: string, userId: string): Promise<boolean> {
         const result = await this.db.delete(schema.userUploads)
             .where(and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)))
+            .returning();
+        return result.length > 0;
+    }
+
+    async deleteByBucketKey(bucketKey: string): Promise<boolean> {
+        const result = await this.db.delete(schema.userUploads)
+            .where(eq(schema.userUploads.bucketKey, bucketKey))
             .returning();
         return result.length > 0;
     }

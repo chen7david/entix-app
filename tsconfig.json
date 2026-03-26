@@ -28,4 +28,14 @@
       ]
     }
   },
+  "include": [
+    "api/**/*",
+    "shared/**/*",
+    "tests/**/*",
+    "*.ts"
+  ],
+  "exclude": [
+    "web/**/*",
+    "node_modules"
+  ]
 }

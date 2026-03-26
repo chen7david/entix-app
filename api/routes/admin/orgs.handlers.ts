@@ -12,7 +12,7 @@ export class AdminOrgsHandler {
 
         const mappedOrgs = orgs.map(org => ({
             ...org,
-            createdAt: org.createdAt.getTime()
+            createdAt: org.createdAt.getTime(),
         }));
 
         ctx.var.logger.info({ count: mappedOrgs.length }, "Global organizations fetched");
