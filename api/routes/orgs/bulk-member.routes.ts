@@ -26,7 +26,7 @@ export class BulkMemberRoutes {
     static exportMembers = createRoute({
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/bulk/export",
-        middleware: [requirePermission("organization", ["update"])] as const,
+        middleware: [requirePermission("member", ["bulk-export"])] as const,
         request: {
             params: z.object({ organizationId: z.string() })
         },
@@ -39,7 +39,7 @@ export class BulkMemberRoutes {
     static importMembers = createRoute({
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/bulk/import",
-        middleware: [requirePermission("organization", ["update"])] as const,
+        middleware: [requirePermission("member", ["bulk-import"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             body: {

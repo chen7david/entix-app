@@ -1,7 +1,7 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
 import type { Role } from "better-auth/plugins/access";
-import { ForbiddenError, InternalServerError } from "@api/errors/app.error";
+import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { roles, type statement } from "@shared/auth/permissions";
 
 
@@ -12,21 +12,13 @@ import { roles, type statement } from "@shared/auth/permissions";
  * Since permissions are derived from the role at definition time (not from DB),
  * the runtime cost is negligible — a simple object lookup.
  * 
- * Must be used AFTER requireOrgMembership middleware.
- * Requires membershipRole to be set in context.
+ * Must be used AFTER requireAuth (sets userId).
+ * Must be used AFTER requireOrgMembership (if checking membership roles).
  * 
  * @param resource - The resource to check (e.g. 'member', 'invitation', 'project')
  * @param actions  - The action(s) required (e.g. 'create', 'delete')
  * @param allowSelfTargetParam - (Optional) If provided, bypasses RBAC if ctx.req.param(allowSelfTargetParam) === ctx.get('userId'). Useful for profile updates.
  * @returns Middleware function
- * 
- * Usage:
- * app.post('/api/v1/orgs/:organizationId/members/:userId',
- *   requireAuth,
- *   requireOrgMembership,
- *   requirePermission('member', ['update'], 'userId'),
- *   handler
- * );
  */
 export const requirePermission = (
     resource: keyof typeof statement,
@@ -34,10 +26,17 @@ export const requirePermission = (
     allowSelfTargetParam?: string
 ) => {
     return async (ctx: AppContext, next: Next) => {
+        const userId = ctx.get('userId');
+
+        // Always require authentication for protected permissions
+        if (!userId) {
+            throw new UnauthorizedError("Authentication required to access this resource");
+        }
+
         // Super admins bypass all permission checks
         if (ctx.get('isSuperAdmin')) {
             ctx.var.logger.info(
-                { userId: ctx.get('userId'), resource, actions },
+                { userId, resource, actions },
                 "Super admin bypass — skipping permission check"
             );
             await next();
@@ -47,7 +46,7 @@ export const requirePermission = (
         // Allow bypass if the route targets the user themselves
         if (allowSelfTargetParam) {
             const targetId = ctx.req.param(allowSelfTargetParam);
-            if (targetId && targetId === ctx.get('userId')) {
+            if (targetId && targetId === userId) {
                 await next();
                 return;
             }

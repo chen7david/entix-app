@@ -96,7 +96,7 @@ describe("Bulk Member Integration Tests", () => {
         });
         expect(account).toBeDefined();
         expect(account?.providerId).toBe("credential");
-        expect(account?.password).toContain("imported_");
+        expect(account?.password).toBeNull();
 
         // 3. Verify Relations
         expect(user?.phoneNumbers.length).toBe(1);

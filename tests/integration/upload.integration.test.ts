@@ -41,8 +41,8 @@ describe("Uploads Integration", () => {
                 app,
                 env,
                 orgId,
-                role: "member",
-                email: `member.${Date.now()}@example.com`
+                role: "admin",
+                email: `admin.${Date.now()}@example.com`
             });
             const organizationId = orgId;
 
@@ -87,11 +87,11 @@ describe("Uploads Integration", () => {
             expect(listBody[0].status).toBe("completed");
             expect(listBody[0].originalName).toBe("test-video.mp4");
 
-            // 4. Try to delete as member (should fail because members don't have upload:delete)
-            const deleteFailRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
+            // 4. Delete as admin (should succeed)
+            const deleteRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
                 method: "DELETE"
             });
-            expect(deleteFailRes.status).toBe(403);
+            expect(deleteRes.status).toBe(204);
 
             presignSpy.mockRestore();
             deleteSpy.mockRestore();

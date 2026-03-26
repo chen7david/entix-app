@@ -17,7 +17,7 @@ export class OrgUploadsHandler {
 
         try {
             const uploadService = getUploadService(ctx);
-            const result = await uploadService.createPresignedUrl(organizationId, userId, originalName, contentType, fileSize);
+            const result = await uploadService.createPresignedUrl("uploads", organizationId, userId, originalName, contentType, fileSize);
 
             ctx.var.logger.info({ uploadId: result.uploadId, organizationId }, "Presigned URL requested");
 

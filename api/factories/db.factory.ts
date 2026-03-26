@@ -7,6 +7,7 @@ export type AppDb = DrizzleD1Database<typeof schema>;
 export const getDbClient = (ctx: AppContext): AppDb => {
     const db = drizzle(ctx.env.DB, {
         schema,
+        logger: false,
     })
     return db;
 }

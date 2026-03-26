@@ -1,91 +1,72 @@
 import { UserRepository } from "@api/repositories/user.repository";
-import { MemberRepository } from "@api/repositories/member.repository";
-import { UploadService } from "@api/services/upload.service";
-import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
+import { UploadService } from "./upload.service";
+import { NotFoundError } from "@api/errors/app.error";
+import { USER_ASSETS_PREFIX, AVATAR_BUCKET_FOLDER } from "@api/helpers/constants.helpers";
 
 export class AvatarService {
     constructor(
         private userRepo: UserRepository,
-        private memberRepo: MemberRepository,
         private uploadService: UploadService
     ) { }
 
-    async updateAvatar(organizationId: string, targetUserId: string, uploadId: string, callerId: string) {
-        // Verify the target user is a member of this organization
-        const membership = await this.memberRepo.findMembership(targetUserId, organizationId);
-        if (!membership) {
-            throw new NotFoundError("Member not found in this organization");
-        }
-
-        // Find the completed upload
-        const upload = await this.uploadService.getUploadById(uploadId, organizationId);
-        if (!upload || upload.status !== "completed") {
-            throw new NotFoundError("Upload not found or not yet completed");
-        }
-
-        // Enforce that only images can be set as avatars
-        if (!upload.contentType.startsWith("image/")) {
-            throw new ForbiddenError("Only image files can be used as profile pictures");
-        }
-
-        // If user already has an avatar, attempt to delete the old file & db record
-        const userRecord = await this.userRepo.findUserById(targetUserId);
-        if (userRecord?.image) {
-            const oldUpload = await this.uploadService.getUploadByUrlGlobal(userRecord.image);
-            
-            if (oldUpload) {
-                const isUploader = oldUpload.uploadedBy === callerId;
-                const isSameOrg = oldUpload.organizationId === organizationId;
-
-                if (isUploader || isSameOrg) {
-                    try {
-                        // This deletes BOTH from R2 and the database organically across any organization boundaries!
-                        await this.uploadService.deleteUploadGlobal(oldUpload.id);
-                    } catch (err: unknown) {
-                        // Log handled upstream or by wrapper if needed, 
-                        // or we could pass a logger if we wanted to keeps it strictly DI.
-                        // For now keeping business logic clean.
-                    }
-                }
-            }
-        }
-
-        // Update user.image to the new upload URL
-        await this.userRepo.updateUser(targetUserId, { image: upload.url });
-
-        return { imageUrl: upload.url };
+    async requestAvatarUploadUrl(
+        targetUserId: string,
+        originalName: string,
+        contentType: string,
+        fileSize: number
+    ) {
+        // storage is always user-centric now
+        return await this.uploadService.createUserUploadPresignedUrl(
+            `${USER_ASSETS_PREFIX}/${targetUserId}/${AVATAR_BUCKET_FOLDER}`,
+            targetUserId,
+            originalName,
+            contentType,
+            fileSize
+        );
     }
 
-    async removeAvatar(organizationId: string, targetUserId: string, callerId: string) {
-        // Verify target is a member
-        const membership = await this.memberRepo.findMembership(targetUserId, organizationId);
-        if (!membership) {
-            throw new NotFoundError("Member not found in this organization");
+    async updateAvatar(targetUserId: string, uploadId: string, _callerId: string) {
+        const user = await this.userRepo.findUserById(targetUserId);
+        if (!user) {
+            throw new NotFoundError("User not found");
         }
 
-        // Get current avatar URL
-        const userRecord = await this.userRepo.findUserById(targetUserId);
-        if (!userRecord?.image) {
+        // 1. Get the new upload from user_uploads
+        const newUpload = await this.uploadService.getUserUploadById(uploadId, targetUserId);
+        if (!newUpload) {
+            throw new NotFoundError("Upload not found");
+        }
+
+        if (newUpload.status !== "completed") {
+            throw new Error("Upload must be completed before updating avatar");
+        }
+
+        // 2. Update user record
+        await this.userRepo.updateUser(targetUserId, {
+            image: newUpload.url
+        });
+
+        return {
+            success: true,
+            imageUrl: newUpload.url
+        };
+    }
+
+    async removeAvatar(targetUserId: string) {
+        const user = await this.userRepo.findUserById(targetUserId);
+        if (!user) {
+            throw new NotFoundError("User not found");
+        }
+
+        if (!user.image) {
             throw new NotFoundError("No avatar to remove");
         }
 
-        // Try to find the upload record to delete from R2 & DB across any organization boundary
-        const avatarUpload = await this.uploadService.getUploadByUrlGlobal(userRecord.image);
+        // Update user record to clear image
+        await this.userRepo.updateUser(targetUserId, {
+            image: null
+        });
 
-        if (avatarUpload) {
-            const isUploader = avatarUpload.uploadedBy === callerId;
-            const isSameOrg = avatarUpload.organizationId === organizationId;
-
-            if (isUploader || isSameOrg) {
-                try {
-                    await this.uploadService.deleteUploadGlobal(avatarUpload.id);
-                } catch (err: unknown) {
-                    // Non-blocking
-                }
-            }
-        }
-
-        // Clear user.image
-        await this.userRepo.updateUser(targetUserId, { image: null });
+        return { success: true };
     }
 }

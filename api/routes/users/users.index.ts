@@ -3,9 +3,16 @@ import { UserHandler } from "./user.handlers";
 import { UserRoutes } from './user.routes';
 import { UserProfileHandler } from "./user-profiles.handlers";
 import { UserProfileRoutes } from "./user-profiles.routes";
+import { UserAvatarHandlers } from "./user-avatar.handlers";
+import { UserAvatarRoutes } from "./user-avatar.routes";
+import { UserAssetHandlers, UserAssetRoutes } from "./user-assets.routes";
 
 export const userRoutes = createRouter()
     .openapi(UserRoutes.findAll, UserHandler.findAll)
+    .openapi(UserAssetRoutes.completeUpload, UserAssetHandlers.completeUpload)
+    .openapi(UserAvatarRoutes.requestAvatarUploadUrl, UserAvatarHandlers.requestAvatarUploadUrl)
+    .openapi(UserAvatarRoutes.updateAvatar, UserAvatarHandlers.updateAvatar)
+    .openapi(UserAvatarRoutes.removeAvatar, UserAvatarHandlers.removeAvatar)
     .openapi(UserProfileRoutes.getAggregate, UserProfileHandler.getAggregate)
     .openapi(UserProfileRoutes.upsertProfile, UserProfileHandler.upsertProfile)
     .openapi(UserProfileRoutes.addPhone, UserProfileHandler.addPhone)

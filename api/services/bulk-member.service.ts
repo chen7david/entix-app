@@ -1,6 +1,6 @@
 import { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and, sql, lt, inArray } from "drizzle-orm";
+import { eq, and, sql, lt } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";
 
@@ -345,7 +345,7 @@ export class BulkMemberService {
                             userId: userId!,
                             accountId: userId!,
                             providerId: "credential",
-                            password: `imported_${nanoid(32)}`, // Placeholder password
+                            password: null, // Imported users must reset password to login via credentials
                             createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
                             updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                         }).onConflictDoNothing()

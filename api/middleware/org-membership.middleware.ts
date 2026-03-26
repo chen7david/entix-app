@@ -3,6 +3,7 @@ import type { Next } from "hono";
 import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { getMemberRepository } from "@api/factories/repository.factory";
 
+
 /**
  * Middleware to verify user is a member of the organization
  * 

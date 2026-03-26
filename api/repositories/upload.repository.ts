@@ -14,6 +14,17 @@ export type CreateUploadInput = {
     status: "pending" | "completed" | "failed";
 };
 
+export type CreateUserUploadInput = {
+    id: string;
+    userId: string;
+    originalName: string;
+    bucketKey: string;
+    url: string;
+    fileSize: number;
+    contentType: string;
+    status: "pending" | "completed" | "failed";
+};
+
 export class UploadRepository {
     constructor(private db: AppDb) { }
 
@@ -61,22 +72,45 @@ export class UploadRepository {
             .returning();
         return result.length > 0;
     }
+}
 
-    async findByIdGlobal(id: string): Promise<schema.Upload | undefined> {
-        return await this.db.query.uploads.findFirst({
-            where: eq(schema.uploads.id, id),
+export class UserUploadRepository {
+    constructor(private db: AppDb) { }
+
+    async create(input: CreateUserUploadInput): Promise<schema.UserUpload> {
+        const [upload] = await this.db.insert(schema.userUploads).values(input).returning();
+        return upload;
+    }
+
+    async findById(id: string, userId: string): Promise<schema.UserUpload | undefined> {
+        return await this.db.query.userUploads.findFirst({
+            where: and(
+                eq(schema.userUploads.id, id),
+                eq(schema.userUploads.userId, userId)
+            ),
         });
     }
 
-    async findByUrlGlobal(url: string): Promise<schema.Upload | undefined> {
-        return await this.db.query.uploads.findFirst({
-            where: eq(schema.uploads.url, url),
+    async findByUrl(url: string, userId: string): Promise<schema.UserUpload | undefined> {
+        return await this.db.query.userUploads.findFirst({
+            where: and(
+                eq(schema.userUploads.url, url),
+                eq(schema.userUploads.userId, userId)
+            ),
         });
     }
 
-    async deleteGlobal(id: string): Promise<boolean> {
-        const result = await this.db.delete(schema.uploads)
-            .where(eq(schema.uploads.id, id))
+    async updateStatus(id: string, userId: string, status: "pending" | "completed" | "failed"): Promise<schema.UserUpload | undefined> {
+        const [upload] = await this.db.update(schema.userUploads)
+            .set({ status })
+            .where(and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)))
+            .returning();
+        return upload;
+    }
+
+    async delete(id: string, userId: string): Promise<boolean> {
+        const result = await this.db.delete(schema.userUploads)
+            .where(and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)))
             .returning();
         return result.length > 0;
     }

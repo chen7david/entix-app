@@ -38,7 +38,6 @@ export const getSocialMediaService = (ctx: AppContext) => {
 export const getAvatarService = (ctx: AppContext) => {
     return new AvatarService(
         getUserRepository(ctx),
-        getMemberRepository(ctx),
         getUploadService(ctx)
     );
 };

@@ -5,6 +5,7 @@ import { createTestDb } from "../lib/utils";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
+import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
@@ -159,5 +160,28 @@ describe("Auth Integration Test", () => {
         expect(body).toHaveProperty("user");
         expect(body).toHaveProperty("token");
         expect(body.user.email).toBe(payload.email);
+    });
+
+    it("GET /api/v1/auth/organization/get-full-organization should return 200", async () => {
+        // 1. Create authenticated org
+        const { cookie, orgId, orgData } = await createAuthenticatedOrg({ app, env });
+
+        // 2. Call get-full-organization
+        const req = new Request(`http://localhost/api/v1/auth/organization/get-full-organization?organizationId=${orgId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Cookie": cookie
+            },
+        });
+
+        const res = await app.request(req, {}, env);
+
+        expect(res.status).not.toBe(500);
+        expect(res.status).toBe(200);
+
+        const fullOrgBody = await res.json() as any;
+        expect(fullOrgBody).toHaveProperty("id");
+        expect(fullOrgBody.name).toBe(orgData.organization.name);
     });
 });
