@@ -7,11 +7,11 @@ When a user types "Alex" into a search box, they generate 4 separate keystrokes 
 
 This leads to:
 1. **Database Spam:** Rapid, unnecessary reads that consume compute resources.
-2. **Race Conditions:** If the request for "A" takes longer than the request for "Alex", the user might see results for "A" pop into the table natively out of order.
+2. **Race Conditions:** If the request for "A" takes longer than the request for "Alex", the user might see results for "A" pop into the table out of order.
 3. **UI Thrashing:** The screen loading indicator flickers instantly as requests overlap.
 
 ## The Solution: TanStack Pacer
-To provide a smooth, resilient experience natively natively, we utilize **TanStack Pacer** (`@tanstack/react-pacer`).
+To provide a smooth, resilient experience, we use **TanStack Pacer** (`@tanstack/react-pacer`).
 
 We decouple the "raw" React input state from the database fetch by passing the input into `useDebouncedValue`.
 
@@ -35,6 +35,6 @@ const { media } = useMedia(debouncedSearch);
 ### The result:
 - The `searchText` updates instantly on every keystroke, keeping the text box responsive.
 - The `debouncedSearch` string stays frozen until the user *stops* typing for `500ms` (as defined in `UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE`).
-- During that 500ms wait, `control.state.isPending` natively surfaces as `true`, natively powering the `...typing` indicator smoothly.
+- During that 500ms wait, `control.state.isPending` surfaces as `true`, which powers the `...typing` indicator.
 
-**Do not reduce this to `0ms` or remove the debouncer to "fix" the speed.** Doing so will immediately revert the application to spamming the backend architecture seamlessly explicitly sensibly reliably cleverly cleanly correctly smoothly sensibly wisely easily explicitly safely fluidly smoothly explicitly dynamically smoothly intelligently fluidly successfully intelligently proactively securely organically optimally securely comfortably efficiently naturally successfully efficiently correctly natively.
+**Do not reduce this to `0ms` or remove the debouncer to "fix" the speed.** Doing so will immediately revert the application to spamming the backend on every keystroke.

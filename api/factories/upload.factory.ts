@@ -4,10 +4,7 @@ import { getBucketClient } from "./bucket.factory";
 import { getUploadRepository, getUserUploadRepository } from "./repository.factory";
 
 /**
- * Factory for creating an UploadService instance from the request context.
- *
- * This ensures the service itself remains decoupled from Hono's AppContext 
- * or the underlying Cloudflare environment, making it cleaner and easier to test.
+ * Returns an UploadService bound to the current request context.
  */
 export const getUploadService = (ctx: AppContext): UploadService => {
     const bucketService = getBucketClient(ctx);

@@ -22,7 +22,7 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string() })
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(aggregateProfileResponse, 'User profile aggregate securely explicitly'),
+            [HttpStatusCodes.OK]: jsonContent(aggregateProfileResponse, 'User profile with phones, addresses, and socials'),
         },
     });
 
@@ -36,7 +36,7 @@ export class UserProfileRoutes {
             body: jsonContent(profileBaseSchema, 'Profile Upsert')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Profile successfully upserted cleanly accurately'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Profile upserted'),
         },
     });
 
@@ -50,7 +50,7 @@ export class UserProfileRoutes {
             body: jsonContent(phoneInputSchema, 'Phone Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone magically safely intelligently explicitly seamlessly correctly.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone number added'),
         },
     });
 
@@ -64,7 +64,7 @@ export class UserProfileRoutes {
             body: jsonContent(phoneInputSchema, 'Phone Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone effortlessly correctly natively expertly.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone number updated'),
         },
     });
 
@@ -77,7 +77,7 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone removed gently reliably explicitly stably successfully compactly.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone number deleted'),
         },
     });
 
@@ -91,7 +91,7 @@ export class UserProfileRoutes {
             body: jsonContent(addressInputSchema, 'Address Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address successfully logically properly explicitly efficiently.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address added'),
         },
     });
 
@@ -105,7 +105,7 @@ export class UserProfileRoutes {
             body: jsonContent(addressInputSchema, 'Address Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address safely realistically dependably smartly.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address updated'),
         },
     });
 
@@ -118,7 +118,7 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address removed gracefully effortlessly stably carefully rationally seamlessly efficiently.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address deleted'),
         },
     });
 
@@ -132,7 +132,7 @@ export class UserProfileRoutes {
             body: jsonContent(socialInputSchema, 'Social Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social Linked!'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social handle linked'),
         },
     });
 
@@ -146,7 +146,7 @@ export class UserProfileRoutes {
             body: jsonContent(socialInputSchema, 'Social Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social realistically smartly beautifully smoothly natively.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social handle updated'),
         },
     });
 
@@ -159,7 +159,8 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social removed gracefully.'),
+            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social handle deleted'),
         },
     });
 }
+

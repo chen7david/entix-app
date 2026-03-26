@@ -11,7 +11,7 @@ export class SocialMediaRoutes {
         method: HttpMethods.GET,
         path: '/social-media-types',
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.array(socialMediaTypeSchema), 'List of global social media types explicitly seamlessly efficiently.'),
+            [HttpStatusCodes.OK]: jsonContent(z.array(socialMediaTypeSchema), 'List of supported social media platform types'),
         },
     });
 }
