@@ -2,6 +2,8 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { message } from "antd";
 import { authClient } from "@web/src/lib/auth-client";
 
+// web/src/hooks/organization/useUpdateAvatar.ts
+
 /**
  * Hook for updating a member's avatar via the avatar API endpoint.
  * After the image has been uploaded and the upload completed, this hook
@@ -12,9 +14,7 @@ export const useUpdateAvatar = (organizationId: string | undefined) => {
 
     return useMutation({
         mutationFn: async ({ userId, uploadId }: { userId: string; uploadId: string }) => {
-            if (!organizationId) throw new Error("Organization ID is required");
-
-            const response = await fetch(`/api/v1/orgs/${organizationId}/members/${userId}/avatar`, {
+            const response = await fetch(`/api/v1/users/${userId}/avatar`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ uploadId }),
@@ -50,9 +50,7 @@ export const useRemoveAvatar = (organizationId: string | undefined) => {
 
     return useMutation({
         mutationFn: async (userId: string) => {
-            if (!organizationId) throw new Error("Organization ID is required");
-
-            const response = await fetch(`/api/v1/orgs/${organizationId}/members/${userId}/avatar`, {
+            const response = await fetch(`/api/v1/users/${userId}/avatar`, {
                 method: "DELETE",
             });
 

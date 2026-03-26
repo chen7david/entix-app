@@ -3,6 +3,8 @@ import type { Next } from "hono";
 import type { Role } from "better-auth/plugins/access";
 import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { roles, type statement } from "@shared/auth/permissions";
+import { MemberRepository } from "@api/repositories/member.repository";
+import { getDbClient } from "@api/factories/db.factory";
 
 
 /**
@@ -52,7 +54,20 @@ export const requirePermission = (
             }
         }
 
-        const currentRoleString = ctx.get('membershipRole') as string | undefined;
+        let currentRoleString = ctx.get('membershipRole') as string | undefined;
+
+        // If no organization-specific role is found, attempt a "Common Org" check 
+        // if this route targets a specific user (e.g. /users/:userId/avatar)
+        if (!currentRoleString && allowSelfTargetParam) {
+            const targetUserId = ctx.req.param(allowSelfTargetParam);
+            if (targetUserId) {
+                const memberRepo = new MemberRepository(getDbClient(ctx));
+                const commonRoles = await memberRepo.findCommonOrgRoles(userId, targetUserId);
+                if (commonRoles.length > 0) {
+                    currentRoleString = commonRoles.join(',');
+                }
+            }
+        }
 
         if (!currentRoleString && !allowSelfTargetParam) {
             ctx.var.logger.error({ 

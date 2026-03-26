@@ -1,6 +1,6 @@
 import { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";
 
@@ -92,5 +92,35 @@ export class MemberRepository {
             role,
             createdAt: now,
         });
+    }
+
+    /**
+     * Finds all roles held by a caller in organizations where the target user is also a member.
+     * Used for cross-org permission checks on user-scoped resources (like avatars).
+     * 
+     * @param callerId - The user performing the action
+     * @param targetUserId - The user being acted upon
+     * @returns Array of roles the caller holds in target user's organizations
+     */
+    async findCommonOrgRoles(callerId: string, targetUserId: string): Promise<string[]> {
+        // 1. Get all organization IDs where the target user is a member
+        const targetMemberOrgs = await this.db.query.authMembers.findMany({
+            where: eq(schema.authMembers.userId, targetUserId),
+            columns: { organizationId: true }
+        });
+
+        const orgIds = targetMemberOrgs.map(m => m.organizationId);
+        if (orgIds.length === 0) return [];
+
+        // 2. Find all roles the caller holds in any of those organizations
+        const callerMemberships = await this.db.query.authMembers.findMany({
+            where: and(
+                eq(schema.authMembers.userId, callerId),
+                inArray(schema.authMembers.organizationId, orgIds)
+            ),
+            columns: { role: true }
+        });
+
+        return callerMemberships.map(m => m.role);
     }
 }

@@ -53,8 +53,8 @@ export const AvatarUploader = ({
         setUploading(true);
 
         try {
-            // 1. Request presigned URL
-            const presignResponse = await fetch(`/api/v1/orgs/${organizationId}/uploads`, {
+            // 1. Request presigned URL via the dedicated user avatar endpoint
+            const presignResponse = await fetch(`/api/v1/users/${userId}/avatar/presigned-url`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -83,9 +83,9 @@ export const AvatarUploader = ({
 
             onProgress?.({ percent: 70 });
 
-            // 3. Mark upload as complete
+            // 3. Mark upload as complete via user assets endpoint
             const completeResponse = await fetch(
-                `/api/v1/orgs/${organizationId}/uploads/${uploadId}/complete`,
+                `/api/v1/users/${userId}/assets/${uploadId}/complete`,
                 { method: "POST" }
             );
 

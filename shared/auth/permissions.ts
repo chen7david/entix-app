@@ -20,7 +20,6 @@ export const ac = createAccessControl(statement);
 export const roles = {
     member: ac.newRole({
         "member": ["read"],
-        "avatar": ["create", "update", "delete"],
         "media": ["read"],
         "user-profile": ["read", "update"],
         "schedule": ["read"],

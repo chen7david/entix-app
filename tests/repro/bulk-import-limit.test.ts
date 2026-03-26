@@ -51,5 +51,19 @@ describe("Bulk Import Limit Reproduction", () => {
         expect(firstItem.user).toHaveProperty("name");
         expect(firstItem).toHaveProperty("userId");
         expect(firstItem.userId).toBe(firstItem.id);
+
+        // 3. Verify consolidated global avatar removal route (fixed 404 issue)
+        // This now works because the middleware performs a "Common Org" check.
+        const deleteRes = await client.request(`/api/v1/users/${firstItem.id}/avatar`, {
+            method: "DELETE"
+        });
+        // status is 204 or 404 if no avatar exists. 
+        // We just want to ensure it's not a generic 404 Route Not Found.
+        if (deleteRes.status === 404) {
+            const body = await deleteRes.json() as any;
+            expect(body.message).toBe("No avatar to remove");
+        } else {
+            expect(deleteRes.status).toBe(204);
+        }
     });
 });
