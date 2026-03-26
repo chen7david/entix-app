@@ -36,5 +36,20 @@ describe("Bulk Import Limit Reproduction", () => {
         expect(body.total).toBe(157);
         expect(body.failed).toBe(0);
         expect(body.created).toBe(157);
+
+        // 2. Verify listing structure for frontend compatibility
+        const listRes = await client.orgs.users.list(orgId);
+        expect(listRes.status).toBe(200);
+        const listBody = await listRes.json() as any;
+        
+        expect(listBody.items.length).toBeGreaterThan(0);
+        const firstItem = listBody.items[0];
+        
+        // Ensure both flat and nested properties exist
+        expect(firstItem).toHaveProperty("name");
+        expect(firstItem).toHaveProperty("user");
+        expect(firstItem.user).toHaveProperty("name");
+        expect(firstItem).toHaveProperty("userId");
+        expect(firstItem.userId).toBe(firstItem.id);
     });
 });

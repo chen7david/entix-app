@@ -132,6 +132,8 @@ export class UserRepository {
             ...result,
             items: result.items.map((row) => ({ 
                 ...row.user,
+                user: row.user,
+                userId: row.user.id,
                 // Override user-level fields with organization-specific ones if necessary
                 // e.g., the member's role in this specific org
                 role: row.member.role,
