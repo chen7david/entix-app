@@ -33,25 +33,31 @@ export const MemberImportExportPage: React.FC = () => {
 
     const importExample = [
         {
+            id: "user_123",
             email: "jane.doe@example.com",
             name: "Jane Doe",
             role: "member",
             avatarUrl: "https://example.com/avatar.jpg",
+            createdAt: "2023-01-01T00:00:00Z",
+            updatedAt: "2023-01-01T00:00:00Z",
             profile: {
+                id: "prof_123",
                 firstName: "Jane",
                 lastName: "Doe",
+                displayName: "JaneD",
                 sex: "female",
-                birthDate: "1985-05-15"
+                birthDate: "1985-05-15",
+                createdAt: "2023-01-01T00:00:00Z",
+                updatedAt: "2023-01-01T00:00:00Z"
             },
             phoneNumbers: [
-                { countryCode: "+1", number: "5551234", label: "Mobile", isPrimary: true }
+                { id: "phone_123", countryCode: "+1", number: "5551234", extension: "101", label: "Mobile", isPrimary: true, createdAt: "2023-01-01T00:00:00Z", updatedAt: "2023-01-01T00:00:00Z" }
             ],
             addresses: [
-                { country: "USA", state: "NY", city: "New York", zip: "10001", address: "123 Broadway", label: "Home", isPrimary: true }
+                { id: "addr_123", country: "USA", state: "NY", city: "New York", zip: "10001", address: "123 Broadway", label: "Home", isPrimary: true, createdAt: "2023-01-01T00:00:00Z", updatedAt: "2023-01-01T00:00:00Z" }
             ],
             socialMedia: [
-                { type: "LinkedIn", urlOrHandle: "https://linkedin.com/in/janedoe" },
-                { type: "GitHub", urlOrHandle: "janedoe" }
+                { id: "soc_123", type: "LinkedIn", urlOrHandle: "https://linkedin.com/in/janedoe", createdAt: "2023-01-01T00:00:00Z", updatedAt: "2023-01-01T00:00:00Z" }
             ]
         }
     ];
@@ -109,9 +115,20 @@ export const MemberImportExportPage: React.FC = () => {
                         
                         <Collapse ghost>
                             <Panel header="View JSON Structure Example" key="1">
-                                <pre className="bg-gray-100 dark:bg-gray-900 p-4 rounded text-xs overflow-auto">
-                                    {JSON.stringify(importExample, null, 2)}
-                                </pre>
+                                <Paragraph 
+                                    copyable={{ text: JSON.stringify(importExample, null, 2) }}
+                                    style={{ 
+                                        background: 'rgba(0, 0, 0, 0.02)', 
+                                        padding: '16px', 
+                                        borderRadius: '8px',
+                                        border: '1px solid rgba(0, 0, 0, 0.06)',
+                                        marginBottom: 0
+                                    }}
+                                >
+                                    <pre className="bg-transparent p-0 m-0 text-xs overflow-auto font-mono">
+                                        {JSON.stringify(importExample, null, 2)}
+                                    </pre>
+                                </Paragraph>
                             </Panel>
                         </Collapse>
 
@@ -126,12 +143,14 @@ export const MemberImportExportPage: React.FC = () => {
                             <div>
                                 <Text strong>Optional Fields:</Text>
                                 <ul className="list-disc pl-5 mt-2 text-gray-600 dark:text-gray-400">
+                                    <li><code>id</code> (String, preserves system identifier)</li>
                                     <li><code>avatarUrl</code> (String)</li>
                                     <li><code>role</code> (Defaults to 'member' for security; can be changed later)</li>
-                                    <li><code>profile</code> (firstName, lastName, sex, birthDate)</li>
-                                    <li><code>phoneNumbers</code> (Array of {`{ countryCode, number, label, isPrimary }`})</li>
-                                    <li><code>addresses</code> (Array of {`{ country, state, city, zip, address, label, isPrimary }`})</li>
-                                    <li><code>socialMedia</code> (Array of {`{ type, urlOrHandle }`})</li>
+                                    <li><code>createdAt</code> / <code>updatedAt</code> (ISO Timestamps)</li>
+                                    <li><code>profile</code> (id, firstName, lastName, displayName, sex, birthDate, timestamps)</li>
+                                    <li><code>phoneNumbers</code> (Array of {`{ id, countryCode, number, extension, label, isPrimary, timestamps }`})</li>
+                                    <li><code>addresses</code> (Array of {`{ id, country, state, city, zip, address, label, isPrimary, timestamps }`})</li>
+                                    <li><code>socialMedia</code> (Array of {`{ id, type, urlOrHandle, timestamps }`})</li>
                                 </ul>
                             </div>
                         </div>

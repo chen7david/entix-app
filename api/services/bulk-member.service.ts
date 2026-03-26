@@ -5,24 +5,35 @@ import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";
 
 export type ImportMemberInput = {
+    id?: string;
     email: string;
     name: string;
     role?: OrgRole;
     avatarUrl?: string | null;
+    createdAt?: string | Date;
+    updatedAt?: string | Date;
     profile?: {
+        id?: string;
         firstName: string;
         lastName: string;
+        displayName?: string | null;
         sex: 'male' | 'female' | 'other';
-        birthDate?: Date | string;
+        birthDate?: Date | string | null;
+        createdAt?: string | Date;
+        updatedAt?: string | Date;
     } | null;
     phoneNumbers?: {
+        id?: string;
         countryCode: string;
         number: string;
         extension?: string;
         label: string;
         isPrimary?: boolean;
+        createdAt?: string | Date;
+        updatedAt?: string | Date;
     }[];
     addresses?: {
+        id?: string;
         country: string;
         state: string;
         city: string;
@@ -30,10 +41,15 @@ export type ImportMemberInput = {
         address: string;
         label: string;
         isPrimary?: boolean;
+        createdAt?: string | Date;
+        updatedAt?: string | Date;
     }[];
     socialMedia?: {
+        id?: string;
         type: string;
         urlOrHandle: string;
+        createdAt?: string | Date;
+        updatedAt?: string | Date;
     }[];
 };
 
@@ -73,7 +89,6 @@ export class BulkMemberService {
         const activeSessions = Number(activeSessionsResult[0]?.count || 0);
 
         // 3. Engagement Risk (Members who haven't updated/logged in for 14 days)
-        // We use authUsers.updatedAt as a proxy for last activity if no lastLogin exists
         const riskResult = await this.db
             .select({ count: sql<number>`count(*)` })
             .from(schema.authMembers)
@@ -161,35 +176,51 @@ export class BulkMemberService {
         return results.map(r => {
             const user = r.user; 
             return {
+                id: user.id,
                 email: user.email,
                 name: user.name,
                 role: r.role as OrgRole,
                 avatarUrl: user.image,
+                createdAt: user.createdAt.toISOString(),
+                updatedAt: user.updatedAt.toISOString(),
                 profile: user.profile ? {
+                    id: user.profile.id,
                     firstName: user.profile.firstName,
                     lastName: user.profile.lastName,
-                    sex: user.profile.sex as 'male' | 'female' | 'other',
+                    displayName: user.profile.displayName,
+                    sex: user.profile.sex as any,
                     birthDate: user.profile.birthDate?.toISOString(),
+                    createdAt: user.profile.createdAt.toISOString(),
+                    updatedAt: user.profile.updatedAt.toISOString(),
                 } : null,
                 phoneNumbers: user.phoneNumbers.map(p => ({
+                    id: p.id,
                     countryCode: p.countryCode,
                     number: p.number,
-                    extension: p.extension || undefined,
+                    extension: p.extension,
                     label: p.label,
-                    isPrimary: p.isPrimary
+                    isPrimary: p.isPrimary,
+                    createdAt: p.createdAt.toISOString(),
+                    updatedAt: p.updatedAt.toISOString(),
                 })),
                 addresses: user.addresses.map(a => ({
+                    id: a.id,
                     country: a.country,
                     state: a.state,
                     city: a.city,
                     zip: a.zip,
                     address: a.address,
                     label: a.label,
-                    isPrimary: a.isPrimary
+                    isPrimary: a.isPrimary,
+                    createdAt: a.createdAt.toISOString(),
+                    updatedAt: a.updatedAt.toISOString(),
                 })),
                 socialMedia: user.socialMedias.map(s => ({
+                    id: s.id,
                     type: s.socialMediaType.name,
-                    urlOrHandle: s.urlOrHandle
+                    urlOrHandle: s.urlOrHandle,
+                    createdAt: s.createdAt.toISOString(),
+                    updatedAt: s.updatedAt.toISOString(),
                 }))
             };
         });
@@ -207,20 +238,41 @@ export class BulkMemberService {
         if (members.length === 0) return results;
 
         try {
-            const uniqueEmails = [...new Set(members.map(m => m.email))];
-            
-            // 1. Pre-fetch existing data
-            const existingUsers = await this.db.query.authUsers.findMany({
-                where: (u, { inArray }) => inArray(u.email, uniqueEmails)
-            });
-            const userMap = new Map(existingUsers.map(u => [u.email, u.id]));
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const validMembers = members.filter(m => emailRegex.test(m.email.trim()));
+            const invalidMembers = members.filter(m => !emailRegex.test(m.email.trim()));
 
-            const existingMembers = await this.db.query.authMembers.findMany({
-                where: (m, { and, eq, inArray }) => and(
-                    eq(m.organizationId, organizationId),
-                    inArray(m.userId, existingUsers.map(u => u.id).concat(['__placeholder__']))
-                )
-            });
+            results.failed += invalidMembers.length;
+            invalidMembers.forEach(m => results.errors.push(`Invalid email format: ${m.email}`));
+
+            const uniqueEmails = [...new Set(validMembers.map(m => m.email.trim()))];
+            
+            // 1. Pre-fetch existing data (Chunked to avoid D1 parameter limits)
+            const QUERY_CHUNK_SIZE = 100;
+            const existingUsers: any[] = [];
+            for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
+                const chunk = uniqueEmails.slice(i, i + QUERY_CHUNK_SIZE);
+                const chunkResults = await this.db.query.authUsers.findMany({
+                    where: (u, { inArray }) => inArray(u.email, chunk)
+                });
+                existingUsers.push(...chunkResults);
+            }
+
+            const userMapByEmail = new Map(existingUsers.map(u => [u.email, u.id]));
+            const userMapById = new Map(existingUsers.map(u => [u.id, u.id]));
+
+            const userIds = existingUsers.map(u => u.id);
+            const existingMembers: any[] = [];
+            for (let i = 0; i < userIds.length; i += QUERY_CHUNK_SIZE) {
+                const chunk = userIds.slice(i, i + QUERY_CHUNK_SIZE);
+                const chunkResults = await this.db.query.authMembers.findMany({
+                    where: (m, { and, eq, inArray }) => and(
+                        eq(m.organizationId, organizationId),
+                        inArray(m.userId, chunk)
+                    )
+                });
+                existingMembers.push(...chunkResults);
+            }
             const memberSet = new Set(existingMembers.map(m => m.userId));
 
             const socialTypes = await this.db.query.socialMediaTypes.findMany();
@@ -228,16 +280,16 @@ export class BulkMemberService {
 
             const batch: any[] = [];
             
-            for (const input of members) {
+            for (const input of validMembers) {
                 // FORCE ROLE TO MEMBER
                 const enforcedRole: OrgRole = "member";
 
-                let userId = userMap.get(input.email);
-                const isNewUser = !userId;
+                let userId = input.id || userMapByEmail.get(input.email);
+                const isNewUser = !userId || (!userMapByEmail.has(input.email) && !userMapById.has(input.id!));
 
                 if (isNewUser) {
-                    userId = nanoid();
-                    userMap.set(input.email, userId);
+                    userId = userId || nanoid();
+                    userMapByEmail.set(input.email, userId);
                     batch.push(
                         this.db.insert(schema.authUsers).values({
                             id: userId,
@@ -246,12 +298,14 @@ export class BulkMemberService {
                             image: input.avatarUrl,
                             emailVerified: true,
                             role: "user",
+                            createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
+                            updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                         }).onConflictDoUpdate({
                             target: schema.authUsers.email,
                             set: { 
                                 name: input.name, 
                                 image: input.avatarUrl,
-                                updatedAt: new Date()
+                                updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             }
                         })
                     );
@@ -263,7 +317,7 @@ export class BulkMemberService {
                             .set({ 
                                 name: input.name, 
                                 image: input.avatarUrl,
-                                updatedAt: new Date() 
+                                updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             })
                             .where(eq(schema.authUsers.id, userId!))
                     );
@@ -281,26 +335,45 @@ export class BulkMemberService {
                     );
                     results.linked++;
                     memberSet.add(userId!);
+
+                    // Also create an auth account for login if it's a new user or we want to ensure login is enabled
+                    // For credential provider, accountId is usually the userId or email. 
+                    // Based on UserRepository, it's the userId.
+                    batch.push(
+                        this.db.insert(schema.authAccounts).values({
+                            id: nanoid(),
+                            userId: userId!,
+                            accountId: userId!,
+                            providerId: "credential",
+                            password: `imported_${nanoid(32)}`, // Placeholder password
+                            createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
+                            updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
+                        }).onConflictDoNothing()
+                    );
                 }
 
                 // Upsert Profile
                 if (input.profile) {
                     batch.push(
                         this.db.insert(schema.userProfiles).values({
-                            id: nanoid(),
+                            id: input.profile.id || nanoid(),
                             userId: userId!,
                             firstName: input.profile.firstName,
                             lastName: input.profile.lastName,
+                            displayName: input.profile.displayName ?? null,
                             sex: input.profile.sex,
                             birthDate: input.profile.birthDate ? new Date(input.profile.birthDate) : null,
+                            createdAt: input.profile.createdAt ? new Date(input.profile.createdAt) : new Date(),
+                            updatedAt: input.profile.updatedAt ? new Date(input.profile.updatedAt) : new Date(),
                         }).onConflictDoUpdate({
                             target: schema.userProfiles.userId,
                             set: {
                                 firstName: input.profile.firstName,
                                 lastName: input.profile.lastName,
-                                sex: input.profile.sex,
+                                displayName: input.profile.displayName ?? null,
+                                sex: input.profile.sex as any,
                                 birthDate: input.profile.birthDate ? new Date(input.profile.birthDate) : null,
-                                updatedAt: new Date()
+                                updatedAt: new Date(),
                             }
                         })
                     );
@@ -311,13 +384,15 @@ export class BulkMemberService {
                     batch.push(this.db.delete(schema.userPhoneNumbers).where(eq(schema.userPhoneNumbers.userId, userId!)));
                     for (const p of input.phoneNumbers) {
                         batch.push(this.db.insert(schema.userPhoneNumbers).values({
-                            id: nanoid(),
+                            id: p.id || nanoid(),
                             userId: userId!,
                             countryCode: p.countryCode,
                             number: p.number,
-                            extension: p.extension,
+                            extension: p.extension ?? null,
                             label: p.label,
                             isPrimary: p.isPrimary ?? false,
+                            createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+                            updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
                         }));
                     }
                 }
@@ -326,7 +401,7 @@ export class BulkMemberService {
                     batch.push(this.db.delete(schema.userAddresses).where(eq(schema.userAddresses.userId, userId!)));
                     for (const a of input.addresses) {
                         batch.push(this.db.insert(schema.userAddresses).values({
-                            id: nanoid(),
+                            id: a.id || nanoid(),
                             userId: userId!,
                             country: a.country,
                             state: a.state,
@@ -335,6 +410,8 @@ export class BulkMemberService {
                             address: a.address,
                             label: a.label,
                             isPrimary: a.isPrimary ?? false,
+                            createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
+                            updatedAt: a.updatedAt ? new Date(a.updatedAt) : new Date(),
                         }));
                     }
                 }
@@ -345,10 +422,12 @@ export class BulkMemberService {
                         const typeId = socialTypeMap.get(s.type.toLowerCase());
                         if (typeId) {
                             batch.push(this.db.insert(schema.userSocialMedias).values({
-                                id: nanoid(),
+                                id: s.id || nanoid(),
                                 userId: userId!,
                                 socialMediaTypeId: typeId,
                                 urlOrHandle: s.urlOrHandle,
+                                createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
+                                updatedAt: s.updatedAt ? new Date(s.updatedAt) : new Date(),
                             }));
                         }
                     }
@@ -356,9 +435,9 @@ export class BulkMemberService {
             }
 
             // 3. Execute everything in batches
-            const CHUNK_SIZE = 100;
-            for (let i = 0; i < batch.length; i += CHUNK_SIZE) {
-                const chunk = batch.slice(i, i + CHUNK_SIZE);
+            const BATCH_CHUNK_SIZE = 100;
+            for (let i = 0; i < batch.length; i += BATCH_CHUNK_SIZE) {
+                const chunk = batch.slice(i, i + BATCH_CHUNK_SIZE);
                 await this.db.batch(chunk as [any, ...any[]]);
             }
 
