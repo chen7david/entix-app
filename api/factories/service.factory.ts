@@ -1,4 +1,4 @@
-import { AppContext } from "@api/helpers/types.helpers";
+import type { AppContext } from "@api/helpers/types.helpers";
 import { UserService } from "@api/services/user.service";
 import { AvatarService } from "@api/services/avatar.service";
 import { RegistrationService } from "@api/services/registration.service";

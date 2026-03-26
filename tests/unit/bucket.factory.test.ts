@@ -20,7 +20,6 @@ describe('BucketFactory', () => {
         const bucketClient = getBucketClient(mockCtx);
 
         expect(bucketClient).toBeInstanceOf(BucketService);
-        // Verify internal configuration properties are set correctly
         expect((bucketClient as any).bucketName).toBe('test-bucket');
         expect((bucketClient as any).endpoint).toBe('https://test-account-id.r2.cloudflarestorage.com');
         expect((bucketClient as any).publicUrl).toBe('https://assets.test.com');
@@ -32,7 +31,6 @@ describe('BucketFactory', () => {
             R2_ACCESS_KEY_ID: 'test-access-key',
             R2_SECRET_ACCESS_KEY: 'test-secret-key',
             R2_BUCKET_NAME: 'test-bucket',
-            // PUBLIC_CDN_URL is omitted
         };
 
         const mockCtx = {

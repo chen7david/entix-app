@@ -1,4 +1,4 @@
-import { CreateMemberDTO } from "@shared/schemas/dto/member.dto";
+import type { CreateMemberDTO } from "@shared/schemas/dto/member.dto";
 
 export function createMockMemberCreationPayload(
     overrides: Partial<CreateMemberDTO> = {}

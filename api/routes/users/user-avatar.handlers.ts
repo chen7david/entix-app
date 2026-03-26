@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { UserAvatarRoutes } from "./user-avatar.routes";
 import { getAvatarService } from "@api/factories/service.factory";
 

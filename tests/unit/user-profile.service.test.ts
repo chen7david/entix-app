@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, TestDb } from "../lib/utils";
+import { createTestDb } from "../lib/utils";
+import type { TestDb } from "../lib/utils";
 import { authUsers as user, userPhoneNumbers } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
@@ -13,7 +14,6 @@ describe("UserProfileService Unit Test", () => {
     beforeEach(async () => {
         db = await createTestDb();
         const repo = new UserProfileRepository(db);
-        // Notice the service only needs the repo for these ops
         service = new UserProfileService(repo);
     });
 
@@ -21,7 +21,6 @@ describe("UserProfileService Unit Test", () => {
         const newUser = createMockUser({ name: "Phone Test", email: "phone@example.com" });
         await db.insert(user).values(newUser);
 
-        // Add first phone, set as primary
         await service.addPhoneNumber(newUser.id, {
             countryCode: "+1",
             number: "1111111111",
@@ -30,7 +29,6 @@ describe("UserProfileService Unit Test", () => {
             isPrimary: true
         });
 
-        // Add second phone, also set as primary
         await service.addPhoneNumber(newUser.id, {
             countryCode: "+1",
             number: "2222222222",
@@ -39,7 +37,6 @@ describe("UserProfileService Unit Test", () => {
             isPrimary: true
         });
 
-        // Fetch phones
         const phones = await db.select().from(userPhoneNumbers).where(eq(userPhoneNumbers.userId, newUser.id));
 
         expect(phones).toHaveLength(2);

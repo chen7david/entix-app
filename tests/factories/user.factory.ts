@@ -1,4 +1,4 @@
-import { AuthUser } from "@shared/db/schema";
+import type { AuthUser } from "@shared/db/schema";
 
 export function createMockUser(overrides: Partial<AuthUser> = {}): AuthUser {
     const now = new Date();

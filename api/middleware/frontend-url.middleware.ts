@@ -1,5 +1,5 @@
 import { createMiddleware } from 'hono/factory';
-import { AppEnv } from '@api/helpers/types.helpers';
+import type { AppEnv } from '@api/helpers/types.helpers';
 import { getFrontendUrl } from '@api/helpers/url.helpers';
 
 export const frontendUrlMiddleware = () => {

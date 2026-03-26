@@ -1,4 +1,5 @@
-import { asc, desc, gt, lt, SQL, sql, AnyColumn } from "drizzle-orm";
+import { asc, desc, gt, lt, SQL, sql } from "drizzle-orm";
+import type { AnyColumn } from "drizzle-orm";
 
 export interface CursorPayload {
     primary: string | number | boolean; 
@@ -34,7 +35,6 @@ export function buildCursorPagination(
 ) {
     const isNext = direction === "next";
     
-    // Default system sort is DESC (newest first). 'prev' fetches older in reverse sequence (ASC), then JS reverses array.
     const orderBy = isNext 
         ? [desc(primaryColumn), desc(secondaryColumn)]
         : [asc(primaryColumn), asc(secondaryColumn)];
@@ -45,7 +45,6 @@ export function buildCursorPagination(
         const decoded = decodeCursor(cursorPayload);
         if (decoded && decoded.primary !== undefined) {
             if (decoded.secondary !== undefined) {
-                // (primary < cursor.primary) OR (primary = cursor.primary AND secondary < cursor.secondary)
                 whereClause = isNext
                     ? sql`(${primaryColumn} < ${decoded.primary} OR (${primaryColumn} = ${decoded.primary} AND ${secondaryColumn} < ${decoded.secondary}))`
                     : sql`(${primaryColumn} > ${decoded.primary} OR (${primaryColumn} = ${decoded.primary} AND ${secondaryColumn} > ${decoded.secondary}))`;

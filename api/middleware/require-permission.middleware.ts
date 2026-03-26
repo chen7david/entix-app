@@ -28,12 +28,10 @@ export const requirePermission = (
     return createMiddleware<AppEnv>(async (ctx, next) => {
         const userId = ctx.get('userId');
 
-        // Always require authentication for protected permissions
         if (!userId) {
             throw new UnauthorizedError("Authentication required to access this resource");
         }
 
-        // Super admins bypass all permission checks
         if (ctx.get('isSuperAdmin')) {
             ctx.var.logger.info(
                 { userId, resource, actions },
@@ -43,7 +41,6 @@ export const requirePermission = (
             return;
         }
 
-        // Allow bypass if the route targets the user themselves
         if (allowSelfTargetParam) {
             const targetId = ctx.req.param(allowSelfTargetParam);
             if (targetId && targetId === userId) {
@@ -54,8 +51,6 @@ export const requirePermission = (
 
         let currentRoleString = ctx.get('membershipRole') as string | undefined;
 
-        // If no organization-specific role is found, attempt a "Common Org" check 
-        // if this route targets a specific user (e.g. /users/:userId/avatar)
         if (!currentRoleString && allowSelfTargetParam) {
             const targetUserId = ctx.req.param(allowSelfTargetParam);
             if (targetUserId) {

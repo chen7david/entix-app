@@ -1,4 +1,4 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq, and, sql, lt } from "drizzle-orm";
 
@@ -9,7 +9,6 @@ export class DashboardService {
         const now = new Date();
         const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-        // 1. Total Storage (Sum of completed uploads)
         const storageResult = await this.db
             .select({ total: sql<number>`sum(${schema.uploads.fileSize})` })
             .from(schema.uploads)
@@ -21,7 +20,6 @@ export class DashboardService {
             );
         const totalStorage = Number(storageResult[0]?.total || 0);
 
-        // 2. Active Sessions (Sessions for users in this org that haven't expired)
         const activeSessionsResult = await this.db
             .select({ count: sql<number>`count(*)` })
             .from(schema.authSessions)
@@ -37,7 +35,6 @@ export class DashboardService {
             );
         const activeSessions = Number(activeSessionsResult[0]?.count || 0);
 
-        // 3. Engagement Risk (Members who haven't updated/logged in for 14 days)
         const riskResult = await this.db
             .select({ count: sql<number>`count(*)` })
             .from(schema.authMembers)
@@ -53,14 +50,12 @@ export class DashboardService {
             );
         const engagementRisk = Number(riskResult[0]?.count || 0);
 
-        // 4. Total Members
         const totalMembersResult = await this.db
             .select({ count: sql<number>`count(*)` })
             .from(schema.authMembers)
             .where(eq(schema.authMembers.organizationId, organizationId));
         const totalMembers = Number(totalMembersResult[0]?.count || 0);
 
-        // 5. Upcoming Birthdays (Next 7 days)
         const allProfiles = await this.db
             .select({
                 userId: schema.userProfiles.userId,

@@ -15,7 +15,6 @@ export class AvatarService {
         contentType: string,
         fileSize: number
     ) {
-        // storage is always user-centric now
         return await this.uploadService.createUserUploadPresignedUrl(
             `${USER_ASSETS_PREFIX}/${targetUserId}/${AVATAR_BUCKET_FOLDER}`,
             targetUserId,
@@ -31,7 +30,6 @@ export class AvatarService {
             throw new NotFoundError("User not found");
         }
 
-        // 1. Get the new upload from user_uploads
         const newUpload = await this.uploadService.getUserUploadById(uploadId, targetUserId);
         if (!newUpload) {
             throw new NotFoundError("Upload not found");
@@ -41,7 +39,6 @@ export class AvatarService {
             throw new Error("Upload must be completed before updating avatar");
         }
 
-        // 2. Update user record
         await this.userRepo.updateUser(targetUserId, {
             image: newUpload.url
         });
@@ -62,7 +59,6 @@ export class AvatarService {
             throw new NotFoundError("No avatar to remove");
         }
 
-        // Update user record to clear image
         await this.userRepo.updateUser(targetUserId, {
             image: null
         });

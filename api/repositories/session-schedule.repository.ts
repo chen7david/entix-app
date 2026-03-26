@@ -1,6 +1,6 @@
 import { eq, and, sql, like, SQL } from "drizzle-orm";
-import { AppDb } from "@api/factories/db.factory";
-import { BatchItem } from "drizzle-orm/batch";
+import type { AppDb } from "@api/factories/db.factory";
+import type { BatchItem } from "drizzle-orm/batch";
 import { scheduledSessions, sessionAttendances, type NewScheduledSession, type NewSessionAttendance } from "@shared/db/schema";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 

@@ -63,12 +63,10 @@ describe("Avatar Integration", () => {
 
             const client = createTestClient(app, env, cookie);
 
-            // Mock BucketService
             const { BucketService } = await import("@api/services/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
             vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
 
-            // 1. Create an upload via the NEW dedicated avatar route
             const uploadRes = await client.request(`/api/v1/users/${memberUserId}/avatar/presigned-url`, {
                 method: "POST",
                 body: {
@@ -80,13 +78,11 @@ describe("Avatar Integration", () => {
             expect(uploadRes.status).toBe(201);
             const { uploadId } = await parseJson<any>(uploadRes);
 
-            // 2. Complete the upload via the NEW global asset route
             const completeRes = await client.request(`/api/v1/users/${memberUserId}/assets/${uploadId}/complete`, {
                 method: "POST",
             });
             expect(completeRes.status).toBe(200);
 
-            // 3. Set as avatar
             const avatarRes = await client.request(`/api/v1/users/${memberUserId}/avatar`, {
                 method: "PATCH",
                 body: { uploadId },
@@ -118,12 +114,10 @@ describe("Avatar Integration", () => {
 
             const client = createTestClient(app, env, cookie);
 
-            // Mock BucketService
             const { BucketService } = await import("@api/services/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
             vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
 
-            // 1. Create and complete an upload
             const uploadRes = await client.request(`/api/v1/users/${memberUserId}/avatar/presigned-url`, {
                 method: "POST",
                 body: { originalName: "avatar.png", contentType: "image/png", fileSize: 30000 },
@@ -131,13 +125,11 @@ describe("Avatar Integration", () => {
             const { uploadId } = await parseJson<any>(uploadRes);
             await client.request(`/api/v1/users/${memberUserId}/assets/${uploadId}/complete`, { method: "POST" });
 
-            // 2. Set as avatar
             await client.request(`/api/v1/users/${memberUserId}/avatar`, {
                 method: "PATCH",
                 body: { uploadId },
             });
 
-            // 3. Remove avatar
             const removeRes = await client.request(`/api/v1/users/${memberUserId}/avatar`, {
                 method: "DELETE",
             });

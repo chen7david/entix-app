@@ -4,7 +4,7 @@ import { env } from "cloudflare:test";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
-import { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
+import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 
 describe("Bulk Import Limit Reproduction", () => {
     let client: TestClient;
@@ -36,7 +36,6 @@ describe("Bulk Import Limit Reproduction", () => {
         expect(body.failed).toBe(0);
         expect(body.created).toBe(157);
 
-        // 2. Verify listing structure for frontend compatibility
         const listRes = await client.orgs.users.list(orgId);
         expect(listRes.status).toBe(200);
         const listBody = await listRes.json() as any;
@@ -44,20 +43,15 @@ describe("Bulk Import Limit Reproduction", () => {
         expect(listBody.items.length).toBeGreaterThan(0);
         const firstItem = listBody.items[0];
         
-        // Ensure both flat and nested properties exist
         expect(firstItem).toHaveProperty("name");
         expect(firstItem).toHaveProperty("user");
         expect(firstItem.user).toHaveProperty("name");
         expect(firstItem).toHaveProperty("userId");
         expect(firstItem.userId).toBe(firstItem.id);
 
-        // 3. Verify consolidated global avatar removal route (fixed 404 issue)
-        // This now works because the middleware performs a "Common Org" check.
         const deleteRes = await client.request(`/api/v1/users/${firstItem.id}/avatar`, {
             method: "DELETE"
         });
-        // status is 204 or 404 if no avatar exists. 
-        // We just want to ensure it's not a generic 404 Route Not Found.
         if (deleteRes.status === 404) {
             const body = await deleteRes.json() as any;
             expect(body.message).toBe("No avatar to remove");

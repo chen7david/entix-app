@@ -1,4 +1,4 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq, and } from "drizzle-orm";
 

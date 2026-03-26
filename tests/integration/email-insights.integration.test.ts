@@ -39,7 +39,6 @@ describe("Email Insights Integration", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);
 
-            // Mock the MailService.listEmails method to bypass the real Resend API
             const { MailService } = await import("@api/services/mailer.service");
             const spy = vi.spyOn(MailService.prototype, 'listEmails').mockResolvedValue({
                 data: {
@@ -68,7 +67,6 @@ describe("Email Insights Integration", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);
 
-            // Mock the MailService.getEmail method to bypass the real Resend API
             const { MailService } = await import("@api/services/mailer.service");
             const spy = vi.spyOn(MailService.prototype, 'getEmail').mockResolvedValue({
                 data: { object: "email", id: "1", from: "Entix", created_at: "2023-01-01", to: ["test@example.com"], subject: "Test", last_event: "delivered", html: "<p>Hi</p>", text: "Hi", tags: [], bcc: [], cc: [], scheduled_at: null, reply_to: [] } as any,
@@ -90,7 +88,6 @@ describe("Email Insights Integration", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);
 
-            // Mock the MailService.getEmail method to return a not_found error
             const { MailService } = await import("@api/services/mailer.service");
             const spy = vi.spyOn(MailService.prototype, 'getEmail').mockResolvedValue({
                 data: null,

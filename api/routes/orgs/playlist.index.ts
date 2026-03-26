@@ -1,5 +1,5 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { AppEnv } from "@api/helpers/types.helpers";
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { PlaylistRoutes } from "./playlist.routes";
 import { PlaylistHandlers } from "./playlist.handlers";
 

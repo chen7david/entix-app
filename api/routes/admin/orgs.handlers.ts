@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { AdminOrgsRoutes } from "./orgs.routes";
 import { getOrganizationService } from "@api/factories/service.factory";
 

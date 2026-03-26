@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { HttpStatusCodes, HttpMethods, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { getUploadService } from "@api/factories/upload.factory";
 import { UploadCompleteResponseSchema } from "@shared/schemas/dto/upload.dto";
 

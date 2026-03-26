@@ -10,9 +10,7 @@ import { parseJson, type ErrorResponse } from '../lib/api-request.helper';
  */
 const buildTestApp = (env: Partial<CloudflareBindings>) => {
     const app = new Hono<AppEnv>();
-    // Inject the validator
     app.use('*', envValidatorMiddleware());
-    // A simple success route to confirm next() was called
     app.get('/health', (c) => c.json({ ok: true }, 200));
 
     return (path: string) =>

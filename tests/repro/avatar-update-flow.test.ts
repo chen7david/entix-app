@@ -46,23 +46,17 @@ describe("Avatar Update Flow", () => {
     });
 
     it("should route presigned URL request to the user avatar endpoint (not org uploads)", async () => {
-        // The route must be accessible (auth/permission layer passes).
-        // It will 500 in test because R2 is not fully configured in miniflare.
-        // We verify this is NOT a 401/403/404 (access) error.
         const res = await client.request(`/api/v1/users/${firstMemberId}/avatar/presigned-url`, {
             method: "POST",
             body: { originalName: "avatar.jpg", contentType: "image/jpeg", fileSize: 1024 },
         });
 
-        // Not an auth/permission issue — route and middleware are correct.
-        // 500 is expected from R2 not being configured in miniflare tests.
         expect(res.status).not.toBe(401); // Not unauthorized
         expect(res.status).not.toBe(403); // Not forbidden
         expect(res.status).not.toBe(404); // Route exists
     });
 
     it("should reject avatar PATCH when uploadId is from org uploads (different table)", async () => {
-        // Use a fabricated uploadId that won't exist in userUploads — simulates the broken flow
         const fakeOrgUploadId = "org-scoped-upload-id-that-does-not-exist-in-user-uploads";
 
         const patchRes = await client.request(`/api/v1/users/${firstMemberId}/avatar`, {
@@ -70,8 +64,6 @@ describe("Avatar Update Flow", () => {
             body: { uploadId: fakeOrgUploadId },
         });
 
-        // AvatarService.updateAvatar reads from userUploads, not uploads table.
-        // An org upload ID will never be found there.
         expect(patchRes.status).toBe(404);
         const body = await patchRes.json() as any;
         expect(body.message).toBe("Upload not found");
@@ -82,8 +74,6 @@ describe("Avatar Update Flow", () => {
             method: "DELETE",
         });
 
-        // 404 = logical "No avatar set yet" — route was found and executed correctly
-        // 204 = avatar was cleared
         if (deleteRes.status === 404) {
             const body = await deleteRes.json() as any;
             expect(body.message).toBe("No avatar to remove");

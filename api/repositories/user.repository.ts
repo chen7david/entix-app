@@ -1,12 +1,11 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
 import * as schema from "@shared/db/schema";
 import { eq, and, like, or } from "drizzle-orm";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
+import type { Auth } from "better-auth";
 
-// Better Auth instance is complex and dynamic, so we use 'any' to avoid brittle type-narrowing 
-// that breaks across the factory layer.
-type BetterAuthInstance = any;
+
 
 export type CreateUserInput = {
     email: string;
@@ -30,7 +29,7 @@ export type CreateUserResult = {
 export class UserRepository {
     constructor(
         private db: AppDb,
-        private auth: BetterAuthInstance
+        private auth: Auth
     ) { }
 
     /**
@@ -104,7 +103,7 @@ export class UserRepository {
 
         const conditions = [eq(schema.authMembers.organizationId, organizationId)];
         if (cursorWhere) conditions.push(cursorWhere);
-        
+
         if (search) {
             // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
             conditions.push(or(
@@ -120,7 +119,7 @@ export class UserRepository {
             .where(and(...conditions))
             .orderBy(...orderBy)
             .limit(limit + 1);
-        
+
         const result = processPaginatedResult(
             membersJoined,
             limit,
@@ -130,7 +129,7 @@ export class UserRepository {
 
         return {
             ...result,
-            items: result.items.map((row) => ({ 
+            items: result.items.map((row) => ({
                 ...row.user,
                 user: row.user,
                 userId: row.user.id,

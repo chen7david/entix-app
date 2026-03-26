@@ -1,5 +1,5 @@
 import { z } from '@hono/zod-openapi';
-import { OrgRole } from '../../auth/permissions';
+import type { OrgRole } from '../../auth/permissions';
 
 const timestampSchema = z.union([z.string(), z.date()]).optional();
 

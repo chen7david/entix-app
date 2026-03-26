@@ -30,7 +30,6 @@ export const requireOrgMembership = createMiddleware<AppEnv>(async (ctx, next) =
         throw new InternalServerError("organizationId parameter missing from route");
     }
 
-    // Super admins bypass org membership check
     if (ctx.get('isSuperAdmin')) {
         ctx.var.logger.info({ userId, organizationId }, "Super admin bypass — skipping membership check");
         ctx.set('organizationId', organizationId);
@@ -40,7 +39,6 @@ export const requireOrgMembership = createMiddleware<AppEnv>(async (ctx, next) =
         return;
     }
 
-    // Use repository pattern via factory
     const memberRepo = getMemberRepository(ctx);
     const membership = await memberRepo.findMembership(userId, organizationId);
 
@@ -50,7 +48,6 @@ export const requireOrgMembership = createMiddleware<AppEnv>(async (ctx, next) =
         );
     }
 
-    // Store membership details in context
     ctx.set('organizationId', organizationId);
     ctx.set('membershipId', membership.id);
     ctx.set('membershipRole', membership.role);

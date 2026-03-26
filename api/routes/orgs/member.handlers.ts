@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { AppHandler } from '@api/helpers/types.helpers';
+import type { AppHandler } from '@api/helpers/types.helpers';
 import { MemberRoutes } from './member.routes';
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { getRegistrationService } from "@api/factories/service.factory";
@@ -9,7 +9,6 @@ export class MemberHandler {
     static createMember: AppHandler<typeof MemberRoutes.createMember> = async (ctx) => {
         const { email, name, role } = ctx.req.valid("json");
 
-        // Get context (verified by middleware)
         const currentUserId = ctx.get('userId')!;
         const organizationId = ctx.get('organizationId')!;
 
@@ -25,7 +24,6 @@ export class MemberHandler {
                 role
             );
 
-            // Send password reset email so user can set their own password
             const resetUrl = `${ctx.var.frontendUrl}/auth/reset-password`;
             ctx.var.logger.info({ email, resetUrl }, "Sending password reset email");
             await userRepo.sendPasswordResetEmail(email, resetUrl);

@@ -1,6 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { z } from "zod";
-import { AppEnv } from "@api/helpers/types.helpers";
+import type { AppEnv } from "@api/helpers/types.helpers";
 
 /**
  * Zod schema defining all required Cloudflare environment variables and secrets.
@@ -24,13 +24,10 @@ export const envValidatorMiddleware = () => {
         const parsed = envSchema.safeParse(c.env);
 
         if (!parsed.success) {
-            // Flatten the error to get exactly which keys are missing or invalid
             const flattened = parsed.error.flatten();
 
-            // Format a highly visible error for the Cloudflare Dashboard logs
             const missingVars = Object.keys(flattened.fieldErrors).join(', ');
 
-            // Ensure we log this massively critical error so it is impossible to miss during deployment
             if (c.var.logger) {
                 c.var.logger.fatal({ errors: flattened.fieldErrors }, `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`);
             } else {
@@ -38,8 +35,6 @@ export const envValidatorMiddleware = () => {
                 console.error(flattened.fieldErrors);
             }
 
-            // Immediately halt the request to prevent weird partial-failures downstream
-            // We use a 500 status because this is a server misconfiguration, not a user error
             return c.json({
                 success: false,
                 message: "Internal Server Configuration Error",

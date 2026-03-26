@@ -34,7 +34,6 @@ export class BucketService {
     constructor(config: BucketConfig) {
         this.bucketName = config.bucketName;
         this.endpoint = `https://${config.accountId}.r2.cloudflarestorage.com`;
-        // Fallback to the R2 dev endpoint if no custom domain is provided
         this.publicUrl = config.publicUrl || `${this.endpoint}/${this.bucketName}`;
 
         this.client = new AwsClient({
@@ -47,8 +46,6 @@ export class BucketService {
 
     private getClient(): AwsClient {
         if (!this.client) {
-            // We check the original source of truth indirectly via lack of client
-            // This error is thrown only when a write/signed-url operation is attempted.
             throw new Error(`R2 Credentials missing. Please ensure R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY are set as secrets in your Cloudflare environment.`);
         }
         return this.client;

@@ -42,7 +42,6 @@ export const patchD1Adapter = (adapterFactory: any) => {
                 const otherConditions = where?.filter((w) => w !== inCondition) || [];
                 let allResults: unknown[] = [];
 
-                // Chunk into 90 to stay safe under the 100 limit
                 for (let i = 0; i < allValues.length; i += 90) {
                     const chunk = allValues.slice(i, i + 90);
                     const results = await originalFindMany({

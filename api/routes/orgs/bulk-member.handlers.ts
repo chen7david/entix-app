@@ -1,4 +1,4 @@
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { getDashboardService, getMemberExportService, getMemberImportService } from "@api/factories/service.factory";
 import { BulkMemberRoutes } from "./bulk-member.routes";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";

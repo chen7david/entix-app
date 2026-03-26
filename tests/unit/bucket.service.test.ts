@@ -19,7 +19,6 @@ describe('BucketService', () => {
         // @ts-ignore - access private client for testing
         mockClient = service.client;
         
-        // Default sign implementation
         mockClient.sign.mockImplementation(async (url: string) => ({ url }));
     });
 

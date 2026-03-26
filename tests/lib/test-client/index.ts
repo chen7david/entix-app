@@ -50,7 +50,6 @@ export function createTestClient(
 
 export type TestClient = ReturnType<typeof createTestClient>;
 
-// Re-export types for convenience
 export type { Requester } from "./base-requester";
 export type { AuthClient } from "./auth.client";
 export type { MembersClient } from "./members.client";

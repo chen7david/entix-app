@@ -1,5 +1,5 @@
 import { AuthRoutes } from "./auth.routes";
-import { AppHandler } from '@api/helpers/types.helpers';
+import type { AppHandler } from '@api/helpers/types.helpers';
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { getRegistrationService } from "@api/factories/service.factory";

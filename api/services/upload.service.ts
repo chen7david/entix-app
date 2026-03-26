@@ -164,7 +164,6 @@ export class UploadService {
     async deleteUploadByUrlGlobalSafely(url: string): Promise<void> {
         const key = url.replace(`${this.publicUrlPrefix}/`, "");
         await this.bucketService.delete(key);
-        // We delete from both repos just in case it belongs to either
         await this.uploadRepo.deleteByBucketKey(key);
         await this.userUploadRepo.deleteByBucketKey(key);
     }

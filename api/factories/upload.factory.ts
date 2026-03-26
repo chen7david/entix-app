@@ -1,4 +1,4 @@
-import { AppContext } from "@api/helpers/types.helpers";
+import type { AppContext } from "@api/helpers/types.helpers";
 import { UploadService } from "@api/services/upload.service";
 import { getBucketClient } from "./bucket.factory";
 import { getUploadRepository, getUserUploadRepository } from "./repository.factory";

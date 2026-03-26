@@ -5,7 +5,8 @@ import { createTestDb } from "../lib/utils";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import * as schema from "@shared/db/schema";
-import { AppDb, getDbClient } from "@api/factories/db.factory";
+import { getDbClient } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 
 describe("Media Routes Integration Tests", () => {
     let client: TestClient;
@@ -24,7 +25,6 @@ describe("Media Routes Integration Tests", () => {
 
     describe("GET /orgs/:organizationId/media", () => {
         it("should return paginated media when there are more than 10 items", async () => {
-            // Seed 15 media items
             const mediaItems = Array.from({ length: 15 }).map((_, i) => ({
                 id: `media-${i}`,
                 organizationId: orgId,
@@ -32,17 +32,14 @@ describe("Media Routes Integration Tests", () => {
                 mimeType: "video/mp4",
                 mediaUrl: `https://example.com/media-${i}.mp4`,
                 uploadedBy: userId,
-                // Ensure deterministic ordering (newest to oldest)
                 createdAt: new Date(Date.now() - i * 10000), 
                 updatedAt: new Date(Date.now() - i * 10000),
             }));
 
-            // D1 SQLite has strict variable limits per query, so we safely iterate
             for (const item of mediaItems) {
                 await db.insert(schema.media).values(item);
             }
 
-            // Fetch first page (limit array length to 10 explicitly to test cursor)
             const res1 = await client.orgs.media.list(orgId, { limit: 10 });
             expect(res1.status).toBe(200);
 
@@ -51,11 +48,9 @@ describe("Media Routes Integration Tests", () => {
             expect(body1.nextCursor).not.toBeNull();
             expect(body1.prevCursor).not.toBeNull();
             
-            // Check descending order mapping (newest first based on createdAt)
             expect(body1.items[0].id).toBe("media-0");
             expect(body1.items[9].id).toBe("media-9");
 
-            // Fetch second page using nextCursor correctly natively gracefully
             const res2 = await client.orgs.media.list(orgId, { 
                 limit: 10, 
                 cursor: body1.nextCursor, 

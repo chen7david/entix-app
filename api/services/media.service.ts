@@ -18,13 +18,11 @@ export class MediaService {
             coverArtUploadId?: string;
         }
     ) {
-        // Enforce the main media payload is a completed upload
         const mediaUpload = await this.uploadService.getUploadById(input.uploadId, organizationId);
         if (!mediaUpload || mediaUpload.status !== "completed") {
             throw new NotFoundError("Media upload not found or not yet completed");
         }
 
-        // Validate MIME type
         if (!mediaUpload.contentType.startsWith("video/") && !mediaUpload.contentType.startsWith("audio/")) {
             throw new ForbiddenError("Media must be a valid video or audio format");
         }
@@ -76,7 +74,6 @@ export class MediaService {
         if (updates.coverArtUploadId) {
             coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(updates.coverArtUploadId, organizationId);
 
-            // Delete old cover art if it existed
             if (currentMedia.coverArtUrl) {
                 await this.uploadService.deleteUploadByUrlGlobalSafely(currentMedia.coverArtUrl);
             }
@@ -97,15 +94,12 @@ export class MediaService {
     async deleteMedia(mediaId: string, organizationId: string) {
         const media = await this.getMedia(mediaId, organizationId);
 
-        // Discard the actual video/audio file permanently via global bucket wipe
         await this.uploadService.deleteUploadByUrlGlobalSafely(media.mediaUrl);
 
-        // Delete cover art permanently
         if (media.coverArtUrl) {
             await this.uploadService.deleteUploadByUrlGlobalSafely(media.coverArtUrl);
         }
 
-        // Delete from Drizzle
         await this.mediaRepo.delete(media.id, organizationId);
     }
 }

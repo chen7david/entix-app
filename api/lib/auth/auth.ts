@@ -1,5 +1,5 @@
 import { betterAuth } from "better-auth";
-import { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
+import type { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import * as schema from "@shared/db/schema";
 import { getDbClient } from "@api/factories/db.factory";
@@ -31,3 +31,6 @@ export const auth = (ctx: AppContext) => {
 export const mountBetterAuth = (app: AppOpenApi) => {
     app.on(["GET", "POST"], "/api/v1/auth/*", (ctx) => auth(ctx).handler(ctx.req.raw));
 }
+
+export type Auth = ReturnType<typeof auth>;
+export type AuthApi = Auth["api"];

@@ -1,4 +1,4 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -54,7 +54,6 @@ export class PlaylistRepository {
         return result.length > 0;
     }
 
-    // Playlist Media Association Logic
     async setMediaSequence(playlistId: string, mediaIds: string[]): Promise<void> {
         const deleteStmt = this.db.delete(schema.playlistMedia).where(eq(schema.playlistMedia.playlistId, playlistId));
         

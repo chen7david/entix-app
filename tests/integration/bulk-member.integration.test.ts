@@ -4,10 +4,11 @@ import { env } from "cloudflare:test";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb, type TestDb } from "../lib/utils";
-import { 
+import type { 
     BulkMemberItemDTO, 
     BulkMetricsDTO 
 } from "@shared/schemas/dto/bulk-member.dto";
+
 
 describe("Bulk Member Integration Tests", () => {
     let client: TestClient;
@@ -69,7 +70,6 @@ describe("Bulk Member Integration Tests", () => {
         const res = await client.orgs.members.import(orgId, payload);
         expect(res.status).toBe(200);
 
-        // 1. Verify User & Member Role
         const user = await db.query.authUsers.findFirst({
             where: (u, { eq }) => eq(u.email, "full-contact@example.com"),
             with: {
@@ -90,7 +90,6 @@ describe("Bulk Member Integration Tests", () => {
         });
         expect(member?.role).toBe("member"); // Enforced role
 
-        // 2. Verify Auth Account (for login enabling)
         const account = await db.query.authAccounts.findFirst({
             where: (a, { eq }) => eq(a.userId, user!.id)
         });
@@ -98,7 +97,6 @@ describe("Bulk Member Integration Tests", () => {
         expect(account?.providerId).toBe("credential");
         expect(account?.password).toBeNull();
 
-        // 3. Verify Relations
         expect(user?.phoneNumbers.length).toBe(1);
         expect(user?.phoneNumbers[0].number).toBe("5551234");
         expect(user?.phoneNumbers[0].extension).toBe("123");

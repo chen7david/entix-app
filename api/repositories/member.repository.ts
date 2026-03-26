@@ -1,8 +1,8 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { OrgRole } from "@shared/auth/permissions";
+import type { OrgRole } from "@shared/auth/permissions";
 
 export type AddMemberInput = {
     userId: string;
@@ -103,7 +103,6 @@ export class MemberRepository {
      * @returns Array of roles the caller holds in target user's organizations
      */
     async findCommonOrgRoles(callerId: string, targetUserId: string): Promise<string[]> {
-        // 1. Get all organization IDs where the target user is a member
         const targetMemberOrgs = await this.db.query.authMembers.findMany({
             where: eq(schema.authMembers.userId, targetUserId),
             columns: { organizationId: true }
@@ -112,7 +111,6 @@ export class MemberRepository {
         const orgIds = targetMemberOrgs.map(m => m.organizationId);
         if (orgIds.length === 0) return [];
 
-        // 2. Find all roles the caller holds in any of those organizations
         const callerMemberships = await this.db.query.authMembers.findMany({
             where: and(
                 eq(schema.authMembers.userId, callerId),

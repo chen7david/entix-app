@@ -17,10 +17,8 @@ import { requireOrgMembership } from "@api/middleware/org-membership.middleware"
  * @param app - The Hono app instance to apply middleware to
  */
 export const mountAuthMiddleware = (app: AppOpenApi) => {
-    // Layer 1: Authentication (sets userId in context)
     app.use('/api/v1/orgs/*', requireAuth);
     app.use('/api/v1/users/*', requireAuth);
 
-    // Layer 2: Organization membership (sets organizationId, membershipId, membershipRole)
     app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
 };

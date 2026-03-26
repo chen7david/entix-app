@@ -1,4 +1,4 @@
-import { AppContext } from "@api/helpers/types.helpers";
+import type { AppContext } from "@api/helpers/types.helpers";
 import { UserRepository } from "@api/repositories/user.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
 import { MemberRepository } from "@api/repositories/member.repository";

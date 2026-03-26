@@ -1,7 +1,7 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import { OrgRole } from "@shared/auth/permissions";
+import type { OrgRole } from "@shared/auth/permissions";
 
 export class MemberExportService {
     constructor(private db: AppDb) { }

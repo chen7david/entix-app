@@ -19,7 +19,6 @@ describe("image-url utilities", () => {
     it("uses avatar presets and applies transformations when env var is set", () => {
         vi.stubEnv("VITE_ENABLE_CF_IMAGES", "true");
 
-        // Let's test standard sizes
         const smallAvatar = getAvatarUrl("https://cdn.entix.org/orgId/file.png", "sm");
         expect(smallAvatar).toBe("https://cdn.entix.org/cdn-cgi/image/width=40,height=40,fit=cover/orgId/file.png");
 

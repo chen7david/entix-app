@@ -1,5 +1,5 @@
 import { openAPI, admin } from 'better-auth/plugins';
-import { AppContext } from '@api/helpers/types.helpers';
+import type { AppContext } from '@api/helpers/types.helpers';
 import { MailService } from '@api/services/mailer.service';
 import { getOrganizationPluginConfig } from './plugins/organization.plugin';
 

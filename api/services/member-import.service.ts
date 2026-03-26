@@ -1,10 +1,10 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import { BatchItem } from "drizzle-orm/batch";
+import type { BatchItem } from "drizzle-orm/batch";
 import { nanoid } from "nanoid";
-import { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
-import { OrgRole } from "@shared/auth/permissions";
+import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
+import type { OrgRole } from "@shared/auth/permissions";
 
 export class MemberImportService {
     constructor(private db: AppDb) { }
@@ -30,7 +30,6 @@ export class MemberImportService {
 
             const uniqueEmails = [...new Set(validMembers.map(m => m.email.trim()))];
 
-            // Pre-fetch existing data (chunked to avoid D1 parameter limits)
             const QUERY_CHUNK_SIZE = 50;
             const existingUsers: schema.AuthUser[] = [];
             for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
@@ -61,7 +60,6 @@ export class MemberImportService {
             const socialTypes = await this.db.query.socialMediaTypes.findMany();
             const socialTypeMap = new Map(socialTypes.map(t => [t.name.toLowerCase(), t.id]));
 
-            // FORCE ROLE TO MEMBER — imported users are always non-privileged
             const enforcedRole: OrgRole = "member";
             const batch: BatchItem<"sqlite">[] = [];
 
@@ -117,7 +115,6 @@ export class MemberImportService {
                     results.linked++;
                     memberSet.add(userId!);
 
-                    // Credential account so the user can reset password and log in
                     batch.push(
                         this.db.insert(schema.authAccounts).values({
                             id: nanoid(),
@@ -157,7 +154,6 @@ export class MemberImportService {
                     );
                 }
 
-                // Delete-then-reinsert 1:many relations for idempotent import
                 if (input.phoneNumbers && input.phoneNumbers.length > 0) {
                     batch.push(this.db.delete(schema.userPhoneNumbers).where(eq(schema.userPhoneNumbers.userId, userId!)));
                     for (const p of input.phoneNumbers) {
@@ -212,7 +208,6 @@ export class MemberImportService {
                 }
             }
 
-            // Execute in batches to respect D1 statement limits
             const BATCH_CHUNK_SIZE = 10;
             for (let i = 0; i < batch.length; i += BATCH_CHUNK_SIZE) {
                 const chunk = batch.slice(i, i + BATCH_CHUNK_SIZE);

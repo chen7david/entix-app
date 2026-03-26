@@ -26,9 +26,7 @@ export class MailService {
         this.$client = new Resend(apiKey);
     }
 
-    // Expose methods to list/retrieve emails as requested by the user
     public async listEmails(options: { limit?: number; after?: string; before?: string }) {
-        // Resend's PaginationOptions uses mutually exclusive after/before
         const paginationParam = options.after
             ? { after: options.after }
             : options.before

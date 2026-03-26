@@ -1,4 +1,4 @@
-import { AppContext } from "./types.helpers";
+import type { AppContext } from "./types.helpers";
 import { getFrontendUrl } from "./url.helpers";
 
 /**
