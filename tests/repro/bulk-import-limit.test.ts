@@ -3,16 +3,15 @@ import app from "@api/app";
 import { env } from "cloudflare:test";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
-import { createTestDb, type TestDb } from "../lib/utils";
+import { createTestDb } from "../lib/utils";
 import { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 
 describe("Bulk Import Limit Reproduction", () => {
     let client: TestClient;
     let orgId: string;
-    let db: TestDb;
 
     beforeEach(async () => {
-        db = await createTestDb();
+        await createTestDb(); // Still initialize it if it performs global setup
         const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
         client = createTestClient(app, env, cookie);
         orgId = id;

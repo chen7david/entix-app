@@ -19,7 +19,7 @@
 		"db:migrate:staging": "npx wrangler d1 migrations apply entix-app-staging --remote --env staging",
 		"db:migrate:production": "npx wrangler d1 migrations apply entix-app-production --remote --env production",
 		"auth:generate": "npx @better-auth/cli generate --config ./better-auth.config.ts",
-		"test": "vitest run",
+		"test": "npm run typecheck && vitest run",
 		"typecheck": "concurrently \"npm run typecheck:api\" \"npm run typecheck:web\"",
 		"typecheck:api": "tsc --noEmit",
 		"typecheck:web": "cd web && npm run typecheck",
