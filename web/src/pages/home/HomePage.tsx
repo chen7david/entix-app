@@ -36,7 +36,7 @@ export const HomePage: React.FC = () => {
     return (
         <>
             <Toolbar />
-            <div className="p-6 overflow-auto" style={{ height: 'calc(100dvh - 64px)' }}>
+            <div className="p-6">
                 <div className="mb-6">
                     <Title level={2} className="m-0">Organization Dashboard</Title>
                     <Text type="secondary">Welcome back to {activeOrganization?.name}. Your central command for organization health.</Text>
