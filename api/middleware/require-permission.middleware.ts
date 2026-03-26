@@ -1,11 +1,9 @@
-import type { AppContext } from "@api/helpers/types.helpers";
-import type { Next } from "hono";
-import type { Role } from "better-auth/plugins/access";
+import { createMiddleware } from "hono/factory";
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { roles, type statement } from "@shared/auth/permissions";
-import { MemberRepository } from "@api/repositories/member.repository";
-import { getDbClient } from "@api/factories/db.factory";
-
+import { getMemberRepository } from "@api/factories/repository.factory";
+import type { Role } from "better-auth/plugins/access";
 
 /**
  * Middleware factory to enforce permission-based authorization
@@ -27,7 +25,7 @@ export const requirePermission = (
     actions: (typeof statement)[keyof typeof statement][number][],
     allowSelfTargetParam?: string
 ) => {
-    return async (ctx: AppContext, next: Next) => {
+    return createMiddleware<AppEnv>(async (ctx, next) => {
         const userId = ctx.get('userId');
 
         // Always require authentication for protected permissions
@@ -61,7 +59,7 @@ export const requirePermission = (
         if (!currentRoleString && allowSelfTargetParam) {
             const targetUserId = ctx.req.param(allowSelfTargetParam);
             if (targetUserId) {
-                const memberRepo = new MemberRepository(getDbClient(ctx));
+                const memberRepo = getMemberRepository(ctx);
                 const commonRoles = await memberRepo.findCommonOrgRoles(userId, targetUserId);
                 if (commonRoles.length > 0) {
                     currentRoleString = commonRoles.join(',');
@@ -118,5 +116,5 @@ export const requirePermission = (
         }
 
         await next();
-    };
+    });
 };

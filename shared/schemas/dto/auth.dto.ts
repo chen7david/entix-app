@@ -1,6 +1,16 @@
 import { z } from '@hono/zod-openapi'
 import { userSchema } from './user.dto';
 
+export const authUserSchema = z.object({
+    id: z.string(),
+    email: z.string().email(),
+    name: z.string(),
+    role: z.string().default("user"),
+    image: z.string().url().nullable().optional(),
+});
+
+export type AuthUserDTO = z.infer<typeof authUserSchema>;
+
 export const signInSchema = z.object({
     username: z.string('Username is required').min(1, "Username is required").openapi({
         example: 'chen7david',

@@ -1,5 +1,5 @@
-import type { AppContext } from "@api/helpers/types.helpers";
-import type { Next } from "hono";
+import { createMiddleware } from "hono/factory";
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { getMemberRepository } from "@api/factories/repository.factory";
 
@@ -18,7 +18,7 @@ import { getMemberRepository } from "@api/factories/repository.factory";
  * Usage:
  * app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
  */
-export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
+export const requireOrgMembership = createMiddleware<AppEnv>(async (ctx, next) => {
     const userId = ctx.get('userId');
     const organizationId = ctx.req.param('organizationId');
 
@@ -56,4 +56,4 @@ export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
     ctx.set('membershipRole', membership.role);
 
     await next();
-};
+});
