@@ -13,7 +13,7 @@ export class BulkMemberRoutes {
     static getMetrics = createRoute({
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/bulk/metrics",
-        middleware: [requirePermission("organization", ["update"])] as const,
+        middleware: [requirePermission("dashboard", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() })
         },
@@ -42,9 +42,7 @@ export class BulkMemberRoutes {
         middleware: [requirePermission("member", ["bulk-import"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: {
-                content: { "application/json": { schema: z.array(bulkMemberItemSchema) } }
-            }
+            body: jsonContent(z.array(bulkMemberItemSchema), 'Array of members to import')
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(bulkImportResponseSchema, "Import summary results"),

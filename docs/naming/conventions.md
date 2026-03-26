@@ -30,7 +30,18 @@ Use `kebab-case`.
 - `/api/v1/auth/signup-with-org`
 - `/dashboard/settings/change-password`
 
-[Why enforce strict naming?](../why/naming.md)
+## 6. DTOs & Validation
+Define all request/response schemas in `shared/schemas/dto/`.
+- Use the `jsonContent` or `jsonContentRequired` helpers in route definitions.
+- Use the inferred `*DTO` types in the Service layer.
 
-Last updated: 2026-03-12
+## 7. Database Types (Drizzle)
+Always use named exports for inferred types in `shared/db/schema/`.
+- `export type AuthUser = typeof authUsers.$inferSelect;`
+- `export type NewAuthUser = typeof authUsers.$inferInsert;`
+- Always prefer these named types over inline `$inferSelect` calls in Repositories and Services.
+
+[Why enforce strict standards?](../why/naming.md)
+
+Last updated: 2026-03-26
 [Back to Documentation Guide](../how-to-write-docs.md)

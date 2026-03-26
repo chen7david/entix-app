@@ -2,6 +2,7 @@ import { UnauthorizedError } from "@api/errors/app.error";
 import { auth } from "@api/lib/auth/auth";
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { Next } from "hono";
+import type { AuthUser } from "@shared/db/schema";
 
 /**
  * Validates the user session and returns the user ID
@@ -16,7 +17,7 @@ export async function validateSession(ctx: AppContext): Promise<string> {
         throw new UnauthorizedError("Authentication required");
     }
 
-    const user = session.user as { id: string; role?: string };
+    const user = session.user as AuthUser;
     ctx.set("userId", user.id);
     ctx.set("isSuperAdmin", user.role === "admin");
     return user.id;

@@ -1,6 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { HttpStatusCodes, HttpMethods, jsonContentRequired } from "@api/helpers/http.helpers";
+import { HttpStatusCodes, HttpMethods, jsonContent, jsonContentRequired } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
+import { PresignedUrlResponseSchema } from "@shared/schemas/dto/upload.dto";
 
 /**
  * Global Avatar Routes
@@ -32,19 +33,7 @@ export class UserAvatarRoutes {
             }), 'Upload details'),
         },
         responses: {
-            [HttpStatusCodes.CREATED]: {
-                content: {
-                    "application/json": {
-                        schema: z.object({
-                            uploadId: z.string(),
-                            presignedUrl: z.string(),
-                            url: z.string(),
-                            bucketKey: z.string(),
-                        }),
-                    },
-                },
-                description: "Presigned URL created successfully",
-            },
+            [HttpStatusCodes.CREATED]: jsonContent(PresignedUrlResponseSchema, "Presigned URL created successfully"),
         },
     });
 
@@ -67,16 +56,7 @@ export class UserAvatarRoutes {
             }), 'Avatar update details'),
         },
         responses: {
-            [HttpStatusCodes.OK]: {
-                content: {
-                    "application/json": {
-                        schema: z.object({
-                            imageUrl: z.string(),
-                        }),
-                    },
-                },
-                description: "Avatar updated successfully",
-            },
+            [HttpStatusCodes.OK]: jsonContent(z.object({ imageUrl: z.string() }), "Avatar updated successfully"),
         },
     });
 

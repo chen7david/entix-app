@@ -74,6 +74,7 @@ export const userUploads = sqliteTable(
 );
 
 export type UserUpload = typeof userUploads.$inferSelect;
+export type NewUserUpload = typeof userUploads.$inferInsert;
 
 export const media = sqliteTable(
     "media",
@@ -106,6 +107,7 @@ export const media = sqliteTable(
 );
 
 export type Media = typeof media.$inferSelect;
+export type NewMedia = typeof media.$inferInsert;
 
 export const playlists = sqliteTable(
     "playlists",
@@ -135,6 +137,7 @@ export const playlists = sqliteTable(
 );
 
 export type Playlist = typeof playlists.$inferSelect;
+export type NewPlaylist = typeof playlists.$inferInsert;
 
 export const playlistMedia = sqliteTable(
     "playlist_media",
@@ -158,3 +161,4 @@ export const playlistMedia = sqliteTable(
 );
 
 export type PlaylistMedia = typeof playlistMedia.$inferSelect;
+export type NewPlaylistMedia = typeof playlistMedia.$inferInsert;

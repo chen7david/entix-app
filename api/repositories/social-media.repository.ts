@@ -27,11 +27,11 @@ export class SocialMediaRepository {
     /**
      * Link a social media handle to a user.
      */
-    async insertUserSocialMedia(data: typeof schema.userSocialMedias.$inferInsert): Promise<void> {
+    async insertUserSocialMedia(data: schema.NewUserSocialMedia): Promise<void> {
         await this.db.insert(schema.userSocialMedias).values(data);
     }
 
-    async updateUserSocialMedia(id: string, userId: string, data: Partial<typeof schema.userSocialMedias.$inferInsert>): Promise<void> {
+    async updateUserSocialMedia(id: string, userId: string, data: Partial<schema.NewUserSocialMedia>): Promise<void> {
         await this.db.update(schema.userSocialMedias)
             .set(data)
             .where(

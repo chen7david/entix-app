@@ -5,7 +5,7 @@ import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createMockMember } from "../factories/member.factory";
 import { drizzle } from "drizzle-orm/d1";
-import { authUsers as userTable, authMembers as memberTable } from "@shared/db/schema";
+import { authUsers as userTable, authMembers as memberTable, type NewAuthUser } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 
 /**
@@ -194,7 +194,7 @@ export async function createSuperAdmin(params: {
     const db = drizzle(params.env.DB);
     await db
         .update(userTable)
-        .set({ role: "admin" } as Partial<typeof userTable.$inferInsert>)
+        .set({ role: "admin" } as Partial<NewAuthUser>)
         .where(eq(userTable.email, email));
 
     // Re-sign-in directly (NOT via getAuthCookie which calls sign-up again)

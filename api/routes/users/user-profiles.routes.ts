@@ -9,6 +9,7 @@ import {
     socialInputSchema,
     aggregateProfileResponse 
 } from "@shared/schemas/dto/user-profile.dto";
+import { successResponseSchema } from "@shared/schemas/dto/base.dto";
 
 export class UserProfileRoutes {
     static tags = ['User Profiles'];
@@ -36,7 +37,7 @@ export class UserProfileRoutes {
             body: jsonContent(profileBaseSchema, 'Profile Upsert')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Profile upserted'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Profile upserted'),
         },
     });
 
@@ -50,7 +51,7 @@ export class UserProfileRoutes {
             body: jsonContent(phoneInputSchema, 'Phone Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone number added'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Phone number added'),
         },
     });
 
@@ -64,7 +65,7 @@ export class UserProfileRoutes {
             body: jsonContent(phoneInputSchema, 'Phone Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone number updated'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Phone number updated'),
         },
     });
 
@@ -77,7 +78,7 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone number deleted'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Phone number deleted'),
         },
     });
 
@@ -91,7 +92,7 @@ export class UserProfileRoutes {
             body: jsonContent(addressInputSchema, 'Address Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address added'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Address added'),
         },
     });
 
@@ -105,7 +106,7 @@ export class UserProfileRoutes {
             body: jsonContent(addressInputSchema, 'Address Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address updated'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Address updated'),
         },
     });
 
@@ -118,7 +119,7 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address deleted'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Address deleted'),
         },
     });
 
@@ -132,7 +133,7 @@ export class UserProfileRoutes {
             body: jsonContent(socialInputSchema, 'Social Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social handle linked'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Social handle linked'),
         },
     });
 
@@ -146,7 +147,7 @@ export class UserProfileRoutes {
             body: jsonContent(socialInputSchema, 'Social Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social handle updated'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Social handle updated'),
         },
     });
 
@@ -159,7 +160,7 @@ export class UserProfileRoutes {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social handle deleted'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Social handle deleted'),
         },
     });
 }

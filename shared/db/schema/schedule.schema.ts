@@ -37,6 +37,7 @@ export const scheduledSessions = sqliteTable(
 );
 
 export type ScheduledSession = typeof scheduledSessions.$inferSelect;
+export type NewScheduledSession = typeof scheduledSessions.$inferInsert;
 
 export const sessionAttendances = sqliteTable(
     "session_attendances",
@@ -67,3 +68,4 @@ export const sessionAttendances = sqliteTable(
 );
 
 export type SessionAttendance = typeof sessionAttendances.$inferSelect;
+export type NewSessionAttendance = typeof sessionAttendances.$inferInsert;

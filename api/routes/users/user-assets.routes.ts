@@ -1,8 +1,9 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { HttpStatusCodes, HttpMethods } from "@api/helpers/http.helpers";
+import { HttpStatusCodes, HttpMethods, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { AppHandler } from "@api/helpers/types.helpers";
 import { getUploadService } from "@api/factories/upload.factory";
+import { UploadCompleteResponseSchema } from "@shared/schemas/dto/upload.dto";
 
 /**
  * Global User Asset Routes
@@ -24,18 +25,7 @@ export class UserAssetRoutes {
             }),
         },
         responses: {
-            [HttpStatusCodes.OK]: {
-                content: {
-                    "application/json": {
-                        schema: z.object({
-                            id: z.string(),
-                            url: z.string(),
-                            status: z.string(),
-                        }),
-                    },
-                },
-                description: "Upload completed successfully",
-            },
+            [HttpStatusCodes.OK]: jsonContent(UploadCompleteResponseSchema, "Upload completed successfully"),
         },
     });
 }

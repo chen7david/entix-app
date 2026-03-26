@@ -74,7 +74,7 @@ export class UserRepository {
     /**
      * Update an existing user's data
      */
-    async updateUser(userId: string, data: Partial<typeof schema.authUsers.$inferInsert>): Promise<void> {
+    async updateUser(userId: string, data: Partial<schema.NewAuthUser>): Promise<void> {
         await this.db.update(schema.authUsers)
             .set(data)
             .where(eq(schema.authUsers.id, userId));

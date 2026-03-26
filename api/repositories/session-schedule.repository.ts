@@ -1,17 +1,17 @@
 import { eq, and, sql, like, SQL } from "drizzle-orm";
 import { AppDb } from "@api/factories/db.factory";
 import { BatchItem } from "drizzle-orm/batch";
-import { scheduledSessions, sessionAttendances } from "@shared/db/schema";
+import { scheduledSessions, sessionAttendances, type NewScheduledSession, type NewSessionAttendance } from "@shared/db/schema";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 
 export class SessionScheduleRepository {
     constructor(private db: AppDb) {}
 
-    async createSessions(sessions: (typeof scheduledSessions.$inferInsert)[]) {
+    async createSessions(sessions: NewScheduledSession[]) {
         return this.db.insert(scheduledSessions).values(sessions).returning();
     }
 
-    async addAttendances(attendances: (typeof sessionAttendances.$inferInsert)[]) {
+    async addAttendances(attendances: NewSessionAttendance[]) {
         if (attendances.length === 0) return [];
         return this.db.insert(sessionAttendances).values(attendances).returning();
     }

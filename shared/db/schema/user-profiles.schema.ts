@@ -56,5 +56,8 @@ export const userAddresses = sqliteTable("user_addresses", {
 });
 
 export type UserProfile = typeof userProfiles.$inferSelect;
+export type NewUserProfile = typeof userProfiles.$inferInsert;
 export type UserPhoneNumber = typeof userPhoneNumbers.$inferSelect;
+export type NewUserPhoneNumber = typeof userPhoneNumbers.$inferInsert;
 export type UserAddress = typeof userAddresses.$inferSelect;
+export type NewUserAddress = typeof userAddresses.$inferInsert;

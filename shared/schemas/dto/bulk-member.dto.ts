@@ -1,4 +1,7 @@
 import { z } from '@hono/zod-openapi';
+import { OrgRole } from '../../auth/permissions';
+
+const timestampSchema = z.union([z.string(), z.date()]).optional();
 
 /**
  * Schema for bulk member import/export items
@@ -9,17 +12,17 @@ export const bulkMemberItemSchema = z.object({
     name: z.string().trim().min(1).openapi({ example: 'John Doe' }),
     role: z.enum(['admin', 'member', 'owner']).optional().openapi({ example: 'member' }),
     avatarUrl: z.string().url().optional().nullable().openapi({ example: 'https://example.com/avatar.jpg' }),
-    createdAt: z.string().optional().openapi({ example: '2023-01-01T00:00:00Z' }),
-    updatedAt: z.string().optional().openapi({ example: '2023-01-01T00:00:00Z' }),
+    createdAt: timestampSchema.openapi({ example: '2023-01-01T00:00:00Z' }),
+    updatedAt: timestampSchema.openapi({ example: '2023-01-01T00:00:00Z' }),
     profile: z.object({
         id: z.string().optional().openapi({ example: 'prof_123' }),
         firstName: z.string(),
         lastName: z.string(),
         displayName: z.string().optional().nullable().openapi({ example: 'Johnnie' }),
         sex: z.enum(['male', 'female', 'other']),
-        birthDate: z.string().optional(),
-        createdAt: z.string().optional(),
-        updatedAt: z.string().optional(),
+        birthDate: z.union([z.string(), z.date()]).optional().nullable(),
+        createdAt: timestampSchema,
+        updatedAt: timestampSchema,
     }).optional().nullable().openapi({ example: { firstName: 'John', lastName: 'Doe', sex: 'male' } }),
     phoneNumbers: z.array(z.object({
         id: z.string().optional(),
@@ -28,8 +31,8 @@ export const bulkMemberItemSchema = z.object({
         extension: z.string().optional().nullable(),
         label: z.string(),
         isPrimary: z.boolean().default(false),
-        createdAt: z.string().optional(),
-        updatedAt: z.string().optional(),
+        createdAt: timestampSchema,
+        updatedAt: timestampSchema,
     })).optional().openapi({ example: [{ countryCode: '+1', number: '1234567890', label: 'Work' }] }),
     addresses: z.array(z.object({
         id: z.string().optional(),
@@ -40,19 +43,21 @@ export const bulkMemberItemSchema = z.object({
         address: z.string(),
         label: z.string(),
         isPrimary: z.boolean().default(false),
-        createdAt: z.string().optional(),
-        updatedAt: z.string().optional(),
+        createdAt: timestampSchema,
+        updatedAt: timestampSchema,
     })).optional().openapi({ example: [{ country: 'USA', state: 'NY', city: 'New York', zip: '10001', address: '123 Main St', label: 'Home' }] }),
     socialMedia: z.array(z.object({
         id: z.string().optional(),
         type: z.string(),
         urlOrHandle: z.string(),
-        createdAt: z.string().optional(),
-        updatedAt: z.string().optional(),
+        createdAt: timestampSchema,
+        updatedAt: timestampSchema,
     })).optional().openapi({ example: [{ type: 'Facebook', urlOrHandle: 'johndoe' }] }),
 });
 
-export type BulkMemberItemDTO = z.infer<typeof bulkMemberItemSchema>;
+export type BulkMemberItemDTO = z.infer<typeof bulkMemberItemSchema> & {
+    role?: OrgRole;
+};
 
 /**
  * Schema for bulk metrics response

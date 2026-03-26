@@ -3,61 +3,13 @@ import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { BatchItem } from "drizzle-orm/batch";
 import { nanoid } from "nanoid";
+import { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 import { OrgRole } from "@shared/auth/permissions";
-
-export type ImportMemberInput = {
-    id?: string;
-    email: string;
-    name: string;
-    role?: OrgRole;
-    avatarUrl?: string | null;
-    createdAt?: string | Date;
-    updatedAt?: string | Date;
-    profile?: {
-        id?: string;
-        firstName: string;
-        lastName: string;
-        displayName?: string | null;
-        sex: 'male' | 'female' | 'other';
-        birthDate?: Date | string | null;
-        createdAt?: string | Date;
-        updatedAt?: string | Date;
-    } | null;
-    phoneNumbers?: {
-        id?: string;
-        countryCode: string;
-        number: string;
-        extension?: string | null;
-        label: string;
-        isPrimary?: boolean;
-        createdAt?: string | Date;
-        updatedAt?: string | Date;
-    }[];
-    addresses?: {
-        id?: string;
-        country: string;
-        state: string;
-        city: string;
-        zip: string;
-        address: string;
-        label: string;
-        isPrimary?: boolean;
-        createdAt?: string | Date;
-        updatedAt?: string | Date;
-    }[];
-    socialMedia?: {
-        id?: string;
-        type: string;
-        urlOrHandle: string;
-        createdAt?: string | Date;
-        updatedAt?: string | Date;
-    }[];
-};
 
 export class MemberImportService {
     constructor(private db: AppDb) { }
 
-    async importMembers(organizationId: string, members: ImportMemberInput[]) {
+    async importMembers(organizationId: string, members: BulkMemberItemDTO[]) {
         const results = {
             total: members.length,
             created: 0,
@@ -80,7 +32,7 @@ export class MemberImportService {
 
             // Pre-fetch existing data (chunked to avoid D1 parameter limits)
             const QUERY_CHUNK_SIZE = 50;
-            const existingUsers: (typeof schema.authUsers.$inferSelect)[] = [];
+            const existingUsers: schema.AuthUser[] = [];
             for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = uniqueEmails.slice(i, i + QUERY_CHUNK_SIZE);
                 const chunkResults = await this.db.query.authUsers.findMany({
@@ -93,7 +45,7 @@ export class MemberImportService {
             const userMapById = new Map(existingUsers.map(u => [u.id, u.id]));
 
             const userIds = existingUsers.map(u => u.id);
-            const existingMembers: (typeof schema.authMembers.$inferSelect)[] = [];
+            const existingMembers: schema.AuthMember[] = [];
             for (let i = 0; i < userIds.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = userIds.slice(i, i + QUERY_CHUNK_SIZE);
                 const chunkResults = await this.db.query.authMembers.findMany({

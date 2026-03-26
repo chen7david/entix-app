@@ -12,11 +12,11 @@ export class UserProfileRepository {
         });
     }
 
-    async insertProfile(data: typeof schema.userProfiles.$inferInsert): Promise<void> {
+    async insertProfile(data: schema.NewUserProfile): Promise<void> {
         await this.db.insert(schema.userProfiles).values(data);
     }
 
-    async updateProfile(userId: string, data: Partial<typeof schema.userProfiles.$inferInsert>): Promise<void> {
+    async updateProfile(userId: string, data: Partial<schema.NewUserProfile>): Promise<void> {
         await this.db.update(schema.userProfiles)
             .set(data)
             .where(eq(schema.userProfiles.userId, userId));
@@ -29,11 +29,11 @@ export class UserProfileRepository {
         });
     }
 
-    async insertPhoneNumber(data: typeof schema.userPhoneNumbers.$inferInsert): Promise<void> {
+    async insertPhoneNumber(data: schema.NewUserPhoneNumber): Promise<void> {
         await this.db.insert(schema.userPhoneNumbers).values(data);
     }
 
-    async updatePhoneNumber(id: string, userId: string, data: Partial<typeof schema.userPhoneNumbers.$inferInsert>): Promise<void> {
+    async updatePhoneNumber(id: string, userId: string, data: Partial<schema.NewUserPhoneNumber>): Promise<void> {
         await this.db.update(schema.userPhoneNumbers)
             .set(data)
             .where(
@@ -72,11 +72,11 @@ export class UserProfileRepository {
         });
     }
 
-    async insertAddress(data: typeof schema.userAddresses.$inferInsert): Promise<void> {
+    async insertAddress(data: schema.NewUserAddress): Promise<void> {
         await this.db.insert(schema.userAddresses).values(data);
     }
 
-    async updateAddress(id: string, userId: string, data: Partial<typeof schema.userAddresses.$inferInsert>): Promise<void> {
+    async updateAddress(id: string, userId: string, data: Partial<schema.NewUserAddress>): Promise<void> {
         await this.db.update(schema.userAddresses)
             .set(data)
             .where(

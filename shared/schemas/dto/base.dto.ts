@@ -15,3 +15,14 @@ export const baseSchema = z.object({
 });
 
 export type BaseDTO = z.infer<typeof baseSchema>;
+
+export const successResponseSchema = z.object({
+    success: z.boolean(),
+}).openapi('SuccessResponse');
+
+export const idResponseSchema = z.object({
+    id: z.string(),
+}).openapi('IdResponse');
+
+export type SuccessResponseDTO = z.infer<typeof successResponseSchema>;
+export type IdResponseDTO = z.infer<typeof idResponseSchema>;
