@@ -1,6 +1,6 @@
 import { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and, sql, lt } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { OrgRole } from "@shared/auth/permissions";
 
@@ -26,7 +26,7 @@ export type ImportMemberInput = {
         id?: string;
         countryCode: string;
         number: string;
-        extension?: string;
+        extension?: string | null;
         label: string;
         isPrimary?: boolean;
         createdAt?: string | Date;
@@ -53,178 +53,8 @@ export type ImportMemberInput = {
     }[];
 };
 
-export class BulkMemberService {
+export class MemberImportService {
     constructor(private db: AppDb) { }
-
-    async getDashboardMetrics(organizationId: string) {
-        const now = new Date();
-        const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-        // 1. Total Storage (Sum of completed uploads)
-        const storageResult = await this.db
-            .select({ total: sql<number>`sum(${schema.uploads.fileSize})` })
-            .from(schema.uploads)
-            .where(
-                and(
-                    eq(schema.uploads.organizationId, organizationId),
-                    eq(schema.uploads.status, "completed")
-                )
-            );
-        const totalStorage = Number(storageResult[0]?.total || 0);
-
-        // 2. Active Sessions (Sessions for users in this org that haven't expired)
-        const activeSessionsResult = await this.db
-            .select({ count: sql<number>`count(*)` })
-            .from(schema.authSessions)
-            .innerJoin(
-                schema.authMembers,
-                eq(schema.authSessions.userId, schema.authMembers.userId)
-            )
-            .where(
-                and(
-                    eq(schema.authMembers.organizationId, organizationId),
-                    sql`${schema.authSessions.expiresAt} > ${now.getTime()}`
-                )
-            );
-        const activeSessions = Number(activeSessionsResult[0]?.count || 0);
-
-        // 3. Engagement Risk (Members who haven't updated/logged in for 14 days)
-        const riskResult = await this.db
-            .select({ count: sql<number>`count(*)` })
-            .from(schema.authMembers)
-            .innerJoin(
-                schema.authUsers,
-                eq(schema.authMembers.userId, schema.authUsers.id)
-            )
-            .where(
-                and(
-                    eq(schema.authMembers.organizationId, organizationId),
-                    lt(schema.authUsers.updatedAt, twoWeeksAgo)
-                )
-            );
-        const engagementRisk = Number(riskResult[0]?.count || 0);
-
-        // 4. Total Members
-        const totalMembersResult = await this.db
-            .select({ count: sql<number>`count(*)` })
-            .from(schema.authMembers)
-            .where(eq(schema.authMembers.organizationId, organizationId));
-        const totalMembers = Number(totalMembersResult[0]?.count || 0);
-
-        // 5. Upcoming Birthdays (Next 7 days)
-        const allProfiles = await this.db
-            .select({
-                userId: schema.userProfiles.userId,
-                name: schema.authUsers.name,
-                birthDate: schema.userProfiles.birthDate,
-            })
-            .from(schema.userProfiles)
-            .innerJoin(schema.authUsers, eq(schema.userProfiles.userId, schema.authUsers.id))
-            .innerJoin(schema.authMembers, eq(schema.authUsers.id, schema.authMembers.userId))
-            .where(
-                and(
-                    eq(schema.authMembers.organizationId, organizationId),
-                    sql`${schema.userProfiles.birthDate} IS NOT NULL`
-                )
-            );
-
-        const upcomingBirthdaysData = allProfiles.map(p => {
-            if (!p.birthDate) return null;
-            const bday = new Date(p.birthDate);
-            const nextBday = new Date(now.getFullYear(), bday.getMonth(), bday.getDate());
-            if (nextBday < now) nextBday.setFullYear(now.getFullYear() + 1);
-            
-            const diffDays = Math.ceil((nextBday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            return {
-                userId: p.userId,
-                name: p.name!,
-                birthDate: p.birthDate.toISOString(),
-                daysUntil: diffDays,
-            };
-        }).filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 7)
-          .sort((a, b) => a.daysUntil - b.daysUntil);
-
-        return {
-            totalStorage,
-            activeSessions,
-            engagementRisk,
-            totalMembers,
-            upcomingBirthdays: upcomingBirthdaysData,
-        };
-    }
-
-    async exportMembers(organizationId: string) {
-        // We use the query API for easier relation handling in memory
-        const results = await this.db.query.authMembers.findMany({
-            where: eq(schema.authMembers.organizationId, organizationId),
-            with: {
-                user: {
-                    with: {
-                        profile: true,
-                        phoneNumbers: true,
-                        addresses: true,
-                        socialMedias: {
-                            with: {
-                                socialMediaType: true
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        return results.map(r => {
-            const user = r.user; 
-            return {
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                role: r.role as OrgRole,
-                avatarUrl: user.image,
-                createdAt: user.createdAt.toISOString(),
-                updatedAt: user.updatedAt.toISOString(),
-                profile: user.profile ? {
-                    id: user.profile.id,
-                    firstName: user.profile.firstName,
-                    lastName: user.profile.lastName,
-                    displayName: user.profile.displayName,
-                    sex: user.profile.sex as any,
-                    birthDate: user.profile.birthDate?.toISOString(),
-                    createdAt: user.profile.createdAt.toISOString(),
-                    updatedAt: user.profile.updatedAt.toISOString(),
-                } : null,
-                phoneNumbers: user.phoneNumbers.map(p => ({
-                    id: p.id,
-                    countryCode: p.countryCode,
-                    number: p.number,
-                    extension: p.extension,
-                    label: p.label,
-                    isPrimary: p.isPrimary,
-                    createdAt: p.createdAt.toISOString(),
-                    updatedAt: p.updatedAt.toISOString(),
-                })),
-                addresses: user.addresses.map(a => ({
-                    id: a.id,
-                    country: a.country,
-                    state: a.state,
-                    city: a.city,
-                    zip: a.zip,
-                    address: a.address,
-                    label: a.label,
-                    isPrimary: a.isPrimary,
-                    createdAt: a.createdAt.toISOString(),
-                    updatedAt: a.updatedAt.toISOString(),
-                })),
-                socialMedia: user.socialMedias.map(s => ({
-                    id: s.id,
-                    type: s.socialMediaType.name,
-                    urlOrHandle: s.urlOrHandle,
-                    createdAt: s.createdAt.toISOString(),
-                    updatedAt: s.updatedAt.toISOString(),
-                }))
-            };
-        });
-    }
 
     async importMembers(organizationId: string, members: ImportMemberInput[]) {
         const results = {
@@ -246,10 +76,10 @@ export class BulkMemberService {
             invalidMembers.forEach(m => results.errors.push(`Invalid email format: ${m.email}`));
 
             const uniqueEmails = [...new Set(validMembers.map(m => m.email.trim()))];
-            
-            // 1. Pre-fetch existing data (Chunked to avoid D1 parameter limits)
+
+            // Pre-fetch existing data (chunked to avoid D1 parameter limits)
             const QUERY_CHUNK_SIZE = 100;
-            const existingUsers: any[] = [];
+            const existingUsers: (typeof schema.authUsers.$inferSelect)[] = [];
             for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = uniqueEmails.slice(i, i + QUERY_CHUNK_SIZE);
                 const chunkResults = await this.db.query.authUsers.findMany({
@@ -262,7 +92,7 @@ export class BulkMemberService {
             const userMapById = new Map(existingUsers.map(u => [u.id, u.id]));
 
             const userIds = existingUsers.map(u => u.id);
-            const existingMembers: any[] = [];
+            const existingMembers: (typeof schema.authMembers.$inferSelect)[] = [];
             for (let i = 0; i < userIds.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = userIds.slice(i, i + QUERY_CHUNK_SIZE);
                 const chunkResults = await this.db.query.authMembers.findMany({
@@ -278,12 +108,11 @@ export class BulkMemberService {
             const socialTypes = await this.db.query.socialMediaTypes.findMany();
             const socialTypeMap = new Map(socialTypes.map(t => [t.name.toLowerCase(), t.id]));
 
+            // FORCE ROLE TO MEMBER — imported users are always non-privileged
+            const enforcedRole: OrgRole = "member";
             const batch: any[] = [];
-            
-            for (const input of validMembers) {
-                // FORCE ROLE TO MEMBER
-                const enforcedRole: OrgRole = "member";
 
+            for (const input of validMembers) {
                 let userId = input.id || userMapByEmail.get(input.email);
                 const isNewUser = !userId || (!userMapByEmail.has(input.email) && !userMapById.has(input.id!));
 
@@ -302,8 +131,8 @@ export class BulkMemberService {
                             updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                         }).onConflictDoUpdate({
                             target: schema.authUsers.email,
-                            set: { 
-                                name: input.name, 
+                            set: {
+                                name: input.name,
                                 image: input.avatarUrl,
                                 updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             }
@@ -311,11 +140,10 @@ export class BulkMemberService {
                     );
                     results.created++;
                 } else {
-                    // Update existing user avatar/name
                     batch.push(
                         this.db.update(schema.authUsers)
-                            .set({ 
-                                name: input.name, 
+                            .set({
+                                name: input.name,
                                 image: input.avatarUrl,
                                 updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             })
@@ -336,23 +164,20 @@ export class BulkMemberService {
                     results.linked++;
                     memberSet.add(userId!);
 
-                    // Also create an auth account for login if it's a new user or we want to ensure login is enabled
-                    // For credential provider, accountId is usually the userId or email. 
-                    // Based on UserRepository, it's the userId.
+                    // Credential account so the user can reset password and log in
                     batch.push(
                         this.db.insert(schema.authAccounts).values({
                             id: nanoid(),
                             userId: userId!,
                             accountId: userId!,
                             providerId: "credential",
-                            password: null, // Imported users must reset password to login via credentials
+                            password: null,
                             createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
                             updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                         }).onConflictDoNothing()
                     );
                 }
 
-                // Upsert Profile
                 if (input.profile) {
                     batch.push(
                         this.db.insert(schema.userProfiles).values({
@@ -371,7 +196,7 @@ export class BulkMemberService {
                                 firstName: input.profile.firstName,
                                 lastName: input.profile.lastName,
                                 displayName: input.profile.displayName ?? null,
-                                sex: input.profile.sex as any,
+                                sex: input.profile.sex,
                                 birthDate: input.profile.birthDate ? new Date(input.profile.birthDate) : null,
                                 updatedAt: new Date(),
                             }
@@ -379,7 +204,7 @@ export class BulkMemberService {
                     );
                 }
 
-                // Batch clean and re-insert 1-to-many relations for simplicity in import
+                // Delete-then-reinsert 1:many relations for idempotent import
                 if (input.phoneNumbers && input.phoneNumbers.length > 0) {
                     batch.push(this.db.delete(schema.userPhoneNumbers).where(eq(schema.userPhoneNumbers.userId, userId!)));
                     for (const p of input.phoneNumbers) {
@@ -434,7 +259,7 @@ export class BulkMemberService {
                 }
             }
 
-            // 3. Execute everything in batches
+            // Execute in batches to respect D1 statement limits
             const BATCH_CHUNK_SIZE = 100;
             for (let i = 0; i < batch.length; i += BATCH_CHUNK_SIZE) {
                 const chunk = batch.slice(i, i + BATCH_CHUNK_SIZE);

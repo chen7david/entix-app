@@ -9,7 +9,9 @@ import { PlaylistService } from "@api/services/playlist.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { UserProfileService } from "@api/services/user-profile.service";
 import { SocialMediaService } from "@api/services/social-media.service";
-import { BulkMemberService } from "@api/services/bulk-member.service";
+import { DashboardService } from "@api/services/dashboard.service";
+import { MemberExportService } from "@api/services/member-export.service";
+import { MemberImportService } from "@api/services/member-import.service";
 import { getDbClient } from "./db.factory";
 import {
     getUserRepository,
@@ -70,6 +72,14 @@ export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(getSessionScheduleRepository(ctx));
 };
 
-export const getBulkMemberService = (ctx: AppContext) => {
-    return new BulkMemberService(getDbClient(ctx));
+export const getDashboardService = (ctx: AppContext) => {
+    return new DashboardService(getDbClient(ctx));
+};
+
+export const getMemberExportService = (ctx: AppContext) => {
+    return new MemberExportService(getDbClient(ctx));
+};
+
+export const getMemberImportService = (ctx: AppContext) => {
+    return new MemberImportService(getDbClient(ctx));
 };
