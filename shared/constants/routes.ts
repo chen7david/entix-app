@@ -30,7 +30,8 @@ export const AppRoutes = {
             members: '/members',
             analytics: '/analytics',
             schedule: '/schedule',
-            uploads: '/uploads'
+            uploads: '/uploads',
+            bulk: '/manage/bulk'
         }
     },
     admin: {
