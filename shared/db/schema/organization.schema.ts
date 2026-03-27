@@ -22,6 +22,7 @@ export const authOrganizations = sqliteTable(
 );
 
 export type AuthOrganization = typeof authOrganizations.$inferSelect;
+export type NewAuthOrganization = typeof authOrganizations.$inferInsert;
 
 export const authMembers = sqliteTable(
     "auth_members",
@@ -44,6 +45,7 @@ export const authMembers = sqliteTable(
 );
 
 export type AuthMember = typeof authMembers.$inferSelect;
+export type NewAuthMember = typeof authMembers.$inferInsert;
 
 export const authInvitations = sqliteTable(
     "auth_invitations",
@@ -70,3 +72,4 @@ export const authInvitations = sqliteTable(
 );
 
 export type AuthInvitation = typeof authInvitations.$inferSelect;
+export type NewAuthInvitation = typeof authInvitations.$inferInsert;

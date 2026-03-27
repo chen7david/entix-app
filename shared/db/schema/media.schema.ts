@@ -8,23 +8,58 @@ import {
 } from "drizzle-orm/sqlite-core";
 import { authOrganizations } from "./organization.schema";
 import { authUsers } from "./auth.schema";
+import { nanoid } from "nanoid";
 
 export const uploads = sqliteTable(
     "uploads",
     {
-        id: text("id").primaryKey(),
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => nanoid()),
         originalName: text("original_name").notNull(),
         bucketKey: text("bucket_key").notNull(),
         url: text("url").notNull(),
         fileSize: integer("file_size").notNull(),
         contentType: text("content_type").notNull(),
-        status: text("status", { enum: ["pending", "completed", "failed"] }).default("pending").notNull(),
+        status: text("status", { enum: ["pending", "completed", "failed"] })
+            .notNull() // Reordered notNull and default
+            .default("pending"),
         organizationId: text("organization_id")
             .notNull()
             .references(() => authOrganizations.id, { onDelete: "cascade" }),
         uploadedBy: text("uploaded_by")
             .notNull()
             .references(() => authUsers.id, { onDelete: "cascade" }),
+        createdAt: integer("created_at", { mode: "timestamp" }) // Changed mode to "timestamp"
+            .notNull() // Reordered notNull and default
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+        updatedAt: integer("updated_at", { mode: "timestamp" }) // Changed mode to "timestamp"
+            .notNull() // Reordered notNull and default
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+            // Removed $onUpdate(() => /* @__PURE__ */ new Date())
+    },
+    (table) => [
+        index("upload_organizationId_idx").on(table.organizationId), // Renamed index
+        index("upload_uploadedBy_idx").on(table.uploadedBy), // Renamed index
+    ]
+);
+
+export type Upload = typeof uploads.$inferSelect; // Renamed type
+export type NewUpload = typeof uploads.$inferInsert; // Added new type
+
+export const userUploads = sqliteTable(
+    "user_uploads",
+    {
+        id: text("id").primaryKey(),
+        userId: text("user_id")
+            .notNull()
+            .references(() => authUsers.id, { onDelete: "cascade" }),
+        originalName: text("original_name").notNull(),
+        bucketKey: text("bucket_key").notNull(),
+        url: text("url").notNull(),
+        fileSize: integer("file_size").notNull(),
+        contentType: text("content_type").notNull(),
+        status: text("status", { enum: ["pending", "completed", "failed"] }).default("pending").notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
@@ -34,12 +69,12 @@ export const uploads = sqliteTable(
             .notNull(),
     },
     (table) => [
-        index("upload_organizationId_idx").on(table.organizationId),
-        index("upload_uploadedBy_idx").on(table.uploadedBy),
+        index("user_upload_userId_idx").on(table.userId),
     ]
 );
 
-export type Upload = typeof uploads.$inferSelect;
+export type UserUpload = typeof userUploads.$inferSelect;
+export type NewUserUpload = typeof userUploads.$inferInsert;
 
 export const media = sqliteTable(
     "media",
@@ -72,6 +107,7 @@ export const media = sqliteTable(
 );
 
 export type Media = typeof media.$inferSelect;
+export type NewMedia = typeof media.$inferInsert;
 
 export const playlists = sqliteTable(
     "playlists",
@@ -101,6 +137,7 @@ export const playlists = sqliteTable(
 );
 
 export type Playlist = typeof playlists.$inferSelect;
+export type NewPlaylist = typeof playlists.$inferInsert;
 
 export const playlistMedia = sqliteTable(
     "playlist_media",
@@ -124,3 +161,4 @@ export const playlistMedia = sqliteTable(
 );
 
 export type PlaylistMedia = typeof playlistMedia.$inferSelect;
+export type NewPlaylistMedia = typeof playlistMedia.$inferInsert;

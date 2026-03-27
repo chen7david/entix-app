@@ -1,4 +1,4 @@
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { ScheduleRoutes } from "./schedule.routes";
 import { getSessionScheduleService } from "@api/factories/service.factory";
@@ -9,11 +9,9 @@ export class ScheduleHandlers {
         const { organizationId } = ctx.req.valid("param");
         const { startDate, endDate, limit, cursor, direction, search } = ctx.req.valid("query");
         
-        // We can just grab the Repository directly if listSessions is mapped there
         const repo = getSessionScheduleRepository(ctx);
         const paginatedResult = await repo.getSessionsForOrg(organizationId, startDate, endDate, limit, cursor, direction, search);
         
-        // Zod output parsing workaround: SQLite Date objects back to numbers
         const normalizedItems = paginatedResult.items.map((s: any) => ({
             ...s,
             startTime: new Date(s.startTime).getTime(),

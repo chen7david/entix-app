@@ -1,7 +1,7 @@
 
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from 'hono/cors';
-import { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
+import type { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
 import { notFoundHandler } from "@api/middleware/not-found.middleware";
 import { globalErrorHandler } from "@api/middleware/global-error.middleware";
 import { frontendUrlMiddleware } from "@api/middleware/frontend-url.middleware";

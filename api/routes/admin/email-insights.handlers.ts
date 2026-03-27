@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { EmailInsightsRoutes } from "./email-insights.routes";
 import { NotFoundError, InternalServerError } from "@api/errors/app.error";
 import { getMailService } from "@api/factories/service.factory";
@@ -23,9 +23,6 @@ export class EmailInsightsHandler {
             throw new InternalServerError(`Failed to retrieve emails: ${error.message}`);
         }
 
-        // Resend's list API returns `{ object, data, has_more }`
-        // We cast to any here to satisfy the Hono OpenAPI type which expects a very specific structure from Resend
-        // which might have slight mismatches in optional fields or enum values.
         const result = data as any; 
         ctx.var.logger.info({ count: result.data?.length ?? 0 }, "Email list fetched from Resend");
 
@@ -46,7 +43,6 @@ export class EmailInsightsHandler {
 
         if (error) {
             ctx.var.logger.error({ emailId, error }, "Failed to get email from MailService");
-            // Resend returns 404-like errors when ID is not found
             const err = error as { name?: string; statusCode?: number };
             if (err.name === 'not_found' || err.statusCode === 404) {
                 throw new NotFoundError(`Email with id '${emailId}' not found`);

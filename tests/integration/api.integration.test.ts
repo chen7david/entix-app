@@ -34,7 +34,6 @@ describe("API Integration Test", () => {
         const body = await parseJson<{ items: UserDTO[]; nextCursor: string | null }>(res);
 
         expect(body.items).toBeInstanceOf(Array);
-        // At least the owner user should be present
         expect(body.items.length).toBeGreaterThanOrEqual(1);
         expect(body.items[0]).toHaveProperty("id");
     });

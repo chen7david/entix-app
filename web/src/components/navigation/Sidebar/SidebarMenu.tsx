@@ -1,6 +1,21 @@
 import React from 'react';
 import { Menu, type MenuProps } from "antd";
-import { HomeOutlined, BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined, TruckOutlined, BankOutlined, TeamOutlined, UserAddOutlined, CloudUploadOutlined, PlaySquareOutlined, OrderedListOutlined, CalendarOutlined, AreaChartOutlined } from "@ant-design/icons";
+import { 
+    DashboardOutlined, 
+    BookOutlined, 
+    ShoppingOutlined, 
+    WalletOutlined, 
+    YoutubeOutlined, 
+    TruckOutlined, 
+    BankOutlined, 
+    TeamOutlined, 
+    UserAddOutlined, 
+    CloudUploadOutlined, 
+    PlaySquareOutlined, 
+    OrderedListOutlined, 
+    CalendarOutlined, 
+    AreaChartOutlined 
+} from "@ant-design/icons";
 import { useLocation } from "react-router";
 import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
 import { AppRoutes } from "@shared/constants/routes";
@@ -24,9 +39,9 @@ export const SidebarMenu: React.FC = () => {
 
     const menuItems: MenuProps['items'] = [
         {
-            label: 'Home',
+            label: 'Dashboard',
             key: AppRoutes.org.dashboard.index,
-            icon: <HomeOutlined />,
+            icon: <DashboardOutlined />,
             disabled: !slug,
         },
         {

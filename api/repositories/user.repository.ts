@@ -1,12 +1,11 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
 import * as schema from "@shared/db/schema";
 import { eq, and, like, or } from "drizzle-orm";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
+import type { Auth } from "better-auth";
 
-// Better Auth server instance type is complex and internal-only. 
-// We use unknown for the instance to ensure zero any, and type cast locally in methods.
-type AuthInstance = unknown;
+
 
 export type CreateUserInput = {
     email: string;
@@ -30,7 +29,7 @@ export type CreateUserResult = {
 export class UserRepository {
     constructor(
         private db: AppDb,
-        private auth: AuthInstance
+        private auth: Auth
     ) { }
 
     /**
@@ -38,8 +37,7 @@ export class UserRepository {
      * Email verification is automatically sent if sendOnSignUp is enabled in config
      */
     async createUser(input: CreateUserInput): Promise<CreateUserResult> {
-        const auth = (this.auth as any); // Type cast for internal library call
-        const result = await auth.api.signUpEmail({
+        const result = await this.auth.api.signUpEmail({
             body: {
                 email: input.email,
                 password: input.password,
@@ -75,7 +73,7 @@ export class UserRepository {
     /**
      * Update an existing user's data
      */
-    async updateUser(userId: string, data: Partial<typeof schema.authUsers.$inferInsert>): Promise<void> {
+    async updateUser(userId: string, data: Partial<schema.NewAuthUser>): Promise<void> {
         await this.db.update(schema.authUsers)
             .set(data)
             .where(eq(schema.authUsers.id, userId));
@@ -86,8 +84,7 @@ export class UserRepository {
      * Uses BetterAuth's built-in password reset functionality
      */
     async sendPasswordResetEmail(email: string, redirectTo: string): Promise<void> {
-        const auth = (this.auth as any); // Type cast for internal library call
-        await auth.api.requestPasswordReset({
+        await this.auth.api.requestPasswordReset({
             body: { email, redirectTo }
         });
     }
@@ -106,7 +103,7 @@ export class UserRepository {
 
         const conditions = [eq(schema.authMembers.organizationId, organizationId)];
         if (cursorWhere) conditions.push(cursorWhere);
-        
+
         if (search) {
             // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
             conditions.push(or(
@@ -120,9 +117,9 @@ export class UserRepository {
             .from(schema.authMembers)
             .innerJoin(schema.authUsers, eq(schema.authMembers.userId, schema.authUsers.id))
             .where(and(...conditions))
-            .orderBy(...(orderBy as any))
+            .orderBy(...orderBy)
             .limit(limit + 1);
-        
+
         const result = processPaginatedResult(
             membersJoined,
             limit,
@@ -132,7 +129,17 @@ export class UserRepository {
 
         return {
             ...result,
-            items: result.items.map((row) => ({ ...row.member, user: row.user })),
+            items: result.items.map((row) => ({
+                ...row.user,
+                user: row.user,
+                userId: row.user.id,
+                // Override user-level fields with organization-specific ones if necessary
+                // e.g., the member's role in this specific org
+                role: row.member.role,
+                createdAt: row.member.createdAt,
+                updatedAt: row.user.updatedAt,
+                id: row.user.id // Keep user's ID as the primary ID for the UserDTO
+            })),
         };
     }
 
@@ -172,7 +179,7 @@ export class UserRepository {
     /**
      * Execute multiple prepared queries atomically
      */
-    async executeBatch(queries: unknown[]) {
-        return await this.db.batch(queries as any);
+    async executeBatch(queries: Parameters<AppDb["batch"]>[0]) {
+        return await this.db.batch(queries);
     }
 }

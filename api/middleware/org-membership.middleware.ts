@@ -1,7 +1,8 @@
-import type { AppContext } from "@api/helpers/types.helpers";
-import type { Next } from "hono";
+import { createMiddleware } from "hono/factory";
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { ForbiddenError, InternalServerError, UnauthorizedError } from "@api/errors/app.error";
 import { getMemberRepository } from "@api/factories/repository.factory";
+
 
 /**
  * Middleware to verify user is a member of the organization
@@ -17,7 +18,7 @@ import { getMemberRepository } from "@api/factories/repository.factory";
  * Usage:
  * app.use('/api/v1/orgs/:organizationId/*', requireOrgMembership);
  */
-export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
+export const requireOrgMembership = createMiddleware<AppEnv>(async (ctx, next) => {
     const userId = ctx.get('userId');
     const organizationId = ctx.req.param('organizationId');
 
@@ -29,7 +30,6 @@ export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
         throw new InternalServerError("organizationId parameter missing from route");
     }
 
-    // Super admins bypass org membership check
     if (ctx.get('isSuperAdmin')) {
         ctx.var.logger.info({ userId, organizationId }, "Super admin bypass — skipping membership check");
         ctx.set('organizationId', organizationId);
@@ -39,7 +39,6 @@ export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
         return;
     }
 
-    // Use repository pattern via factory
     const memberRepo = getMemberRepository(ctx);
     const membership = await memberRepo.findMembership(userId, organizationId);
 
@@ -49,10 +48,9 @@ export const requireOrgMembership = async (ctx: AppContext, next: Next) => {
         );
     }
 
-    // Store membership details in context
     ctx.set('organizationId', organizationId);
     ctx.set('membershipId', membership.id);
     ctx.set('membershipRole', membership.role);
 
     await next();
-};
+});

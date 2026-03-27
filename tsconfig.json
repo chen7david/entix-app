@@ -11,9 +11,9 @@
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx",
     "types": [
-      "./worker-configuration.d.ts",
       "@cloudflare/vitest-pool-workers"
     ],
+    "verbatimModuleSyntax": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "paths": {
@@ -28,4 +28,14 @@
       ]
     }
   },
+  "include": [
+    "api/**/*",
+    "shared/**/*",
+    "tests/**/*",
+    "*.ts"
+  ],
+  "exclude": [
+    "web/**/*",
+    "node_modules"
+  ]
 }

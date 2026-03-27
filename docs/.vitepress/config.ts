@@ -1,13 +1,11 @@
 import { defineConfig } from 'vitepress'
 
-// https://vitepress.dev/reference/site-config
 export default defineConfig({
     title: "Entix-App Docs",
     description: "Documentation for Entix-App",
     base: '/docs/',
     outDir: '../web/dist/docs',
     themeConfig: {
-        // https://vitepress.dev/reference/default-theme-config
         nav: [
             { text: 'Home', link: '/' },
             { text: 'How to Write Docs', link: '/how-to-write-docs' }

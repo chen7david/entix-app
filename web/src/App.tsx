@@ -32,6 +32,7 @@ import { OrganizationUploadsPage } from "./pages/organization/OrganizationUpload
 import { OrganizationPlaylistsPage } from "./pages/organization/OrganizationPlaylistsPage";
 import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
 import { OrganizationMediaPage } from "./pages/organization/OrganizationMediaPage";
+import { MemberImportExportPage } from "./pages/organization/MemberImportExportPage";
 import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/onboarding/SelectOrganizationPage";
 import { AcceptInvitationPage } from "./pages/onboarding/AcceptInvitationPage";
@@ -124,6 +125,7 @@ export default function App() {
                   <Route path="members" element={<OrganizationMembersPage />} />
                   <Route path="invitations" element={<OrganizationInvitationsPage />} />
                   <Route path="uploads" element={<OrganizationUploadsPage />} />
+                  <Route path="manage/bulk" element={<MemberImportExportPage />} />
                   <Route path="organizations" element={<OrganizationListPage />} />
                 </Route>
               </Route>

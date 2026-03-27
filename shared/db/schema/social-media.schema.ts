@@ -31,4 +31,6 @@ export const userSocialMedias = sqliteTable("user_social_medias", {
 });
 
 export type SocialMediaType = typeof socialMediaTypes.$inferSelect;
+export type NewSocialMediaType = typeof socialMediaTypes.$inferInsert;
 export type UserSocialMedia = typeof userSocialMedias.$inferSelect;
+export type NewUserSocialMedia = typeof userSocialMedias.$inferInsert;

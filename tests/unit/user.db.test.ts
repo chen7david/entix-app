@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb, TestDb } from "../lib/utils";
+import { createTestDb } from "../lib/utils";
+import type { TestDb } from "../lib/utils";
 import { authUsers as user } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { createMockUser } from "../factories/user.factory";
@@ -18,10 +19,8 @@ describe("AuthUser Integration Test", () => {
             email: "test@example.com"
         });
 
-        // Insert
         await db.insert(user).values(newUser);
 
-        // Retrieve
         const result = await db.select().from(user).where(eq(user.id, newUser.id));
 
         expect(result).toHaveLength(1);

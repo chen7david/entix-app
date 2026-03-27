@@ -33,10 +33,8 @@ describe("Member Creation Integration Tests", () => {
     it("should fail when user with email already exists", async () => {
         const payload = createMockMemberCreationPayload();
 
-        // First request - should succeed
         await client.orgs.members.create(orgId, payload);
 
-        // Second request with same email - should fail
         const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(409);
@@ -46,8 +44,6 @@ describe("Member Creation Integration Tests", () => {
         const payload = createMockMemberCreationPayload();
         const res = await client.orgs.members.create("fake-id", payload);
 
-        // Middleware checks membership before handler checks org existence
-        // User is not a member of fake-id, so 403 is returned
         expect(res.status).toBe(403);
     });
 
@@ -61,7 +57,6 @@ describe("Member Creation Integration Tests", () => {
     });
 
     it("should fail when user lacks permission (unauthorized member)", async () => {
-        // Create another user who is NOT in the original org
         const intruderCookie = await getAuthCookie({
             app,
             env,
@@ -72,16 +67,13 @@ describe("Member Creation Integration Tests", () => {
             }
         });
 
-        // Create a client for the intruder
         const intruderClient = createTestClient(app, env, intruderCookie);
 
-        // Try to add member to the FIRST organization (should fail - not a member)
         const payload = createMockMemberCreationPayload();
         const res = await intruderClient.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(403);
         const body = await parseJson<ErrorResponse>(res);
-        // Middleware now includes org ID in error message
         expect(body.message).toContain("You are not a member of organization");
     });
 });

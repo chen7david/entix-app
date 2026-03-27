@@ -1,7 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
 import { z } from "zod";
-import { requireAuth } from "@api/middleware/auth.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { 
     profileBaseSchema, 
@@ -10,6 +9,7 @@ import {
     socialInputSchema,
     aggregateProfileResponse 
 } from "@shared/schemas/dto/user-profile.dto";
+import { successResponseSchema } from "@shared/schemas/dto/base.dto";
 
 export class UserProfileRoutes {
     static tags = ['User Profiles'];
@@ -18,12 +18,12 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.GET,
         path: '/users/{userId}/profile',
-        middleware: [requireAuth, requirePermission('user-profile', ['read'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['read'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() })
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(aggregateProfileResponse, 'User profile aggregate securely explicitly'),
+            [HttpStatusCodes.OK]: jsonContent(aggregateProfileResponse, 'User profile with phones, addresses, and socials'),
         },
     });
 
@@ -31,13 +31,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(profileBaseSchema, 'Profile Upsert')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Profile successfully upserted cleanly accurately'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Profile upserted'),
         },
     });
 
@@ -45,13 +45,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.POST,
         path: '/users/{userId}/profile/phones',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(phoneInputSchema, 'Phone Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone magically safely intelligently explicitly seamlessly correctly.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Phone number added'),
         },
     });
 
@@ -59,13 +59,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile/phones/{id}',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
             body: jsonContent(phoneInputSchema, 'Phone Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone effortlessly correctly natively expertly.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Phone number updated'),
         },
     });
 
@@ -73,12 +73,12 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.DELETE,
         path: '/users/{userId}/profile/phones/{id}',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Phone removed gently reliably explicitly stably successfully compactly.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Phone number deleted'),
         },
     });
 
@@ -86,13 +86,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.POST,
         path: '/users/{userId}/profile/addresses',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(addressInputSchema, 'Address Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address successfully logically properly explicitly efficiently.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Address added'),
         },
     });
 
@@ -100,13 +100,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile/addresses/{id}',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
             body: jsonContent(addressInputSchema, 'Address Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address safely realistically dependably smartly.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Address updated'),
         },
     });
 
@@ -114,12 +114,12 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.DELETE,
         path: '/users/{userId}/profile/addresses/{id}',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Address removed gracefully effortlessly stably carefully rationally seamlessly efficiently.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Address deleted'),
         },
     });
 
@@ -127,13 +127,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.POST,
         path: '/users/{userId}/profile/socials',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string() }),
             body: jsonContent(socialInputSchema, 'Social Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social Linked!'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Social handle linked'),
         },
     });
 
@@ -141,13 +141,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.PUT,
         path: '/users/{userId}/profile/socials/{id}',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
             body: jsonContent(socialInputSchema, 'Social Update Input')
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social realistically smartly beautifully smoothly natively.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Social handle updated'),
         },
     });
 
@@ -155,12 +155,13 @@ export class UserProfileRoutes {
         tags: UserProfileRoutes.tags,
         method: HttpMethods.DELETE,
         path: '/users/{userId}/profile/socials/{id}',
-        middleware: [requireAuth, requirePermission('user-profile', ['update'], 'userId')] as const,
+        middleware: [requirePermission('user-profile', ['update'], 'userId')] as const,
         request: {
             params: z.object({ userId: z.string(), id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.object({ success: z.boolean() }), 'Social removed gracefully.'),
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, 'Social handle deleted'),
         },
     });
 }
+

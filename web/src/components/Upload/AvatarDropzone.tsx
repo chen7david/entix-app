@@ -50,8 +50,8 @@ export const AvatarDropzone = ({
         onProgress?.({ percent: 0 });
 
         try {
-            // 1. Request presigned URL
-            const presignResponse = await fetch(`/api/v1/orgs/${organizationId}/uploads`, {
+            // 1. Request presigned URL via the dedicated user avatar endpoint
+            const presignResponse = await fetch(`/api/v1/users/${userId}/avatar/presigned-url`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -80,9 +80,9 @@ export const AvatarDropzone = ({
 
             onProgress?.({ percent: 60 });
 
-            // 3. Mark upload as complete
+            // 3. Mark upload as complete via user assets endpoint
             const completeResponse = await fetch(
-                `/api/v1/orgs/${organizationId}/uploads/${uploadId}/complete`,
+                `/api/v1/users/${userId}/assets/${uploadId}/complete`,
                 { method: "POST" }
             );
 

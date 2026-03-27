@@ -1,4 +1,4 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq, and, like, or } from "drizzle-orm";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
@@ -65,7 +65,7 @@ export class MediaRepository {
         const items = await this.db.select()
             .from(schema.media)
             .where(and(...filters))
-            .orderBy(...(orderBy as any))
+            .orderBy(...orderBy)
             .limit(limit + 1);
 
         return processPaginatedResult(
@@ -89,7 +89,6 @@ export class MediaRepository {
     }
 
     async incrementPlayCount(id: string, organizationId: string): Promise<void> {
-        // Drizzle specific atomic increment using SQL operator
         const { sql } = await import("drizzle-orm");
         await this.db.update(schema.media)
             .set({ playCount: sql`${schema.media.playCount} + 1` })

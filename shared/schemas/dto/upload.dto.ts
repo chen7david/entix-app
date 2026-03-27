@@ -20,4 +20,19 @@ export const UploadResponseSchema = z.object({
     updatedAt: z.union([z.number(), z.date(), z.string(), z.null()]).optional().transform(stableTimestamp).nullable(),
 }).openapi("UploadResponse");
 
+export const PresignedUrlResponseSchema = z.object({
+    uploadId: z.string(),
+    presignedUrl: z.string(),
+    url: z.string(),
+    bucketKey: z.string(),
+}).openapi("PresignedUrlResponse");
+
+export const UploadCompleteResponseSchema = z.object({
+    id: z.string(),
+    url: z.string(),
+    status: z.string(),
+}).openapi("UploadCompleteResponse");
+
 export type UploadDto = z.infer<typeof UploadResponseSchema>;
+export type PresignedUrlResponseDto = z.infer<typeof PresignedUrlResponseSchema>;
+export type UploadCompleteResponseDto = z.infer<typeof UploadCompleteResponseSchema>;

@@ -31,6 +31,7 @@ export const authUsers = sqliteTable("auth_users", {
 });
 
 export type AuthUser = typeof authUsers.$inferSelect;
+export type NewAuthUser = typeof authUsers.$inferInsert;
 
 export const authSessions = sqliteTable(
     "auth_sessions",
@@ -56,6 +57,7 @@ export const authSessions = sqliteTable(
 );
 
 export type AuthSession = typeof authSessions.$inferSelect;
+export type NewAuthSession = typeof authSessions.$inferInsert;
 
 export const authAccounts = sqliteTable(
     "auth_accounts",
@@ -88,6 +90,7 @@ export const authAccounts = sqliteTable(
 );
 
 export type AuthAccount = typeof authAccounts.$inferSelect;
+export type NewAuthAccount = typeof authAccounts.$inferInsert;
 
 export const authVerifications = sqliteTable(
     "auth_verifications",
@@ -108,3 +111,4 @@ export const authVerifications = sqliteTable(
 );
 
 export type AuthVerification = typeof authVerifications.$inferSelect;
+export type NewAuthVerification = typeof authVerifications.$inferInsert;

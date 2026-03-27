@@ -2,8 +2,8 @@
 
 ## Core Principles
 
-1. **Plural Table Names**: All database tables MUST use absolute pluralized names natively (e.g. `playlists`, `uploads`, `scheduled_sessions`).
-2. **Typescript Exports**: All internal Typescript variable schemas exported mapping tables MUST also reflect the identical pluralized names accurately natively (e.g. `export const playlists = sqliteTable(...)`). Wait! The exception is `auth` variables which are heavily namespaced natively.
+1. **Plural Table Names**: All database tables MUST use pluralized names (e.g. `playlists`, `uploads`, `scheduled_sessions`).
+2. **Typescript Exports**: All internal Typescript variable schemas exported mapping tables MUST also reflect the identical pluralized names (e.g. `export const playlists = sqliteTable(...)`). The exception is `auth` variables which are heavily namespaced by better-auth.
 
 ## Schema Modularization Strategy
 
@@ -14,13 +14,13 @@ All schemas live strictly within `shared/db/schema/`:
 - `organization.schema.ts`: Tenancy dependencies
 - `media.schema.ts`: System assets
 - `schedule.schema.ts`: Event sequences
-- `relations.schema.ts`: A purely dedicated relationship mapping file natively bridging dependencies seamlessly.
+- `relations.schema.ts`: Cross-domain relationship mappings (Drizzle `relations()` calls only).
 
 ## Strict Rules on Better-Auth Tables
 
 The system's identity abstraction is securely mounted on `better-auth`.
 **WARNING:** 
 `auth_users`, `auth_sessions`, `auth_accounts`, and `auth_verifications` **ARE MANAGED EXPLICITLY** by `better-auth`.
-Do NOT manually alter their column names or definitions unless instructed by the auth library specifications cleanly expertly organically reliably confidently dependably solidly creatively properly cleanly firmly correctly smoothly dependably. Future extensions are possible natively.
+Do NOT manually alter their column names or definitions unless explicitly instructed by the auth library. Future extensions via `additionalFields` are supported.
 
-*Authored reliably to maintain the Entix Architectural standards cleanly.*
+*Maintained to uphold Entix architectural standards.*

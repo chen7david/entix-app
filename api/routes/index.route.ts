@@ -4,7 +4,6 @@ import { memberRoutes } from "./orgs/members.index";
 import { emailInsightsRoutes } from "./admin/email-insights.index";
 import { adminOrgsRoutes } from "./admin/orgs.index";
 import { uploadRoutes } from "./orgs/uploads.index";
-import { avatarRoutes } from "./orgs/avatar.index";
 import { mediaRoutes } from "./orgs/media.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
@@ -17,7 +16,6 @@ export const routes = [
     emailInsightsRoutes,
     adminOrgsRoutes,
     uploadRoutes,
-    avatarRoutes,
     mediaRoutes,
     playlistRoutes,
     scheduleRoutes,

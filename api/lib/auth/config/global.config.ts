@@ -1,7 +1,7 @@
 
-import { BetterAuthOptions } from 'better-auth';
+import type { BetterAuthOptions } from 'better-auth';
 import { getBetterAuthPluginsConfig } from './plugins.config';
-import { AppContext } from '@api/helpers/types.helpers';
+import type { AppContext } from '@api/helpers/types.helpers';
 import { MailService } from '@api/services/mailer.service';
 
 export const betterAuthGlobalOptions = (ctx?: AppContext, mailer?: MailService): BetterAuthOptions => ({

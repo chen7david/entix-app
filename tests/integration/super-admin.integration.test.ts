@@ -36,7 +36,6 @@ describe("Super Admin Bypass Tests", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const superAdminClient = createTestClient(app, env, cookie);
 
-            // Create two members — both should succeed for a super admin
             const payload1 = createMockMemberCreationPayload();
             const res1 = await superAdminClient.orgs.members.create(ownerOrgId, payload1);
             expect(res1.status).toBe(201);
@@ -49,7 +48,6 @@ describe("Super Admin Bypass Tests", () => {
 
     describe("Regular user still blocked", () => {
         it("non-super-admin user cannot bypass membership check", async () => {
-            // Create a regular user (NOT super admin, NOT org member)
             const regularCookie = await getAuthCookie({
                 app,
                 env,

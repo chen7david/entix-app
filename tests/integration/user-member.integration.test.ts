@@ -17,13 +17,11 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
     });
 
     it("POST /api/v1/orgs/:orgId/members should rollback user creation atomically on setup failure", async () => {
-        // Use the proper test helper to get a real valid database session
         const { orgId, cookie } = await createAuthenticatedOrg({ app, env });
 
         const fakeConflictUser = createMockUserDbRecord({ id: "fake-conflict-user" });
         await db.insert(schema.authUsers).values(fakeConflictUser);
 
-        // Seed a member explicitly to trigger a UNIQUE constraint violation later
         await db.insert(schema.authMembers).values({
             id: "pre-existing-conflict",
             organizationId: orgId,
@@ -35,7 +33,6 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
         const targetEmail = "new-member@example.com";
         const dummyName = "New AuthMember";
 
-        // Mock the member repository `prepareAdd` to intentionally insert a conflicting 'id'
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
         const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
@@ -54,10 +51,8 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
 
         const res = await realClient.orgs.members.create(orgId, payload);
 
-        // Ensure the handler caught the Drizzle batch error
         expect(res.status).toBe(500);
 
-        // Verify the user was NOT created (rolled back atomically)
         const user = await db.query.authUsers.findFirst({
             where: eq(schema.authUsers.email, targetEmail)
         });

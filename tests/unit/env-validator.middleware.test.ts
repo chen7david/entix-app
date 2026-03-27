@@ -10,16 +10,14 @@ import { parseJson, type ErrorResponse } from '../lib/api-request.helper';
  */
 const buildTestApp = (env: Partial<CloudflareBindings>) => {
     const app = new Hono<AppEnv>();
-    // Inject the validator
     app.use('*', envValidatorMiddleware());
-    // A simple success route to confirm next() was called
     app.get('/health', (c) => c.json({ ok: true }, 200));
 
     return (path: string) =>
-        app.request(path, {}, { ...env } as CloudflareBindings);
+        app.request(path, {}, { ...env } as unknown as CloudflareBindings);
 };
 
-const validEnv: Partial<CloudflareBindings> = {
+const validEnv: any = {
     FRONTEND_URL: 'http://localhost:8000',
     BETTER_AUTH_SECRET: '12345678901234567890123456789012',
     RESEND_API_KEY: 're_test_key_1234567890',

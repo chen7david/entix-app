@@ -1,4 +1,4 @@
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { MediaRoutes } from "./media.routes";
 import { getMediaService } from "@api/factories/service.factory";
@@ -32,7 +32,6 @@ export class MediaHandlers {
         const updated = await mediaService.updateMedia(organizationId, mediaId, updates);
         ctx.var.logger.info({ organizationId, mediaId }, "Media updated");
         
-        // Assert updated is not undefined because service throws if not found
         return ctx.json(updated!, HttpStatusCodes.OK);
     };
 

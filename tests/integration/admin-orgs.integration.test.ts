@@ -38,7 +38,6 @@ describe("Admin Organizations Integration", () => {
 
     describe("Super Admin Access", () => {
         it("returns 200 OK and lists all organizations for super admin", async () => {
-            // Seed a few organizations into the db directly
             const ctxMock: any = { env };
             const { getDbClient } = await import("@api/factories/db.factory");
             const db = getDbClient(ctxMock);
@@ -60,8 +59,6 @@ describe("Admin Organizations Integration", () => {
             expect(body.some(org => org.slug === "test-org-1")).toBe(true);
             expect(body.some(org => org.slug === "test-org-2")).toBe(true);
 
-            // Validate the explicit Zod schema matches our payload format 
-            // createdAt should be a JS number (milliseconds) because we map it
             const firstOrg = body[0];
             expect(typeof firstOrg.id).toBe('string');
             expect(typeof firstOrg.name).toBe('string');

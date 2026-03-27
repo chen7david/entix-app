@@ -1,4 +1,4 @@
-import { SignUpWithOrgDTO } from "@shared/schemas/dto/auth.dto";
+import type { SignUpWithOrgDTO } from "@shared/schemas/dto/auth.dto";
 
 export function createMockSignUpWithOrgPayload(overrides: Partial<SignUpWithOrgDTO> = {}): SignUpWithOrgDTO {
     const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();

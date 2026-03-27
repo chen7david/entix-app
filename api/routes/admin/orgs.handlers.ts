@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { AdminOrgsRoutes } from "./orgs.routes";
 import { getOrganizationService } from "@api/factories/service.factory";
 
@@ -12,7 +12,7 @@ export class AdminOrgsHandler {
 
         const mappedOrgs = orgs.map(org => ({
             ...org,
-            createdAt: org.createdAt.getTime()
+            createdAt: org.createdAt.getTime(),
         }));
 
         ctx.var.logger.info({ count: mappedOrgs.length }, "Global organizations fetched");

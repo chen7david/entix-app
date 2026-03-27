@@ -55,7 +55,6 @@ export class PlaylistService {
         if (updates.coverArtUploadId) {
             coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(updates.coverArtUploadId, organizationId);
 
-            // Clean up old cover artifact globally if replaced
             if (currentPlaylist.coverArtUrl) {
                 await this.uploadService.deleteUploadByUrlGlobalSafely(currentPlaylist.coverArtUrl);
             }
@@ -79,15 +78,12 @@ export class PlaylistService {
     }
 
     async setPlaylistSequence(playlistId: string, organizationId: string, mediaIds: string[]) {
-        // Must verify existence and permissions first
         await this.getPlaylist(playlistId, organizationId);
         
-        // Push atomic sequence to repository
         await this.playlistRepo.setMediaSequence(playlistId, mediaIds);
     }
 
     async getPlaylistSequence(playlistId: string, organizationId: string) {
-        // Enforce org bounds
         await this.getPlaylist(playlistId, organizationId);
         
         return await this.playlistRepo.getMediaSequence(playlistId);

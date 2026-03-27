@@ -1,4 +1,4 @@
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { PlaylistRoutes } from "./playlist.routes";
 import { getPlaylistService } from "@api/factories/service.factory";

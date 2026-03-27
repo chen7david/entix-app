@@ -1,5 +1,5 @@
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { AppHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import { OrgUploadsRoutes } from "./uploads.routes";
 import { getUploadService } from "@api/factories/upload.factory";
 import { stableTimestamp } from "@shared/schemas/dto/upload.dto";
@@ -17,7 +17,7 @@ export class OrgUploadsHandler {
 
         try {
             const uploadService = getUploadService(ctx);
-            const result = await uploadService.createPresignedUrl(organizationId, userId, originalName, contentType, fileSize);
+            const result = await uploadService.createPresignedUrl("uploads", organizationId, userId, originalName, contentType, fileSize);
 
             ctx.var.logger.info({ uploadId: result.uploadId, organizationId }, "Presigned URL requested");
 
@@ -57,7 +57,6 @@ export class OrgUploadsHandler {
 
             ctx.var.logger.info({ organizationId, count: uploads.length }, "Uploads retrieved");
 
-            // Manually map to DTO format to ensure numbers are returned and satisfy TS
             const result = uploads.map(u => ({
                 ...u,
                 createdAt: stableTimestamp(u.createdAt),

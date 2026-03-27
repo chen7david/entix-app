@@ -1,4 +1,4 @@
-import { AppContext } from "@api/helpers/types.helpers";
+import type { AppContext } from "@api/helpers/types.helpers";
 import { organization } from "better-auth/plugins";
 import { ac, member, owner, admin } from "@shared/auth/permissions";
 import { MailService } from "@api/services/mailer.service";

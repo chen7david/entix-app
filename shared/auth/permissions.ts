@@ -5,8 +5,10 @@ export const statement = {
     ...defaultStatements,
     "organization": ["update", "delete"],
     "invitation": ["create", "cancel"],
-    "member": ["read", "create", "update", "delete"],
+    "member": ["read", "create", "update", "delete", "bulk-import", "bulk-export"],
     "upload": ["read", "create", "update", "delete"],
+    "avatar": ["create", "update", "delete"],
+    "dashboard": ["read"],
     "media": ["read", "create", "update", "delete"],
     "social-media-type": ["read", "create", "update", "delete"],
     "user-profile": ["read", "update"],
@@ -19,7 +21,6 @@ export const ac = createAccessControl(statement);
 export const roles = {
     member: ac.newRole({
         "member": ["read"],
-        "upload": ["read", "create", "update"],
         "media": ["read"],
         "user-profile": ["read", "update"],
         "schedule": ["read"],
@@ -28,8 +29,10 @@ export const roles = {
     admin: ac.newRole({
         "organization": ["update"],
         "invitation": ["create", "cancel"],
-        "member": ["read", "create", "update", "delete"],
+        "member": ["read", "create", "update", "delete", "bulk-import", "bulk-export"],
         "upload": ["read", "create", "update", "delete"],
+        "avatar": ["create", "update", "delete"],
+        "dashboard": ["read"],
         "media": ["read", "create", "update", "delete"],
         "social-media-type": ["read", "create", "update", "delete"],
         "user-profile": ["read", "update"],
@@ -39,8 +42,10 @@ export const roles = {
     owner: ac.newRole({
         "organization": ["update", "delete"],
         "invitation": ["create", "cancel"],
-        "member": ["read", "create", "update", "delete"],
+        "member": ["read", "create", "update", "delete", "bulk-import", "bulk-export"],
         "upload": ["read", "create", "update", "delete"],
+        "avatar": ["create", "update", "delete"],
+        "dashboard": ["read"],
         "media": ["read", "create", "update", "delete"],
         "social-media-type": ["read", "create", "update", "delete"],
         "user-profile": ["read", "update"],

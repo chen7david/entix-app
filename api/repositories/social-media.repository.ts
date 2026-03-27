@@ -1,4 +1,4 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
 import { eq, and } from "drizzle-orm";
 
@@ -13,7 +13,7 @@ export class SocialMediaRepository {
     }
 
     /**
-     * Find linked social media accounts natively explicitly for the targeted user.
+     * Find all linked social media accounts for a user.
      */
     async findUserSocialMedias(userId: string): Promise<schema.UserSocialMedia[]> {
         return await this.db.query.userSocialMedias.findMany({
@@ -25,13 +25,13 @@ export class SocialMediaRepository {
     }
 
     /**
-     * Link a new custom identity handle strictly to the generic user safely neatly.
+     * Link a social media handle to a user.
      */
-    async insertUserSocialMedia(data: typeof schema.userSocialMedias.$inferInsert): Promise<void> {
+    async insertUserSocialMedia(data: schema.NewUserSocialMedia): Promise<void> {
         await this.db.insert(schema.userSocialMedias).values(data);
     }
 
-    async updateUserSocialMedia(id: string, userId: string, data: Partial<typeof schema.userSocialMedias.$inferInsert>): Promise<void> {
+    async updateUserSocialMedia(id: string, userId: string, data: Partial<schema.NewUserSocialMedia>): Promise<void> {
         await this.db.update(schema.userSocialMedias)
             .set(data)
             .where(
@@ -43,7 +43,7 @@ export class SocialMediaRepository {
     }
 
     /**
-     * Unlink standard handles seamlessly forcefully properly smoothly manually beautifully securely organically carefully confidently neatly elegantly successfully automatically smartly natively.
+     * Delete a user's linked social media handle.
      */
     async deleteUserSocialMedia(id: string, userId: string): Promise<void> {
         await this.db.delete(schema.userSocialMedias)

@@ -20,7 +20,6 @@ export class RegistrationService {
     ) { }
 
     async signupWithOrg(input: SignupData) {
-        // Pre-validate uniqueness
         const existingUser = await this.userRepo.findUserByEmail(input.email);
         if (existingUser) {
             throw new ConflictError("User already exists");
@@ -32,7 +31,6 @@ export class RegistrationService {
             throw new ConflictError("Organization name already taken");
         }
 
-        // Generate absolute IDs
         const uId = nanoid();
         const oId = nanoid();
         const acctId = nanoid();
@@ -41,13 +39,11 @@ export class RegistrationService {
 
         const hashedPassword = input.password ? await hashPassword(input.password) : await hashPassword(nanoid(32));
 
-        // Prepare queries
         const userQuery = this.userRepo.prepareCreateUser(uId, input.email, input.name, emailVerified);
         const accountQuery = this.userRepo.prepareCreateAccount(acctId, uId, "credential", hashedPassword);
         const orgQuery = this.orgRepo.prepareCreate(oId, input.organizationName!, slug);
         const memberQuery = this.memberRepo.prepareAdd(memberId, oId, uId, "owner");
 
-        // Atomic multi-domain execution
         await this.userRepo.executeBatch([
             userQuery,
             accountQuery,
@@ -71,13 +67,11 @@ export class RegistrationService {
     }
 
     async createUserAndMember(email: string, name: string, organizationId: string, role: string) {
-        // Pre-validate uniqueness
         const existingUser = await this.userRepo.findUserByEmail(email);
         if (existingUser) {
             throw new ConflictError("User with this email already exists");
         }
 
-        // Generate absolute IDs
         const uId = nanoid();
         const acctId = nanoid();
         const memberId = nanoid();
@@ -86,12 +80,10 @@ export class RegistrationService {
         const dummyPassword = nanoid(32);
         const hashedPassword = await hashPassword(dummyPassword);
 
-        // Prepare queries
         const userQuery = this.userRepo.prepareCreateUser(uId, email, name, emailVerified);
         const accountQuery = this.userRepo.prepareCreateAccount(acctId, uId, "credential", hashedPassword);
         const memberQuery = this.memberRepo.prepareAdd(memberId, organizationId, uId, role);
 
-        // Atomic multi-domain execution
         await this.userRepo.executeBatch([
             userQuery,
             accountQuery,

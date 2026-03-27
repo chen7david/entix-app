@@ -52,11 +52,9 @@ describe('SessionScheduleService Architecture Bounds', () => {
         expect(result[0].seriesId).toBeDefined();
         expect(result[0].seriesId).toEqual(result[3].seriesId); // all arrays grouped safely
         
-        // Exact 1 week apart interval mapping
         const timeDiff = result[1].startTime.getTime() - result[0].startTime.getTime();
         expect(timeDiff).toBe(7 * 24 * 60 * 60 * 1000); 
         
-        // 8 total attendance maps securely batched (4 occurrences * 2 users)
         expect(mockRepo.addAttendances).toHaveBeenCalledWith(expect.arrayContaining([
             expect.objectContaining({ userId: "usr_abc" }),
             expect.objectContaining({ userId: "usr_xyz" })
@@ -72,7 +70,6 @@ describe('SessionScheduleService Architecture Bounds', () => {
             recurrenceRule: "FREQ=WEEKLY;COUNT=4",
         });
 
-        // Simulating the repo deleting the remaining 3 events
         mockRepo.deleteFollowingSessions.mockResolvedValue([
             { id: "sess_anchor" }, { id: "sess_next1" }, { id: "sess_next2" }
         ]);
@@ -92,7 +89,6 @@ describe('SessionScheduleService Architecture Bounds', () => {
         expect(result.success).toBe(true);
         expect(mockRepo.deleteFollowingSessions).toHaveBeenCalledWith("series_123", mockOriginalStartDate);
         
-        // Because "deleted" returned 3 arrays, our algorithm should rebuild exactly 3
         expect(mockRepo.createSessions).toHaveBeenCalledWith(expect.arrayContaining([
             expect.objectContaining({ 
                 title: "Advanced Math Revamped",
@@ -101,7 +97,6 @@ describe('SessionScheduleService Architecture Bounds', () => {
             })
         ]));
         
-        // Ensure chronological offsets step strictly weekly starting from the NEW chronological anchor
         const insertedData = mockRepo.createSessions.mock.calls[0][0];
         expect(insertedData).toHaveLength(3);
         expect(insertedData[0].startTime.getTime()).toBe(NEW_START_TIME);

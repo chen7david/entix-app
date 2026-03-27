@@ -1,4 +1,4 @@
-import { AuthUser } from "@shared/db/schema";
+import type { AuthUser } from "@shared/db/schema";
 
 export function createMockUser(overrides: Partial<AuthUser> = {}): AuthUser {
     const now = new Date();
@@ -6,6 +6,7 @@ export function createMockUser(overrides: Partial<AuthUser> = {}): AuthUser {
 
     return {
         id: id,
+        xid: id.substring(0, 8),
         name: `AuthUser ${id.substring(0, 8)}`,
         email: `user.${id.substring(0, 8)}@example.com`,
         emailVerified: false,
@@ -14,6 +15,8 @@ export function createMockUser(overrides: Partial<AuthUser> = {}): AuthUser {
         banned: false,
         banReason: null,
         banExpires: null,
+        theme: "system",
+        timezone: "UTC",
         createdAt: now,
         updatedAt: now,
         ...overrides,

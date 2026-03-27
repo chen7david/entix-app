@@ -4,7 +4,8 @@ import { env } from "cloudflare:test";
 import { createTestDb } from "../lib/utils";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createTestClient, type TestClient } from "../lib/test-client";
-import { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
+import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
+import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
@@ -37,11 +38,9 @@ describe("Auth Integration Test", () => {
     it("POST /api/v1/auth/signup-with-org should return error for existing user", async () => {
         const payload = createMockSignUpWithOrgPayload();
 
-        // First request to create user
         const setupRes = await client.auth.signUpWithOrg(payload);
         expect(setupRes.status).toBe(201);
 
-        // Second request with same user
         const res = await client.auth.signUpWithOrg(payload);
 
         expect(res.status).toBe(409);
@@ -53,11 +52,9 @@ describe("Auth Integration Test", () => {
         const payload1 = createMockSignUpWithOrgPayload();
         const payload2 = createMockSignUpWithOrgPayload();
 
-        // First request to create organization
         const setupRes = await client.auth.signUpWithOrg(payload1);
         expect(setupRes.status).toBe(201);
 
-        // Second request with same organization name but DIFFERENT email
         payload2.email = `other.${Date.now()}.${Math.random()}@example.com`;
         payload2.organizationName = payload1.organizationName;
         const res = await client.auth.signUpWithOrg(payload2);
@@ -70,7 +67,6 @@ describe("Auth Integration Test", () => {
     it("POST /api/v1/auth/signup-with-org should rollback user and organization atomically on setup failure", async () => {
         const payload = createMockSignUpWithOrgPayload();
 
-        // Seed valid user and org to satisfy Foreign Key constraints
         await db.insert(schema.authUsers).values({
             id: "dummy-user",
             name: "Dummy",
@@ -89,7 +85,6 @@ describe("Auth Integration Test", () => {
             createdAt: new Date(),
         });
 
-        // Seed a member explicitly to trigger a UNIQUE constraint violation later
         await db.insert(schema.authMembers).values({
             id: "pre-existing-conflict",
             organizationId: "dummy-org",
@@ -98,7 +93,6 @@ describe("Auth Integration Test", () => {
             createdAt: new Date(),
         });
 
-        // Mock the member repository `prepareAdd` to intentionally insert a conflicting 'id'
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
         const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
@@ -113,18 +107,15 @@ describe("Auth Integration Test", () => {
 
         const res = await client.auth.signUpWithOrg(payload);
 
-        // Ensure the handler caught the Drizzle batch error
         expect(res.status).toBe(500);
         const body = await res.json() as { message: string };
         expect(body.message).toBe("Failed to setup organization, please try again");
 
-        // Verify the user was NOT created (rolled back atomically)
         const user = await db.query.authUsers.findFirst({
             where: eq(schema.authUsers.email, payload.email)
         });
         expect(user).toBeUndefined();
 
-        // Verify the organization was NOT created (rolled back atomically)
         const slug = payload.organizationName.toLowerCase().replace(/[^a-z0-9]/g, "-");
         const org = await db.query.authOrganizations.findFirst({
             where: eq(schema.authOrganizations.slug, slug)
@@ -136,10 +127,8 @@ describe("Auth Integration Test", () => {
     it("POST /api/v1/auth/sign-in/email should successfully authenticate user and create session", async () => {
         const payload = createMockSignUpWithOrgPayload();
 
-        // Register the user first
         await client.auth.signUpWithOrg(payload);
 
-        // Attempt login via sign-in/email POST natively testing Better Auth Drizzle bindings
         const signInPayload = {
             email: payload.email,
             password: payload.password
@@ -159,5 +148,26 @@ describe("Auth Integration Test", () => {
         expect(body).toHaveProperty("user");
         expect(body).toHaveProperty("token");
         expect(body.user.email).toBe(payload.email);
+    });
+
+    it("GET /api/v1/auth/organization/get-full-organization should return 200", async () => {
+        const { cookie, orgId, orgData } = await createAuthenticatedOrg({ app, env });
+
+        const req = new Request(`http://localhost/api/v1/auth/organization/get-full-organization?organizationId=${orgId}`, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                "Cookie": cookie
+            },
+        });
+
+        const res = await app.request(req, {}, env);
+
+        expect(res.status).not.toBe(500);
+        expect(res.status).toBe(200);
+
+        const fullOrgBody = await res.json() as any;
+        expect(fullOrgBody).toHaveProperty("id");
+        expect(fullOrgBody.name).toBe(orgData.organization.name);
     });
 });

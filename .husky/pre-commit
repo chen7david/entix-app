@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Only regenerate worker-configuration.d.ts if wrangler.toml is staged
+if git diff --cached --name-only | grep -q "wrangler.toml"; then
+  echo "🔧 wrangler.toml changed — regenerating worker-configuration.d.ts..."
+  npm run cf-typegen
+  git add worker-configuration.d.ts
+  echo "✅ worker-configuration.d.ts updated and staged."
+fi
