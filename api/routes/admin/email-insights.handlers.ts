@@ -1,6 +1,22 @@
 import { InternalServerError, NotFoundError } from "@api/errors/app.error";
 import { getMailService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import { z } from "zod";
+
+const resendEmailSchema = z.object({
+    id: z.string(),
+    to: z.array(z.string()),
+    subject: z.string(),
+    created_at: z.string(),
+    from: z.string().optional(),
+    html: z.string().optional(),
+    text: z.string().optional(),
+});
+
+const resendListResponseSchema = z.object({
+    data: z.array(resendEmailSchema).optional(),
+    has_more: z.boolean().optional(),
+});
 
 export const EmailInsightsHandler = {
     list: async (ctx: any) => {
@@ -21,7 +37,7 @@ export const EmailInsightsHandler = {
             throw new InternalServerError(`Failed to retrieve emails: ${error.message}`);
         }
 
-        const result = data as any;
+        const result = resendListResponseSchema.parse(data);
         ctx.var.logger.info({ count: result.data?.length ?? 0 }, "Email list fetched from Resend");
 
         return ctx.json(
@@ -29,7 +45,7 @@ export const EmailInsightsHandler = {
                 object: "list" as const,
                 data: result.data ?? [],
                 has_more: result.has_more ?? false,
-            } as any,
+            },
             HttpStatusCodes.OK
         );
     },
@@ -56,6 +72,6 @@ export const EmailInsightsHandler = {
         }
 
         ctx.var.logger.info({ emailId }, "Email detail fetched from MailService");
-        return ctx.json(data as any, HttpStatusCodes.OK);
+        return ctx.json(resendEmailSchema.parse(data), HttpStatusCodes.OK);
     },
 };

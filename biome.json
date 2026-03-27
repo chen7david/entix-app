@@ -38,7 +38,8 @@
             },
             "style": {
                 "useImportType": "error",
-                "noNonNullAssertion": "warn"
+                "noNonNullAssertion": "warn",
+                "noParameterProperties": "off"
             },
             "a11y": {
                 "useKeyWithClickEvents": "off",

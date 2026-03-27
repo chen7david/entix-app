@@ -15,13 +15,13 @@ export class SocialMediaRepository {
     /**
      * Find all linked social media accounts for a user.
      */
-    async findUserSocialMedias(userId: string): Promise<schema.UserSocialMedia[]> {
-        return await this.db.query.userSocialMedias.findMany({
+    async findUserSocialMedias(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
+        return (await this.db.query.userSocialMedias.findMany({
             where: eq(schema.userSocialMedias.userId, userId),
             with: {
                 socialMediaType: true,
             },
-        });
+        })) as schema.UserSocialMediaWithRelations[];
     }
 
     /**

@@ -62,18 +62,20 @@ export class MemberImportService {
             const batch: BatchItem<"sqlite">[] = [];
 
             for (const input of validMembers) {
-                let userId = input.id || userMapByEmail.get(input.email);
+                const existingUserId = input.id || userMapByEmail.get(input.email);
                 const isNewUser =
-                    !userId || (!userMapByEmail.has(input.email) && !userMapById.has(input.id!));
+                    !existingUserId ||
+                    (!userMapByEmail.has(input.email) && (!input.id || !userMapById.has(input.id)));
+
+                const targetUserId = existingUserId || nanoid();
 
                 if (isNewUser) {
-                    userId = userId || nanoid();
-                    userMapByEmail.set(input.email, userId);
+                    userMapByEmail.set(input.email, targetUserId);
                     batch.push(
                         this.db
                             .insert(schema.authUsers)
                             .values({
-                                id: userId,
+                                id: targetUserId,
                                 email: input.email,
                                 name: input.name,
                                 image: input.avatarUrl,
@@ -103,33 +105,33 @@ export class MemberImportService {
                                 image: input.avatarUrl,
                                 updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             })
-                            .where(eq(schema.authUsers.id, userId!))
+                            .where(eq(schema.authUsers.id, targetUserId))
                     );
                 }
 
-                if (isNewUser || !memberSet.has(userId!)) {
+                if (isNewUser || !memberSet.has(targetUserId)) {
                     batch.push(
                         this.db
                             .insert(schema.authMembers)
                             .values({
                                 id: nanoid(),
                                 organizationId,
-                                userId: userId!,
+                                userId: targetUserId,
                                 role: enforcedRole,
                                 createdAt: new Date(),
                             })
                             .onConflictDoNothing()
                     );
                     results.linked++;
-                    memberSet.add(userId!);
+                    memberSet.add(targetUserId);
 
                     batch.push(
                         this.db
                             .insert(schema.authAccounts)
                             .values({
                                 id: nanoid(),
-                                userId: userId!,
-                                accountId: userId!,
+                                userId: targetUserId,
+                                accountId: targetUserId,
                                 providerId: "credential",
                                 password: null,
                                 createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
@@ -145,7 +147,7 @@ export class MemberImportService {
                             .insert(schema.userProfiles)
                             .values({
                                 id: input.profile.id || nanoid(),
-                                userId: userId!,
+                                userId: targetUserId,
                                 firstName: input.profile.firstName,
                                 lastName: input.profile.lastName,
                                 displayName: input.profile.displayName ?? null,
@@ -180,13 +182,13 @@ export class MemberImportService {
                     batch.push(
                         this.db
                             .delete(schema.userPhoneNumbers)
-                            .where(eq(schema.userPhoneNumbers.userId, userId!))
+                            .where(eq(schema.userPhoneNumbers.userId, targetUserId))
                     );
                     for (const p of input.phoneNumbers) {
                         batch.push(
                             this.db.insert(schema.userPhoneNumbers).values({
                                 id: p.id || nanoid(),
-                                userId: userId!,
+                                userId: targetUserId,
                                 countryCode: p.countryCode,
                                 number: p.number,
                                 extension: p.extension ?? null,
@@ -203,13 +205,13 @@ export class MemberImportService {
                     batch.push(
                         this.db
                             .delete(schema.userAddresses)
-                            .where(eq(schema.userAddresses.userId, userId!))
+                            .where(eq(schema.userAddresses.userId, targetUserId))
                     );
                     for (const a of input.addresses) {
                         batch.push(
                             this.db.insert(schema.userAddresses).values({
                                 id: a.id || nanoid(),
-                                userId: userId!,
+                                userId: targetUserId,
                                 country: a.country,
                                 state: a.state,
                                 city: a.city,
@@ -228,7 +230,7 @@ export class MemberImportService {
                     batch.push(
                         this.db
                             .delete(schema.userSocialMedias)
-                            .where(eq(schema.userSocialMedias.userId, userId!))
+                            .where(eq(schema.userSocialMedias.userId, targetUserId))
                     );
                     for (const s of input.socialMedia) {
                         const typeId = socialTypeMap.get(s.type.toLowerCase());
@@ -236,7 +238,7 @@ export class MemberImportService {
                             batch.push(
                                 this.db.insert(schema.userSocialMedias).values({
                                     id: s.id || nanoid(),
-                                    userId: userId!,
+                                    userId: targetUserId,
                                     socialMediaTypeId: typeId,
                                     urlOrHandle: s.urlOrHandle,
                                     createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),

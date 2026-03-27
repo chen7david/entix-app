@@ -42,3 +42,7 @@ export type SocialMediaType = typeof socialMediaTypes.$inferSelect;
 export type NewSocialMediaType = typeof socialMediaTypes.$inferInsert;
 export type UserSocialMedia = typeof userSocialMedias.$inferSelect;
 export type NewUserSocialMedia = typeof userSocialMedias.$inferInsert;
+
+export type UserSocialMediaWithRelations = UserSocialMedia & {
+    socialMediaType: SocialMediaType;
+};

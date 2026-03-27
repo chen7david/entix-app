@@ -20,12 +20,17 @@ export class RegistrationService {
     ) {}
 
     async signupWithOrg(input: SignupData) {
+        if (!input.organizationName) {
+            throw new ConflictError("Organization name is required for registration");
+        }
+
         const existingUser = await this.userRepo.findUserByEmail(input.email);
         if (existingUser) {
             throw new ConflictError("User already exists");
         }
 
-        const slug = input.organizationName!.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const organizationName = input.organizationName;
+        const slug = organizationName.toLowerCase().replace(/[^a-z0-9]/g, "-");
         const existingOrg = await this.orgRepo.findBySlug(slug);
         if (existingOrg) {
             throw new ConflictError("Organization name already taken");
@@ -53,7 +58,7 @@ export class RegistrationService {
             "credential",
             hashedPassword
         );
-        const orgQuery = this.orgRepo.prepareCreate(oId, input.organizationName!, slug);
+        const orgQuery = this.orgRepo.prepareCreate(oId, organizationName, slug);
         const memberQuery = this.memberRepo.prepareAdd(memberId, oId, uId, "owner");
 
         await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
@@ -67,7 +72,7 @@ export class RegistrationService {
             },
             organization: {
                 id: oId,
-                name: input.organizationName!,
+                name: organizationName,
                 slug,
             },
         };

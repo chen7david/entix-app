@@ -9,8 +9,8 @@ export class MemberHandler {
     static createMember: AppHandler<typeof MemberRoutes.createMember> = async (ctx) => {
         const { email, name, role } = ctx.req.valid("json");
 
-        const currentUserId = ctx.get("userId")!;
-        const organizationId = ctx.get("organizationId")!;
+        const currentUserId = ctx.get("userId");
+        const organizationId = ctx.get("organizationId");
 
         ctx.var.logger.info(
             { currentUserId, organizationId, email, name, role },

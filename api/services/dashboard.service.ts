@@ -80,7 +80,7 @@ export class DashboardService {
                 );
                 return {
                     userId: p.userId,
-                    name: p.name!,
+                    name: p.name ?? "Unknown User",
                     birthDate: p.birthDate.toISOString(),
                     daysUntil,
                 };

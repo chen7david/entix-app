@@ -9,7 +9,7 @@ export class SocialMediaService {
         return await this.socialRepo.findAllSocialMediaTypes();
     }
 
-    async getUserSocialMedias(userId: string): Promise<schema.UserSocialMedia[]> {
+    async getUserSocialMedias(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
         return await this.socialRepo.findUserSocialMedias(userId);
     }
 

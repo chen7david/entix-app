@@ -36,7 +36,7 @@ export class UserAvatarHandlers {
     static updateAvatar: AppHandler<typeof UserAvatarRoutes.updateAvatar> = async (ctx) => {
         const { userId: targetUserId } = ctx.req.valid("param");
         const { uploadId } = ctx.req.valid("json");
-        const callerId = ctx.get("userId")!;
+        const callerId = ctx.get("userId");
 
         const avatarService = getAvatarService(ctx);
         const result = await avatarService.updateAvatar(targetUserId, uploadId, callerId);

@@ -10,7 +10,7 @@ export class UserProfileHandler {
         const socialService = getSocialMediaService(ctx);
         const data = await service.getProfileAggregate(userId);
         const socialMedias = await socialService.getUserSocialMedias(userId);
-        return ctx.json({ ...data, socialMedias } as any, HttpStatusCodes.OK);
+        return ctx.json({ ...data, socialMedias }, HttpStatusCodes.OK);
     };
 
     static upsertProfile: AppHandler<typeof UserProfileRoutes.upsertProfile> = async (ctx) => {

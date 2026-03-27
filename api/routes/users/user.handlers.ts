@@ -5,7 +5,7 @@ import type { UserRoutes } from "./user.routes";
 
 export class UserHandler {
     static findAll: AppHandler<typeof UserRoutes.findAll> = async (ctx) => {
-        const organizationId = ctx.get("organizationId")!;
+        const organizationId = ctx.get("organizationId");
         const { limit, cursor, direction, search } = ctx.req.valid("query");
 
         ctx.var.logger.info({ organizationId }, `Fetching users for organization`);

@@ -108,12 +108,13 @@ export class UserRepository {
 
         if (search) {
             // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
-            conditions.push(
-                or(
-                    like(schema.authUsers.name, `%${search}%`),
-                    like(schema.authUsers.email, `%${search}%`)
-                )!
+            const searchFilter = or(
+                like(schema.authUsers.name, `%${search}%`),
+                like(schema.authUsers.email, `%${search}%`)
             );
+            if (searchFilter) {
+                conditions.push(searchFilter);
+            }
         }
 
         const membersJoined = await this.db

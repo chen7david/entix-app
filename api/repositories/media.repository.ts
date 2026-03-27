@@ -53,12 +53,13 @@ export class MediaRepository {
         }
 
         if (search) {
-            filters.push(
-                or(
-                    like(schema.media.title, `%${search}%`),
-                    like(schema.media.description, `%${search}%`)
-                )!
+            const searchFilter = or(
+                like(schema.media.title, `%${search}%`),
+                like(schema.media.description, `%${search}%`)
             );
+            if (searchFilter) {
+                filters.push(searchFilter);
+            }
         }
 
         const items = await this.db
