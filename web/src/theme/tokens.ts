@@ -99,12 +99,18 @@ export const getThemeConfig = (isDark: boolean): ThemeConfig => {
 
     // Deep merge components (simple implementation for our known structure)
     const mergedComponents: ThemeConfig["components"] = { ...sharedComponents };
-    for (const key in activeComponents) {
-        const componentKey = key as keyof typeof activeComponents;
-        mergedComponents[componentKey] = {
-            ...(sharedComponents[componentKey as keyof typeof sharedComponents] || {}),
-            ...activeComponents[componentKey],
-        } as unknown;
+
+    // Explicitly merge overrides for known components to maintain full type safety
+    // during the "simple implementation" phase.
+    if (activeComponents.Card) {
+        mergedComponents.Card = { ...sharedComponents.Card, ...activeComponents.Card };
+    }
+    if (activeComponents.Layout) {
+        // Layout is only in activeComponents, so this works safely
+        mergedComponents.Layout = activeComponents.Layout;
+    }
+    if (activeComponents.Menu) {
+        mergedComponents.Menu = { ...sharedComponents.Menu, ...activeComponents.Menu };
     }
 
     return {

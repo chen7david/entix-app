@@ -2,13 +2,11 @@ import { OrganizationSwitcher } from "@web/src/components/organization/Organizat
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { Spin, Typography } from "antd";
 import React from "react";
-import { useNavigate } from "react-router";
 
 const { Title, Text } = Typography;
 
 export const SelectOrganizationPage: React.FC = () => {
     const { loading, activeOrganization, checkOrganizationStatus } = useOrganization();
-    const _navigate = useNavigate();
 
     React.useEffect(() => {
         if (activeOrganization) {

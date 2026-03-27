@@ -9,6 +9,15 @@ if [ $? -ne 0 ]; then
 fi
 echo "✅ Biome check passed."
 
+# Run type check
+echo "⏳ Running type check..."
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ Type check failed — fix the above errors and recommit."
+  exit 1
+fi
+echo "✅ Type check passed."
+
 # Regenerate worker-configuration.d.ts if wrangler.toml is staged
 if git diff --cached --name-only | grep -q "wrangler.toml"; then
   echo "🔧 wrangler.toml changed — regenerating worker-configuration.d.ts..."
