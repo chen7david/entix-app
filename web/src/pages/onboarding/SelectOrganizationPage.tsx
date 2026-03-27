@@ -10,9 +10,7 @@ export const SelectOrganizationPage: React.FC = () => {
 
     React.useEffect(() => {
         if (activeOrganization) {
-            if (activeOrganization) {
-                checkOrganizationStatus(); // Use checkOrganizationStatus to navigate
-            }
+            checkOrganizationStatus(); // Use checkOrganizationStatus to navigate
         }
     }, [activeOrganization, checkOrganizationStatus]);
 

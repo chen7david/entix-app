@@ -47,7 +47,14 @@ export const useOrganization = () => {
 
     // getOrgLink removed as per AppRoutes enforcing abstract context natively
 
-    const checkOrganizationStatus = async () => {
+    const setActive = useCallback(
+        async (organizationId: string) => {
+            return setActiveMutation(organizationId);
+        },
+        [setActiveMutation]
+    );
+
+    const checkOrganizationStatus = useCallback(async () => {
         // 1. Fetch and cache organizations
         const orgs = await queryClient.fetchQuery({
             queryKey: ["organizations"],
@@ -85,14 +92,7 @@ export const useOrganization = () => {
 
         // More than 1 organization and no active one
         navigate(AppRoutes.onboarding.selectOrganization);
-    };
-
-    const setActive = useCallback(
-        async (organizationId: string) => {
-            return setActiveMutation(organizationId);
-        },
-        [setActiveMutation]
-    );
+    }, [queryClient, navigate, setActive]);
 
     return {
         organizations,
