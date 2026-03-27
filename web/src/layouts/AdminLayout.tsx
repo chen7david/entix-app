@@ -1,7 +1,7 @@
-import { Outlet } from "react-router";
-import { Layout, theme } from "antd";
-import { AdminDesktopSidebar } from "./AdminDesktopSidebar";
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
+import { Layout, theme } from "antd";
+import { Outlet } from "react-router";
+import { AdminDesktopSidebar } from "./AdminDesktopSidebar";
 
 const { Sider, Content } = Layout;
 
@@ -18,7 +18,7 @@ export const AdminLayout: React.FC = () => {
                 <Content
                     className="overflow-auto relative"
                     style={{
-                        backgroundColor: token.colorBgLayout
+                        backgroundColor: token.colorBgLayout,
                     }}
                 >
                     <ImpersonationBanner />

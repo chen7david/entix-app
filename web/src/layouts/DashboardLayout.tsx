@@ -1,9 +1,9 @@
-import { Outlet } from "react-router";
-import { Layout, theme } from "antd";
-import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
-import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
+import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
+import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
 import { GlobalUploadManager } from "@web/src/components/Upload/GlobalUploadManager";
+import { Layout, theme } from "antd";
+import { Outlet } from "react-router";
 
 const { Sider, Content } = Layout;
 
@@ -20,7 +20,7 @@ export const DashboardLayout: React.FC = () => {
                 <Content
                     className="overflow-auto relative"
                     style={{
-                        backgroundColor: token.colorBgLayout
+                        backgroundColor: token.colorBgLayout,
                     }}
                 >
                     <ImpersonationBanner />

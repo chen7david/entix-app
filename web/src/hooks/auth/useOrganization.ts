@@ -1,33 +1,28 @@
-import { authClient } from "@web/src/lib/auth-client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
 import { AppRoutes } from "@shared/constants/routes";
-import { useCallback } from "react";
-import { useOrgContext } from "@web/src/context/OrgContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { OrgContext } from "@web/src/context/OrgContext";
+import { authClient } from "@web/src/lib/auth-client";
+import { useCallback, useContext } from "react";
+import { useNavigate } from "react-router";
 
 export const useOrganization = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     // Try to consume context - might be undefined if outside OrgGuard
-    let contextVal;
-    try {
-        contextVal = useOrgContext();
-    } catch (e) {
-        contextVal = null;
-    }
+    const contextVal = useContext(OrgContext);
 
     // 1. Fetch user's organizations
     const {
         data: organizations = [],
         isLoading: loadingOrganizations,
-        isFetching: fetchingOrganizations
+        isFetching: fetchingOrganizations,
     } = useQuery({
-        queryKey: ['organizations'],
+        queryKey: ["organizations"],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
             return data || [];
-        }
+        },
     });
 
     // 2. Active Organization - derived strictly from Context if available
@@ -40,14 +35,14 @@ export const useOrganization = () => {
         },
         onSuccess: async (result) => {
             if (result.data) {
-                await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
-                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
+                await queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+                await queryClient.invalidateQueries({ queryKey: ["organizations"] });
             }
-        }
+        },
     });
 
     const listOrganizations = useCallback(async () => {
-        return queryClient.refetchQueries({ queryKey: ['organizations'] });
+        return queryClient.refetchQueries({ queryKey: ["organizations"] });
     }, [queryClient]);
 
     // getOrgLink removed as per AppRoutes enforcing abstract context natively
@@ -55,20 +50,20 @@ export const useOrganization = () => {
     const checkOrganizationStatus = async () => {
         // 1. Fetch and cache organizations
         const orgs = await queryClient.fetchQuery({
-            queryKey: ['organizations'],
+            queryKey: ["organizations"],
             queryFn: async () => {
                 const { data } = await authClient.organization.list();
                 return data || [];
-            }
+            },
         });
 
         // 2. Fetch and cache active organization
         const activeOrg = await queryClient.fetchQuery({
-            queryKey: ['activeOrganization'],
+            queryKey: ["activeOrganization"],
             queryFn: async () => {
                 const { data } = await authClient.organization.getFullOrganization();
                 return data || null;
-            }
+            },
         });
 
         if (activeOrg?.slug) {
@@ -92,9 +87,12 @@ export const useOrganization = () => {
         navigate(AppRoutes.onboarding.selectOrganization);
     };
 
-    const setActive = useCallback(async (organizationId: string) => {
-        return setActiveMutation(organizationId);
-    }, [setActiveMutation]);
+    const setActive = useCallback(
+        async (organizationId: string) => {
+            return setActiveMutation(organizationId);
+        },
+        [setActiveMutation]
+    );
 
     return {
         organizations,

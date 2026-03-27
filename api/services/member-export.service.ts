@@ -1,10 +1,10 @@
 import type { AppDb } from "@api/factories/db.factory";
+import type { OrgRole } from "@shared/auth/permissions";
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import type { OrgRole } from "@shared/auth/permissions";
 
 export class MemberExportService {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     async exportMembers(organizationId: string) {
         const results = await this.db.query.authMembers.findMany({
@@ -17,15 +17,15 @@ export class MemberExportService {
                         addresses: true,
                         socialMedias: {
                             with: {
-                                socialMediaType: true
-                            }
-                        }
-                    }
-                }
-            }
+                                socialMediaType: true,
+                            },
+                        },
+                    },
+                },
+            },
         });
 
-        return results.map(r => {
+        return results.map((r) => {
             const user = r.user;
             return {
                 id: user.id,
@@ -35,17 +35,19 @@ export class MemberExportService {
                 avatarUrl: user.image,
                 createdAt: user.createdAt.toISOString(),
                 updatedAt: user.updatedAt.toISOString(),
-                profile: user.profile ? {
-                    id: user.profile.id,
-                    firstName: user.profile.firstName,
-                    lastName: user.profile.lastName,
-                    displayName: user.profile.displayName,
-                    sex: user.profile.sex as 'male' | 'female' | 'other',
-                    birthDate: user.profile.birthDate?.toISOString(),
-                    createdAt: user.profile.createdAt.toISOString(),
-                    updatedAt: user.profile.updatedAt.toISOString(),
-                } : null,
-                phoneNumbers: user.phoneNumbers.map(p => ({
+                profile: user.profile
+                    ? {
+                          id: user.profile.id,
+                          firstName: user.profile.firstName,
+                          lastName: user.profile.lastName,
+                          displayName: user.profile.displayName,
+                          sex: user.profile.sex as "male" | "female" | "other",
+                          birthDate: user.profile.birthDate?.toISOString(),
+                          createdAt: user.profile.createdAt.toISOString(),
+                          updatedAt: user.profile.updatedAt.toISOString(),
+                      }
+                    : null,
+                phoneNumbers: user.phoneNumbers.map((p) => ({
                     id: p.id,
                     countryCode: p.countryCode,
                     number: p.number,
@@ -55,7 +57,7 @@ export class MemberExportService {
                     createdAt: p.createdAt.toISOString(),
                     updatedAt: p.updatedAt.toISOString(),
                 })),
-                addresses: user.addresses.map(a => ({
+                addresses: user.addresses.map((a) => ({
                     id: a.id,
                     country: a.country,
                     state: a.state,
@@ -67,13 +69,13 @@ export class MemberExportService {
                     createdAt: a.createdAt.toISOString(),
                     updatedAt: a.updatedAt.toISOString(),
                 })),
-                socialMedia: user.socialMedias.map(s => ({
+                socialMedia: user.socialMedias.map((s) => ({
                     id: s.id,
                     type: s.socialMediaType.name,
                     urlOrHandle: s.urlOrHandle,
                     createdAt: s.createdAt.toISOString(),
                     updatedAt: s.updatedAt.toISOString(),
-                }))
+                })),
             };
         });
     }

@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
+import app from "@api/app";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { parseJson } from "../lib/api-request.helper";
 import { createSuperAdmin, getAuthCookie } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
-import { parseJson } from "../lib/api-request.helper";
+import { createTestDb } from "../lib/utils";
 
 describe("Email Insights Integration", () => {
     beforeEach(async () => {
@@ -40,13 +40,24 @@ describe("Email Insights Integration", () => {
             const client = createTestClient(app, env, cookie);
 
             const { MailService } = await import("@api/services/mailer.service");
-            const spy = vi.spyOn(MailService.prototype, 'listEmails').mockResolvedValue({
+            const spy = vi.spyOn(MailService.prototype, "listEmails").mockResolvedValue({
                 data: {
                     object: "list",
                     data: [
-                        { id: "1", from: "Entix", created_at: "2023-01-01", to: ["test@example.com"], subject: "Test", last_event: "delivered", bcc: [], cc: [], scheduled_at: null, reply_to: [] }
+                        {
+                            id: "1",
+                            from: "Entix",
+                            created_at: "2023-01-01",
+                            to: ["test@example.com"],
+                            subject: "Test",
+                            last_event: "delivered",
+                            bcc: [],
+                            cc: [],
+                            scheduled_at: null,
+                            reply_to: [],
+                        },
                     ],
-                    has_more: false
+                    has_more: false,
                 } as any,
                 error: null,
                 headers: null,
@@ -68,8 +79,23 @@ describe("Email Insights Integration", () => {
             const client = createTestClient(app, env, cookie);
 
             const { MailService } = await import("@api/services/mailer.service");
-            const spy = vi.spyOn(MailService.prototype, 'getEmail').mockResolvedValue({
-                data: { object: "email", id: "1", from: "Entix", created_at: "2023-01-01", to: ["test@example.com"], subject: "Test", last_event: "delivered", html: "<p>Hi</p>", text: "Hi", tags: [], bcc: [], cc: [], scheduled_at: null, reply_to: [] } as any,
+            const spy = vi.spyOn(MailService.prototype, "getEmail").mockResolvedValue({
+                data: {
+                    object: "email",
+                    id: "1",
+                    from: "Entix",
+                    created_at: "2023-01-01",
+                    to: ["test@example.com"],
+                    subject: "Test",
+                    last_event: "delivered",
+                    html: "<p>Hi</p>",
+                    text: "Hi",
+                    tags: [],
+                    bcc: [],
+                    cc: [],
+                    scheduled_at: null,
+                    reply_to: [],
+                } as any,
                 error: null,
                 headers: null,
             });
@@ -89,7 +115,7 @@ describe("Email Insights Integration", () => {
             const client = createTestClient(app, env, cookie);
 
             const { MailService } = await import("@api/services/mailer.service");
-            const spy = vi.spyOn(MailService.prototype, 'getEmail').mockResolvedValue({
+            const spy = vi.spyOn(MailService.prototype, "getEmail").mockResolvedValue({
                 data: null,
                 error: { name: "not_found", message: "Not found" } as any,
                 headers: null,

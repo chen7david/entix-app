@@ -1,5 +1,5 @@
-import { authClient } from "@web/src/lib/auth-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authClient } from "@web/src/lib/auth-client";
 
 export interface Session {
     id: string;
@@ -13,7 +13,7 @@ export interface Session {
 
 export function useListSessions() {
     return useQuery({
-        queryKey: ['sessions'],
+        queryKey: ["sessions"],
         queryFn: async () => {
             const response = await authClient.listSessions();
             return response.data as Session[];
@@ -27,15 +27,15 @@ export function useRevokeSession() {
     return useMutation({
         mutationFn: async (token: string) => {
             const response = await authClient.revokeSession({ token });
-            
+
             if (response.error) {
                 throw new Error(response.error.message || "Failed to revoke session");
             }
-            
+
             return response;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ["sessions"] });
         },
     });
 }
@@ -46,15 +46,15 @@ export function useRevokeOtherSessions() {
     return useMutation({
         mutationFn: async () => {
             const response = await authClient.revokeOtherSessions();
-            
+
             if (response.error) {
                 throw new Error(response.error.message || "Failed to revoke other sessions");
             }
-            
+
             return response;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            queryClient.invalidateQueries({ queryKey: ["sessions"] });
         },
     });
 }

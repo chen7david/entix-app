@@ -1,9 +1,9 @@
-import React from 'react';
-import { Outlet } from 'react-router';
-import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { Button } from 'antd';
-import { CenteredResult } from '@web/src/components/common/CenteredView';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { CenteredResult } from "@web/src/components/common/CenteredView";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { Button } from "antd";
+import type React from "react";
+import { Outlet } from "react-router";
 
 /**
  * Guard component that restricts access to admin-only routes.
@@ -22,7 +22,11 @@ export const AdminGuard: React.FC = () => {
                 status="403"
                 title="403"
                 subTitle="Sorry, you are not authorized to access this page."
-                extra={<Button type="primary" onClick={() => checkOrganizationStatus()}>Back to Dashboard</Button>}
+                extra={
+                    <Button type="primary" onClick={() => checkOrganizationStatus()}>
+                        Back to Dashboard
+                    </Button>
+                }
             />
         );
     }

@@ -1,16 +1,16 @@
-import { MediaRepository } from "@api/repositories/media.repository";
-import { UploadService } from "@api/services/upload.service";
-import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
+import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
+import type { MediaRepository } from "@api/repositories/media.repository";
+import type { UploadService } from "@api/services/upload.service";
 
 export class MediaService {
     constructor(
         private mediaRepo: MediaRepository,
         private uploadService: UploadService
-    ) { }
+    ) {}
 
     async createMedia(
-        organizationId: string, 
-        userId: string, 
+        organizationId: string,
+        userId: string,
         input: {
             title: string;
             description?: string;
@@ -23,14 +23,20 @@ export class MediaService {
             throw new NotFoundError("Media upload not found or not yet completed");
         }
 
-        if (!mediaUpload.contentType.startsWith("video/") && !mediaUpload.contentType.startsWith("audio/")) {
+        if (
+            !mediaUpload.contentType.startsWith("video/") &&
+            !mediaUpload.contentType.startsWith("audio/")
+        ) {
             throw new ForbiddenError("Media must be a valid video or audio format");
         }
 
         let coverArtUrl: string | undefined;
 
         if (input.coverArtUploadId) {
-            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(input.coverArtUploadId, organizationId);
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(
+                input.coverArtUploadId,
+                organizationId
+            );
         }
 
         return await this.mediaRepo.create({
@@ -52,14 +58,21 @@ export class MediaService {
     }
 
     async listMedia(
-        organizationId: string, 
-        limit: number, 
-        cursor?: string, 
-        direction: 'next' | 'prev' = 'next', 
-        search?: string, 
+        organizationId: string,
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string,
         type?: "video" | "audio"
     ) {
-        return await this.mediaRepo.findAllByOrganization(organizationId, limit, cursor, direction, search, type);
+        return await this.mediaRepo.findAllByOrganization(
+            organizationId,
+            limit,
+            cursor,
+            direction,
+            search,
+            type
+        );
     }
 
     async updateMedia(
@@ -72,7 +85,10 @@ export class MediaService {
         const currentMedia = await this.getMedia(mediaId, organizationId);
 
         if (updates.coverArtUploadId) {
-            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(updates.coverArtUploadId, organizationId);
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(
+                updates.coverArtUploadId,
+                organizationId
+            );
 
             if (currentMedia.coverArtUrl) {
                 await this.uploadService.deleteUploadByUrlGlobalSafely(currentMedia.coverArtUrl);

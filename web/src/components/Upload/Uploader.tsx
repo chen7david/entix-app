@@ -1,7 +1,7 @@
-import { Upload, App } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
-import { useQueryClient } from '@tanstack/react-query';
+import { InboxOutlined } from "@ant-design/icons";
+import { useQueryClient } from "@tanstack/react-query";
+import type { UploadProps } from "antd";
+import { App, Upload } from "antd";
 
 const { Dragger } = Upload;
 
@@ -16,7 +16,7 @@ interface UploaderProps {
 export const Uploader = ({
     organizationId,
     onUploadSuccess,
-    allowedFileTypes = ['image/*', 'video/*', 'audio/*', 'application/pdf'],
+    allowedFileTypes = ["image/*", "video/*", "audio/*", "application/pdf"],
     maxNumberOfFiles = 10,
     maxFileSize = 1024 * 1024 * 500, // 500MB limit
 }: UploaderProps) => {
@@ -24,9 +24,9 @@ export const Uploader = ({
     const queryClient = useQueryClient();
 
     const props: UploadProps = {
-        name: 'file',
+        name: "file",
         multiple: true,
-        accept: allowedFileTypes.join(','),
+        accept: allowedFileTypes.join(","),
         maxCount: maxNumberOfFiles,
         customRequest: async (options) => {
             const { file, onSuccess, onError, onProgress } = options;
@@ -42,11 +42,11 @@ export const Uploader = ({
             try {
                 // 1. Get presigned URL
                 const response = await fetch(`/api/v1/orgs/${organizationId}/uploads`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         originalName: fileObj.name,
-                        contentType: fileObj.type || 'application/octet-stream',
+                        contentType: fileObj.type || "application/octet-stream",
                         fileSize: fileObj.size,
                     }),
                 });
@@ -59,29 +59,34 @@ export const Uploader = ({
 
                 // 2. Upload to R2 directly with PUT
                 const uploadResponse = await fetch(data.presignedUrl, {
-                    method: 'PUT',
+                    method: "PUT",
                     headers: {
-                        'Content-Type': fileObj.type || 'application/octet-stream',
+                        "Content-Type": fileObj.type || "application/octet-stream",
                     },
                     body: fileObj,
                 });
 
                 if (!uploadResponse.ok) {
-                    throw new Error('Failed to upload file to storage');
+                    throw new Error("Failed to upload file to storage");
                 }
 
                 onProgress?.({ percent: 100 });
 
                 // 3. Mark as complete
-                const completeResponse = await fetch(`/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`, {
-                    method: 'POST',
-                });
+                const completeResponse = await fetch(
+                    `/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`,
+                    {
+                        method: "POST",
+                    }
+                );
 
                 if (!completeResponse.ok) {
-                    throw new Error('Failed to complete upload registration');
+                    throw new Error("Failed to complete upload registration");
                 }
 
-                queryClient.invalidateQueries({ queryKey: ["organizationUploads", organizationId] });
+                queryClient.invalidateQueries({
+                    queryKey: ["organizationUploads", organizationId],
+                });
                 onUploadSuccess?.();
                 onSuccess?.("ok");
                 message.success(`${fileObj.name} file uploaded successfully.`);
@@ -92,7 +97,7 @@ export const Uploader = ({
             }
         },
         onDrop(e) {
-            console.log('Dropped files', e.dataTransfer.files);
+            console.log("Dropped files", e.dataTransfer.files);
         },
     };
 
@@ -104,7 +109,8 @@ export const Uploader = ({
                 </p>
                 <p className="ant-upload-text">Click or drag file to this area to upload</p>
                 <p className="ant-upload-hint">
-                    Max file size: {Math.round(maxFileSize / (1024 * 1024))}MB. Allowed types: {allowedFileTypes.join(', ')}
+                    Max file size: {Math.round(maxFileSize / (1024 * 1024))}MB. Allowed types:{" "}
+                    {allowedFileTypes.join(", ")}
                 </p>
             </Dragger>
         </div>

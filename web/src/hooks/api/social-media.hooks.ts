@@ -3,7 +3,7 @@ import { API_V1 } from "@web/src/lib/api";
 
 export const useSocialMediaTypes = () => {
     const { data: socialMediaTypes, isLoading } = useQuery({
-        queryKey: ['socialMediaTypes'],
+        queryKey: ["socialMediaTypes"],
         queryFn: async () => {
             const res = await fetch(`${API_V1}/social-media-types`);
             if (!res.ok) throw new Error("Failed to fetch social media types");

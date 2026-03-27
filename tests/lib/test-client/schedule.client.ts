@@ -10,10 +10,12 @@ export function createScheduleClient(request: Requester) {
             const searchParams = new URLSearchParams();
             if (query?.startDate) searchParams.set("startDate", query.startDate.toString());
             if (query?.endDate) searchParams.set("endDate", query.endDate.toString());
-            
+
             const queryString = searchParams.toString();
-            const url = queryString ? `/api/v1/orgs/${orgId}/schedule?${queryString}` : `/api/v1/orgs/${orgId}/schedule`;
-            
+            const url = queryString
+                ? `/api/v1/orgs/${orgId}/schedule?${queryString}`
+                : `/api/v1/orgs/${orgId}/schedule`;
+
             return request(url, { method: "GET" });
         },
 

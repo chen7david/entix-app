@@ -1,8 +1,8 @@
-import { AuthRoutes } from "./auth.routes";
-import type { AppHandler } from '@api/helpers/types.helpers';
-import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { getRegistrationService } from "@api/factories/service.factory";
+import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
+import type { AuthRoutes } from "./auth.routes";
 
 export class AuthHandler {
     static signupWithOrg: AppHandler<typeof AuthRoutes.signupWithOrg> = async (ctx) => {
@@ -17,13 +17,16 @@ export class AuthHandler {
                 email,
                 name,
                 password,
-                organizationName
+                organizationName,
             });
 
-            ctx.var.logger.info({ userId: result.user.id, orgId: result.organization.id }, "Signup with organization completed");
+            ctx.var.logger.info(
+                { userId: result.user.id, orgId: result.organization.id },
+                "Signup with organization completed"
+            );
 
             return ctx.json(result, HttpStatusCodes.CREATED);
-        } catch (error: unknown) {
+        } catch (error: any) {
             ctx.var.logger.error({ error }, "Error during organization setup, rolling back");
 
             if (error instanceof ConflictError) {

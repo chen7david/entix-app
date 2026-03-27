@@ -1,13 +1,13 @@
-import { useEffect } from "react";
-import { useSearchParams } from "react-router";
-import { Typography, DatePicker, Row, Col, Select } from "antd";
+import { AnalyticsMetricCards } from "@web/src/components/analytics/AnalyticsMetricCards";
+import { AttendanceTrendChart } from "@web/src/components/analytics/AttendanceTrendChart";
+import { SessionVolumeChart } from "@web/src/components/analytics/SessionVolumeChart";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { useAnalytics } from "@web/src/hooks/useAnalytics";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { AnalyticsMetricCards } from "@web/src/components/analytics/AnalyticsMetricCards";
-import { SessionVolumeChart } from "@web/src/components/analytics/SessionVolumeChart";
-import { AttendanceTrendChart } from "@web/src/components/analytics/AttendanceTrendChart";
 import { DateUtils } from "@web/src/utils/date";
+import { Col, DatePicker, Row, Select, Typography } from "antd";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router";
 
 const { RangePicker } = DatePicker;
 const { Title, Text } = Typography;
@@ -17,8 +17,8 @@ export const OrganizationAnalyticsPage = () => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     // Default to "This Month" dynamically cleanly linking URL state universally
-    const defaultStart = DateUtils.startOf('month');
-    const defaultEnd = DateUtils.endOf('month');
+    const defaultStart = DateUtils.startOf("month");
+    const defaultEnd = DateUtils.endOf("month");
 
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
@@ -33,18 +33,23 @@ export const OrganizationAnalyticsPage = () => {
             params.set("endDate", queryEnd.toString());
             setSearchParams(params, { replace: true });
         }
-    }, [startDateParam, endDateParam, searchParams, setSearchParams]);
+    }, [
+        startDateParam,
+        endDateParam,
+        searchParams,
+        setSearchParams,
+        queryEnd.toString,
+        queryStart.toString,
+    ]);
 
-    const { 
-        sessionTrends, isLoadingSessions, 
-        attendanceTrends, isLoadingAttendance 
-    } = useAnalytics(activeOrganization?.id, queryStart, queryEnd);
+    const { sessionTrends, isLoadingSessions, attendanceTrends, isLoadingAttendance } =
+        useAnalytics(activeOrganization?.id, queryStart, queryEnd);
 
     const handleRangeChange = (dates: any) => {
         const params = new URLSearchParams(searchParams);
-        if (dates && dates[0] && dates[1]) {
-            params.set("startDate", DateUtils.startOf('day', dates[0]).toString());
-            params.set("endDate", DateUtils.endOf('day', dates[1]).toString());
+        if (dates?.[0] && dates[1]) {
+            params.set("startDate", DateUtils.startOf("day", dates[0]).toString());
+            params.set("endDate", DateUtils.endOf("day", dates[1]).toString());
         } else {
             params.delete("startDate");
             params.delete("endDate");
@@ -58,42 +63,91 @@ export const OrganizationAnalyticsPage = () => {
             <div className="p-6">
                 <div className="flex justify-between items-end mb-6 w-full gap-4 flex-wrap">
                     <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>Analytics</Title>
+                        <Title level={2} style={{ marginBottom: 4 }}>
+                            Analytics
+                        </Title>
                         <Text type="secondary">Historical performance and engagement trends</Text>
                     </div>
                     <div className="flex items-center gap-4 flex-wrap">
-                        <Select 
+                        <Select
                             value={
-                                (queryStart === DateUtils.startOf('month') && queryEnd === DateUtils.endOf('month')) ? 'This Month' : 
-                                (queryStart === DateUtils.offsetStartOf(-1, 'month', 'month') && queryEnd === DateUtils.offsetEndOf(-1, 'month', 'month')) ? 'Last Month' : 
-                                (queryStart === DateUtils.startOf('year') && queryEnd === DateUtils.endOf('year')) ? 'This Year' : 
-                                (queryStart === DateUtils.offsetStartOf(-1, 'year', 'year') && queryEnd === DateUtils.offsetEndOf(-1, 'year', 'year')) ? 'Last Year' : 
-                                (queryStart === DateUtils.offsetStartOf(1, 'year', 'year') && queryEnd === DateUtils.offsetEndOf(1, 'year', 'year')) ? 'Next Year' : 
-                                null
+                                queryStart === DateUtils.startOf("month") &&
+                                queryEnd === DateUtils.endOf("month")
+                                    ? "This Month"
+                                    : queryStart ===
+                                            DateUtils.offsetStartOf(-1, "month", "month") &&
+                                        queryEnd === DateUtils.offsetEndOf(-1, "month", "month")
+                                      ? "Last Month"
+                                      : queryStart === DateUtils.startOf("year") &&
+                                          queryEnd === DateUtils.endOf("year")
+                                        ? "This Year"
+                                        : queryStart ===
+                                                DateUtils.offsetStartOf(-1, "year", "year") &&
+                                            queryEnd === DateUtils.offsetEndOf(-1, "year", "year")
+                                          ? "Last Year"
+                                          : queryStart ===
+                                                  DateUtils.offsetStartOf(1, "year", "year") &&
+                                              queryEnd === DateUtils.offsetEndOf(1, "year", "year")
+                                            ? "Next Year"
+                                            : null
                             }
                             placeholder="Custom Range"
                             onChange={(val) => {
-                                if (val === 'This Month') handleRangeChange([DateUtils.toLibDate(DateUtils.startOf('month')), DateUtils.toLibDate(DateUtils.endOf('month'))]);
-                                else if (val === 'Last Month') handleRangeChange([DateUtils.toLibDate(DateUtils.offsetStartOf(-1, 'month', 'month')), DateUtils.toLibDate(DateUtils.offsetEndOf(-1, 'month', 'month'))]);
-                                else if (val === 'This Year') handleRangeChange([DateUtils.toLibDate(DateUtils.startOf('year')), DateUtils.toLibDate(DateUtils.endOf('year'))]);
-                                else if (val === 'Last Year') handleRangeChange([DateUtils.toLibDate(DateUtils.offsetStartOf(-1, 'year', 'year')), DateUtils.toLibDate(DateUtils.offsetEndOf(-1, 'year', 'year'))]);
-                                else if (val === 'Next Year') handleRangeChange([DateUtils.toLibDate(DateUtils.offsetStartOf(1, 'year', 'year')), DateUtils.toLibDate(DateUtils.offsetEndOf(1, 'year', 'year'))]);
+                                if (val === "This Month")
+                                    handleRangeChange([
+                                        DateUtils.toLibDate(DateUtils.startOf("month")),
+                                        DateUtils.toLibDate(DateUtils.endOf("month")),
+                                    ]);
+                                else if (val === "Last Month")
+                                    handleRangeChange([
+                                        DateUtils.toLibDate(
+                                            DateUtils.offsetStartOf(-1, "month", "month")
+                                        ),
+                                        DateUtils.toLibDate(
+                                            DateUtils.offsetEndOf(-1, "month", "month")
+                                        ),
+                                    ]);
+                                else if (val === "This Year")
+                                    handleRangeChange([
+                                        DateUtils.toLibDate(DateUtils.startOf("year")),
+                                        DateUtils.toLibDate(DateUtils.endOf("year")),
+                                    ]);
+                                else if (val === "Last Year")
+                                    handleRangeChange([
+                                        DateUtils.toLibDate(
+                                            DateUtils.offsetStartOf(-1, "year", "year")
+                                        ),
+                                        DateUtils.toLibDate(
+                                            DateUtils.offsetEndOf(-1, "year", "year")
+                                        ),
+                                    ]);
+                                else if (val === "Next Year")
+                                    handleRangeChange([
+                                        DateUtils.toLibDate(
+                                            DateUtils.offsetStartOf(1, "year", "year")
+                                        ),
+                                        DateUtils.toLibDate(
+                                            DateUtils.offsetEndOf(1, "year", "year")
+                                        ),
+                                    ]);
                             }}
                             style={{ minWidth: 130 }}
                             options={[
-                                { label: 'This Month', value: 'This Month' },
-                                { label: 'Last Month', value: 'Last Month' },
-                                { label: 'This Year', value: 'This Year' },
-                                { label: 'Last Year', value: 'Last Year' },
-                                { label: 'Next Year', value: 'Next Year' }
+                                { label: "This Month", value: "This Month" },
+                                { label: "Last Month", value: "Last Month" },
+                                { label: "This Year", value: "This Year" },
+                                { label: "Last Year", value: "Last Year" },
+                                { label: "Next Year", value: "Next Year" },
                             ]}
                         />
-                        <RangePicker 
-                            onChange={handleRangeChange} 
-                            value={[
-                                queryStart ? DateUtils.toLibDate(queryStart) : null, 
-                                queryEnd ? DateUtils.toLibDate(queryEnd) : null
-                            ] as any}
+                        <RangePicker
+                            onChange={handleRangeChange}
+                            value={
+                                [
+                                    queryStart ? DateUtils.toLibDate(queryStart) : null,
+                                    queryEnd ? DateUtils.toLibDate(queryEnd) : null,
+                                ] as any
+                            }
                             allowClear={false}
                         />
                     </div>
@@ -108,7 +162,10 @@ export const OrganizationAnalyticsPage = () => {
                         <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
                     </Col>
                     <Col span={24} lg={12}>
-                        <AttendanceTrendChart data={attendanceTrends} isLoading={isLoadingAttendance} />
+                        <AttendanceTrendChart
+                            data={attendanceTrends}
+                            isLoading={isLoadingAttendance}
+                        />
                     </Col>
                 </Row>
             </div>

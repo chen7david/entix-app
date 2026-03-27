@@ -27,7 +27,7 @@ export const useBulkMembers = (orgId?: string) => {
     const queryClient = useQueryClient();
 
     const { data: metrics, isLoading: isLoadingMetrics } = useQuery<BulkMetrics>({
-        queryKey: ['bulkMetrics', orgId],
+        queryKey: ["bulkMetrics", orgId],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
             const res = await fetch(`${API_V1}/orgs/${orgId}/bulk/metrics`);
@@ -43,18 +43,18 @@ export const useBulkMembers = (orgId?: string) => {
             const res = await fetch(`${API_V1}/orgs/${orgId}/bulk/export`);
             if (!res.ok) throw new Error("Failed to export members");
             const data = await res.json();
-            
+
             // Trigger download
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            const a = document.createElement("a");
             a.href = url;
-            a.download = `members-export-${orgId}-${new Date().toISOString().split('T')[0]}.json`;
+            a.download = `members-export-${orgId}-${new Date().toISOString().split("T")[0]}.json`;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
-            
+
             message.success("Members exported successfully");
         } catch (err) {
             message.error("Failed to export members");
@@ -66,17 +66,17 @@ export const useBulkMembers = (orgId?: string) => {
         mutationFn: async (data: any[]) => {
             if (!orgId) throw new Error("Organization ID required");
             const res = await fetch(`${API_V1}/orgs/${orgId}/bulk/import`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),
             });
             if (!res.ok) throw new Error("Failed to import members");
             return res.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['organizationMembers'] });
-            queryClient.invalidateQueries({ queryKey: ['bulkMetrics', orgId] });
-        }
+            queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
+            queryClient.invalidateQueries({ queryKey: ["bulkMetrics", orgId] });
+        },
     });
 
     return {

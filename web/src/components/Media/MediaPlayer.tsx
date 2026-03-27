@@ -1,9 +1,9 @@
-import React from 'react';
-import { MediaPlayer as VidstackPlayer, MediaProvider, Poster, Track } from '@vidstack/react';
-import '../../../node_modules/@vidstack/react/player/styles/default/theme.css';
-import '../../../node_modules/@vidstack/react/player/styles/default/layouts/video.css';
-import { defaultLayoutIcons, DefaultVideoLayout } from '@vidstack/react/player/layouts/default';
-import { StepBackwardOutlined, StepForwardOutlined, AudioOutlined } from '@ant-design/icons';
+import { MediaProvider, Poster, Track, MediaPlayer as VidstackPlayer } from "@vidstack/react";
+import type React from "react";
+import "../../../node_modules/@vidstack/react/player/styles/default/theme.css";
+import "../../../node_modules/@vidstack/react/player/styles/default/layouts/video.css";
+import { AudioOutlined, StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
+import { DefaultVideoLayout, defaultLayoutIcons } from "@vidstack/react/player/layouts/default";
 
 interface MediaPlayerProps {
     title: string;
@@ -29,13 +29,18 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
     onPlay,
     autoPlay = false,
     onNext,
-    onPrevious
+    onPrevious,
 }) => {
-    const isAudio = mimeType.startsWith('audio/');
+    const isAudio = mimeType.startsWith("audio/");
 
     // Helper to generate the exact native skip-buttons
     const prevButton = onPrevious ? (
-        <button type="button" className="vds-button" onClick={onPrevious} aria-label="Previous Track">
+        <button
+            type="button"
+            className="vds-button"
+            onClick={onPrevious}
+            aria-label="Previous Track"
+        >
             <StepBackwardOutlined className="text-xl" />
         </button>
     ) : null;
@@ -65,27 +70,19 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
             {isAudio && !coverArtUrl && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900 pointer-events-none px-6 text-center -z-10">
                     <AudioOutlined className="text-5xl text-blue-500 mb-4 opacity-50" />
-                    <h3 className="text-white text-2xl font-semibold truncate w-full opacity-80">{title}</h3>
+                    <h3 className="text-white text-2xl font-semibold truncate w-full opacity-80">
+                        {title}
+                    </h3>
                     <p className="text-gray-400 text-sm mt-2 opacity-60">Audio Playback</p>
                 </div>
             )}
 
             <MediaProvider>
                 {coverArtUrl && (
-                    <Poster
-                        className="vds-poster"
-                        src={coverArtUrl}
-                        alt={`${title} Cover Art`}
-                    />
+                    <Poster className="vds-poster" src={coverArtUrl} alt={`${title} Cover Art`} />
                 )}
                 {subtitlesUrl && (
-                    <Track
-                        src={subtitlesUrl}
-                        kind="subtitles"
-                        label="English"
-                        lang="en"
-                        default
-                    />
+                    <Track src={subtitlesUrl} kind="subtitles" label="English" lang="en" default />
                 )}
             </MediaProvider>
 

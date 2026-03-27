@@ -1,18 +1,15 @@
-import { z } from '@hono/zod-openapi'
+import { z } from "@hono/zod-openapi";
 
-export const emailEventSchema = z.enum([
-    "sent",
-    "delivered",
-    "delivery_delayed",
-    "complained",
-    "bounced",
-    "opened",
-    "clicked",
-]).openapi({ example: "delivered" });
+export const emailEventSchema = z
+    .enum(["sent", "delivered", "delivery_delayed", "complained", "bounced", "opened", "clicked"])
+    .openapi({ example: "delivered" });
 
 export const emailSummarySchema = z.object({
     id: z.string().openapi({ example: "email_123" }),
-    to: z.array(z.string()).nullable().openapi({ example: ["user@example.com"] }),
+    to: z
+        .array(z.string())
+        .nullable()
+        .openapi({ example: ["user@example.com"] }),
     from: z.string().openapi({ example: "noreply@example.com" }),
     subject: z.string().nullable().openapi({ example: "Hello World" }),
     created_at: z.string().openapi({ example: "2023-01-01T00:00:00Z" }),
@@ -26,10 +23,15 @@ export const emailSummarySchema = z.object({
 export const emailDetailSchema = emailSummarySchema.extend({
     html: z.string().nullable().openapi({ example: "<html><body>Hello</body></html>" }),
     text: z.string().nullable().openapi({ example: "Hello" }),
-    tags: z.array(z.object({ 
-        name: z.string(), 
-        value: z.string() 
-    })).nullable().openapi({ example: [{ name: "category", value: "welcome" }] }),
+    tags: z
+        .array(
+            z.object({
+                name: z.string(),
+                value: z.string(),
+            })
+        )
+        .nullable()
+        .openapi({ example: [{ name: "category", value: "welcome" }] }),
 });
 
 export const emailListResponseSchema = z.object({

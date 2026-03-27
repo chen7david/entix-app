@@ -1,52 +1,57 @@
-import { createRoute, z } from "@hono/zod-openapi";
-import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
+import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
-import { 
-    bulkMemberItemSchema, 
-    bulkMetricsSchema, 
-    bulkImportResponseSchema 
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+    bulkImportResponseSchema,
+    bulkMemberItemSchema,
+    bulkMetricsSchema,
 } from "@shared/schemas/dto/bulk-member.dto";
 
-export class BulkMemberRoutes {
-    static tags = ["Organization Members"];
+const tags = ["Organization Members"];
 
-    static getMetrics = createRoute({
+export const BulkMemberRoutes = {
+    tags,
+
+    getMetrics: createRoute({
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/bulk/metrics",
         middleware: [requirePermission("dashboard", ["read"])] as const,
         request: {
-            params: z.object({ organizationId: z.string() })
+            params: z.object({ organizationId: z.string() }),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(bulkMetricsSchema, "Organization dashboard metrics"),
         },
-        tags: BulkMemberRoutes.tags,
-    });
+        tags: tags,
+    }),
 
-    static exportMembers = createRoute({
+    exportMembers: createRoute({
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/bulk/export",
         middleware: [requirePermission("member", ["bulk-export"])] as const,
         request: {
-            params: z.object({ organizationId: z.string() })
+            params: z.object({ organizationId: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.array(bulkMemberItemSchema), "Exported member data"),
+            [HttpStatusCodes.OK]: jsonContent(
+                z.array(bulkMemberItemSchema),
+                "Exported member data"
+            ),
         },
-        tags: BulkMemberRoutes.tags,
-    });
+        tags: tags,
+    }),
 
-    static importMembers = createRoute({
+    importMembers: createRoute({
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/bulk/import",
         middleware: [requirePermission("member", ["bulk-import"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: jsonContent(z.array(bulkMemberItemSchema), 'Array of members to import')
+            body: jsonContent(z.array(bulkMemberItemSchema), "Array of members to import"),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(bulkImportResponseSchema, "Import summary results"),
         },
-        tags: BulkMemberRoutes.tags,
-    });
-}
+        tags: tags,
+    }),
+};

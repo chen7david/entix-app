@@ -1,5 +1,5 @@
-import type { Hono } from "hono";
 import type { AppEnv } from "@api/helpers/types.helpers";
+import type { Hono } from "hono";
 
 /**
  * Core request function type used by all entity clients.
@@ -10,7 +10,7 @@ export type Requester = (
     options?: {
         method?: string;
         body?: unknown;
-        cookie?: string;      // Override per-request cookie
+        cookie?: string; // Override per-request cookie
     }
 ) => Promise<Response>;
 
@@ -18,11 +18,7 @@ export type Requester = (
  * Create a base requester bound to app + env + optional default cookie.
  * All entity clients receive this to make HTTP calls.
  */
-export function createRequester(
-    app: Hono<AppEnv>,
-    env: any,
-    defaultCookie?: string
-): Requester {
+export function createRequester(app: Hono<AppEnv>, env: any, defaultCookie?: string): Requester {
     return async (path, options = {}) => {
         const { method = "GET", body, cookie } = options;
         const activeCookie = cookie ?? defaultCookie;
@@ -30,7 +26,7 @@ export function createRequester(
         const headers: Record<string, string> = {};
 
         if (activeCookie) {
-            headers["Cookie"] = activeCookie;
+            headers.Cookie = activeCookie;
         }
 
         if (body !== undefined) {

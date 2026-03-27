@@ -1,12 +1,12 @@
-import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
-import { 
-    playlistSchema, 
-    playlistMediaItemSchema, 
-    createPlaylistSchema, 
-    updatePlaylistSchema, 
-    updateSequenceSchema 
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+    createPlaylistSchema,
+    playlistMediaItemSchema,
+    playlistSchema,
+    updatePlaylistSchema,
+    updateSequenceSchema,
 } from "@shared/schemas/dto/playlist.dto";
 
 export const PlaylistRoutes = {
@@ -14,7 +14,7 @@ export const PlaylistRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/playlists",
         tags: ["Playlist"],
-        middleware: [requirePermission('playlist', ['read'])] as const,
+        middleware: [requirePermission("playlist", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -29,14 +29,12 @@ export const PlaylistRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/playlists",
         tags: ["Playlist"],
-        middleware: [
-            requirePermission('playlist', ['create'])
-        ] as const,
+        middleware: [requirePermission("playlist", ["create"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
             }),
-            body: jsonContent(createPlaylistSchema, 'Playlist creation data'),
+            body: jsonContent(createPlaylistSchema, "Playlist creation data"),
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(playlistSchema, "Playlist created successfully"),
@@ -47,15 +45,13 @@ export const PlaylistRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/playlists/{playlistId}",
         tags: ["Playlist"],
-        middleware: [
-            requirePermission('playlist', ['update'])
-        ] as const,
+        middleware: [requirePermission("playlist", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
                 playlistId: z.string(),
             }),
-            body: jsonContent(updatePlaylistSchema, 'Playlist update data'),
+            body: jsonContent(updatePlaylistSchema, "Playlist update data"),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(playlistSchema, "Playlist updated successfully"),
@@ -66,9 +62,7 @@ export const PlaylistRoutes = {
         method: HttpMethods.DELETE,
         path: "/orgs/{organizationId}/playlists/{playlistId}",
         tags: ["Playlist"],
-        middleware: [
-            requirePermission('playlist', ['delete'])
-        ] as const,
+        middleware: [requirePermission("playlist", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -86,7 +80,7 @@ export const PlaylistRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/playlists/{playlistId}/sequence",
         tags: ["Playlist"],
-        middleware: [requirePermission('playlist', ['read'])] as const,
+        middleware: [requirePermission("playlist", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -94,7 +88,10 @@ export const PlaylistRoutes = {
             }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.array(playlistMediaItemSchema), "Playlist media sequence"),
+            [HttpStatusCodes.OK]: jsonContent(
+                z.array(playlistMediaItemSchema),
+                "Playlist media sequence"
+            ),
         },
     }),
 
@@ -102,13 +99,13 @@ export const PlaylistRoutes = {
         method: HttpMethods.PUT,
         path: "/orgs/{organizationId}/playlists/{playlistId}/sequence",
         tags: ["Playlist"],
-        middleware: [requirePermission('playlist', ['update'])] as const,
+        middleware: [requirePermission("playlist", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
                 playlistId: z.string(),
             }),
-            body: jsonContent(updateSequenceSchema, 'New sequence of media IDs'),
+            body: jsonContent(updateSequenceSchema, "New sequence of media IDs"),
         },
         responses: {
             [HttpStatusCodes.NO_CONTENT]: {

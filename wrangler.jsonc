@@ -3,91 +3,85 @@
  * Secrets and sensitive credentials are stored in Cloudflare Workers dashboard.
  */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "entix-app",
-	"main": "api/main.ts",
-	"keep_vars": true,
-	"compatibility_date": "2025-12-10",
-	"compatibility_flags": [
-		"nodejs_compat"
-	],
-	"observability": {
-		"enabled": true
-	},
-	"env": {
-		"development": {
-			"vars": {
-				"FRONTEND_URL": "http://localhost:8000",
-				"CORS_ORIGINS": "http://localhost:8000",
-				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
-				"R2_BUCKET_NAME": "entix-app-development",
-				"R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
-				"PUBLIC_CDN_URL": "https://development-cdn.entix.org",
-				"SKIP_EMAIL_VERIFICATION": "true"
-			},
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "entix-app-development",
-					"database_id": "12345678910",
-					"migrations_dir": "api/db/migrations"
-				}
-			]
-		},
-		"staging": {
-			"name": "entix-app-staging",
-			"preview_urls": true,
-			"vars": {
-				"FRONTEND_URL": "https://staging.entix.org",
-				"PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
-				"SKIP_EMAIL_VERIFICATION": "false",
-				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
-				"R2_BUCKET_NAME": "entix-app-staging",
-				"R2_ACCESS_KEY_ID": "fcab42d0ac6d7603c4256e4cd26aaa75",
-			},
-			"assets": {
-				"binding": "ASSETS",
-				"directory": "./web/dist",
-				"not_found_handling": "single-page-application",
-				"run_worker_first": [
-					"/api/*"
-				]
-			},
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "entix-app-staging",
-					"database_id": "8900bc69-07fe-4c7f-9f47-3fa48492fe82",
-					"migrations_dir": "api/db/migrations"
-				}
-			]
-		},
-		"production": {
-			"name": "entix-app",
-			"vars": {
-				"FRONTEND_URL": "https://entix.org",
-				"PUBLIC_CDN_URL": "https://cdn.entix.org",
-				"SKIP_EMAIL_VERIFICATION": "false",
-				"CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
-				"R2_BUCKET_NAME": "entix-app-production",
-				"R2_ACCESS_KEY_ID": "50840d1a09535a68ffe2084a39e1742c",
-			},
-			"assets": {
-				"binding": "ASSETS",
-				"directory": "./web/dist",
-				"not_found_handling": "single-page-application",
-				"run_worker_first": [
-					"/api/*"
-				]
-			},
-			"d1_databases": [
-				{
-					"binding": "DB",
-					"database_name": "entix-app-production",
-					"database_id": "b4a5b85f-ac21-4f5a-842a-30424f61199c",
-					"migrations_dir": "api/db/migrations"
-				}
-			]
-		}
-	}
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "entix-app",
+    "main": "api/main.ts",
+    "keep_vars": true,
+    "compatibility_date": "2025-12-10",
+    "compatibility_flags": ["nodejs_compat"],
+    "observability": {
+        "enabled": true
+    },
+    "env": {
+        "development": {
+            "vars": {
+                "FRONTEND_URL": "http://localhost:8000",
+                "CORS_ORIGINS": "http://localhost:8000",
+                "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+                "R2_BUCKET_NAME": "entix-app-development",
+                "R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
+                "PUBLIC_CDN_URL": "https://development-cdn.entix.org",
+                "SKIP_EMAIL_VERIFICATION": "true"
+            },
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "entix-app-development",
+                    "database_id": "12345678910",
+                    "migrations_dir": "api/db/migrations"
+                }
+            ]
+        },
+        "staging": {
+            "name": "entix-app-staging",
+            "preview_urls": true,
+            "vars": {
+                "FRONTEND_URL": "https://staging.entix.org",
+                "PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
+                "SKIP_EMAIL_VERIFICATION": "false",
+                "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+                "R2_BUCKET_NAME": "entix-app-staging",
+                "R2_ACCESS_KEY_ID": "fcab42d0ac6d7603c4256e4cd26aaa75"
+            },
+            "assets": {
+                "binding": "ASSETS",
+                "directory": "./web/dist",
+                "not_found_handling": "single-page-application",
+                "run_worker_first": ["/api/*"]
+            },
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "entix-app-staging",
+                    "database_id": "8900bc69-07fe-4c7f-9f47-3fa48492fe82",
+                    "migrations_dir": "api/db/migrations"
+                }
+            ]
+        },
+        "production": {
+            "name": "entix-app",
+            "vars": {
+                "FRONTEND_URL": "https://entix.org",
+                "PUBLIC_CDN_URL": "https://cdn.entix.org",
+                "SKIP_EMAIL_VERIFICATION": "false",
+                "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+                "R2_BUCKET_NAME": "entix-app-production",
+                "R2_ACCESS_KEY_ID": "50840d1a09535a68ffe2084a39e1742c"
+            },
+            "assets": {
+                "binding": "ASSETS",
+                "directory": "./web/dist",
+                "not_found_handling": "single-page-application",
+                "run_worker_first": ["/api/*"]
+            },
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "entix-app-production",
+                    "database_id": "b4a5b85f-ac21-4f5a-842a-30424f61199c",
+                    "migrations_dir": "api/db/migrations"
+                }
+            ]
+        }
+    }
 }

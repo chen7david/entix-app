@@ -1,10 +1,14 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { getAuthCookie, createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
-import { createTestClient } from "../lib/test-client";
+import app from "@api/app";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { parseJson } from "../lib/api-request.helper";
+import {
+    createAuthenticatedOrg,
+    createOrgMemberWithRole,
+    getAuthCookie,
+} from "../lib/auth-test.helper";
+import { createTestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("Uploads Integration", () => {
     beforeEach(async () => {
@@ -42,23 +46,27 @@ describe("Uploads Integration", () => {
                 env,
                 orgId,
                 role: "admin",
-                email: `admin.${Date.now()}@example.com`
+                email: `admin.${Date.now()}@example.com`,
             });
             const organizationId = orgId;
 
             const client = createTestClient(app, env, cookie);
 
             const { BucketService } = await import("@api/services/bucket.service");
-            const presignSpy = vi.spyOn(BucketService.prototype, 'getPresignedUploadUrl').mockResolvedValue("https://fake-presigned-url.com");
-            const deleteSpy = vi.spyOn(BucketService.prototype, 'delete').mockResolvedValue(undefined);
+            const presignSpy = vi
+                .spyOn(BucketService.prototype, "getPresignedUploadUrl")
+                .mockResolvedValue("https://fake-presigned-url.com");
+            const deleteSpy = vi
+                .spyOn(BucketService.prototype, "delete")
+                .mockResolvedValue(undefined);
 
             const reqRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`, {
                 method: "POST",
                 body: {
                     originalName: "test-video.mp4",
                     contentType: "video/mp4",
-                    fileSize: 1024 * 1024 * 5 // 5MB
-                }
+                    fileSize: 1024 * 1024 * 5, // 5MB
+                },
             });
 
             expect(reqRes.status).toBe(201);
@@ -68,9 +76,12 @@ describe("Uploads Integration", () => {
 
             const uploadId = reqBody.uploadId;
 
-            const completeRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}/complete`, {
-                method: "POST"
-            });
+            const completeRes = await client.request(
+                `/api/v1/orgs/${organizationId}/uploads/${uploadId}/complete`,
+                {
+                    method: "POST",
+                }
+            );
             expect(completeRes.status).toBe(200);
             const completeBody = await parseJson<any>(completeRes);
             expect(completeBody.status).toBe("completed");
@@ -83,9 +94,12 @@ describe("Uploads Integration", () => {
             expect(listBody[0].status).toBe("completed");
             expect(listBody[0].originalName).toBe("test-video.mp4");
 
-            const deleteRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
-                method: "DELETE"
-            });
+            const deleteRes = await client.request(
+                `/api/v1/orgs/${organizationId}/uploads/${uploadId}`,
+                {
+                    method: "DELETE",
+                }
+            );
             expect(deleteRes.status).toBe(204);
 
             presignSpy.mockRestore();
@@ -99,22 +113,27 @@ describe("Uploads Integration", () => {
             const client = createTestClient(app, env, cookie);
 
             const { BucketService } = await import("@api/services/bucket.service");
-            vi.spyOn(BucketService.prototype, 'getPresignedUploadUrl').mockResolvedValue("https://fake.presigned");
-            vi.spyOn(BucketService.prototype, 'delete').mockResolvedValue(undefined); // Success return for new implementation
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
+                "https://fake.presigned"
+            );
+            vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined); // Success return for new implementation
 
             const reqRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`, {
                 method: "POST",
                 body: {
                     originalName: "test-success.png",
                     contentType: "image/png",
-                    fileSize: 1024
-                }
+                    fileSize: 1024,
+                },
             });
             const { uploadId } = await parseJson<any>(reqRes);
 
-            const deleteRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
-                method: "DELETE"
-            });
+            const deleteRes = await client.request(
+                `/api/v1/orgs/${organizationId}/uploads/${uploadId}`,
+                {
+                    method: "DELETE",
+                }
+            );
             expect(deleteRes.status).toBe(204);
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);
@@ -128,23 +147,28 @@ describe("Uploads Integration", () => {
             const client = createTestClient(app, env, cookie);
 
             const { BucketService } = await import("@api/services/bucket.service");
-            vi.spyOn(BucketService.prototype, 'getPresignedUploadUrl').mockResolvedValue("https://fake.presigned");
-            
-            vi.spyOn(BucketService.prototype, 'delete').mockResolvedValue(undefined as any);
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
+                "https://fake.presigned"
+            );
+
+            vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined as any);
 
             const reqRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`, {
                 method: "POST",
                 body: {
                     originalName: "ghost-file.png",
                     contentType: "image/png",
-                    fileSize: 1024
-                }
+                    fileSize: 1024,
+                },
             });
             const { uploadId } = await parseJson<any>(reqRes);
 
-            const deleteRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
-                method: "DELETE"
-            });
+            const deleteRes = await client.request(
+                `/api/v1/orgs/${organizationId}/uploads/${uploadId}`,
+                {
+                    method: "DELETE",
+                }
+            );
             expect(deleteRes.status).toBe(204);
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);
@@ -158,9 +182,11 @@ describe("Uploads Integration", () => {
             const client = createTestClient(app, env, cookie);
 
             const { BucketService } = await import("@api/services/bucket.service");
-            vi.spyOn(BucketService.prototype, 'getPresignedUploadUrl').mockResolvedValue("https://fake.presigned");
-            
-            vi.spyOn(BucketService.prototype, 'delete').mockImplementation(() => {
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
+                "https://fake.presigned"
+            );
+
+            vi.spyOn(BucketService.prototype, "delete").mockImplementation(() => {
                 const error: any = new Error("R2 Delete Error: Internal Server Error");
                 error.status = 500;
                 throw error;
@@ -171,14 +197,17 @@ describe("Uploads Integration", () => {
                 body: {
                     originalName: "failing-delete.png",
                     contentType: "image/png",
-                    fileSize: 1024
-                }
+                    fileSize: 1024,
+                },
             });
             const { uploadId } = await parseJson<any>(reqRes);
 
-            const deleteRes = await client.request(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
-                method: "DELETE"
-            });
+            const deleteRes = await client.request(
+                `/api/v1/orgs/${organizationId}/uploads/${uploadId}`,
+                {
+                    method: "DELETE",
+                }
+            );
             expect(deleteRes.status).toBe(500);
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);

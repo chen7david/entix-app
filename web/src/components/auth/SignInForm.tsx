@@ -1,8 +1,8 @@
-import React from 'react';
-import { Form, Input, Button, Typography, Alert } from 'antd';
-import { MailOutlined, LockOutlined } from '@ant-design/icons';
-import { Link } from 'react-router';
-import { AppRoutes } from '@shared/constants/routes';
+import { LockOutlined, MailOutlined } from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { Alert, Button, Form, Input, Typography } from "antd";
+import type React from "react";
+import { Link } from "react-router";
 
 const { Text } = Typography;
 
@@ -32,18 +32,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                 />
             )}
 
-            <Form
-                form={form}
-                name="signin"
-                onFinish={onSubmit}
-                layout="vertical"
-                size="large"
-            >
+            <Form form={form} name="signin" onFinish={onSubmit} layout="vertical" size="large">
                 <Form.Item
                     name="email"
                     rules={[
-                        { required: true, message: 'Please input your email!' },
-                        { type: 'email', message: 'Please enter a valid email!' }
+                        { required: true, message: "Please input your email!" },
+                        { type: "email", message: "Please enter a valid email!" },
                     ]}
                 >
                     <Input prefix={<MailOutlined />} placeholder="Email" />
@@ -51,12 +45,12 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
 
                 <Form.Item
                     name="password"
-                    rules={[{ required: true, message: 'Please input your password!' }]}
+                    rules={[{ required: true, message: "Please input your password!" }]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="Password" />
                 </Form.Item>
 
-                <div style={{ marginBottom: 24, textAlign: 'right' }}>
+                <div style={{ marginBottom: 24, textAlign: "right" }}>
                     <Link to={AppRoutes.auth.forgotPassword}>Forgot password?</Link>
                 </div>
 
@@ -66,8 +60,10 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                     </Button>
                 </Form.Item>
 
-                <div style={{ textAlign: 'center' }}>
-                    <Text>Don't have an account? <Link to={AppRoutes.auth.signUp}>Sign up</Link></Text>
+                <div style={{ textAlign: "center" }}>
+                    <Text>
+                        Don't have an account? <Link to={AppRoutes.auth.signUp}>Sign up</Link>
+                    </Text>
                 </div>
             </Form>
         </>

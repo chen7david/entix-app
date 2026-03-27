@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { message } from "antd";
+import { useCallback } from "react";
 
 // DTOs matching our Zod schemas
 type Playlist = {
@@ -42,7 +42,7 @@ export const usePlaylists = () => {
             if (!orgId) return [];
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists`);
             if (!res.ok) throw new Error("Failed to fetch playlists");
-            return await res.json() as Playlist[];
+            return (await res.json()) as Playlist[];
         },
         enabled: !!orgId,
     });
@@ -57,7 +57,7 @@ export const usePlaylists = () => {
                 body: JSON.stringify(input),
             });
             if (!res.ok) throw new Error("Failed to create playlist");
-            return await res.json() as Playlist;
+            return (await res.json()) as Playlist;
         },
         onSuccess: () => {
             message.success("Playlist created");
@@ -66,12 +66,18 @@ export const usePlaylists = () => {
         },
         onError: () => {
             message.error("Failed to sequence playlist");
-        }
+        },
     });
 
     // Update Playlist
     const updatePlaylistMutation = useMutation({
-        mutationFn: async ({ playlistId, updates }: { playlistId: string; updates: UpdatePlaylistInput }) => {
+        mutationFn: async ({
+            playlistId,
+            updates,
+        }: {
+            playlistId: string;
+            updates: UpdatePlaylistInput;
+        }) => {
             if (!orgId) throw new Error("Organization missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`, {
                 method: "PATCH",
@@ -79,7 +85,7 @@ export const usePlaylists = () => {
                 body: JSON.stringify(updates),
             });
             if (!res.ok) throw new Error("Failed to patch playlist");
-            return await res.json() as Playlist;
+            return (await res.json()) as Playlist;
         },
         onSuccess: () => {
             message.success("Playlist properties saved");
@@ -88,14 +94,16 @@ export const usePlaylists = () => {
         },
         onError: () => {
             message.error("Failed to commit settings");
-        }
+        },
     });
 
     // Delete Playlist
     const deletePlaylistMutation = useMutation({
         mutationFn: async (playlistId: string) => {
             if (!orgId) throw new Error("Organization missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`, { method: "DELETE" });
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`, {
+                method: "DELETE",
+            });
             if (!res.ok) throw new Error("Failed to delete playlist");
         },
         onSuccess: () => {
@@ -113,7 +121,13 @@ export const usePlaylists = () => {
     };
 
     const updateSequenceMutation = useMutation({
-        mutationFn: async ({ playlistId, mediaIds }: { playlistId: string; mediaIds: string[] }) => {
+        mutationFn: async ({
+            playlistId,
+            mediaIds,
+        }: {
+            playlistId: string;
+            mediaIds: string[];
+        }) => {
             if (!orgId) throw new Error("Organization missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`, {
                 method: "PUT",
@@ -123,23 +137,37 @@ export const usePlaylists = () => {
             if (!res.ok) throw new Error("Failed to sync structural order");
         },
         onSuccess: (_, variables) => {
-            // We can silently rewrite the query cache here or let React rely on local state 
+            // We can silently rewrite the query cache here or let React rely on local state
             queryClient.invalidateQueries({ queryKey: ["playlistSequence", variables.playlistId] });
         },
         onError: () => {
             message.error("Failed to persist the media order");
-        }
+        },
     });
 
     return {
         playlists,
         isLoadingPlaylists,
-        createPlaylist: useCallback((input: CreatePlaylistInput) => createPlaylistMutation.mutateAsync(input), [createPlaylistMutation]),
-        updatePlaylist: useCallback((playlistId: string, updates: UpdatePlaylistInput) => updatePlaylistMutation.mutateAsync({ playlistId, updates }), [updatePlaylistMutation]),
-        deletePlaylist: useCallback((playlistId: string) => deletePlaylistMutation.mutateAsync(playlistId), [deletePlaylistMutation]),
+        createPlaylist: useCallback(
+            (input: CreatePlaylistInput) => createPlaylistMutation.mutateAsync(input),
+            [createPlaylistMutation]
+        ),
+        updatePlaylist: useCallback(
+            (playlistId: string, updates: UpdatePlaylistInput) =>
+                updatePlaylistMutation.mutateAsync({ playlistId, updates }),
+            [updatePlaylistMutation]
+        ),
+        deletePlaylist: useCallback(
+            (playlistId: string) => deletePlaylistMutation.mutateAsync(playlistId),
+            [deletePlaylistMutation]
+        ),
         getSequence,
-        updateSequence: useCallback((playlistId: string, mediaIds: string[]) => updateSequenceMutation.mutateAsync({ playlistId, mediaIds }), [updateSequenceMutation]),
-        
+        updateSequence: useCallback(
+            (playlistId: string, mediaIds: string[]) =>
+                updateSequenceMutation.mutateAsync({ playlistId, mediaIds }),
+            [updateSequenceMutation]
+        ),
+
         isCreating: createPlaylistMutation.isPending,
         isUpdating: updatePlaylistMutation.isPending,
         isDeleting: deletePlaylistMutation.isPending,

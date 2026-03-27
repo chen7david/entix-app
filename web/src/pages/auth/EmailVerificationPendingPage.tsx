@@ -1,9 +1,9 @@
-import React from 'react';
-import { Card, Typography, Button, App } from 'antd';
-import { MailOutlined } from '@ant-design/icons';
-import { useResendVerification } from '@web/src/hooks/auth/useAuth';
-import { useLocation, useNavigate } from 'react-router';
-import { AppRoutes } from '@shared/constants/routes';
+import { MailOutlined } from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { useResendVerification } from "@web/src/hooks/auth/useAuth";
+import { App, Button, Card, Typography } from "antd";
+import type React from "react";
+import { useLocation, useNavigate } from "react-router";
 
 const { Title, Text } = Typography;
 
@@ -20,28 +20,32 @@ export const EmailVerificationPendingPage: React.FC = () => {
             return;
         }
 
-        resend({
-            email,
-        }, {
-            onSuccess: () => {
-                message.success("Verification email sent!");
+        resend(
+            {
+                email,
             },
-            onError: (error) => {
-                message.error(error.message || "Failed to resend verification email.");
+            {
+                onSuccess: () => {
+                    message.success("Verification email sent!");
+                },
+                onError: (error) => {
+                    message.error(error.message || "Failed to resend verification email.");
+                },
             }
-        });
+        );
     };
 
     return (
-        <Card style={{ width: 400, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Card style={{ width: 400, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
                 <div className="mb-6">
-                    <MailOutlined style={{ fontSize: '48px', color: '#646cff' }} />
+                    <MailOutlined style={{ fontSize: "48px", color: "#646cff" }} />
                 </div>
                 <Title level={2}>Check your email</Title>
                 <div style={{ marginBottom: 24 }}>
                     <Text>
-                        We've sent a verification link to <Text strong>{email || 'your email address'}</Text>.
+                        We've sent a verification link to{" "}
+                        <Text strong>{email || "your email address"}</Text>.
                     </Text>
                     <br />
                     <Text type="secondary">
@@ -59,14 +63,10 @@ export const EmailVerificationPendingPage: React.FC = () => {
                     >
                         Resend Email
                     </Button>
-                    <Button
-                        type="default"
-                        onClick={() => navigate(AppRoutes.auth.signIn)}
-                        block
-                    >
+                    <Button type="default" onClick={() => navigate(AppRoutes.auth.signIn)} block>
                         Go to Sign In
                     </Button>
-                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
                         Did not receive the email? Check your spam folder.
                     </Text>
                 </div>

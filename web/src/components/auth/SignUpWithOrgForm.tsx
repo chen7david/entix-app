@@ -1,6 +1,6 @@
-import React from 'react';
-import { Form, Input, Button, Alert } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, BankOutlined } from '@ant-design/icons';
+import { BankOutlined, LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
+import { Alert, Button, Form, Input } from "antd";
+import type React from "react";
 
 export interface SignUpWithOrgValues {
     email: string;
@@ -15,18 +15,17 @@ interface SignUpWithOrgFormProps {
     apiError?: string;
 }
 
-export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({ onSubmit, isLoading, apiError }) => {
+export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({
+    onSubmit,
+    isLoading,
+    apiError,
+}) => {
     const [form] = Form.useForm();
 
     return (
         <>
             {apiError && (
-                <Alert
-                    message={apiError}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
+                <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
             <Form
@@ -39,7 +38,7 @@ export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({ onSubmit, 
                 <Form.Item
                     name="name"
                     label="Full Name"
-                    rules={[{ required: true, message: 'Please enter the user\'s full name' }]}
+                    rules={[{ required: true, message: "Please enter the user's full name" }]}
                 >
                     <Input prefix={<UserOutlined />} placeholder="Full Name" />
                 </Form.Item>
@@ -48,8 +47,8 @@ export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({ onSubmit, 
                     name="email"
                     label="Email"
                     rules={[
-                        { required: true, message: 'Please enter an email address' },
-                        { type: 'email', message: 'Please enter a valid email address' }
+                        { required: true, message: "Please enter an email address" },
+                        { type: "email", message: "Please enter a valid email address" },
                     ]}
                 >
                     <Input prefix={<MailOutlined />} placeholder="Email" />
@@ -58,7 +57,7 @@ export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({ onSubmit, 
                 <Form.Item
                     name="organizationName"
                     label="Organization Name"
-                    rules={[{ required: true, message: 'Please enter the organization name' }]}
+                    rules={[{ required: true, message: "Please enter the organization name" }]}
                 >
                     <Input prefix={<BankOutlined />} placeholder="Organization Name" />
                 </Form.Item>
@@ -67,8 +66,8 @@ export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({ onSubmit, 
                     name="password"
                     label="Password"
                     rules={[
-                        { required: true, message: 'Please enter a password' },
-                        { min: 8, message: 'Password must be at least 8 characters' }
+                        { required: true, message: "Please enter a password" },
+                        { min: 8, message: "Password must be at least 8 characters" },
                     ]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="Password" />

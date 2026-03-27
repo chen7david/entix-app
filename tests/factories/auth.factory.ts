@@ -1,6 +1,8 @@
 import type { SignUpWithOrgDTO } from "@shared/schemas/dto/auth.dto";
 
-export function createMockSignUpWithOrgPayload(overrides: Partial<SignUpWithOrgDTO> = {}): SignUpWithOrgDTO {
+export function createMockSignUpWithOrgPayload(
+    overrides: Partial<SignUpWithOrgDTO> = {}
+): SignUpWithOrgDTO {
     const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
 
     return {
@@ -12,7 +14,9 @@ export function createMockSignUpWithOrgPayload(overrides: Partial<SignUpWithOrgD
     };
 }
 
-export function createMockUserPayload(overrides: Partial<Omit<SignUpWithOrgDTO, "organizationName">> = {}): Omit<SignUpWithOrgDTO, "organizationName"> {
+export function createMockUserPayload(
+    overrides: Partial<Omit<SignUpWithOrgDTO, "organizationName">> = {}
+): Omit<SignUpWithOrgDTO, "organizationName"> {
     const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
 
     return {

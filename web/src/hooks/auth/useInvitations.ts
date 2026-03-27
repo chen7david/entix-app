@@ -1,6 +1,6 @@
-import { authClient } from "@web/src/lib/auth-client";
 import type { OrgRole } from "@shared/auth/permissions";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { authClient } from "@web/src/lib/auth-client";
 import { useCallback } from "react";
 import { useOrganization } from "./useOrganization";
 
@@ -9,17 +9,17 @@ export const useInvitations = () => {
     const { activeOrganization, setActive } = useOrganization();
 
     const { data: invitations = [], isLoading: loadingInvitations } = useQuery({
-        queryKey: ['organizationInvitations', activeOrganization?.id],
+        queryKey: ["organizationInvitations", activeOrganization?.id],
         queryFn: async () => {
             if (!activeOrganization?.id) return [];
             const { data } = await authClient.organization.listInvitations({
                 query: {
                     organizationId: activeOrganization.id,
-                }
+                },
             });
             return data || [];
         },
-        enabled: !!activeOrganization?.id
+        enabled: !!activeOrganization?.id,
     });
 
     const { mutateAsync: inviteMemberMutation, isPending: isInviting } = useMutation({
@@ -27,53 +27,66 @@ export const useInvitations = () => {
             return await authClient.organization.inviteMember({
                 email,
                 role: role as OrgRole,
-                organizationId: activeOrganization!.id
+                organizationId: activeOrganization?.id,
             });
         },
         onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
-        }
+            await queryClient.invalidateQueries({ queryKey: ["organizationInvitations"] });
+        },
     });
 
-    const { mutateAsync: cancelInvitationMutation, isPending: isCancelingInvitation } = useMutation({
-        mutationFn: async (invitationId: string) => {
-            return await authClient.organization.cancelInvitation({ invitationId });
-        },
-        onSuccess: async () => {
-            await queryClient.invalidateQueries({ queryKey: ['organizationInvitations'] });
+    const { mutateAsync: cancelInvitationMutation, isPending: isCancelingInvitation } = useMutation(
+        {
+            mutationFn: async (invitationId: string) => {
+                return await authClient.organization.cancelInvitation({ invitationId });
+            },
+            onSuccess: async () => {
+                await queryClient.invalidateQueries({ queryKey: ["organizationInvitations"] });
+            },
         }
-    });
+    );
 
-    const { mutateAsync: acceptInvitationMutation, isPending: isAcceptingInvitation } = useMutation({
-        mutationFn: async (invitationId: string) => {
-            return await authClient.organization.acceptInvitation({ invitationId });
-        },
-        onSuccess: async (result) => {
-            if (result.data) {
-                // Invalidate queries to refresh organization list and active org
-                await queryClient.invalidateQueries({ queryKey: ['organizations'] });
-                await queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
+    const { mutateAsync: acceptInvitationMutation, isPending: isAcceptingInvitation } = useMutation(
+        {
+            mutationFn: async (invitationId: string) => {
+                return await authClient.organization.acceptInvitation({ invitationId });
+            },
+            onSuccess: async (result) => {
+                if (result.data) {
+                    // Invalidate queries to refresh organization list and active org
+                    await queryClient.invalidateQueries({ queryKey: ["organizations"] });
+                    await queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
 
-                // Set the accepted organization as active
-                // We use the setActive from useOrganization to ensure consistency
-                if (result.data.invitation?.organizationId) {
-                    await setActive(result.data.invitation.organizationId);
+                    // Set the accepted organization as active
+                    // We use the setActive from useOrganization to ensure consistency
+                    if (result.data.invitation?.organizationId) {
+                        await setActive(result.data.invitation.organizationId);
+                    }
                 }
-            }
+            },
         }
-    });
+    );
 
-    const inviteMember = useCallback(async (email: string, role: string) => {
-        return inviteMemberMutation({ email, role });
-    }, [inviteMemberMutation]);
+    const inviteMember = useCallback(
+        async (email: string, role: string) => {
+            return inviteMemberMutation({ email, role });
+        },
+        [inviteMemberMutation]
+    );
 
-    const cancelInvitation = useCallback(async (invitationId: string) => {
-        return cancelInvitationMutation(invitationId);
-    }, [cancelInvitationMutation]);
+    const cancelInvitation = useCallback(
+        async (invitationId: string) => {
+            return cancelInvitationMutation(invitationId);
+        },
+        [cancelInvitationMutation]
+    );
 
-    const acceptInvitation = useCallback(async (invitationId: string) => {
-        return acceptInvitationMutation(invitationId);
-    }, [acceptInvitationMutation]);
+    const acceptInvitation = useCallback(
+        async (invitationId: string) => {
+            return acceptInvitationMutation(invitationId);
+        },
+        [acceptInvitationMutation]
+    );
 
     return {
         invitations,

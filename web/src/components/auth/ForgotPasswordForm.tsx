@@ -1,8 +1,8 @@
-import React from 'react';
-import { Form, Input, Button, Typography, Alert } from 'antd';
-import { MailOutlined } from '@ant-design/icons';
-import { Link } from 'react-router';
-import { AppRoutes } from '@shared/constants/routes';
+import { MailOutlined } from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { Alert, Button, Form, Input, Typography } from "antd";
+import type React from "react";
+import { Link } from "react-router";
 
 const { Text } = Typography;
 
@@ -16,18 +16,17 @@ interface ForgotPasswordFormProps {
     apiError?: string;
 }
 
-export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSubmit, isLoading, apiError }) => {
+export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
+    onSubmit,
+    isLoading,
+    apiError,
+}) => {
     const [form] = Form.useForm();
 
     return (
         <>
             {apiError && (
-                <Alert
-                    message={apiError}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
+                <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
             <Form
@@ -40,8 +39,8 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSubmit
                 <Form.Item
                     name="email"
                     rules={[
-                        { required: true, message: 'Please input your email!' },
-                        { type: 'email', message: 'Please enter a valid email!' }
+                        { required: true, message: "Please input your email!" },
+                        { type: "email", message: "Please enter a valid email!" },
                     ]}
                 >
                     <Input prefix={<MailOutlined />} placeholder="Email" />
@@ -53,8 +52,10 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({ onSubmit
                     </Button>
                 </Form.Item>
 
-                <div style={{ textAlign: 'center' }}>
-                    <Text>Remember your password? <Link to={AppRoutes.auth.signIn}>Sign in</Link></Text>
+                <div style={{ textAlign: "center" }}>
+                    <Text>
+                        Remember your password? <Link to={AppRoutes.auth.signIn}>Sign in</Link>
+                    </Text>
                 </div>
             </Form>
         </>

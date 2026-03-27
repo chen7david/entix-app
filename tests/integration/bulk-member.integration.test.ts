@@ -1,14 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
+import app from "@api/app";
+import type { BulkMemberItemDTO, BulkMetricsDTO } from "@shared/schemas/dto/bulk-member.dto";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb, type TestDb } from "../lib/utils";
-import type { 
-    BulkMemberItemDTO, 
-    BulkMetricsDTO 
-} from "@shared/schemas/dto/bulk-member.dto";
-
 
 describe("Bulk Member Integration Tests", () => {
     let client: TestClient;
@@ -25,7 +21,7 @@ describe("Bulk Member Integration Tests", () => {
     it("should fetch dashboard metrics successfully", async () => {
         const res = await client.orgs.members.getMetrics(orgId);
         expect(res.status).toBe(200);
-        const body = await res.json() as BulkMetricsDTO;
+        const body = (await res.json()) as BulkMetricsDTO;
         expect(body).toHaveProperty("totalStorage");
         expect(body).toHaveProperty("activeSessions");
         expect(body).toHaveProperty("engagementRisk");
@@ -36,7 +32,7 @@ describe("Bulk Member Integration Tests", () => {
     it("should export members successfully", async () => {
         const res = await client.orgs.members.export(orgId);
         expect(res.status).toBe(200);
-        const body = await res.json() as BulkMemberItemDTO[];
+        const body = (await res.json()) as BulkMemberItemDTO[];
         expect(Array.isArray(body)).toBe(true);
         expect(body.length).toBeGreaterThan(0);
     });
@@ -53,18 +49,30 @@ describe("Bulk Member Integration Tests", () => {
                     lastName: "Contact",
                     displayName: "FullDisplayName",
                     sex: "male",
-                    birthDate: "1990-01-01"
+                    birthDate: "1990-01-01",
                 },
                 phoneNumbers: [
-                    { countryCode: "+1", number: "5551234", extension: "123", label: "Mobile", isPrimary: true }
+                    {
+                        countryCode: "+1",
+                        number: "5551234",
+                        extension: "123",
+                        label: "Mobile",
+                        isPrimary: true,
+                    },
                 ],
                 addresses: [
-                    { country: "USA", state: "NY", city: "New York", zip: "10001", address: "123 Broadway", label: "Home", isPrimary: true }
+                    {
+                        country: "USA",
+                        state: "NY",
+                        city: "New York",
+                        zip: "10001",
+                        address: "123 Broadway",
+                        label: "Home",
+                        isPrimary: true,
+                    },
                 ],
-                socialMedia: [
-                    { type: "GitHub", urlOrHandle: "fullcontact" }
-                ]
-            }
+                socialMedia: [{ type: "GitHub", urlOrHandle: "fullcontact" }],
+            },
         ];
 
         const res = await client.orgs.members.import(orgId, payload);
@@ -76,22 +84,22 @@ describe("Bulk Member Integration Tests", () => {
                 profile: true,
                 phoneNumbers: true,
                 addresses: true,
-                socialMedias: { with: { socialMediaType: true } }
-            }
+                socialMedias: { with: { socialMediaType: true } },
+            },
         });
-        
+
         expect(user).toBeDefined();
         expect(user?.name).toBe("Full Contact User");
         expect(user?.image).toBe("https://example.com/avatar.jpg");
         expect(user?.profile?.displayName).toBe("FullDisplayName");
 
         const member = await db.query.authMembers.findFirst({
-            where: (m, { and, eq }) => and(eq(m.userId, user!.id), eq(m.organizationId, orgId))
+            where: (m, { and, eq }) => and(eq(m.userId, user!.id), eq(m.organizationId, orgId)),
         });
         expect(member?.role).toBe("member"); // Enforced role
 
         const account = await db.query.authAccounts.findFirst({
-            where: (a, { eq }) => eq(a.userId, user!.id)
+            where: (a, { eq }) => eq(a.userId, user!.id),
         });
         expect(account).toBeDefined();
         expect(account?.providerId).toBe("credential");
@@ -100,7 +108,7 @@ describe("Bulk Member Integration Tests", () => {
         expect(user?.phoneNumbers.length).toBe(1);
         expect(user?.phoneNumbers[0].number).toBe("5551234");
         expect(user?.phoneNumbers[0].extension).toBe("123");
-        
+
         expect(user?.addresses.length).toBe(1);
         expect(user?.addresses[0].city).toBe("New York");
 
@@ -113,18 +121,18 @@ describe("Bulk Member Integration Tests", () => {
         const payload: BulkMemberItemDTO[] = [
             {
                 email: "valid@example.com",
-                name: "Valid User"
+                name: "Valid User",
             },
             {
                 email: "invalid-email-no-at",
-                name: "Invalid User"
-            }
+                name: "Invalid User",
+            },
         ];
 
         const res = await client.orgs.members.import(orgId, payload);
         expect(res.status).toBe(200);
-        
-        const body = await res.json() as any;
+
+        const body = (await res.json()) as any;
         expect(body.total).toBe(2);
         expect(body.created).toBe(1);
         expect(body.failed).toBe(1);

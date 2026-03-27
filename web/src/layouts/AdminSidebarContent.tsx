@@ -1,11 +1,21 @@
-import React from 'react';
-import { Avatar, Typography, type MenuProps, Menu, Dropdown, Button } from 'antd';
-import { UserOutlined, LogoutOutlined, SafetyOutlined, TeamOutlined, DashboardOutlined, ArrowLeftOutlined, MoreOutlined, MailOutlined, ApartmentOutlined } from '@ant-design/icons';
-import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { useNavigate, useLocation } from 'react-router';
-import { getAvatarUrl } from '@shared/utils/image-url';
-import { AppRoutes } from '@shared/constants/routes';
+import {
+    ApartmentOutlined,
+    ArrowLeftOutlined,
+    DashboardOutlined,
+    LogoutOutlined,
+    MailOutlined,
+    MoreOutlined,
+    SafetyOutlined,
+    TeamOutlined,
+    UserOutlined,
+} from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { getAvatarUrl } from "@shared/utils/image-url";
+import { useAuth, useSignOut } from "@web/src/hooks/auth/useAuth";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { Avatar, Button, Dropdown, Menu, type MenuProps, Typography } from "antd";
+import type React from "react";
+import { useLocation, useNavigate } from "react-router";
 
 const { Text } = Typography;
 
@@ -17,56 +27,54 @@ export const AdminSidebarContent: React.FC = () => {
     const location = useLocation();
 
     // 1. User Profile Dropdown
-    const handleMenuClick: MenuProps['onClick'] = (e) => {
-        if (e.key === 'logout') {
+    const handleMenuClick: MenuProps["onClick"] = (e) => {
+        if (e.key === "logout") {
             signOut(undefined, {
-                onSuccess: () => navigate(AppRoutes.auth.signIn)
+                onSuccess: () => navigate(AppRoutes.auth.signIn),
             });
-        } else if (e.key === 'exit') {
+        } else if (e.key === "exit") {
             checkOrganizationStatus();
         }
     };
 
-    const userMenuItems: MenuProps['items'] = [
+    const userMenuItems: MenuProps["items"] = [
         {
-            key: 'exit',
-            label: 'Exit Admin Portal',
+            key: "exit",
+            label: "Exit Admin Portal",
             icon: <ArrowLeftOutlined />,
         },
         {
-            type: 'divider',
+            type: "divider",
         },
         {
-            key: 'logout',
-            label: 'Sign Out',
+            key: "logout",
+            label: "Sign Out",
             icon: <LogoutOutlined />,
             danger: true,
         },
     ];
 
     // 2. Navigation Main Menu
-    const navItems: MenuProps['items'] = [
-
-
+    const navItems: MenuProps["items"] = [
         {
-            label: 'System Dashboard',
+            label: "System Dashboard",
             key: AppRoutes.admin.index,
-            icon: <DashboardOutlined />
+            icon: <DashboardOutlined />,
         },
         {
-            label: 'Global Users',
+            label: "Global Users",
             key: AppRoutes.admin.users,
-            icon: <TeamOutlined />
+            icon: <TeamOutlined />,
         },
         {
-            label: 'Global Organizations',
+            label: "Global Organizations",
             key: AppRoutes.admin.organizations,
-            icon: <ApartmentOutlined />
+            icon: <ApartmentOutlined />,
         },
         {
-            label: 'Email Insights',
+            label: "Email Insights",
             key: AppRoutes.admin.emails,
-            icon: <MailOutlined />
+            icon: <MailOutlined />,
         },
     ];
 
@@ -74,14 +82,15 @@ export const AdminSidebarContent: React.FC = () => {
         navigate(e.key);
     };
 
-
     return (
         <div className="flex flex-col h-full">
             {/* Header Badge */}
             <div className="p-4 flex items-center gap-3 border-b border-gray-100">
                 <SafetyOutlined className="text-yellow-600 text-2xl" />
                 <div className="flex flex-col">
-                    <Text className="text-gray-900 text-sm font-bold uppercase tracking-wider">Super Admin</Text>
+                    <Text className="text-gray-900 text-sm font-bold uppercase tracking-wider">
+                        Super Admin
+                    </Text>
                     <Text className="text-gray-500 text-xs">Entix Platform Control</Text>
                 </div>
             </div>
@@ -95,17 +104,20 @@ export const AdminSidebarContent: React.FC = () => {
                     style={{ height: "100%", background: "transparent", borderRight: 0 }}
                     onClick={handleNavClick}
                     items={navItems}
-                    defaultOpenKeys={['system-submenu']}
+                    defaultOpenKeys={["system-submenu"]}
                 />
             </div>
 
             {/* Footer Profile */}
             <div className="border-t border-gray-100 p-2">
                 <div className="flex items-center gap-1 p-2">
-                    <div style={{ flex: 1, minWidth: 0, paddingLeft: 8 }} className="flex items-center gap-3">
+                    <div
+                        style={{ flex: 1, minWidth: 0, paddingLeft: 8 }}
+                        className="flex items-center gap-3"
+                    >
                         <Avatar
                             size={32}
-                            src={getAvatarUrl(session.data?.user?.image, 'sm')}
+                            src={getAvatarUrl(session.data?.user?.image, "sm")}
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
                         />
@@ -115,8 +127,16 @@ export const AdminSidebarContent: React.FC = () => {
                             </Text>
                         </div>
                     </div>
-                    <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
-                        <Button type="text" icon={<MoreOutlined className="text-gray-500" />} className="hover:bg-gray-200 flex-shrink-0" />
+                    <Dropdown
+                        menu={{ items: userMenuItems, onClick: handleMenuClick }}
+                        trigger={["click"]}
+                        placement="topRight"
+                    >
+                        <Button
+                            type="text"
+                            icon={<MoreOutlined className="text-gray-500" />}
+                            className="hover:bg-gray-200 flex-shrink-0"
+                        />
                     </Dropdown>
                 </div>
             </div>

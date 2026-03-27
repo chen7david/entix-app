@@ -1,10 +1,33 @@
-import { useState } from "react";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { Table, Typography, Button, Modal, Form, Input, Select, Tag, Popconfirm, message, Space, Statistic, Row, Col, Card } from "antd";
-import { PlusOutlined, DeleteOutlined, MailOutlined, ClockCircleOutlined, CheckCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import {
+    CheckCircleOutlined,
+    ClockCircleOutlined,
+    DeleteOutlined,
+    MailOutlined,
+    PlusOutlined,
+    SearchOutlined,
+} from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useInvitations } from "@web/src/hooks/auth/useInvitations";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import {
+    Button,
+    Card,
+    Col,
+    Form,
+    Input,
+    Modal,
+    message,
+    Popconfirm,
+    Row,
+    Select,
+    Space,
+    Statistic,
+    Table,
+    Tag,
+    Typography,
+} from "antd";
 import dayjs from "dayjs";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -17,11 +40,11 @@ export const OrganizationInvitationsPage = () => {
         inviteMember,
         cancelInvitation,
         isInviting,
-        isCancelingInvitation
+        isCancelingInvitation,
     } = useInvitations();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState('');
+    const [searchText, setSearchText] = useState("");
     const [form] = Form.useForm();
 
     const handleInvite = async (values: any) => {
@@ -46,43 +69,49 @@ export const OrganizationInvitationsPage = () => {
 
     // Compute stats
     const totalInvitations = invitations?.length || 0;
-    const pendingCount = invitations?.filter((i: any) => i.status === 'pending').length || 0;
-    const acceptedCount = invitations?.filter((i: any) => i.status === 'accepted').length || 0;
+    const pendingCount = invitations?.filter((i: any) => i.status === "pending").length || 0;
+    const acceptedCount = invitations?.filter((i: any) => i.status === "accepted").length || 0;
 
     const columns = [
         {
-            title: 'Email',
-            dataIndex: 'email',
-            key: 'email',
+            title: "Email",
+            dataIndex: "email",
+            key: "email",
             filteredValue: searchText ? [searchText] : null,
             onFilter: (value: any, record: any) =>
                 record.email?.toLowerCase().includes(value.toLowerCase()),
         },
         {
-            title: 'Role',
-            dataIndex: 'role',
-            key: 'role',
-            render: (role: string) => <Tag color={role === 'admin' ? 'blue' : 'default'}>{role.toUpperCase()}</Tag>,
+            title: "Role",
+            dataIndex: "role",
+            key: "role",
+            render: (role: string) => (
+                <Tag color={role === "admin" ? "blue" : "default"}>{role.toUpperCase()}</Tag>
+            ),
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
             render: (status: string) => (
-                <Tag color={status === 'pending' ? 'orange' : status === 'accepted' ? 'green' : 'red'}>
+                <Tag
+                    color={
+                        status === "pending" ? "orange" : status === "accepted" ? "green" : "red"
+                    }
+                >
                     {status.toUpperCase()}
                 </Tag>
             ),
         },
         {
-            title: 'Expires At',
-            dataIndex: 'expiresAt',
-            key: 'expiresAt',
-            render: (date: string) => dayjs(date).format('MMM D, YYYY'),
+            title: "Expires At",
+            dataIndex: "expiresAt",
+            key: "expiresAt",
+            render: (date: string) => dayjs(date).format("MMM D, YYYY"),
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
             render: (_: any, record: any) => (
                 <Popconfirm
                     title="Cancel Invitation"
@@ -101,7 +130,7 @@ export const OrganizationInvitationsPage = () => {
                     </Button>
                 </Popconfirm>
             ),
-        }
+        },
     ];
 
     if (!activeOrganization) return null;
@@ -112,7 +141,9 @@ export const OrganizationInvitationsPage = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>Invitations</Title>
+                        <Title level={2} style={{ marginBottom: 4 }}>
+                            Invitations
+                        </Title>
                         <Text type="secondary">Manage pending and sent invitations</Text>
                     </div>
                     <Button
@@ -141,7 +172,7 @@ export const OrganizationInvitationsPage = () => {
                                 title="Pending"
                                 value={pendingCount}
                                 prefix={<ClockCircleOutlined />}
-                                valueStyle={pendingCount > 0 ? { color: '#fa8c16' } : undefined}
+                                valueStyle={pendingCount > 0 ? { color: "#fa8c16" } : undefined}
                             />
                         </Card>
                     </Col>
@@ -151,7 +182,7 @@ export const OrganizationInvitationsPage = () => {
                                 title="Accepted"
                                 value={acceptedCount}
                                 prefix={<CheckCircleOutlined />}
-                                valueStyle={acceptedCount > 0 ? { color: '#52c41a' } : undefined}
+                                valueStyle={acceptedCount > 0 ? { color: "#52c41a" } : undefined}
                             />
                         </Card>
                     </Col>
@@ -163,7 +194,7 @@ export const OrganizationInvitationsPage = () => {
                         placeholder="Search invitations..."
                         prefix={<SearchOutlined />}
                         className="max-w-xs"
-                        onChange={e => setSearchText(e.target.value)}
+                        onChange={(e) => setSearchText(e.target.value)}
                         allowClear
                     />
                 </div>
@@ -186,14 +217,14 @@ export const OrganizationInvitationsPage = () => {
                         form={form}
                         layout="vertical"
                         onFinish={handleInvite}
-                        initialValues={{ role: 'member' }}
+                        initialValues={{ role: "member" }}
                     >
                         <Form.Item
                             name="email"
                             label="Email Address"
                             rules={[
-                                { required: true, message: 'Please input the email address!' },
-                                { type: 'email', message: 'Please enter a valid email!' }
+                                { required: true, message: "Please input the email address!" },
+                                { type: "email", message: "Please enter a valid email!" },
                             ]}
                         >
                             <Input placeholder="colleague@example.com" />
@@ -202,7 +233,7 @@ export const OrganizationInvitationsPage = () => {
                         <Form.Item
                             name="role"
                             label="Role"
-                            rules={[{ required: true, message: 'Please select a role!' }]}
+                            rules={[{ required: true, message: "Please select a role!" }]}
                         >
                             <Select>
                                 <Select.Option value="member">Member</Select.Option>

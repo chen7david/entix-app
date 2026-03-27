@@ -59,9 +59,13 @@ export const AVATAR_PRESETS = {
 function buildFullUrl(pathOrUrl: string): string {
     if (!pathOrUrl) return "";
 
-    if (!pathOrUrl.startsWith("http://") && !pathOrUrl.startsWith("https://") && !pathOrUrl.startsWith("//")) {
-        const firstSegment = pathOrUrl.split('/')[0];
-        if (firstSegment.includes('.')) {
+    if (
+        !pathOrUrl.startsWith("http://") &&
+        !pathOrUrl.startsWith("https://") &&
+        !pathOrUrl.startsWith("//")
+    ) {
+        const firstSegment = pathOrUrl.split("/")[0];
+        if (firstSegment.includes(".")) {
             return `https://${pathOrUrl}`;
         }
     }

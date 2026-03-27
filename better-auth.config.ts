@@ -1,9 +1,9 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth } from "better-auth";
-import { config as loadEnv } from "dotenv";
 import { betterAuthGlobalOptions } from "@api/lib/auth/config/global.config";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import Database from "better-sqlite3";
+import { config as loadEnv } from "dotenv";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 
 loadEnv({ path: ".dev.vars" });
 

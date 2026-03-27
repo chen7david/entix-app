@@ -1,7 +1,7 @@
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Select, App } from "antd";
-import { useNavigate } from "react-router";
 import { AppRoutes } from "@shared/constants/routes";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { App, Select } from "antd";
+import { useNavigate } from "react-router";
 
 export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void }) => {
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();
@@ -19,7 +19,7 @@ export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void
                 afterSelect();
             } else {
                 // Default: navigate to the selected org's dashboard
-                const selectedOrg = organizations.find(o => o.id === value);
+                const selectedOrg = organizations.find((o) => o.id === value);
                 if (selectedOrg?.slug) {
                     navigate(`/org/${selectedOrg.slug}${AppRoutes.org.dashboard.index}`);
                 }
@@ -28,12 +28,11 @@ export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void
     };
 
     const options = [
-        ...(organizations?.map(org => ({
+        ...(organizations?.map((org) => ({
             label: org.name,
             value: org.id,
-        })) || [])
+        })) || []),
     ];
-
 
     return (
         <Select

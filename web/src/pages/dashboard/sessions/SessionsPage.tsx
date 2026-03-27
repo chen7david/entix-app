@@ -1,32 +1,36 @@
-import React from 'react';
 import {
-    List,
-    Card,
-    Button,
-    Typography,
-    Space,
-    Tag,
-    Empty,
-    Skeleton,
-    Popconfirm,
-    message,
-    theme,
-    Tooltip
-} from 'antd';
-import {
+    ClockCircleOutlined,
+    CopyOutlined,
+    DeleteOutlined,
+    GlobalOutlined,
     LaptopOutlined,
     MobileOutlined,
-    GlobalOutlined,
-    ClockCircleOutlined,
     SafetyOutlined,
-    DeleteOutlined,
-    CopyOutlined
-} from '@ant-design/icons';
-import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
-import { useListSessions, useRevokeSession, useRevokeOtherSessions } from '@web/src/hooks/auth/useSessions';
-import { useAuth } from '@web/src/hooks/auth/useAuth';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+} from "@ant-design/icons";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
+import {
+    useListSessions,
+    useRevokeOtherSessions,
+    useRevokeSession,
+} from "@web/src/hooks/auth/useSessions";
+import {
+    Button,
+    Card,
+    Empty,
+    List,
+    message,
+    Popconfirm,
+    Skeleton,
+    Space,
+    Tag,
+    Tooltip,
+    Typography,
+    theme,
+} from "antd";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import React from "react";
 
 dayjs.extend(relativeTime);
 
@@ -41,39 +45,42 @@ export const SessionsPage: React.FC = () => {
 
     const handleRevokeSession = (token: string) => {
         revokeSession(token, {
-            onSuccess: () => message.success('Session revoked successfully'),
-            onError: () => message.error('Failed to revoke session'),
+            onSuccess: () => message.success("Session revoked successfully"),
+            onError: () => message.error("Failed to revoke session"),
         });
     };
 
     const handleRevokeAllOtherSessions = () => {
         revokeOtherSessions(undefined, {
-            onSuccess: () => message.success('All other sessions revoked successfully'),
-            onError: () => message.error('Failed to revoke sessions'),
+            onSuccess: () => message.success("All other sessions revoked successfully"),
+            onError: () => message.error("Failed to revoke sessions"),
         });
     };
 
     const getDeviceIcon = (userAgent?: string) => {
         if (!userAgent) return <LaptopOutlined />;
         const ua = userAgent.toLowerCase();
-        if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+        if (ua.includes("mobile") || ua.includes("android") || ua.includes("iphone")) {
             return <MobileOutlined />;
         }
         return <LaptopOutlined />;
     };
 
     const getDeviceInfo = (userAgent?: string) => {
-        if (!userAgent) return 'Unknown Device';
-        if (userAgent.includes('Chrome')) return 'Chrome';
-        if (userAgent.includes('Firefox')) return 'Firefox';
-        if (userAgent.includes('Safari') && !userAgent.includes('Chrome')) return 'Safari';
-        if (userAgent.includes('Edge')) return 'Edge';
-        return 'Unknown Browser';
+        if (!userAgent) return "Unknown Device";
+        if (userAgent.includes("Chrome")) return "Chrome";
+        if (userAgent.includes("Firefox")) return "Firefox";
+        if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) return "Safari";
+        if (userAgent.includes("Edge")) return "Edge";
+        return "Unknown Browser";
     };
 
-    const isCurrentSession = (sessionToken?: string) => {
-        return sessionToken === currentSession.data?.session?.token;
-    };
+    const isCurrentSession = React.useCallback(
+        (sessionToken?: string) => {
+            return sessionToken === currentSession.data?.session?.token;
+        },
+        [currentSession.data?.session?.token]
+    );
 
     const sortedSessions = React.useMemo(() => {
         if (!sessions) return [];
@@ -84,9 +91,9 @@ export const SessionsPage: React.FC = () => {
             if (!aIsCurrent && bIsCurrent) return 1;
             return 0;
         });
-    }, [sessions, currentSession]);
+    }, [sessions, isCurrentSession]);
 
-    const otherSessionsCount = sortedSessions.filter(s => !isCurrentSession(s.token)).length || 0;
+    const otherSessionsCount = sortedSessions.filter((s) => !isCurrentSession(s.token)).length || 0;
 
     return (
         <>
@@ -95,7 +102,9 @@ export const SessionsPage: React.FC = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <Title level={2} className="!mb-2">Active Sessions</Title>
+                        <Title level={2} className="!mb-2">
+                            Active Sessions
+                        </Title>
                         <Text type="secondary">Manage your active sessions across all devices</Text>
                     </div>
 
@@ -116,12 +125,15 @@ export const SessionsPage: React.FC = () => {
                 </div>
 
                 {isLoading ? (
-                    <Space direction="vertical" style={{ width: '100%' }} size="large">
+                    <Space direction="vertical" style={{ width: "100%" }} size="large">
                         <Skeleton active paragraph={{ rows: 3 }} />
                         <Skeleton active paragraph={{ rows: 3 }} />
                     </Space>
                 ) : !sessions || sessions.length === 0 ? (
-                    <Empty description="No active sessions found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                    <Empty
+                        description="No active sessions found"
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
                 ) : (
                     <List
                         dataSource={sortedSessions}
@@ -129,11 +141,13 @@ export const SessionsPage: React.FC = () => {
                             const isCurrent = isCurrentSession(session.token);
 
                             return (
-                                <List.Item style={{ padding: 0, border: 'none', marginBottom: 16 }}>
+                                <List.Item style={{ padding: 0, border: "none", marginBottom: 16 }}>
                                     <Card
                                         style={{
-                                            width: '100%',
-                                            borderColor: isCurrent ? token.colorPrimary : token.colorBorder,
+                                            width: "100%",
+                                            borderColor: isCurrent
+                                                ? token.colorPrimary
+                                                : token.colorBorder,
                                         }}
                                         styles={{ body: { padding: 20 } }}
                                     >
@@ -155,21 +169,37 @@ export const SessionsPage: React.FC = () => {
                                                             </Text>
 
                                                             {isCurrent && (
-                                                                <Tag color="success" icon={<SafetyOutlined />}>
+                                                                <Tag
+                                                                    color="success"
+                                                                    icon={<SafetyOutlined />}
+                                                                >
                                                                     Current Session
                                                                 </Tag>
                                                             )}
                                                         </Space>
 
                                                         <div style={{ marginTop: 4 }}>
-                                                            <Space split={<span>•</span>} size="small">
+                                                            <Space
+                                                                split={<span>•</span>}
+                                                                size="small"
+                                                            >
                                                                 {session.ipAddress && (
-                                                                    <Text type="secondary" style={{ fontSize: 12 }}>
-                                                                        <GlobalOutlined /> {session.ipAddress}
+                                                                    <Text
+                                                                        type="secondary"
+                                                                        style={{ fontSize: 12 }}
+                                                                    >
+                                                                        <GlobalOutlined />{" "}
+                                                                        {session.ipAddress}
                                                                     </Text>
                                                                 )}
-                                                                <Text type="secondary" style={{ fontSize: 12 }}>
-                                                                    <ClockCircleOutlined /> Active {dayjs(session.createdAt).fromNow()}
+                                                                <Text
+                                                                    type="secondary"
+                                                                    style={{ fontSize: 12 }}
+                                                                >
+                                                                    <ClockCircleOutlined /> Active{" "}
+                                                                    {dayjs(
+                                                                        session.createdAt
+                                                                    ).fromNow()}
                                                                 </Text>
                                                             </Space>
                                                         </div>
@@ -182,12 +212,20 @@ export const SessionsPage: React.FC = () => {
                                                             <Button
                                                                 type="text"
                                                                 size="small"
-                                                                icon={<CopyOutlined style={{ fontSize: 12 }} />}
+                                                                icon={
+                                                                    <CopyOutlined
+                                                                        style={{ fontSize: 12 }}
+                                                                    />
+                                                                }
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     if (!session.userAgent) return;
-                                                                    navigator.clipboard.writeText(session.userAgent);
-                                                                    message.success('User Agent copied');
+                                                                    navigator.clipboard.writeText(
+                                                                        session.userAgent
+                                                                    );
+                                                                    message.success(
+                                                                        "User Agent copied"
+                                                                    );
                                                                 }}
                                                                 style={{ flexShrink: 0 }}
                                                             />
@@ -199,12 +237,12 @@ export const SessionsPage: React.FC = () => {
                                                                 style={{
                                                                     flex: 1,
                                                                     minWidth: 0,
-                                                                    display: 'block',
+                                                                    display: "block",
                                                                     fontSize: 11,
                                                                     color: token.colorTextSecondary,
-                                                                    overflow: 'hidden',
-                                                                    textOverflow: 'ellipsis',
-                                                                    whiteSpace: 'nowrap',
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
+                                                                    whiteSpace: "nowrap",
                                                                 }}
                                                             >
                                                                 {session.userAgent}
@@ -218,7 +256,9 @@ export const SessionsPage: React.FC = () => {
                                                 <Popconfirm
                                                     title="Revoke this session?"
                                                     description="You will be signed out from this device."
-                                                    onConfirm={() => handleRevokeSession(session.token)}
+                                                    onConfirm={() =>
+                                                        handleRevokeSession(session.token)
+                                                    }
                                                     okText="Revoke"
                                                     okButtonProps={{ danger: true }}
                                                     cancelText="Cancel"

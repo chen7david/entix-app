@@ -1,13 +1,13 @@
-import { UserRepository } from "@api/repositories/user.repository";
-import { UploadService } from "./upload.service";
 import { NotFoundError } from "@api/errors/app.error";
-import { USER_ASSETS_PREFIX, AVATAR_BUCKET_FOLDER } from "@api/helpers/constants.helpers";
+import { AVATAR_BUCKET_FOLDER, USER_ASSETS_PREFIX } from "@api/helpers/constants.helpers";
+import type { UserRepository } from "@api/repositories/user.repository";
+import type { UploadService } from "./upload.service";
 
 export class AvatarService {
     constructor(
         private userRepo: UserRepository,
         private uploadService: UploadService
-    ) { }
+    ) {}
 
     async requestAvatarUploadUrl(
         targetUserId: string,
@@ -40,12 +40,12 @@ export class AvatarService {
         }
 
         await this.userRepo.updateUser(targetUserId, {
-            image: newUpload.url
+            image: newUpload.url,
         });
 
         return {
             success: true,
-            imageUrl: newUpload.url
+            imageUrl: newUpload.url,
         };
     }
 
@@ -60,7 +60,7 @@ export class AvatarService {
         }
 
         await this.userRepo.updateUser(targetUserId, {
-            image: null
+            image: null,
         });
 
         return { success: true };

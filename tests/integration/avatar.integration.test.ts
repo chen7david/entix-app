@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
+import app from "@api/app";
+import * as schema from "@shared/db/schema";
+import { drizzle } from "drizzle-orm/d1";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { parseJson } from "../lib/api-request.helper";
 import { getAuthCookie } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
-import { parseJson } from "../lib/api-request.helper";
-import { drizzle } from "drizzle-orm/d1";
-import * as schema from "@shared/db/schema";
+import { createTestDb } from "../lib/utils";
 
 describe("Avatar Integration", () => {
     beforeEach(async () => {
@@ -57,30 +57,38 @@ describe("Avatar Integration", () => {
 
             const db = drizzle(env.DB, { schema });
             const user = await db.query.authUsers.findFirst({
-                where: (u, { eq }) => eq(u.email, email)
+                where: (u, { eq }) => eq(u.email, email),
             });
-            const memberUserId = user!.id;
+            const memberUserId = user?.id;
 
             const client = createTestClient(app, env, cookie);
 
             const { BucketService } = await import("@api/services/bucket.service");
-            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
+                "https://fake-presigned-url.com"
+            );
             vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
 
-            const uploadRes = await client.request(`/api/v1/users/${memberUserId}/avatar/presigned-url`, {
-                method: "POST",
-                body: {
-                    originalName: "avatar.jpg",
-                    contentType: "image/jpeg",
-                    fileSize: 50000,
-                },
-            });
+            const uploadRes = await client.request(
+                `/api/v1/users/${memberUserId}/avatar/presigned-url`,
+                {
+                    method: "POST",
+                    body: {
+                        originalName: "avatar.jpg",
+                        contentType: "image/jpeg",
+                        fileSize: 50000,
+                    },
+                }
+            );
             expect(uploadRes.status).toBe(201);
             const { uploadId } = await parseJson<any>(uploadRes);
 
-            const completeRes = await client.request(`/api/v1/users/${memberUserId}/assets/${uploadId}/complete`, {
-                method: "POST",
-            });
+            const completeRes = await client.request(
+                `/api/v1/users/${memberUserId}/assets/${uploadId}/complete`,
+                {
+                    method: "POST",
+                }
+            );
             expect(completeRes.status).toBe(200);
 
             const avatarRes = await client.request(`/api/v1/users/${memberUserId}/avatar`, {
@@ -108,22 +116,29 @@ describe("Avatar Integration", () => {
             });
             const db = drizzle(env.DB, { schema });
             const user = await db.query.authUsers.findFirst({
-                where: (u, { eq }) => eq(u.email, email)
+                where: (u, { eq }) => eq(u.email, email),
             });
-            const memberUserId = user!.id;
+            const memberUserId = user?.id;
 
             const client = createTestClient(app, env, cookie);
 
             const { BucketService } = await import("@api/services/bucket.service");
-            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue("https://fake-presigned-url.com");
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
+                "https://fake-presigned-url.com"
+            );
             vi.spyOn(BucketService.prototype, "delete").mockResolvedValue(undefined);
 
-            const uploadRes = await client.request(`/api/v1/users/${memberUserId}/avatar/presigned-url`, {
-                method: "POST",
-                body: { originalName: "avatar.png", contentType: "image/png", fileSize: 30000 },
-            });
+            const uploadRes = await client.request(
+                `/api/v1/users/${memberUserId}/avatar/presigned-url`,
+                {
+                    method: "POST",
+                    body: { originalName: "avatar.png", contentType: "image/png", fileSize: 30000 },
+                }
+            );
             const { uploadId } = await parseJson<any>(uploadRes);
-            await client.request(`/api/v1/users/${memberUserId}/assets/${uploadId}/complete`, { method: "POST" });
+            await client.request(`/api/v1/users/${memberUserId}/assets/${uploadId}/complete`, {
+                method: "POST",
+            });
 
             await client.request(`/api/v1/users/${memberUserId}/avatar`, {
                 method: "PATCH",

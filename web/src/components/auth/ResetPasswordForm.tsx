@@ -1,6 +1,6 @@
-import React from 'react';
-import { Form, Input, Button, Alert } from 'antd';
-import { LockOutlined } from '@ant-design/icons';
+import { LockOutlined } from "@ant-design/icons";
+import { Alert, Button, Form, Input } from "antd";
+import type React from "react";
 
 export interface ResetPasswordValues {
     newPassword: string;
@@ -13,18 +13,17 @@ interface ResetPasswordFormProps {
     apiError?: string;
 }
 
-export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onSubmit, isLoading, apiError }) => {
+export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
+    onSubmit,
+    isLoading,
+    apiError,
+}) => {
     const [form] = Form.useForm();
 
     return (
         <>
             {apiError && (
-                <Alert
-                    message={apiError}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
+                <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
             <Form
@@ -37,8 +36,8 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onSubmit, 
                 <Form.Item
                     name="newPassword"
                     rules={[
-                        { required: true, message: 'Please input your new password!' },
-                        { min: 8, message: 'Password must be at least 8 characters!' }
+                        { required: true, message: "Please input your new password!" },
+                        { min: 8, message: "Password must be at least 8 characters!" },
                     ]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="New Password" />
@@ -46,15 +45,15 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({ onSubmit, 
 
                 <Form.Item
                     name="confirmPassword"
-                    dependencies={['newPassword']}
+                    dependencies={["newPassword"]}
                     rules={[
-                        { required: true, message: 'Please confirm your password!' },
+                        { required: true, message: "Please confirm your password!" },
                         ({ getFieldValue }) => ({
                             validator(_, value) {
-                                if (!value || getFieldValue('newPassword') === value) {
+                                if (!value || getFieldValue("newPassword") === value) {
                                     return Promise.resolve();
                                 }
-                                return Promise.reject(new Error('Passwords do not match!'));
+                                return Promise.reject(new Error("Passwords do not match!"));
                             },
                         }),
                     ]}

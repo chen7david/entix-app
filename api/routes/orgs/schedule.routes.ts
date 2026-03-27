@@ -1,7 +1,10 @@
-import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
-import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+    createPaginatedResponseSchema,
+    PaginationQuerySchema,
+} from "@shared/schemas/pagination.schema";
 
 const SessionResponseSchema = z.object({
     id: z.string(),
@@ -13,22 +16,30 @@ const SessionResponseSchema = z.object({
     status: z.enum(["scheduled", "completed", "cancelled"]),
     seriesId: z.string().nullable(),
     recurrenceRule: z.string().nullable(),
-    participants: z.array(z.object({
-        sessionId: z.string(),
-        memberId: z.string(),
-        joinedAt: z.coerce.number().optional(),
-        absent: z.boolean().optional().default(false),
-        absenceReason: z.string().nullable().optional(),
-        notes: z.string().nullable().optional(),
-        member: z.object({
-            user: z.object({
-                id: z.string(),
-                name: z.string(),
-                email: z.string(),
-                image: z.string().nullable()
-            }).optional()
-        }).optional()
-    })).optional()
+    participants: z
+        .array(
+            z.object({
+                sessionId: z.string(),
+                memberId: z.string(),
+                joinedAt: z.coerce.number().optional(),
+                absent: z.boolean().optional().default(false),
+                absenceReason: z.string().nullable().optional(),
+                notes: z.string().nullable().optional(),
+                member: z
+                    .object({
+                        user: z
+                            .object({
+                                id: z.string(),
+                                name: z.string(),
+                                email: z.string(),
+                                image: z.string().nullable(),
+                            })
+                            .optional(),
+                    })
+                    .optional(),
+            })
+        )
+        .optional(),
 });
 
 export const ScheduleRoutes = {
@@ -36,16 +47,18 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['read'])] as const,
+        middleware: [requirePermission("schedule", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
             }),
-            query: z.object({
-                startDate: z.coerce.number().optional(),
-                endDate: z.coerce.number().optional(),
-                tzOffset: z.string().optional(),
-            }).merge(PaginationQuerySchema),
+            query: z
+                .object({
+                    startDate: z.coerce.number().optional(),
+                    endDate: z.coerce.number().optional(),
+                    tzOffset: z.string().optional(),
+                })
+                .merge(PaginationQuerySchema),
         },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -63,7 +76,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/metrics",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['read'])] as const,
+        middleware: [requirePermission("schedule", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -94,7 +107,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/analytics/sessions",
         tags: ["Schedule", "Analytics"],
-        middleware: [requirePermission('schedule', ['read'])] as const,
+        middleware: [requirePermission("schedule", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -109,13 +122,15 @@ export const ScheduleRoutes = {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: z.array(z.object({
-                            date: z.string(),
-                            total: z.number(),
-                            scheduled: z.number(),
-                            completed: z.number(),
-                            cancelled: z.number(),
-                        })),
+                        schema: z.array(
+                            z.object({
+                                date: z.string(),
+                                total: z.number(),
+                                scheduled: z.number(),
+                                completed: z.number(),
+                                cancelled: z.number(),
+                            })
+                        ),
                     },
                 },
                 description: "Daily aggregates of scheduled sessions",
@@ -127,7 +142,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/analytics/attendance",
         tags: ["Schedule", "Analytics"],
-        middleware: [requirePermission('schedule', ['read'])] as const,
+        middleware: [requirePermission("schedule", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -142,12 +157,14 @@ export const ScheduleRoutes = {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: z.array(z.object({
-                            date: z.string(),
-                            totalExpected: z.number(),
-                            present: z.number(),
-                            absent: z.number(),
-                        })),
+                        schema: z.array(
+                            z.object({
+                                date: z.string(),
+                                totalExpected: z.number(),
+                                present: z.number(),
+                                absent: z.number(),
+                            })
+                        ),
                     },
                 },
                 description: "Daily aggregates of session attendance",
@@ -159,7 +176,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['create'])] as const,
+        middleware: [requirePermission("schedule", ["create"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -173,10 +190,12 @@ export const ScheduleRoutes = {
                             startTime: z.number(),
                             durationMinutes: z.number().min(15),
                             userIds: z.array(z.string()),
-                            recurrence: z.object({
-                                frequency: z.literal("weekly"),
-                                count: z.number().min(2).max(52)
-                            }).optional()
+                            recurrence: z
+                                .object({
+                                    frequency: z.literal("weekly"),
+                                    count: z.number().min(2).max(52),
+                                })
+                                .optional(),
                         }),
                     },
                 },
@@ -194,7 +213,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['update'])] as const,
+        middleware: [requirePermission("schedule", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -210,7 +229,7 @@ export const ScheduleRoutes = {
                             durationMinutes: z.number().min(15),
                             userIds: z.array(z.string()),
                             updateForward: z.boolean().default(false),
-                            status: z.enum(["scheduled", "completed", "cancelled"]).optional()
+                            status: z.enum(["scheduled", "completed", "cancelled"]).optional(),
                         }),
                     },
                 },
@@ -228,7 +247,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}/status",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['update'])] as const,
+        middleware: [requirePermission("schedule", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -238,7 +257,7 @@ export const ScheduleRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            status: z.enum(["scheduled", "completed", "cancelled"])
+                            status: z.enum(["scheduled", "completed", "cancelled"]),
                         }),
                     },
                 },
@@ -256,7 +275,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/schedule/{sessionId}/attendances",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['update'])] as const,
+        middleware: [requirePermission("schedule", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -266,12 +285,14 @@ export const ScheduleRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            attendances: z.array(z.object({
-                                userId: z.string(),
-                                absent: z.boolean(),
-                                absenceReason: z.string().nullable().optional(),
-                                notes: z.string().nullable().optional(),
-                            }))
+                            attendances: z.array(
+                                z.object({
+                                    userId: z.string(),
+                                    absent: z.boolean(),
+                                    absenceReason: z.string().nullable().optional(),
+                                    notes: z.string().nullable().optional(),
+                                })
+                            ),
                         }),
                     },
                 },
@@ -289,7 +310,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.DELETE,
         path: "/orgs/{organizationId}/schedule/{sessionId}",
         tags: ["Schedule"],
-        middleware: [requirePermission('schedule', ['delete'])] as const,
+        middleware: [requirePermission("schedule", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -299,7 +320,7 @@ export const ScheduleRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            deleteForward: z.boolean().default(false)
+                            deleteForward: z.boolean().default(false),
                         }),
                     },
                 },

@@ -1,8 +1,13 @@
-import { useInfiniteQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
-import { useCallback } from "react";
+import type { Media } from "@shared/db/schema";
+import {
+    keepPreviousData,
+    useInfiniteQuery,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
 import { message } from "antd";
-import type { Media } from "@shared/db/schema";
+import { useCallback } from "react";
 
 type CreateMediaInput = {
     title: string;
@@ -29,17 +34,17 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
     const orgId = activeOrganization?.id;
 
     // List Media
-    const { 
-        data: mediaPages, 
+    const {
+        data: mediaPages,
         isLoading: isLoadingMedia,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
     } = useInfiniteQuery({
         queryKey: ["media", orgId, type, search],
         queryFn: async ({ pageParam }) => {
             if (!orgId) return { items: [], nextCursor: null, prevCursor: null };
-            
+
             const params = new URLSearchParams();
             if (type) params.append("type", type);
             if (search) params.append("search", search);
@@ -51,7 +56,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
 
             const res = await fetch(`/api/v1/orgs/${orgId}/media?${params.toString()}`);
             if (!res.ok) throw new Error("Failed to fetch media");
-            return await res.json() as PaginatedResponse<Media>;
+            return (await res.json()) as PaginatedResponse<Media>;
         },
         enabled: !!orgId,
         initialPageParam: null as string | null,
@@ -59,7 +64,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         placeholderData: keepPreviousData,
     });
 
-    const media = mediaPages?.pages.flatMap(page => page.items) ?? [];
+    const media = mediaPages?.pages.flatMap((page) => page.items) ?? [];
 
     // Create Media
     const createMediaMutation = useMutation({
@@ -81,12 +86,18 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         },
         onError: () => {
             message.error("Could not create media. Ensure the upload completed.");
-        }
+        },
     });
 
     // Update Media
     const updateMediaMutation = useMutation({
-        mutationFn: async ({ mediaId, updates }: { mediaId: string; updates: UpdateMediaInput }) => {
+        mutationFn: async ({
+            mediaId,
+            updates,
+        }: {
+            mediaId: string;
+            updates: UpdateMediaInput;
+        }) => {
             if (!orgId) throw new Error("AuthOrganization ID missing");
             const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}`, {
                 method: "PATCH",
@@ -102,7 +113,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         },
         onError: () => {
             message.error("Failed to update media details.");
-        }
+        },
     });
 
     // Delete Media
@@ -120,7 +131,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         },
         onError: () => {
             message.error("Failed to sweep media asset.");
-        }
+        },
     });
 
     // Record Play
@@ -137,7 +148,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         onSuccess: () => {
             // Silently refresh the list in the background
             queryClient.invalidateQueries({ queryKey: ["media", orgId] });
-        }
+        },
     });
 
     return {
@@ -146,11 +157,24 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
-        createMedia: useCallback((input: CreateMediaInput) => createMediaMutation.mutateAsync(input), [createMediaMutation]),
-        updateMedia: useCallback((mediaId: string, updates: UpdateMediaInput) => updateMediaMutation.mutateAsync({ mediaId, updates }), [updateMediaMutation]),
-        deleteMedia: useCallback((mediaId: string) => deleteMediaMutation.mutateAsync(mediaId), [deleteMediaMutation]),
-        recordPlay: useCallback((mediaId: string) => recordPlayMutation.mutateAsync(mediaId), [recordPlayMutation]),
-        
+        createMedia: useCallback(
+            (input: CreateMediaInput) => createMediaMutation.mutateAsync(input),
+            [createMediaMutation]
+        ),
+        updateMedia: useCallback(
+            (mediaId: string, updates: UpdateMediaInput) =>
+                updateMediaMutation.mutateAsync({ mediaId, updates }),
+            [updateMediaMutation]
+        ),
+        deleteMedia: useCallback(
+            (mediaId: string) => deleteMediaMutation.mutateAsync(mediaId),
+            [deleteMediaMutation]
+        ),
+        recordPlay: useCallback(
+            (mediaId: string) => recordPlayMutation.mutateAsync(mediaId),
+            [recordPlayMutation]
+        ),
+
         isCreating: createMediaMutation.isPending,
         isUpdating: updateMediaMutation.isPending,
         isDeleting: deleteMediaMutation.isPending,

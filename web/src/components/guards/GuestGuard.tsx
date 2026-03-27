@@ -1,8 +1,9 @@
-import React, { useEffect } from 'react';
-import { Outlet } from 'react-router';
-import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { CenteredSpin } from '@web/src/components/common/CenteredView';
+import { CenteredSpin } from "@web/src/components/common/CenteredView";
+import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import type React from "react";
+import { useEffect } from "react";
+import { Outlet } from "react-router";
 
 export const GuestGuard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();

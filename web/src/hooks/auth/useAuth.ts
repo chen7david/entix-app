@@ -1,5 +1,16 @@
-import { useSession, signIn, signUp, signOut, verifyEmail, sendVerificationEmail, requestPasswordReset, resetPassword, changePassword, authClient } from "@web/src/lib/auth-client";
 import { useMutation } from "@tanstack/react-query";
+import {
+    authClient,
+    changePassword,
+    requestPasswordReset,
+    resetPassword,
+    sendVerificationEmail,
+    signIn,
+    signOut,
+    signUp,
+    useSession,
+    verifyEmail,
+} from "@web/src/lib/auth-client";
 
 export const useAuth = () => {
     const session = useSession();
@@ -7,7 +18,7 @@ export const useAuth = () => {
         session,
         isAuthenticated: !!session.data,
         isLoading: session.isPending,
-        isSuperAdmin: session.data?.user?.role === 'admin',
+        isSuperAdmin: session.data?.user?.role === "admin",
         refetch: session.refetch,
     };
 };
@@ -29,10 +40,14 @@ export const useSignIn = () => {
     });
 };
 
-
 export const useSignUpWithOrg = () => {
     return useMutation({
-        mutationFn: async (values: { email: string; password: string; name: string; organizationName: string }) => {
+        mutationFn: async (values: {
+            email: string;
+            password: string;
+            name: string;
+            organizationName: string;
+        }) => {
             const response = await fetch("/api/v1/auth/signup-with-org", {
                 method: "POST",
                 headers: {
@@ -151,7 +166,11 @@ export const useResetPassword = () => {
 
 export const useChangePassword = () => {
     return useMutation({
-        mutationFn: async (values: { currentPassword: string; newPassword: string; revokeOtherSessions?: boolean }) => {
+        mutationFn: async (values: {
+            currentPassword: string;
+            newPassword: string;
+            revokeOtherSessions?: boolean;
+        }) => {
             const response = await changePassword({
                 currentPassword: values.currentPassword,
                 newPassword: values.newPassword,
@@ -180,7 +199,7 @@ export const useStopImpersonating = () => {
         },
         onSuccess: () => {
             // Force a deep reload to clear all contexts and fetch the correct user session
-            window.location.href = '/admin/users';
-        }
+            window.location.href = "/admin/users";
+        },
     });
 };

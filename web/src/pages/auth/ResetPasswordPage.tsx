@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router';
-import { App, Card, Typography, Result, Button } from 'antd';
-import { ResetPasswordForm, type ResetPasswordValues } from '@web/src/components/auth/ResetPasswordForm';
-import { useResetPassword } from '@web/src/hooks/auth/useAuth';
-import { AppRoutes } from '@shared/constants/routes';
+import { AppRoutes } from "@shared/constants/routes";
+import {
+    ResetPasswordForm,
+    type ResetPasswordValues,
+} from "@web/src/components/auth/ResetPasswordForm";
+import { useResetPassword } from "@web/src/hooks/auth/useAuth";
+import { App, Button, Card, Result, Typography } from "antd";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
@@ -11,14 +15,14 @@ export const ResetPasswordPage: React.FC = () => {
     const { message } = App.useApp();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const token = searchParams.get('token');
-    const [status, setStatus] = useState<'idle' | 'success' | 'invalid'>('idle');
+    const token = searchParams.get("token");
+    const [status, setStatus] = useState<"idle" | "success" | "invalid">("idle");
 
     const { mutate: resetPassword, isPending } = useResetPassword();
 
     useEffect(() => {
         if (!token) {
-            setStatus('invalid');
+            setStatus("invalid");
         }
     }, [token]);
 
@@ -28,32 +32,46 @@ export const ResetPasswordPage: React.FC = () => {
             return;
         }
 
-        resetPassword({
-            newPassword: values.newPassword,
-            token,
-        }, {
-            onSuccess: () => {
-                setStatus('success');
-                message.success('Password reset successfully!');
-                setTimeout(() => {
-                    navigate(AppRoutes.auth.signIn);
-                }, 3000);
+        resetPassword(
+            {
+                newPassword: values.newPassword,
+                token,
             },
-            onError: (error) => {
-                message.error(error.message || "Failed to reset password");
+            {
+                onSuccess: () => {
+                    setStatus("success");
+                    message.success("Password reset successfully!");
+                    setTimeout(() => {
+                        navigate(AppRoutes.auth.signIn);
+                    }, 3000);
+                },
+                onError: (error) => {
+                    message.error(error.message || "Failed to reset password");
+                },
             }
-        });
+        );
     };
 
-    if (status === 'invalid') {
+    if (status === "invalid") {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: "60vh",
+                }}
+            >
                 <Result
                     status="error"
                     title="Invalid Reset Link"
                     subTitle="The password reset link is invalid or has expired."
                     extra={[
-                        <Button type="primary" key="forgot" onClick={() => navigate(AppRoutes.auth.forgotPassword)}>
+                        <Button
+                            type="primary"
+                            key="forgot"
+                            onClick={() => navigate(AppRoutes.auth.forgotPassword)}
+                        >
                             Request New Link
                         </Button>,
                         <Button key="signin" onClick={() => navigate(AppRoutes.auth.signIn)}>
@@ -65,15 +83,26 @@ export const ResetPasswordPage: React.FC = () => {
         );
     }
 
-    if (status === 'success') {
+    if (status === "success") {
         return (
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+            <div
+                style={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    minHeight: "60vh",
+                }}
+            >
                 <Result
                     status="success"
                     title="Password Reset Successfully!"
                     subTitle="Redirecting you to sign in..."
                     extra={[
-                        <Button type="primary" key="signin" onClick={() => navigate(AppRoutes.auth.signIn)}>
+                        <Button
+                            type="primary"
+                            key="signin"
+                            onClick={() => navigate(AppRoutes.auth.signIn)}
+                        >
                             Go to Sign In
                         </Button>,
                     ]}
@@ -83,8 +112,8 @@ export const ResetPasswordPage: React.FC = () => {
     }
 
     return (
-        <Card style={{ width: 400, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <Card style={{ width: 400, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
                 <Title level={2}>Reset Password</Title>
                 <Text type="secondary">Enter your new password</Text>
             </div>

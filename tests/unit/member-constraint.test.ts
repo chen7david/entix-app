@@ -1,15 +1,18 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
+import {
+    authMembers as member,
+    authOrganizations as organization,
+    authUsers as user,
+} from "@shared/db/schema";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { authUsers as user, authMembers as member, authOrganizations as organization } from "@shared/db/schema";
-import { eq, and } from "drizzle-orm";
-import { createMockUser } from "../factories/user.factory";
-import { createMockOrganization } from "../factories/organization.factory";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createMockMember } from "../factories/member.factory";
+import { createMockOrganization } from "../factories/organization.factory";
+import { createMockUser } from "../factories/user.factory";
+import { createTestDb } from "../lib/utils";
 
 describe("AuthMember Unique Constraint Test", () => {
-
     beforeEach(async () => {
         await createTestDb();
     });
@@ -46,9 +49,10 @@ describe("AuthMember Unique Constraint Test", () => {
 
         expect(errorThrown).toBe(true);
 
-        const members = await db.select().from(member).where(
-            and(eq(member.userId, testUser.id), eq(member.organizationId, testOrg.id))
-        );
+        const members = await db
+            .select()
+            .from(member)
+            .where(and(eq(member.userId, testUser.id), eq(member.organizationId, testOrg.id)));
         expect(members).toHaveLength(1);
     });
 
@@ -76,9 +80,7 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member2);
 
-        const members = await db.select().from(member).where(
-            eq(member.userId, testUser.id)
-        );
+        const members = await db.select().from(member).where(eq(member.userId, testUser.id));
         expect(members).toHaveLength(2);
     });
 
@@ -106,9 +108,7 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member2);
 
-        const members = await db.select().from(member).where(
-            eq(member.organizationId, testOrg.id)
-        );
+        const members = await db.select().from(member).where(eq(member.organizationId, testOrg.id));
         expect(members).toHaveLength(2);
     });
 });

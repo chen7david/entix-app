@@ -1,9 +1,9 @@
 import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export class SocialMediaRepository {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     /**
      * Fetch all global generic social media structural types.
@@ -20,7 +20,7 @@ export class SocialMediaRepository {
             where: eq(schema.userSocialMedias.userId, userId),
             with: {
                 socialMediaType: true,
-            }
+            },
         });
     }
 
@@ -31,14 +31,16 @@ export class SocialMediaRepository {
         await this.db.insert(schema.userSocialMedias).values(data);
     }
 
-    async updateUserSocialMedia(id: string, userId: string, data: Partial<schema.NewUserSocialMedia>): Promise<void> {
-        await this.db.update(schema.userSocialMedias)
+    async updateUserSocialMedia(
+        id: string,
+        userId: string,
+        data: Partial<schema.NewUserSocialMedia>
+    ): Promise<void> {
+        await this.db
+            .update(schema.userSocialMedias)
             .set(data)
             .where(
-                and(
-                    eq(schema.userSocialMedias.id, id),
-                    eq(schema.userSocialMedias.userId, userId)
-                )
+                and(eq(schema.userSocialMedias.id, id), eq(schema.userSocialMedias.userId, userId))
             );
     }
 
@@ -46,12 +48,10 @@ export class SocialMediaRepository {
      * Delete a user's linked social media handle.
      */
     async deleteUserSocialMedia(id: string, userId: string): Promise<void> {
-        await this.db.delete(schema.userSocialMedias)
+        await this.db
+            .delete(schema.userSocialMedias)
             .where(
-                and(
-                    eq(schema.userSocialMedias.id, id),
-                    eq(schema.userSocialMedias.userId, userId)
-                )
+                and(eq(schema.userSocialMedias.id, id), eq(schema.userSocialMedias.userId, userId))
             );
     }
 }

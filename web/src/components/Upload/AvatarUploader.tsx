@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { Upload, Modal, message } from "antd";
-import ImgCrop from "antd-img-crop";
-import type { UploadFile, UploadProps } from "antd";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
+import type { UploadFile, UploadProps } from "antd";
+import { Modal, message, Upload } from "antd";
+import ImgCrop from "antd-img-crop";
+import { useState } from "react";
 
 interface AvatarUploaderProps {
     /** The organization this upload belongs to */
@@ -26,12 +26,7 @@ interface AvatarUploaderProps {
  * 3. Upload is marked as completed
  * 4. Avatar PATCH endpoint links the upload to the user's profile
  */
-export const AvatarUploader = ({
-    organizationId,
-    userId,
-    open,
-    onClose,
-}: AvatarUploaderProps) => {
+export const AvatarUploader = ({ organizationId, userId, open, onClose }: AvatarUploaderProps) => {
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
@@ -149,7 +144,8 @@ export const AvatarUploader = ({
         >
             <div className="py-4">
                 <p className="text-gray-500 mb-4">
-                    Select an image and crop it to a square. The image will be used as the member's profile picture.
+                    Select an image and crop it to a square. The image will be used as the member's
+                    profile picture.
                 </p>
                 <ImgCrop
                     rotationSlider

@@ -1,12 +1,10 @@
-import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import type { AppHandler } from "@api/helpers/types.helpers";
-import { EmailInsightsRoutes } from "./email-insights.routes";
-import { NotFoundError, InternalServerError } from "@api/errors/app.error";
+import { InternalServerError, NotFoundError } from "@api/errors/app.error";
 import { getMailService } from "@api/factories/service.factory";
+import { HttpStatusCodes } from "@api/helpers/http.helpers";
 
-export class EmailInsightsHandler {
-    static list: AppHandler<typeof EmailInsightsRoutes.list> = async (ctx) => {
-        const { limit, after, before } = ctx.req.valid('query');
+export const EmailInsightsHandler = {
+    list: async (ctx: any) => {
+        const { limit, after, before } = ctx.req.valid("query");
 
         ctx.var.logger.info({ limit, after, before }, "Fetching email list via MailService");
 
@@ -23,18 +21,21 @@ export class EmailInsightsHandler {
             throw new InternalServerError(`Failed to retrieve emails: ${error.message}`);
         }
 
-        const result = data as any; 
+        const result = data as any;
         ctx.var.logger.info({ count: result.data?.length ?? 0 }, "Email list fetched from Resend");
 
-        return ctx.json({
-            object: "list" as const,
-            data: result.data ?? [],
-            has_more: result.has_more ?? false,
-        } as any, HttpStatusCodes.OK);
-    };
+        return ctx.json(
+            {
+                object: "list" as const,
+                data: result.data ?? [],
+                has_more: result.has_more ?? false,
+            } as any,
+            HttpStatusCodes.OK
+        );
+    },
 
-    static get: AppHandler<typeof EmailInsightsRoutes.get> = async (ctx) => {
-        const { emailId } = ctx.req.valid('param');
+    get: async (ctx: any) => {
+        const { emailId } = ctx.req.valid("param");
 
         ctx.var.logger.info({ emailId }, "Fetching email detail via MailService");
 
@@ -44,7 +45,7 @@ export class EmailInsightsHandler {
         if (error) {
             ctx.var.logger.error({ emailId, error }, "Failed to get email from MailService");
             const err = error as { name?: string; statusCode?: number };
-            if (err.name === 'not_found' || err.statusCode === 404) {
+            if (err.name === "not_found" || err.statusCode === 404) {
                 throw new NotFoundError(`Email with id '${emailId}' not found`);
             }
             throw new InternalServerError(`Failed to retrieve email: ${error.message}`);
@@ -56,5 +57,5 @@ export class EmailInsightsHandler {
 
         ctx.var.logger.info({ emailId }, "Email detail fetched from MailService");
         return ctx.json(data as any, HttpStatusCodes.OK);
-    };
-}
+    },
+};

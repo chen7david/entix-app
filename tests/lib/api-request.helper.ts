@@ -1,6 +1,6 @@
 /**
  * Shared test utilities for API response handling.
- * 
+ *
  * NOTE: For making API requests, use createTestClient from ./test-client instead.
  */
 
@@ -9,7 +9,7 @@
  * Usage: const body = await parseJson<MyDTO>(response);
  */
 export async function parseJson<T>(response: Response): Promise<T> {
-    return await response.json() as T;
+    return (await response.json()) as T;
 }
 
 /**

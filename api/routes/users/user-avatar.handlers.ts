@@ -1,33 +1,34 @@
+import { getAvatarService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
-import { UserAvatarRoutes } from "./user-avatar.routes";
-import { getAvatarService } from "@api/factories/service.factory";
+import type { UserAvatarRoutes } from "./user-avatar.routes";
 
 /**
  * Global User Avatar Handlers
- * 
+ *
  * Logic delegated to AvatarService.
  */
 export class UserAvatarHandlers {
     /**
      * POST /users/:userId/avatar/presigned-url
      */
-    static requestAvatarUploadUrl: AppHandler<typeof UserAvatarRoutes.requestAvatarUploadUrl> = async (ctx) => {
-        const { userId: targetUserId } = ctx.req.valid("param");
-        const { originalName, contentType, fileSize } = ctx.req.valid("json");
+    static requestAvatarUploadUrl: AppHandler<typeof UserAvatarRoutes.requestAvatarUploadUrl> =
+        async (ctx) => {
+            const { userId: targetUserId } = ctx.req.valid("param");
+            const { originalName, contentType, fileSize } = ctx.req.valid("json");
 
-        const avatarService = getAvatarService(ctx);
-        const result = await avatarService.requestAvatarUploadUrl(
-            targetUserId,
-            originalName,
-            contentType,
-            fileSize
-        );
+            const avatarService = getAvatarService(ctx);
+            const result = await avatarService.requestAvatarUploadUrl(
+                targetUserId,
+                originalName,
+                contentType,
+                fileSize
+            );
 
-        ctx.var.logger.info({ targetUserId }, "Avatar upload URL generated");
+            ctx.var.logger.info({ targetUserId }, "Avatar upload URL generated");
 
-        return ctx.json(result, HttpStatusCodes.CREATED);
-    };
+            return ctx.json(result, HttpStatusCodes.CREATED);
+        };
 
     /**
      * PATCH /users/:userId/avatar

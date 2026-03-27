@@ -1,8 +1,8 @@
-import React from 'react';
-import { Card, Typography, Button } from 'antd';
-import { useSignOut } from '@web/src/hooks/auth/useAuth';
-import { useNavigate } from 'react-router';
-import { AppRoutes } from '@shared/constants/routes';
+import { AppRoutes } from "@shared/constants/routes";
+import { useSignOut } from "@web/src/hooks/auth/useAuth";
+import { Button, Card, Typography } from "antd";
+import type React from "react";
+import { useNavigate } from "react-router";
 
 const { Title, Paragraph } = Typography;
 
@@ -14,19 +14,20 @@ export const NoOrganizationPage: React.FC = () => {
         signOut(undefined, {
             onSuccess: () => {
                 navigate(AppRoutes.auth.signIn);
-            }
+            },
         });
     };
 
     return (
-            <Card className="w-full max-w-md text-center shadow-lg">
-                <Title level={3}>No Organization Found</Title>
-                <Paragraph className="mb-6 text-gray-600">
-                    You are not a member of any organization. Please contact your site administrator to request an invitation.
-                </Paragraph>
-                <Button type="primary" onClick={handleSignOut} block>
-                    Sign Out
-                </Button>
-            </Card>
+        <Card className="w-full max-w-md text-center shadow-lg">
+            <Title level={3}>No Organization Found</Title>
+            <Paragraph className="mb-6 text-gray-600">
+                You are not a member of any organization. Please contact your site administrator to
+                request an invitation.
+            </Paragraph>
+            <Button type="primary" onClick={handleSignOut} block>
+                Sign Out
+            </Button>
+        </Card>
     );
 };

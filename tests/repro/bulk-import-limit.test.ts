@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
+import app from "@api/app";
+import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
-import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 
 describe("Bulk Import Limit Reproduction", () => {
     let client: TestClient;
@@ -24,25 +24,25 @@ describe("Bulk Import Limit Reproduction", () => {
             profile: {
                 firstName: "User",
                 lastName: i.toString(),
-                sex: "other"
-            }
+                sex: "other",
+            },
         }));
 
         const res = await client.orgs.members.import(orgId, payload);
         expect(res.status).toBe(200);
-        
-        const body = await res.json() as any;
+
+        const body = (await res.json()) as any;
         expect(body.total).toBe(157);
         expect(body.failed).toBe(0);
         expect(body.created).toBe(157);
 
         const listRes = await client.orgs.users.list(orgId);
         expect(listRes.status).toBe(200);
-        const listBody = await listRes.json() as any;
-        
+        const listBody = (await listRes.json()) as any;
+
         expect(listBody.items.length).toBeGreaterThan(0);
         const firstItem = listBody.items[0];
-        
+
         expect(firstItem).toHaveProperty("name");
         expect(firstItem).toHaveProperty("user");
         expect(firstItem.user).toHaveProperty("name");
@@ -50,10 +50,10 @@ describe("Bulk Import Limit Reproduction", () => {
         expect(firstItem.userId).toBe(firstItem.id);
 
         const deleteRes = await client.request(`/api/v1/users/${firstItem.id}/avatar`, {
-            method: "DELETE"
+            method: "DELETE",
         });
         if (deleteRes.status === 404) {
-            const body = await deleteRes.json() as any;
+            const body = (await deleteRes.json()) as any;
             expect(body.message).toBe("No avatar to remove");
         } else {
             expect(deleteRes.status).toBe(204);

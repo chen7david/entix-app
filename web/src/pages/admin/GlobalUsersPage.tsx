@@ -1,9 +1,9 @@
-import React from 'react';
-import { Typography, Card, Statistic, Row, Col } from 'antd';
-import { useAdminUsers } from '@web/src/hooks/admin/useAdminUsers';
-import { TeamOutlined, SafetyOutlined, StopOutlined } from '@ant-design/icons';
-import { UserTable } from '@web/src/components/admin/UserTable';
-import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
+import { UserTable } from "@web/src/components/admin/UserTable";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useAdminUsers } from "@web/src/hooks/admin/useAdminUsers";
+import { Card, Col, Row, Statistic, Typography } from "antd";
+import type React from "react";
 
 const { Title, Text } = Typography;
 
@@ -11,7 +11,7 @@ export const GlobalUsersPage: React.FC = () => {
     const { data: users, isLoading } = useAdminUsers();
 
     const totalUsers = users?.length || 0;
-    const adminUsers = users?.filter((u: any) => u.role === 'admin').length || 0;
+    const adminUsers = users?.filter((u: any) => u.role === "admin").length || 0;
     const bannedUsers = users?.filter((u: any) => u.banned).length || 0;
 
     return (
@@ -20,7 +20,9 @@ export const GlobalUsersPage: React.FC = () => {
             <div className="p-8">
                 <div className="flex justify-between items-center mb-8">
                     <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>Global Users</Title>
+                        <Title level={2} style={{ marginBottom: 4 }}>
+                            Global Users
+                        </Title>
                         <Text type="secondary">Manage all platform users, roles, and access</Text>
                     </div>
                 </div>
@@ -50,7 +52,7 @@ export const GlobalUsersPage: React.FC = () => {
                                 title="Banned Users"
                                 value={bannedUsers}
                                 prefix={<StopOutlined className="text-red-500" />}
-                                valueStyle={bannedUsers > 0 ? { color: '#ff4d4f' } : undefined}
+                                valueStyle={bannedUsers > 0 ? { color: "#ff4d4f" } : undefined}
                             />
                         </Card>
                     </Col>

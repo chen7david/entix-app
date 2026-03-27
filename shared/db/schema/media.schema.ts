@@ -1,14 +1,8 @@
 import { sql } from "drizzle-orm";
-import {
-    sqliteTable,
-    text,
-    integer,
-    index,
-    primaryKey,
-} from "drizzle-orm/sqlite-core";
-import { authOrganizations } from "./organization.schema";
-import { authUsers } from "./auth.schema";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { nanoid } from "nanoid";
+import { authUsers } from "./auth.schema";
+import { authOrganizations } from "./organization.schema";
 
 export const uploads = sqliteTable(
     "uploads",
@@ -36,7 +30,7 @@ export const uploads = sqliteTable(
         updatedAt: integer("updated_at", { mode: "timestamp" }) // Changed mode to "timestamp"
             .notNull() // Reordered notNull and default
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
-            // Removed $onUpdate(() => /* @__PURE__ */ new Date())
+        // Removed $onUpdate(() => /* @__PURE__ */ new Date())
     },
     (table) => [
         index("upload_organizationId_idx").on(table.organizationId), // Renamed index
@@ -59,7 +53,9 @@ export const userUploads = sqliteTable(
         url: text("url").notNull(),
         fileSize: integer("file_size").notNull(),
         contentType: text("content_type").notNull(),
-        status: text("status", { enum: ["pending", "completed", "failed"] }).default("pending").notNull(),
+        status: text("status", { enum: ["pending", "completed", "failed"] })
+            .default("pending")
+            .notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
@@ -68,9 +64,7 @@ export const userUploads = sqliteTable(
             .$onUpdate(() => /* @__PURE__ */ new Date())
             .notNull(),
     },
-    (table) => [
-        index("user_upload_userId_idx").on(table.userId),
-    ]
+    (table) => [index("user_upload_userId_idx").on(table.userId)]
 );
 
 export type UserUpload = typeof userUploads.$inferSelect;

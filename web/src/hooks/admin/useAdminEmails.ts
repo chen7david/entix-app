@@ -1,6 +1,14 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery } from "@tanstack/react-query";
 
-export type EmailEvent = 'sent' | 'delivered' | 'delivery_delayed' | 'complained' | 'bounced' | 'opened' | 'clicked' | null;
+export type EmailEvent =
+    | "sent"
+    | "delivered"
+    | "delivery_delayed"
+    | "complained"
+    | "bounced"
+    | "opened"
+    | "clicked"
+    | null;
 
 export interface EmailRow {
     id: string;
@@ -13,18 +21,18 @@ export interface EmailRow {
 }
 
 export interface EmailListResponse {
-    object: 'list';
+    object: "list";
     data: EmailRow[];
     has_more: boolean;
 }
 
 export const useAdminEmails = () => {
     return useQuery<EmailListResponse>({
-        queryKey: ['admin', 'emails'],
+        queryKey: ["admin", "emails"],
         queryFn: async () => {
-            const res = await fetch('/api/v1/admin/emails?limit=100', { credentials: 'include' });
+            const res = await fetch("/api/v1/admin/emails?limit=100", { credentials: "include" });
             if (!res.ok) throw new Error(`Failed to fetch emails: ${res.status}`);
             return res.json();
-        }
+        },
     });
 };

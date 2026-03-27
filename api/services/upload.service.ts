@@ -1,6 +1,6 @@
-import { BucketService } from "./bucket.service";
-import { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
-import { NotFoundError, ForbiddenError } from "@api/errors/app.error";
+import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
+import type { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
+import type { BucketService } from "./bucket.service";
 
 export class UploadService {
     constructor(
@@ -8,7 +8,7 @@ export class UploadService {
         private uploadRepo: UploadRepository,
         private userUploadRepo: UserUploadRepository,
         private publicUrlPrefix: string
-    ) { }
+    ) {}
 
     // --- Organization Assets (Implicit) ---
 
@@ -22,7 +22,7 @@ export class UploadService {
     ) {
         const uploadId = crypto.randomUUID();
         const extMatch = originalName.match(/\.[0-9a-z]+$/i);
-        const ext = extMatch ? extMatch[0].toLowerCase() : '';
+        const ext = extMatch ? extMatch[0].toLowerCase() : "";
         const bucketKey = `${storagePrefix}/${uploadId}${ext}`;
 
         const presignedUrl = await this.bucketService.getPresignedUploadUrl(bucketKey);
@@ -36,14 +36,14 @@ export class UploadService {
             contentType,
             organizationId,
             uploadedBy: userId,
-            status: "pending"
+            status: "pending",
         });
 
         return {
             uploadId: uploadRecord.id,
             presignedUrl,
             url: `${this.publicUrlPrefix}/${bucketKey}`,
-            bucketKey: uploadRecord.bucketKey
+            bucketKey: uploadRecord.bucketKey,
         };
     }
 
@@ -54,7 +54,7 @@ export class UploadService {
         }
         return {
             ...record,
-            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`,
         };
     }
 
@@ -63,15 +63,15 @@ export class UploadService {
         if (!record) return undefined;
         return {
             ...record,
-            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`,
         };
     }
 
     async listUploads(organizationId: string) {
         const uploads = await this.uploadRepo.findAllByOrganization(organizationId);
-        return uploads.map(u => ({
+        return uploads.map((u) => ({
             ...u,
-            url: `${this.publicUrlPrefix}/${u.bucketKey}`
+            url: `${this.publicUrlPrefix}/${u.bucketKey}`,
         }));
     }
 
@@ -95,7 +95,7 @@ export class UploadService {
     ) {
         const uploadId = crypto.randomUUID();
         const extMatch = originalName.match(/\.[0-9a-z]+$/i);
-        const ext = extMatch ? extMatch[0].toLowerCase() : '';
+        const ext = extMatch ? extMatch[0].toLowerCase() : "";
         const bucketKey = `${storagePrefix}/${uploadId}${ext}`;
 
         const presignedUrl = await this.bucketService.getPresignedUploadUrl(bucketKey);
@@ -108,14 +108,14 @@ export class UploadService {
             url: bucketKey,
             fileSize,
             contentType,
-            status: "pending"
+            status: "pending",
         });
 
         return {
             uploadId: uploadRecord.id,
             presignedUrl,
             url: `${this.publicUrlPrefix}/${bucketKey}`,
-            bucketKey: uploadRecord.bucketKey
+            bucketKey: uploadRecord.bucketKey,
         };
     }
 
@@ -126,7 +126,7 @@ export class UploadService {
         }
         return {
             ...record,
-            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`,
         };
     }
 
@@ -135,7 +135,7 @@ export class UploadService {
         if (!record) return undefined;
         return {
             ...record,
-            url: `${this.publicUrlPrefix}/${record.bucketKey}`
+            url: `${this.publicUrlPrefix}/${record.bucketKey}`,
         };
     }
 

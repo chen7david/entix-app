@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb } from "../lib/utils";
-import type { TestDb } from "../lib/utils";
-import { authUsers as user, userPhoneNumbers } from "@shared/db/schema";
-import { eq } from "drizzle-orm";
-import { createMockUser } from "../factories/user.factory";
 import { UserProfileRepository } from "@api/repositories/user-profile.repository";
 import { UserProfileService } from "@api/services/user-profile.service";
+import { authUsers as user, userPhoneNumbers } from "@shared/db/schema";
+import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createMockUser } from "../factories/user.factory";
+import type { TestDb } from "../lib/utils";
+import { createTestDb } from "../lib/utils";
 
 describe("UserProfileService Unit Test", () => {
     let db: TestDb;
@@ -26,7 +26,7 @@ describe("UserProfileService Unit Test", () => {
             number: "1111111111",
             extension: null,
             label: "Mobile",
-            isPrimary: true
+            isPrimary: true,
         });
 
         await service.addPhoneNumber(newUser.id, {
@@ -34,15 +34,18 @@ describe("UserProfileService Unit Test", () => {
             number: "2222222222",
             extension: null,
             label: "Home",
-            isPrimary: true
+            isPrimary: true,
         });
 
-        const phones = await db.select().from(userPhoneNumbers).where(eq(userPhoneNumbers.userId, newUser.id));
+        const phones = await db
+            .select()
+            .from(userPhoneNumbers)
+            .where(eq(userPhoneNumbers.userId, newUser.id));
 
         expect(phones).toHaveLength(2);
 
-        const firstPhone = phones.find(p => p.number === "1111111111");
-        const secondPhone = phones.find(p => p.number === "2222222222");
+        const firstPhone = phones.find((p) => p.number === "1111111111");
+        const secondPhone = phones.find((p) => p.number === "2222222222");
 
         expect(firstPhone?.isPrimary).toBe(false); // First should have been dynamically demoted
         expect(secondPhone?.isPrimary).toBe(true); // Second gracefully inherits primary status

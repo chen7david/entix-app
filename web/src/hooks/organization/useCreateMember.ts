@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { CreateMemberDTO, CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { message } from "antd";
 
 export const useCreateMember = (organizationId: string) => {

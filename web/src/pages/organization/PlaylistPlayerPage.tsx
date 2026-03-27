@@ -1,14 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { Typography, List, Switch, Button, Skeleton, Tooltip, theme } from 'antd';
-import { AudioOutlined, PlaySquareOutlined, MenuUnfoldOutlined, InteractionOutlined, ArrowLeftOutlined } from '@ant-design/icons';
-import { useParams } from 'react-router';
-import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
-import { AppRoutes } from '@shared/constants/routes';
-import { MediaPlayer } from '@web/src/components/Media/MediaPlayer';
-import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
-import { useMedia } from '@web/src/hooks/organization/useMedia';
+import {
+    ArrowLeftOutlined,
+    AudioOutlined,
+    InteractionOutlined,
+    MenuUnfoldOutlined,
+    PlaySquareOutlined,
+} from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { MediaPlayer } from "@web/src/components/Media/MediaPlayer";
 // useOrganization import removed
-import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
+import { useMedia } from "@web/src/hooks/organization/useMedia";
+import { usePlaylists } from "@web/src/hooks/organization/usePlaylists";
+import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router";
 
 const { Title, Text } = Typography;
 
@@ -30,21 +37,25 @@ export const PlaylistPlayerPage: React.FC = () => {
     const [isAutoPlay, setIsAutoPlay] = useState(true);
     const [isShuffle, setIsShuffle] = useState(false);
 
-    const activePlaylist = playlists.find(p => p.id === playlistId);
+    const activePlaylist = playlists.find((p) => p.id === playlistId);
 
     useEffect(() => {
         if (playlistId) {
             setIsLoading(true);
-            getSequence(playlistId).then(items => {
-                // sort by position
-                const sorted = items.sort((a, b) => a.position - b.position).map(item => item.mediaId);
-                setSequence(sorted);
-                setCurrentIndex(0);
-            }).finally(() => {
-                setIsLoading(false);
-            });
+            getSequence(playlistId)
+                .then((items) => {
+                    // sort by position
+                    const sorted = items
+                        .sort((a, b) => a.position - b.position)
+                        .map((item) => item.mediaId);
+                    setSequence(sorted);
+                    setCurrentIndex(0);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
         }
-    }, [playlistId]);
+    }, [playlistId, getSequence]);
 
     const handleNext = () => {
         if (isShuffle) {
@@ -77,7 +88,7 @@ export const PlaylistPlayerPage: React.FC = () => {
     const hasPrev = currentIndex > 0;
 
     const activeMediaId = sequence[currentIndex];
-    const activeMedia = media.find(m => m.id === activeMediaId);
+    const activeMedia = media.find((m) => m.id === activeMediaId);
 
     // Render the Sidebar queue
     const queueList = (
@@ -85,7 +96,7 @@ export const PlaylistPlayerPage: React.FC = () => {
             className="w-full"
             dataSource={sequence}
             renderItem={(mediaId, index) => {
-                const item = media.find(m => m.id === mediaId);
+                const item = media.find((m) => m.id === mediaId);
                 if (!item) return <></>;
 
                 const isPlaying = index === currentIndex;
@@ -95,25 +106,56 @@ export const PlaylistPlayerPage: React.FC = () => {
                         onClick={() => setCurrentIndex(index)}
                         className={`flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors border-l-4`}
                         style={{
-                            backgroundColor: isPlaying ? token.controlItemBgActive : 'transparent',
-                            borderColor: isPlaying ? token.colorPrimary : 'transparent',
+                            backgroundColor: isPlaying ? token.controlItemBgActive : "transparent",
+                            borderColor: isPlaying ? token.colorPrimary : "transparent",
                         }}
-                        onMouseEnter={(e) => { if (!isPlaying) e.currentTarget.style.backgroundColor = token.colorBgTextHover }}
-                        onMouseLeave={(e) => { if (!isPlaying) e.currentTarget.style.backgroundColor = 'transparent' }}
+                        onMouseEnter={(e) => {
+                            if (!isPlaying)
+                                e.currentTarget.style.backgroundColor = token.colorBgTextHover;
+                        }}
+                        onMouseLeave={(e) => {
+                            if (!isPlaying) e.currentTarget.style.backgroundColor = "transparent";
+                        }}
                     >
-                        {item.mimeType.startsWith('video/') ? (
-                            <PlaySquareOutlined className={`transition-colors`} style={{ color: isPlaying ? token.colorPrimary : token.colorTextSecondary }} />
+                        {item.mimeType.startsWith("video/") ? (
+                            <PlaySquareOutlined
+                                className={`transition-colors`}
+                                style={{
+                                    color: isPlaying
+                                        ? token.colorPrimary
+                                        : token.colorTextSecondary,
+                                }}
+                            />
                         ) : (
-                            <AudioOutlined className={`transition-colors`} style={{ color: isPlaying ? token.colorPrimary : token.colorTextSecondary }} />
+                            <AudioOutlined
+                                className={`transition-colors`}
+                                style={{
+                                    color: isPlaying
+                                        ? token.colorPrimary
+                                        : token.colorTextSecondary,
+                                }}
+                            />
                         )}
                         <div className="flex flex-col flex-1 min-w-0">
                             <Tooltip title={item.title} placement="topLeft" mouseEnterDelay={0.5}>
-                                <Text className={`truncate block font-medium transition-colors`} style={{ color: isPlaying ? token.colorPrimary : undefined }}>{item.title}</Text>
+                                <Text
+                                    className={`truncate block font-medium transition-colors`}
+                                    style={{ color: isPlaying ? token.colorPrimary : undefined }}
+                                >
+                                    {item.title}
+                                </Text>
                             </Tooltip>
                             {item.description ? (
-                                <Text type="secondary" className="text-xs truncate block mt-0.5">{item.description}</Text>
+                                <Text type="secondary" className="text-xs truncate block mt-0.5">
+                                    {item.description}
+                                </Text>
                             ) : (
-                                <Text type="secondary" className="text-xs truncate block mt-0.5 italic opacity-50">No description</Text>
+                                <Text
+                                    type="secondary"
+                                    className="text-xs truncate block mt-0.5 italic opacity-50"
+                                >
+                                    No description
+                                </Text>
                             )}
                         </div>
                     </div>
@@ -137,10 +179,10 @@ export const PlaylistPlayerPage: React.FC = () => {
                         Back to Playlists
                     </Button>
                     <Title level={2} className="!mb-1">
-                        {activePlaylist?.title || 'Playlist Player'}
+                        {activePlaylist?.title || "Playlist Player"}
                     </Title>
                     <Text type="secondary">
-                        {activePlaylist?.description || 'Seamless edge delivery playback sequence.'}
+                        {activePlaylist?.description || "Seamless edge delivery playback sequence."}
                     </Text>
                 </div>
 
@@ -164,13 +206,19 @@ export const PlaylistPlayerPage: React.FC = () => {
                                     onPrevious={hasPrev ? handlePrev : undefined}
                                 />
                             ) : (
-                                <Text className="text-white opacity-50">No media found in sequence</Text>
+                                <Text className="text-white opacity-50">
+                                    No media found in sequence
+                                </Text>
                             )}
                         </div>
                         {/* Metadata below player */}
                         <div className="mt-5 px-1">
-                            <Title level={4} className="!mb-1">{activeMedia?.title || 'Unknown Asset'}</Title>
-                            <Text type="secondary">{activeMedia?.description || 'No description provided.'}</Text>
+                            <Title level={4} className="!mb-1">
+                                {activeMedia?.title || "Unknown Asset"}
+                            </Title>
+                            <Text type="secondary">
+                                {activeMedia?.description || "No description provided."}
+                            </Text>
                         </div>
                     </div>
 
@@ -194,8 +242,17 @@ export const PlaylistPlayerPage: React.FC = () => {
                             </div>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <Text type="secondary" className="text-xs font-semibold uppercase tracking-wider">Auto-Play</Text>
-                                    <Switch size="small" checked={isAutoPlay} onChange={setIsAutoPlay} />
+                                    <Text
+                                        type="secondary"
+                                        className="text-xs font-semibold uppercase tracking-wider"
+                                    >
+                                        Auto-Play
+                                    </Text>
+                                    <Switch
+                                        size="small"
+                                        checked={isAutoPlay}
+                                        onChange={setIsAutoPlay}
+                                    />
                                 </div>
                                 <Button
                                     type={isShuffle ? "primary" : "default"}
@@ -211,7 +268,9 @@ export const PlaylistPlayerPage: React.FC = () => {
 
                         <div className="flex-1 overflow-y-auto bg-transparent">
                             {isLoading ? (
-                                <div className="p-4"><Skeleton active paragraph={{ rows: 6 }} /></div>
+                                <div className="p-4">
+                                    <Skeleton active paragraph={{ rows: 6 }} />
+                                </div>
                             ) : (
                                 queueList
                             )}

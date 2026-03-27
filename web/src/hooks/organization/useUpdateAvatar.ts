@@ -1,6 +1,6 @@
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { message } from "antd";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
+import { message } from "antd";
 
 // web/src/hooks/organization/useUpdateAvatar.ts
 
@@ -29,7 +29,7 @@ export const useUpdateAvatar = (organizationId: string | undefined) => {
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
-            
+
             // Globally refresh the active session to sync Sidebar and Top Nav
             await authClient.getSession();
 
@@ -63,7 +63,7 @@ export const useRemoveAvatar = (organizationId: string | undefined) => {
         },
         onSuccess: async () => {
             queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
-            
+
             // Globally refresh the active session to sync Sidebar and Top Nav
             await authClient.getSession();
 

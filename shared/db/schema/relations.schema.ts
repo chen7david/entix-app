@@ -1,10 +1,10 @@
 import { relations } from "drizzle-orm";
-import { authUsers, authSessions, authAccounts } from "./auth.schema";
-import { authOrganizations, authMembers, authInvitations } from "./organization.schema";
-import { uploads, userUploads, media, playlists, playlistMedia } from "./media.schema";
+import { authAccounts, authSessions, authUsers } from "./auth.schema";
+import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
+import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
-import { userProfiles, userPhoneNumbers, userAddresses } from "./user-profiles.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
+import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 
 export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     sessions: many(authSessions),

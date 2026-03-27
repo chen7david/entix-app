@@ -1,5 +1,5 @@
-import { z } from '@hono/zod-openapi'
-import { userSchema } from './user.dto';
+import { z } from "@hono/zod-openapi";
+import { userSchema } from "./user.dto";
 
 export const authUserSchema = z.object({
     id: z.string(),
@@ -12,21 +12,21 @@ export const authUserSchema = z.object({
 export type AuthUserDTO = z.infer<typeof authUserSchema>;
 
 export const signInSchema = z.object({
-    username: z.string('Username is required').min(1, "Username is required").openapi({
-        example: 'chen7david',
+    username: z.string("Username is required").min(1, "Username is required").openapi({
+        example: "chen7david",
     }),
-    password: z.string('Password is required').min(1, "Password is required").openapi({
-        example: 'password',
+    password: z.string("Password is required").min(1, "Password is required").openapi({
+        example: "password",
     }),
 });
 
 export type SignInDTO = z.infer<typeof signInSchema>;
 
 export const signUpSchema = z.object({
-    username: z.string('Username is required').min(1, "Username is required").openapi({
-        example: 'chen7david',
+    username: z.string("Username is required").min(1, "Username is required").openapi({
+        example: "chen7david",
     }),
-    password: z.string('Password is required').min(1, "Password is required"),
+    password: z.string("Password is required").min(1, "Password is required"),
 });
 
 export type SignUpDTO = z.infer<typeof signUpSchema>;
@@ -40,12 +40,11 @@ export const authContextSchema = z.object({
             email: "email@example.com",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-        }
+        },
     }),
     token: z.string().openapi({ example: "xxxxx.yyyyy.zzzzz" }),
     refreshToken: z.string().openapi({ example: "xxxxx.yyyyy.zzzzz" }),
 });
-
 
 export type AuthContextDTO = z.infer<typeof authContextSchema>;
 

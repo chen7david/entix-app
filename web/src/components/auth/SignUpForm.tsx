@@ -1,8 +1,8 @@
-import React from 'react';
-import { Form, Input, Button, Typography, Alert } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
-import { Link } from 'react-router';
-import { AppRoutes } from '@shared/constants/routes';
+import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { Alert, Button, Form, Input, Typography } from "antd";
+import type React from "react";
+import { Link } from "react-router";
 
 const { Text } = Typography;
 
@@ -25,24 +25,13 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
     return (
         <>
             {apiError && (
-                <Alert
-                    message={apiError}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
+                <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
-            <Form
-                form={form}
-                name="signup"
-                onFinish={onSubmit}
-                layout="vertical"
-                size="large"
-            >
+            <Form form={form} name="signup" onFinish={onSubmit} layout="vertical" size="large">
                 <Form.Item
                     name="name"
-                    rules={[{ required: true, message: 'Please input your name!' }]}
+                    rules={[{ required: true, message: "Please input your name!" }]}
                 >
                     <Input prefix={<UserOutlined />} placeholder="Full Name" />
                 </Form.Item>
@@ -50,8 +39,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
                 <Form.Item
                     name="email"
                     rules={[
-                        { required: true, message: 'Please input your email!' },
-                        { type: 'email', message: 'Please enter a valid email!' }
+                        { required: true, message: "Please input your email!" },
+                        { type: "email", message: "Please enter a valid email!" },
                     ]}
                 >
                     <Input prefix={<MailOutlined />} placeholder="Email" />
@@ -59,7 +48,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
 
                 <Form.Item
                     name="organizationName"
-                    rules={[{ required: true, message: 'Please input your organization name!' }]}
+                    rules={[{ required: true, message: "Please input your organization name!" }]}
                 >
                     <Input prefix={<UserOutlined />} placeholder="Organization Name" />
                 </Form.Item>
@@ -67,8 +56,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
                 <Form.Item
                     name="password"
                     rules={[
-                        { required: true, message: 'Please input your password!' },
-                        { min: 8, message: 'Password must be at least 8 characters!' }
+                        { required: true, message: "Please input your password!" },
+                        { min: 8, message: "Password must be at least 8 characters!" },
                     ]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="Password" />
@@ -80,8 +69,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
                     </Button>
                 </Form.Item>
 
-                <div style={{ textAlign: 'center' }}>
-                    <Text>Already have an account? <Link to={AppRoutes.auth.signIn}>Sign in</Link></Text>
+                <div style={{ textAlign: "center" }}>
+                    <Text>
+                        Already have an account? <Link to={AppRoutes.auth.signIn}>Sign in</Link>
+                    </Text>
                 </div>
             </Form>
         </>

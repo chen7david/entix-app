@@ -1,5 +1,5 @@
-import { z } from '@hono/zod-openapi'
-import { baseSchema } from './base.dto'
+import { z } from "@hono/zod-openapi";
+import { baseSchema } from "./base.dto";
 
 export const profileBaseSchema = z.object({
     firstName: z.string().openapi({ example: "John" }),
@@ -9,9 +9,11 @@ export const profileBaseSchema = z.object({
     birthDate: z.coerce.date().nullable().openapi({ example: "1990-01-01T00:00:00Z" }),
 });
 
-export const profileSchema = baseSchema.extend({
-    userId: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),
-}).merge(profileBaseSchema);
+export const profileSchema = baseSchema
+    .extend({
+        userId: z.string().openapi({ example: "123e4567-e89b-12d3-a456-426614174000" }),
+    })
+    .merge(profileBaseSchema);
 
 export const phoneInputSchema = z.object({
     countryCode: z.string().openapi({ example: "+1" }),
@@ -46,13 +48,19 @@ export const aggregateProfileResponse = z.object({
     profile: profileSchema.nullable(),
     phoneNumbers: z.array(phoneSchema),
     addresses: z.array(addressSchema),
-    socialMedias: z.array(socialSchema.extend({
-        socialMediaType: z.object({
-            id: z.string(),
-            name: z.string(),
-            image: z.string().nullable()
-        }).optional()
-    })).optional()
+    socialMedias: z
+        .array(
+            socialSchema.extend({
+                socialMediaType: z
+                    .object({
+                        id: z.string(),
+                        name: z.string(),
+                        image: z.string().nullable(),
+                    })
+                    .optional(),
+            })
+        )
+        .optional(),
 });
 
 export type ProfileBaseDTO = z.infer<typeof profileBaseSchema>;

@@ -1,14 +1,16 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
 
 export const useAdminOrganizations = () => {
     return useQuery({
-        queryKey: ['admin', 'organizations'],
+        queryKey: ["admin", "organizations"],
         queryFn: async () => {
-            const response = await fetch('/api/v1/admin/organizations');
+            const response = await fetch("/api/v1/admin/organizations");
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ message: 'Failed to fetch global organizations' }));
-                throw new Error(error.message || 'Failed to fetch global organizations');
+                const error = await response
+                    .json()
+                    .catch(() => ({ message: "Failed to fetch global organizations" }));
+                throw new Error(error.message || "Failed to fetch global organizations");
             }
             return response.json();
         },
@@ -25,8 +27,8 @@ export const useAdminCreateOrganization = () => {
             return res.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin', 'organizations'] });
-            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "organizations"] });
+            queryClient.invalidateQueries({ queryKey: ["organizations"] });
         },
     });
 };
@@ -52,8 +54,8 @@ export const useAdminCreateUserWithOrg = () => {
             return response.json();
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin', 'organizations'] });
-            queryClient.invalidateQueries({ queryKey: ['organizations'] });
+            queryClient.invalidateQueries({ queryKey: ["admin", "organizations"] });
+            queryClient.invalidateQueries({ queryKey: ["organizations"] });
         },
     });
 };

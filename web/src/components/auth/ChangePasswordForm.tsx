@@ -1,6 +1,6 @@
-import React from 'react';
-import { Form, Input, Button, Alert, Checkbox } from 'antd';
-import { LockOutlined } from '@ant-design/icons';
+import { LockOutlined } from "@ant-design/icons";
+import { Alert, Button, Checkbox, Form, Input } from "antd";
+import type React from "react";
 
 export interface ChangePasswordValues {
     currentPassword: string;
@@ -15,18 +15,17 @@ interface ChangePasswordFormProps {
     apiError?: string;
 }
 
-export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSubmit, isLoading, apiError }) => {
+export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
+    onSubmit,
+    isLoading,
+    apiError,
+}) => {
     const [form] = Form.useForm();
 
     return (
         <>
             {apiError && (
-                <Alert
-                    message={apiError}
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 24 }}
-                />
+                <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
             <Form
@@ -39,9 +38,7 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSubmit
                 <Form.Item
                     name="currentPassword"
                     label="Current Password"
-                    rules={[
-                        { required: true, message: 'Please input your current password!' }
-                    ]}
+                    rules={[{ required: true, message: "Please input your current password!" }]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="Current Password" />
                 </Form.Item>
@@ -50,8 +47,8 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSubmit
                     name="newPassword"
                     label="New Password"
                     rules={[
-                        { required: true, message: 'Please input your new password!' },
-                        { min: 8, message: 'Password must be at least 8 characters!' }
+                        { required: true, message: "Please input your new password!" },
+                        { min: 8, message: "Password must be at least 8 characters!" },
                     ]}
                 >
                     <Input.Password prefix={<LockOutlined />} placeholder="New Password" />
@@ -60,15 +57,15 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({ onSubmit
                 <Form.Item
                     name="confirmPassword"
                     label="Confirm New Password"
-                    dependencies={['newPassword']}
+                    dependencies={["newPassword"]}
                     rules={[
-                        { required: true, message: 'Please confirm your new password!' },
+                        { required: true, message: "Please confirm your new password!" },
                         ({ getFieldValue }) => ({
                             validator(_, value) {
-                                if (!value || getFieldValue('newPassword') === value) {
+                                if (!value || getFieldValue("newPassword") === value) {
                                     return Promise.resolve();
                                 }
-                                return Promise.reject(new Error('Passwords do not match!'));
+                                return Promise.reject(new Error("Passwords do not match!"));
                             },
                         }),
                     ]}

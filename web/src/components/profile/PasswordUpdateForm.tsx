@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { Form, Input, Button, Card, App, Alert } from 'antd';
-import { KeyOutlined } from '@ant-design/icons';
-import { changePassword } from '@web/src/lib/auth-client';
+import { KeyOutlined } from "@ant-design/icons";
+import { changePassword } from "@web/src/lib/auth-client";
+import { Alert, App, Button, Card, Form, Input } from "antd";
+import { useState } from "react";
 
 export const PasswordUpdateForm = () => {
     const { message } = App.useApp();
@@ -12,22 +12,22 @@ export const PasswordUpdateForm = () => {
     const onFinish = async (values: any) => {
         setLoading(true);
         setErrorMsg(null);
-        
+
         try {
             const result = await changePassword({
                 newPassword: values.newPassword,
                 currentPassword: values.currentPassword,
-                revokeOtherSessions: true
+                revokeOtherSessions: true,
             });
-            
+
             if (result.error) {
-                setErrorMsg(result.error.message || 'Failed to update password');
+                setErrorMsg(result.error.message || "Failed to update password");
             } else {
-                message.success('Password updated successfully!');
+                message.success("Password updated successfully!");
                 form.resetFields();
             }
         } catch (err: any) {
-            setErrorMsg(err.message || 'An unexpected error occurred.');
+            setErrorMsg(err.message || "An unexpected error occurred.");
         } finally {
             setLoading(false);
         }
@@ -39,21 +39,14 @@ export const PasswordUpdateForm = () => {
                 <KeyOutlined className="text-blue-500 text-xl" />
                 <h3 className="text-lg font-medium m-0">Change Password</h3>
             </div>
-            
-            {errorMsg && (
-                <Alert message={errorMsg} type="error" showIcon className="mb-6" />
-            )}
 
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={onFinish}
-                autoComplete="off"
-            >
+            {errorMsg && <Alert message={errorMsg} type="error" showIcon className="mb-6" />}
+
+            <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
                 <Form.Item
                     name="currentPassword"
                     label="Current Password"
-                    rules={[{ required: true, message: 'Please input your current password!' }]}
+                    rules={[{ required: true, message: "Please input your current password!" }]}
                 >
                     <Input.Password placeholder="Enter current password" />
                 </Form.Item>
@@ -62,8 +55,8 @@ export const PasswordUpdateForm = () => {
                     name="newPassword"
                     label="New Password"
                     rules={[
-                        { required: true, message: 'Please input your new password!' },
-                        { min: 8, message: 'Password must be at least 8 characters long.' }
+                        { required: true, message: "Please input your new password!" },
+                        { min: 8, message: "Password must be at least 8 characters long." },
                     ]}
                 >
                     <Input.Password placeholder="Enter new password" />
@@ -72,15 +65,15 @@ export const PasswordUpdateForm = () => {
                 <Form.Item
                     name="confirmPassword"
                     label="Confirm New Password"
-                    dependencies={['newPassword']}
+                    dependencies={["newPassword"]}
                     rules={[
-                        { required: true, message: 'Please confirm your new password!' },
+                        { required: true, message: "Please confirm your new password!" },
                         ({ getFieldValue }) => ({
                             validator(_, value) {
-                                if (!value || getFieldValue('newPassword') === value) {
+                                if (!value || getFieldValue("newPassword") === value) {
                                     return Promise.resolve();
                                 }
-                                return Promise.reject(new Error('The two passwords do not match!'));
+                                return Promise.reject(new Error("The two passwords do not match!"));
                             },
                         }),
                     ]}

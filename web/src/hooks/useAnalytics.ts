@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { API_V1 } from '@web/src/lib/api';
+import { useQuery } from "@tanstack/react-query";
+import { API_V1 } from "@web/src/lib/api";
 
 export interface SessionTrend {
     date: string;
@@ -16,41 +16,36 @@ export interface AttendanceTrend {
     absent: number;
 }
 
-export function useAnalytics(
-    organizationId?: string,
-    startDate?: number,
-    endDate?: number
-) {
-
+export function useAnalytics(organizationId?: string, startDate?: number, endDate?: number) {
     const sessionsQuery = useQuery({
-        queryKey: ['orgTracker', organizationId, 'analytics', 'sessions', startDate, endDate],
+        queryKey: ["orgTracker", organizationId, "analytics", "sessions", startDate, endDate],
         queryFn: async (): Promise<SessionTrend[]> => {
             const params = new URLSearchParams();
-            if (startDate) params.append('startDate', startDate.toString());
-            if (endDate) params.append('endDate', endDate.toString());
-            
+            if (startDate) params.append("startDate", startDate.toString());
+            if (endDate) params.append("endDate", endDate.toString());
+
             const queryString = params.toString();
-            const url = `${API_V1}/orgs/${organizationId}/analytics/sessions${queryString ? `?${queryString}` : ''}`;
-            
+            const url = `${API_V1}/orgs/${organizationId}/analytics/sessions${queryString ? `?${queryString}` : ""}`;
+
             const res = await fetch(url);
-            if (!res.ok) throw new Error('Failed to fetch session analytics');
+            if (!res.ok) throw new Error("Failed to fetch session analytics");
             return res.json();
         },
         enabled: !!organizationId,
     });
 
     const attendanceQuery = useQuery({
-        queryKey: ['orgTracker', organizationId, 'analytics', 'attendance', startDate, endDate],
+        queryKey: ["orgTracker", organizationId, "analytics", "attendance", startDate, endDate],
         queryFn: async (): Promise<AttendanceTrend[]> => {
             const params = new URLSearchParams();
-            if (startDate) params.append('startDate', startDate.toString());
-            if (endDate) params.append('endDate', endDate.toString());
-            
+            if (startDate) params.append("startDate", startDate.toString());
+            if (endDate) params.append("endDate", endDate.toString());
+
             const queryString = params.toString();
-            const url = `${API_V1}/orgs/${organizationId}/analytics/attendance${queryString ? `?${queryString}` : ''}`;
-            
+            const url = `${API_V1}/orgs/${organizationId}/analytics/attendance${queryString ? `?${queryString}` : ""}`;
+
             const res = await fetch(url);
-            if (!res.ok) throw new Error('Failed to fetch attendance analytics');
+            if (!res.ok) throw new Error("Failed to fetch attendance analytics");
             return res.json();
         },
         enabled: !!organizationId,
@@ -60,7 +55,7 @@ export function useAnalytics(
         sessionTrends: sessionsQuery.data || [],
         isLoadingSessions: sessionsQuery.isLoading,
         sessionsError: sessionsQuery.error,
-        
+
         attendanceTrends: attendanceQuery.data || [],
         isLoadingAttendance: attendanceQuery.isLoading,
         attendanceError: attendanceQuery.error,

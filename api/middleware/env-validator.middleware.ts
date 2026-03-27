@@ -1,6 +1,6 @@
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { createMiddleware } from "hono/factory";
 import { z } from "zod";
-import type { AppEnv } from "@api/helpers/types.helpers";
 
 /**
  * Zod schema defining all required Cloudflare environment variables and secrets.
@@ -26,20 +26,29 @@ export const envValidatorMiddleware = () => {
         if (!parsed.success) {
             const flattened = parsed.error.flatten();
 
-            const missingVars = Object.keys(flattened.fieldErrors).join(', ');
+            const missingVars = Object.keys(flattened.fieldErrors).join(", ");
 
             if (c.var.logger) {
-                c.var.logger.fatal({ errors: flattened.fieldErrors }, `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`);
+                c.var.logger.fatal(
+                    { errors: flattened.fieldErrors },
+                    `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`
+                );
             } else {
-                console.error(`🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`);
+                console.error(
+                    `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`
+                );
                 console.error(flattened.fieldErrors);
             }
 
-            return c.json({
-                success: false,
-                message: "Internal Server Configuration Error",
-                details: "The server is missing required infrastructure configuration and cannot boot safely."
-            }, 500);
+            return c.json(
+                {
+                    success: false,
+                    message: "Internal Server Configuration Error",
+                    details:
+                        "The server is missing required infrastructure configuration and cannot boot safely.",
+                },
+                500
+            );
         }
 
         await next();

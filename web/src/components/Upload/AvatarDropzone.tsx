@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { Upload, message, Spin, Avatar } from "antd";
-import ImgCrop from "antd-img-crop";
-import type { UploadProps } from "antd";
+import { CloudUploadOutlined, UserOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUpdateAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
-import { UserOutlined, CloudUploadOutlined } from "@ant-design/icons";
+import { useUpdateAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
+import type { UploadProps } from "antd";
+import { Avatar, message, Spin, Upload } from "antd";
+import ImgCrop from "antd-img-crop";
+import { useState } from "react";
 
 interface AvatarDropzoneProps {
     /** The organization this upload belongs to */
@@ -105,11 +105,10 @@ export const AvatarDropzone = ({
             // Refresh relevant query caches
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", organizationId] });
             queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
-            
+
             // Note: If on ProfilePage, user session needs refetching possibly;
             // The Auth lib handles useSession refresh, but we might want to trigger global invalidations if needed.
             // Assuming session query gets invalidated or polled.
-
         } catch (err: any) {
             console.error("Avatar upload error:", err);
             onError?.(err);
@@ -139,9 +138,9 @@ export const AvatarDropzone = ({
                     {...uploadProps}
                     className="w-full h-full block [&_.ant-upload]:w-full [&_.ant-upload]:h-full [&_.ant-upload]:block relative group cursor-pointer"
                 >
-                    <div 
-                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 group-hover:border-[#646cff] transition-colors" 
-                        style={{ width: size, height: size, padding: '4px' }}
+                    <div
+                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 group-hover:border-[#646cff] transition-colors"
+                        style={{ width: size, height: size, padding: "4px" }}
                     >
                         <div className="w-full h-full relative rounded-full overflow-hidden bg-gray-50 flex items-center justify-center">
                             {/* Display existing avatar or placeholder */}

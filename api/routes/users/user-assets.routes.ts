@@ -1,8 +1,8 @@
-import { createRoute, z } from "@hono/zod-openapi";
-import { HttpStatusCodes, HttpMethods, jsonContent } from "@api/helpers/http.helpers";
-import { requirePermission } from "@api/middleware/require-permission.middleware";
-import type { AppHandler } from "@api/helpers/types.helpers";
 import { getUploadService } from "@api/factories/upload.factory";
+import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
+import { requirePermission } from "@api/middleware/require-permission.middleware";
+import { createRoute, z } from "@hono/zod-openapi";
 import { UploadCompleteResponseSchema } from "@shared/schemas/dto/upload.dto";
 
 /**
@@ -16,7 +16,7 @@ export class UserAssetRoutes {
         method: HttpMethods.POST,
         path: "/users/{userId}/assets/{uploadId}/complete",
         middleware: [
-            requirePermission('avatar', ['update'], 'userId') // Reuse avatar update permission for now as it's the primary global resource
+            requirePermission("avatar", ["update"], "userId"), // Reuse avatar update permission for now as it's the primary global resource
         ] as const,
         request: {
             params: z.object({
@@ -25,7 +25,10 @@ export class UserAssetRoutes {
             }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(UploadCompleteResponseSchema, "Upload completed successfully"),
+            [HttpStatusCodes.OK]: jsonContent(
+                UploadCompleteResponseSchema,
+                "Upload completed successfully"
+            ),
         },
     });
 }
@@ -39,5 +42,5 @@ export class UserAssetHandlers {
         const uploadService = getUploadService(ctx);
         const result = await uploadService.completeUserUpload(uploadId, userId);
         return ctx.json(result, HttpStatusCodes.OK);
-    }
+    };
 }
