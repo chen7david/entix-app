@@ -28,11 +28,9 @@ export const PlaylistPlayerPage: React.FC = () => {
     const { media } = useMedia();
     const { token } = theme.useToken();
 
-    // Page State
     const [sequence, setSequence] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Player State
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [isAutoPlay, setIsAutoPlay] = useState(true);
     const [isShuffle, setIsShuffle] = useState(false);
@@ -90,7 +88,6 @@ export const PlaylistPlayerPage: React.FC = () => {
     const activeMediaId = sequence[currentIndex];
     const activeMedia = media.find((m) => m.id === activeMediaId);
 
-    // Render the Sidebar queue
     const queueList = (
         <List
             className="w-full"
@@ -187,7 +184,6 @@ export const PlaylistPlayerPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Left Pane (Player 70%) */}
                     <div className="w-full lg:w-[70%] flex flex-col">
                         <div className="aspect-video w-full bg-black flex items-center justify-center overflow-hidden z-10">
                             {isLoading ? (
@@ -211,7 +207,6 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 </Text>
                             )}
                         </div>
-                        {/* Metadata below player */}
                         <div className="mt-5 px-1">
                             <Title level={4} className="!mb-1">
                                 {activeMedia?.title || "Unknown Asset"}
@@ -222,7 +217,6 @@ export const PlaylistPlayerPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Right Pane (Queue 30%) */}
                     <div
                         className="w-full lg:w-[30%] flex flex-col shadow-sm h-[calc(100vh-240px)]"
                         style={{

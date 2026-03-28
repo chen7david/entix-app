@@ -5,7 +5,6 @@ import { and, eq, ne } from "drizzle-orm";
 export class UserProfileRepository {
     constructor(private db: AppDb) {}
 
-    // --- User Profiles ---
     async findProfileByUserId(userId: string): Promise<schema.UserProfile | undefined> {
         return await this.db.query.userProfiles.findFirst({
             where: eq(schema.userProfiles.userId, userId),
@@ -23,7 +22,6 @@ export class UserProfileRepository {
             .where(eq(schema.userProfiles.userId, userId));
     }
 
-    // --- User Phone Numbers ---
     async findPhoneNumbersByUserId(userId: string): Promise<schema.UserPhoneNumber[]> {
         return await this.db.query.userPhoneNumbers.findMany({
             where: eq(schema.userPhoneNumbers.userId, userId),
@@ -67,7 +65,6 @@ export class UserProfileRepository {
             );
     }
 
-    // --- User Addresses ---
     async findAddressesByUserId(userId: string): Promise<schema.UserAddress[]> {
         return await this.db.query.userAddresses.findMany({
             where: eq(schema.userAddresses.userId, userId),

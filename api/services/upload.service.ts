@@ -10,8 +10,6 @@ export class UploadService {
         private publicUrlPrefix: string
     ) {}
 
-    // --- Organization Assets (Implicit) ---
-
     async createPresignedUrl(
         storagePrefix: string,
         organizationId: string,
@@ -84,8 +82,6 @@ export class UploadService {
         return false;
     }
 
-    // --- User Assets (Global) ---
-
     async createUserUploadPresignedUrl(
         storagePrefix: string,
         userId: string,
@@ -147,8 +143,6 @@ export class UploadService {
         }
         return false;
     }
-
-    // --- Helper / Validation Methods ---
 
     async getVerifiedImageUploadUrl(uploadId: string, organizationId: string): Promise<string> {
         const upload = await this.getUploadById(uploadId, organizationId);

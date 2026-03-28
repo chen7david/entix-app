@@ -3,11 +3,6 @@ import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { UserAvatarRoutes } from "./user-avatar.routes";
 
-/**
- * Global User Avatar Handlers
- *
- * Logic delegated to AvatarService.
- */
 export class UserAvatarHandlers {
     /**
      * POST /users/:userId/avatar/presigned-url

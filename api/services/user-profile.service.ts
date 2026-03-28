@@ -5,7 +5,6 @@ import type * as schema from "@shared/db/schema";
 export class UserProfileService {
     constructor(private profileRepo: UserProfileRepository) {}
 
-    // --- Profile Context ---
     async getProfileAggregate(userId: string) {
         const [profile, phoneNumbers, addresses] = await Promise.all([
             this.profileRepo.findProfileByUserId(userId),
@@ -38,7 +37,6 @@ export class UserProfileService {
         return await this.profileRepo.findProfileByUserId(userId);
     }
 
-    // --- Phone Numbers ---
     async addPhoneNumber(
         userId: string,
         data: Omit<
@@ -67,7 +65,6 @@ export class UserProfileService {
         await this.profileRepo.deletePhoneNumber(id, userId);
     }
 
-    // --- Addresses ---
     async addAddress(
         userId: string,
         data: Omit<
