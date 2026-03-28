@@ -6,11 +6,10 @@ import "./index.css";
 import App from "./App.tsx";
 
 import { ThemeProvider } from "./providers/ThemeProvider.tsx";
+import { getRequiredElementById } from "./utils/dom.ts";
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-    throw new Error("Failed to find the root element");
-}
+// Satisfy Biome's zero-! policy by using a safe DOM helper that throws if root is missing.
+const rootElement = getRequiredElementById("root");
 
 createRoot(rootElement).render(
     <StrictMode>
