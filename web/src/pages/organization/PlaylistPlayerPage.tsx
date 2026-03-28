@@ -23,7 +23,6 @@ export const PlaylistPlayerPage: React.FC = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigateOrg = useOrgNavigate();
 
-    // Core Data Context removed
     const { getSequence, playlists } = usePlaylists();
     const { media } = useMedia();
     const { token } = theme.useToken();
