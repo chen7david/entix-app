@@ -97,7 +97,7 @@ export const PlaylistPlayerPage: React.FC = () => {
             dataSource={sequence}
             renderItem={(mediaId, index) => {
                 const item = media.find((m) => m.id === mediaId);
-                if (!item) return <></>;
+                if (!item) return null;
 
                 const isPlaying = index === currentIndex;
 

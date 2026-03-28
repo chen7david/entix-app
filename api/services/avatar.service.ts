@@ -1,4 +1,4 @@
-import { NotFoundError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError, NotFoundError } from "@api/errors/app.error";
 import { AVATAR_BUCKET_FOLDER, USER_ASSETS_PREFIX } from "@api/helpers/constants.helpers";
 import type { UserRepository } from "@api/repositories/user.repository";
 import type { UploadService } from "./upload.service";
@@ -36,7 +36,11 @@ export class AvatarService {
         }
 
         if (newUpload.status !== "completed") {
-            throw new Error("Upload must be completed before updating avatar");
+            throw new ConflictError("Upload must be completed before updating avatar");
+        }
+
+        if (!newUpload.contentType.startsWith("image/")) {
+            throw new BadRequestError("Avatar upload must be an image");
         }
 
         await this.userRepo.updateUser(targetUserId, {

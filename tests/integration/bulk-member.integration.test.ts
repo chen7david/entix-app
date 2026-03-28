@@ -94,12 +94,13 @@ describe("Bulk Member Integration Tests", () => {
         expect(user?.profile?.displayName).toBe("FullDisplayName");
 
         const member = await db.query.authMembers.findFirst({
-            where: (m, { and, eq }) => and(eq(m.userId, user!.id), eq(m.organizationId, orgId)),
+            where: (m, { and, eq }) =>
+                and(eq(m.userId, user?.id ?? ""), eq(m.organizationId, orgId)),
         });
         expect(member?.role).toBe("member"); // Enforced role
 
         const account = await db.query.authAccounts.findFirst({
-            where: (a, { eq }) => eq(a.userId, user!.id),
+            where: (a, { eq }) => eq(a.userId, user?.id ?? ""),
         });
         expect(account).toBeDefined();
         expect(account?.providerId).toBe("credential");

@@ -76,6 +76,5 @@ export const patchD1Adapter = <T extends (options: any) => any>(adapterFactory: 
         }
 
         return adapter;
-        // biome-ignore lint/suspicious/noExplicitAny: complexity of Better Auth adapter types warrants an unsafe cast here
     }) as unknown as T;
 };
