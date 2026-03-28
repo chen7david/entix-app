@@ -28,7 +28,6 @@ describe("Avatar Hardening", () => {
     });
 
     it("should return 409 Conflict when upload is not completed", async () => {
-        // 1. Request presigned URL (creates pending upload)
         const uploadRes = await client.request(`/api/v1/users/${userId}/avatar/presigned-url`, {
             method: "POST",
             body: { originalName: "avatar.jpg", contentType: "image/jpeg", fileSize: 1024 },
@@ -36,7 +35,6 @@ describe("Avatar Hardening", () => {
         expect(uploadRes.status).toBe(201);
         const { uploadId } = await parseJson<any>(uploadRes);
 
-        // 2. Try to update avatar before completing upload
         const patchRes = await client.request(`/api/v1/users/${userId}/avatar`, {
             method: "PATCH",
             body: { uploadId },
@@ -48,7 +46,6 @@ describe("Avatar Hardening", () => {
     });
 
     it("should return 400 Bad Request when upload is not an image", async () => {
-        // 1. Request presigned URL with non-image content type
         const uploadRes = await client.request(`/api/v1/users/${userId}/avatar/presigned-url`, {
             method: "POST",
             body: { originalName: "malicious.pdf", contentType: "application/pdf", fileSize: 1024 },
@@ -56,7 +53,6 @@ describe("Avatar Hardening", () => {
         expect(uploadRes.status).toBe(201);
         const { uploadId } = await parseJson<any>(uploadRes);
 
-        // 2. Complete the upload
         const completeRes = await client.request(
             `/api/v1/users/${userId}/assets/${uploadId}/complete`,
             {
@@ -65,7 +61,6 @@ describe("Avatar Hardening", () => {
         );
         expect(completeRes.status).toBe(200);
 
-        // 3. Try to update avatar with non-image upload
         const patchRes = await client.request(`/api/v1/users/${userId}/avatar`, {
             method: "PATCH",
             body: { uploadId },

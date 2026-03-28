@@ -14,7 +14,6 @@ export const patchD1Adapter = <T extends (options: any) => any>(adapterFactory: 
     return ((options: any) => {
         const adapter = adapterFactory(options);
 
-        // --- Patch findMany ---
         const originalFindMany = adapter.findMany?.bind(adapter);
         if (originalFindMany) {
             adapter.findMany = async (params: any) => {
@@ -46,7 +45,6 @@ export const patchD1Adapter = <T extends (options: any) => any>(adapterFactory: 
             };
         }
 
-        // --- Patch deleteMany ---
         const originalDeleteMany = adapter.deleteMany?.bind(adapter);
         if (originalDeleteMany) {
             adapter.deleteMany = async (params: any) => {
