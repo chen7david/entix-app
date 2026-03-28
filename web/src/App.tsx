@@ -48,11 +48,7 @@ import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
 const queryClient = new QueryClient();
 
 function logError(error: unknown, info: { componentStack?: string | null }) {
-    // Log to console in development
     console.error("Error Boundary caught an error:", error, info);
-
-    // TODO: In production, send to error logging service (e.g., Sentry, LogRocket)
-    // Example: Sentry.captureException(error, { extra: info });
 }
 
 export default function App() {
@@ -61,7 +57,6 @@ export default function App() {
             FallbackComponent={ErrorFallback}
             onError={logError}
             onReset={() => {
-                // Reset application state if needed
                 window.location.href = "/";
             }}
         >
@@ -70,7 +65,6 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<Navigate to={AppRoutes.auth.signIn} replace />} />
 
-                        {/* Public routes (no guard) */}
                         <Route path="/auth" element={<AuthLayout />}>
                             <Route path="verify-email" element={<VerifyEmailPage />} />
                             <Route
@@ -79,7 +73,6 @@ export default function App() {
                             />
                         </Route>
 
-                        {/* Public Routes (Guest Only) */}
                         <Route element={<GuestGuard />}>
                             <Route path="/auth" element={<AuthLayout />}>
                                 <Route path="sign-in" element={<SignInPage />} />
@@ -89,9 +82,7 @@ export default function App() {
                             </Route>
                         </Route>
 
-                        {/* Protected Routes */}
                         <Route element={<AuthGuard />}>
-                            {/* Onboarding Routes (Authenticated but no active org required) */}
                             <Route path={AppRoutes.onboarding.index} element={<AuthLayout />}>
                                 <Route path="no-organization" element={<NoOrganizationPage />} />
                                 <Route
@@ -104,12 +95,10 @@ export default function App() {
                                 />
                             </Route>
 
-                            {/* URL-scoped Organization Routes: /org/:slug/... */}
                             <Route path="org/:slug" element={<OrgGuard />}>
                                 <Route element={<DashboardLayout />}>
                                     <Route index element={<Navigate to="dashboard" replace />} />
 
-                                    {/* Dashboard Routes */}
                                     <Route path="dashboard">
                                         <Route index element={<HomePage />} />
                                         <Route path="profile" element={<ProfilePage />} />
@@ -126,7 +115,6 @@ export default function App() {
                                         <Route path="orders" element={<OrdersPage />} />
                                     </Route>
 
-                                    {/* Organization Management */}
                                     <Route path="media" element={<OrganizationMediaPage />} />
                                     <Route
                                         path="playlists"
@@ -158,7 +146,6 @@ export default function App() {
                                 </Route>
                             </Route>
 
-                            {/* Global Admin Routes */}
                             <Route element={<AdminGuard />}>
                                 <Route element={<AdminLayout />}>
                                     <Route path="admin" element={<AdminDashboardPage />} />
@@ -171,8 +158,6 @@ export default function App() {
                                 </Route>
                             </Route>
                         </Route>
-
-                        {/* Catch-all 404 route */}
 
                         <Route element={<AuthLayout />}>
                             <Route path="*" element={<NotFoundPage />} />
