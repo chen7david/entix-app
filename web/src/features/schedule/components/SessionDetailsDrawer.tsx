@@ -1,5 +1,7 @@
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { useMembers } from "@web/src/features/organization";
+import { useDebouncedValue } from "@tanstack/react-pacer";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     Alert,
     App,
@@ -16,6 +18,7 @@ import {
     Space,
     Switch,
     Tabs,
+    Tag,
     TimePicker,
     Tooltip,
     Typography,
@@ -60,7 +63,10 @@ export const SessionDetailsDrawer = ({
 }: Props) => {
     const { message } = App.useApp();
     const [form] = Form.useForm();
-    const { members, loadingMembers } = useMembers();
+    const [memberSearch, setMemberSearch] = useState("");
+    const [debouncedMemberSearch] = useDebouncedValue(memberSearch, { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE });
+    const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
+        useMembers(debouncedMemberSearch);
     const [isRecurring, setIsRecurring] = useState(false);
     const [enableDelete, setEnableDelete] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -338,13 +344,91 @@ export const SessionDetailsDrawer = ({
                 <Select
                     mode="multiple"
                     placeholder="Select teachers or participants"
-                    loading={loadingMembers}
+                    loading={loadingMembers || isFetchingNextPage}
                     options={(members || []).map((m: any) => ({
                         label: m.user?.name || m.user?.email,
                         value: m.user?.id,
+                        image: m.user?.image, // Include image for the custom renderers
                     }))}
                     showSearch
-                    optionFilterProp="label"
+                    filterOption={false}
+                    onSearch={setMemberSearch}
+                    onPopupScroll={(e) => {
+                        const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+                        if (
+                            scrollHeight - scrollTop <= clientHeight + 10 &&
+                            hasNextPage &&
+                            !isFetchingNextPage
+                        ) {
+                            fetchNextPage();
+                        }
+                    }}
+                    searchValue={memberSearch}
+                    onBlur={() => setMemberSearch("")}
+                    optionRender={(option) => (
+                        <Space>
+                            <Avatar
+                                size="small"
+                                src={
+                                    option.data.image
+                                        ? getAvatarUrl(option.data.image, "sm")
+                                        : undefined
+                                }
+                            >
+                                {!(option.data.image) && option.label?.toString().charAt(0).toUpperCase()}
+                            </Avatar>
+                            {option.label}
+                        </Space>
+                    )}
+                    tagRender={(props) => {
+                        const { label, value, closable, onClose } = props;
+                        const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        };
+                        const member = members.find((m: any) => m.userId === value);
+                        return (
+                            <Tooltip title={label} mouseEnterDelay={0.5}>
+                                <Tag
+                                    color="blue"
+                                    onMouseDown={onPreventMouseDown}
+                                    closable={closable}
+                                    onClose={onClose}
+                                    style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: 4,
+                                        padding: "2px 6px",
+                                        borderRadius: 4,
+                                        margin: "2px 4px 2px 0",
+                                        width: 140, // Reduced to ensure exactly 2 fit per line with margins
+                                    }}
+                                >
+                                    <Avatar
+                                        size={16}
+                                        src={
+                                            member?.user?.image
+                                                ? getAvatarUrl(member.user.image, "sm")
+                                                : undefined
+                                        }
+                                        style={{ fontSize: 10, flexShrink: 0 }}
+                                    >
+                                        {!member?.user?.image &&
+                                            label?.toString().charAt(0).toUpperCase()}
+                                    </Avatar>
+                                    <span
+                                        style={{
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                        }}
+                                    >
+                                        {label}
+                                    </span>
+                                </Tag>
+                            </Tooltip>
+                        );
+                    }}
                 />
             </Form.Item>
 
