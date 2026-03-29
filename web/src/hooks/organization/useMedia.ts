@@ -6,7 +6,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { message } from "antd";
+import { App } from "antd";
 import { useCallback } from "react";
 
 type CreateMediaInput = {
@@ -29,6 +29,7 @@ type PaginatedResponse<T> = {
 };
 
 export const useMedia = (type?: "video" | "audio", search?: string) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;

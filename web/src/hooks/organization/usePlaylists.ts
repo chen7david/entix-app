@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { message } from "antd";
+import { App } from "antd";
 import { useCallback } from "react";
 
 // DTOs matching our Zod schemas
@@ -31,6 +31,7 @@ type CreatePlaylistInput = {
 type UpdatePlaylistInput = Partial<CreatePlaylistInput>;
 
 export const usePlaylists = () => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;

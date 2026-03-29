@@ -1,9 +1,10 @@
 import { useUserProfile } from "@web/src/hooks/api/user-profiles.hooks";
-import { Button, DatePicker, Form, Input, message, Select, Spin } from "antd";
+import { App, Button, DatePicker, Form, Input, Select, Spin } from "antd";
 import dayjs from "dayjs";
 import { useEffect } from "react";
 
 export const UserProfileForm = ({ userId }: { userId: string }) => {
+    const { message } = App.useApp();
     const { aggregate, isLoading, upsertProfile } = useUserProfile(userId);
     const [form] = Form.useForm();
 

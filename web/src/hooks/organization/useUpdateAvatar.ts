@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
-import { message } from "antd";
+import { App } from "antd";
 
 // web/src/hooks/organization/useUpdateAvatar.ts
 
@@ -10,6 +10,7 @@ import { message } from "antd";
  * links the upload to the user's profile image.
  */
 export const useUpdateAvatar = (organizationId: string | undefined) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -46,6 +47,7 @@ export const useUpdateAvatar = (organizationId: string | undefined) => {
  * Deletes the avatar from R2 and clears the user.image field.
  */
 export const useRemoveAvatar = (organizationId: string | undefined) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({

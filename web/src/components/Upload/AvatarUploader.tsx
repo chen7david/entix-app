@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
 import type { UploadFile, UploadProps } from "antd";
-import { Modal, message, Upload } from "antd";
+import { App, Modal, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 
@@ -27,6 +27,7 @@ interface AvatarUploaderProps {
  * 4. Avatar PATCH endpoint links the upload to the user's profile
  */
 export const AvatarUploader = ({ organizationId, userId, open, onClose }: AvatarUploaderProps) => {
+    const { message } = App.useApp();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();

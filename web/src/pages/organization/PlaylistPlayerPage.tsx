@@ -85,7 +85,14 @@ export const PlaylistPlayerPage: React.FC = () => {
     const hasPrev = currentIndex > 0;
 
     const activeMediaId = sequence[currentIndex];
-    const activeMedia = media.find((m) => m.id === activeMediaId);
+    const activeMedia = media.find((m) => m.id === activeMediaId) || {
+        id: "not-found",
+        title: "Media not found",
+        description: "The requested media asset could not be located.",
+        mediaUrl: "",
+        mimeType: "video/mp4",
+        coverArtUrl: null,
+    };
 
     const queueList = (
         <List

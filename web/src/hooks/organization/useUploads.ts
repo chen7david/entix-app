@@ -1,6 +1,6 @@
 import type { UploadDto } from "@shared/schemas/dto/upload.dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { message } from "antd";
+import { App } from "antd";
 
 export const useOrganizationUploads = (organizationId: string | undefined) => {
     return useQuery({
@@ -21,6 +21,7 @@ export const useOrganizationUploads = (organizationId: string | undefined) => {
 };
 
 export const useDeleteUpload = (organizationId: string | undefined) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({

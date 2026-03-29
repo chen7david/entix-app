@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { useUpdateAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
 import type { UploadProps } from "antd";
-import { Avatar, message, Spin, Upload } from "antd";
+import { App, Avatar, Spin, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 
@@ -27,6 +27,7 @@ export const AvatarDropzone = ({
     size = 120,
     className = "",
 }: AvatarDropzoneProps) => {
+    const { message } = App.useApp();
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
     const updateAvatarMutation = useUpdateAvatar(organizationId);

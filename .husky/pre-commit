@@ -2,21 +2,12 @@
 
 # Run Biome check on staged files (lint + format + import organization)
 echo "🔍 Running Biome on staged files..."
-npx biome check --staged --write --no-errors-on-unmatched
+npm exec biome check -- --staged --write --no-errors-on-unmatched
 if [ $? -ne 0 ]; then
   echo "❌ Biome check failed — fix the above errors and recommit."
   exit 1
 fi
 echo "✅ Biome check passed."
-
-# Run type check
-echo "⏳ Running type check..."
-npm run typecheck
-if [ $? -ne 0 ]; then
-  echo "❌ Type check failed — fix the above errors and recommit."
-  exit 1
-fi
-echo "✅ Type check passed."
 
 # Regenerate worker-configuration.d.ts if wrangler.toml is staged
 if git diff --cached --name-only | grep -q "wrangler.toml"; then

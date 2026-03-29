@@ -1,8 +1,9 @@
 import { useAdminCreateOrganization } from "@web/src/hooks/admin/useAdminOrganizations";
-import { Alert, Button, Form, Input, message } from "antd";
+import { Alert, App, Button, Form, Input } from "antd";
 import { useState } from "react";
 
 export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
+    const { message } = App.useApp();
     const { mutateAsync: createOrganization, isPending: isCreating } = useAdminCreateOrganization();
     const [error, setError] = useState<string | null>(null);
 

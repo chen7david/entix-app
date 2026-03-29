@@ -1,6 +1,6 @@
 import { CloudUploadOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { message, Spin, Upload } from "antd";
+import { App, Spin, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 
@@ -19,6 +19,7 @@ export const CoverArtUploader = ({
     aspectRatio = 16 / 9,
     onUploadSuccess,
 }: CoverArtUploaderProps) => {
+    const { message } = App.useApp();
     const [uploading, setUploading] = useState(false);
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {

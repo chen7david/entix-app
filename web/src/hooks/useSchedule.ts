@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/hooks/auth/useAuth";
 import { API_V1 } from "@web/src/lib/api";
-import { message } from "antd";
+import { App } from "antd";
 
 export type SessionDTO = {
     id: string;
@@ -43,6 +43,7 @@ export const useSchedule = (
     endDate?: number,
     searchQuery?: string
 ) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuth();
 

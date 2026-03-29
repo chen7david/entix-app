@@ -26,11 +26,11 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { AppRoutes } from "@shared/constants/routes";
 import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
-// useOrganization import removed
 import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
 import { useMedia } from "@web/src/hooks/organization/useMedia";
 import { usePlaylists } from "@web/src/hooks/organization/usePlaylists";
 import {
+    App,
     Button,
     Drawer,
     Empty,
@@ -128,6 +128,7 @@ export const PlaylistManager: React.FC<{
         updateSequence,
     } = usePlaylists();
 
+    const { message } = App.useApp();
     const { media } = useMedia();
     const navigateOrg = useOrgNavigate();
     // Legacy definition removed since we merged the hook calls
@@ -191,7 +192,9 @@ export const PlaylistManager: React.FC<{
                 const newArray = arrayMove(items, oldIndex, newIndex);
 
                 if (activePlaylist) {
-                    updateSequence(activePlaylist.id, newArray).catch(console.error);
+                    updateSequence(activePlaylist.id, newArray).catch((_err) =>
+                        message.error("Failed to update sequence order")
+                    );
                 }
 
                 return newArray;
@@ -203,7 +206,9 @@ export const PlaylistManager: React.FC<{
         const newItems = sequenceItems.filter((id) => id !== mediaIdToRemove);
         setSequenceItems(newItems);
         if (activePlaylist) {
-            updateSequence(activePlaylist.id, newItems).catch(console.error);
+            updateSequence(activePlaylist.id, newItems).catch((_err) =>
+                message.error("Failed to remove item from sequence")
+            );
         }
     };
 
@@ -212,7 +217,9 @@ export const PlaylistManager: React.FC<{
             const newItems = [...sequenceItems, mediaId];
             setSequenceItems(newItems);
             if (activePlaylist) {
-                updateSequence(activePlaylist.id, newItems).catch(console.error);
+                updateSequence(activePlaylist.id, newItems).catch((_err) =>
+                    message.error("Failed to add item to sequence")
+                );
             }
         }
     };

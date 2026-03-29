@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { API_V1 } from "@web/src/lib/api";
-import { message } from "antd";
+import { App } from "antd";
 
 export type BulkMetrics = {
     totalStorage: number;
@@ -24,6 +24,7 @@ export type ImportResult = {
 };
 
 export const useBulkMembers = (orgId?: string) => {
+    const { message } = App.useApp();
     const queryClient = useQueryClient();
 
     const { data: metrics, isLoading: isLoadingMetrics } = useQuery<BulkMetrics>({

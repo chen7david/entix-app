@@ -27,10 +27,10 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
         multiple: true,
         accept:
             type === "all"
-                ? "video/mp4,audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a"
+                ? "video/mp4,audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a,.mp3"
                 : type === "video"
                   ? "video/mp4"
-                  : "audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a",
+                  : "audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a,.mp3",
         showUploadList: false,
         beforeUpload: (file) => {
             const isVideo = type === "video";
