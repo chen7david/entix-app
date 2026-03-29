@@ -69,6 +69,45 @@ export const SessionDetailsDrawer = ({
     });
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
+    const [memberCache, setMemberCache] = useState<Record<string, { name: string; image?: string }>>(
+        {}
+    );
+
+    // Sync member details from search results into local cache to persist metadata during re-searches
+    useEffect(() => {
+        if (members?.length) {
+            setMemberCache((prev) => {
+                const next = { ...prev };
+                members.forEach((m: any) => {
+                    if (m.user?.id) {
+                        next[m.user.id] = {
+                            name: m.user.name || m.user.email,
+                            image: m.user.image,
+                        };
+                    }
+                });
+                return next;
+            });
+        }
+    }, [members]);
+
+    // Pre-hydrate cache from existing session data to prevent "ID only" rendering when opening edit view
+    useEffect(() => {
+        if (open && session?.attendances) {
+            setMemberCache((prev) => {
+                const next = { ...prev };
+                session.attendances.forEach((p: any) => {
+                    if (p.userId) {
+                        next[p.userId] = {
+                            name: p.user?.name || p.user?.email || p.userId,
+                            image: p.user?.image,
+                        };
+                    }
+                });
+                return next;
+            });
+        }
+    }, [open, session]);
     const [isRecurring, setIsRecurring] = useState(false);
     const [enableDelete, setEnableDelete] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -366,6 +405,7 @@ export const SessionDetailsDrawer = ({
                         }
                     }}
                     searchValue={memberSearch}
+                    onSelect={() => setMemberSearch("")}
                     onBlur={() => setMemberSearch("")}
                     optionRender={(option) => (
                         <Space>
@@ -389,9 +429,14 @@ export const SessionDetailsDrawer = ({
                             event.preventDefault();
                             event.stopPropagation();
                         };
-                        const member = members.find((m: any) => m.userId === value);
+
+                        // Use cache for metadata to ensure persistence during search-driven list changes
+                        const cached = memberCache[value];
+                        const displayName = cached?.name || label;
+                        const displayImage = cached?.image;
+
                         return (
-                            <Tooltip title={label} mouseEnterDelay={0.5}>
+                            <Tooltip title={displayName} mouseEnterDelay={0.5}>
                                 <Tag
                                     color="blue"
                                     onMouseDown={onPreventMouseDown}
@@ -410,14 +455,14 @@ export const SessionDetailsDrawer = ({
                                     <Avatar
                                         size={16}
                                         src={
-                                            member?.user?.image
-                                                ? getAvatarUrl(member.user.image, "sm")
+                                            displayImage
+                                                ? getAvatarUrl(displayImage, "sm")
                                                 : undefined
                                         }
                                         style={{ fontSize: 10, flexShrink: 0 }}
                                     >
-                                        {!member?.user?.image &&
-                                            label?.toString().charAt(0).toUpperCase()}
+                                        {!displayImage &&
+                                            displayName?.toString().charAt(0).toUpperCase()}
                                     </Avatar>
                                     <span
                                         style={{
@@ -426,7 +471,7 @@ export const SessionDetailsDrawer = ({
                                             whiteSpace: "nowrap",
                                         }}
                                     >
-                                        {label}
+                                        {displayName}
                                     </span>
                                 </Tag>
                             </Tooltip>
