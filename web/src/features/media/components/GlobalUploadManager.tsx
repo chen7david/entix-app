@@ -16,17 +16,19 @@ import {
     isUploadWindowVisibleAtom,
     uploadQueueAtom,
 } from "@web/src/features/media";
-import { Button, Progress, Space, Tooltip, Typography } from "antd";
+import { Button, Progress, Space, Tooltip, Typography, theme } from "antd";
 import { useAtom, useAtomValue } from "jotai";
 import type React from "react";
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 export const GlobalUploadManager: React.FC = () => {
     const [queue, setQueue] = useAtom(uploadQueueAtom);
     const [isMinimized, setIsMinimized] = useAtom(isUploadWindowMinimizedAtom);
     const [isVisible, setIsVisible] = useAtom(isUploadWindowVisibleAtom);
     const hasActiveUploads = useAtomValue(hasActiveUploadsAtom);
+    const { token } = useToken();
 
     if (!isVisible && queue.length === 0) return null;
 
@@ -42,11 +44,19 @@ export const GlobalUploadManager: React.FC = () => {
 
     return (
         <div
-            className={`fixed bottom-4 right-4 z-[99] transition-all duration-300 ${isMinimized ? "w-64" : "w-80"} shadow-xl rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col`}
+            className={`fixed bottom-4 right-4 z-[99] transition-all duration-300 ${isMinimized ? "w-64" : "w-80"} shadow-xl rounded-lg overflow-hidden flex flex-col border`}
+            style={{
+                backgroundColor: token.colorBgElevated,
+                borderColor: token.colorBorderSecondary,
+            }}
         >
             {/* Header */}
             <div
-                className="flex justify-between items-center px-4 py-3 cursor-pointer bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700"
+                className="flex justify-between items-center px-4 py-3 cursor-pointer border-b"
+                style={{
+                    backgroundColor: token.colorFillAlter,
+                    borderColor: token.colorBorderSecondary,
+                }}
                 onClick={() => setIsMinimized(!isMinimized)}
             >
                 <Text strong>
@@ -80,7 +90,10 @@ export const GlobalUploadManager: React.FC = () => {
 
             {/* Content */}
             {!isMinimized && (
-                <div className="max-h-80 overflow-y-auto p-2 bg-white dark:bg-gray-800">
+                <div
+                    className="max-h-80 overflow-y-auto p-2"
+                    style={{ backgroundColor: token.colorBgElevated }}
+                >
                     {queue.map((task) => (
                         <div
                             key={task.id}

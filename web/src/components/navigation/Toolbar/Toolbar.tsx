@@ -1,16 +1,23 @@
 import { MenuOutlined } from "@ant-design/icons";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
-import { Button } from "antd";
+import { Button, theme } from "antd";
 import cn from "classnames";
+
+const { useToken } = theme;
 
 export const Toolbar = ({ children, className, ...rest }: React.HTMLAttributes<HTMLDivElement>) => {
     const { toggle } = useSidebar();
+    const { token } = useToken();
+
     return (
         <div
-            className={cn(
-                "bg-gray-100 z-10 flex items-center sticky top-0 h-16 md:hidden px-4",
-                className
-            )}
+            className={cn("z-10 flex items-center sticky top-0 h-16 md:hidden px-4", className)}
+            style={{
+                backgroundColor: `${token.colorBgContainer}CC`, // 80% opacity for glass effect
+                borderBottom: `1px solid ${token.colorBorderSecondary}`,
+                backdropFilter: "blur(8px)",
+                WebkitBackdropFilter: "blur(8px)",
+            }}
             {...rest}
         >
             <div className="flex items-center w-full gap-2">

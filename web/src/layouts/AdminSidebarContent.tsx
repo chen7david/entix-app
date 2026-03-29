@@ -13,11 +13,12 @@ import { AppRoutes } from "@shared/constants/routes";
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { useAuth, useSignOut } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
-import { Avatar, Button, Dropdown, Menu, type MenuProps, Typography } from "antd";
+import { Avatar, Button, Dropdown, Menu, type MenuProps, Typography, theme } from "antd";
 import type React from "react";
 import { useLocation, useNavigate } from "react-router";
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 export const AdminSidebarContent: React.FC = () => {
     const { session } = useAuth();
@@ -25,6 +26,7 @@ export const AdminSidebarContent: React.FC = () => {
     const { checkOrganizationStatus } = useOrganization();
     const navigate = useNavigate();
     const location = useLocation();
+    const { token } = useToken();
 
     // 1. User Profile Dropdown
     const handleMenuClick: MenuProps["onClick"] = (e) => {
@@ -109,12 +111,12 @@ export const AdminSidebarContent: React.FC = () => {
             </div>
 
             {/* Footer Profile */}
-            <div className="border-t border-gray-100 p-2">
-                <div className="flex items-center gap-1 p-2">
-                    <div
-                        style={{ flex: 1, minWidth: 0, paddingLeft: 8 }}
-                        className="flex items-center gap-3"
-                    >
+            <div
+                className="p-4 mt-auto border-t"
+                style={{ borderColor: token.colorBorderSecondary }}
+            >
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={32}
                             src={getAvatarUrl(session.data?.user?.image, "sm")}
@@ -135,7 +137,8 @@ export const AdminSidebarContent: React.FC = () => {
                         <Button
                             type="text"
                             icon={<MoreOutlined className="text-gray-500" />}
-                            className="hover:bg-gray-200 flex-shrink-0"
+                            className="flex-shrink-0"
+                            style={{ backgroundColor: "transparent" }}
                         />
                     </Dropdown>
                 </div>
