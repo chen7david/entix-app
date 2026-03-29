@@ -192,7 +192,7 @@ export const ScheduleRoutes = {
                             userIds: z.array(z.string()),
                             recurrence: z
                                 .object({
-                                    frequency: z.literal("weekly"),
+                                    frequency: z.enum(["daily", "weekly", "monthly"]),
                                     count: z.number().min(2).max(52),
                                 })
                                 .optional(),

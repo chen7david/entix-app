@@ -120,4 +120,38 @@ describe("SessionScheduleService Architecture Bounds", () => {
         expect(insertedData[0].startTime.getTime()).toBe(NEW_START_TIME);
         expect(insertedData[2].startTime.getTime()).toBe(addWeeks(NEW_START_TIME, 2).getTime());
     });
+
+    it("generates 3 recurring daily sessions correctly", async () => {
+        const payload = {
+            title: "Daily Standup",
+            startTime: new Date("2026-03-20T09:00:00Z").getTime(),
+            durationMinutes: 15,
+            userIds: ["usr_1"],
+            recurrence: { frequency: "daily" as const, count: 3 },
+        };
+
+        const result = await service.createSession("org_1", payload);
+
+        expect(result).toHaveLength(3);
+        const timeDiff = result[1].startTime.getTime() - result[0].startTime.getTime();
+        expect(timeDiff).toBe(24 * 60 * 60 * 1000); // 1 day
+    });
+
+    it("generates 3 recurring monthly sessions correctly skipping across month boundaries", async () => {
+        const payload = {
+            title: "Monthly Review",
+            startTime: new Date("2026-03-31T10:00:00Z").getTime(),
+            durationMinutes: 60,
+            userIds: ["usr_1"],
+            recurrence: { frequency: "monthly" as const, count: 3 },
+        };
+
+        const result = await service.createSession("org_1", payload);
+
+        expect(result).toHaveLength(3);
+        // March 31 -> April 30 -> May 31
+        expect(result[0].startTime.toISOString()).toContain("03-31");
+        expect(result[1].startTime.toISOString()).toContain("04-30"); // April logic
+        expect(result[2].startTime.toISOString()).toContain("05-31");
+    });
 });

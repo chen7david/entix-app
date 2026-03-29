@@ -1,5 +1,5 @@
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
-import { addWeeks } from "date-fns";
+import { addDays, addMonths, addWeeks } from "date-fns";
 import { HTTPException } from "hono/http-exception";
 import { nanoid } from "nanoid";
 
@@ -10,7 +10,7 @@ export type CreateSessionDTO = {
     durationMinutes: number;
     userIds: string[];
     recurrence?: {
-        frequency: "weekly";
+        frequency: "daily" | "weekly" | "monthly";
         count: number;
     };
 };
@@ -28,6 +28,20 @@ export type UpdateSessionDTO = {
 export class SessionScheduleService {
     constructor(private sessionRepo: SessionScheduleRepository) {}
 
+    private calculateNextOccurrence(startTime: number, frequency: string, offset: number): number {
+        const date = new Date(startTime);
+        switch (frequency.toLowerCase()) {
+            case "daily":
+                return addDays(date, offset).getTime();
+            case "weekly":
+                return addWeeks(date, offset).getTime();
+            case "monthly":
+                return addMonths(date, offset).getTime();
+            default:
+                return startTime;
+        }
+    }
+
     async createSession(organizationId: string, data: CreateSessionDTO) {
         const isRecurring = !!data.recurrence;
         const seriesId = isRecurring ? nanoid() : null;
@@ -42,8 +56,8 @@ export class SessionScheduleService {
             title: data.title,
             description: data.description ?? null,
             startTime: new Date(
-                isRecurring && data.recurrence?.frequency === "weekly"
-                    ? addWeeks(new Date(data.startTime), i).getTime()
+                isRecurring && data.recurrence
+                    ? this.calculateNextOccurrence(data.startTime, data.recurrence.frequency, i)
                     : data.startTime
             ),
             durationMinutes: data.durationMinutes,
@@ -141,13 +155,18 @@ export class SessionScheduleService {
             const remainingCount = deletedFutureSessions.length;
 
             if (remainingCount > 0) {
+                const recurrenceRule = currentSession.recurrenceRule || "";
+                let frequency = "weekly";
+                if (recurrenceRule.includes("DAILY")) frequency = "daily";
+                if (recurrenceRule.includes("MONTHLY")) frequency = "monthly";
+
                 const sessionsToInsert = [];
                 for (let i = 0; i < remainingCount; i++) {
-                    let sessionStartTime = data.startTime;
-                    const isWeekly = currentSession.recurrenceRule?.includes("WEEKLY");
-                    if (isWeekly) {
-                        sessionStartTime = addWeeks(new Date(data.startTime), i).getTime();
-                    }
+                    const sessionStartTime = this.calculateNextOccurrence(
+                        data.startTime,
+                        frequency,
+                        i
+                    );
 
                     sessionsToInsert.push({
                         id: nanoid(),

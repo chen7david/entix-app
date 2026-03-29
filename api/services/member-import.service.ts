@@ -22,13 +22,19 @@ export class MemberImportService {
 
         try {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const validMembers = members.filter((m) => emailRegex.test(m.email.trim()));
-            const invalidMembers = members.filter((m) => !emailRegex.test(m.email.trim()));
+            const preValidatedMembers = members.map((m) => ({
+                ...m,
+                email: m.email.trim().toLowerCase(),
+            }));
 
+            const invalidMembers = preValidatedMembers.filter((m) => !emailRegex.test(m.email));
             results.failed += invalidMembers.length;
-            invalidMembers.forEach((m) => results.errors.push(`Invalid email format: ${m.email}`));
+            for (const m of invalidMembers) {
+                results.errors.push(`Invalid email format: ${m.email}`);
+            }
 
-            const uniqueEmails = [...new Set(validMembers.map((m) => m.email.trim()))];
+            const validMembers = preValidatedMembers.filter((m) => emailRegex.test(m.email));
+            const uniqueEmails = [...new Set(validMembers.map((m) => m.email))];
 
             const QUERY_CHUNK_SIZE = 50;
             const existingUsers: schema.AuthUser[] = [];
@@ -40,8 +46,25 @@ export class MemberImportService {
                 existingUsers.push(...chunkResults);
             }
 
-            const userMapByEmail = new Map(existingUsers.map((u) => [u.email, u.id]));
-            const userMapById = new Map(existingUsers.map((u) => [u.id, u.id]));
+            // Also fetch by ID if provided in input
+            const inputIds = [
+                ...new Set(validMembers.map((m) => m.id).filter(Boolean) as string[]),
+            ];
+            for (let i = 0; i < inputIds.length; i += QUERY_CHUNK_SIZE) {
+                const chunk = inputIds.slice(i, i + QUERY_CHUNK_SIZE);
+                const chunkResults = await this.db.query.authUsers.findMany({
+                    where: (u, { inArray }) => inArray(u.id, chunk),
+                });
+                // Avoid duplicates if email and id queries overlaps
+                for (const u of chunkResults) {
+                    if (!existingUsers.find((eu) => eu.id === u.id)) {
+                        existingUsers.push(u);
+                    }
+                }
+            }
+
+            const userMapByEmail = new Map(existingUsers.map((u) => [u.email.toLowerCase(), u.id]));
+            const userMapById = new Map(existingUsers.map((u) => [u.id, u.email.toLowerCase()]));
 
             const userIds = existingUsers.map((u) => u.id);
             const existingMembers: schema.AuthMember[] = [];
@@ -59,19 +82,37 @@ export class MemberImportService {
             const socialTypeMap = new Map(socialTypes.map((t) => [t.name.toLowerCase(), t.id]));
 
             const enforcedRole: OrgRole = "member";
-            const batch: BatchItem<"sqlite">[] = [];
 
+            // Process users one by one to ensure identity consistency
             for (const input of validMembers) {
-                const existingUserId = input.id || userMapByEmail.get(input.email);
-                const isNewUser =
-                    !existingUserId ||
-                    (!userMapByEmail.has(input.email) && (!input.id || !userMapById.has(input.id)));
+                const userByEmailId = userMapByEmail.get(input.email);
 
-                const targetUserId = existingUserId || nanoid();
+                // Identity Resolution & Consistency Check
+                if (input.id) {
+                    if (userByEmailId && userByEmailId !== input.id) {
+                        results.failed++;
+                        results.errors.push(
+                            `Identity Conflict: Email ${input.email} belongs to user ${userByEmailId}, but payload provided id ${input.id}`
+                        );
+                        continue;
+                    }
+                    if (userMapById.has(input.id) && userMapById.get(input.id) !== input.email) {
+                        results.failed++;
+                        results.errors.push(
+                            `Identity Conflict: ID ${input.id} belongs to email ${userMapById.get(input.id)}, but payload provided email ${input.email}`
+                        );
+                        continue;
+                    }
+                }
+
+                const targetUserId = input.id || userByEmailId || nanoid();
+                const isNewUser = !userByEmailId && (!input.id || !userMapById.has(input.id));
+                const userBatch: BatchItem<"sqlite">[] = [];
 
                 if (isNewUser) {
                     userMapByEmail.set(input.email, targetUserId);
-                    batch.push(
+                    userMapById.set(targetUserId, input.email);
+                    userBatch.push(
                         this.db
                             .insert(schema.authUsers)
                             .values({
@@ -97,7 +138,7 @@ export class MemberImportService {
                     );
                     results.created++;
                 } else {
-                    batch.push(
+                    userBatch.push(
                         this.db
                             .update(schema.authUsers)
                             .set({
@@ -110,7 +151,7 @@ export class MemberImportService {
                 }
 
                 if (isNewUser || !memberSet.has(targetUserId)) {
-                    batch.push(
+                    userBatch.push(
                         this.db
                             .insert(schema.authMembers)
                             .values({
@@ -125,7 +166,7 @@ export class MemberImportService {
                     results.linked++;
                     memberSet.add(targetUserId);
 
-                    batch.push(
+                    userBatch.push(
                         this.db
                             .insert(schema.authAccounts)
                             .values({
@@ -142,7 +183,7 @@ export class MemberImportService {
                 }
 
                 if (input.profile) {
-                    batch.push(
+                    userBatch.push(
                         this.db
                             .insert(schema.userProfiles)
                             .values({
@@ -179,13 +220,14 @@ export class MemberImportService {
                 }
 
                 if (input.phoneNumbers && input.phoneNumbers.length > 0) {
-                    batch.push(
+                    // Full replace semantics for child arrays
+                    userBatch.push(
                         this.db
                             .delete(schema.userPhoneNumbers)
                             .where(eq(schema.userPhoneNumbers.userId, targetUserId))
                     );
                     for (const p of input.phoneNumbers) {
-                        batch.push(
+                        userBatch.push(
                             this.db.insert(schema.userPhoneNumbers).values({
                                 id: p.id || nanoid(),
                                 userId: targetUserId,
@@ -202,13 +244,13 @@ export class MemberImportService {
                 }
 
                 if (input.addresses && input.addresses.length > 0) {
-                    batch.push(
+                    userBatch.push(
                         this.db
                             .delete(schema.userAddresses)
                             .where(eq(schema.userAddresses.userId, targetUserId))
                     );
                     for (const a of input.addresses) {
-                        batch.push(
+                        userBatch.push(
                             this.db.insert(schema.userAddresses).values({
                                 id: a.id || nanoid(),
                                 userId: targetUserId,
@@ -227,7 +269,7 @@ export class MemberImportService {
                 }
 
                 if (input.socialMedia && input.socialMedia.length > 0) {
-                    batch.push(
+                    userBatch.push(
                         this.db
                             .delete(schema.userSocialMedias)
                             .where(eq(schema.userSocialMedias.userId, targetUserId))
@@ -235,7 +277,7 @@ export class MemberImportService {
                     for (const s of input.socialMedia) {
                         const typeId = socialTypeMap.get(s.type.toLowerCase());
                         if (typeId) {
-                            batch.push(
+                            userBatch.push(
                                 this.db.insert(schema.userSocialMedias).values({
                                     id: s.id || nanoid(),
                                     userId: targetUserId,
@@ -248,21 +290,20 @@ export class MemberImportService {
                         }
                     }
                 }
-            }
 
-            const BATCH_CHUNK_SIZE = 10;
-            for (let i = 0; i < batch.length; i += BATCH_CHUNK_SIZE) {
-                const chunk = batch.slice(i, i + BATCH_CHUNK_SIZE);
-                if (chunk.length > 0) {
-                    await this.db.batch(chunk as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+                // Execute batch per user to satisfy atomicity for that user's record set
+                if (userBatch.length > 0) {
+                    await this.db.batch(
+                        userBatch as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]
+                    );
                 }
             }
         } catch (err: unknown) {
-            results.failed = results.total;
             const errorMessage = err instanceof Error ? err.message : String(err);
-            results.errors.push(`Import failed: ${errorMessage}`);
-            results.created = 0;
-            results.linked = 0;
+            results.errors.push(
+                `Import halted by critical error: ${errorMessage}. Partial data may have been committed for successfully processed users.`
+            );
+            // Note: We don't reset created/linked because we process users sequentially now.
         }
 
         return results;
