@@ -1,6 +1,6 @@
 import { CloudUploadOutlined, UserOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@web/src/features/auth";
+import { useBetterAuth } from "@web/src/features/auth";
 import { useUpdateAvatar } from "@web/src/features/user-profiles";
 import type { UploadProps } from "antd";
 import { App, Avatar, Spin, theme, Upload } from "antd";
@@ -34,7 +34,7 @@ export const AvatarDropzone = ({
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
     const updateAvatarMutation = useUpdateAvatar(organizationId);
-    const { session, refetch } = useAuth();
+    const { session, refetch } = useBetterAuth();
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {
         const { file, onSuccess, onError, onProgress } = options;

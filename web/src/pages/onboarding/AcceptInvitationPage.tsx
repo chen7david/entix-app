@@ -1,19 +1,17 @@
-import { AppRoutes } from "@shared/constants/routes";
 import { useAuth } from "@web/src/features/auth";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 
 export const AcceptInvitationPage: React.FC = () => {
     const { message } = App.useApp();
     const [searchParams] = useSearchParams();
     const invitationId = searchParams.get("id");
-    const navigate = useNavigate();
     const { checkOrganizationStatus } = useOrganization();
     const { acceptInvitation, isAcceptingInvitation } = useInvitations();
-    const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+    const { isLoading: isAuthLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const hasAcceptedRef = useRef(false);
@@ -26,15 +24,7 @@ export const AcceptInvitationPage: React.FC = () => {
             return;
         }
 
-        if (!isAuthenticated) {
-            // Redirect to sign in and preserve return URL
-            navigate(
-                `${AppRoutes.auth.signIn}?returnUrl=${encodeURIComponent(`/auth/accept-invitation?id=${invitationId}`)}`
-            );
-            return;
-        }
-
-        // Auto-accept if authenticated and not already processed
+        // Auto-accept if authenticated (ProtectedRoute ensures we are) and not already processed
         if (!success && !error && !isAcceptingInvitation && !hasAcceptedRef.current) {
             hasAcceptedRef.current = true; // Mark as accepted immediately to prevent double-invocation
             acceptInvitation(invitationId)
@@ -52,10 +42,8 @@ export const AcceptInvitationPage: React.FC = () => {
         }
     }, [
         invitationId,
-        isAuthenticated,
         isAuthLoading,
         acceptInvitation,
-        navigate,
         success,
         error,
         isAcceptingInvitation,
@@ -67,7 +55,7 @@ export const AcceptInvitationPage: React.FC = () => {
         checkOrganizationStatus();
     };
 
-    if (isAuthLoading || (isAuthenticated && isAcceptingInvitation && !success && !error)) {
+    if (isAuthLoading || (isAcceptingInvitation && !success && !error)) {
         return <Spin size="large" tip="Accepting invitation..." />;
     }
 

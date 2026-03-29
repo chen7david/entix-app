@@ -4,8 +4,8 @@ export * from "./components/ResetPasswordForm";
 export * from "./components/SignInForm";
 export * from "./components/SignUpForm";
 export * from "./components/SignUpWithOrgForm";
-
-export * from "./hooks/useAuth";
+export * from "./context/AuthContext";
+export * from "./hooks/useBetterAuth";
 export {
     useChangePassword,
     useForgotPassword,
@@ -17,6 +17,6 @@ export {
     useSignUpWithOrg,
     useStopImpersonating,
     useVerifyEmail,
-} from "./hooks/useAuth";
+} from "./hooks/useBetterAuth";
 export * from "./hooks/useSessions";
 export * from "./hooks/useUserPreferences";

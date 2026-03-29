@@ -18,7 +18,7 @@ import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
-    const { session, isLoading, isSuperAdmin } = useAuth();
+    const { user, isLoading, isSuperAdmin } = useAuth();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
@@ -96,20 +96,16 @@ export const SidebarContent: React.FC = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={40}
-                            src={
-                                session.data?.user?.image
-                                    ? getAvatarUrl(session.data?.user?.image, "sm")
-                                    : undefined
-                            }
+                            src={user?.image ? getAvatarUrl(user.image, "sm") : undefined}
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
                         />
                         <div className="flex flex-col min-w-0">
                             <Text strong className="truncate text-sm">
-                                {session.data?.user?.name}
+                                {user?.name}
                             </Text>
                             <Text type="secondary" className="truncate text-xs">
-                                {session.data?.user?.email}
+                                {user?.email}
                             </Text>
                         </div>
                     </div>

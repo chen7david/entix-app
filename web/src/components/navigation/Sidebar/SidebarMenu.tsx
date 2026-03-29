@@ -15,6 +15,7 @@ import {
     YoutubeOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared/constants/routes";
+import { useAuth } from "@web/src/features/auth";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Menu, type MenuProps } from "antd";
@@ -25,6 +26,9 @@ export const SidebarMenu: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
     const { close } = useSidebar();
+    const { user } = useAuth();
+    const orgRole = user?.orgRole;
+    const isAdminOrOwner = orgRole === "admin" || orgRole === "owner";
 
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
@@ -76,14 +80,14 @@ export const SidebarMenu: React.FC = () => {
         {
             type: "divider",
         },
-        {
-            label: "Organizations",
-            key: AppRoutes.org.manage.index,
-            icon: <BankOutlined />,
-            disabled: !slug,
-        },
-        ...(activeOrganization
+        ...(activeOrganization && isAdminOrOwner
             ? [
+                  {
+                      label: "Organizations",
+                      key: AppRoutes.org.manage.index,
+                      icon: <BankOutlined />,
+                      disabled: !slug,
+                  },
                   {
                       label: "Media",
                       key: "media_collection", // using group wrapper
@@ -102,14 +106,14 @@ export const SidebarMenu: React.FC = () => {
                       ],
                   },
                   {
-                      label: "Analytics",
-                      key: "/analytics",
-                      icon: <AreaChartOutlined />,
-                  },
-                  {
                       label: "Schedule",
                       key: "/schedule",
                       icon: <CalendarOutlined />,
+                  },
+                  {
+                      label: "Analytics",
+                      key: "/analytics",
+                      icon: <AreaChartOutlined />,
                   },
                   {
                       label: "Members",

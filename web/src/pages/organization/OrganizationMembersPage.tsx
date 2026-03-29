@@ -100,8 +100,8 @@ export const OrganizationMembersPage = () => {
         isFetchingNextPage,
     } = useMembers(debouncedSearch);
 
-    const { session } = useAuth();
-    const currentUserId = session.data?.user?.id;
+    const { user } = useAuth();
+    const currentUserId = user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);

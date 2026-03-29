@@ -354,7 +354,11 @@ export const SessionDetailsDrawer = ({
                                 type="link"
                                 size="small"
                                 loading={isGeneratingTitle}
-                                icon={!isGeneratingTitle && <ThunderboltOutlined />}
+                                icon={
+                                    !isGeneratingTitle && (
+                                        <ThunderboltOutlined style={{ color: "#faad14" }} />
+                                    )
+                                }
                                 onClick={async () => {
                                     const selectedIds = form.getFieldValue("userIds") || [];
                                     if (selectedIds.length === 0) {
@@ -390,9 +394,17 @@ export const SessionDetailsDrawer = ({
                                     message.success("Title generated from members");
                                     setIsGeneratingTitle(false);
                                 }}
-                                style={{ padding: 0, height: "auto", fontSize: 12, marginLeft: 8 }}
+                                style={{
+                                    padding: 0,
+                                    height: "auto",
+                                    fontSize: 12,
+                                    marginLeft: 4,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 2,
+                                }}
                             >
-                                Auto-generate from members
+                                <span style={{ color: "#faad14", fontWeight: 500 }}>Generate</span>
                             </Button>
                         </Tooltip>
                     </div>
