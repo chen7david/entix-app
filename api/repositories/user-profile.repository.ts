@@ -100,4 +100,70 @@ export class UserProfileRepository {
                 and(eq(schema.userAddresses.userId, userId), ne(schema.userAddresses.id, excludeId))
             );
     }
+
+    /**
+     * Prepare a query to upsert a profile for batching
+     */
+    prepareUpsertProfile(data: schema.NewUserProfile) {
+        return this.db
+            .insert(schema.userProfiles)
+            .values(data)
+            .onConflictDoUpdate({
+                target: schema.userProfiles.userId,
+                set: {
+                    firstName: data.firstName,
+                    lastName: data.lastName,
+                    displayName: data.displayName,
+                    sex: data.sex,
+                    birthDate: data.birthDate,
+                    updatedAt: new Date(),
+                },
+            });
+    }
+
+    /**
+     * Prepare a query to delete all phone numbers for a user
+     */
+    prepareDeletePhoneNumbers(userId: string) {
+        return this.db
+            .delete(schema.userPhoneNumbers)
+            .where(eq(schema.userPhoneNumbers.userId, userId));
+    }
+
+    /**
+     * Prepare a query to insert a phone number for batching
+     */
+    prepareInsertPhoneNumber(data: schema.NewUserPhoneNumber) {
+        return this.db.insert(schema.userPhoneNumbers).values(data);
+    }
+
+    /**
+     * Prepare a query to delete all addresses for a user
+     */
+    prepareDeleteAddresses(userId: string) {
+        return this.db.delete(schema.userAddresses).where(eq(schema.userAddresses.userId, userId));
+    }
+
+    /**
+     * Prepare a query to insert an address for batching
+     */
+    prepareInsertAddress(data: schema.NewUserAddress) {
+        return this.db.insert(schema.userAddresses).values(data);
+    }
+
+    /**
+     * Prepare a query to delete all social medias for a user
+     */
+    prepareDeleteSocialMedias(userId: string) {
+        return this.db
+            .delete(schema.userSocialMedias)
+            .where(eq(schema.userSocialMedias.userId, userId));
+    }
+
+    /**
+     * Prepare a query to insert a social media for batching
+     */
+    prepareInsertSocialMedia(data: schema.NewUserSocialMedia) {
+        return this.db.insert(schema.userSocialMedias).values(data);
+    }
 }
