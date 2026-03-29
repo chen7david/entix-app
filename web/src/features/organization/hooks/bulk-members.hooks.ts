@@ -1,5 +1,5 @@
+import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_V1 } from "@web/src/lib/api";
 import { App } from "antd";
 
 export type BulkMetrics = {
@@ -7,6 +7,8 @@ export type BulkMetrics = {
     activeSessions: number;
     engagementRisk: number;
     totalMembers: number;
+    adminCount: number;
+    ownerCount: number;
     upcomingBirthdays: {
         userId: string;
         name: string;

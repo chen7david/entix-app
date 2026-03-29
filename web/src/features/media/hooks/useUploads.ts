@@ -1,4 +1,4 @@
-import type { UploadDto } from "@shared/schemas/dto/upload.dto";
+import type { UploadDto } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 

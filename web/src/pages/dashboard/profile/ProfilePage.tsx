@@ -1,7 +1,7 @@
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { AppRoutes, getAvatarUrl } from "@shared";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useSignOut } from "@web/src/features/auth";
 import { AvatarDropzone } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
 import {
@@ -9,11 +9,11 @@ import {
     UserContactList,
     UserProfileForm,
 } from "@web/src/features/user-profiles";
+import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
 import { App, Avatar, Button, Card, Col, Divider, Row, Spin, Tooltip, Typography } from "antd";
 import type React from "react";
 import { useNavigate } from "react-router";
-import { signOut, useSession } from "../../../lib/auth-client";
 
 const { Title, Text } = Typography;
 
@@ -22,20 +22,18 @@ export const ProfilePage: React.FC = () => {
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
     const { activeOrganization } = useOrganization();
+    const { mutate: signOut } = useSignOut();
 
-    const handleLogout = async () => {
-        try {
-            await signOut({
-                fetchOptions: {
-                    onSuccess: () => {
-                        message.success("Logged out successfully");
-                        navigate(AppRoutes.auth.signIn);
-                    },
-                },
-            });
-        } catch {
-            message.error("Failed to log out");
-        }
+    const handleLogout = () => {
+        signOut(undefined, {
+            onSuccess: () => {
+                message.success("Logged out successfully");
+                navigate(AppRoutes.auth.signIn);
+            },
+            onError: (err) => {
+                message.error(err.message || "Failed to log out");
+            },
+        });
     };
 
     if (isPending) {

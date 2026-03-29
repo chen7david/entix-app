@@ -10,12 +10,17 @@ import {
     TeamOutlined,
     UserOutlined,
 } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { getAvatarUrl } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/features/auth";
 import { AvatarDropzone } from "@web/src/features/media";
-import { useCreateMember, useMembers, useOrganization } from "@web/src/features/organization";
+import {
+    useBulkMembers,
+    useCreateMember,
+    useMembers,
+    useOrganization,
+} from "@web/src/features/organization";
 import {
     MemberRolesForm,
     UserContactList,
@@ -81,6 +86,7 @@ export const OrganizationMembersPage = () => {
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
     const { activeOrganization } = useOrganization();
+    const { metrics, isLoadingMetrics: loadingMetrics } = useBulkMembers(activeOrganization?.id);
 
     const {
         members,
@@ -94,8 +100,8 @@ export const OrganizationMembersPage = () => {
         isFetchingNextPage,
     } = useMembers(debouncedSearch);
 
-    const { session } = useAuth();
-    const currentUserId = session.data?.user?.id;
+    const { user } = useAuth();
+    const currentUserId = user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
@@ -167,14 +173,10 @@ export const OrganizationMembersPage = () => {
         }
     };
 
-    // Compute role counts
-    const totalMembers = members?.length || 0;
-    const adminCount =
-        members?.filter((m: Record<string, unknown>) => String(m.role || "").includes("admin"))
-            .length || 0;
-    const ownerCount =
-        members?.filter((m: Record<string, unknown>) => String(m.role || "").includes("owner"))
-            .length || 0;
+    // Compute role counts from organization-wide metrics if available, fallback to list (list is paginated so list-based stats are inaccurate)
+    const totalMembers = metrics?.totalMembers ?? members?.length ?? 0;
+    const adminCount = metrics?.adminCount ?? 0;
+    const ownerCount = metrics?.ownerCount ?? 0;
 
     const columns: ColumnsType<Record<string, unknown>> = [
         {
@@ -335,7 +337,7 @@ export const OrganizationMembersPage = () => {
                 {/* Stats Cards */}
                 <Row gutter={16} className="mb-6">
                     <Col xs={24} sm={8}>
-                        <Card>
+                        <Card loading={loadingMetrics}>
                             <Statistic
                                 title="Total Members"
                                 value={totalMembers}
@@ -344,7 +346,7 @@ export const OrganizationMembersPage = () => {
                         </Card>
                     </Col>
                     <Col xs={24} sm={8}>
-                        <Card>
+                        <Card loading={loadingMetrics}>
                             <Statistic
                                 title="Admins"
                                 value={adminCount}
@@ -353,7 +355,7 @@ export const OrganizationMembersPage = () => {
                         </Card>
                     </Col>
                     <Col xs={24} sm={8}>
-                        <Card>
+                        <Card loading={loadingMetrics}>
                             <Statistic
                                 title="Owners"
                                 value={ownerCount}

@@ -1,11 +1,9 @@
-import { AwsClient } from "aws4fetch";
+import type { AwsClient } from "aws4fetch";
 
 export type BucketConfig = {
-    accountId: string;
     bucketName: string;
-    accessKeyId?: string;
-    secretAccessKey?: string;
-    publicUrl?: string; // e.g., https://media.example.com
+    endpoint: string; // e.g., https://<account_id>.r2.cloudflarestorage.com
+    publicUrl: string; // e.g., https://media.example.com
 };
 
 export type UploadOptions = {
@@ -26,32 +24,10 @@ export type UploadResponse = {
 };
 
 export class BucketService {
-    private client?: AwsClient;
-    private endpoint: string;
-    private bucketName: string;
-    private publicUrl: string;
-
-    constructor(config: BucketConfig) {
-        this.bucketName = config.bucketName;
-        this.endpoint = `https://${config.accountId}.r2.cloudflarestorage.com`;
-        this.publicUrl = config.publicUrl || `${this.endpoint}/${this.bucketName}`;
-
-        this.client = new AwsClient({
-            accessKeyId: config.accessKeyId?.trim() || "",
-            secretAccessKey: config.secretAccessKey?.trim() || "",
-            service: "s3",
-            region: "auto",
-        });
-    }
-
-    private getClient(): AwsClient {
-        if (!this.client) {
-            throw new Error(
-                `R2 Credentials missing. Please ensure R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY are set as secrets in your Cloudflare environment.`
-            );
-        }
-        return this.client;
-    }
+    constructor(
+        private readonly client: AwsClient,
+        public readonly config: BucketConfig
+    ) {}
 
     /**
      * Uploads a file to R2 with a Cloudinary-style response
@@ -67,9 +43,9 @@ export class BucketService {
         } = options;
 
         const key = folder ? `${folder}/${fileName}` : fileName;
-        const url = `${this.endpoint}/${this.bucketName}/${key}`;
+        const url = `${this.config.endpoint}/${this.config.bucketName}/${key}`;
 
-        const response = await this.getClient().fetch(url, {
+        const response = await this.client.fetch(url, {
             method: "PUT",
             headers: {
                 "Content-Type": contentType,
@@ -87,7 +63,7 @@ export class BucketService {
             version: Date.now(),
             format: contentType.split("/")[1] || "bin",
             bytes: data instanceof Blob ? data.size : 0, // Simplified for brevity
-            secure_url: `${this.publicUrl}/${key}`,
+            secure_url: `${this.config.publicUrl}/${key}`,
             created_at: new Date().toISOString(),
         };
     }
@@ -97,10 +73,10 @@ export class BucketService {
      * Useful for large files to bypass Worker limits
      */
     async getPresignedUploadUrl(key: string, expiresIn = 3600): Promise<string> {
-        const url = new URL(`${this.endpoint}/${this.bucketName}/${key}`);
+        const url = new URL(`${this.config.endpoint}/${this.config.bucketName}/${key}`);
         url.searchParams.set("X-Amz-Expires", expiresIn.toString());
 
-        const signedRequest = await this.getClient().sign(url.toString(), {
+        const signedRequest = await this.client.sign(url.toString(), {
             method: "PUT",
             aws: { signQuery: true },
         });
@@ -109,15 +85,18 @@ export class BucketService {
     }
 
     async delete(key: string): Promise<void> {
-        const url = `${this.endpoint}/${this.bucketName}/${key}`;
-        const response = await this.getClient().fetch(url, { method: "DELETE" });
+        const url = `${this.config.endpoint}/${this.config.bucketName}/${key}`;
+        const response = await this.client.fetch(url, { method: "DELETE" });
 
         if (response.ok || response.status === 404) {
             return;
         }
 
         const errorText = await response.text().catch(() => "Unknown error");
-        const error: any = new Error(`R2 Delete Error: ${response.statusText}`);
+        const error = new Error(`R2 Delete Error: ${response.statusText}`) as Error & {
+            status?: number;
+            body?: string;
+        };
         error.status = response.status;
         error.body = errorText;
         throw error;

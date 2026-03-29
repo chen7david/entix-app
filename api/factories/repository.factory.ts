@@ -1,5 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
+import { DashboardRepository } from "@api/repositories/dashboard.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
@@ -49,4 +50,8 @@ export const getPlaylistRepository = (ctx: AppContext) => {
 
 export const getSessionScheduleRepository = (ctx: AppContext) => {
     return new SessionScheduleRepository(getDbClient(ctx));
+};
+
+export const getDashboardRepository = (ctx: AppContext) => {
+    return new DashboardRepository(getDbClient(ctx));
 };

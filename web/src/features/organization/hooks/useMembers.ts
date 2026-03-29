@@ -1,4 +1,4 @@
-import type { OrgRole } from "@shared/auth/permissions";
+import { API_V1, type OrgRole } from "@shared";
 import {
     keepPreviousData,
     useInfiniteQuery,
@@ -6,7 +6,6 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
-import { API_V1 } from "@web/src/lib/api";
 import { authClient } from "@web/src/lib/auth-client";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
@@ -14,8 +13,7 @@ import { useOrganization } from "./useOrganization";
 export const useMembers = (searchQuery?: string) => {
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
-    const { session, isSuperAdmin } = useAuth();
-    const userId = session.data?.user?.id;
+    const { isSuperAdmin } = useAuth();
 
     const queryKey = ["organizationMembers", activeOrganization?.id, searchQuery];
 
@@ -53,12 +51,16 @@ export const useMembers = (searchQuery?: string) => {
         return membersPages.pages.flatMap((p: any) => p.items);
     }, [membersPages]);
 
+    // Securely acquire the current member's role via BetterAuth reactive primitive session context.
+    // This avoids race conditions where searching the paginated/filtered members array failed if you weren't on Page 1.
+    const activeMember = authClient.useActiveMember();
+
     const userRoles = useMemo(() => {
-        return (members.find((m: any) => m.userId === userId)?.role || "")
+        return (activeMember.data?.role || "")
             .split(",")
             .map((r: string) => r.trim())
             .filter(Boolean);
-    }, [members, userId]);
+    }, [activeMember.data?.role]);
 
     const checkPermission = useCallback(
         (permission: { permissions: Record<string, string[]> }) => {

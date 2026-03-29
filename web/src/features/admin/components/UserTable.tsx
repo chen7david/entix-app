@@ -9,7 +9,7 @@ import {
     UserOutlined,
     UserSwitchOutlined,
 } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { getAvatarUrl } from "@shared";
 import {
     useAdminUsers,
     useBanUser,

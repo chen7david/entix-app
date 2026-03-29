@@ -42,3 +42,4 @@ lerna-debug.log*
 # VitePress
 .vitepress/cache
 .vitepress/dist
+changes.diff

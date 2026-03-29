@@ -8,7 +8,7 @@ import {
     UploadOutlined,
     WarningOutlined,
 } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { SessionVolumeChart, useAnalytics } from "@web/src/features/analytics";
 import { DashboardMetricCards } from "@web/src/features/dashboard";

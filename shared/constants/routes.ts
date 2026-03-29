@@ -46,4 +46,6 @@ export const AppRoutes = {
         selectOrganization: "/onboarding/select-organization",
         acceptInvitation: "/onboarding/accept-invitation",
     },
+    unauthorized: "/unauthorized",
+    notFound: "/404",
 } as const;

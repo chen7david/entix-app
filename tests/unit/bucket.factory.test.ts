@@ -20,11 +20,11 @@ describe("BucketFactory", () => {
         const bucketClient = getBucketClient(mockCtx);
 
         expect(bucketClient).toBeInstanceOf(BucketService);
-        expect((bucketClient as any).bucketName).toBe("test-bucket");
-        expect((bucketClient as any).endpoint).toBe(
+        expect(bucketClient.config.bucketName).toBe("test-bucket");
+        expect(bucketClient.config.endpoint).toBe(
             "https://test-account-id.r2.cloudflarestorage.com"
         );
-        expect((bucketClient as any).publicUrl).toBe("https://assets.test.com");
+        expect(bucketClient.config.publicUrl).toBe("https://assets.test.com");
     });
 
     it("should fallback to R2 dev endpoint if PUBLIC_CDN_URL is missing", () => {
@@ -41,7 +41,7 @@ describe("BucketFactory", () => {
 
         const bucketClient = getBucketClient(mockCtx);
 
-        expect((bucketClient as any).publicUrl).toBe(
+        expect(bucketClient.config.publicUrl).toBe(
             "https://test-account-id.r2.cloudflarestorage.com/test-bucket"
         );
     });

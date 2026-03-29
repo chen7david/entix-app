@@ -1,4 +1,4 @@
-import type { Media } from "@shared/db/schema";
+import type { Media } from "@shared";
 import {
     keepPreviousData,
     useInfiniteQuery,

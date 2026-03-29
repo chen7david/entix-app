@@ -1,4 +1,4 @@
-import { ac, admin, member, owner } from "@shared/auth/permissions";
+import { ac, admin, member, owner } from "@shared";
 import { adminClient, organizationClient } from "better-auth/client/plugins";
 import type { AccessControl } from "better-auth/plugins/access";
 import { createAuthClient } from "better-auth/react";

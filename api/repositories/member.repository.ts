@@ -84,16 +84,32 @@ export class MemberRepository {
     }
 
     /**
-     * Prepare a query to add a member for batching
+     * Prepare a query to add a member for batching with conflict handling
      */
     prepareAdd(id: string, organizationId: string, userId: string, role: string) {
         const now = new Date();
-        return this.db.insert(schema.authMembers).values({
-            id,
-            organizationId,
-            userId,
-            role,
-            createdAt: now,
+        return this.db
+            .insert(schema.authMembers)
+            .values({
+                id,
+                organizationId,
+                userId,
+                role,
+                createdAt: now,
+            })
+            .onConflictDoNothing();
+    }
+
+    /**
+     * Find all memberships for a list of user IDs in an organization
+     */
+    async findMembershipsByUserIds(organizationId: string, userIds: string[]) {
+        if (userIds.length === 0) return [];
+        return await this.db.query.authMembers.findMany({
+            where: and(
+                eq(schema.authMembers.organizationId, organizationId),
+                inArray(schema.authMembers.userId, userIds)
+            ),
         });
     }
 
@@ -123,5 +139,28 @@ export class MemberRepository {
         });
 
         return callerMemberships.map((m) => m.role);
+    }
+
+    /**
+     * Find all members with their full user profile and contact details for export
+     */
+    async findAllDetailed(organizationId: string) {
+        return await this.db.query.authMembers.findMany({
+            where: eq(schema.authMembers.organizationId, organizationId),
+            with: {
+                user: {
+                    with: {
+                        profile: true,
+                        phoneNumbers: true,
+                        addresses: true,
+                        socialMedias: {
+                            with: {
+                                socialMediaType: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
     }
 }

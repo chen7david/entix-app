@@ -1,4 +1,4 @@
-import type { OrgRole } from "@shared/auth/permissions";
+import type { OrgRole } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
 import { useCallback } from "react";

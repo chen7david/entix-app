@@ -1,3 +1,4 @@
+import { API_V1 } from "@shared";
 import {
     keepPreviousData,
     useInfiniteQuery,
@@ -6,7 +7,6 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
-import { API_V1 } from "@web/src/lib/api";
 import { App } from "antd";
 
 export type SessionDTO = {
