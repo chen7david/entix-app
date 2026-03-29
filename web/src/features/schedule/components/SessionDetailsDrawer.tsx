@@ -69,9 +69,9 @@ export const SessionDetailsDrawer = ({
     });
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
-    const [memberCache, setMemberCache] = useState<Record<string, { name: string; image?: string }>>(
-        {}
-    );
+    const [memberCache, setMemberCache] = useState<
+        Record<string, { name: string; image?: string }>
+    >({});
 
     // Sync member details from search results into local cache to persist metadata during re-searches
     useEffect(() => {
