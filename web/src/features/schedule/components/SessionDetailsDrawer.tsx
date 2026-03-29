@@ -1,6 +1,6 @@
 import { getAvatarUrl } from "@shared/utils/image-url";
-import { useMembers } from "@web/src/features/organization";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     Alert,
@@ -64,7 +64,9 @@ export const SessionDetailsDrawer = ({
     const { message } = App.useApp();
     const [form] = Form.useForm();
     const [memberSearch, setMemberSearch] = useState("");
-    const [debouncedMemberSearch] = useDebouncedValue(memberSearch, { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE });
+    const [debouncedMemberSearch] = useDebouncedValue(memberSearch, {
+        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
+    });
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
     const [isRecurring, setIsRecurring] = useState(false);
@@ -375,7 +377,8 @@ export const SessionDetailsDrawer = ({
                                         : undefined
                                 }
                             >
-                                {!(option.data.image) && option.label?.toString().charAt(0).toUpperCase()}
+                                {!option.data.image &&
+                                    option.label?.toString().charAt(0).toUpperCase()}
                             </Avatar>
                             {option.label}
                         </Space>
