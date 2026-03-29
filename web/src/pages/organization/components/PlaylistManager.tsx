@@ -24,7 +24,7 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import {

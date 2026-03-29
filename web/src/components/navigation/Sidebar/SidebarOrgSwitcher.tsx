@@ -1,5 +1,5 @@
 import { CheckOutlined, PlusOutlined, SwapOutlined } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useOrganization } from "@web/src/features/organization";
 import { Popover, Typography } from "antd";
 import type React from "react";

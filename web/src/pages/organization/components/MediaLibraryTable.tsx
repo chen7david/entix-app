@@ -4,7 +4,7 @@ import {
     PlaySquareOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
-import type { Media } from "@shared/db/schema";
+import type { Media } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media";
 import { UI_CONSTANTS } from "@web/src/utils/constants";

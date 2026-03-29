@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import {
-    useAuth,
+    useBetterAuth,
     useListSessions,
     useRevokeOtherSessions,
     useRevokeSession,
@@ -39,7 +39,7 @@ const { Title, Text } = Typography;
 export const SessionsPage: React.FC = () => {
     const { token } = theme.useToken();
     const { data: sessions, isLoading } = useListSessions();
-    const { session: currentSession } = useAuth();
+    const { session: currentSession } = useBetterAuth();
     const { mutate: revokeSession, isPending: isRevoking } = useRevokeSession();
     const { mutate: revokeOtherSessions, isPending: isRevokingAll } = useRevokeOtherSessions();
 

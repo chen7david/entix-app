@@ -1,5 +1,4 @@
 import { SignInForm, type SignInValues, useSignIn } from "@web/src/features/auth";
-import { useOrganization } from "@web/src/features/organization";
 import { App, Card, Typography } from "antd";
 import type React from "react";
 
@@ -9,7 +8,6 @@ export const SignInPage: React.FC = () => {
     const { message } = App.useApp();
 
     const { mutate: signIn, isPending } = useSignIn();
-    const { checkOrganizationStatus } = useOrganization();
 
     const handleSignIn = (values: SignInValues) => {
         signIn(
@@ -20,7 +18,6 @@ export const SignInPage: React.FC = () => {
             {
                 onSuccess: async () => {
                     message.success("Signed in successfully!");
-                    await checkOrganizationStatus();
                 },
                 onError: (error: any) => {
                     message.error(error.message || "Failed to sign in");

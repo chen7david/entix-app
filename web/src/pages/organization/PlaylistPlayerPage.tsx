@@ -5,7 +5,7 @@ import {
     MenuUnfoldOutlined,
     PlaySquareOutlined,
 } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 // useOrganization import removed
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { MediaPlayer, useMedia, usePlaylists } from "@web/src/features/media";

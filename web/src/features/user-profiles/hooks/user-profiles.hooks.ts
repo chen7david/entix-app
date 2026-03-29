@@ -1,5 +1,5 @@
+import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { API_V1 } from "@web/src/lib/api";
 
 export const useUserProfile = (userId?: string) => {
     const queryClient = useQueryClient();

@@ -180,9 +180,61 @@ export class UserRepository {
     }
 
     /**
+     * Prepare a query to upsert a user for batching
+     */
+    prepareUpsertUser(data: schema.NewAuthUser) {
+        return this.db
+            .insert(schema.authUsers)
+            .values(data)
+            .onConflictDoUpdate({
+                target: schema.authUsers.email,
+                set: {
+                    name: data.name,
+                    image: data.image,
+                    updatedAt: data.updatedAt,
+                },
+            });
+    }
+
+    /**
+     * Prepare a query to update a user for batching
+     */
+    prepareUpdateUser(userId: string, data: Partial<schema.NewAuthUser>) {
+        return this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, userId));
+    }
+
+    /**
+     * Prepare a query to insert an account for batching
+     */
+    prepareInsertAccount(data: schema.NewAuthAccount) {
+        return this.db.insert(schema.authAccounts).values(data).onConflictDoNothing();
+    }
+
+    /**
      * Execute multiple prepared queries atomically
      */
-    async executeBatch(queries: Parameters<AppDb["batch"]>[0]) {
-        return await this.db.batch(queries);
+    async executeBatch(queries: any[]) {
+        if (queries.length === 0) return;
+        return await this.db.batch(queries as any);
+    }
+
+    /**
+     * Find multiple users by their email addresses
+     */
+    async findUsersByEmails(emails: string[]): Promise<schema.AuthUser[]> {
+        if (emails.length === 0) return [];
+        return await this.db.query.authUsers.findMany({
+            where: (u, { inArray }) => inArray(u.email, emails),
+        });
+    }
+
+    /**
+     * Find multiple users by their IDs
+     */
+    async findUsersByIds(ids: string[]): Promise<schema.AuthUser[]> {
+        if (ids.length === 0) return [];
+        return await this.db.query.authUsers.findMany({
+            where: (u, { inArray }) => inArray(u.id, ids),
+        });
     }
 }

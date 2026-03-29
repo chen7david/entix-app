@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import {
     ResetPasswordForm,
     type ResetPasswordValues,

@@ -12,7 +12,7 @@ import {
     verifyEmail,
 } from "@web/src/lib/auth-client";
 
-export const useAuth = () => {
+export const useBetterAuth = () => {
     const session = useSession();
     return {
         session,
@@ -91,6 +91,14 @@ export const useSignOut = () => {
 
             if (response.error) {
                 throw new Error(response.error.message || "Failed to sign out");
+            }
+
+            // Force-clear org membership cache after sign-out to prevent stale RBAC data
+            // during back-to-back sign-ins on the same browser session.
+            try {
+                await authClient.organization.setActive({ organizationId: null });
+            } catch (e) {
+                console.error("Failed to clear org membership cache during sign-out:", e);
             }
 
             return response;

@@ -1,5 +1,5 @@
 import { MailOutlined } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useResendVerification } from "@web/src/features/auth";
 import { App, Button, Card, Typography } from "antd";
 import type React from "react";

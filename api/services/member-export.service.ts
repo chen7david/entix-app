@@ -1,29 +1,11 @@
-import type { AppDb } from "@api/factories/db.factory";
+import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrgRole } from "@shared/auth/permissions";
-import * as schema from "@shared/db/schema";
-import { eq } from "drizzle-orm";
 
 export class MemberExportService {
-    constructor(private db: AppDb) {}
+    constructor(private memberRepo: MemberRepository) {}
 
     async exportMembers(organizationId: string) {
-        const results = await this.db.query.authMembers.findMany({
-            where: eq(schema.authMembers.organizationId, organizationId),
-            with: {
-                user: {
-                    with: {
-                        profile: true,
-                        phoneNumbers: true,
-                        addresses: true,
-                        socialMedias: {
-                            with: {
-                                socialMediaType: true,
-                            },
-                        },
-                    },
-                },
-            },
-        });
+        const results = await this.memberRepo.findAllDetailed(organizationId);
 
         return results.map((r) => {
             const user = r.user;

@@ -12,8 +12,8 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
-import { getDbClient } from "./db.factory";
 import {
+    getDashboardRepository,
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
@@ -70,13 +70,18 @@ export const getSessionScheduleService = (ctx: AppContext) => {
 };
 
 export const getDashboardService = (ctx: AppContext) => {
-    return new DashboardService(getDbClient(ctx));
+    return new DashboardService(getDashboardRepository(ctx));
 };
 
 export const getMemberExportService = (ctx: AppContext) => {
-    return new MemberExportService(getDbClient(ctx));
+    return new MemberExportService(getMemberRepository(ctx));
 };
 
 export const getMemberImportService = (ctx: AppContext) => {
-    return new MemberImportService(getDbClient(ctx));
+    return new MemberImportService(
+        getUserRepository(ctx),
+        getMemberRepository(ctx),
+        getUserProfileRepository(ctx),
+        getSocialMediaRepository(ctx)
+    );
 };

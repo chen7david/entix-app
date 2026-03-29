@@ -8,7 +8,7 @@ import type React from "react";
 const { Title, Text } = Typography;
 
 export const AdminDashboardPage: React.FC = () => {
-    const { session } = useAuth();
+    const { user } = useAuth();
     const { data: users } = useAdminUsers();
 
     const totalUsers = users?.length || 0;
@@ -27,7 +27,7 @@ export const AdminDashboardPage: React.FC = () => {
                         <Text type="secondary">Manage all system users</Text>
                     </div>
                     <Tag color="purple" className="text-sm px-3 py-1">
-                        Logged in as: {session.data?.user?.name}
+                        Logged in as: {user?.name}
                     </Tag>
                 </div>
 

@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import {
     ChangePasswordForm,

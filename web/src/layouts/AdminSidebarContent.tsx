@@ -9,8 +9,7 @@ import {
     TeamOutlined,
     UserOutlined,
 } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { AppRoutes, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
 import { Avatar, Button, Dropdown, Menu, type MenuProps, Typography, theme } from "antd";
@@ -21,7 +20,7 @@ const { Text } = Typography;
 const { useToken } = theme;
 
 export const AdminSidebarContent: React.FC = () => {
-    const { session } = useAuth();
+    const { user } = useAuth();
     const { mutate: signOut } = useSignOut();
     const { checkOrganizationStatus } = useOrganization();
     const navigate = useNavigate();
@@ -119,13 +118,13 @@ export const AdminSidebarContent: React.FC = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={32}
-                            src={getAvatarUrl(session.data?.user?.image, "sm")}
+                            src={getAvatarUrl(user?.image, "sm")}
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
                         />
                         <div className="flex flex-col min-w-0">
                             <Text strong className="truncate text-xs text-gray-900">
-                                {session.data?.user?.name}
+                                {user?.name}
                             </Text>
                         </div>
                     </div>

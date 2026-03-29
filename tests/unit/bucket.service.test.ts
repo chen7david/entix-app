@@ -3,10 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("BucketService", () => {
     const config: BucketConfig = {
-        accountId: "test-account-id",
-        accessKeyId: "test-access-key",
-        secretAccessKey: "test-secret-key",
         bucketName: "test-bucket",
+        endpoint: "https://test-account-id.r2.cloudflarestorage.com",
         publicUrl: "https://assets.test.com",
     };
 
@@ -15,11 +13,12 @@ describe("BucketService", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        service = new BucketService(config);
-        // @ts-expect-error - access private client for testing
-        mockClient = service.client;
+        mockClient = {
+            sign: vi.fn(async (url: string) => ({ url })),
+            fetch: vi.fn(),
+        };
 
-        mockClient.sign.mockImplementation(async (url: string) => ({ url }));
+        service = new BucketService(mockClient as any, config);
     });
 
     describe("upload", () => {
