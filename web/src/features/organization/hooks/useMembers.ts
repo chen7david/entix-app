@@ -14,8 +14,7 @@ import { useOrganization } from "./useOrganization";
 export const useMembers = (searchQuery?: string) => {
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
-    const { session, isSuperAdmin } = useAuth();
-    const userId = session.data?.user?.id;
+    const { isSuperAdmin } = useAuth();
 
     const queryKey = ["organizationMembers", activeOrganization?.id, searchQuery];
 
@@ -53,12 +52,16 @@ export const useMembers = (searchQuery?: string) => {
         return membersPages.pages.flatMap((p: any) => p.items);
     }, [membersPages]);
 
+    // Securely acquire the current member's role via BetterAuth reactive primitive session context.
+    // This avoids race conditions where searching the paginated/filtered members array failed if you weren't on Page 1.
+    const activeMember = authClient.useActiveMember();
+
     const userRoles = useMemo(() => {
-        return (members.find((m: any) => m.userId === userId)?.role || "")
+        return (activeMember.data?.role || "")
             .split(",")
             .map((r: string) => r.trim())
             .filter(Boolean);
-    }, [members, userId]);
+    }, [activeMember.data?.role]);
 
     const checkPermission = useCallback(
         (permission: { permissions: Record<string, string[]> }) => {

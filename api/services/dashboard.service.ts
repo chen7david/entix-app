@@ -1,6 +1,6 @@
 import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { and, eq, lt, sql } from "drizzle-orm";
+import { and, eq, like, lt, sql } from "drizzle-orm";
 
 export class DashboardService {
     constructor(private db: AppDb) {}
@@ -53,6 +53,28 @@ export class DashboardService {
             .where(eq(schema.authMembers.organizationId, organizationId));
         const totalMembers = Number(totalMembersResult[0]?.count || 0);
 
+        const adminCountResult = await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.authMembers)
+            .where(
+                and(
+                    eq(schema.authMembers.organizationId, organizationId),
+                    like(schema.authMembers.role, "%admin%")
+                )
+            );
+        const adminCount = Number(adminCountResult[0]?.count || 0);
+
+        const ownerCountResult = await this.db
+            .select({ count: sql<number>`count(*)` })
+            .from(schema.authMembers)
+            .where(
+                and(
+                    eq(schema.authMembers.organizationId, organizationId),
+                    like(schema.authMembers.role, "%owner%")
+                )
+            );
+        const ownerCount = Number(ownerCountResult[0]?.count || 0);
+
         const allProfiles = await this.db
             .select({
                 userId: schema.userProfiles.userId,
@@ -93,6 +115,8 @@ export class DashboardService {
             activeSessions,
             engagementRisk,
             totalMembers,
+            adminCount,
+            ownerCount,
             upcomingBirthdays,
         };
     }

@@ -7,6 +7,8 @@ export type BulkMetrics = {
     activeSessions: number;
     engagementRisk: number;
     totalMembers: number;
+    adminCount: number;
+    ownerCount: number;
     upcomingBirthdays: {
         userId: string;
         name: string;

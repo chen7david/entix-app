@@ -102,6 +102,8 @@ export const bulkMetricsSchema = z.object({
     activeSessions: z.number().openapi({ example: 5 }),
     engagementRisk: z.number().openapi({ example: 2 }),
     totalMembers: z.number().openapi({ example: 50 }),
+    adminCount: z.number().openapi({ example: 5 }),
+    ownerCount: z.number().openapi({ example: 1 }),
     upcomingBirthdays: z
         .array(
             z.object({
