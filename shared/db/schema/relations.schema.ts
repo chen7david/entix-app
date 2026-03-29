@@ -1,10 +1,10 @@
 import { relations } from "drizzle-orm";
-import { authUsers, authSessions, authAccounts } from "./auth.schema";
-import { authOrganizations, authMembers, authInvitations } from "./organization.schema";
-import { uploads, media, playlists, playlistMedia } from "./media.schema";
+import { authAccounts, authSessions, authUsers } from "./auth.schema";
+import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
+import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
-import { userProfiles, userPhoneNumbers, userAddresses } from "./user-profiles.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
+import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 
 export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     sessions: many(authSessions),
@@ -12,6 +12,7 @@ export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     members: many(authMembers),
     invitations: many(authInvitations),
     uploads: many(uploads),
+    userUploads: many(userUploads),
     media: many(media),
     playlists: many(playlists),
     attendances: many(sessionAttendances),
@@ -73,6 +74,13 @@ export const uploadsRelations = relations(uploads, ({ one }) => ({
     }),
     uploadedBy: one(authUsers, {
         fields: [uploads.uploadedBy],
+        references: [authUsers.id],
+    }),
+}));
+
+export const userUploadsRelations = relations(userUploads, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [userUploads.userId],
         references: [authUsers.id],
     }),
 }));

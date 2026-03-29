@@ -1,6 +1,6 @@
-import { AppDb } from "@api/factories/db.factory";
+import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 export type CreateOrganizationInput = {
     name: string;
@@ -12,7 +12,7 @@ export type CreateOrganizationInput = {
  * Provides type-safe methods for organization management
  */
 export class OrganizationRepository {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     /**
      * Find organization by slug
@@ -27,7 +27,8 @@ export class OrganizationRepository {
      * Get all organizations
      */
     async findAll(): Promise<schema.AuthOrganization[]> {
-        return await this.db.select()
+        return await this.db
+            .select()
             .from(schema.authOrganizations)
             .orderBy(desc(schema.authOrganizations.createdAt));
     }
@@ -42,7 +43,7 @@ export class OrganizationRepository {
     }
 
     /** Prepare a query to create an organization for batching
-        */
+     */
     prepareCreate(id: string, name: string, slug: string) {
         const now = new Date();
         return this.db.insert(schema.authOrganizations).values({

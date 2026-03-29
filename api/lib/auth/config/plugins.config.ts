@@ -1,8 +1,7 @@
-import { openAPI, admin } from 'better-auth/plugins';
-import { AppContext } from '@api/helpers/types.helpers';
-import { MailService } from '@api/services/mailer.service';
-import { getOrganizationPluginConfig } from './plugins/organization.plugin';
-
+import type { AppContext } from "@api/helpers/types.helpers";
+import type { MailService } from "@api/services/mailer.service";
+import { admin, openAPI } from "better-auth/plugins";
+import { getOrganizationPluginConfig } from "./plugins/organization.plugin";
 
 export const getBetterAuthPluginsConfig = (ctx?: AppContext, mailer?: MailService) => [
     getOrganizationPluginConfig(ctx, mailer),
@@ -10,5 +9,5 @@ export const getBetterAuthPluginsConfig = (ctx?: AppContext, mailer?: MailServic
     admin({
         defaultRole: "user",
         adminRoles: ["admin"],
-    })
+    }),
 ];

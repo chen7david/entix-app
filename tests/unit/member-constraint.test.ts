@@ -1,15 +1,18 @@
-import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
+import {
+    authMembers as member,
+    authOrganizations as organization,
+    authUsers as user,
+} from "@shared/db/schema";
+import { and, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { authUsers as user, authMembers as member, authOrganizations as organization } from "@shared/db/schema";
-import { eq, and } from "drizzle-orm";
-import { createMockUser } from "../factories/user.factory";
-import { createMockOrganization } from "../factories/organization.factory";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createMockMember } from "../factories/member.factory";
+import { createMockOrganization } from "../factories/organization.factory";
+import { createMockUser } from "../factories/user.factory";
+import { createTestDb } from "../lib/utils";
 
 describe("AuthMember Unique Constraint Test", () => {
-
     beforeEach(async () => {
         await createTestDb();
     });
@@ -20,11 +23,9 @@ describe("AuthMember Unique Constraint Test", () => {
         const testUser = createMockUser({ emailVerified: true });
         const testOrg = createMockOrganization();
 
-        // Create user and organization
         await db.insert(user).values(testUser);
         await db.insert(organization).values(testOrg);
 
-        // First insert should succeed
         const member1 = createMockMember({
             organizationId: testOrg.id,
             userId: testUser.id,
@@ -32,7 +33,6 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member1);
 
-        // Second insert with same userId and organizationId should fail
         let errorThrown = false;
         try {
             const member2 = createMockMember({
@@ -43,17 +43,16 @@ describe("AuthMember Unique Constraint Test", () => {
             await db.insert(member).values(member2);
         } catch (error: any) {
             errorThrown = true;
-            // SQLite unique constraint error - check cause.message first as D1 wraps errors
             const msg = error?.cause?.message ?? error?.message ?? String(error);
             expect(msg).toMatch(/UNIQUE/i);
         }
 
         expect(errorThrown).toBe(true);
 
-        // Verify only one member exists
-        const members = await db.select().from(member).where(
-            and(eq(member.userId, testUser.id), eq(member.organizationId, testOrg.id))
-        );
+        const members = await db
+            .select()
+            .from(member)
+            .where(and(eq(member.userId, testUser.id), eq(member.organizationId, testOrg.id)));
         expect(members).toHaveLength(1);
     });
 
@@ -64,11 +63,9 @@ describe("AuthMember Unique Constraint Test", () => {
         const testOrg1 = createMockOrganization();
         const testOrg2 = createMockOrganization();
 
-        // Create user and two organizations
         await db.insert(user).values(testUser);
         await db.insert(organization).values([testOrg1, testOrg2]);
 
-        // Add user to first org
         const member1 = createMockMember({
             organizationId: testOrg1.id,
             userId: testUser.id,
@@ -76,7 +73,6 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member1);
 
-        // Add same user to second org should succeed
         const member2 = createMockMember({
             organizationId: testOrg2.id,
             userId: testUser.id,
@@ -84,10 +80,7 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member2);
 
-        // Verify two members exist
-        const members = await db.select().from(member).where(
-            eq(member.userId, testUser.id)
-        );
+        const members = await db.select().from(member).where(eq(member.userId, testUser.id));
         expect(members).toHaveLength(2);
     });
 
@@ -98,11 +91,9 @@ describe("AuthMember Unique Constraint Test", () => {
         const testUser2 = createMockUser({ emailVerified: true });
         const testOrg = createMockOrganization();
 
-        // Create two users and one organization
         await db.insert(user).values([testUser1, testUser2]);
         await db.insert(organization).values(testOrg);
 
-        // Add first user to org
         const member1 = createMockMember({
             organizationId: testOrg.id,
             userId: testUser1.id,
@@ -110,7 +101,6 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member1);
 
-        // Add second user to same org should succeed
         const member2 = createMockMember({
             organizationId: testOrg.id,
             userId: testUser2.id,
@@ -118,10 +108,7 @@ describe("AuthMember Unique Constraint Test", () => {
         });
         await db.insert(member).values(member2);
 
-        // Verify two members exist
-        const members = await db.select().from(member).where(
-            eq(member.organizationId, testOrg.id)
-        );
+        const members = await db.select().from(member).where(eq(member.organizationId, testOrg.id));
         expect(members).toHaveLength(2);
     });
 });

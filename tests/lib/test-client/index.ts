@@ -1,11 +1,11 @@
-import type { Hono } from "hono";
 import type { AppEnv } from "@api/helpers/types.helpers";
-import { createRequester } from "./base-requester";
+import type { Hono } from "hono";
 import { createAuthClient } from "./auth.client";
-import { createMembersClient } from "./members.client";
-import { createUsersClient } from "./users.client";
+import { createRequester } from "./base-requester";
 import { createMediaClient } from "./media.client";
+import { createMembersClient } from "./members.client";
 import { createScheduleClient } from "./schedule.client";
+import { createUsersClient } from "./users.client";
 
 /**
  * Create a domain-specific test client for the API.
@@ -25,11 +25,7 @@ import { createScheduleClient } from "./schedule.client";
  * const member = await client.orgs.members.create(orgId, payload);
  * ```
  */
-export function createTestClient(
-    app: Hono<AppEnv>,
-    env: any,
-    cookie?: string
-) {
+export function createTestClient(app: Hono<AppEnv>, env: any, cookie?: string) {
     const request = createRequester(app, env, cookie);
 
     return {
@@ -50,10 +46,8 @@ export function createTestClient(
 
 export type TestClient = ReturnType<typeof createTestClient>;
 
-// Re-export types for convenience
-export type { Requester } from "./base-requester";
 export type { AuthClient } from "./auth.client";
+export type { Requester } from "./base-requester";
+export type { MediaClient } from "./media.client";
 export type { MembersClient } from "./members.client";
 export type { UsersClient } from "./users.client";
-export type { MediaClient } from "./media.client";
-

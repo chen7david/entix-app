@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { createTestDb } from "../lib/utils";
-import app from "@api/app";
 import { env } from "cloudflare:test";
+import app from "@api/app";
+import type { UserDTO } from "@shared/schemas/dto/user.dto";
+import { beforeEach, describe, expect, it } from "vitest";
+import { type ErrorResponse, parseJson } from "../lib/api-request.helper";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
-import type { UserDTO } from "@shared/schemas/dto/user.dto";
-import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
+import { createTestDb } from "../lib/utils";
 
 describe("API Integration Test", () => {
     let client: ReturnType<typeof createTestClient>;
@@ -34,7 +34,6 @@ describe("API Integration Test", () => {
         const body = await parseJson<{ items: UserDTO[]; nextCursor: string | null }>(res);
 
         expect(body.items).toBeInstanceOf(Array);
-        // At least the owner user should be present
         expect(body.items.length).toBeGreaterThanOrEqual(1);
         expect(body.items[0]).toHaveProperty("id");
     });

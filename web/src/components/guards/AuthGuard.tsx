@@ -1,10 +1,9 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router';
-import { useAuth } from '@web/src/hooks/auth/useAuth';
-import { AppRoutes } from '@shared/constants/routes';
-import { CenteredSpin } from '@web/src/components/common/CenteredView';
-
-import { Outlet } from 'react-router';
+import { AppRoutes } from "@shared/constants/routes";
+import { CenteredSpin } from "@web/src/components/common/CenteredView";
+import { useAuth } from "@web/src/features/auth";
+import type React from "react";
+import { useEffect } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router";
 
 export const AuthGuard: React.FC = () => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -13,7 +12,10 @@ export const AuthGuard: React.FC = () => {
 
     useEffect(() => {
         if (!isLoading && !isAuthenticated) {
-            navigate(`${AppRoutes.auth.signIn}?returnUrl=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
+            navigate(
+                `${AppRoutes.auth.signIn}?returnUrl=${encodeURIComponent(location.pathname + location.search)}`,
+                { replace: true }
+            );
         }
     }, [isLoading, isAuthenticated, navigate, location]);
 

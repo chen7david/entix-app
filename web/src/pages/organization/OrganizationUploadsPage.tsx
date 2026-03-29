@@ -1,31 +1,54 @@
-import { useState } from "react";
-import { Table, Typography, Tag, Skeleton, Button, Tooltip, Modal, Statistic, Row, Col, Card, Input } from "antd";
-import type { ColumnsType } from "antd/es/table";
-import { CloudUploadOutlined, DeleteOutlined, FileOutlined, DatabaseOutlined, PlaySquareOutlined, PictureOutlined, SearchOutlined } from "@ant-design/icons";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useOrganizationUploads, useDeleteUpload } from "@web/src/hooks/organization/useUploads";
+import {
+    CloudUploadOutlined,
+    DatabaseOutlined,
+    DeleteOutlined,
+    FileOutlined,
+    PictureOutlined,
+    PlaySquareOutlined,
+    SearchOutlined,
+} from "@ant-design/icons";
 import type { UploadDto } from "@shared/schemas/dto/upload.dto";
-import { Uploader } from "@web/src/components/Upload/Uploader";
 import { getAssetUrl } from "@shared/utils/image-url";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
+import { useOrganization } from "@web/src/features/organization";
+import {
+    Button,
+    Card,
+    Col,
+    Input,
+    Modal,
+    Row,
+    Skeleton,
+    Statistic,
+    Table,
+    Tag,
+    Tooltip,
+    Typography,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
 export const OrganizationUploadsPage = () => {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState('');
+    const [searchText, setSearchText] = useState("");
     const { activeOrganization } = useOrganization();
 
-    const { data: uploads, isLoading: loadingUploads } = useOrganizationUploads(activeOrganization?.id);
+    const { data: uploads, isLoading: loadingUploads } = useOrganizationUploads(
+        activeOrganization?.id
+    );
     const deleteUploadMutation = useDeleteUpload(activeOrganization?.id);
 
     const handleDelete = (uploadId: string) => {
         Modal.confirm({
-            title: 'Delete File',
-            content: 'Are you sure you want to permanently delete this file? This action cannot be undone.',
-            okText: 'Yes, Delete',
-            okType: 'danger',
-            cancelText: 'Cancel',
+            title: "Delete File",
+            content:
+                "Are you sure you want to permanently delete this file? This action cannot be undone.",
+            okText: "Yes, Delete",
+            okType: "danger",
+            cancelText: "Cancel",
             onOk: async () => {
                 try {
                     await deleteUploadMutation.mutateAsync(uploadId);
@@ -37,29 +60,35 @@ export const OrganizationUploadsPage = () => {
     };
 
     const formatBytes = (bytes: number) => {
-        if (bytes === 0) return '0 Bytes';
+        if (bytes === 0) return "0 Bytes";
         const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+        const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
     };
 
     const getFileIcon = (contentType: string) => {
-        if (contentType.startsWith('image/')) return <PictureOutlined className="text-blue-500" />;
-        if (contentType.startsWith('video/')) return <PlaySquareOutlined className="text-purple-500" />;
+        if (contentType.startsWith("image/")) return <PictureOutlined className="text-blue-500" />;
+        if (contentType.startsWith("video/"))
+            return <PlaySquareOutlined className="text-purple-500" />;
         return <FileOutlined className="text-gray-500" />;
     };
 
     const columns: ColumnsType<UploadDto> = [
         {
-            title: 'File Name',
-            dataIndex: 'originalName',
-            key: 'originalName',
+            title: "File Name",
+            dataIndex: "originalName",
+            key: "originalName",
             render: (name: string, record: UploadDto) => (
                 <div className="flex items-center gap-3 min-w-0 max-w-[400px]">
                     {getFileIcon(record.contentType)}
                     <Tooltip title={name} placement="topLeft" mouseEnterDelay={0.5}>
-                        <a href={getAssetUrl(record.url)} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 font-medium truncate block">
+                        <a
+                            href={getAssetUrl(record.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 font-medium truncate block"
+                        >
                             {name}
                         </a>
                     </Tooltip>
@@ -67,36 +96,44 @@ export const OrganizationUploadsPage = () => {
             ),
         },
         {
-            title: 'Size',
-            dataIndex: 'fileSize',
-            key: 'fileSize',
+            title: "Size",
+            dataIndex: "fileSize",
+            key: "fileSize",
             render: (size: number) => formatBytes(size),
         },
         {
-            title: 'Type',
-            dataIndex: 'contentType',
-            key: 'contentType',
-            render: (type: string) => <Tag>{type.split('/')[1] || type}</Tag>,
+            title: "Type",
+            dataIndex: "contentType",
+            key: "contentType",
+            render: (type: string) => <Tag>{type.split("/")[1] || type}</Tag>,
         },
         {
-            title: 'Status',
-            dataIndex: 'status',
-            key: 'status',
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
             render: (status: string) => (
-                <Tag color={status === 'completed' ? 'success' : status === 'failed' ? 'error' : 'processing'}>
+                <Tag
+                    color={
+                        status === "completed"
+                            ? "success"
+                            : status === "failed"
+                              ? "error"
+                              : "processing"
+                    }
+                >
                     {status.toUpperCase()}
                 </Tag>
             ),
         },
         {
-            title: 'Uploaded At',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
+            title: "Uploaded At",
+            dataIndex: "createdAt",
+            key: "createdAt",
             render: (date: number) => new Date(date).toLocaleString(),
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
             render: (_: unknown, record: UploadDto) => (
                 <Tooltip title="Delete File">
                     <Button
@@ -104,11 +141,14 @@ export const OrganizationUploadsPage = () => {
                         danger
                         icon={<DeleteOutlined />}
                         onClick={() => handleDelete(record.id)}
-                        loading={deleteUploadMutation.isPending && deleteUploadMutation.variables === record.id}
+                        loading={
+                            deleteUploadMutation.isPending &&
+                            deleteUploadMutation.variables === record.id
+                        }
                     />
                 </Tooltip>
             ),
-        }
+        },
     ];
 
     if (loadingUploads) return <Skeleton active className="p-8" />;
@@ -123,8 +163,13 @@ export const OrganizationUploadsPage = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>Files and Uploads</Title>
-                        <Text type="secondary">Manage your organization's storage securely via Direct-to-R2 architecture.</Text>
+                        <Title level={2} style={{ marginBottom: 4 }}>
+                            Files and Uploads
+                        </Title>
+                        <Text type="secondary">
+                            Manage your organization's storage securely via Direct-to-R2
+                            architecture.
+                        </Text>
                     </div>
                     <div className="flex items-center gap-4">
                         <Button
@@ -165,13 +210,15 @@ export const OrganizationUploadsPage = () => {
                         placeholder="Search files..."
                         prefix={<SearchOutlined />}
                         className="max-w-xs"
-                        onChange={e => setSearchText(e.target.value)}
+                        onChange={(e) => setSearchText(e.target.value)}
                         allowClear
                     />
                 </div>
 
                 <Table
-                    dataSource={uploads?.filter(u => u.originalName.toLowerCase().includes(searchText.toLowerCase()))}
+                    dataSource={uploads?.filter((u) =>
+                        u.originalName.toLowerCase().includes(searchText.toLowerCase())
+                    )}
                     columns={columns}
                     rowKey="id"
                     pagination={{ pageSize: 10 }}

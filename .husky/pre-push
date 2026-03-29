@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Run full type check before push
+echo "⏳ Running project-wide type check..."
+npm run typecheck
+if [ $? -ne 0 ]; then
+  echo "❌ Type check failed — fix errors before pushing."
+  exit 1
+fi
+echo "✅ Type check passed."

@@ -1,4 +1,4 @@
-import { AppContext } from "./types.helpers";
+import type { AppContext } from "./types.helpers";
 import { getFrontendUrl } from "./url.helpers";
 
 /**
@@ -8,13 +8,10 @@ import { getFrontendUrl } from "./url.helpers";
 export const getCorsOrigins = (ctx: AppContext): string[] => {
     const frontendUrl = getFrontendUrl(ctx);
 
-    const configuredOrigins = (ctx.env.CORS_ORIGINS || '')
-        .split(',')
+    const configuredOrigins = (ctx.env.CORS_ORIGINS || "")
+        .split(",")
         .map((o: string) => o.trim())
         .filter(Boolean);
 
-    return [
-        frontendUrl,
-        ...configuredOrigins
-    ];
+    return [frontendUrl, ...configuredOrigins];
 };

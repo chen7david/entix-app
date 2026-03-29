@@ -1,17 +1,20 @@
-import type { Hono } from "hono";
 import type { AppEnv } from "@api/helpers/types.helpers";
+import {
+    authMembers as memberTable,
+    type NewAuthUser,
+    authUsers as userTable,
+} from "@shared/db/schema";
 import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
-
+import { eq } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import type { Hono } from "hono";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
 import { createMockMember } from "../factories/member.factory";
-import { drizzle } from "drizzle-orm/d1";
-import { authUsers as userTable, authMembers as memberTable } from "@shared/db/schema";
-import { eq } from "drizzle-orm";
 
 /**
  * Extract cookies from a Response object
  * Handles both Workers runtime (with getSetCookie) and standard fetch API
- * 
+ *
  * @param response - The Response object containing Set-Cookie headers
  * @returns Cookie string ready to use in Cookie header (e.g., "name1=value1; name2=value2")
  */
@@ -20,9 +23,10 @@ export function extractCookies(response: Response): string {
         getSetCookie?: () => string[];
     };
 
-    const setCookies = typeof headers.getSetCookie === "function"
-        ? headers.getSetCookie()
-        : [headers.get("set-cookie")].filter(Boolean) as string[];
+    const setCookies =
+        typeof headers.getSetCookie === "function"
+            ? headers.getSetCookie()
+            : ([headers.get("set-cookie")].filter(Boolean) as string[]);
 
     if (!setCookies.length) {
         throw new Error("No Set-Cookie headers found in response");
@@ -55,7 +59,7 @@ export async function getAuthCookie(params: {
                 name: user.name ?? "Test AuthUser",
             }),
         },
-        env,
+        env
     );
 
     // Sign in to get session cookie
@@ -66,7 +70,7 @@ export async function getAuthCookie(params: {
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ email: user.email, password: user.password }),
         },
-        env,
+        env
     );
 
     if (!signInRes.ok) {
@@ -94,30 +98,38 @@ export async function createAuthenticatedOrg(params: {
     const orgPayload = createMockSignUpWithOrgPayload({ password });
 
     // Create org and user via signup-with-org
-    const orgRes = await app.request("/api/v1/auth/signup-with-org", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orgPayload),
-    }, env);
+    const orgRes = await app.request(
+        "/api/v1/auth/signup-with-org",
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(orgPayload),
+        },
+        env
+    );
 
     if (!orgRes.ok) {
-        throw new Error("Failed to create org: " + await orgRes.text());
+        throw new Error(`Failed to create org: ${await orgRes.text()}`);
     }
 
-    const orgData = await orgRes.json() as SignUpWithOrgResponseDTO;
+    const orgData = (await orgRes.json()) as SignUpWithOrgResponseDTO;
 
     // Sign in to get session cookie
-    const signInRes = await app.request("/api/v1/auth/sign-in/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            email: orgPayload.email,
-            password,
-        }),
-    }, env);
+    const signInRes = await app.request(
+        "/api/v1/auth/sign-in/email",
+        {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: orgPayload.email,
+                password,
+            }),
+        },
+        env
+    );
 
     if (!signInRes.ok) {
-        throw new Error("Sign-in failed: " + await signInRes.text());
+        throw new Error(`Sign-in failed: ${await signInRes.text()}`);
     }
 
     return {
@@ -194,15 +206,19 @@ export async function createSuperAdmin(params: {
     const db = drizzle(params.env.DB);
     await db
         .update(userTable)
-        .set({ role: "admin" } as Partial<typeof userTable.$inferInsert>)
+        .set({ role: "admin" } as Partial<NewAuthUser>)
         .where(eq(userTable.email, email));
 
     // Re-sign-in directly (NOT via getAuthCookie which calls sign-up again)
-    const signInRes = await params.app.request("/api/v1/auth/sign-in/email", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password }),
-    }, params.env);
+    const signInRes = await params.app.request(
+        "/api/v1/auth/sign-in/email",
+        {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        },
+        params.env
+    );
 
     if (!signInRes.ok) {
         throw new Error(`Super admin re-sign-in failed: ${signInRes.status}`);
@@ -210,4 +226,3 @@ export async function createSuperAdmin(params: {
 
     return { cookie: extractCookies(signInRes), email };
 }
-

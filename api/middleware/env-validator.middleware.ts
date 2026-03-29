@@ -1,6 +1,6 @@
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { createMiddleware } from "hono/factory";
 import { z } from "zod";
-import { AppEnv } from "@api/helpers/types.helpers";
 
 /**
  * Zod schema defining all required Cloudflare environment variables and secrets.
@@ -24,27 +24,31 @@ export const envValidatorMiddleware = () => {
         const parsed = envSchema.safeParse(c.env);
 
         if (!parsed.success) {
-            // Flatten the error to get exactly which keys are missing or invalid
             const flattened = parsed.error.flatten();
 
-            // Format a highly visible error for the Cloudflare Dashboard logs
-            const missingVars = Object.keys(flattened.fieldErrors).join(', ');
+            const missingVars = Object.keys(flattened.fieldErrors).join(", ");
 
-            // Ensure we log this massively critical error so it is impossible to miss during deployment
             if (c.var.logger) {
-                c.var.logger.fatal({ errors: flattened.fieldErrors }, `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`);
+                c.var.logger.fatal(
+                    { errors: flattened.fieldErrors },
+                    `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`
+                );
             } else {
-                console.error(`🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`);
+                console.error(
+                    `🚨 [CRITICAL STARTUP ERROR] Missing or invalid environment variables: ${missingVars}`
+                );
                 console.error(flattened.fieldErrors);
             }
 
-            // Immediately halt the request to prevent weird partial-failures downstream
-            // We use a 500 status because this is a server misconfiguration, not a user error
-            return c.json({
-                success: false,
-                message: "Internal Server Configuration Error",
-                details: "The server is missing required infrastructure configuration and cannot boot safely."
-            }, 500);
+            return c.json(
+                {
+                    success: false,
+                    message: "Internal Server Configuration Error",
+                    details:
+                        "The server is missing required infrastructure configuration and cannot boot safely.",
+                },
+                500
+            );
         }
 
         await next();

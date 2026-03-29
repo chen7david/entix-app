@@ -1,38 +1,39 @@
 import { UnauthorizedError } from "@api/errors/app.error";
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
-import type { AppContext } from "@api/helpers/types.helpers";
-import type { Next } from "hono";
+import { authUserSchema } from "@shared/schemas/dto/auth.dto";
+import type { Context } from "hono";
+import { createMiddleware } from "hono/factory";
 
 /**
- * Validates the user session and returns the user ID
- * Throws 401 if unauthorized
+ * Validates the user session and populates context variables.
+ * Throws 401 if unauthorized or if session shape is invalid.
  */
-export async function validateSession(ctx: AppContext): Promise<string> {
+export async function validateSession(ctx: Context<AppEnv>): Promise<void> {
     const authClient = auth(ctx);
     const session = await authClient.api.getSession({ headers: ctx.req.raw.headers });
 
-    if (!session || !session.user) {
+    if (!session?.user) {
         ctx.var.logger.warn("Unauthorized: No valid session");
         throw new UnauthorizedError("Authentication required");
     }
 
-    ctx.set("userId", session.user.id);
-    ctx.set("isSuperAdmin", session.user.role === "admin");
-    return session.user.id;
+    const result = authUserSchema.safeParse(session.user);
+    if (!result.success) {
+        ctx.var.logger.error({ errors: result.error.format() }, "Invalid session user shape");
+        throw new UnauthorizedError("Invalid session structure");
+    }
+
+    const { id, role } = result.data;
+    ctx.set("userId", id);
+    ctx.set("isSuperAdmin", role === "admin");
 }
 
 /**
- * Hono middleware that validates session for protected routes
- * Sets userId in context for downstream handlers to use
- * 
- * Usage:
- * ```typescript
- * export const protectedRoutes = createRouter()
- *     .use(requireAuth)  // Apply to all routes in this router
- *     .openapi(MyRoutes.endpoint, MyHandler.endpoint);
- * ```
+ * Hono middleware that validates session for protected routes.
+ * Ensures userId is available in context for downstream handlers.
  */
-export const requireAuth = async (ctx: AppContext, next: Next) => {
+export const requireAuth = createMiddleware<AppEnv>(async (ctx, next) => {
     await validateSession(ctx);
     await next();
-};
+});

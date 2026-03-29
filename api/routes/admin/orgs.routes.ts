@@ -1,19 +1,24 @@
-import { createRoute } from "@hono/zod-openapi";
-import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
+import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
+import { createRoute } from "@hono/zod-openapi";
 import { organizationListResponseSchema } from "@shared/schemas/dto/organization.dto";
 
-export class AdminOrgsRoutes {
-    static tags = ['Admin - Organizations'];
+const tags = ["Admin - Organizations"];
 
-    static list = createRoute({
-        tags: AdminOrgsRoutes.tags,
+export const AdminOrgsRoutes = {
+    tags,
+
+    list: createRoute({
+        tags: tags,
         method: HttpMethods.GET,
-        path: '/admin/organizations',
+        path: "/admin/organizations",
         middleware: [requireAuth, requireSuperAdmin] as const,
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(organizationListResponseSchema, 'List of all organizations globally'),
+            [HttpStatusCodes.OK]: jsonContent(
+                organizationListResponseSchema,
+                "List of all organizations globally"
+            ),
         },
-    });
-}
+    }),
+};

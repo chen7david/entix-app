@@ -1,19 +1,15 @@
 import { sql } from "drizzle-orm";
-import {
-    sqliteTable,
-    text,
-    integer,
-    index,
-} from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const authUsers = sqliteTable("auth_users", {
     id: text("id").primaryKey(),
-    xid: text("xid").$defaultFn(() => Math.random().toString(36).substring(2, 10).toUpperCase()).unique().notNull(),
+    xid: text("xid")
+        .$defaultFn(() => Math.random().toString(36).substring(2, 10).toUpperCase())
+        .unique()
+        .notNull(),
     name: text("name").notNull(),
     email: text("email").notNull().unique(),
-    emailVerified: integer("email_verified", { mode: "boolean" })
-        .default(false)
-        .notNull(),
+    emailVerified: integer("email_verified", { mode: "boolean" }).default(false).notNull(),
     image: text("image"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
         .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
@@ -31,6 +27,7 @@ export const authUsers = sqliteTable("auth_users", {
 });
 
 export type AuthUser = typeof authUsers.$inferSelect;
+export type NewAuthUser = typeof authUsers.$inferInsert;
 
 export const authSessions = sqliteTable(
     "auth_sessions",
@@ -52,10 +49,11 @@ export const authSessions = sqliteTable(
         activeOrganizationId: text("active_organization_id"),
         impersonatedBy: text("impersonated_by"),
     },
-    (table) => [index("session_userId_idx").on(table.userId)],
+    (table) => [index("session_userId_idx").on(table.userId)]
 );
 
 export type AuthSession = typeof authSessions.$inferSelect;
+export type NewAuthSession = typeof authSessions.$inferInsert;
 
 export const authAccounts = sqliteTable(
     "auth_accounts",
@@ -84,10 +82,11 @@ export const authAccounts = sqliteTable(
             .$onUpdate(() => /* @__PURE__ */ new Date())
             .notNull(),
     },
-    (table) => [index("account_userId_idx").on(table.userId)],
+    (table) => [index("account_userId_idx").on(table.userId)]
 );
 
 export type AuthAccount = typeof authAccounts.$inferSelect;
+export type NewAuthAccount = typeof authAccounts.$inferInsert;
 
 export const authVerifications = sqliteTable(
     "auth_verifications",
@@ -104,7 +103,8 @@ export const authVerifications = sqliteTable(
             .$onUpdate(() => /* @__PURE__ */ new Date())
             .notNull(),
     },
-    (table) => [index("verification_identifier_idx").on(table.identifier)],
+    (table) => [index("verification_identifier_idx").on(table.identifier)]
 );
 
 export type AuthVerification = typeof authVerifications.$inferSelect;
+export type NewAuthVerification = typeof authVerifications.$inferInsert;

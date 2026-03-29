@@ -1,11 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-    sqliteTable,
-    text,
-    integer,
-    index,
-    uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema"; // Import correctly explicitly
 
 export const authOrganizations = sqliteTable(
@@ -18,10 +12,11 @@ export const authOrganizations = sqliteTable(
         createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
         metadata: text("metadata"),
     },
-    (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
+    (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)]
 );
 
 export type AuthOrganization = typeof authOrganizations.$inferSelect;
+export type NewAuthOrganization = typeof authOrganizations.$inferInsert;
 
 export const authMembers = sqliteTable(
     "auth_members",
@@ -40,10 +35,11 @@ export const authMembers = sqliteTable(
         index("member_organizationId_idx").on(table.organizationId),
         index("member_userId_idx").on(table.userId),
         uniqueIndex("member_org_user_uidx").on(table.organizationId, table.userId),
-    ],
+    ]
 );
 
 export type AuthMember = typeof authMembers.$inferSelect;
+export type NewAuthMember = typeof authMembers.$inferInsert;
 
 export const authInvitations = sqliteTable(
     "auth_invitations",
@@ -66,7 +62,8 @@ export const authInvitations = sqliteTable(
     (table) => [
         index("invitation_organizationId_idx").on(table.organizationId),
         index("invitation_email_idx").on(table.email),
-    ],
+    ]
 );
 
 export type AuthInvitation = typeof authInvitations.$inferSelect;
+export type NewAuthInvitation = typeof authInvitations.$inferInsert;

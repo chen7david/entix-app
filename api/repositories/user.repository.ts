@@ -1,12 +1,9 @@
-import { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
-import * as schema from "@shared/db/schema";
-import { eq, and, like, or } from "drizzle-orm";
+import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
-
-// Better Auth server instance type is complex and internal-only. 
-// We use unknown for the instance to ensure zero any, and type cast locally in methods.
-type AuthInstance = unknown;
+import * as schema from "@shared/db/schema";
+import type { Auth } from "better-auth";
+import { and, eq, like, or } from "drizzle-orm";
 
 export type CreateUserInput = {
     email: string;
@@ -30,16 +27,15 @@ export type CreateUserResult = {
 export class UserRepository {
     constructor(
         private db: AppDb,
-        private auth: AuthInstance
-    ) { }
+        private auth: Auth
+    ) {}
 
     /**
      * Create a new user via BetterAuth
      * Email verification is automatically sent if sendOnSignUp is enabled in config
      */
     async createUser(input: CreateUserInput): Promise<CreateUserResult> {
-        const auth = (this.auth as any); // Type cast for internal library call
-        const result = await auth.api.signUpEmail({
+        const result = await this.auth.api.signUpEmail({
             body: {
                 email: input.email,
                 password: input.password,
@@ -75,10 +71,8 @@ export class UserRepository {
     /**
      * Update an existing user's data
      */
-    async updateUser(userId: string, data: Partial<typeof schema.authUsers.$inferInsert>): Promise<void> {
-        await this.db.update(schema.authUsers)
-            .set(data)
-            .where(eq(schema.authUsers.id, userId));
+    async updateUser(userId: string, data: Partial<schema.NewAuthUser>): Promise<void> {
+        await this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, userId));
     }
 
     /**
@@ -86,9 +80,8 @@ export class UserRepository {
      * Uses BetterAuth's built-in password reset functionality
      */
     async sendPasswordResetEmail(email: string, redirectTo: string): Promise<void> {
-        const auth = (this.auth as any); // Type cast for internal library call
-        await auth.api.requestPasswordReset({
-            body: { email, redirectTo }
+        await this.auth.api.requestPasswordReset({
+            body: { email, redirectTo },
         });
     }
 
@@ -96,7 +89,13 @@ export class UserRepository {
      * Find all users belonging to an organization
      * Queries via the member table to scope results to the given org
      */
-    async findUsersByOrganization(organizationId: string, limit: number, cursor?: string, direction: 'next' | 'prev' = 'next', search?: string) {
+    async findUsersByOrganization(
+        organizationId: string,
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
         const { where: cursorWhere, orderBy } = buildCursorPagination(
             schema.authMembers.createdAt,
             schema.authMembers.id,
@@ -106,13 +105,16 @@ export class UserRepository {
 
         const conditions = [eq(schema.authMembers.organizationId, organizationId)];
         if (cursorWhere) conditions.push(cursorWhere);
-        
+
         if (search) {
             // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
-            conditions.push(or(
+            const searchFilter = or(
                 like(schema.authUsers.name, `%${search}%`),
                 like(schema.authUsers.email, `%${search}%`)
-            )!);
+            );
+            if (searchFilter) {
+                conditions.push(searchFilter);
+            }
         }
 
         const membersJoined = await this.db
@@ -120,19 +122,27 @@ export class UserRepository {
             .from(schema.authMembers)
             .innerJoin(schema.authUsers, eq(schema.authMembers.userId, schema.authUsers.id))
             .where(and(...conditions))
-            .orderBy(...(orderBy as any))
+            .orderBy(...orderBy)
             .limit(limit + 1);
-        
-        const result = processPaginatedResult(
-            membersJoined,
-            limit,
-            direction,
-            (row) => ({ primary: row.member.createdAt.getTime(), secondary: row.member.id })
-        );
+
+        const result = processPaginatedResult(membersJoined, limit, direction, (row) => ({
+            primary: row.member.createdAt.getTime(),
+            secondary: row.member.id,
+        }));
 
         return {
             ...result,
-            items: result.items.map((row) => ({ ...row.member, user: row.user })),
+            items: result.items.map((row) => ({
+                ...row.user,
+                user: row.user,
+                userId: row.user.id,
+                // Override user-level fields with organization-specific ones if necessary
+                // e.g., the member's role in this specific org
+                role: row.member.role,
+                createdAt: row.member.createdAt,
+                updatedAt: row.user.updatedAt,
+                id: row.user.id, // Keep user's ID as the primary ID for the UserDTO
+            })),
         };
     }
 
@@ -172,7 +182,7 @@ export class UserRepository {
     /**
      * Execute multiple prepared queries atomically
      */
-    async executeBatch(queries: unknown[]) {
-        return await this.db.batch(queries as any);
+    async executeBatch(queries: Parameters<AppDb["batch"]>[0]) {
+        return await this.db.batch(queries);
     }
 }

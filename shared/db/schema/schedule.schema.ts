@@ -1,13 +1,7 @@
 import { sql } from "drizzle-orm";
-import {
-    sqliteTable,
-    text,
-    integer,
-    index,
-    primaryKey,
-} from "drizzle-orm/sqlite-core";
-import { authOrganizations } from "./organization.schema";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
+import { authOrganizations } from "./organization.schema";
 
 export const scheduledSessions = sqliteTable(
     "scheduled_sessions",
@@ -20,7 +14,9 @@ export const scheduledSessions = sqliteTable(
         description: text("description"),
         startTime: integer("start_time", { mode: "timestamp_ms" }).notNull(),
         durationMinutes: integer("duration_minutes").notNull(),
-        status: text("status", { enum: ["scheduled", "completed", "cancelled"] }).default("scheduled").notNull(),
+        status: text("status", { enum: ["scheduled", "completed", "cancelled"] })
+            .default("scheduled")
+            .notNull(),
         seriesId: text("series_id"),
         recurrenceRule: text("recurrence_rule"),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
@@ -32,11 +28,12 @@ export const scheduledSessions = sqliteTable(
     },
     (table) => [
         index("scheduled_session_organizationId_idx").on(table.organizationId),
-        index("scheduled_session_seriesId_idx").on(table.seriesId)
+        index("scheduled_session_seriesId_idx").on(table.seriesId),
     ]
 );
 
 export type ScheduledSession = typeof scheduledSessions.$inferSelect;
+export type NewScheduledSession = typeof scheduledSessions.$inferInsert;
 
 export const sessionAttendances = sqliteTable(
     "session_attendances",
@@ -67,3 +64,4 @@ export const sessionAttendances = sqliteTable(
 );
 
 export type SessionAttendance = typeof sessionAttendances.$inferSelect;
+export type NewSessionAttendance = typeof sessionAttendances.$inferInsert;

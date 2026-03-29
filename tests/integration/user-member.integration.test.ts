@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { createTestClient } from "../lib/test-client";
-import { createAuthenticatedOrg } from "../lib/auth-test.helper";
-import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
-import { createMockUserDbRecord } from "../factories/auth.factory";
+import app from "@api/app";
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createMockUserDbRecord } from "../factories/auth.factory";
+import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
+import { createAuthenticatedOrg } from "../lib/auth-test.helper";
+import { createTestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("AuthUser & AuthMember Creation Atomicity", () => {
     let db: ReturnType<typeof createTestDb> extends Promise<infer U> ? U : never;
@@ -17,13 +17,11 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
     });
 
     it("POST /api/v1/orgs/:orgId/members should rollback user creation atomically on setup failure", async () => {
-        // Use the proper test helper to get a real valid database session
         const { orgId, cookie } = await createAuthenticatedOrg({ app, env });
 
         const fakeConflictUser = createMockUserDbRecord({ id: "fake-conflict-user" });
         await db.insert(schema.authUsers).values(fakeConflictUser);
 
-        // Seed a member explicitly to trigger a UNIQUE constraint violation later
         await db.insert(schema.authMembers).values({
             id: "pre-existing-conflict",
             organizationId: orgId,
@@ -35,18 +33,21 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
         const targetEmail = "new-member@example.com";
         const dummyName = "New AuthMember";
 
-        // Mock the member repository `prepareAdd` to intentionally insert a conflicting 'id'
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
-        const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
+        const spy = vi.spyOn(MemberRepository.prototype, "prepareAdd").mockImplementation(function (
+            this: any
+        ) {
             const getDbClient = require("@api/factories/db.factory").getDbClient;
-            return getDbClient((this as any).ctx).insert(schema.authMembers).values({
-                id: "pre-existing-conflict", // Will conflict with existing member ID
-                organizationId: orgId, // Must match foreign key
-                userId: "will-not-save", // Assume uId
-                role: "member",
-                createdAt: new Date(),
-            });
+            return getDbClient((this as any).ctx)
+                .insert(schema.authMembers)
+                .values({
+                    id: "pre-existing-conflict", // Will conflict with existing member ID
+                    organizationId: orgId, // Must match foreign key
+                    userId: "will-not-save", // Assume uId
+                    role: "member",
+                    createdAt: new Date(),
+                });
         });
 
         const payload = createMockMemberCreationPayload({ email: targetEmail, name: dummyName });
@@ -54,12 +55,10 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
 
         const res = await realClient.orgs.members.create(orgId, payload);
 
-        // Ensure the handler caught the Drizzle batch error
         expect(res.status).toBe(500);
 
-        // Verify the user was NOT created (rolled back atomically)
         const user = await db.query.authUsers.findFirst({
-            where: eq(schema.authUsers.email, targetEmail)
+            where: eq(schema.authUsers.email, targetEmail),
         });
         expect(user).toBeUndefined();
 

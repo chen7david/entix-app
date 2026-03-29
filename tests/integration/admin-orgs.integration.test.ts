@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { createSuperAdmin, getAuthCookie } from "../lib/auth-test.helper";
-import { createTestClient } from "../lib/test-client";
-import { parseJson } from "../lib/api-request.helper";
+import app from "@api/app";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
 import { nanoid } from "nanoid";
+import { beforeEach, describe, expect, it } from "vitest";
+import { parseJson } from "../lib/api-request.helper";
+import { createSuperAdmin, getAuthCookie } from "../lib/auth-test.helper";
+import { createTestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("Admin Organizations Integration", () => {
     beforeEach(async () => {
@@ -38,7 +38,6 @@ describe("Admin Organizations Integration", () => {
 
     describe("Super Admin Access", () => {
         it("returns 200 OK and lists all organizations for super admin", async () => {
-            // Seed a few organizations into the db directly
             const ctxMock: any = { env };
             const { getDbClient } = await import("@api/factories/db.factory");
             const db = getDbClient(ctxMock);
@@ -57,15 +56,13 @@ describe("Admin Organizations Integration", () => {
 
             expect(Array.isArray(body)).toBe(true);
             expect(body.length).toBeGreaterThanOrEqual(2);
-            expect(body.some(org => org.slug === "test-org-1")).toBe(true);
-            expect(body.some(org => org.slug === "test-org-2")).toBe(true);
+            expect(body.some((org) => org.slug === "test-org-1")).toBe(true);
+            expect(body.some((org) => org.slug === "test-org-2")).toBe(true);
 
-            // Validate the explicit Zod schema matches our payload format 
-            // createdAt should be a JS number (milliseconds) because we map it
             const firstOrg = body[0];
-            expect(typeof firstOrg.id).toBe('string');
-            expect(typeof firstOrg.name).toBe('string');
-            expect(typeof firstOrg.createdAt).toBe('number');
+            expect(typeof firstOrg.id).toBe("string");
+            expect(typeof firstOrg.name).toBe("string");
+            expect(typeof firstOrg.createdAt).toBe("number");
         });
     });
 });

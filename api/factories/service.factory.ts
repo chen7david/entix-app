@@ -1,25 +1,27 @@
-import { AppContext } from "@api/helpers/types.helpers";
-import { UserService } from "@api/services/user.service";
+import type { AppContext } from "@api/helpers/types.helpers";
 import { AvatarService } from "@api/services/avatar.service";
-import { RegistrationService } from "@api/services/registration.service";
-import { OrganizationService } from "@api/services/organization.service";
+import { DashboardService } from "@api/services/dashboard.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
+import { MemberExportService } from "@api/services/member-export.service";
+import { MemberImportService } from "@api/services/member-import.service";
+import { OrganizationService } from "@api/services/organization.service";
 import { PlaylistService } from "@api/services/playlist.service";
+import { RegistrationService } from "@api/services/registration.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
-import { UserProfileService } from "@api/services/user-profile.service";
 import { SocialMediaService } from "@api/services/social-media.service";
-import { BulkMemberService } from "@api/services/bulk-member.service";
+import { UserService } from "@api/services/user.service";
+import { UserProfileService } from "@api/services/user-profile.service";
 import { getDbClient } from "./db.factory";
 import {
-    getUserRepository,
-    getOrganizationRepository,
-    getMemberRepository,
     getMediaRepository,
+    getMemberRepository,
+    getOrganizationRepository,
     getPlaylistRepository,
     getSessionScheduleRepository,
-    getUserProfileRepository,
     getSocialMediaRepository,
+    getUserProfileRepository,
+    getUserRepository,
 } from "./repository.factory";
 import { getUploadService } from "./upload.factory";
 
@@ -36,11 +38,7 @@ export const getSocialMediaService = (ctx: AppContext) => {
 };
 
 export const getAvatarService = (ctx: AppContext) => {
-    return new AvatarService(
-        getUserRepository(ctx),
-        getMemberRepository(ctx),
-        getUploadService(ctx)
-    );
+    return new AvatarService(getUserRepository(ctx), getUploadService(ctx));
 };
 
 export const getRegistrationService = (ctx: AppContext) => {
@@ -71,6 +69,14 @@ export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(getSessionScheduleRepository(ctx));
 };
 
-export const getBulkMemberService = (ctx: AppContext) => {
-    return new BulkMemberService(getDbClient(ctx));
+export const getDashboardService = (ctx: AppContext) => {
+    return new DashboardService(getDbClient(ctx));
+};
+
+export const getMemberExportService = (ctx: AppContext) => {
+    return new MemberExportService(getDbClient(ctx));
+};
+
+export const getMemberImportService = (ctx: AppContext) => {
+    return new MemberImportService(getDbClient(ctx));
 };

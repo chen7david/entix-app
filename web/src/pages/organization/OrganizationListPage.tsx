@@ -1,13 +1,31 @@
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useMembers } from "@web/src/hooks/auth/useMembers";
-import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { Table, Button, Typography, Skeleton, Statistic, Row, Col, Card, Tag, Input, Dropdown, Tooltip } from "antd";
-import type { MenuProps } from "antd";
-import { TeamOutlined, MailOutlined, AppstoreOutlined, SearchOutlined, MoreOutlined, EyeOutlined } from "@ant-design/icons";
-import { useState } from "react";
-import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
+import {
+    AppstoreOutlined,
+    EyeOutlined,
+    MailOutlined,
+    MoreOutlined,
+    SearchOutlined,
+    TeamOutlined,
+} from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
+import { useInvitations, useMembers, useOrganization } from "@web/src/features/organization";
+import type { MenuProps } from "antd";
+import {
+    Button,
+    Card,
+    Col,
+    Dropdown,
+    Input,
+    Row,
+    Skeleton,
+    Statistic,
+    Table,
+    Tag,
+    Tooltip,
+    Typography,
+} from "antd";
 import dayjs from "dayjs";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -15,7 +33,7 @@ export const OrganizationListPage = () => {
     const { organizations, loading, activeOrganization } = useOrganization();
     const { members } = useMembers();
     const { invitations } = useInvitations();
-    const [searchText, setSearchText] = useState('');
+    const [searchText, setSearchText] = useState("");
 
     // Sort: active org on top
     const sortedOrgs = [...(organizations || [])].sort((a, b) => {
@@ -26,22 +44,33 @@ export const OrganizationListPage = () => {
 
     const columns = [
         {
-            title: 'Organization',
-            key: 'name',
+            title: "Organization",
+            key: "name",
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
-                    <EntityAvatar active={record.id === activeOrganization?.id} text={record.name} />
+                    <EntityAvatar
+                        active={record.id === activeOrganization?.id}
+                        text={record.name}
+                    />
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <div className="font-medium flex items-center gap-2">
                             <Tooltip title={record.name} placement="topLeft" mouseEnterDelay={0.5}>
                                 <span className="truncate block max-w-[200px]">{record.name}</span>
                             </Tooltip>
                             {record.id === activeOrganization?.id && (
-                                <Tag color="purple" style={{ fontSize: 11 }} className="flex-shrink-0">Active</Tag>
+                                <Tag
+                                    color="purple"
+                                    style={{ fontSize: 11 }}
+                                    className="flex-shrink-0"
+                                >
+                                    Active
+                                </Tag>
                             )}
                         </div>
                         <Tooltip title={record.slug} placement="topLeft" mouseEnterDelay={0.5}>
-                            <div className="text-xs text-gray-500 truncate block">{record.slug}</div>
+                            <div className="text-xs text-gray-500 truncate block">
+                                {record.slug}
+                            </div>
                         </Tooltip>
                     </div>
                 </div>
@@ -52,31 +81,31 @@ export const OrganizationListPage = () => {
                 record.slug.toLowerCase().includes(value.toLowerCase()),
         },
         {
-            title: 'Slug',
-            dataIndex: 'slug',
-            key: 'slug',
-            responsive: ['md' as const],
+            title: "Slug",
+            dataIndex: "slug",
+            key: "slug",
+            responsive: ["md" as const],
         },
         {
-            title: 'Created',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
-            render: (date: string) => dayjs(date).format('MMM D, YYYY'),
-            responsive: ['lg' as const],
+            title: "Created",
+            dataIndex: "createdAt",
+            key: "createdAt",
+            render: (date: string) => dayjs(date).format("MMM D, YYYY"),
+            responsive: ["lg" as const],
         },
         {
-            title: 'Actions',
-            key: 'actions',
+            title: "Actions",
+            key: "actions",
             render: () => {
-                const items: MenuProps['items'] = [
+                const items: MenuProps["items"] = [
                     {
-                        key: 'view',
-                        label: 'View Details',
+                        key: "view",
+                        label: "View Details",
                         icon: <EyeOutlined />,
                     },
                 ];
                 return (
-                    <Dropdown menu={{ items }} trigger={['click']}>
+                    <Dropdown menu={{ items }} trigger={["click"]}>
                         <Button type="text" icon={<MoreOutlined />} />
                     </Dropdown>
                 );
@@ -101,7 +130,9 @@ export const OrganizationListPage = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>Manage Organizations</Title>
+                        <Title level={2} style={{ marginBottom: 4 }}>
+                            Manage Organizations
+                        </Title>
                         <Text type="secondary">View and manage your organizations</Text>
                     </div>
                 </div>
@@ -112,7 +143,7 @@ export const OrganizationListPage = () => {
                         <Card>
                             <Statistic
                                 title="Current Organization"
-                                value={activeOrganization?.name || 'None'}
+                                value={activeOrganization?.name || "None"}
                                 prefix={<AppstoreOutlined />}
                             />
                         </Card>
@@ -143,7 +174,7 @@ export const OrganizationListPage = () => {
                         placeholder="Search organizations..."
                         prefix={<SearchOutlined />}
                         className="max-w-xs"
-                        onChange={e => setSearchText(e.target.value)}
+                        onChange={(e) => setSearchText(e.target.value)}
                         allowClear
                     />
                 </div>
@@ -155,8 +186,6 @@ export const OrganizationListPage = () => {
                     rowKey="id"
                     pagination={{ pageSize: 10 }}
                 />
-
-
             </div>
         </>
     );

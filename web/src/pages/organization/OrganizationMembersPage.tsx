@@ -1,24 +1,56 @@
-import { useMembers } from "@web/src/hooks/auth/useMembers";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { Table, Typography, Avatar, Tag, Skeleton, Select, Button, message, Space, Modal, Form, Input, Statistic, Row, Col, Card, Drawer, Tooltip, Dropdown, Tabs } from "antd";
-import type { MenuProps } from "antd";
-import { DateUtils } from "@web/src/utils/date";
-import type { ColumnsType } from "antd/es/table";
-import { UserOutlined, DeleteOutlined, PlusOutlined, TeamOutlined, SafetyOutlined, CrownOutlined, SearchOutlined, MailOutlined, LockOutlined, MoreOutlined } from "@ant-design/icons";
-import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
-import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
-import { MemberRolesForm } from "@web/src/features/user-profiles/MemberRolesForm";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
-import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
-import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
-import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
-import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
-import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router";
-import { useDebouncedValue } from '@tanstack/react-pacer';
-import { UI_CONSTANTS } from '@web/src/utils/constants';
+import {
+    CrownOutlined,
+    DeleteOutlined,
+    LockOutlined,
+    MailOutlined,
+    MoreOutlined,
+    PlusOutlined,
+    SafetyOutlined,
+    SearchOutlined,
+    TeamOutlined,
+    UserOutlined,
+} from "@ant-design/icons";
 import { getAvatarUrl } from "@shared/utils/image-url";
+import { useDebouncedValue } from "@tanstack/react-pacer";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { useAuth } from "@web/src/features/auth";
+import { AvatarDropzone } from "@web/src/features/media";
+import { useCreateMember, useMembers, useOrganization } from "@web/src/features/organization";
+import {
+    MemberRolesForm,
+    UserContactList,
+    UserProfileForm,
+    useRemoveAvatar,
+} from "@web/src/features/user-profiles";
+import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
+import { DateUtils } from "@web/src/utils/date";
+import type { MenuProps } from "antd";
+import {
+    Avatar,
+    Button,
+    Card,
+    Col,
+    Drawer,
+    Dropdown,
+    Form,
+    Input,
+    Modal,
+    message,
+    Row,
+    Select,
+    Skeleton,
+    Space,
+    Statistic,
+    Table,
+    Tabs,
+    Tag,
+    Tooltip,
+    Typography,
+} from "antd";
+import type { ColumnsType } from "antd/es/table";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
@@ -27,8 +59,8 @@ export const OrganizationMembersPage = () => {
 
     // Bind search state generically to url string matching native architecture persistence
     const [searchParams, setSearchParams] = useSearchParams();
-    const [searchText, setSearchText] = useState(searchParams.get('q') || '');
-    
+    const [searchText, setSearchText] = useState(searchParams.get("q") || "");
+
     // Defer pushing expensive re-renders and network bounds rapidly on keystroke loops
     const [debouncedSearch, control] = useDebouncedValue(
         searchText,
@@ -40,12 +72,12 @@ export const OrganizationMembersPage = () => {
     useEffect(() => {
         const newParams = new URLSearchParams(searchParams);
         if (debouncedSearch) {
-            newParams.set('q', debouncedSearch);
+            newParams.set("q", debouncedSearch);
         } else {
-            newParams.delete('q');
+            newParams.delete("q");
         }
         setSearchParams(newParams, { replace: true });
-    }, [debouncedSearch, setSearchParams]);
+    }, [debouncedSearch, setSearchParams, searchParams]);
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
     const { activeOrganization } = useOrganization();
@@ -59,7 +91,7 @@ export const OrganizationMembersPage = () => {
         userRoles: currentUserRoles,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
     } = useMembers(debouncedSearch);
 
     const { session } = useAuth();
@@ -81,9 +113,9 @@ export const OrganizationMembersPage = () => {
     const handleRemoveAvatar = async (memberUserId: string) => {
         try {
             await removeAvatarMutation.mutateAsync(memberUserId);
-            message.success('Profile picture removed successfully');
+            message.success("Profile picture removed successfully");
         } catch {
-            message.error('Failed to remove profile picture');
+            message.error("Failed to remove profile picture");
         }
     };
 
@@ -94,74 +126,102 @@ export const OrganizationMembersPage = () => {
     const handleRoleChange = async (memberId: string, newRoles: string[]) => {
         try {
             await updateMemberRoles(memberId, newRoles);
-            message.success('Roles updated successfully');
+            message.success("Roles updated successfully");
         } catch {
-            message.error('Failed to update roles');
+            message.error("Failed to update roles");
         }
     };
 
     const handleRemoveMember = async (memberId: string) => {
         try {
             await removeMember(memberId);
-            message.success('Member removed successfully');
+            message.success("Member removed successfully");
         } catch {
-            message.error('Failed to remove member');
+            message.error("Failed to remove member");
         }
     };
 
     const handleResendPassword = async (email: string) => {
         if (!email) return;
-        const { error } = await requestPasswordReset({ email, redirectTo: window.location.origin + '/auth/reset-password' });
+        const { error } = await requestPasswordReset({
+            email,
+            redirectTo: `${window.location.origin}/auth/reset-password`,
+        });
         if (error) {
-            message.error('Failed to send password reset: ' + error.message);
+            message.error(`Failed to send password reset: ${error.message}`);
         } else {
-            message.success('Password reset email sent');
+            message.success("Password reset email sent");
         }
     };
 
     const handleResendVerification = async (email: string) => {
         if (!email) return;
-        const { error } = await sendVerificationEmail({ email, callbackURL: window.location.origin });
+        const { error } = await sendVerificationEmail({
+            email,
+            callbackURL: window.location.origin,
+        });
         if (error) {
-            message.error('Failed to send verification email: ' + error.message);
+            message.error(`Failed to send verification email: ${error.message}`);
         } else {
-            message.success('Verification email sent');
+            message.success("Verification email sent");
         }
     };
 
     // Compute role counts
     const totalMembers = members?.length || 0;
-    const adminCount = members?.filter((m: Record<string, unknown>) => (String(m.role || '')).includes('admin')).length || 0;
-    const ownerCount = members?.filter((m: Record<string, unknown>) => (String(m.role || '')).includes('owner')).length || 0;
+    const adminCount =
+        members?.filter((m: Record<string, unknown>) => String(m.role || "").includes("admin"))
+            .length || 0;
+    const ownerCount =
+        members?.filter((m: Record<string, unknown>) => String(m.role || "").includes("owner"))
+            .length || 0;
 
     const columns: ColumnsType<Record<string, unknown>> = [
         {
-            title: 'User',
-            dataIndex: 'user',
-            key: 'user',
+            title: "User",
+            dataIndex: "user",
+            key: "user",
             render: (user: Record<string, unknown>, record: any) => (
                 <div
                     className="flex items-center gap-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded transition-colors"
                     onClick={() => setSelectedMember(record)}
                 >
-                    <Avatar src={user?.image ? getAvatarUrl(user.image as string, 'sm') : undefined} icon={<UserOutlined />} />
+                    <Avatar
+                        src={user?.image ? getAvatarUrl(user.image as string, "sm") : undefined}
+                        icon={<UserOutlined />}
+                    />
                     <div className="flex flex-col">
-                        <Typography.Text strong className="text-[#646cff] hover:text-[#747bff] transition-colors">{user.name as string}</Typography.Text>
-                        <Typography.Text type="secondary" className="text-xs">{user.email as string}</Typography.Text>
+                        <Typography.Text
+                            strong
+                            className="text-[#646cff] hover:text-[#747bff] transition-colors"
+                        >
+                            {user.name as string}
+                        </Typography.Text>
+                        <Typography.Text type="secondary" className="text-xs">
+                            {user.email as string}
+                        </Typography.Text>
                     </div>
                 </div>
-            )
+            ),
         },
         {
-            title: 'Role',
-            dataIndex: 'role',
-            key: 'role',
+            title: "Role",
+            dataIndex: "role",
+            key: "role",
             render: (role: unknown) => {
-                const memberRoles = (String(role || "")).split(",").map(r => r.trim()).filter(Boolean);
+                const memberRoles = String(role || "")
+                    .split(",")
+                    .map((r) => r.trim())
+                    .filter(Boolean);
                 return (
                     <Space wrap>
-                        {memberRoles.map(r => (
-                            <Tag key={r} color={r === 'owner' ? 'purple' : r === 'admin' ? '#646cff' : 'default'}>
+                        {memberRoles.map((r) => (
+                            <Tag
+                                key={r}
+                                color={
+                                    r === "owner" ? "purple" : r === "admin" ? "#646cff" : "default"
+                                }
+                            >
                                 {r.toUpperCase()}
                             </Tag>
                         ))}
@@ -170,9 +230,9 @@ export const OrganizationMembersPage = () => {
             },
         },
         {
-            title: 'Joined At',
-            dataIndex: 'createdAt',
-            key: 'createdAt',
+            title: "Joined At",
+            dataIndex: "createdAt",
+            key: "createdAt",
             render: (date: string) => {
                 return (
                     <Tooltip title={DateUtils.toDate(date).toLocaleString()}>
@@ -182,51 +242,51 @@ export const OrganizationMembersPage = () => {
             },
         },
         {
-            title: '',
-            key: 'actions',
-            align: 'right',
+            title: "",
+            key: "actions",
+            align: "right",
             width: 50,
             render: (_: any, record: any) => {
-                const items: MenuProps['items'] = [
+                const items: MenuProps["items"] = [
                     {
-                        key: 'resend-verification',
-                        label: 'Resend Verification Email',
+                        key: "resend-verification",
+                        label: "Resend Verification Email",
                         icon: <MailOutlined />,
                         onClick: (e) => {
                             e.domEvent.stopPropagation();
                             handleResendVerification(record.user?.email);
-                        }
+                        },
                     },
                     {
-                        key: 'resend-password',
-                        label: 'Resend Password Reset',
+                        key: "resend-password",
+                        label: "Resend Password Reset",
                         icon: <LockOutlined />,
                         onClick: (e) => {
                             e.domEvent.stopPropagation();
                             handleResendPassword(record.user?.email);
-                        }
+                        },
                     },
                     {
-                        key: 'remove-picture',
-                        label: 'Remove Picture',
+                        key: "remove-picture",
+                        label: "Remove Picture",
                         icon: <DeleteOutlined />,
                         danger: true,
                         disabled: !record.user?.image,
                         onClick: (e) => {
                             e.domEvent.stopPropagation();
                             handleRemoveAvatar(record.user?.id as string);
-                        }
-                    }
+                        },
+                    },
                 ];
                 return (
-                    <div onClick={e => e.stopPropagation()}>
-                        <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+                    <div onClick={(e) => e.stopPropagation()}>
+                        <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
                             <Button type="text" icon={<MoreOutlined />} />
                         </Dropdown>
                     </div>
                 );
-            }
-        }
+            },
+        },
     ];
 
     if (loading && members.length === 0) {
@@ -243,7 +303,9 @@ export const OrganizationMembersPage = () => {
             <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
                     <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>Members</Title>
+                        <Title level={2} style={{ marginBottom: 4 }}>
+                            Members
+                        </Title>
                         <Text type="secondary">Manage organization members and roles</Text>
                     </div>
                     <div className="flex items-center gap-4">
@@ -309,7 +371,11 @@ export const OrganizationMembersPage = () => {
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                         allowClear
-                        suffix={control.state.isPending ? <span className="text-xs text-gray-400 italic">typing...</span> : null}
+                        suffix={
+                            control.state.isPending ? (
+                                <span className="text-xs text-gray-400 italic">typing...</span>
+                            ) : null
+                        }
                     />
                 </div>
 
@@ -333,7 +399,6 @@ export const OrganizationMembersPage = () => {
                     </div>
                 )}
 
-
                 {/* Create New Member Modal */}
                 <Modal
                     title="Create New Member"
@@ -345,14 +410,12 @@ export const OrganizationMembersPage = () => {
                         form={createForm}
                         layout="vertical"
                         onFinish={handleCreateMember}
-                        initialValues={{ role: 'member' }}
+                        initialValues={{ role: "member" }}
                     >
                         <Form.Item
                             name="name"
                             label="Full Name"
-                            rules={[
-                                { required: true, message: 'Please input the full name!' }
-                            ]}
+                            rules={[{ required: true, message: "Please input the full name!" }]}
                         >
                             <Input placeholder="John Doe" />
                         </Form.Item>
@@ -361,8 +424,8 @@ export const OrganizationMembersPage = () => {
                             name="email"
                             label="Email Address"
                             rules={[
-                                { required: true, message: 'Please input the email address!' },
-                                { type: 'email', message: 'Please enter a valid email!' }
+                                { required: true, message: "Please input the email address!" },
+                                { type: "email", message: "Please enter a valid email!" },
                             ]}
                         >
                             <Input placeholder="colleague@example.com" />
@@ -371,7 +434,7 @@ export const OrganizationMembersPage = () => {
                         <Form.Item
                             name="role"
                             label="Role"
-                            rules={[{ required: true, message: 'Please select a role!' }]}
+                            rules={[{ required: true, message: "Please select a role!" }]}
                         >
                             <Select>
                                 <Select.Option value="member">Member</Select.Option>
@@ -383,7 +446,11 @@ export const OrganizationMembersPage = () => {
                         <Form.Item className="mb-0 flex justify-end">
                             <Space>
                                 <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-                                <Button type="primary" htmlType="submit" loading={createMemberMutation.isPending}>
+                                <Button
+                                    type="primary"
+                                    htmlType="submit"
+                                    loading={createMemberMutation.isPending}
+                                >
                                     Create Member
                                 </Button>
                             </Space>
@@ -400,66 +467,94 @@ export const OrganizationMembersPage = () => {
                     width={400}
                     push={false}
                 >
-                    {selectedMember && (() => {
-                        const activeMember = members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
-                        const user = activeMember.user as Record<string, unknown> | undefined;
-                        return (
-                            <div className="flex flex-col gap-6 pt-2 pb-6">
-                                <div className="text-center mb-6">
-                                    {activeOrganization ? (
-                                        <AvatarDropzone
-                                            organizationId={activeOrganization.id}
-                                            userId={activeMember.userId as string}
-                                            currentImageUrl={getAvatarUrl(user?.image as string, 'xl')}
-                                            size={96}
-                                            className="mx-auto"
-                                        />
-                                    ) : (
-                                        <Avatar size={96} icon={<UserOutlined />} src={getAvatarUrl(user?.image as string, 'xl')} className="mx-auto" />
-                                    )}
-                                    <Title level={4} style={{ marginTop: '16px', marginBottom: '4px' }}>{user?.name as string}</Title>
-                                    <Text type="secondary">{user?.email as string}</Text>
-                                    <div className="mt-2">
-                                        <Tag color={user?.emailVerified ? 'success' : 'warning'}>
-                                            {user?.emailVerified ? 'Verified' : 'Unverified'}
-                                        </Tag>
+                    {selectedMember &&
+                        (() => {
+                            const activeMember =
+                                members?.find((m: any) => m.id === selectedMember.id) ||
+                                selectedMember;
+                            const user = activeMember.user as Record<string, unknown> | undefined;
+                            return (
+                                <div className="flex flex-col gap-6 pt-2 pb-6">
+                                    <div className="text-center mb-6">
+                                        {activeOrganization ? (
+                                            <AvatarDropzone
+                                                organizationId={activeOrganization.id}
+                                                userId={activeMember.userId as string}
+                                                currentImageUrl={getAvatarUrl(
+                                                    user?.image as string,
+                                                    "xl"
+                                                )}
+                                                size={96}
+                                                className="mx-auto"
+                                            />
+                                        ) : (
+                                            <Avatar
+                                                size={96}
+                                                icon={<UserOutlined />}
+                                                src={getAvatarUrl(user?.image as string, "xl")}
+                                                className="mx-auto"
+                                            />
+                                        )}
+                                        <Title
+                                            level={4}
+                                            style={{ marginTop: "16px", marginBottom: "4px" }}
+                                        >
+                                            {user?.name as string}
+                                        </Title>
+                                        <Text type="secondary">{user?.email as string}</Text>
+                                        <div className="mt-2">
+                                            <Tag
+                                                color={user?.emailVerified ? "success" : "warning"}
+                                            >
+                                                {user?.emailVerified ? "Verified" : "Unverified"}
+                                            </Tag>
+                                        </div>
                                     </div>
+
+                                    <Tabs
+                                        defaultActiveKey="1"
+                                        className="flex-1"
+                                        items={[
+                                            {
+                                                key: "1",
+                                                label: "Personal Info",
+                                                children: (
+                                                    <UserProfileForm
+                                                        userId={activeMember.userId as string}
+                                                    />
+                                                ),
+                                            },
+                                            {
+                                                key: "2",
+                                                label: "Contact Details",
+                                                children: (
+                                                    <UserContactList
+                                                        userId={activeMember.userId as string}
+                                                    />
+                                                ),
+                                            },
+                                            {
+                                                key: "3",
+                                                label: "Roles",
+                                                children: (
+                                                    <MemberRolesForm
+                                                        member={activeMember}
+                                                        currentUserId={currentUserId as string}
+                                                        canUpdateMember={canUpdateMember}
+                                                        canDeleteMember={canDeleteMember}
+                                                        handleRoleChange={handleRoleChange}
+                                                        handleRemoveMember={handleRemoveMember}
+                                                        onRemoveSuccess={() =>
+                                                            setSelectedMember(null)
+                                                        }
+                                                    />
+                                                ),
+                                            },
+                                        ]}
+                                    />
                                 </div>
-                                
-                                <Tabs 
-                                    defaultActiveKey="1" 
-                                    className="flex-1"
-                                    items={[
-                                        {
-                                            key: "1",
-                                            label: "Personal Info",
-                                            children: <UserProfileForm userId={activeMember.userId as string} />
-                                        },
-                                        {
-                                            key: "2",
-                                            label: "Contact Details",
-                                            children: <UserContactList userId={activeMember.userId as string} />
-                                        },
-                                        {
-                                            key: "3",
-                                            label: "Roles",
-                                            children: (
-                                                <MemberRolesForm 
-                                                    member={activeMember}
-                                                    currentUserId={currentUserId as string}
-                                                    canUpdateMember={canUpdateMember}
-                                                    canDeleteMember={canDeleteMember}
-                                                    handleRoleChange={handleRoleChange}
-                                                    handleRemoveMember={handleRemoveMember}
-                                                    onRemoveSuccess={() => setSelectedMember(null)}
-                                                />
-                                            )
-                                        }
-                                    ]}
-                                />
-                            </div>
-                        );
-                    })()}
+                            );
+                        })()}
                 </Drawer>
             </div>
         </>

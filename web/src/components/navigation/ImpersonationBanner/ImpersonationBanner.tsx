@@ -1,8 +1,8 @@
-import React from 'react';
-import { Button, Alert, App } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
-import { useSession } from '@web/src/lib/auth-client';
-import { useStopImpersonating } from '@web/src/hooks/auth/useAuth';
+import { UserOutlined } from "@ant-design/icons";
+import { useStopImpersonating } from "@web/src/features/auth";
+import { useSession } from "@web/src/lib/auth-client";
+import { Alert, App, Button } from "antd";
+import type React from "react";
 
 export const ImpersonationBanner: React.FC = () => {
     const { message } = App.useApp();
@@ -20,8 +20,8 @@ export const ImpersonationBanner: React.FC = () => {
         stopImpersonating(undefined, {
             onError: (error) => {
                 message.error(error.message);
-                console.error('Failed to stop impersonation', error);
-            }
+                console.error("Failed to stop impersonation", error);
+            },
         });
     };
 
@@ -31,7 +31,9 @@ export const ImpersonationBanner: React.FC = () => {
                 <div className="flex justify-between items-center w-full px-2 py-1">
                     <div className="flex items-center gap-2 font-medium">
                         <UserOutlined />
-                        <span>You are currently impersonating {data?.user?.name || data?.user?.email}</span>
+                        <span>
+                            You are currently impersonating {data?.user?.name || data?.user?.email}
+                        </span>
                     </div>
                     <Button
                         type="primary"

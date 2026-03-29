@@ -1,35 +1,80 @@
-import React, { useState } from 'react';
-import { Typography, Button, Table, Space, Modal, Form, Input, Drawer, Popconfirm, Select, Empty, Tooltip } from 'antd';
-import { DeleteOutlined, OrderedListOutlined, SearchOutlined, HolderOutlined, AudioOutlined, PlayCircleOutlined, PlaySquareOutlined } from '@ant-design/icons';
-import { usePlaylists } from '@web/src/hooks/organization/usePlaylists';
-import { useMedia } from '@web/src/hooks/organization/useMedia';
-// useOrganization import removed
-import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
-import { AppRoutes } from '@shared/constants/routes';
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
+import {
+    AudioOutlined,
+    DeleteOutlined,
+    HolderOutlined,
+    OrderedListOutlined,
+    PlayCircleOutlined,
+    PlaySquareOutlined,
+    SearchOutlined,
+} from "@ant-design/icons";
+import {
+    closestCenter,
+    DndContext,
+    type DragEndEvent,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    useSortable,
+    verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { AppRoutes } from "@shared/constants/routes";
+import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
+import { useOrgNavigate } from "@web/src/features/organization";
+import {
+    App,
+    Button,
+    Drawer,
+    Empty,
+    Form,
+    Input,
+    Modal,
+    Popconfirm,
+    Select,
+    Space,
+    Table,
+    Tooltip,
+    Typography,
+} from "antd";
+import type React from "react";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
-const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any; onRemove: () => void }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+const SortableItem = ({
+    id,
+    mediaItem,
+    onRemove,
+}: {
+    id: string;
+    mediaItem: any;
+    onRemove: () => void;
+}) => {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id,
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        zIndex: isDragging ? 100 : 'auto',
+        zIndex: isDragging ? 100 : "auto",
     };
 
     return (
         <div
             ref={setNodeRef}
             style={style}
-            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${isDragging
-                    ? 'border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20'
-                    : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors'
-                } transition-all group`}
+            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
+                isDragging
+                    ? "border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20"
+                    : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            } transition-all group`}
         >
             <div className="flex items-center gap-3 flex-1 min-w-0">
                 <div
@@ -41,35 +86,52 @@ const SortableItem = ({ id, mediaItem, onRemove }: { id: string; mediaItem: any;
                 </div>
                 <div className="flex flex-col flex-1 min-w-0 max-w-[280px]">
                     <Tooltip title={mediaItem.title} placement="topLeft" mouseEnterDelay={0.5}>
-                        <span className="font-semibold text-sm truncate block text-[#646cff] dark:text-[#747bff] transition-colors">{mediaItem.title}</span>
+                        <span className="font-semibold text-sm truncate block text-[#646cff] dark:text-[#747bff] transition-colors">
+                            {mediaItem.title}
+                        </span>
                     </Tooltip>
                     <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                        {mediaItem.mimeType.startsWith('audio') ? <AudioOutlined /> : <PlaySquareOutlined />}
-                        <span className="capitalize">{mediaItem.mimeType.split('/')[0]}</span>
+                        {mediaItem.mimeType.startsWith("audio") ? (
+                            <AudioOutlined />
+                        ) : (
+                            <PlaySquareOutlined />
+                        )}
+                        <span className="capitalize">{mediaItem.mimeType.split("/")[0]}</span>
                     </div>
                 </div>
             </div>
-            <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={onRemove} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Button
+                type="text"
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                onClick={onRemove}
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+            />
         </div>
     );
 };
 
-export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, onCloseCreateModal?: () => void }> = ({ externalIsCreateModalOpen, onCloseCreateModal }) => {
-    const { 
-        playlists, 
-        isLoadingPlaylists, 
-        createPlaylist, 
+export const PlaylistManager: React.FC<{
+    externalIsCreateModalOpen?: boolean;
+    onCloseCreateModal?: () => void;
+}> = ({ externalIsCreateModalOpen, onCloseCreateModal }) => {
+    const {
+        playlists,
+        isLoadingPlaylists,
+        createPlaylist,
         updatePlaylist,
         deletePlaylist,
         getSequence,
-        updateSequence
+        updateSequence,
     } = usePlaylists();
 
+    const { message } = App.useApp();
     const { media } = useMedia();
     const navigateOrg = useOrgNavigate();
     // Legacy definition removed since we merged the hook calls
 
-    const [searchText, setSearchText] = useState('');
+    const [searchText, setSearchText] = useState("");
     const [internalIsCreateModalOpen, setInternalIsCreateModalOpen] = useState(false);
     const isCreateModalOpen = externalIsCreateModalOpen ?? internalIsCreateModalOpen;
     const setIsCreateModalOpen = (val: boolean) => {
@@ -98,7 +160,7 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
     const openSequenceManager = async (playlist: any) => {
         setActivePlaylist(playlist);
         const seq = await getSequence(playlist.id);
-        setSequenceItems(seq.map(item => item.mediaId));
+        setSequenceItems(seq.map((item) => item.mediaId));
         setIsSequenceDrawerOpen(true);
     };
 
@@ -128,7 +190,9 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                 const newArray = arrayMove(items, oldIndex, newIndex);
 
                 if (activePlaylist) {
-                    updateSequence(activePlaylist.id, newArray).catch(console.error);
+                    updateSequence(activePlaylist.id, newArray).catch((_err) =>
+                        message.error("Failed to update sequence order")
+                    );
                 }
 
                 return newArray;
@@ -137,10 +201,12 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
     };
 
     const handleRemoveFromSequence = (mediaIdToRemove: string) => {
-        const newItems = sequenceItems.filter(id => id !== mediaIdToRemove);
+        const newItems = sequenceItems.filter((id) => id !== mediaIdToRemove);
         setSequenceItems(newItems);
         if (activePlaylist) {
-            updateSequence(activePlaylist.id, newItems).catch(console.error);
+            updateSequence(activePlaylist.id, newItems).catch((_err) =>
+                message.error("Failed to remove item from sequence")
+            );
         }
     };
 
@@ -149,33 +215,43 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
             const newItems = [...sequenceItems, mediaId];
             setSequenceItems(newItems);
             if (activePlaylist) {
-                updateSequence(activePlaylist.id, newItems).catch(console.error);
+                updateSequence(activePlaylist.id, newItems).catch((_err) =>
+                    message.error("Failed to add item to sequence")
+                );
             }
         }
     };
 
     const columns = [
         {
-            title: 'Playlist',
-            key: 'title',
+            title: "Playlist",
+            key: "title",
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
                     <OrderedListOutlined className="text-blue-500 flex-shrink-0" />
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={record.title} placement="topLeft" mouseEnterDelay={0.5}>
-                            <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">{record.title}</span>
+                            <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">
+                                {record.title}
+                            </span>
                         </Tooltip>
-                        <Tooltip title={record.description} placement="topLeft" mouseEnterDelay={0.5}>
-                            <span className="text-xs font-medium mt-0.5 text-gray-500 truncate block">{record.description || 'No description'}</span>
+                        <Tooltip
+                            title={record.description}
+                            placement="topLeft"
+                            mouseEnterDelay={0.5}
+                        >
+                            <span className="text-xs font-medium mt-0.5 text-gray-500 truncate block">
+                                {record.description || "No description"}
+                            </span>
                         </Tooltip>
                     </div>
                 </div>
-            )
+            ),
         },
         {
-            title: 'Actions',
-            key: 'actions',
-            align: 'right' as const,
+            title: "Actions",
+            key: "actions",
+            align: "right" as const,
             render: (_: any, record: any) => (
                 <Space size="middle">
                     <Button
@@ -207,11 +283,16 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                         okText="Delete"
                         okButtonProps={{ danger: true }}
                     >
-                        <Button danger type="text" icon={<DeleteOutlined />} onClick={(e) => e.stopPropagation()} />
+                        <Button
+                            danger
+                            type="text"
+                            icon={<DeleteOutlined />}
+                            onClick={(e) => e.stopPropagation()}
+                        />
                     </Popconfirm>
                 </Space>
-            )
-        }
+            ),
+        },
     ];
 
     return (
@@ -221,20 +302,22 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                     placeholder="Search playlists..."
                     prefix={<SearchOutlined />}
                     className="max-w-xs"
-                    onChange={e => setSearchText(e.target.value)}
+                    onChange={(e) => setSearchText(e.target.value)}
                     allowClear
                 />
             </div>
 
             <Table
-                dataSource={playlists?.filter((p: any) => p.title.toLowerCase().includes(searchText.toLowerCase()))}
+                dataSource={playlists?.filter((p: any) =>
+                    p.title.toLowerCase().includes(searchText.toLowerCase())
+                )}
                 columns={columns}
                 rowKey="id"
                 loading={isLoadingPlaylists}
                 pagination={{ pageSize: 10 }}
                 rowClassName="cursor-pointer"
                 onRow={(record) => ({
-                    onClick: () => openEditDrawer(record)
+                    onClick: () => openEditDrawer(record),
                 })}
             />
 
@@ -247,14 +330,23 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                 destroyOnClose
             >
                 <Form layout="vertical" onFinish={handleCreateFinish}>
-                    <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Please input the title' }]}>
+                    <Form.Item
+                        name="title"
+                        label="Title"
+                        rules={[{ required: true, message: "Please input the title" }]}
+                    >
                         <Input placeholder="E.g., Onboarding VODs" />
                     </Form.Item>
                     <Form.Item name="description" label="Description">
-                        <Input.TextArea placeholder="A brief overview of this playlist..." rows={4} />
+                        <Input.TextArea
+                            placeholder="A brief overview of this playlist..."
+                            rows={4}
+                        />
                     </Form.Item>
                     <Form.Item className="mb-0 flex justify-end">
-                        <Button type="primary" htmlType="submit">Create Playlist</Button>
+                        <Button type="primary" htmlType="submit">
+                            Create Playlist
+                        </Button>
                     </Form.Item>
                 </Form>
             </Modal>
@@ -270,35 +362,53 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                 <div className="flex flex-col gap-8 h-full">
                     {/* Add Media AutoComplete Block */}
                     <div>
-                        <Title level={5} className="!mb-4">Quick Add Media</Title>
+                        <Title level={5} className="!mb-4">
+                            Quick Add Media
+                        </Title>
                         <Select
                             showSearch
                             placeholder="Type to search and add media to this playlist..."
-                            style={{ width: '100%' }}
-
+                            style={{ width: "100%" }}
                             allowClear
                             size="large"
                             onChange={(value) => handleAddMedia(value as string)}
                             filterOption={(input, option) =>
-                                (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                                (option?.label ?? "")
+                                    .toString()
+                                    .toLowerCase()
+                                    .includes(input.toLowerCase())
                             }
-                            options={media?.filter((m: any) => !sequenceItems.includes(m.id))?.map((m: any) => ({
-                                value: m.id,
-                                label: `${m.title} (${m.mimeType.split('/')[0]})`
-                            }))}
+                            options={media
+                                ?.filter((m: any) => !sequenceItems.includes(m.id))
+                                ?.map((m: any) => ({
+                                    value: m.id,
+                                    label: `${m.title} (${m.mimeType.split("/")[0]})`,
+                                }))}
                         />
                     </div>
 
                     {/* Current Sequence Drag and Drop */}
                     <div className="flex-1 overflow-y-auto pr-2 pb-6">
                         <div className="flex justify-between items-center mb-4">
-                            <Title level={5} className="!mb-0">Current Sequence</Title>
-                            <Text type="secondary" className="text-xs">{sequenceItems.length} items</Text>
+                            <Title level={5} className="!mb-0">
+                                Current Sequence
+                            </Title>
+                            <Text type="secondary" className="text-xs">
+                                {sequenceItems.length} items
+                            </Text>
                         </div>
 
                         {sequenceItems.length === 0 ? (
                             <div className="py-12">
-                                <Empty description={<>No media added yet.<br />Use the search bar above to add content.</>} />
+                                <Empty
+                                    description={
+                                        <>
+                                            No media added yet.
+                                            <br />
+                                            Use the search bar above to add content.
+                                        </>
+                                    }
+                                />
                             </div>
                         ) : (
                             <DndContext
@@ -311,10 +421,15 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                                     strategy={verticalListSortingStrategy}
                                 >
                                     {sequenceItems.map((mediaId) => {
-                                        const mediaItem = media.find(m => m.id === mediaId);
+                                        const mediaItem = media.find((m) => m.id === mediaId);
                                         if (!mediaItem) return null;
                                         return (
-                                            <SortableItem key={mediaId} id={mediaId} mediaItem={mediaItem} onRemove={() => handleRemoveFromSequence(mediaId)} />
+                                            <SortableItem
+                                                key={mediaId}
+                                                id={mediaId}
+                                                mediaItem={mediaItem}
+                                                onRemove={() => handleRemoveFromSequence(mediaId)}
+                                            />
                                         );
                                     })}
                                 </SortableContext>
@@ -340,13 +455,17 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
             >
                 {/* Frictionless Cover Art Upload Zone */}
                 <div className="flex flex-col mb-6">
-                    <Text type="secondary" className="mb-2">Playlist Cover</Text>
+                    <Text type="secondary" className="mb-2">
+                        Playlist Cover
+                    </Text>
                     {activePlaylist && (
                         <CoverArtUploader
                             organizationId={activePlaylist.organizationId}
                             currentImageUrl={activePlaylist.coverArtUrl}
                             onUploadSuccess={async (uploadId) => {
-                                const updatedPlaylist = await updatePlaylist(activePlaylist.id, { coverArtUploadId: uploadId });
+                                const updatedPlaylist = await updatePlaylist(activePlaylist.id, {
+                                    coverArtUploadId: uploadId,
+                                });
                                 setActivePlaylist(updatedPlaylist);
                             }}
                         />
@@ -354,7 +473,11 @@ export const PlaylistManager: React.FC<{ externalIsCreateModalOpen?: boolean, on
                 </div>
 
                 <Form form={editForm} layout="vertical" onFinish={handleEditSave} className="mt-2">
-                    <Form.Item name="title" label="Title" rules={[{ required: true, message: 'Please input the title' }]}>
+                    <Form.Item
+                        name="title"
+                        label="Title"
+                        rules={[{ required: true, message: "Please input the title" }]}
+                    >
                         <Input size="large" />
                     </Form.Item>
                     <Form.Item name="description" label="Description">

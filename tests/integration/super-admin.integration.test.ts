@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
-import { createAuthenticatedOrg, getAuthCookie, createSuperAdmin } from "../lib/auth-test.helper";
-import { createTestClient } from "../lib/test-client";
-import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
+import app from "@api/app";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
+import { type ErrorResponse, parseJson } from "../lib/api-request.helper";
+import { createAuthenticatedOrg, createSuperAdmin, getAuthCookie } from "../lib/auth-test.helper";
+import { createTestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("Super Admin Bypass Tests", () => {
     let ownerOrgId: string;
@@ -36,7 +36,6 @@ describe("Super Admin Bypass Tests", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const superAdminClient = createTestClient(app, env, cookie);
 
-            // Create two members — both should succeed for a super admin
             const payload1 = createMockMemberCreationPayload();
             const res1 = await superAdminClient.orgs.members.create(ownerOrgId, payload1);
             expect(res1.status).toBe(201);
@@ -49,7 +48,6 @@ describe("Super Admin Bypass Tests", () => {
 
     describe("Regular user still blocked", () => {
         it("non-super-admin user cannot bypass membership check", async () => {
-            // Create a regular user (NOT super admin, NOT org member)
             const regularCookie = await getAuthCookie({
                 app,
                 env,

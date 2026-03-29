@@ -59,10 +59,13 @@ export const AVATAR_PRESETS = {
 function buildFullUrl(pathOrUrl: string): string {
     if (!pathOrUrl) return "";
 
-    // If it lacks a protocol but looks like a domain, prepend https://
-    if (!pathOrUrl.startsWith("http://") && !pathOrUrl.startsWith("https://") && !pathOrUrl.startsWith("//")) {
-        const firstSegment = pathOrUrl.split('/')[0];
-        if (firstSegment.includes('.')) {
+    if (
+        !pathOrUrl.startsWith("http://") &&
+        !pathOrUrl.startsWith("https://") &&
+        !pathOrUrl.startsWith("//")
+    ) {
+        const firstSegment = pathOrUrl.split("/")[0];
+        if (firstSegment.includes(".")) {
             return `https://${pathOrUrl}`;
         }
     }
@@ -89,7 +92,6 @@ export function getImageUrl(
 
     if (!options || !enableTransformations) return baseUrl;
 
-    // Build the transformation parameters string
     const params: string[] = [];
     if (options.width) params.push(`width=${options.width}`);
     if (options.height) params.push(`height=${options.height}`);
@@ -100,13 +102,11 @@ export function getImageUrl(
 
     if (params.length === 0) return baseUrl;
 
-    // Parse the URL to insert the /cdn-cgi/image/ segment
     try {
         const url = new URL(baseUrl);
         const transformPath = `/cdn-cgi/image/${params.join(",")}`;
         return `${url.origin}${transformPath}${url.pathname}`;
     } catch {
-        // If URL parsing fails, return the original
         return baseUrl;
     }
 }

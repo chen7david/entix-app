@@ -1,12 +1,12 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
-import { fileURLToPath } from 'node:url';
-import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineWorkersConfig({
     test: {
-        setupFiles: ['./tests/setup.ts'],
+        setupFiles: ["./tests/setup.ts"],
         poolOptions: {
             workers: {
                 isolate: false,
@@ -24,7 +24,7 @@ export default defineWorkersConfig({
                         CLOUDFLARE_ACCOUNT_ID: "mock_account_id",
                         R2_BUCKET_NAME: "mock-bucket",
                         PUBLIC_CDN_URL: "https://mock-cdn.example.com",
-                    }
+                    },
                 },
             },
         },

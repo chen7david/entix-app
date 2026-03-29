@@ -1,6 +1,11 @@
-import { Context } from 'hono';
-import { NotFoundError } from '../errors/app.error';
+import type { Context } from "hono";
 
 export const notFoundHandler = (ctx: Context) => {
-    throw new NotFoundError(`Route ${ctx.req.path} not found`);
+    return ctx.json(
+        {
+            success: false,
+            message: `Route ${ctx.req.path} not found`,
+        },
+        404
+    );
 };

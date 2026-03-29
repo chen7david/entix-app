@@ -1,16 +1,14 @@
-import { createRoute, z } from "@hono/zod-openapi";
-import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import { HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
+import { createRoute, z } from "@hono/zod-openapi";
 
-import { UploadResponseSchema } from "@shared/schemas/dto/upload.dto";
+import { PresignedUrlResponseSchema, UploadResponseSchema } from "@shared/schemas/dto/upload.dto";
 export const OrgUploadsRoutes = {
     requestPresignedUrl: createRoute({
         method: "post",
         path: "/orgs/{organizationId}/uploads",
         tags: ["Organization Uploads"],
-        middleware: [
-            requirePermission("upload", ["create"]),
-        ] as const,
+        middleware: [requirePermission("upload", ["create"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -28,19 +26,10 @@ export const OrgUploadsRoutes = {
             },
         },
         responses: {
-            [HttpStatusCodes.CREATED]: {
-                content: {
-                    "application/json": {
-                        schema: z.object({
-                            uploadId: z.string(),
-                            presignedUrl: z.string(),
-                            url: z.string(),
-                            bucketKey: z.string(),
-                        }),
-                    },
-                },
-                description: "Presigned URL created successfully",
-            },
+            [HttpStatusCodes.CREATED]: jsonContent(
+                PresignedUrlResponseSchema,
+                "Presigned URL created successfully"
+            ),
         },
     }),
 
@@ -48,9 +37,7 @@ export const OrgUploadsRoutes = {
         method: "post",
         path: "/orgs/{organizationId}/uploads/{uploadId}/complete",
         tags: ["Organization Uploads"],
-        middleware: [
-            requirePermission("upload", ["update"]),
-        ] as const,
+        middleware: [requirePermission("upload", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -58,14 +45,7 @@ export const OrgUploadsRoutes = {
             }),
         },
         responses: {
-            [HttpStatusCodes.OK]: {
-                content: {
-                    "application/json": {
-                        schema: UploadResponseSchema,
-                    },
-                },
-                description: "Upload marked as completed",
-            },
+            [HttpStatusCodes.OK]: jsonContent(UploadResponseSchema, "Upload marked as completed"),
         },
     }),
 
@@ -80,14 +60,10 @@ export const OrgUploadsRoutes = {
             }),
         },
         responses: {
-            [HttpStatusCodes.OK]: {
-                content: {
-                    "application/json": {
-                        schema: z.array(UploadResponseSchema),
-                    },
-                },
-                description: "Uploads retrieved successfully",
-            },
+            [HttpStatusCodes.OK]: jsonContent(
+                z.array(UploadResponseSchema),
+                "Uploads retrieved successfully"
+            ),
         },
     }),
 
@@ -95,9 +71,7 @@ export const OrgUploadsRoutes = {
         method: "delete",
         path: "/orgs/{organizationId}/uploads/{uploadId}",
         tags: ["Organization Uploads"],
-        middleware: [
-            requirePermission("upload", ["delete"]),
-        ] as const,
+        middleware: [requirePermission("upload", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),

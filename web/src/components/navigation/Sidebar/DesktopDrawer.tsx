@@ -1,8 +1,9 @@
 // DesktopSidebar.tsx
-import React from "react";
+
 import type { DrawerProps } from "antd";
 import { theme } from "antd";
 import classNames from "classnames";
+import type React from "react";
 
 type DesktopDrawerProps = Omit<
     DrawerProps,
@@ -31,15 +32,12 @@ export const DesktopDrawer: React.FC<DesktopDrawerProps> = ({
 
     return (
         <div
-            className={classNames(
-                "flex flex-col h-full",
-                className
-            )}
-            style={{ 
-                width, 
+            className={classNames("flex flex-col h-full", className)}
+            style={{
+                width,
                 backgroundColor: token.colorBgContainer,
                 borderRight: `1px solid ${token.colorSplit}`,
-                ...style 
+                ...style,
             }}
             {...rest}
         >
@@ -50,15 +48,9 @@ export const DesktopDrawer: React.FC<DesktopDrawerProps> = ({
                 </div>
             )}
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden">
-                {children}
-            </div>
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">{children}</div>
 
-            {footer && (
-                <div className="px-6 py-4 border-t border-gray-100">
-                    {footer}
-                </div>
-            )}
+            {footer && <div className="px-6 py-4 border-t border-gray-100">{footer}</div>}
         </div>
     );
 };

@@ -1,11 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
+import app from "@api/app";
+import type { AppDb } from "@api/factories/db.factory";
+import { getDbClient } from "@api/factories/db.factory";
+import * as schema from "@shared/db/schema";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
-import * as schema from "@shared/db/schema";
-import { AppDb, getDbClient } from "@api/factories/db.factory";
+import { createTestDb } from "../lib/utils";
 
 describe("Media Routes Integration Tests", () => {
     let client: TestClient;
@@ -24,7 +25,6 @@ describe("Media Routes Integration Tests", () => {
 
     describe("GET /orgs/:organizationId/media", () => {
         it("should return paginated media when there are more than 10 items", async () => {
-            // Seed 15 media items
             const mediaItems = Array.from({ length: 15 }).map((_, i) => ({
                 id: `media-${i}`,
                 organizationId: orgId,
@@ -32,38 +32,33 @@ describe("Media Routes Integration Tests", () => {
                 mimeType: "video/mp4",
                 mediaUrl: `https://example.com/media-${i}.mp4`,
                 uploadedBy: userId,
-                // Ensure deterministic ordering (newest to oldest)
-                createdAt: new Date(Date.now() - i * 10000), 
+                createdAt: new Date(Date.now() - i * 10000),
                 updatedAt: new Date(Date.now() - i * 10000),
             }));
 
-            // D1 SQLite has strict variable limits per query, so we safely iterate
             for (const item of mediaItems) {
                 await db.insert(schema.media).values(item);
             }
 
-            // Fetch first page (limit array length to 10 explicitly to test cursor)
             const res1 = await client.orgs.media.list(orgId, { limit: 10 });
             expect(res1.status).toBe(200);
 
-            const body1 = await res1.json() as any;
+            const body1 = (await res1.json()) as any;
             expect(body1.items).toHaveLength(10);
             expect(body1.nextCursor).not.toBeNull();
             expect(body1.prevCursor).not.toBeNull();
-            
-            // Check descending order mapping (newest first based on createdAt)
+
             expect(body1.items[0].id).toBe("media-0");
             expect(body1.items[9].id).toBe("media-9");
 
-            // Fetch second page using nextCursor correctly natively gracefully
-            const res2 = await client.orgs.media.list(orgId, { 
-                limit: 10, 
-                cursor: body1.nextCursor, 
-                direction: "next" 
+            const res2 = await client.orgs.media.list(orgId, {
+                limit: 10,
+                cursor: body1.nextCursor,
+                direction: "next",
             });
             expect(res2.status).toBe(200);
 
-            const body2 = await res2.json() as any;
+            const body2 = (await res2.json()) as any;
             expect(body2.items).toHaveLength(5);
             expect(body2.nextCursor).toBeNull(); // No more items successfully intercepted implicitly
             expect(body2.items[0].id).toBe("media-10");

@@ -1,7 +1,7 @@
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { OpenAPIHono } from "@hono/zod-openapi";
-import { AppEnv } from "@api/helpers/types.helpers";
-import { PlaylistRoutes } from "./playlist.routes";
 import { PlaylistHandlers } from "./playlist.handlers";
+import { PlaylistRoutes } from "./playlist.routes";
 
 export const playlistRoutes = new OpenAPIHono<AppEnv>()
     .openapi(PlaylistRoutes.listPlaylists, PlaylistHandlers.listPlaylists)

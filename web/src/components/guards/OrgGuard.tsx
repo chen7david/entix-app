@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { useNavigate, useParams, Outlet } from 'react-router';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { authClient } from '@web/src/lib/auth-client';
-import { AppRoutes } from '@shared/constants/routes';
-import { Button } from 'antd';
-import { CenteredSpin, CenteredResult } from '@web/src/components/common/CenteredView';
-import { OrgProvider } from '@web/src/context/OrgContext';
+import { AppRoutes } from "@shared/constants/routes";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CenteredResult, CenteredSpin } from "@web/src/components/common/CenteredView";
+import { OrgProvider } from "@web/src/context/OrgContext";
+import { authClient } from "@web/src/lib/auth-client";
+import { Button } from "antd";
+import type React from "react";
+import { useEffect, useRef } from "react";
+import { Outlet, useNavigate, useParams } from "react-router";
 
 /**
  * OrgGuard - Organization context guard and provider.
@@ -23,25 +24,21 @@ export const OrgGuard: React.FC = () => {
     const syncingRef = useRef(false);
 
     // 1. Fetch User's Organizations (to check access)
-    const {
-        data: organizations = [],
-        isLoading: loadingOrgs,
-    } = useQuery({
-        queryKey: ['organizations'],
+    const { data: organizations = [], isLoading: loadingOrgs } = useQuery({
+        queryKey: ["organizations"],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
             return data || [];
-        }
+        },
     });
 
     // 2. Resolve org from URL slug (client-side lookup from cached list)
-    const activeOrganization = !loadingOrgs && slug
-        ? organizations.find(o => o.slug === slug) || null
-        : null;
+    const activeOrganization =
+        !loadingOrgs && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
     // 3. Fetch server's current active org to detect mismatches
     const { data: serverActiveOrg } = useQuery({
-        queryKey: ['serverActiveOrganization'],
+        queryKey: ["serverActiveOrganization"],
         queryFn: async () => {
             const { data } = await authClient.organization.getFullOrganization();
             return data || null;
@@ -58,15 +55,18 @@ export const OrgGuard: React.FC = () => {
         const serverSlug = serverActiveOrg?.slug;
         if (serverSlug !== activeOrganization.slug) {
             syncingRef.current = true;
-            authClient.organization.setActive({
-                organizationId: activeOrganization.id
-            }).then(() => {
-                // Update the server active org cache to reflect the sync
-                queryClient.setQueryData(['serverActiveOrganization'], activeOrganization);
-                queryClient.invalidateQueries({ queryKey: ['activeOrganization'] });
-            }).finally(() => {
-                syncingRef.current = false;
-            });
+            authClient.organization
+                .setActive({
+                    organizationId: activeOrganization.id,
+                })
+                .then(() => {
+                    // Update the server active org cache to reflect the sync
+                    queryClient.setQueryData(["serverActiveOrganization"], activeOrganization);
+                    queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+                })
+                .finally(() => {
+                    syncingRef.current = false;
+                });
         }
     }, [activeOrganization, serverActiveOrg, queryClient]);
 
@@ -82,7 +82,14 @@ export const OrgGuard: React.FC = () => {
                 status="403"
                 title="Access Denied"
                 subTitle="You do not have access to this organization, or it does not exist."
-                extra={<Button type="primary" onClick={() => navigate(AppRoutes.onboarding.selectOrganization)}>Switch Organization</Button>}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => navigate(AppRoutes.onboarding.selectOrganization)}
+                    >
+                        Switch Organization
+                    </Button>
+                }
             />
         );
     }

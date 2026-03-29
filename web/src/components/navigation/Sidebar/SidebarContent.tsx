@@ -1,13 +1,19 @@
-import React from 'react';
-import { Avatar, Button, Typography, Skeleton, Dropdown, type MenuProps, theme } from 'antd';
-import { UserOutlined, MoreOutlined, SettingOutlined, LogoutOutlined, SafetyOutlined } from '@ant-design/icons';
-import { SidebarMenu } from './SidebarMenu';
-import { SidebarOrgSwitcher } from './SidebarOrgSwitcher';
-import { useAuth, useSignOut } from '@web/src/hooks/auth/useAuth';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { useNavigate } from 'react-router';
-import { AppRoutes } from '@shared/constants/routes';
-import { getAvatarUrl } from '@shared/utils/image-url';
+import {
+    LogoutOutlined,
+    MoreOutlined,
+    SafetyOutlined,
+    SettingOutlined,
+    UserOutlined,
+} from "@ant-design/icons";
+import { AppRoutes } from "@shared/constants/routes";
+import { getAvatarUrl } from "@shared/utils/image-url";
+import { useAuth, useSignOut } from "@web/src/features/auth";
+import { useOrganization } from "@web/src/features/organization";
+import { Avatar, Button, Dropdown, type MenuProps, Skeleton, Typography, theme } from "antd";
+import type React from "react";
+import { useNavigate } from "react-router";
+import { SidebarMenu } from "./SidebarMenu";
+import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
 
 const { Text } = Typography;
 
@@ -16,55 +22,65 @@ export const SidebarContent: React.FC = () => {
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
-    const slug = activeOrganization?.slug || '';
+    const slug = activeOrganization?.slug || "";
     const { token } = theme.useToken();
 
-    const handleMenuClick: MenuProps['onClick'] = (e) => {
-        if (e.key === 'logout') {
+    const handleMenuClick: MenuProps["onClick"] = (e) => {
+        if (e.key === "logout") {
             signOut(undefined, {
                 onSuccess: () => {
                     navigate(AppRoutes.auth.signIn);
-                }
+                },
             });
         } else {
             navigate(e.key);
         }
     };
 
-    const userMenuItems: MenuProps['items'] = [
-        ...(isSuperAdmin ? [
-            {
-                key: AppRoutes.admin.index,
-                label: 'Admin Management',
-                icon: <SafetyOutlined style={{ color: '#faad14' }} />,
-            },
-            {
-                type: 'divider' as const,
-            },
-        ] : []),
-        ...(slug ? [
-            {
-                key: slug ? `/org/${slug}${AppRoutes.org.dashboard.profile}` : 'profile-disabled',
-                label: 'Profile',
-                icon: <UserOutlined />,
-            },
-            {
-                key: slug ? `/org/${slug}${AppRoutes.org.dashboard.sessions}` : 'sessions-disabled',
-                label: 'Sessions',
-                icon: <SafetyOutlined />,
-            },
-            {
-                key: slug ? `/org/${slug}${AppRoutes.org.dashboard.settings}` : 'settings-disabled',
-                label: 'Settings',
-                icon: <SettingOutlined />,
-            },
-            {
-                type: 'divider' as const,
-            },
-        ] : []),
+    const userMenuItems: MenuProps["items"] = [
+        ...(isSuperAdmin
+            ? [
+                  {
+                      key: AppRoutes.admin.index,
+                      label: "Admin Management",
+                      icon: <SafetyOutlined style={{ color: "#faad14" }} />,
+                  },
+                  {
+                      type: "divider" as const,
+                  },
+              ]
+            : []),
+        ...(slug
+            ? [
+                  {
+                      key: slug
+                          ? `/org/${slug}${AppRoutes.org.dashboard.profile}`
+                          : "profile-disabled",
+                      label: "Profile",
+                      icon: <UserOutlined />,
+                  },
+                  {
+                      key: slug
+                          ? `/org/${slug}${AppRoutes.org.dashboard.sessions}`
+                          : "sessions-disabled",
+                      label: "Sessions",
+                      icon: <SafetyOutlined />,
+                  },
+                  {
+                      key: slug
+                          ? `/org/${slug}${AppRoutes.org.dashboard.settings}`
+                          : "settings-disabled",
+                      label: "Settings",
+                      icon: <SettingOutlined />,
+                  },
+                  {
+                      type: "divider" as const,
+                  },
+              ]
+            : []),
         {
-            key: 'logout',
-            label: 'Sign Out',
+            key: "logout",
+            label: "Sign Out",
             icon: <LogoutOutlined />,
             danger: true,
         },
@@ -80,7 +96,11 @@ export const SidebarContent: React.FC = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={40}
-                            src={session.data?.user?.image ? getAvatarUrl(session.data?.user?.image, 'sm') : undefined}
+                            src={
+                                session.data?.user?.image
+                                    ? getAvatarUrl(session.data?.user?.image, "sm")
+                                    : undefined
+                            }
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
                         />
@@ -107,7 +127,11 @@ export const SidebarContent: React.FC = () => {
                     <div style={{ flex: 1, minWidth: 0 }}>
                         <SidebarOrgSwitcher />
                     </div>
-                    <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }} trigger={['click']} placement="topRight">
+                    <Dropdown
+                        menu={{ items: userMenuItems, onClick: handleMenuClick }}
+                        trigger={["click"]}
+                        placement="topRight"
+                    >
                         <Button type="text" icon={<MoreOutlined />} className="flex-shrink-0" />
                     </Dropdown>
                 </div>
@@ -115,4 +139,3 @@ export const SidebarContent: React.FC = () => {
         </div>
     );
 };
-

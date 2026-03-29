@@ -1,5 +1,5 @@
-import { z } from '@hono/zod-openapi'
-import { baseSchema } from './base.dto';
+import { z } from "@hono/zod-openapi";
+import { baseSchema } from "./base.dto";
 
 export const userSchema = baseSchema.extend({
     name: z.string().openapi({ example: "name" }),

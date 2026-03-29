@@ -1,7 +1,7 @@
-import { OrganizationRepository } from "@api/repositories/organization.repository";
+import type { OrganizationRepository } from "@api/repositories/organization.repository";
 
 export class OrganizationService {
-    constructor(private orgRepo: OrganizationRepository) { }
+    constructor(private orgRepo: OrganizationRepository) {}
 
     async findAll() {
         return await this.orgRepo.findAll();

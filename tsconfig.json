@@ -1,31 +1,23 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "strict": true,
-    "skipLibCheck": true,
-    "lib": [
-      "ESNext"
-    ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx",
-    "types": [
-      "./worker-configuration.d.ts",
-      "@cloudflare/vitest-pool-workers"
-    ],
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "paths": {
-      "@shared/*": [
-        "./shared/*"
-      ],
-      "@api/*": [
-        "./api/*"
-      ],
-      "@web/*": [
-        "./web/*"
-      ]
-    }
-  },
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "strict": true,
+        "skipLibCheck": true,
+        "lib": ["ESNext"],
+        "jsx": "react-jsx",
+        "jsxImportSource": "hono/jsx",
+        "types": ["@cloudflare/vitest-pool-workers"],
+        "verbatimModuleSyntax": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "paths": {
+            "@shared/*": ["./shared/*"],
+            "@api/*": ["./api/*"],
+            "@web/*": ["./web/*"]
+        }
+    },
+    "include": ["api/**/*", "shared/**/*", "tests/**/*", "*.ts"],
+    "exclude": ["web/**/*", "node_modules"]
 }

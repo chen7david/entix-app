@@ -1,155 +1,170 @@
-import { Routes, Route, Navigate } from "react-router";
-import { SignUpPage } from "./pages/auth/SignUpPage";
-import { SignInPage } from "./pages/auth/SignInPage";
-import { ProfilePage } from "./pages/dashboard/profile/ProfilePage";
-import { SessionsPage } from "./pages/dashboard/sessions/SessionsPage";
-import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
-import { ShopPage } from "./pages/dashboard/shop/ShopPage";
-import { WalletPage } from "./pages/dashboard/wallet/WalletPage";
-import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
-import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
-import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
-import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
-import { AuthLayout } from "./layouts/AuthLayout";
-import { AppRoutes } from '@shared/constants/routes';
-
-import { DashboardLayout } from "./layouts/DashboardLayout";
+import { AppRoutes } from "@shared/constants/routes";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
+import { Navigate, Route, Routes } from "react-router";
+import { ErrorFallback } from "./components/error/ErrorFallback";
+import { AdminGuard } from "./components/guards/AdminGuard";
+import { AuthGuard } from "./components/guards/AuthGuard";
+import { GuestGuard } from "./components/guards/GuestGuard";
+import { OrgGuard } from "./components/guards/OrgGuard";
 import { AdminLayout } from "./layouts/AdminLayout";
-import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
+import { AuthLayout } from "./layouts/AuthLayout";
+import { DashboardLayout } from "./layouts/DashboardLayout";
+import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
+import { EmailInsightsPage } from "./pages/admin/EmailInsightsPage";
+import { GlobalOrganizationsPage } from "./pages/admin/GlobalOrganizationsPage";
+import { GlobalUsersPage } from "./pages/admin/GlobalUsersPage";
 import { EmailVerificationPendingPage } from "./pages/auth/EmailVerificationPendingPage";
 import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
-import { GlobalUsersPage } from './pages/admin/GlobalUsersPage';
-import { EmailInsightsPage } from './pages/admin/EmailInsightsPage';
-import { GlobalOrganizationsPage } from './pages/admin/GlobalOrganizationsPage';
-import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
-import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
-import { OrganizationSchedulePage } from "./pages/organization/OrganizationSchedulePage";
-import { OrganizationAnalyticsPage } from "./pages/organization/OrganizationAnalyticsPage";
-import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
-import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
-import { OrganizationPlaylistsPage } from "./pages/organization/OrganizationPlaylistsPage";
-import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
-import { OrganizationMediaPage } from "./pages/organization/OrganizationMediaPage";
-import { MemberImportExportPage } from "./pages/organization/MemberImportExportPage";
+import { SignInPage } from "./pages/auth/SignInPage";
+import { SignUpPage } from "./pages/auth/SignUpPage";
+import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
+import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
+import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
+import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
+import { ProfilePage } from "./pages/dashboard/profile/ProfilePage";
+import { SessionsPage } from "./pages/dashboard/sessions/SessionsPage";
+import { ChangePasswordPage } from "./pages/dashboard/settings/ChangePasswordPage";
+import { SettingsPage } from "./pages/dashboard/settings/SettingsPage";
+import { ShopPage } from "./pages/dashboard/shop/ShopPage";
+import { WalletPage } from "./pages/dashboard/wallet/WalletPage";
+import { NotFoundPage } from "./pages/error/NotFoundPage";
+import { HomePage } from "./pages/home/HomePage";
+import { AcceptInvitationPage } from "./pages/onboarding/AcceptInvitationPage";
 import { NoOrganizationPage } from "./pages/onboarding/NoOrganizationPage";
 import { SelectOrganizationPage } from "./pages/onboarding/SelectOrganizationPage";
-import { AcceptInvitationPage } from "./pages/onboarding/AcceptInvitationPage";
-import { HomePage } from "./pages/home/HomePage";
-import { AuthGuard } from "./components/guards/AuthGuard";
-import { GuestGuard } from "./components/guards/GuestGuard";
-import { AdminGuard } from "./components/guards/AdminGuard";
-import { ErrorBoundary } from 'react-error-boundary';
-import { ErrorFallback } from './components/error/ErrorFallback';
-import { NotFoundPage } from './pages/error/NotFoundPage';
-import { OrgGuard } from './components/guards/OrgGuard';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { MemberImportExportPage } from "./pages/organization/MemberImportExportPage";
+import { OrganizationAnalyticsPage } from "./pages/organization/OrganizationAnalyticsPage";
+import { OrganizationInvitationsPage } from "./pages/organization/OrganizationInvitationsPage";
+import { OrganizationListPage } from "./pages/organization/OrganizationListPage";
+import { OrganizationMediaPage } from "./pages/organization/OrganizationMediaPage";
+import { OrganizationMembersPage } from "./pages/organization/OrganizationMembersPage";
+import { OrganizationPlaylistsPage } from "./pages/organization/OrganizationPlaylistsPage";
+import { OrganizationSchedulePage } from "./pages/organization/OrganizationSchedulePage";
+import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
+import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
 
 const queryClient = new QueryClient();
 
 function logError(error: unknown, info: { componentStack?: string | null }) {
-  // Log to console in development
-  console.error('Error Boundary caught an error:', error, info);
-
-  // TODO: In production, send to error logging service (e.g., Sentry, LogRocket)
-  // Example: Sentry.captureException(error, { extra: info });
+    console.error("Error Boundary caught an error:", error, info);
 }
 
 export default function App() {
-  return (
-    <ErrorBoundary
-      FallbackComponent={ErrorFallback}
-      onError={logError}
-      onReset={() => {
-        // Reset application state if needed
-        window.location.href = '/';
-      }}
-    >
-      <QueryClientProvider client={queryClient}>
-        <div className="flex h-[calc(100dvh)] m-0 p-0">
-          <Routes>
-            <Route path="/" element={<Navigate to={AppRoutes.auth.signIn} replace />} />
+    return (
+        <ErrorBoundary
+            FallbackComponent={ErrorFallback}
+            onError={logError}
+            onReset={() => {
+                window.location.href = "/";
+            }}
+        >
+            <QueryClientProvider client={queryClient}>
+                <div className="flex h-[calc(100dvh)] m-0 p-0">
+                    <Routes>
+                        <Route path="/" element={<Navigate to={AppRoutes.auth.signIn} replace />} />
 
-            {/* Public routes (no guard) */}
-            <Route path="/auth" element={<AuthLayout />}>
-              <Route path="verify-email" element={<VerifyEmailPage />} />
-              <Route path="email-verification-pending" element={<EmailVerificationPendingPage />} />
-            </Route>
+                        <Route path="/auth" element={<AuthLayout />}>
+                            <Route path="verify-email" element={<VerifyEmailPage />} />
+                            <Route
+                                path="email-verification-pending"
+                                element={<EmailVerificationPendingPage />}
+                            />
+                        </Route>
 
-            {/* Public Routes (Guest Only) */}
-            <Route element={<GuestGuard />}>
-              <Route path="/auth" element={<AuthLayout />}>
-                <Route path="sign-in" element={<SignInPage />} />
-                <Route path="sign-up" element={<SignUpPage />} />
-                <Route path="forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="reset-password" element={<ResetPasswordPage />} />
-              </Route>
-            </Route>
+                        <Route element={<GuestGuard />}>
+                            <Route path="/auth" element={<AuthLayout />}>
+                                <Route path="sign-in" element={<SignInPage />} />
+                                <Route path="sign-up" element={<SignUpPage />} />
+                                <Route path="forgot-password" element={<ForgotPasswordPage />} />
+                                <Route path="reset-password" element={<ResetPasswordPage />} />
+                            </Route>
+                        </Route>
 
-            {/* Protected Routes */}
-            <Route element={<AuthGuard />}>
+                        <Route element={<AuthGuard />}>
+                            <Route path={AppRoutes.onboarding.index} element={<AuthLayout />}>
+                                <Route path="no-organization" element={<NoOrganizationPage />} />
+                                <Route
+                                    path="select-organization"
+                                    element={<SelectOrganizationPage />}
+                                />
+                                <Route
+                                    path="accept-invitation"
+                                    element={<AcceptInvitationPage />}
+                                />
+                            </Route>
 
-              {/* Onboarding Routes (Authenticated but no active org required) */}
-              <Route path={AppRoutes.onboarding.index} element={<AuthLayout />}>
-                <Route path="no-organization" element={<NoOrganizationPage />} />
-                <Route path="select-organization" element={<SelectOrganizationPage />} />
-                <Route path="accept-invitation" element={<AcceptInvitationPage />} />
-              </Route>
+                            <Route path="org/:slug" element={<OrgGuard />}>
+                                <Route element={<DashboardLayout />}>
+                                    <Route index element={<Navigate to="dashboard" replace />} />
 
-              {/* URL-scoped Organization Routes: /org/:slug/... */}
-              <Route path="org/:slug" element={<OrgGuard />}>
-                <Route element={<DashboardLayout />}>
-                  <Route index element={<Navigate to="dashboard" replace />} />
+                                    <Route path="dashboard">
+                                        <Route index element={<HomePage />} />
+                                        <Route path="profile" element={<ProfilePage />} />
+                                        <Route path="sessions" element={<SessionsPage />} />
+                                        <Route path="settings" element={<SettingsPage />} />
+                                        <Route
+                                            path="change-password"
+                                            element={<ChangePasswordPage />}
+                                        />
+                                        <Route path="lessons" element={<LessonsPage />} />
+                                        <Route path="shop" element={<ShopPage />} />
+                                        <Route path="wallet" element={<WalletPage />} />
+                                        <Route path="movies" element={<MoviesPage />} />
+                                        <Route path="orders" element={<OrdersPage />} />
+                                    </Route>
 
-                  {/* Dashboard Routes */}
-                  <Route path="dashboard">
-                    <Route index element={<HomePage />} />
-                    <Route path='profile' element={<ProfilePage />} />
-                    <Route path='sessions' element={<SessionsPage />} />
-                    <Route path='settings' element={<SettingsPage />} />
-                    <Route path='change-password' element={<ChangePasswordPage />} />
-                    <Route path='lessons' element={<LessonsPage />} />
-                    <Route path='shop' element={<ShopPage />} />
-                    <Route path='wallet' element={<WalletPage />} />
-                    <Route path='movies' element={<MoviesPage />} />
-                    <Route path='orders' element={<OrdersPage />} />
-                  </Route>
+                                    <Route path="media" element={<OrganizationMediaPage />} />
+                                    <Route
+                                        path="playlists"
+                                        element={<OrganizationPlaylistsPage />}
+                                    />
+                                    <Route
+                                        path="playlists/:playlistId"
+                                        element={<PlaylistPlayerPage />}
+                                    />
+                                    <Route path="schedule" element={<OrganizationSchedulePage />} />
+                                    <Route
+                                        path="analytics"
+                                        element={<OrganizationAnalyticsPage />}
+                                    />
+                                    <Route path="members" element={<OrganizationMembersPage />} />
+                                    <Route
+                                        path="invitations"
+                                        element={<OrganizationInvitationsPage />}
+                                    />
+                                    <Route path="uploads" element={<OrganizationUploadsPage />} />
+                                    <Route
+                                        path="manage/bulk"
+                                        element={<MemberImportExportPage />}
+                                    />
+                                    <Route
+                                        path="organizations"
+                                        element={<OrganizationListPage />}
+                                    />
+                                </Route>
+                            </Route>
 
-                  {/* Organization Management */}
-                  <Route path="media" element={<OrganizationMediaPage />} />
-                  <Route path="playlists" element={<OrganizationPlaylistsPage />} />
-                  <Route path="playlists/:playlistId" element={<PlaylistPlayerPage />} />
-                  <Route path="schedule" element={<OrganizationSchedulePage />} />
-                  <Route path="analytics" element={<OrganizationAnalyticsPage />} />
-                  <Route path="members" element={<OrganizationMembersPage />} />
-                  <Route path="invitations" element={<OrganizationInvitationsPage />} />
-                  <Route path="uploads" element={<OrganizationUploadsPage />} />
-                  <Route path="manage/bulk" element={<MemberImportExportPage />} />
-                  <Route path="organizations" element={<OrganizationListPage />} />
-                </Route>
-              </Route>
+                            <Route element={<AdminGuard />}>
+                                <Route element={<AdminLayout />}>
+                                    <Route path="admin" element={<AdminDashboardPage />} />
+                                    <Route path="admin/users" element={<GlobalUsersPage />} />
+                                    <Route
+                                        path="admin/organizations"
+                                        element={<GlobalOrganizationsPage />}
+                                    />
+                                    <Route path="admin/emails" element={<EmailInsightsPage />} />
+                                </Route>
+                            </Route>
+                        </Route>
 
-              {/* Global Admin Routes */}
-              <Route element={<AdminGuard />}>
-                <Route element={<AdminLayout />}>
-                  <Route path="admin" element={<AdminDashboardPage />} />
-                  <Route path="admin/users" element={<GlobalUsersPage />} />
-                  <Route path="admin/organizations" element={<GlobalOrganizationsPage />} />
-                  <Route path="admin/emails" element={<EmailInsightsPage />} />
-                </Route>
-              </Route>
-            </Route>
-
-            {/* Catch-all 404 route */}
-
-
-            <Route element={<AuthLayout />}>
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
-        </div>
-      </QueryClientProvider>
-    </ErrorBoundary>
-  )
+                        <Route element={<AuthLayout />}>
+                            <Route path="*" element={<NotFoundPage />} />
+                        </Route>
+                    </Routes>
+                </div>
+            </QueryClientProvider>
+        </ErrorBoundary>
+    );
 }

@@ -1,16 +1,16 @@
-import { PlaylistRepository } from "@api/repositories/playlist.repository";
-import { UploadService } from "@api/services/upload.service";
 import { NotFoundError } from "@api/errors/app.error";
+import type { PlaylistRepository } from "@api/repositories/playlist.repository";
+import type { UploadService } from "@api/services/upload.service";
 
 export class PlaylistService {
     constructor(
         private playlistRepo: PlaylistRepository,
         private uploadService: UploadService
-    ) { }
+    ) {}
 
     async createPlaylist(
-        organizationId: string, 
-        userId: string, 
+        organizationId: string,
+        userId: string,
         input: {
             title: string;
             description?: string;
@@ -20,7 +20,10 @@ export class PlaylistService {
         let coverArtUrl: string | undefined;
 
         if (input.coverArtUploadId) {
-            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(input.coverArtUploadId, organizationId);
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(
+                input.coverArtUploadId,
+                organizationId
+            );
         }
 
         return await this.playlistRepo.create({
@@ -53,9 +56,11 @@ export class PlaylistService {
         const currentPlaylist = await this.getPlaylist(playlistId, organizationId);
 
         if (updates.coverArtUploadId) {
-            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(updates.coverArtUploadId, organizationId);
+            coverArtUrl = await this.uploadService.getVerifiedImageUploadUrl(
+                updates.coverArtUploadId,
+                organizationId
+            );
 
-            // Clean up old cover artifact globally if replaced
             if (currentPlaylist.coverArtUrl) {
                 await this.uploadService.deleteUploadByUrlGlobalSafely(currentPlaylist.coverArtUrl);
             }
@@ -79,17 +84,14 @@ export class PlaylistService {
     }
 
     async setPlaylistSequence(playlistId: string, organizationId: string, mediaIds: string[]) {
-        // Must verify existence and permissions first
         await this.getPlaylist(playlistId, organizationId);
-        
-        // Push atomic sequence to repository
+
         await this.playlistRepo.setMediaSequence(playlistId, mediaIds);
     }
 
     async getPlaylistSequence(playlistId: string, organizationId: string) {
-        // Enforce org bounds
         await this.getPlaylist(playlistId, organizationId);
-        
+
         return await this.playlistRepo.getMediaSequence(playlistId);
     }
 }
