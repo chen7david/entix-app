@@ -1,5 +1,5 @@
 /**
- * Centralized API configuration for the frontend.
+ * Centralized API configuration shared across the monorepo.
  *
  * We use /api/v1 as the base path for all custom REST endpoints.
  * In the future, we will transition to a fully type-safe Hono RPC client (hc).

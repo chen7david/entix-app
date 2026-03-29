@@ -10,7 +10,7 @@ import {
     TeamOutlined,
     UserOutlined,
 } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { getAvatarUrl } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/features/auth";

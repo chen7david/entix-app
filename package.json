@@ -2,6 +2,7 @@
     "name": "entix-app",
     "type": "module",
     "version": "1.0.0",
+    "sideEffects": false,
     "scripts": {
         "prepare": "husky || true",
         "dev:init": "npm install && cd web && npm install",

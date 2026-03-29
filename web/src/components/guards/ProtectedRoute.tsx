@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
 import { useAuth } from "@web/src/features/auth";
 import type React from "react";

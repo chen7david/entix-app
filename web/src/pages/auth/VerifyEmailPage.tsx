@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useVerifyEmail } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin, Typography } from "antd";

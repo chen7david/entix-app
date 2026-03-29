@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CenteredResult, CenteredSpin } from "@web/src/components/common/CenteredView";
 import { OrgProvider } from "@web/src/context/OrgContext";

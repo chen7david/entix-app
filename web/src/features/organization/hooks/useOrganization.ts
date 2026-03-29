@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { OrgContext } from "@web/src/context/OrgContext";
 import { authClient } from "@web/src/lib/auth-client";

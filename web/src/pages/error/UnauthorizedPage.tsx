@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { Button, Result, theme } from "antd";
 import type React from "react";
 import { useNavigate } from "react-router";

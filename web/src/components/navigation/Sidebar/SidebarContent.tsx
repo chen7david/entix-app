@@ -5,8 +5,7 @@ import {
     SettingOutlined,
     UserOutlined,
 } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { AppRoutes, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
 import { Avatar, Button, Dropdown, type MenuProps, Skeleton, Typography, theme } from "antd";

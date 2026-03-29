@@ -1,4 +1,4 @@
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useSignOut } from "@web/src/features/auth";
 import { Button, Card, Typography } from "antd";
 import type React from "react";

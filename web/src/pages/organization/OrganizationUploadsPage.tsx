@@ -7,8 +7,8 @@ import {
     PlaySquareOutlined,
     SearchOutlined,
 } from "@ant-design/icons";
-import type { UploadDto } from "@shared/schemas/dto/upload.dto";
-import { getAssetUrl } from "@shared/utils/image-url";
+import type { UploadDto } from "@shared";
+import { getAssetUrl } from "@shared";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";

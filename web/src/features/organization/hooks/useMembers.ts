@@ -1,4 +1,4 @@
-import type { OrgRole } from "@shared/auth/permissions";
+import { API_V1, type OrgRole } from "@shared";
 import {
     keepPreviousData,
     useInfiniteQuery,
@@ -6,7 +6,6 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
-import { API_V1 } from "@web/src/lib/api";
 import { authClient } from "@web/src/lib/auth-client";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";

@@ -14,7 +14,7 @@ import {
     WalletOutlined,
     YoutubeOutlined,
 } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { useAuth } from "@web/src/features/auth";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";

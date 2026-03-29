@@ -1,5 +1,5 @@
 import { ThunderboltOutlined } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { getAvatarUrl } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";

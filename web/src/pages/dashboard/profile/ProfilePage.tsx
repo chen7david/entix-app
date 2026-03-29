@@ -1,6 +1,5 @@
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
-import { getAvatarUrl } from "@shared/utils/image-url";
+import { AppRoutes, getAvatarUrl } from "@shared";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useSignOut } from "@web/src/features/auth";
 import { AvatarDropzone } from "@web/src/features/media";

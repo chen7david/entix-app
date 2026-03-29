@@ -1,5 +1,5 @@
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
-import { AppRoutes } from "@shared/constants/routes";
+import { AppRoutes } from "@shared";
 import { Alert, Button, Form, Input, Typography } from "antd";
 import type React from "react";
 import { Link } from "react-router";
