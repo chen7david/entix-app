@@ -1,12 +1,14 @@
-import React from 'react';
+import { AppRoutes } from "@shared/constants/routes";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import {
+    ChangePasswordForm,
+    type ChangePasswordValues,
+    useChangePassword,
+} from "@web/src/features/auth";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 // Removed useNavigate
-import { Card, Typography, App } from 'antd';
-import { ChangePasswordForm, type ChangePasswordValues } from '@web/src/components/auth/ChangePasswordForm';
-import { useChangePassword } from '@web/src/hooks/auth/useAuth';
-import { AppRoutes } from '@shared/constants/routes';
-import { useOrgNavigate } from '@web/src/hooks/navigation/useOrgNavigate';
-import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
+import { App, Card, Typography } from "antd";
+import type React from "react";
 
 const { Title, Text } = Typography;
 
@@ -17,34 +19,37 @@ export const ChangePasswordPage: React.FC = () => {
     const { mutate: changePassword, isPending } = useChangePassword();
 
     const handleChangePassword = (values: ChangePasswordValues) => {
-        changePassword({
-            currentPassword: values.currentPassword,
-            newPassword: values.newPassword,
-            revokeOtherSessions: values.revokeOtherSessions,
-        }, {
-            onSuccess: () => {
-                message.success('Password changed successfully!');
-                setTimeout(() => {
-                    if (activeOrganization?.slug) {
-                        navigateOrg(AppRoutes.org.dashboard.settings);
-                    } else {
-                        navigateOrg(-1); // Fallback
-                    }
-                }, 1500);
+        changePassword(
+            {
+                currentPassword: values.currentPassword,
+                newPassword: values.newPassword,
+                revokeOtherSessions: values.revokeOtherSessions,
             },
-            onError: (error) => {
-                message.error(error.message || "Failed to change password");
+            {
+                onSuccess: () => {
+                    message.success("Password changed successfully!");
+                    setTimeout(() => {
+                        if (activeOrganization?.slug) {
+                            navigateOrg(AppRoutes.org.dashboard.settings);
+                        } else {
+                            navigateOrg(-1); // Fallback
+                        }
+                    }, 1500);
+                },
+                onError: (error) => {
+                    message.error(error.message || "Failed to change password");
+                },
             }
-        });
+        );
     };
 
     return (
         <>
             <Toolbar />
-            <div style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>
+            <div style={{ padding: "24px", maxWidth: "600px", margin: "0 auto" }}>
                 <Card>
                     <Title level={3}>Change Password</Title>
-                    <Text type="secondary" style={{ display: 'block', marginBottom: 24 }}>
+                    <Text type="secondary" style={{ display: "block", marginBottom: 24 }}>
                         Update your password to keep your account secure
                     </Text>
 

@@ -1,6 +1,6 @@
 import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export type CreateUploadInput = {
     id: string;
@@ -26,7 +26,7 @@ export type CreateUserUploadInput = {
 };
 
 export class UploadRepository {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     async create(input: CreateUploadInput): Promise<schema.Upload> {
         const [upload] = await this.db.insert(schema.uploads).values(input).returning();
@@ -51,30 +51,42 @@ export class UploadRepository {
         });
     }
 
-    async updateStatus(id: string, organizationId: string, status: "pending" | "completed" | "failed"): Promise<schema.Upload | undefined> {
-        const [upload] = await this.db.update(schema.uploads)
+    async updateStatus(
+        id: string,
+        organizationId: string,
+        status: "pending" | "completed" | "failed"
+    ): Promise<schema.Upload | undefined> {
+        const [upload] = await this.db
+            .update(schema.uploads)
             .set({ status })
-            .where(and(eq(schema.uploads.id, id), eq(schema.uploads.organizationId, organizationId)))
+            .where(
+                and(eq(schema.uploads.id, id), eq(schema.uploads.organizationId, organizationId))
+            )
             .returning();
         return upload;
     }
 
     async findAllByOrganization(organizationId: string): Promise<schema.Upload[]> {
-        return await this.db.select()
+        return await this.db
+            .select()
             .from(schema.uploads)
             .where(eq(schema.uploads.organizationId, organizationId))
             .orderBy(desc(schema.uploads.createdAt));
     }
 
     async delete(id: string, organizationId: string): Promise<boolean> {
-        const result = await this.db.delete(schema.uploads)
-            .where(and(eq(schema.uploads.id, id), eq(schema.uploads.organizationId, organizationId)))
+        const result = await this.db
+            .delete(schema.uploads)
+            .where(
+                and(eq(schema.uploads.id, id), eq(schema.uploads.organizationId, organizationId))
+            )
             .returning();
         return result.length > 0;
     }
 
     async deleteByBucketKey(bucketKey: string): Promise<boolean> {
-        const result = await this.db.delete(schema.uploads)
+        const result = await this.db
+            .delete(schema.uploads)
             .where(eq(schema.uploads.bucketKey, bucketKey))
             .returning();
         return result.length > 0;
@@ -82,7 +94,7 @@ export class UploadRepository {
 }
 
 export class UserUploadRepository {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     async create(input: CreateUserUploadInput): Promise<schema.UserUpload> {
         const [upload] = await this.db.insert(schema.userUploads).values(input).returning();
@@ -91,24 +103,23 @@ export class UserUploadRepository {
 
     async findById(id: string, userId: string): Promise<schema.UserUpload | undefined> {
         return await this.db.query.userUploads.findFirst({
-            where: and(
-                eq(schema.userUploads.id, id),
-                eq(schema.userUploads.userId, userId)
-            ),
+            where: and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)),
         });
     }
 
     async findByUrl(url: string, userId: string): Promise<schema.UserUpload | undefined> {
         return await this.db.query.userUploads.findFirst({
-            where: and(
-                eq(schema.userUploads.url, url),
-                eq(schema.userUploads.userId, userId)
-            ),
+            where: and(eq(schema.userUploads.url, url), eq(schema.userUploads.userId, userId)),
         });
     }
 
-    async updateStatus(id: string, userId: string, status: "pending" | "completed" | "failed"): Promise<schema.UserUpload | undefined> {
-        const [upload] = await this.db.update(schema.userUploads)
+    async updateStatus(
+        id: string,
+        userId: string,
+        status: "pending" | "completed" | "failed"
+    ): Promise<schema.UserUpload | undefined> {
+        const [upload] = await this.db
+            .update(schema.userUploads)
             .set({ status })
             .where(and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)))
             .returning();
@@ -116,14 +127,16 @@ export class UserUploadRepository {
     }
 
     async delete(id: string, userId: string): Promise<boolean> {
-        const result = await this.db.delete(schema.userUploads)
+        const result = await this.db
+            .delete(schema.userUploads)
             .where(and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)))
             .returning();
         return result.length > 0;
     }
 
     async deleteByBucketKey(bucketKey: string): Promise<boolean> {
-        const result = await this.db.delete(schema.userUploads)
+        const result = await this.db
+            .delete(schema.userUploads)
             .where(eq(schema.userUploads.bucketKey, bucketKey))
             .returning();
         return result.length > 0;

@@ -1,15 +1,15 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import { UserRepository } from "@api/repositories/user.repository";
-import { OrganizationRepository } from "@api/repositories/organization.repository";
-import { MemberRepository } from "@api/repositories/member.repository";
+import { auth } from "@api/lib/auth/auth";
 import { MediaRepository } from "@api/repositories/media.repository";
+import { MemberRepository } from "@api/repositories/member.repository";
+import { OrganizationRepository } from "@api/repositories/organization.repository";
 import { PlaylistRepository } from "@api/repositories/playlist.repository";
 import { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
-import { getDbClient } from "./db.factory";
-import { auth } from "@api/lib/auth/auth";
-import { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
-import { UserProfileRepository } from "@api/repositories/user-profile.repository";
 import { SocialMediaRepository } from "@api/repositories/social-media.repository";
+import { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
+import { UserRepository } from "@api/repositories/user.repository";
+import { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import { getDbClient } from "./db.factory";
 
 export const getUserRepository = (ctx: AppContext) => {
     return new UserRepository(getDbClient(ctx), auth(ctx));
@@ -30,7 +30,6 @@ export const getOrganizationRepository = (ctx: AppContext) => {
 export const getMemberRepository = (ctx: AppContext) => {
     return new MemberRepository(getDbClient(ctx));
 };
-
 
 export const getUploadRepository = (ctx: AppContext) => {
     return new UploadRepository(getDbClient(ctx));

@@ -1,14 +1,13 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
-import { createTestClient, type TestClient } from "../lib/test-client";
-import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
-import { createAuthenticatedOrg } from "../lib/auth-test.helper";
-
+import app from "@api/app";
 import * as schema from "@shared/db/schema";
+import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
+import { createAuthenticatedOrg } from "../lib/auth-test.helper";
+import { createTestClient, type TestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("Auth Integration Test", () => {
     let client: TestClient;
@@ -24,7 +23,7 @@ describe("Auth Integration Test", () => {
         const res = await client.auth.signUpWithOrg(payload);
 
         expect(res.status).toBe(201);
-        const body = await res.json() as SignUpWithOrgResponseDTO;
+        const body = (await res.json()) as SignUpWithOrgResponseDTO;
 
         expect(body).toHaveProperty("user");
         expect(body.user).toHaveProperty("id");
@@ -44,7 +43,7 @@ describe("Auth Integration Test", () => {
         const res = await client.auth.signUpWithOrg(payload);
 
         expect(res.status).toBe(409);
-        const body = await res.json() as { message: string };
+        const body = (await res.json()) as { message: string };
         expect(body.message).toBe("User already exists");
     });
 
@@ -60,7 +59,7 @@ describe("Auth Integration Test", () => {
         const res = await client.auth.signUpWithOrg(payload2);
 
         expect(res.status).toBe(409);
-        const body = await res.json() as { message: string };
+        const body = (await res.json()) as { message: string };
         expect(body.message).toBe("Organization name already taken");
     });
 
@@ -95,11 +94,13 @@ describe("Auth Integration Test", () => {
 
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
-        const spy = vi.spyOn(MemberRepository.prototype, 'prepareAdd').mockImplementation(function (this: any) {
+        const spy = vi.spyOn(MemberRepository.prototype, "prepareAdd").mockImplementation(function (
+            this: any
+        ) {
             return this.db.insert(schema.authMembers).values({
                 id: "pre-existing-conflict", // Will conflict
                 organizationId: "dummy-org", // Must match foreign key
-                userId: "dummy-user", // Must match foreign key 
+                userId: "dummy-user", // Must match foreign key
                 role: "owner",
                 createdAt: new Date(),
             });
@@ -108,17 +109,17 @@ describe("Auth Integration Test", () => {
         const res = await client.auth.signUpWithOrg(payload);
 
         expect(res.status).toBe(500);
-        const body = await res.json() as { message: string };
+        const body = (await res.json()) as { message: string };
         expect(body.message).toBe("Failed to setup organization, please try again");
 
         const user = await db.query.authUsers.findFirst({
-            where: eq(schema.authUsers.email, payload.email)
+            where: eq(schema.authUsers.email, payload.email),
         });
         expect(user).toBeUndefined();
 
         const slug = payload.organizationName.toLowerCase().replace(/[^a-z0-9]/g, "-");
         const org = await db.query.authOrganizations.findFirst({
-            where: eq(schema.authOrganizations.slug, slug)
+            where: eq(schema.authOrganizations.slug, slug),
         });
         expect(org).toBeUndefined();
 
@@ -131,7 +132,7 @@ describe("Auth Integration Test", () => {
 
         const signInPayload = {
             email: payload.email,
-            password: payload.password
+            password: payload.password,
         };
 
         const req = new Request("http://localhost/api/v1/auth/sign-in/email", {
@@ -143,8 +144,8 @@ describe("Auth Integration Test", () => {
         const res = await app.request(req, {}, env);
 
         expect(res.status).toBe(200);
-        
-        const body = await res.json() as any;
+
+        const body = (await res.json()) as any;
         expect(body).toHaveProperty("user");
         expect(body).toHaveProperty("token");
         expect(body.user.email).toBe(payload.email);
@@ -153,20 +154,23 @@ describe("Auth Integration Test", () => {
     it("GET /api/v1/auth/organization/get-full-organization should return 200", async () => {
         const { cookie, orgId, orgData } = await createAuthenticatedOrg({ app, env });
 
-        const req = new Request(`http://localhost/api/v1/auth/organization/get-full-organization?organizationId=${orgId}`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Cookie": cookie
-            },
-        });
+        const req = new Request(
+            `http://localhost/api/v1/auth/organization/get-full-organization?organizationId=${orgId}`,
+            {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+            }
+        );
 
         const res = await app.request(req, {}, env);
 
         expect(res.status).not.toBe(500);
         expect(res.status).toBe(200);
 
-        const fullOrgBody = await res.json() as any;
+        const fullOrgBody = (await res.json()) as any;
         expect(fullOrgBody).toHaveProperty("id");
         expect(fullOrgBody.name).toBe(orgData.organization.name);
     });

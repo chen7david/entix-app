@@ -1,6 +1,6 @@
 import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export type CreatePlaylistInput = {
     id: string;
@@ -12,7 +12,7 @@ export type CreatePlaylistInput = {
 };
 
 export class PlaylistRepository {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     async create(input: CreatePlaylistInput): Promise<schema.Playlist> {
         const [playlist] = await this.db.insert(schema.playlists).values(input).returning();
@@ -29,7 +29,8 @@ export class PlaylistRepository {
     }
 
     async findAllByOrganization(organizationId: string): Promise<schema.Playlist[]> {
-        return await this.db.select()
+        return await this.db
+            .select()
             .from(schema.playlists)
             .where(eq(schema.playlists.organizationId, organizationId))
             .orderBy(desc(schema.playlists.createdAt));
@@ -40,23 +41,37 @@ export class PlaylistRepository {
         organizationId: string,
         updates: Partial<Pick<schema.Playlist, "title" | "description" | "coverArtUrl">>
     ): Promise<schema.Playlist | undefined> {
-        const [updated] = await this.db.update(schema.playlists)
+        const [updated] = await this.db
+            .update(schema.playlists)
             .set({ ...updates, updatedAt: new Date() })
-            .where(and(eq(schema.playlists.id, id), eq(schema.playlists.organizationId, organizationId)))
+            .where(
+                and(
+                    eq(schema.playlists.id, id),
+                    eq(schema.playlists.organizationId, organizationId)
+                )
+            )
             .returning();
         return updated;
     }
 
     async delete(id: string, organizationId: string): Promise<boolean> {
-        const result = await this.db.delete(schema.playlists)
-            .where(and(eq(schema.playlists.id, id), eq(schema.playlists.organizationId, organizationId)))
+        const result = await this.db
+            .delete(schema.playlists)
+            .where(
+                and(
+                    eq(schema.playlists.id, id),
+                    eq(schema.playlists.organizationId, organizationId)
+                )
+            )
             .returning();
         return result.length > 0;
     }
 
     async setMediaSequence(playlistId: string, mediaIds: string[]): Promise<void> {
-        const deleteStmt = this.db.delete(schema.playlistMedia).where(eq(schema.playlistMedia.playlistId, playlistId));
-        
+        const deleteStmt = this.db
+            .delete(schema.playlistMedia)
+            .where(eq(schema.playlistMedia.playlistId, playlistId));
+
         if (mediaIds.length > 0) {
             const mappings = mediaIds.map((mediaId, index) => ({
                 playlistId,
@@ -71,7 +86,8 @@ export class PlaylistRepository {
     }
 
     async getMediaSequence(playlistId: string): Promise<schema.PlaylistMedia[]> {
-        return await this.db.select()
+        return await this.db
+            .select()
             .from(schema.playlistMedia)
             .where(eq(schema.playlistMedia.playlistId, playlistId))
             .orderBy(schema.playlistMedia.position);

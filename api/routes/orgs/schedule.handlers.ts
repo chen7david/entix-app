@@ -1,40 +1,50 @@
-import type { AppHandler } from "@api/helpers/types.helpers";
-import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import { ScheduleRoutes } from "./schedule.routes";
-import { getSessionScheduleService } from "@api/factories/service.factory";
 import { getSessionScheduleRepository } from "@api/factories/repository.factory";
+import { getSessionScheduleService } from "@api/factories/service.factory";
+import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
+import type { ScheduleRoutes } from "./schedule.routes";
 
 export class ScheduleHandlers {
     static listSessions: AppHandler<typeof ScheduleRoutes.listSessions> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const { startDate, endDate, limit, cursor, direction, search } = ctx.req.valid("query");
-        
+
         const repo = getSessionScheduleRepository(ctx);
-        const paginatedResult = await repo.getSessionsForOrg(organizationId, startDate, endDate, limit, cursor, direction, search);
-        
+        const paginatedResult = await repo.getSessionsForOrg(
+            organizationId,
+            startDate,
+            endDate,
+            limit,
+            cursor,
+            direction,
+            search
+        );
+
         const normalizedItems = paginatedResult.items.map((s: any) => ({
             ...s,
             startTime: new Date(s.startTime).getTime(),
         }));
-        
-        return ctx.json({ ...paginatedResult, items: normalizedItems }, HttpStatusCodes.OK);
+
+        return ctx.json({ ...paginatedResult, items: normalizedItems } as any, HttpStatusCodes.OK);
     };
 
     static createSession: AppHandler<typeof ScheduleRoutes.createSession> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");
         const service = getSessionScheduleService(ctx);
-        
+
         const sessions = await service.createSession(organizationId, input);
         const normalized = sessions.map((s: any) => ({
             ...s,
             startTime: new Date(s.startTime).getTime(),
         }));
 
-        return ctx.json(normalized, HttpStatusCodes.CREATED);
+        return ctx.json(normalized as any, HttpStatusCodes.CREATED);
     };
 
-    static getScheduleMetrics: AppHandler<typeof ScheduleRoutes.getScheduleMetrics> = async (ctx) => {
+    static getScheduleMetrics: AppHandler<typeof ScheduleRoutes.getScheduleMetrics> = async (
+        ctx
+    ) => {
         const organizationId = ctx.req.valid("param").organizationId;
         const { startDate, endDate } = ctx.req.valid("query");
 
@@ -44,40 +54,55 @@ export class ScheduleHandlers {
         return ctx.json(result, HttpStatusCodes.OK);
     };
 
-    static getAnalyticsSessions: AppHandler<typeof ScheduleRoutes.getAnalyticsSessions> = async (ctx) => {
+    static getAnalyticsSessions: AppHandler<typeof ScheduleRoutes.getAnalyticsSessions> = async (
+        ctx
+    ) => {
         const organizationId = ctx.req.valid("param").organizationId;
         const { startDate, endDate, tzOffset } = ctx.req.valid("query");
 
         const service = getSessionScheduleService(ctx);
-        const result = await service.getAnalyticsSessions(organizationId, startDate, endDate, tzOffset);
+        const result = await service.getAnalyticsSessions(
+            organizationId,
+            startDate,
+            endDate,
+            tzOffset
+        );
 
         return ctx.json(result, HttpStatusCodes.OK);
     };
 
-    static getAnalyticsAttendance: AppHandler<typeof ScheduleRoutes.getAnalyticsAttendance> = async (ctx) => {
-        const organizationId = ctx.req.valid("param").organizationId;
-        const { startDate, endDate, tzOffset } = ctx.req.valid("query");
+    static getAnalyticsAttendance: AppHandler<typeof ScheduleRoutes.getAnalyticsAttendance> =
+        async (ctx) => {
+            const organizationId = ctx.req.valid("param").organizationId;
+            const { startDate, endDate, tzOffset } = ctx.req.valid("query");
 
-        const service = getSessionScheduleService(ctx);
-        const result = await service.getAnalyticsAttendance(organizationId, startDate, endDate, tzOffset);
+            const service = getSessionScheduleService(ctx);
+            const result = await service.getAnalyticsAttendance(
+                organizationId,
+                startDate,
+                endDate,
+                tzOffset
+            );
 
-        return ctx.json(result, HttpStatusCodes.OK);
-    };
+            return ctx.json(result, HttpStatusCodes.OK);
+        };
 
     static updateSession: AppHandler<typeof ScheduleRoutes.updateSession> = async (ctx) => {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");
         const service = getSessionScheduleService(ctx);
-        
+
         const result = await service.updateSession(organizationId, sessionId, input);
         return ctx.json(result, HttpStatusCodes.OK);
     };
 
-    static updateSessionStatus: AppHandler<typeof ScheduleRoutes.updateSessionStatus> = async (ctx) => {
+    static updateSessionStatus: AppHandler<typeof ScheduleRoutes.updateSessionStatus> = async (
+        ctx
+    ) => {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const { status } = ctx.req.valid("json");
         const service = getSessionScheduleService(ctx);
-        
+
         await service.updateSessionStatus(organizationId, sessionId, status);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
@@ -86,7 +111,7 @@ export class ScheduleHandlers {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");
         const service = getSessionScheduleService(ctx);
-        
+
         const result = await service.updateAttendance(organizationId, sessionId, input.attendances);
         return ctx.json(result, HttpStatusCodes.OK);
     };
@@ -95,7 +120,7 @@ export class ScheduleHandlers {
         const { organizationId, sessionId } = ctx.req.valid("param");
         const input = ctx.req.valid("json");
         const service = getSessionScheduleService(ctx);
-        
+
         const result = await service.deleteSession(organizationId, sessionId, input.deleteForward);
         return ctx.json(result, HttpStatusCodes.OK);
     };

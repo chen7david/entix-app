@@ -1,6 +1,6 @@
-import React from 'react';
-import { Typography } from 'antd';
-import { Toolbar } from '@web/src/components/navigation/Toolbar/Toolbar';
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { Typography } from "antd";
+import type React from "react";
 
 const { Title } = Typography;
 

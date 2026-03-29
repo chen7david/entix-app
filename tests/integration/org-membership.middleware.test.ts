@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { getAuthCookie, createAuthenticatedOrg } from "../lib/auth-test.helper";
-import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
-import { createTestClient, type TestClient } from "../lib/test-client";
-import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
+import app from "@api/app";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
+import { type ErrorResponse, parseJson } from "../lib/api-request.helper";
+import { createAuthenticatedOrg, getAuthCookie } from "../lib/auth-test.helper";
+import { createTestClient, type TestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("Organization Membership Middleware Tests", () => {
     let client: TestClient;
@@ -33,8 +33,8 @@ describe("Organization Membership Middleware Tests", () => {
             user: {
                 email: "intruder@example.com",
                 password: "Password123!",
-                name: "Intruder"
-            }
+                name: "Intruder",
+            },
         });
 
         const intruderClient = createTestClient(app, env, intruderCookie);

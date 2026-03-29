@@ -1,11 +1,9 @@
-import type { AppDb } from "@api/factories/db.factory";
 import { InternalServerError } from "@api/errors/app.error";
-import * as schema from "@shared/db/schema";
-import { eq, and, like, or } from "drizzle-orm";
+import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
+import * as schema from "@shared/db/schema";
 import type { Auth } from "better-auth";
-
-
+import { and, eq, like, or } from "drizzle-orm";
 
 export type CreateUserInput = {
     email: string;
@@ -30,7 +28,7 @@ export class UserRepository {
     constructor(
         private db: AppDb,
         private auth: Auth
-    ) { }
+    ) {}
 
     /**
      * Create a new user via BetterAuth
@@ -74,9 +72,7 @@ export class UserRepository {
      * Update an existing user's data
      */
     async updateUser(userId: string, data: Partial<schema.NewAuthUser>): Promise<void> {
-        await this.db.update(schema.authUsers)
-            .set(data)
-            .where(eq(schema.authUsers.id, userId));
+        await this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, userId));
     }
 
     /**
@@ -85,7 +81,7 @@ export class UserRepository {
      */
     async sendPasswordResetEmail(email: string, redirectTo: string): Promise<void> {
         await this.auth.api.requestPasswordReset({
-            body: { email, redirectTo }
+            body: { email, redirectTo },
         });
     }
 
@@ -93,7 +89,13 @@ export class UserRepository {
      * Find all users belonging to an organization
      * Queries via the member table to scope results to the given org
      */
-    async findUsersByOrganization(organizationId: string, limit: number, cursor?: string, direction: 'next' | 'prev' = 'next', search?: string) {
+    async findUsersByOrganization(
+        organizationId: string,
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
         const { where: cursorWhere, orderBy } = buildCursorPagination(
             schema.authMembers.createdAt,
             schema.authMembers.id,
@@ -106,10 +108,13 @@ export class UserRepository {
 
         if (search) {
             // ILIKE is preferred for case-insensitive, but SQLite natively treats LIKE as case-insensitive globally.
-            conditions.push(or(
+            const searchFilter = or(
                 like(schema.authUsers.name, `%${search}%`),
                 like(schema.authUsers.email, `%${search}%`)
-            )!);
+            );
+            if (searchFilter) {
+                conditions.push(searchFilter);
+            }
         }
 
         const membersJoined = await this.db
@@ -120,12 +125,10 @@ export class UserRepository {
             .orderBy(...orderBy)
             .limit(limit + 1);
 
-        const result = processPaginatedResult(
-            membersJoined,
-            limit,
-            direction,
-            (row) => ({ primary: row.member.createdAt.getTime(), secondary: row.member.id })
-        );
+        const result = processPaginatedResult(membersJoined, limit, direction, (row) => ({
+            primary: row.member.createdAt.getTime(),
+            secondary: row.member.id,
+        }));
 
         return {
             ...result,
@@ -138,7 +141,7 @@ export class UserRepository {
                 role: row.member.role,
                 createdAt: row.member.createdAt,
                 updatedAt: row.user.updatedAt,
-                id: row.user.id // Keep user's ID as the primary ID for the UserDTO
+                id: row.user.id, // Keep user's ID as the primary ID for the UserDTO
             })),
         };
     }

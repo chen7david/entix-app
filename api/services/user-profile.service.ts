@@ -1,21 +1,23 @@
-import { UserProfileRepository } from "@api/repositories/user-profile.repository";
-import * as schema from "@shared/db/schema";
 import { BadRequestError } from "@api/errors/app.error";
+import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import type * as schema from "@shared/db/schema";
 
 export class UserProfileService {
-    constructor(private profileRepo: UserProfileRepository) { }
+    constructor(private profileRepo: UserProfileRepository) {}
 
-    // --- Profile Context ---
     async getProfileAggregate(userId: string) {
         const [profile, phoneNumbers, addresses] = await Promise.all([
             this.profileRepo.findProfileByUserId(userId),
             this.profileRepo.findPhoneNumbersByUserId(userId),
-            this.profileRepo.findAddressesByUserId(userId)
+            this.profileRepo.findAddressesByUserId(userId),
         ]);
         return { profile, phoneNumbers, addresses };
     }
 
-    async upsertProfile(userId: string, data: Partial<Omit<schema.UserProfile, "id" | "userId" | "createdAt" | "updatedAt">>) {
+    async upsertProfile(
+        userId: string,
+        data: Partial<Omit<schema.UserProfile, "id" | "userId" | "createdAt" | "updatedAt">>
+    ) {
         const existing = await this.profileRepo.findProfileByUserId(userId);
         if (existing) {
             await this.profileRepo.updateProfile(userId, data);
@@ -35,15 +37,24 @@ export class UserProfileService {
         return await this.profileRepo.findProfileByUserId(userId);
     }
 
-    // --- Phone Numbers ---
-    async addPhoneNumber(userId: string, data: Omit<typeof schema.userPhoneNumbers.$inferInsert, "id" | "userId" | "createdAt" | "updatedAt">) {
+    async addPhoneNumber(
+        userId: string,
+        data: Omit<
+            typeof schema.userPhoneNumbers.$inferInsert,
+            "id" | "userId" | "createdAt" | "updatedAt"
+        >
+    ) {
         if (data.isPrimary) {
             await this.profileRepo.unsetOtherPrimaryPhoneNumbers(userId, "new_placeholder"); // Will unset all
         }
         await this.profileRepo.insertPhoneNumber({ ...data, userId });
     }
 
-    async updatePhoneNumber(id: string, userId: string, data: Partial<typeof schema.userPhoneNumbers.$inferInsert>) {
+    async updatePhoneNumber(
+        id: string,
+        userId: string,
+        data: Partial<typeof schema.userPhoneNumbers.$inferInsert>
+    ) {
         if (data.isPrimary) {
             await this.profileRepo.unsetOtherPrimaryPhoneNumbers(userId, id);
         }
@@ -54,15 +65,24 @@ export class UserProfileService {
         await this.profileRepo.deletePhoneNumber(id, userId);
     }
 
-    // --- Addresses ---
-    async addAddress(userId: string, data: Omit<typeof schema.userAddresses.$inferInsert, "id" | "userId" | "createdAt" | "updatedAt">) {
+    async addAddress(
+        userId: string,
+        data: Omit<
+            typeof schema.userAddresses.$inferInsert,
+            "id" | "userId" | "createdAt" | "updatedAt"
+        >
+    ) {
         if (data.isPrimary) {
             await this.profileRepo.unsetOtherPrimaryAddresses(userId, "new_placeholder");
         }
         await this.profileRepo.insertAddress({ ...data, userId });
     }
 
-    async updateAddress(id: string, userId: string, data: Partial<typeof schema.userAddresses.$inferInsert>) {
+    async updateAddress(
+        id: string,
+        userId: string,
+        data: Partial<typeof schema.userAddresses.$inferInsert>
+    ) {
         if (data.isPrimary) {
             await this.profileRepo.unsetOtherPrimaryAddresses(userId, id);
         }

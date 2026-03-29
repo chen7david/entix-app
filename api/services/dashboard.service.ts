@@ -1,9 +1,9 @@
 import type { AppDb } from "@api/factories/db.factory";
 import * as schema from "@shared/db/schema";
-import { eq, and, sql, lt } from "drizzle-orm";
+import { and, eq, lt, sql } from "drizzle-orm";
 
 export class DashboardService {
-    constructor(private db: AppDb) { }
+    constructor(private db: AppDb) {}
 
     async getDashboardMetrics(organizationId: string) {
         const now = new Date();
@@ -38,10 +38,7 @@ export class DashboardService {
         const riskResult = await this.db
             .select({ count: sql<number>`count(*)` })
             .from(schema.authMembers)
-            .innerJoin(
-                schema.authUsers,
-                eq(schema.authMembers.userId, schema.authUsers.id)
-            )
+            .innerJoin(schema.authUsers, eq(schema.authMembers.userId, schema.authUsers.id))
             .where(
                 and(
                     eq(schema.authMembers.organizationId, organizationId),
@@ -72,20 +69,24 @@ export class DashboardService {
                 )
             );
 
-        const upcomingBirthdays = allProfiles.map(p => {
-            if (!p.birthDate) return null;
-            const bday = new Date(p.birthDate);
-            const nextBday = new Date(now.getFullYear(), bday.getMonth(), bday.getDate());
-            if (nextBday < now) nextBday.setFullYear(now.getFullYear() + 1);
-            const daysUntil = Math.ceil((nextBday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-            return {
-                userId: p.userId,
-                name: p.name!,
-                birthDate: p.birthDate.toISOString(),
-                daysUntil,
-            };
-        }).filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 7)
-          .sort((a, b) => a.daysUntil - b.daysUntil);
+        const upcomingBirthdays = allProfiles
+            .map((p) => {
+                if (!p.birthDate) return null;
+                const bday = new Date(p.birthDate);
+                const nextBday = new Date(now.getFullYear(), bday.getMonth(), bday.getDate());
+                if (nextBday < now) nextBday.setFullYear(now.getFullYear() + 1);
+                const daysUntil = Math.ceil(
+                    (nextBday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                );
+                return {
+                    userId: p.userId,
+                    name: p.name ?? "Unknown User",
+                    birthDate: p.birthDate.toISOString(),
+                    daysUntil,
+                };
+            })
+            .filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 7)
+            .sort((a, b) => a.daysUntil - b.daysUntil);
 
         return {
             totalStorage,

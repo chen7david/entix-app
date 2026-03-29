@@ -1,12 +1,12 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
-import { createTestDb } from "../lib/utils";
-import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
-import { getAuthCookie, createAuthenticatedOrg } from "../lib/auth-test.helper";
-import { createTestClient, type TestClient } from "../lib/test-client";
-import { parseJson, type ErrorResponse } from "../lib/api-request.helper";
+import app from "@api/app";
 import type { CreateMemberResponseDTO } from "@shared/schemas/dto/member.dto";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
+import { type ErrorResponse, parseJson } from "../lib/api-request.helper";
+import { createAuthenticatedOrg, getAuthCookie } from "../lib/auth-test.helper";
+import { createTestClient, type TestClient } from "../lib/test-client";
+import { createTestDb } from "../lib/utils";
 
 describe("Member Creation Integration Tests", () => {
     let client: TestClient;
@@ -24,7 +24,7 @@ describe("Member Creation Integration Tests", () => {
         const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(201);
-        const body = await res.json() as CreateMemberResponseDTO;
+        const body = (await res.json()) as CreateMemberResponseDTO;
 
         expect(body.user.email).toBe(payload.email);
         expect(body.member.role).toBe(payload.role);
@@ -52,7 +52,7 @@ describe("Member Creation Integration Tests", () => {
         const res = await client.orgs.members.create(orgId, payload);
 
         expect(res.status).toBe(201);
-        const body = await res.json() as CreateMemberResponseDTO;
+        const body = (await res.json()) as CreateMemberResponseDTO;
         expect(body.member.role).toBe("admin");
     });
 
@@ -63,8 +63,8 @@ describe("Member Creation Integration Tests", () => {
             user: {
                 email: "intruder@example.com",
                 password: "Password123!",
-                name: "Intruder"
-            }
+                name: "Intruder",
+            },
         });
 
         const intruderClient = createTestClient(app, env, intruderCookie);

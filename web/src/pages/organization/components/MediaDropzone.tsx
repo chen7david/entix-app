@@ -1,15 +1,19 @@
-import React from 'react';
-import { Upload, App } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
-import type { UploadProps } from 'antd';
-import { useMedia } from '@web/src/hooks/organization/useMedia';
-import { useOrganization } from '@web/src/hooks/auth/useOrganization';
-import { useSetAtom } from 'jotai';
-import { uploadQueueAtom, isUploadWindowVisibleAtom, type UploadTask } from '@web/src/store/upload.store';
+import { InboxOutlined } from "@ant-design/icons";
+import {
+    isUploadWindowVisibleAtom,
+    type UploadTask,
+    uploadQueueAtom,
+    useMedia,
+} from "@web/src/features/media";
+import { useOrganization } from "@web/src/features/organization";
+import type { UploadProps } from "antd";
+import { App, Upload } from "antd";
+import { useSetAtom } from "jotai";
+import type React from "react";
 
 const { Dragger } = Upload;
 
-export const MediaDropzone: React.FC<{ type: 'video' | 'audio' | 'all' }> = ({ type }) => {
+export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ type }) => {
     const { message } = App.useApp();
     const { activeOrganization } = useOrganization();
     const { createMedia } = useMedia();
@@ -19,27 +23,34 @@ export const MediaDropzone: React.FC<{ type: 'video' | 'audio' | 'all' }> = ({ t
     const organizationId = activeOrganization?.id;
 
     const props: UploadProps = {
-        name: 'file',
+        name: "file",
         multiple: true,
-        accept: type === 'all' 
-            ? 'video/mp4,audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a' 
-            : type === 'video' 
-                ? 'video/mp4' 
-                : 'audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a',
+        accept:
+            type === "all"
+                ? "video/mp4,audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a,.mp3"
+                : type === "video"
+                  ? "video/mp4"
+                  : "audio/mpeg,audio/mp4,audio/m4a,audio/x-m4a,.m4a,.mp3",
         showUploadList: false,
         beforeUpload: (file) => {
-            const isVideo = type === 'video';
-            const allowedVideo = ['video/mp4'];
-            const allowedAudio = ['audio/mpeg', 'audio/mp4', 'audio/m4a', 'audio/x-m4a'];
-            const ext = file.name.slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1).toLowerCase();
-            
+            const isVideo = type === "video";
+            const allowedVideo = ["video/mp4"];
+            const allowedAudio = ["audio/mpeg", "audio/mp4", "audio/m4a", "audio/x-m4a"];
+            const ext = file.name
+                .slice((Math.max(0, file.name.lastIndexOf(".")) || Infinity) + 1)
+                .toLowerCase();
+
             let isValid = false;
-            if (type === 'all') {
-                isValid = allowedVideo.includes(file.type) || allowedAudio.includes(file.type) || ext === 'm4a' || ext === 'mp3';
+            if (type === "all") {
+                isValid =
+                    allowedVideo.includes(file.type) ||
+                    allowedAudio.includes(file.type) ||
+                    ext === "m4a" ||
+                    ext === "mp3";
             } else if (isVideo) {
                 isValid = allowedVideo.includes(file.type);
             } else {
-                isValid = allowedAudio.includes(file.type) || ext === 'm4a' || ext === 'mp3';
+                isValid = allowedAudio.includes(file.type) || ext === "m4a" || ext === "mp3";
             }
 
             if (!isValid) {
@@ -58,37 +69,40 @@ export const MediaDropzone: React.FC<{ type: 'video' | 'audio' | 'all' }> = ({ t
             const fileObj = file as File;
             const taskId = crypto.randomUUID();
 
-            const taskType = fileObj.type.startsWith('video/') ? 'video' : 'audio';
+            const taskType = fileObj.type.startsWith("video/") ? "video" : "audio";
 
-            setQueue(q => [...q, {
-                id: taskId,
-                originalName: fileObj.name,
-                progress: 0,
-                status: 'pending',
-                type: taskType,
-            }]);
+            setQueue((q) => [
+                ...q,
+                {
+                    id: taskId,
+                    originalName: fileObj.name,
+                    progress: 0,
+                    status: "pending",
+                    type: taskType,
+                },
+            ]);
             setIsUploadWindowVisible(true);
 
             const updateTask = (updates: Partial<UploadTask>) => {
-                setQueue(q => q.map(t => t.id === taskId ? { ...t, ...updates } : t));
+                setQueue((q) => q.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
             };
 
             try {
-                updateTask({ status: 'uploading', progress: 10 });
+                updateTask({ status: "uploading", progress: 10 });
                 // 1. Get presigned URL
                 const response = await fetch(`/api/v1/orgs/${organizationId}/uploads`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         originalName: fileObj.name,
-                        contentType: fileObj.type || 'application/octet-stream',
+                        contentType: fileObj.type || "application/octet-stream",
                         fileSize: fileObj.size,
                     }),
                 });
 
                 if (!response.ok) throw new Error(await response.text());
                 const data = await response.json();
-                
+
                 updateTask({ progress: 20 });
 
                 // 2. Upload to R2 directly with PUT using XMLHttpRequest for progress
@@ -96,37 +110,43 @@ export const MediaDropzone: React.FC<{ type: 'video' | 'audio' | 'all' }> = ({ t
                     const xhr = new XMLHttpRequest();
                     updateTask({ xhr });
 
-                    xhr.open('PUT', data.presignedUrl);
-                    xhr.setRequestHeader('Content-Type', fileObj.type || 'application/octet-stream');
-                    
+                    xhr.open("PUT", data.presignedUrl);
+                    xhr.setRequestHeader(
+                        "Content-Type",
+                        fileObj.type || "application/octet-stream"
+                    );
+
                     xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
                             const percent = (e.loaded / e.total) * 100;
                             // Map 20% to 90% for the actual upload phase
-                            updateTask({ progress: 20 + (percent * 0.7) });
+                            updateTask({ progress: 20 + percent * 0.7 });
                         }
                     };
-                    
+
                     xhr.onload = () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
                             resolve(xhr.response);
                         } else {
-                            reject(new Error('Failed to upload file to storage'));
+                            reject(new Error("Failed to upload file to storage"));
                         }
                     };
-                    xhr.onerror = () => reject(new Error('Network error during upload'));
-                    xhr.onabort = () => reject(new Error('Upload aborted'));
+                    xhr.onerror = () => reject(new Error("Network error during upload"));
+                    xhr.onabort = () => reject(new Error("Upload aborted"));
                     xhr.send(fileObj);
                 });
 
-                updateTask({ status: 'processing', progress: 90 });
+                updateTask({ status: "processing", progress: 90 });
 
                 // 3. Mark as complete
-                const completeResponse = await fetch(`/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`, {
-                    method: 'POST',
-                });
+                const completeResponse = await fetch(
+                    `/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`,
+                    {
+                        method: "POST",
+                    }
+                );
 
-                if (!completeResponse.ok) throw new Error('Failed to complete upload registration');
+                if (!completeResponse.ok) throw new Error("Failed to complete upload registration");
 
                 updateTask({ progress: 95 });
 
@@ -136,17 +156,21 @@ export const MediaDropzone: React.FC<{ type: 'video' | 'audio' | 'all' }> = ({ t
                     uploadId: data.uploadId,
                 });
 
-                updateTask({ status: 'completed', progress: 100 });
+                updateTask({ status: "completed", progress: 100 });
                 onSuccess?.("ok");
             } catch (err: any) {
-                if (err.message === 'Upload aborted') {
+                if (err.message === "Upload aborted") {
                     // Update task gracefully in case it wasn't destroyed
-                    updateTask({ status: 'error', progress: 0, errorMessage: 'Upload cancelled' });
+                    updateTask({ status: "error", progress: 0, errorMessage: "Upload cancelled" });
                     onError?.(err);
                     return;
                 }
                 console.error("Upload error", err);
-                updateTask({ status: 'error', progress: 100, errorMessage: err.message || 'Upload failed' });
+                updateTask({
+                    status: "error",
+                    progress: 100,
+                    errorMessage: err.message || "Upload failed",
+                });
                 onError?.(err);
                 message.error(`${fileObj.name} file upload failed.`);
             }
@@ -161,11 +185,11 @@ export const MediaDropzone: React.FC<{ type: 'video' | 'audio' | 'all' }> = ({ t
                 </p>
                 <p className="ant-upload-text">Click or drag file to this area to upload</p>
                 <p className="ant-upload-hint">
-                    {type === 'all'
-                       ? 'Allowed types: .mp4, .mp3, .m4a. Your media assets will be processed securely.'
-                       : type === 'video' 
-                            ? 'Allowed type: video/mp4. Your cinematic assets will be processed for web streaming.' 
-                            : 'Allowed types: .mp3, .m4a. Your sonic assets will be processed for web streaming.'}
+                    {type === "all"
+                        ? "Allowed types: .mp4, .mp3, .m4a. Your media assets will be processed securely."
+                        : type === "video"
+                          ? "Allowed type: video/mp4. Your cinematic assets will be processed for web streaming."
+                          : "Allowed types: .mp3, .m4a. Your sonic assets will be processed for web streaming."}
                 </p>
             </Dragger>
         </div>

@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import app from "@api/app";
 import { env } from "cloudflare:test";
+import app from "@api/app";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
@@ -33,15 +33,17 @@ describe("Avatar Update Flow", () => {
         client = createTestClient(app, env, cookie);
         orgId = id;
 
-        const importRes = await client.orgs.members.import(orgId, [{
-            email: "member-avatar-test@example.com",
-            name: "Test Member",
-            profile: { firstName: "Test", lastName: "Member", sex: "other" }
-        }]);
+        const importRes = await client.orgs.members.import(orgId, [
+            {
+                email: "member-avatar-test@example.com",
+                name: "Test Member",
+                profile: { firstName: "Test", lastName: "Member", sex: "other" },
+            },
+        ]);
         expect(importRes.status).toBe(200);
 
         const listRes = await client.orgs.users.list(orgId);
-        const listBody = await listRes.json() as any;
+        const listBody = (await listRes.json()) as any;
         firstMemberId = listBody.items[0].id;
     });
 
@@ -65,7 +67,7 @@ describe("Avatar Update Flow", () => {
         });
 
         expect(patchRes.status).toBe(404);
-        const body = await patchRes.json() as any;
+        const body = (await patchRes.json()) as any;
         expect(body.message).toBe("Upload not found");
     });
 
@@ -75,7 +77,7 @@ describe("Avatar Update Flow", () => {
         });
 
         if (deleteRes.status === 404) {
-            const body = await deleteRes.json() as any;
+            const body = (await deleteRes.json()) as any;
             expect(body.message).toBe("No avatar to remove");
         } else {
             expect(deleteRes.status).toBe(204);

@@ -4,23 +4,23 @@ type SendTemplateParams = {
     to: string;
     templateId: string;
     variables: Record<string, string>;
-}
+};
 
 type SendHtmlParams = {
     to: string;
     subject: string;
     html: string;
-}
+};
 
 type SendPasswordResetParams = {
     to: string;
     displayName: string;
     resetUrl: string;
-}
+};
 
 export class MailService {
     private $client: Resend;
-    private sender: string = 'Entix <donotreply@entix.org>';
+    private sender: string = "Entix <donotreply@entix.org>";
 
     constructor(apiKey: string) {
         this.$client = new Resend(apiKey);
@@ -30,8 +30,8 @@ export class MailService {
         const paginationParam = options.after
             ? { after: options.after }
             : options.before
-                ? { before: options.before }
-                : {};
+              ? { before: options.before }
+              : {};
 
         return this.$client.emails.list({
             limit: options.limit ?? 20,
@@ -71,7 +71,11 @@ export class MailService {
         }
     }
 
-    public async sendWelcomeEmailWithPasswordReset({ to, displayName, resetUrl }: SendPasswordResetParams) {
+    public async sendWelcomeEmailWithPasswordReset({
+        to,
+        displayName,
+        resetUrl,
+    }: SendPasswordResetParams) {
         return this.sendTemplate({
             to,
             templateId: "welcome-initial-password-setup",

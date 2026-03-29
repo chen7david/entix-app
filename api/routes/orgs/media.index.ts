@@ -1,6 +1,6 @@
 import { createRouter } from "@api/lib/app.lib";
-import { MediaRoutes } from "./media.routes";
 import { MediaHandlers } from "./media.handlers";
+import { MediaRoutes } from "./media.routes";
 
 export const mediaRoutes = createRouter()
     .openapi(MediaRoutes.listMedia, MediaHandlers.listMedia)

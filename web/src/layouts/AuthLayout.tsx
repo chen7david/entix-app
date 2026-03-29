@@ -1,5 +1,5 @@
-import { Outlet } from "react-router";
 import { theme } from "antd";
+import { Outlet } from "react-router";
 
 export const AuthLayout = () => {
     const { token } = theme.useToken();

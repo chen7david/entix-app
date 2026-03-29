@@ -1,5 +1,5 @@
-import type { Requester } from "./base-requester";
 import type { SignUpWithOrgDTO } from "@shared/schemas/dto/auth.dto";
+import type { Requester } from "./base-requester";
 
 /**
  * Auth API test client.

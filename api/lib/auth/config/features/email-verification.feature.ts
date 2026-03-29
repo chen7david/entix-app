@@ -1,8 +1,11 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import { MailService } from "@api/services/mailer.service";
+import type { MailService } from "@api/services/mailer.service";
 import type { BetterAuthOptions } from "better-auth";
 
-export const getEmailVerificationConfig = (ctx?: AppContext, mailer?: MailService): Partial<BetterAuthOptions> => {
+export const getEmailVerificationConfig = (
+    ctx?: AppContext,
+    mailer?: MailService
+): Partial<BetterAuthOptions> => {
     if (ctx?.env.SKIP_EMAIL_VERIFICATION === "true") {
         return {};
     }
@@ -24,7 +27,7 @@ export const getEmailVerificationConfig = (ctx?: AppContext, mailer?: MailServic
                         },
                     })
                 );
-            }
+            },
         },
     };
 };

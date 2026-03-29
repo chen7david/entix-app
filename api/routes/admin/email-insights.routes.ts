@@ -1,39 +1,44 @@
-import { createRoute, z } from "@hono/zod-openapi";
-import { HttpStatusCodes, jsonContent, HttpMethods } from "@api/helpers/http.helpers";
+import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
-import { 
-    emailDetailSchema, 
-    emailListResponseSchema, 
-    emailListQuerySchema 
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+    emailDetailSchema,
+    emailListQuerySchema,
+    emailListResponseSchema,
 } from "@shared/schemas/dto/email-insights.dto";
 
-export class EmailInsightsRoutes {
-    static tags = ['Admin - Email Insights'];
+const tags = ["Admin - Email Insights"];
 
-    static list = createRoute({
-        tags: EmailInsightsRoutes.tags,
+export const EmailInsightsRoutes = {
+    tags,
+
+    list: createRoute({
+        tags: tags,
         method: HttpMethods.GET,
-        path: '/admin/emails',
+        path: "/admin/emails",
         middleware: [requireAuth, requireSuperAdmin] as const,
         request: {
             query: emailListQuerySchema,
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(emailListResponseSchema, 'List of sent emails from Resend'),
+            [HttpStatusCodes.OK]: jsonContent(
+                emailListResponseSchema,
+                "List of sent emails from Resend"
+            ),
         },
-    });
+    }),
 
-    static get = createRoute({
-        tags: EmailInsightsRoutes.tags,
+    get: createRoute({
+        tags: tags,
         method: HttpMethods.GET,
-        path: '/admin/emails/{emailId}',
+        path: "/admin/emails/{emailId}",
         middleware: [requireAuth, requireSuperAdmin] as const,
         request: {
             params: z.object({ emailId: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(emailDetailSchema, 'Email detail from Resend'),
+            [HttpStatusCodes.OK]: jsonContent(emailDetailSchema, "Email detail from Resend"),
         },
-    });
-}
+    }),
+};

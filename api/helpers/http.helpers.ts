@@ -1,4 +1,5 @@
-export * as HttpStatusCodes from 'stoker/http-status-codes'
+export * as HttpStatusCodes from "stoker/http-status-codes";
+
 import type { ZodSchema } from "zod";
 
 export const jsonContent = <T extends ZodSchema>(schema: T, description: string) => {
@@ -20,13 +21,13 @@ export const jsonContentRequired = <T extends ZodSchema>(schema: T, description:
 };
 
 export const HttpMethods = {
-    GET: 'get',
-    POST: 'post',
-    PUT: 'put',
-    DELETE: 'delete',
-    PATCH: 'patch',
-    HEAD: 'head',
-    OPTIONS: 'options',
-    TRACE: 'trace',
-    CONNECT: 'connect',
-} as const
+    GET: "get",
+    POST: "post",
+    PUT: "put",
+    DELETE: "delete",
+    PATCH: "patch",
+    HEAD: "head",
+    OPTIONS: "options",
+    TRACE: "trace",
+    CONNECT: "connect",
+} as const;

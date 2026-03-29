@@ -1,7 +1,10 @@
-import { createRoute, z } from "@hono/zod-openapi";
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
-import { PaginationQuerySchema, createPaginatedResponseSchema } from "@shared/schemas/pagination.schema";
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+    createPaginatedResponseSchema,
+    PaginationQuerySchema,
+} from "@shared/schemas/pagination.schema";
 
 const MediaResponseSchema = z.object({
     id: z.string(),
@@ -22,14 +25,16 @@ export const MediaRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/media",
         tags: ["Media"],
-        middleware: [requirePermission('media', ['read'])] as const,
+        middleware: [requirePermission("media", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
             }),
-            query: z.object({
-                type: z.enum(["video", "audio"]).optional(),
-            }).merge(PaginationQuerySchema),
+            query: z
+                .object({
+                    type: z.enum(["video", "audio"]).optional(),
+                })
+                .merge(PaginationQuerySchema),
         },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -47,9 +52,7 @@ export const MediaRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/media",
         tags: ["Media"],
-        middleware: [
-            requirePermission('media', ['create'])
-        ] as const,
+        middleware: [requirePermission("media", ["create"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -83,9 +86,7 @@ export const MediaRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/media/{mediaId}",
         tags: ["Media"],
-        middleware: [
-            requirePermission('media', ['update'])
-        ] as const,
+        middleware: [requirePermission("media", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -119,9 +120,7 @@ export const MediaRoutes = {
         method: HttpMethods.DELETE,
         path: "/orgs/{organizationId}/media/{mediaId}",
         tags: ["Media"],
-        middleware: [
-            requirePermission('media', ['delete'])
-        ] as const,
+        middleware: [requirePermission("media", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -139,7 +138,7 @@ export const MediaRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/media/{mediaId}/play",
         tags: ["Media"],
-        middleware: [requirePermission('media', ['read'])] as const,
+        middleware: [requirePermission("media", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),

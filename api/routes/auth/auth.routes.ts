@@ -1,20 +1,30 @@
+import {
+    HttpMethods,
+    HttpStatusCodes,
+    jsonContent,
+    jsonContentRequired,
+} from "@api/helpers/http.helpers";
 import { createRoute } from "@hono/zod-openapi";
-import { signUpWithOrgSchema, signUpWithOrgResponseSchema } from "@shared/schemas/dto/auth.dto";
-import { HttpStatusCodes, jsonContent, jsonContentRequired, HttpMethods } from "@api/helpers/http.helpers";
+import { signUpWithOrgResponseSchema, signUpWithOrgSchema } from "@shared/schemas/dto/auth.dto";
 
-export class AuthRoutes {
-    static tags = ['Auth'];
+const tags = ["Auth"];
 
-    static signupWithOrg = createRoute({
-        tags: AuthRoutes.tags,
+export const AuthRoutes = {
+    tags,
+
+    signupWithOrg: createRoute({
+        tags: tags,
         method: HttpMethods.POST,
-        path: '/auth/signup-with-org',
+        path: "/auth/signup-with-org",
         summary: "Sign up a new user and create an organization",
         request: {
-            body: jsonContentRequired(signUpWithOrgSchema, 'User and Organization details'),
+            body: jsonContentRequired(signUpWithOrgSchema, "User and Organization details"),
         },
         responses: {
-            [HttpStatusCodes.CREATED]: jsonContent(signUpWithOrgResponseSchema, 'User and organization created successfully'),
+            [HttpStatusCodes.CREATED]: jsonContent(
+                signUpWithOrgResponseSchema,
+                "User and organization created successfully"
+            ),
             [HttpStatusCodes.BAD_REQUEST]: {
                 description: "Bad request",
             },
@@ -22,5 +32,5 @@ export class AuthRoutes {
                 description: "Internal server error",
             },
         },
-    });
-}
+    }),
+};

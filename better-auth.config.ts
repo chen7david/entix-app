@@ -1,9 +1,10 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { betterAuth } from "better-auth";
-import { config as loadEnv } from "dotenv";
+import { getEnvConfig } from "@api/helpers/config.helpers";
 import { betterAuthGlobalOptions } from "@api/lib/auth/config/global.config";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import Database from "better-sqlite3";
+import { config as loadEnv } from "dotenv";
+import { drizzle } from "drizzle-orm/better-sqlite3";
 
 loadEnv({ path: ".dev.vars" });
 
@@ -15,9 +16,11 @@ const url = `./.wrangler/state/v3/d1/miniflare-D1DatabaseObject/${d1DatabaseName
 const sqlite = new Database(url);
 const db = drizzle(sqlite);
 
+const config = getEnvConfig();
+
 export const auth = betterAuth({
     ...betterAuthGlobalOptions(),
-    baseURL: process.env.FRONTEND_URL!,
-    secret: process.env.BETTER_AUTH_SECRET!,
+    baseURL: config.FRONTEND_URL,
+    secret: config.BETTER_AUTH_SECRET,
     database: drizzleAdapter(db, { provider: "sqlite" }),
 });

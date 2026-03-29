@@ -1,6 +1,15 @@
 #!/bin/sh
 
-# Only regenerate worker-configuration.d.ts if wrangler.toml is staged
+# Run Biome check on staged files (lint + format + import organization)
+echo "🔍 Running Biome on staged files..."
+npm exec biome check -- --staged --write --no-errors-on-unmatched
+if [ $? -ne 0 ]; then
+  echo "❌ Biome check failed — fix the above errors and recommit."
+  exit 1
+fi
+echo "✅ Biome check passed."
+
+# Regenerate worker-configuration.d.ts if wrangler.toml is staged
 if git diff --cached --name-only | grep -q "wrangler.toml"; then
   echo "🔧 wrangler.toml changed — regenerating worker-configuration.d.ts..."
   npm run cf-typegen

@@ -1,10 +1,15 @@
 import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 
 export const userProfiles = sqliteTable("user_profiles", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id").notNull().unique().references(() => authUsers.id, { onDelete: "cascade" }),
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .unique()
+        .references(() => authUsers.id, { onDelete: "cascade" }),
     firstName: text("first_name").notNull(),
     lastName: text("last_name").notNull(),
     displayName: text("display_name"),
@@ -20,8 +25,12 @@ export const userProfiles = sqliteTable("user_profiles", {
 });
 
 export const userPhoneNumbers = sqliteTable("user_phone_numbers", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => authUsers.id, { onDelete: "cascade" }),
     countryCode: text("country_code").notNull(),
     number: text("number").notNull(),
     extension: text("extension"),
@@ -37,8 +46,12 @@ export const userPhoneNumbers = sqliteTable("user_phone_numbers", {
 });
 
 export const userAddresses = sqliteTable("user_addresses", {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-    userId: text("user_id").notNull().references(() => authUsers.id, { onDelete: "cascade" }),
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+        .notNull()
+        .references(() => authUsers.id, { onDelete: "cascade" }),
     country: text("country").notNull(),
     state: text("state").notNull(),
     city: text("city").notNull(),

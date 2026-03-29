@@ -7,14 +7,12 @@ import type { Requester } from "./base-requester";
 export function createUsersClient(request: Requester) {
     return {
         /** GET /api/v1/orgs/:orgId/users */
-        list: (orgId: string) =>
-            request(`/api/v1/orgs/${orgId}/users`),
+        list: (orgId: string) => request(`/api/v1/orgs/${orgId}/users`),
 
         /** GET /api/v1/users/:userId/profile */
         profile: {
-            get: (userId: string) =>
-                request(`/api/v1/users/${userId}/profile`),
-        }
+            get: (userId: string) => request(`/api/v1/users/${userId}/profile`),
+        },
     };
 }
 

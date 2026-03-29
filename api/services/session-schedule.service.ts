@@ -1,5 +1,5 @@
-import { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
-import { addWeeks } from "date-fns";
+import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
+import { addDays, addMonths, addWeeks } from "date-fns";
 import { HTTPException } from "hono/http-exception";
 import { nanoid } from "nanoid";
 
@@ -10,7 +10,7 @@ export type CreateSessionDTO = {
     durationMinutes: number;
     userIds: string[];
     recurrence?: {
-        frequency: "weekly";
+        frequency: "daily" | "weekly" | "monthly";
         count: number;
     };
 };
@@ -28,18 +28,38 @@ export type UpdateSessionDTO = {
 export class SessionScheduleService {
     constructor(private sessionRepo: SessionScheduleRepository) {}
 
+    private calculateNextOccurrence(startTime: number, frequency: string, offset: number): number {
+        const date = new Date(startTime);
+        switch (frequency.toLowerCase()) {
+            case "daily":
+                return addDays(date, offset).getTime();
+            case "weekly":
+                return addWeeks(date, offset).getTime();
+            case "monthly":
+                return addMonths(date, offset).getTime();
+            default:
+                return startTime;
+        }
+    }
+
     async createSession(organizationId: string, data: CreateSessionDTO) {
         const isRecurring = !!data.recurrence;
         const seriesId = isRecurring ? nanoid() : null;
-        const count = isRecurring ? data.recurrence!.count : 1;
-        const recurrenceRule = isRecurring ? `FREQ=${data.recurrence!.frequency.toUpperCase()};COUNT=${count}` : null;
+        const count = isRecurring ? (data.recurrence?.count ?? 1) : 1;
+        const recurrenceRule = isRecurring
+            ? `FREQ=${data.recurrence?.frequency.toUpperCase()};COUNT=${count}`
+            : null;
 
         const sessionsToInsert = Array.from({ length: count }).map((_, i) => ({
             id: nanoid(),
             organizationId,
             title: data.title,
             description: data.description ?? null,
-            startTime: new Date(isRecurring && data.recurrence!.frequency === "weekly" ? addWeeks(new Date(data.startTime), i).getTime() : data.startTime),
+            startTime: new Date(
+                isRecurring && data.recurrence
+                    ? this.calculateNextOccurrence(data.startTime, data.recurrence.frequency, i)
+                    : data.startTime
+            ),
             durationMinutes: data.durationMinutes,
             status: "scheduled" as const,
             seriesId,
@@ -48,8 +68,8 @@ export class SessionScheduleService {
 
         const createdSessions = await this.sessionRepo.createSessions(sessionsToInsert);
 
-        const attendancesToInsert = createdSessions.flatMap(session => 
-            data.userIds.map(userId => ({
+        const attendancesToInsert = createdSessions.flatMap((session) =>
+            data.userIds.map((userId) => ({
                 sessionId: session.id,
                 organizationId,
                 userId,
@@ -67,15 +87,39 @@ export class SessionScheduleService {
         return this.sessionRepo.getScheduleMetricsForOrg(organizationId, startDate, endDate);
     }
 
-    async getAnalyticsSessions(organizationId: string, startDate?: number, endDate?: number, tzOffset?: string) {
-        return this.sessionRepo.getSessionTrendsForOrg(organizationId, startDate, endDate, tzOffset);
+    async getAnalyticsSessions(
+        organizationId: string,
+        startDate?: number,
+        endDate?: number,
+        tzOffset?: string
+    ) {
+        return this.sessionRepo.getSessionTrendsForOrg(
+            organizationId,
+            startDate,
+            endDate,
+            tzOffset
+        );
     }
 
-    async getAnalyticsAttendance(organizationId: string, startDate?: number, endDate?: number, tzOffset?: string) {
-        return this.sessionRepo.getAttendanceTrendsForOrg(organizationId, startDate, endDate, tzOffset);
+    async getAnalyticsAttendance(
+        organizationId: string,
+        startDate?: number,
+        endDate?: number,
+        tzOffset?: string
+    ) {
+        return this.sessionRepo.getAttendanceTrendsForOrg(
+            organizationId,
+            startDate,
+            endDate,
+            tzOffset
+        );
     }
 
-    async updateSessionStatus(organizationId: string, sessionId: string, status: "scheduled" | "completed" | "cancelled") {
+    async updateSessionStatus(
+        organizationId: string,
+        sessionId: string,
+        status: "scheduled" | "completed" | "cancelled"
+    ) {
         return this.sessionRepo.updateSessionStatus(organizationId, sessionId, status);
     }
 
@@ -95,24 +139,34 @@ export class SessionScheduleService {
 
             await this.sessionRepo.deleteAllSessionAttendances(sessionId);
             if (data.userIds.length > 0) {
-                await this.sessionRepo.addAttendances(data.userIds.map(userId => ({ sessionId, organizationId, userId })));
+                await this.sessionRepo.addAttendances(
+                    data.userIds.map((userId) => ({ sessionId, organizationId, userId }))
+                );
             }
 
             if (data.status) {
                 await this.sessionRepo.updateSessionStatus(organizationId, sessionId, data.status);
             }
         } else {
-            const deletedFutureSessions = await this.sessionRepo.deleteFollowingSessions(currentSession.seriesId, currentSession.startTime);
+            const deletedFutureSessions = await this.sessionRepo.deleteFollowingSessions(
+                currentSession.seriesId,
+                currentSession.startTime
+            );
             const remainingCount = deletedFutureSessions.length;
 
             if (remainingCount > 0) {
+                const recurrenceRule = currentSession.recurrenceRule || "";
+                let frequency = "weekly";
+                if (recurrenceRule.includes("DAILY")) frequency = "daily";
+                if (recurrenceRule.includes("MONTHLY")) frequency = "monthly";
+
                 const sessionsToInsert = [];
                 for (let i = 0; i < remainingCount; i++) {
-                    let sessionStartTime = data.startTime;
-                    const isWeekly = currentSession.recurrenceRule?.includes("WEEKLY");
-                    if (isWeekly) {
-                        sessionStartTime = addWeeks(new Date(data.startTime), i).getTime();
-                    }
+                    const sessionStartTime = this.calculateNextOccurrence(
+                        data.startTime,
+                        frequency,
+                        i
+                    );
 
                     sessionsToInsert.push({
                         id: nanoid(),
@@ -149,14 +203,19 @@ export class SessionScheduleService {
                 await this.sessionRepo.updateSessionStatus(organizationId, sessionId, data.status);
             }
         }
-        
+
         return { success: true };
     }
 
     async updateAttendance(
-        organizationId: string, 
-        sessionId: string, 
-        attendances: { userId: string, absent: boolean, absenceReason?: string | null, notes?: string | null }[]
+        organizationId: string,
+        sessionId: string,
+        attendances: {
+            userId: string;
+            absent: boolean;
+            absenceReason?: string | null;
+            notes?: string | null;
+        }[]
     ) {
         const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
         if (!currentSession) {
@@ -179,9 +238,12 @@ export class SessionScheduleService {
         if (!deleteForward || !currentSession.seriesId) {
             await this.sessionRepo.deleteSessionSingle(organizationId, sessionId);
         } else {
-            await this.sessionRepo.deleteFollowingSessions(currentSession.seriesId, currentSession.startTime);
+            await this.sessionRepo.deleteFollowingSessions(
+                currentSession.seriesId,
+                currentSession.startTime
+            );
         }
-        
+
         return { success: true };
     }
 }

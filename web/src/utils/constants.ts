@@ -1,6 +1,6 @@
 /**
  * Global UI constants for the Entix Application.
- * 
+ *
  * Centralizing these values ensures uniform user experiences across different tables,
  * screens, and components while maintaining a single source of truth for design tweaks.
  */
@@ -17,9 +17,9 @@ export const UI_CONSTANTS = {
         SEARCH_TABLE: 350,
 
         /**
-         * Intended for rapid autocomplete dropdowns or command palettes where 
+         * Intended for rapid autocomplete dropdowns or command palettes where
          * users expect near-instant feedback without heavy layout thrashing.
          */
         AUTOCOMPLETE: 250,
-    }
+    },
 } as const;

@@ -6,20 +6,20 @@
  */
 media-player,
 [data-media-player] {
-    --video-border-radius: 0px !important;
-    --audio-border-radius: 0px !important;
-    --media-border-radius: 0px !important;
-    border-radius: 0px !important;
-    padding: 0px !important;
-    margin: 0px !important;
-    box-shadow: none !important;
-    border: none !important;
+    --video-border-radius: 0px;
+    --audio-border-radius: 0px;
+    --media-border-radius: 0px;
+    border-radius: 0px;
+    padding: 0px;
+    margin: 0px;
+    box-shadow: none;
+    border: none;
 }
 
 media-player::part(video),
 media-player::part(provider) {
-    border-radius: 0px !important;
-    padding: 0px !important;
-    margin: 0px !important;
-    background-color: black !important;
+    border-radius: 0px;
+    padding: 0px;
+    margin: 0px;
+    background-color: black;
 }

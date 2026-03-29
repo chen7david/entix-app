@@ -1,21 +1,15 @@
-import { Button } from 'antd'
-import cn from 'classnames'
-import { MenuOutlined } from '@ant-design/icons';
-import { useSidebar } from '@web/src/hooks/navigation/useSidebar';
+import { MenuOutlined } from "@ant-design/icons";
+import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
+import { Button } from "antd";
+import cn from "classnames";
 
-
-export const Toolbar = ({
-    children,
-    className,
-    ...rest
-}: React.HTMLAttributes<HTMLDivElement>) => {
-
+export const Toolbar = ({ children, className, ...rest }: React.HTMLAttributes<HTMLDivElement>) => {
     const { toggle } = useSidebar();
     return (
         <div
             className={cn(
-                'bg-gray-100 z-10 flex items-center sticky top-0 h-16 md:hidden px-4',
-                className,
+                "bg-gray-100 z-10 flex items-center sticky top-0 h-16 md:hidden px-4",
+                className
             )}
             {...rest}
         >
@@ -28,5 +22,5 @@ export const Toolbar = ({
                 {children}
             </div>
         </div>
-    )
-}
+    );
+};

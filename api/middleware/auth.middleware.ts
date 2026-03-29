@@ -1,9 +1,9 @@
-import { createMiddleware } from "hono/factory";
-import type { Context } from "hono";
 import { UnauthorizedError } from "@api/errors/app.error";
+import type { AppEnv } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
 import { authUserSchema } from "@shared/schemas/dto/auth.dto";
-import type { AppEnv } from "@api/helpers/types.helpers";
+import type { Context } from "hono";
+import { createMiddleware } from "hono/factory";
 
 /**
  * Validates the user session and populates context variables.
@@ -13,7 +13,7 @@ export async function validateSession(ctx: Context<AppEnv>): Promise<void> {
     const authClient = auth(ctx);
     const session = await authClient.api.getSession({ headers: ctx.req.raw.headers });
 
-    if (!session || !session.user) {
+    if (!session?.user) {
         ctx.var.logger.warn("Unauthorized: No valid session");
         throw new UnauthorizedError("Authentication required");
     }

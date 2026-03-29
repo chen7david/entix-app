@@ -1,10 +1,13 @@
-import type { AppContext } from "@api/helpers/types.helpers";
-import { MailService } from "@api/services/mailer.service";
-import type { BetterAuthOptions } from "better-auth";
 import { getUserRepository } from "@api/factories/repository.factory";
+import type { AppContext } from "@api/helpers/types.helpers";
 import { getFrontendUrl } from "@api/helpers/url.helpers";
+import type { MailService } from "@api/services/mailer.service";
+import type { BetterAuthOptions } from "better-auth";
 
-export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: MailService): Partial<BetterAuthOptions> => {
+export const getEmailAndPasswordConfig = (
+    ctx?: AppContext,
+    mailer?: MailService
+): Partial<BetterAuthOptions> => {
     const requireEmailVerification = ctx?.env.SKIP_EMAIL_VERIFICATION !== "true";
 
     return {
@@ -19,22 +22,25 @@ export const getEmailAndPasswordConfig = (ctx?: AppContext, mailer?: MailService
 
                 const emailPromise = !user.emailVerified
                     ? mailer.sendWelcomeEmailWithPasswordReset({
-                        to: user.email,
-                        displayName: user.name,
-                        resetUrl,
-                    })
+                          to: user.email,
+                          displayName: user.name,
+                          resetUrl,
+                      })
                     : mailer.sendPasswordResetEmail({
-                        to: user.email,
-                        displayName: user.name,
-                        resetUrl,
-                    });
+                          to: user.email,
+                          displayName: user.name,
+                          resetUrl,
+                      });
 
                 ctx.executionCtx.waitUntil(emailPromise);
             },
             async onPasswordReset({ user }) {
                 if (!ctx) return;
 
-                ctx.var.logger.info({ userId: user.id, email: user.email }, "Password reset successful, ensuring email is verified");
+                ctx.var.logger.info(
+                    { userId: user.id, email: user.email },
+                    "Password reset successful, ensuring email is verified"
+                );
 
                 const userRepo = getUserRepository(ctx);
                 await userRepo.updateUser(user.id, { emailVerified: true });

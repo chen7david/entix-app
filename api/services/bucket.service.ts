@@ -46,7 +46,9 @@ export class BucketService {
 
     private getClient(): AwsClient {
         if (!this.client) {
-            throw new Error(`R2 Credentials missing. Please ensure R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY are set as secrets in your Cloudflare environment.`);
+            throw new Error(
+                `R2 Credentials missing. Please ensure R2_ACCESS_KEY_ID and R2_SECRET_ACCESS_KEY are set as secrets in your Cloudflare environment.`
+            );
         }
         return this.client;
     }
@@ -61,7 +63,7 @@ export class BucketService {
         const {
             folder = "uploads",
             fileName = crypto.randomUUID(),
-            contentType = "application/octet-stream"
+            contentType = "application/octet-stream",
         } = options;
 
         const key = folder ? `${folder}/${fileName}` : fileName;
@@ -100,7 +102,7 @@ export class BucketService {
 
         const signedRequest = await this.getClient().sign(url.toString(), {
             method: "PUT",
-            aws: { signQuery: true }
+            aws: { signQuery: true },
         });
 
         return signedRequest.url;

@@ -1,11 +1,11 @@
 import { createRouter } from "@api/lib/app.lib";
 import { UserHandler } from "./user.handlers";
-import { UserRoutes } from './user.routes';
-import { UserProfileHandler } from "./user-profiles.handlers";
-import { UserProfileRoutes } from "./user-profiles.routes";
+import { UserRoutes } from "./user.routes";
+import { UserAssetHandlers, UserAssetRoutes } from "./user-assets.routes";
 import { UserAvatarHandlers } from "./user-avatar.handlers";
 import { UserAvatarRoutes } from "./user-avatar.routes";
-import { UserAssetHandlers, UserAssetRoutes } from "./user-assets.routes";
+import { UserProfileHandler } from "./user-profiles.handlers";
+import { UserProfileRoutes } from "./user-profiles.routes";
 
 export const userRoutes = createRouter()
     .openapi(UserRoutes.findAll, UserHandler.findAll)

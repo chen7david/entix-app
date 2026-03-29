@@ -1,20 +1,19 @@
-import type { AppContext } from '../helpers/types.helpers';
-import { ZodError } from 'zod';
-import { HTTPException } from 'hono/http-exception';
-import { AppError } from '../errors/app.error';
-import { z } from 'zod';
+import { HTTPException } from "hono/http-exception";
+import { ZodError, z } from "zod";
+import { AppError } from "../errors/app.error";
+import type { AppContext } from "../helpers/types.helpers";
 
 export const globalErrorHandler = async (err: Error, ctx: AppContext) => {
-    ctx.var.logger.error({ err }, 'Caught error');
+    ctx.var.logger.error({ err }, "Caught error");
 
     if (err instanceof ZodError) {
         const flattened = z.treeifyError(err);
-        ctx.var.logger.warn({ flattened }, 'Flattened Zod error');
+        ctx.var.logger.warn({ flattened }, "Flattened Zod error");
         return ctx.json(
             {
                 success: false,
-                message: 'Validation failed',
-                details: 'properties' in flattened ? flattened.properties : flattened,
+                message: "Validation failed",
+                details: "properties" in flattened ? flattened.properties : flattened,
             },
             { status: 400 }
         );
@@ -44,7 +43,7 @@ export const globalErrorHandler = async (err: Error, ctx: AppContext) => {
     return ctx.json(
         {
             success: false,
-            message: 'Internal Server Error',
+            message: "Internal Server Error",
         },
         500
     );
