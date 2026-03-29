@@ -2,6 +2,7 @@ import { AppRoutes } from "@shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import { Navigate, Route, Routes } from "react-router";
+import { CenteredSpin } from "./components/common/CenteredView";
 import { ErrorFallback } from "./components/error/ErrorFallback";
 import { GuestRoute } from "./components/guards/GuestRoute";
 import { OrgGuard } from "./components/guards/OrgGuard";
@@ -52,16 +53,29 @@ function logError(error: unknown, info: { componentStack?: string | null }) {
     console.error("Error Boundary caught an error:", error, info);
 }
 
+import { useEffect } from "react";
+import { useOrganization } from "./features/organization/hooks/useOrganization";
+
 function HomeRedirect() {
-    const { isAuthenticated, isLoading } = useAuth();
+    const { isAuthenticated, isLoading: loadingAuth } = useAuth();
+    const { checkOrganizationStatus, loading: loadingOrg } = useOrganization();
 
-    if (isLoading) return null;
+    useEffect(() => {
+        if (!loadingAuth && isAuthenticated) {
+            checkOrganizationStatus();
+        }
+    }, [isAuthenticated, loadingAuth, checkOrganizationStatus]);
 
-    if (isAuthenticated) {
-        return <Navigate to={AppRoutes.onboarding.selectOrganization} replace />;
+    if (loadingAuth || loadingOrg) {
+        return <CenteredSpin />;
     }
 
-    return <Navigate to={AppRoutes.auth.signIn} replace />;
+    if (!isAuthenticated) {
+        return <Navigate to={AppRoutes.auth.signIn} replace />;
+    }
+
+    // Keep showing spinner while checkOrganizationStatus handles navigation
+    return <CenteredSpin />;
 }
 
 export default function App() {
