@@ -1,4 +1,3 @@
-import { AppRoutes } from "@shared";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
 import { useAuth } from "@web/src/features/auth";
 import type React from "react";
@@ -8,9 +7,7 @@ interface GuestRouteProps {
     redirectPath?: string;
 }
 
-export const GuestRoute: React.FC<GuestRouteProps> = ({
-    redirectPath = AppRoutes.onboarding.selectOrganization,
-}) => {
+export const GuestRoute: React.FC<GuestRouteProps> = ({ redirectPath = "/" }) => {
     const { isAuthenticated, isLoading } = useAuth();
 
     if (isLoading) {
