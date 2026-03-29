@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import { useUpdateAvatar } from "@web/src/features/user-profiles";
 import type { UploadProps } from "antd";
-import { App, Avatar, Spin, Upload } from "antd";
+import { App, Avatar, Spin, Upload, theme } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 
@@ -20,6 +20,8 @@ interface AvatarDropzoneProps {
     className?: string;
 }
 
+const { useToken } = theme;
+
 export const AvatarDropzone = ({
     organizationId,
     userId,
@@ -28,6 +30,7 @@ export const AvatarDropzone = ({
     className = "",
 }: AvatarDropzoneProps) => {
     const { message } = App.useApp();
+    const { token } = useToken();
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
     const updateAvatarMutation = useUpdateAvatar(organizationId);
@@ -140,10 +143,18 @@ export const AvatarDropzone = ({
                     className="w-full h-full block [&_.ant-upload]:w-full [&_.ant-upload]:h-full [&_.ant-upload]:block relative group cursor-pointer"
                 >
                     <div
-                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed border-gray-300 group-hover:border-[#646cff] transition-colors"
-                        style={{ width: size, height: size, padding: "4px" }}
+                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed group-hover:border-[#646cff] transition-colors"
+                        style={{
+                            width: size,
+                            height: size,
+                            padding: "4px",
+                            borderColor: token.colorBorderSecondary,
+                        }}
                     >
-                        <div className="w-full h-full relative rounded-full overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <div
+                            className="w-full h-full relative rounded-full overflow-hidden flex items-center justify-center"
+                            style={{ backgroundColor: token.colorBgContainer }}
+                        >
                             {/* Display existing avatar or placeholder */}
                             <Avatar
                                 size={size - 12}

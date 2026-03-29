@@ -1,8 +1,11 @@
-import { Button, Result } from "antd";
+import { Button, Result, theme } from "antd";
 import type { FallbackProps } from "react-error-boundary";
+
+const { useToken } = theme;
 
 export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
     const isDevelopment = import.meta.env.DEV;
+    const { token } = useToken();
 
     // Type guard to check if error is an Error instance
     const isError = error instanceof Error;
@@ -22,7 +25,13 @@ export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
                 ]}
             >
                 {isDevelopment && (
-                    <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left">
+                    <div
+                        className="mt-4 p-4 rounded-lg text-left"
+                        style={{
+                            backgroundColor: token.colorBgContainer,
+                            border: `1px solid ${token.colorBorderSecondary}`,
+                        }}
+                    >
                         <p className="font-semibold text-red-600 mb-2">
                             Error Details (Development Only):
                         </p>
@@ -30,7 +39,7 @@ export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
                             <code>{errorMessage}</code>
                         </pre>
                         {errorStack && (
-                            <pre className="text-xs overflow-auto max-w-2xl mt-2 text-gray-600">
+                            <pre className="text-xs overflow-auto max-w-2xl mt-2 text-gray-500">
                                 <code>{errorStack}</code>
                             </pre>
                         )}

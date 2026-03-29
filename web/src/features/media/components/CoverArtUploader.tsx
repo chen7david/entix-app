@@ -1,6 +1,6 @@
 import { CloudUploadOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { App, Spin, Upload } from "antd";
+import { App, Spin, Upload, theme } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 
@@ -21,6 +21,7 @@ export const CoverArtUploader = ({
 }: CoverArtUploaderProps) => {
     const { message } = App.useApp();
     const [uploading, setUploading] = useState(false);
+    const { token } = theme.useToken();
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {
         const { file, onSuccess, onError, onProgress } = options;
@@ -103,8 +104,14 @@ export const CoverArtUploader = ({
                 modalOk="Crop & Upload"
             >
                 <Upload {...uploadProps} className="w-full block !mb-0 cover-art-uploader">
-                    <div className="w-full aspect-video relative rounded-2xl border-2 border-dashed border-gray-300 dark:border-zinc-700 group-hover:border-[#646cff] transition-colors p-[4px] cursor-pointer group">
-                        <div className="w-full h-full relative rounded-xl overflow-hidden bg-gray-50 dark:bg-zinc-800/50 flex items-center justify-center">
+                    <div
+                        className="w-full aspect-video relative rounded-2xl border-2 border-dashed group-hover:border-[#646cff] transition-colors p-[4px] cursor-pointer group"
+                        style={{ borderColor: token.colorBorderSecondary }}
+                    >
+                        <div
+                            className="w-full h-full relative rounded-xl overflow-hidden flex items-center justify-center"
+                            style={{ backgroundColor: token.colorBgContainer }}
+                        >
                             {/* Display existing cover or placeholder */}
                             {currentImageUrl ? (
                                 <img
@@ -113,7 +120,7 @@ export const CoverArtUploader = ({
                                     className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-60"
                                 />
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-zinc-500">
                                     <VideoCameraOutlined className="text-3xl mb-2 opacity-50" />
                                     <span className="text-sm font-medium">Upload Cover</span>
                                     <span className="text-xs opacity-70 mt-1">16:9 format</span>
@@ -136,7 +143,13 @@ export const CoverArtUploader = ({
                         </div>
 
                         {/* Floating Upload Indicator Badge matching Member Avatar */}
-                        <div className="absolute -bottom-2 -right-2 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-[#646cff] group-hover:border-[#646cff] transition-colors pointer-events-none z-10">
+                        <div
+                            className="absolute -bottom-2 -right-2 border rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-[#646cff] group-hover:border-[#646cff] transition-colors pointer-events-none z-10"
+                            style={{
+                                backgroundColor: token.colorBgElevated,
+                                borderColor: token.colorBorderSecondary,
+                            }}
+                        >
                             <CloudUploadOutlined className="text-base" />
                         </div>
                     </div>

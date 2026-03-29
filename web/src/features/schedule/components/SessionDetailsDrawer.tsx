@@ -1,3 +1,4 @@
+import { ThunderboltOutlined } from "@ant-design/icons";
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMembers } from "@web/src/features/organization";
@@ -67,6 +68,7 @@ export const SessionDetailsDrawer = ({
     const [debouncedMemberSearch] = useDebouncedValue(memberSearch, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
     });
+    const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
     const [memberCache, setMemberCache] = useState<
@@ -337,7 +339,64 @@ export const SessionDetailsDrawer = ({
             )}
             <Form.Item
                 name="title"
-                label="Title"
+                label={
+                    <div
+                        style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            alignItems: "center",
+                        }}
+                    >
+                        <span>Title</span>
+                        <Tooltip title="Automatically generate a session title from selected members">
+                            <Button
+                                type="link"
+                                size="small"
+                                loading={isGeneratingTitle}
+                                icon={!isGeneratingTitle && <ThunderboltOutlined />}
+                                onClick={async () => {
+                                    const selectedIds = form.getFieldValue("userIds") || [];
+                                    if (selectedIds.length === 0) {
+                                        message.warning("Select members first to generate a title");
+                                        return;
+                                    }
+
+                                    setIsGeneratingTitle(true);
+                                    // Brief synthetic delay to make the "Magic" feel robust
+                                    await new Promise((resolve) => setTimeout(resolve, 600));
+
+                                    const names = selectedIds
+                                        .map((id: string) => memberCache[id]?.name)
+                                        .filter(Boolean);
+
+                                    if (names.length === 0) {
+                                        message.warning("No member names found in cache");
+                                        setIsGeneratingTitle(false);
+                                        return;
+                                    }
+
+                                    let generatedTitle = "";
+                                    if (names.length === 1) {
+                                        generatedTitle = names[0];
+                                    } else if (names.length === 2) {
+                                        generatedTitle = `${names[0]} & ${names[1]}`;
+                                    } else {
+                                        const last = names.pop();
+                                        generatedTitle = `${names.join(", ")} & ${last}`;
+                                    }
+
+                                    form.setFieldsValue({ title: generatedTitle });
+                                    message.success("Title generated from members");
+                                    setIsGeneratingTitle(false);
+                                }}
+                                style={{ padding: 0, height: "auto", fontSize: 12, marginLeft: 8 }}
+                            >
+                                Auto-generate from members
+                            </Button>
+                        </Tooltip>
+                    </div>
+                }
                 rules={[{ required: true, message: "Please input title" }]}
             >
                 <Input placeholder="Session Title" />
@@ -697,12 +756,12 @@ export const SessionDetailsDrawer = ({
                     style={{
                         marginBottom: 24,
                         padding: 16,
-                        border: "1px solid #ffccc7",
-                        backgroundColor: "#fff2f0",
+                        border: "1px solid rgba(255, 77, 79, 0.3)", // Translucent red border
+                        backgroundColor: "rgba(255, 77, 79, 0.05)", // Very subtle red tint
                         borderRadius: 8,
                     }}
                 >
-                    <Text strong style={{ fontSize: 16, display: "block", color: "#cf1322" }}>
+                    <Text strong style={{ fontSize: 16, display: "block", color: "#ff4d4f" }}>
                         Danger Zone
                     </Text>
 
