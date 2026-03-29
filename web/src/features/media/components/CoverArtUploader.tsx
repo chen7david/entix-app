@@ -1,6 +1,6 @@
 import { CloudUploadOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import type { UploadProps } from "antd";
-import { App, Spin, Upload, theme } from "antd";
+import { App, Spin, theme, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 

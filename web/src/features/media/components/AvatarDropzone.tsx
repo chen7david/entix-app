@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import { useUpdateAvatar } from "@web/src/features/user-profiles";
 import type { UploadProps } from "antd";
-import { App, Avatar, Spin, Upload, theme } from "antd";
+import { App, Avatar, Spin, theme, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
 import { useState } from "react";
 
