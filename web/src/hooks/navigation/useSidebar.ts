@@ -1,6 +1,6 @@
+import { useAuth } from "@web/src/features/auth";
 import { atom, useAtom } from "jotai";
 import { useEffect } from "react";
-import { useAuth } from "../auth/useAuth";
 
 const sidebarOpenAtom = atom(false);
 

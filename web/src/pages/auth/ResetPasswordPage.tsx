@@ -2,8 +2,8 @@ import { AppRoutes } from "@shared/constants/routes";
 import {
     ResetPasswordForm,
     type ResetPasswordValues,
-} from "@web/src/components/auth/ResetPasswordForm";
-import { useResetPassword } from "@web/src/hooks/auth/useAuth";
+    useResetPassword,
+} from "@web/src/features/auth";
 import { App, Button, Card, Result, Typography } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";

@@ -8,9 +8,7 @@ import {
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
-import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { useMembers } from "@web/src/hooks/auth/useMembers";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useInvitations, useMembers, useOrganization } from "@web/src/features/organization";
 import type { MenuProps } from "antd";
 import {
     Button,

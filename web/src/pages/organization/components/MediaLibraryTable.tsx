@@ -6,9 +6,7 @@ import {
 } from "@ant-design/icons";
 import type { Media } from "@shared/db/schema";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { MediaPlayer } from "@web/src/components/Media/MediaPlayer";
-import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
-import { useMedia } from "@web/src/hooks/organization/useMedia";
+import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     Button,

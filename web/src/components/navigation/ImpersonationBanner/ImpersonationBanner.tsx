@@ -1,5 +1,5 @@
 import { UserOutlined } from "@ant-design/icons";
-import { useStopImpersonating } from "@web/src/hooks/auth/useAuth";
+import { useStopImpersonating } from "@web/src/features/auth";
 import { useSession } from "@web/src/lib/auth-client";
 import { Alert, App, Button } from "antd";
 import type React from "react";

@@ -15,8 +15,7 @@ import {
     YoutubeOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared/constants/routes";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Menu, type MenuProps } from "antd";
 import type React from "react";

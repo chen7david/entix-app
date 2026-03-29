@@ -1,6 +1,6 @@
 import { AppRoutes } from "@shared/constants/routes";
-import { useVerifyEmail } from "@web/src/hooks/auth/useAuth";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useVerifyEmail } from "@web/src/features/auth";
+import { useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin, Typography } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -32,7 +32,7 @@ export const VerifyEmailPage: React.FC = () => {
                 },
             },
             {
-                onSuccess: (response) => {
+                onSuccess: (response: any) => {
                     const data = response.data as { status?: boolean } | null;
                     if (data?.status) {
                         message.success("Email verified successfully!");

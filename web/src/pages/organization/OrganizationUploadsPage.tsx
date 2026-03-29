@@ -10,9 +10,8 @@ import {
 import type { UploadDto } from "@shared/schemas/dto/upload.dto";
 import { getAssetUrl } from "@shared/utils/image-url";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { Uploader } from "@web/src/components/Upload/Uploader";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useDeleteUpload, useOrganizationUploads } from "@web/src/hooks/organization/useUploads";
+import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
+import { useOrganization } from "@web/src/features/organization";
 import {
     Button,
     Card,

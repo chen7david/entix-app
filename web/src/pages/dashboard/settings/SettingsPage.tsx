@@ -1,7 +1,6 @@
 import { SettingOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { ThemeSelector } from "@web/src/components/profile/ThemeSelector";
-import { TimezoneSelector } from "@web/src/components/profile/TimezoneSelector";
+import { ThemeSelector, TimezoneSelector } from "@web/src/features/user-profiles";
 import { Card, Col, Row, Space, Typography } from "antd";
 
 const { Title, Text } = Typography;

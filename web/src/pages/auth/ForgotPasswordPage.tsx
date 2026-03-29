@@ -2,8 +2,8 @@ import { AppRoutes } from "@shared/constants/routes";
 import {
     ForgotPasswordForm,
     type ForgotPasswordValues,
-} from "@web/src/components/auth/ForgotPasswordForm";
-import { useForgotPassword } from "@web/src/hooks/auth/useAuth";
+    useForgotPassword,
+} from "@web/src/features/auth";
 import { App, Button, Card, Result, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";

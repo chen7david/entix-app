@@ -2,8 +2,8 @@ import { AppRoutes } from "@shared/constants/routes";
 import {
     SignUpWithOrgForm,
     type SignUpWithOrgValues,
-} from "@web/src/components/auth/SignUpWithOrgForm";
-import { useSignUpWithOrg } from "@web/src/hooks/auth/useAuth";
+    useSignUpWithOrg,
+} from "@web/src/features/auth";
 import { App, Card, Typography } from "antd";
 import type React from "react";
 import { useNavigate } from "react-router";

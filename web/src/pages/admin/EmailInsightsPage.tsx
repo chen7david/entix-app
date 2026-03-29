@@ -5,11 +5,7 @@ import {
     WarningOutlined,
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import {
-    type EmailEvent,
-    type EmailRow,
-    useAdminEmails,
-} from "@web/src/hooks/admin/useAdminEmails";
+import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/features/admin";
 import {
     Alert,
     Card,

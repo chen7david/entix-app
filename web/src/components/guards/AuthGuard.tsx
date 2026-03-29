@@ -1,6 +1,6 @@
 import { AppRoutes } from "@shared/constants/routes";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { useAuth } from "@web/src/features/auth";
 import type React from "react";
 import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";

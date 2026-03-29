@@ -1,5 +1,4 @@
-import { OrganizationSwitcher } from "@web/src/components/organization/OrganizationSwitcher";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { OrganizationSwitcher, useOrganization } from "@web/src/features/organization";
 import { Spin, Typography } from "antd";
 import React from "react";
 

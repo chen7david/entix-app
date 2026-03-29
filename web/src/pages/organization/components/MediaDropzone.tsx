@@ -1,11 +1,11 @@
 import { InboxOutlined } from "@ant-design/icons";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useMedia } from "@web/src/hooks/organization/useMedia";
 import {
     isUploadWindowVisibleAtom,
     type UploadTask,
     uploadQueueAtom,
-} from "@web/src/store/upload.store";
+    useMedia,
+} from "@web/src/features/media";
+import { useOrganization } from "@web/src/features/organization";
 import type { UploadProps } from "antd";
 import { App, Upload } from "antd";
 import { useSetAtom } from "jotai";

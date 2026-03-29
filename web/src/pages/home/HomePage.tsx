@@ -9,13 +9,10 @@ import {
     WarningOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared/constants/routes";
-import { SessionVolumeChart } from "@web/src/components/analytics/SessionVolumeChart";
-import { DashboardMetricCards } from "@web/src/components/dashboard/DashboardMetricCards";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useBulkMembers } from "@web/src/hooks/api/bulk-members.hooks";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
-import { useAnalytics } from "@web/src/hooks/useAnalytics";
+import { SessionVolumeChart, useAnalytics } from "@web/src/features/analytics";
+import { DashboardMetricCards } from "@web/src/features/dashboard";
+import { useBulkMembers, useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
 import { Alert, Button, Card, Col, Divider, Row, Space, Typography } from "antd";
 import type React from "react";

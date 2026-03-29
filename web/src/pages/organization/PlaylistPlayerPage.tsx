@@ -6,12 +6,10 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared/constants/routes";
-import { MediaPlayer } from "@web/src/components/Media/MediaPlayer";
 // useOrganization import removed
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
-import { useMedia } from "@web/src/hooks/organization/useMedia";
-import { usePlaylists } from "@web/src/hooks/organization/usePlaylists";
+import { MediaPlayer, useMedia, usePlaylists } from "@web/src/features/media";
+import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";

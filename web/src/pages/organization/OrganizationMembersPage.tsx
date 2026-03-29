@@ -13,15 +13,15 @@ import {
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
-import { MemberRolesForm } from "@web/src/features/user-profiles/MemberRolesForm";
-import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
-import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
-import { useMembers } from "@web/src/hooks/auth/useMembers";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useCreateMember } from "@web/src/hooks/organization/useCreateMember";
-import { useRemoveAvatar } from "@web/src/hooks/organization/useUpdateAvatar";
+import { useAuth } from "@web/src/features/auth";
+import { AvatarDropzone } from "@web/src/features/media";
+import { useCreateMember, useMembers, useOrganization } from "@web/src/features/organization";
+import {
+    MemberRolesForm,
+    UserContactList,
+    UserProfileForm,
+    useRemoveAvatar,
+} from "@web/src/features/user-profiles";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";

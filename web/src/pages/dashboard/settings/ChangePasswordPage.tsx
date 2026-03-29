@@ -1,12 +1,11 @@
 import { AppRoutes } from "@shared/constants/routes";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import {
     ChangePasswordForm,
     type ChangePasswordValues,
-} from "@web/src/components/auth/ChangePasswordForm";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useChangePassword } from "@web/src/hooks/auth/useAuth";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
+    useChangePassword,
+} from "@web/src/features/auth";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 // Removed useNavigate
 import { App, Card, Typography } from "antd";
 import type React from "react";

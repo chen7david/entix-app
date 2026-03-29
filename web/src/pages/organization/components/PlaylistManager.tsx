@@ -25,10 +25,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AppRoutes } from "@shared/constants/routes";
-import { CoverArtUploader } from "@web/src/components/Upload/CoverArtUploader";
-import { useOrgNavigate } from "@web/src/hooks/navigation/useOrgNavigate";
-import { useMedia } from "@web/src/hooks/organization/useMedia";
-import { usePlaylists } from "@web/src/hooks/organization/usePlaylists";
+import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
+import { useOrgNavigate } from "@web/src/features/organization";
 import {
     App,
     Button,

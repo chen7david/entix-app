@@ -1,6 +1,5 @@
-import { SignInForm, type SignInValues } from "@web/src/components/auth/SignInForm";
-import { useSignIn } from "@web/src/hooks/auth/useAuth";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { SignInForm, type SignInValues, useSignIn } from "@web/src/features/auth";
+import { useOrganization } from "@web/src/features/organization";
 import { App, Card, Typography } from "antd";
 import type React from "react";
 
@@ -23,7 +22,7 @@ export const SignInPage: React.FC = () => {
                     message.success("Signed in successfully!");
                     await checkOrganizationStatus();
                 },
-                onError: (error) => {
+                onError: (error: any) => {
                     message.error(error.message || "Failed to sign in");
                 },
             }

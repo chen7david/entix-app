@@ -1,7 +1,7 @@
 import { BarChartOutlined, SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useAdminUsers } from "@web/src/hooks/admin/useAdminUsers";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
+import { useAdminUsers } from "@web/src/features/admin";
+import { useAuth } from "@web/src/features/auth";
 import { Card, Col, Row, Statistic, Tag, Typography } from "antd";
 import type React from "react";
 

@@ -1,4 +1,4 @@
-import { useUserPreferences } from "@web/src/hooks/auth/useUserPreferences";
+import { useUserPreferences } from "@web/src/features/auth";
 import { App as AntApp, ConfigProvider } from "antd";
 import type React from "react";
 import { getThemeConfig } from "../theme/tokens";

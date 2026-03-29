@@ -1,7 +1,6 @@
 import { SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
-import { UserTable } from "@web/src/components/admin/UserTable";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useAdminUsers } from "@web/src/hooks/admin/useAdminUsers";
+import { UserTable, useAdminUsers } from "@web/src/features/admin";
 import { Card, Col, Row, Statistic, Typography } from "antd";
 import type React from "react";
 

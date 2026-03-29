@@ -7,16 +7,10 @@ import {
     UserAddOutlined,
 } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import {
-    SignUpWithOrgForm,
-    type SignUpWithOrgValues,
-} from "@web/src/components/auth/SignUpWithOrgForm";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { CreateOrganizationForm } from "@web/src/components/organization/CreateOrganizationForm";
-import {
-    useAdminCreateUserWithOrg,
-    useAdminOrganizations,
-} from "@web/src/hooks/admin/useAdminOrganizations";
+import { useAdminCreateUserWithOrg, useAdminOrganizations } from "@web/src/features/admin";
+import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
+import { CreateOrganizationForm } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import {

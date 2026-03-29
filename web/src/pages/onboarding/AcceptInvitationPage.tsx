@@ -1,7 +1,6 @@
 import { AppRoutes } from "@shared/constants/routes";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
-import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useAuth } from "@web/src/features/auth";
+import { useInvitations, useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";

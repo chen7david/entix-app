@@ -8,12 +8,12 @@ import {
     SafetyOutlined,
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useAuth } from "@web/src/hooks/auth/useAuth";
 import {
+    useAuth,
     useListSessions,
     useRevokeOtherSessions,
     useRevokeSession,
-} from "@web/src/hooks/auth/useSessions";
+} from "@web/src/features/auth";
 import {
     Button,
     Card,

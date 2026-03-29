@@ -1,5 +1,5 @@
 import { AppRoutes } from "@shared/constants/routes";
-import { useSignOut } from "@web/src/hooks/auth/useAuth";
+import { useSignOut } from "@web/src/features/auth";
 import { Button, Card, Typography } from "antd";
 import type React from "react";
 import { useNavigate } from "react-router";

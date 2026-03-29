@@ -1,7 +1,7 @@
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
 import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
-import { GlobalUploadManager } from "@web/src/components/Upload/GlobalUploadManager";
+import { GlobalUploadManager } from "@web/src/features/media";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
 

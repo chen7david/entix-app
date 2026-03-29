@@ -2,11 +2,13 @@ import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared/constants/routes";
 import { getAvatarUrl } from "@shared/utils/image-url";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { PasswordUpdateForm } from "@web/src/components/profile/PasswordUpdateForm";
-import { AvatarDropzone } from "@web/src/components/Upload/AvatarDropzone";
-import { UserContactList } from "@web/src/features/user-profiles/UserContactList";
-import { UserProfileForm } from "@web/src/features/user-profiles/UserProfileForm";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { AvatarDropzone } from "@web/src/features/media";
+import { useOrganization } from "@web/src/features/organization";
+import {
+    PasswordUpdateForm,
+    UserContactList,
+    UserProfileForm,
+} from "@web/src/features/user-profiles";
 import { DateUtils } from "@web/src/utils/date";
 import { App, Avatar, Button, Card, Col, Divider, Row, Spin, Tooltip, Typography } from "antd";
 import type React from "react";

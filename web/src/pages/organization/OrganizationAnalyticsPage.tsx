@@ -1,9 +1,11 @@
-import { AnalyticsMetricCards } from "@web/src/components/analytics/AnalyticsMetricCards";
-import { AttendanceTrendChart } from "@web/src/components/analytics/AttendanceTrendChart";
-import { SessionVolumeChart } from "@web/src/components/analytics/SessionVolumeChart";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useAnalytics } from "@web/src/hooks/useAnalytics";
+import {
+    AnalyticsMetricCards,
+    AttendanceTrendChart,
+    SessionVolumeChart,
+    useAnalytics,
+} from "@web/src/features/analytics";
+import { useOrganization } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
 import { Col, DatePicker, Row, Select, Typography } from "antd";
 import { useEffect } from "react";

@@ -7,8 +7,7 @@ import {
     SearchOutlined,
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useInvitations } from "@web/src/hooks/auth/useInvitations";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useInvitations, useOrganization } from "@web/src/features/organization";
 import {
     Button,
     Card,

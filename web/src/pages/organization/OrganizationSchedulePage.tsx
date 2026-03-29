@@ -9,10 +9,9 @@ import {
 } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import type { SessionSubmitPayload } from "@web/src/components/schedule/SessionDetailsDrawer";
-import { SessionDetailsDrawer } from "@web/src/components/schedule/SessionDetailsDrawer";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
-import { useSchedule, useScheduleMetrics } from "@web/src/hooks/useSchedule";
+import { useOrganization } from "@web/src/features/organization";
+import type { SessionSubmitPayload } from "@web/src/features/schedule";
+import { SessionDetailsDrawer, useSchedule, useScheduleMetrics } from "@web/src/features/schedule";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
 import {

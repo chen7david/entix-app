@@ -6,8 +6,7 @@ import {
     UploadOutlined,
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { useBulkMembers } from "@web/src/hooks/api/bulk-members.hooks";
-import { useOrganization } from "@web/src/hooks/auth/useOrganization";
+import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import { Alert, Button, Card, Collapse, Divider, Space, Statistic, Typography, Upload } from "antd";
 import type React from "react";
 
