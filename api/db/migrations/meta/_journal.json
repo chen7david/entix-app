@@ -1,41 +1,48 @@
 {
-    "version": "7",
-    "dialect": "sqlite",
-    "entries": [
-        {
-            "idx": 0,
-            "version": "6",
-            "when": 1774194855380,
-            "tag": "0000_fearless_kulan_gath",
-            "breakpoints": true
-        },
-        {
-            "idx": 1,
-            "version": "6",
-            "when": 1774197088413,
-            "tag": "0001_seed_root",
-            "breakpoints": true
-        },
-        {
-            "idx": 2,
-            "version": "6",
-            "when": 1774213740410,
-            "tag": "0002_absent_paibok",
-            "breakpoints": true
-        },
-        {
-            "idx": 3,
-            "version": "6",
-            "when": 1774517862107,
-            "tag": "0003_common_the_spike",
-            "breakpoints": true
-        },
-        {
-            "idx": 4,
-            "version": "6",
-            "when": 1774519520785,
-            "tag": "0004_graceful_donald_blake",
-            "breakpoints": true
-        }
-    ]
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1774194855380,
+      "tag": "0000_fearless_kulan_gath",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1774197088413,
+      "tag": "0001_seed_root",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774213740410,
+      "tag": "0002_absent_paibok",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1774517862107,
+      "tag": "0003_common_the_spike",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1774519520785,
+      "tag": "0004_graceful_donald_blake",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1774825616760,
+      "tag": "0005_tough_kabuki",
+      "breakpoints": true
+    }
+  ]
 }

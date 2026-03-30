@@ -1,0 +1,180 @@
+import { createFinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
+import { financialAccounts } from "@shared/db/schema/financial-accounts.schema";
+import { financialCurrencies } from "@shared/db/schema/financial-currencies.schema";
+import { financialCurrencySeed } from "@shared/db/seed/financial-currencies";
+import { beforeEach, describe, expect, it } from "vitest";
+import { createTestDb, type TestDb } from "../lib/utils";
+
+describe("financialAccountsRepository", () => {
+    let db: TestDb;
+    let repo: ReturnType<typeof createFinancialAccountsRepository>;
+
+    const BASE_INPUT = {
+        ownerId: "user_test_01",
+        ownerType: "user" as const,
+        currencyId: "fcur_usd",
+        name: "Personal Wallet",
+    };
+
+    beforeEach(async () => {
+        db = await createTestDb();
+        repo = createFinancialAccountsRepository(db as any);
+
+        // Clear tables (order matters for FKs)
+        await db.delete(financialAccounts);
+        await db.delete(financialCurrencies);
+
+        // Seed required currencies
+        await db.insert(financialCurrencies).values(financialCurrencySeed);
+    });
+
+    // ─── create ──────────────────────────────────────────────────────────────────
+
+    describe("create", () => {
+        it("returns account with correct defaults", async () => {
+            const account = await repo.create(BASE_INPUT);
+
+            expect(account.id).toMatch(/^facc_/);
+            expect(account.ownerId).toBe("user_test_01");
+            expect(account.ownerType).toBe("user");
+            expect(account.currencyId).toBe("fcur_usd");
+            expect(account.name).toBe("Personal Wallet");
+            expect(account.balanceCents).toBe(0);
+            expect(account.isActive).toBe(true);
+            expect(account.archivedAt).toBeNull();
+            expect(account.createdAt).toBeInstanceOf(Date);
+        });
+
+        it("creates an org account", async () => {
+            const account = await repo.create({
+                ownerId: "org_test_01",
+                ownerType: "org",
+                currencyId: "fcur_cad",
+                name: "Store Revenue",
+            });
+            expect(account.ownerType).toBe("org");
+            expect(account.currencyId).toBe("fcur_cad");
+        });
+
+        it("allows multiple accounts per owner", async () => {
+            await repo.create(BASE_INPUT);
+            await repo.create({ ...BASE_INPUT, name: "Savings" });
+            const results = await repo.findActiveByOwner("user_test_01", "user");
+            expect(results).toHaveLength(2);
+        });
+
+        it("throws on unknown currencyId (FK violation)", async () => {
+            await expect(
+                repo.create({ ...BASE_INPUT, currencyId: "fcur_nonexistent" })
+            ).rejects.toThrow();
+        });
+    });
+
+    // ─── findById ────────────────────────────────────────────────────────────────
+
+    describe("findById", () => {
+        it("returns account when found", async () => {
+            const created = await repo.create(BASE_INPUT);
+            const found = await repo.findById(created.id as string);
+            expect(found?.id).toBe(created.id);
+        });
+
+        it("returns undefined when not found", async () => {
+            const found = await repo.findById("facc_ghost");
+            expect(found).toBeUndefined();
+        });
+    });
+
+    // ─── findActiveByOwner ───────────────────────────────────────────────────────
+
+    describe("findActiveByOwner", () => {
+        it("excludes deactivated accounts", async () => {
+            const active = await repo.create(BASE_INPUT);
+            const inactive = await repo.create({ ...BASE_INPUT, name: "Inactive" });
+            await repo.deactivate(inactive.id as string);
+
+            const results = await repo.findActiveByOwner("user_test_01", "user");
+            expect(results).toHaveLength(1);
+            expect(results[0].id).toBe(active.id);
+        });
+
+        it("excludes archived accounts", async () => {
+            const active = await repo.create(BASE_INPUT);
+            const archived = await repo.create({ ...BASE_INPUT, name: "Archived" });
+            await repo.archive(archived.id as string);
+
+            const results = await repo.findActiveByOwner("user_test_01", "user");
+            expect(results).toHaveLength(1);
+            expect(results[0].id).toBe(active.id);
+        });
+
+        it("does not return other owners accounts", async () => {
+            await repo.create(BASE_INPUT);
+            await repo.create({
+                ownerId: "org_test_01",
+                ownerType: "org",
+                currencyId: "fcur_usd",
+                name: "Org Revenue",
+            });
+
+            const results = await repo.findActiveByOwner("user_test_01", "user");
+            expect(results).toHaveLength(1);
+            expect(results[0].ownerType).toBe("user");
+        });
+    });
+
+    // ─── deactivate ──────────────────────────────────────────────────────────────
+
+    describe("deactivate", () => {
+        it("sets isActive to false", async () => {
+            const account = await repo.create(BASE_INPUT);
+            const updated = await repo.deactivate(account.id as string);
+            expect(updated.isActive).toBe(false);
+        });
+
+        it("deactivated account is still findable by id", async () => {
+            const account = await repo.create(BASE_INPUT);
+            await repo.deactivate(account.id as string);
+            const found = await repo.findById(account.id as string);
+            expect(found).toBeDefined();
+            expect(found?.isActive).toBe(false);
+        });
+    });
+
+    // ─── archive ─────────────────────────────────────────────────────────────────
+
+    describe("archive", () => {
+        it("sets archivedAt to a timestamp", async () => {
+            const account = await repo.create(BASE_INPUT);
+            const updated = await repo.archive(account.id as string);
+            expect(updated.archivedAt).toBeInstanceOf(Date);
+        });
+
+        it("archived account is still findable by id", async () => {
+            const account = await repo.create(BASE_INPUT);
+            await repo.archive(account.id as string);
+            const found = await repo.findById(account.id as string);
+            expect(found?.archivedAt).not.toBeNull();
+        });
+
+        it("account can be both deactivated and archived", async () => {
+            const account = await repo.create(BASE_INPUT);
+            await repo.deactivate(account.id as string);
+            await repo.archive(account.id as string);
+            const found = await repo.findById(account.id as string);
+            expect(found?.isActive).toBe(false);
+            expect(found?.archivedAt).toBeInstanceOf(Date);
+        });
+    });
+
+    // ─── no delete ───────────────────────────────────────────────────────────────
+
+    describe("delete must not exist", () => {
+        it("exposes no delete or remove method", () => {
+            expect((repo as any).delete).toBeUndefined();
+            expect((repo as any).remove).toBeUndefined();
+            expect((repo as any).hardDelete).toBeUndefined();
+            expect((repo as any).destroy).toBeUndefined();
+        });
+    });
+});
