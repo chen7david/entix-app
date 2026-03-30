@@ -41,11 +41,7 @@ export class FinancialAccountsRepository {
         return account ?? null;
     }
 
-    /**
-     * Finds an account by its unique ID.
-     * Returns null if not found.
-     */
-    async findById(id: string): Promise<FinancialAccount | null> {
+    async findAccountById(id: string): Promise<FinancialAccount | null> {
         const account = await this.db.query.financialAccounts.findFirst({
             where: eq(financialAccounts.id, id),
         });

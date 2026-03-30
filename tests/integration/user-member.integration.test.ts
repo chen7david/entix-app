@@ -35,20 +35,20 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
 
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
-        const spy = vi.spyOn(MemberRepository.prototype, "prepareAdd").mockImplementation(function (
-            this: any
-        ) {
-            const getDbClient = require("@api/factories/db.factory").getDbClient;
-            return getDbClient((this as any).ctx)
-                .insert(schema.authMembers)
-                .values({
-                    id: "pre-existing-conflict", // Will conflict with existing member ID
-                    organizationId: orgId, // Must match foreign key
-                    userId: "will-not-save", // Assume uId
-                    role: "member",
-                    createdAt: new Date(),
-                });
-        });
+        const spy = vi
+            .spyOn(MemberRepository.prototype, "createMemberQuery")
+            .mockImplementation(function (this: any) {
+                const getDbClient = require("@api/factories/db.factory").getDbClient;
+                return getDbClient((this as any).ctx)
+                    .insert(schema.authMembers)
+                    .values({
+                        id: "pre-existing-conflict", // Will conflict with existing member ID
+                        organizationId: orgId, // Must match foreign key
+                        userId: "will-not-save", // Assume uId
+                        role: "member",
+                        createdAt: new Date(),
+                    });
+            });
 
         const payload = createMockMemberCreationPayload({ email: targetEmail, name: dummyName });
         const realClient = createTestClient(app, env, cookie);

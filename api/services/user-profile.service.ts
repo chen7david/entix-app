@@ -1,13 +1,25 @@
 import { BadRequestError } from "@api/errors/app.error";
 import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
 import type * as schema from "@shared/db/schema";
+import { BaseService } from "./base.service";
 
-export class UserProfileService {
-    constructor(private profileRepo: UserProfileRepository) {}
+export class UserProfileService extends BaseService {
+    constructor(private profileRepo: UserProfileRepository) {
+        super();
+    }
+
+    async findProfileByUserId(userId: string) {
+        return await this.profileRepo.findProfileByUserId(userId);
+    }
+
+    async getProfileByUserId(userId: string) {
+        const profile = await this.findProfileByUserId(userId);
+        return this.assertExists(profile, `Profile for user ${userId} not found`);
+    }
 
     async getProfileAggregate(userId: string) {
         const [profile, phoneNumbers, addresses] = await Promise.all([
-            this.profileRepo.findProfileByUserId(userId),
+            this.findProfileByUserId(userId),
             this.profileRepo.findPhoneNumbersByUserId(userId),
             this.profileRepo.findAddressesByUserId(userId),
         ]);

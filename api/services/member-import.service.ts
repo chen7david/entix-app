@@ -3,6 +3,7 @@ import type { SocialMediaRepository } from "@api/repositories/social-media.repos
 import type { UserRepository } from "@api/repositories/user.repository";
 import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
 import type { OrgRole } from "@shared/auth/permissions";
+import type * as schema from "@shared/db/schema";
 import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 import { nanoid } from "nanoid";
 
@@ -79,8 +80,10 @@ export class MemberImportService {
             }
             const memberSet = new Set(existingMembers.map((m) => m.userId));
 
-            const socialTypes = await this.socialRepo.findAllSocialMediaTypes();
-            const socialTypeMap = new Map(socialTypes.map((t) => [t.name.toLowerCase(), t.id]));
+            const socialTypes = await this.socialRepo.findSocialMediaTypes();
+            const socialTypeMap = new Map(
+                socialTypes.map((t: schema.SocialMediaType) => [t.name.toLowerCase(), t.id])
+            );
 
             const enforcedRole: OrgRole = "member";
 
@@ -138,7 +141,7 @@ export class MemberImportService {
 
                 if (isNewUser || !memberSet.has(targetUserId)) {
                     userBatch.push(
-                        this.memberRepo.prepareAdd(
+                        this.memberRepo.createMemberQuery(
                             nanoid(),
                             organizationId,
                             targetUserId,
@@ -232,7 +235,7 @@ export class MemberImportService {
                                 this.profileRepo.prepareInsertSocialMedia({
                                     id: s.id || nanoid(),
                                     userId: targetUserId,
-                                    socialMediaTypeId: typeId,
+                                    socialMediaTypeId: typeId as string,
                                     urlOrHandle: s.urlOrHandle,
                                     createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
                                     updatedAt: s.updatedAt ? new Date(s.updatedAt) : new Date(),

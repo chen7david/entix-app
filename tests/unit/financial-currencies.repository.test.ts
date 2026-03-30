@@ -33,15 +33,15 @@ describe("FinancialCurrenciesRepository", () => {
         });
     });
 
-    describe("findById", () => {
+    describe("findCurrencyById", () => {
         it("returns currency when found", async () => {
             const created = await repo.create(BASE_INPUT);
-            const found = await repo.findById(created.id);
+            const found = await repo.findCurrencyById(created.id);
             expect(found?.id).toBe(created.id);
         });
 
         it("returns null when not found", async () => {
-            const found = await repo.findById("fcur_ghost");
+            const found = await repo.findCurrencyById("fcur_ghost");
             expect(found).toBeNull();
         });
     });

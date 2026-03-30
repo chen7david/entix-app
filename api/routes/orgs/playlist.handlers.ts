@@ -1,4 +1,3 @@
-import { NotFoundError } from "@api/errors/app.error";
 import { getPlaylistService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
@@ -30,9 +29,6 @@ export class PlaylistHandlers {
         const playlistService = getPlaylistService(ctx);
 
         const updated = await playlistService.updatePlaylist(organizationId, playlistId, updates);
-        if (!updated) {
-            throw new NotFoundError(`Playlist with id '${playlistId}' not found`);
-        }
         ctx.var.logger.info({ organizationId, playlistId }, "Playlist updated");
 
         return ctx.json(updated, HttpStatusCodes.OK);

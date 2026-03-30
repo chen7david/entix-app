@@ -33,29 +33,31 @@ export class UploadRepository {
         return upload;
     }
 
-    async findById(id: string, organizationId: string): Promise<schema.Upload | undefined> {
-        return await this.db.query.uploads.findFirst({
+    async findUploadById(id: string, organizationId: string): Promise<schema.Upload | null> {
+        const upload = await this.db.query.uploads.findFirst({
             where: and(
                 eq(schema.uploads.id, id),
                 eq(schema.uploads.organizationId, organizationId)
             ),
         });
+        return upload ?? null;
     }
 
-    async findByUrl(url: string, organizationId: string): Promise<schema.Upload | undefined> {
-        return await this.db.query.uploads.findFirst({
+    async findUploadByUrl(url: string, organizationId: string): Promise<schema.Upload | null> {
+        const upload = await this.db.query.uploads.findFirst({
             where: and(
                 eq(schema.uploads.url, url),
                 eq(schema.uploads.organizationId, organizationId)
             ),
         });
+        return upload ?? null;
     }
 
     async updateStatus(
         id: string,
         organizationId: string,
         status: "pending" | "completed" | "failed"
-    ): Promise<schema.Upload | undefined> {
+    ): Promise<schema.Upload | null> {
         const [upload] = await this.db
             .update(schema.uploads)
             .set({ status })
@@ -63,10 +65,10 @@ export class UploadRepository {
                 and(eq(schema.uploads.id, id), eq(schema.uploads.organizationId, organizationId))
             )
             .returning();
-        return upload;
+        return upload ?? null;
     }
 
-    async findAllByOrganization(organizationId: string): Promise<schema.Upload[]> {
+    async findUploadsByOrganization(organizationId: string): Promise<schema.Upload[]> {
         return await this.db
             .select()
             .from(schema.uploads)
@@ -101,29 +103,31 @@ export class UserUploadRepository {
         return upload;
     }
 
-    async findById(id: string, userId: string): Promise<schema.UserUpload | undefined> {
-        return await this.db.query.userUploads.findFirst({
+    async findUploadById(id: string, userId: string): Promise<schema.UserUpload | null> {
+        const upload = await this.db.query.userUploads.findFirst({
             where: and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)),
         });
+        return upload ?? null;
     }
 
-    async findByUrl(url: string, userId: string): Promise<schema.UserUpload | undefined> {
-        return await this.db.query.userUploads.findFirst({
+    async findUploadByUrl(url: string, userId: string): Promise<schema.UserUpload | null> {
+        const upload = await this.db.query.userUploads.findFirst({
             where: and(eq(schema.userUploads.url, url), eq(schema.userUploads.userId, userId)),
         });
+        return upload ?? null;
     }
 
     async updateStatus(
         id: string,
         userId: string,
         status: "pending" | "completed" | "failed"
-    ): Promise<schema.UserUpload | undefined> {
+    ): Promise<schema.UserUpload | null> {
         const [upload] = await this.db
             .update(schema.userUploads)
             .set({ status })
             .where(and(eq(schema.userUploads.id, id), eq(schema.userUploads.userId, userId)))
             .returning();
-        return upload;
+        return upload ?? null;
     }
 
     async delete(id: string, userId: string): Promise<boolean> {

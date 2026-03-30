@@ -58,7 +58,7 @@ describe("PlaylistRepository DB Test", () => {
 
         await repo.setMediaSequence(newPlaylist.id, [media1.id, media2.id]);
 
-        let sequence = await repo.getMediaSequence(newPlaylist.id);
+        let sequence = await repo.findMediaSequence(newPlaylist.id);
         expect(sequence).toHaveLength(2);
         expect(sequence[0].mediaId).toBe("media_1");
         expect(sequence[0].position).toBe(0);
@@ -67,7 +67,7 @@ describe("PlaylistRepository DB Test", () => {
 
         await repo.setMediaSequence(newPlaylist.id, [media2.id, media1.id]);
 
-        sequence = await repo.getMediaSequence(newPlaylist.id);
+        sequence = await repo.findMediaSequence(newPlaylist.id);
         expect(sequence).toHaveLength(2);
         expect(sequence[0].mediaId).toBe("media_2"); // Verify Swapped
         expect(sequence[0].position).toBe(0);
@@ -76,13 +76,13 @@ describe("PlaylistRepository DB Test", () => {
 
         await repo.setMediaSequence(newPlaylist.id, [media1.id]);
 
-        sequence = await repo.getMediaSequence(newPlaylist.id);
+        sequence = await repo.findMediaSequence(newPlaylist.id);
         expect(sequence).toHaveLength(1);
         expect(sequence[0].mediaId).toBe("media_1");
         expect(sequence[0].position).toBe(0);
 
         await repo.setMediaSequence(newPlaylist.id, []);
-        sequence = await repo.getMediaSequence(newPlaylist.id);
+        sequence = await repo.findMediaSequence(newPlaylist.id);
         expect(sequence).toHaveLength(0);
     });
 });

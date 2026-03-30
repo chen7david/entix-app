@@ -4,6 +4,7 @@ import type { OrganizationRepository } from "@api/repositories/organization.repo
 import type { UserRepository } from "@api/repositories/user.repository";
 import { hashPassword } from "better-auth/crypto";
 import { nanoid } from "nanoid";
+import { BaseService } from "./base.service";
 
 type SignupData = {
     email: string;
@@ -12,12 +13,14 @@ type SignupData = {
     organizationName?: string;
 };
 
-export class RegistrationService {
+export class RegistrationService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private orgRepo: OrganizationRepository,
         private memberRepo: MemberRepository
-    ) {}
+    ) {
+        super();
+    }
 
     async signupWithOrg(input: SignupData) {
         if (!input.organizationName) {
@@ -59,7 +62,7 @@ export class RegistrationService {
             hashedPassword
         );
         const orgQuery = this.orgRepo.prepareCreate(oId, organizationName, slug);
-        const memberQuery = this.memberRepo.prepareAdd(memberId, oId, uId, "owner");
+        const memberQuery = this.memberRepo.createMemberQuery(memberId, oId, uId, "owner");
 
         await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
@@ -99,7 +102,7 @@ export class RegistrationService {
             "credential",
             hashedPassword
         );
-        const memberQuery = this.memberRepo.prepareAdd(memberId, organizationId, uId, role);
+        const memberQuery = this.memberRepo.createMemberQuery(memberId, organizationId, uId, role);
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
 

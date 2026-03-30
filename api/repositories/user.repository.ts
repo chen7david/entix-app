@@ -42,8 +42,7 @@ export class UserRepository {
     }
 
     /**
-     * Find all users belonging to an organization.
-     * Queries via the member table to scope results to the given org.
+     * Find users belonging to an organization with cursor pagination.
      */
     async findUsersByOrganization(
         organizationId: string,

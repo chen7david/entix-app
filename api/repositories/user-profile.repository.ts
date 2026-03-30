@@ -5,10 +5,11 @@ import { and, eq, ne } from "drizzle-orm";
 export class UserProfileRepository {
     constructor(private db: AppDb) {}
 
-    async findProfileByUserId(userId: string): Promise<schema.UserProfile | undefined> {
-        return await this.db.query.userProfiles.findFirst({
+    async findProfileByUserId(userId: string): Promise<schema.UserProfile | null> {
+        const profile = await this.db.query.userProfiles.findFirst({
             where: eq(schema.userProfiles.userId, userId),
         });
+        return profile ?? null;
     }
 
     async insertProfile(data: schema.NewUserProfile): Promise<void> {

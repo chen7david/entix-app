@@ -4,6 +4,7 @@ import { AvatarService } from "@api/services/avatar.service";
 import { DashboardService } from "@api/services/dashboard.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
+import { MemberService } from "@api/services/member.service";
 import { MemberExportService } from "@api/services/member-export.service";
 import { MemberImportService } from "@api/services/member-import.service";
 import { OrganizationService } from "@api/services/organization.service";
@@ -68,6 +69,10 @@ export const getPlaylistService = (ctx: AppContext) => {
 
 export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(getSessionScheduleRepository(ctx));
+};
+
+export const getMemberService = (ctx: AppContext) => {
+    return new MemberService(getMemberRepository(ctx));
 };
 
 export const getDashboardService = (ctx: AppContext) => {

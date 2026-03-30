@@ -9,7 +9,7 @@ export class UserProfileHandler {
         const service = getUserProfileService(ctx);
         const socialService = getSocialMediaService(ctx);
         const data = await service.getProfileAggregate(userId);
-        const socialMedias = await socialService.getUserSocialMedias(userId);
+        const socialMedias = await socialService.findSocialMediasByUserId(userId);
         return ctx.json({ ...data, socialMedias }, HttpStatusCodes.OK);
     };
 

@@ -1,14 +1,20 @@
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors/app.error";
 import { AVATAR_BUCKET_FOLDER, USER_ASSETS_PREFIX } from "@api/helpers/constants.helpers";
 import type { UserRepository } from "@api/repositories/user.repository";
+import { BaseService } from "./base.service";
 import type { UploadService } from "./upload.service";
 
-export class AvatarService {
+export class AvatarService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private uploadService: UploadService
-    ) {}
+    ) {
+        super();
+    }
 
+    /**
+     * Request a presigned URL for uploading a user avatar.
+     */
     async requestAvatarUploadUrl(
         targetUserId: string,
         originalName: string,
@@ -24,16 +30,15 @@ export class AvatarService {
         );
     }
 
+    /**
+     * Update a user's avatar using a completed upload.
+     */
     async updateAvatar(targetUserId: string, uploadId: string, _callerId: string) {
         const user = await this.userRepo.findUserById(targetUserId);
-        if (!user) {
-            throw new NotFoundError("User not found");
-        }
+        this.assertExists(user, `User with ID ${targetUserId} not found`);
 
         const newUpload = await this.uploadService.getUserUploadById(uploadId, targetUserId);
-        if (!newUpload) {
-            throw new NotFoundError("Upload not found");
-        }
+        // Note: getUserUploadById already uses assertExists within UploadService.
 
         if (newUpload.status !== "completed") {
             throw new ConflictError("Upload must be completed before updating avatar");
@@ -53,13 +58,14 @@ export class AvatarService {
         };
     }
 
+    /**
+     * Remove a user's avatar (sets image column to null).
+     */
     async removeAvatar(targetUserId: string) {
         const user = await this.userRepo.findUserById(targetUserId);
-        if (!user) {
-            throw new NotFoundError("User not found");
-        }
+        this.assertExists(user, `User with ID ${targetUserId} not found`);
 
-        if (!user.image) {
+        if (!user?.image) {
             throw new NotFoundError("No avatar to remove");
         }
 

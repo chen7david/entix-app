@@ -94,17 +94,17 @@ describe("Auth Integration Test", () => {
 
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
-        const spy = vi.spyOn(MemberRepository.prototype, "prepareAdd").mockImplementation(function (
-            this: any
-        ) {
-            return this.db.insert(schema.authMembers).values({
-                id: "pre-existing-conflict", // Will conflict
-                organizationId: "dummy-org", // Must match foreign key
-                userId: "dummy-user", // Must match foreign key
-                role: "owner",
-                createdAt: new Date(),
+        const spy = vi
+            .spyOn(MemberRepository.prototype, "createMemberQuery")
+            .mockImplementation(function (this: any) {
+                return this.db.insert(schema.authMembers).values({
+                    id: "pre-existing-conflict", // Will conflict
+                    organizationId: "dummy-org", // Must match foreign key
+                    userId: "dummy-user", // Must match foreign key
+                    role: "owner",
+                    createdAt: new Date(),
+                });
             });
-        });
 
         const res = await client.auth.signUpWithOrg(payload);
 

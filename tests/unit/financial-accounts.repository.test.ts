@@ -84,12 +84,12 @@ describe("financialAccountsRepository", () => {
     describe("findById", () => {
         it("returns account when found", async () => {
             const created = await repo.create(BASE_INPUT);
-            const found = await repo.findById(created.id);
+            const found = await repo.findAccountById(created.id);
             expect(found?.id).toBe(created.id);
         });
 
         it("returns null when not found", async () => {
-            const found = await repo.findById("facc_ghost");
+            const found = await repo.findAccountById("facc_ghost");
             expect(found).toBeNull();
         });
     });
@@ -155,7 +155,7 @@ describe("financialAccountsRepository", () => {
         it("deactivated account is still findable by id", async () => {
             const account = await repo.create(BASE_INPUT);
             await repo.deactivate(account.id);
-            const found = await repo.findById(account.id);
+            const found = await repo.findAccountById(account.id);
             expect(found).not.toBeNull();
             expect(found?.isActive).toBe(false);
         });
@@ -178,7 +178,7 @@ describe("financialAccountsRepository", () => {
         it("archived account is still findable by id", async () => {
             const account = await repo.create(BASE_INPUT);
             await repo.archive(account.id);
-            const found = await repo.findById(account.id);
+            const found = await repo.findAccountById(account.id);
             expect(found?.archivedAt).not.toBeNull();
         });
 
@@ -186,7 +186,7 @@ describe("financialAccountsRepository", () => {
             const account = await repo.create(BASE_INPUT);
             await repo.deactivate(account.id);
             await repo.archive(account.id);
-            const found = await repo.findById(account.id);
+            const found = await repo.findAccountById(account.id);
             expect(found?.isActive).toBe(false);
             expect(found?.archivedAt).toBeInstanceOf(Date);
         });

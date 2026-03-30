@@ -33,10 +33,7 @@ export class FinancialCurrenciesRepository {
         return currency ?? null;
     }
 
-    /**
-     * Finds a currency by ID.
-     */
-    async findById(id: string): Promise<FinancialCurrency | null> {
+    async findCurrencyById(id: string): Promise<FinancialCurrency | null> {
         const currency = await this.db.query.financialCurrencies.findFirst({
             where: eq(financialCurrencies.id, id),
         });
@@ -53,11 +50,7 @@ export class FinancialCurrenciesRepository {
         return currency ?? null;
     }
 
-    /**
-     * Returns all currencies, including archived ones.
-     * Typically used for admin management views.
-     */
-    async findAll(): Promise<FinancialCurrency[]> {
+    async findCurrencies(): Promise<FinancialCurrency[]> {
         return this.db.select().from(financialCurrencies);
     }
 

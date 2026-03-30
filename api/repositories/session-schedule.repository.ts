@@ -8,7 +8,7 @@ import type { BatchItem } from "drizzle-orm/batch";
 export class SessionScheduleRepository {
     constructor(private db: AppDb) {}
 
-    async createSessions(sessions: NewScheduledSession[]) {
+    async createSessions(sessions: NewScheduledSession[]): Promise<schema.ScheduledSession[]> {
         return this.db.insert(schema.scheduledSessions).values(sessions).returning();
     }
 
@@ -47,7 +47,7 @@ export class SessionScheduleRepository {
             .where(eq(schema.sessionAttendances.sessionId, sessionId));
     }
 
-    async getSessionsForOrg(
+    async findSessionsByOrganization(
         organizationId: string,
         startDate?: number,
         endDate?: number,
@@ -100,8 +100,8 @@ export class SessionScheduleRepository {
         return result;
     }
 
-    async getSessionById(organizationId: string, sessionId: string) {
-        return this.db.query.scheduledSessions.findFirst({
+    async findSessionById(organizationId: string, sessionId: string) {
+        const session = await this.db.query.scheduledSessions.findFirst({
             where: and(
                 eq(schema.scheduledSessions.organizationId, organizationId),
                 eq(schema.scheduledSessions.id, sessionId)
@@ -121,9 +121,14 @@ export class SessionScheduleRepository {
                 },
             },
         });
+        return session ?? null;
     }
 
-    async getScheduleMetricsForOrg(organizationId: string, startDate?: number, endDate?: number) {
+    async findScheduleMetricsByOrganization(
+        organizationId: string,
+        startDate?: number,
+        endDate?: number
+    ) {
         const conditions: SQL[] = [eq(schema.scheduledSessions.organizationId, organizationId)];
         if (startDate) conditions.push(sql`${schema.scheduledSessions.startTime} >= ${startDate}`);
         if (endDate) conditions.push(sql`${schema.scheduledSessions.startTime} <= ${endDate}`);
@@ -144,7 +149,7 @@ export class SessionScheduleRepository {
         };
     }
 
-    async getSessionTrendsForOrg(
+    async findSessionTrendsByOrganization(
         organizationId: string,
         startDate?: number,
         endDate?: number,
@@ -168,7 +173,7 @@ export class SessionScheduleRepository {
             .orderBy(sql`1`);
     }
 
-    async getAttendanceTrendsForOrg(
+    async findAttendanceTrendsByOrganization(
         organizationId: string,
         startDate?: number,
         endDate?: number,
@@ -210,7 +215,7 @@ export class SessionScheduleRepository {
                 )
             )
             .returning();
-        return updated;
+        return updated ?? null;
     }
 
     async updateAttendance(
@@ -260,6 +265,6 @@ export class SessionScheduleRepository {
                 )
             )
             .returning();
-        return updated;
+        return updated ?? null;
     }
 }

@@ -1,4 +1,3 @@
-import { getSessionScheduleRepository } from "@api/factories/repository.factory";
 import { getSessionScheduleService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
@@ -9,8 +8,8 @@ export class ScheduleHandlers {
         const { organizationId } = ctx.req.valid("param");
         const { startDate, endDate, limit, cursor, direction, search } = ctx.req.valid("query");
 
-        const repo = getSessionScheduleRepository(ctx);
-        const paginatedResult = await repo.getSessionsForOrg(
+        const service = getSessionScheduleService(ctx);
+        const paginatedResult = await service.findSessionsByOrganization(
             organizationId,
             startDate,
             endDate,

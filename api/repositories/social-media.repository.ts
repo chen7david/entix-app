@@ -8,14 +8,14 @@ export class SocialMediaRepository {
     /**
      * Fetch all global generic social media structural types.
      */
-    async findAllSocialMediaTypes(): Promise<schema.SocialMediaType[]> {
+    async findSocialMediaTypes(): Promise<schema.SocialMediaType[]> {
         return await this.db.query.socialMediaTypes.findMany();
     }
 
     /**
      * Find all linked social media accounts for a user.
      */
-    async findUserSocialMedias(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
+    async findSocialMediasByUserId(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
         return (await this.db.query.userSocialMedias.findMany({
             where: eq(schema.userSocialMedias.userId, userId),
             with: {

@@ -39,15 +39,15 @@ describe("FinancialTransactionCategoriesRepository", () => {
         });
     });
 
-    describe("findById", () => {
+    describe("findCategoryById", () => {
         it("returns category when found", async () => {
             const created = await repo.create(BASE_INPUT);
-            const found = await repo.findById(created.id);
+            const found = await repo.findCategoryById(created.id);
             expect(found?.id).toBe(created.id);
         });
 
         it("returns null when not found", async () => {
-            const found = await repo.findById("fcat_ghost");
+            const found = await repo.findCategoryById("fcat_ghost");
             expect(found).toBeNull();
         });
     });

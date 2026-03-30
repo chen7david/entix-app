@@ -21,7 +21,7 @@ describe("SessionScheduleRepository Unit test", () => {
         const START_EPOCH = 10000;
         const END_EPOCH = 50000;
 
-        await repo.getSessionsForOrg(ORG_ID, START_EPOCH, END_EPOCH);
+        await repo.findSessionsByOrganization(ORG_ID, START_EPOCH, END_EPOCH);
 
         expect(mockDb.query.scheduledSessions.findMany).toHaveBeenCalledTimes(1);
         const args = mockDb.query.scheduledSessions.findMany.mock.calls[0][0];
@@ -33,7 +33,7 @@ describe("SessionScheduleRepository Unit test", () => {
         const START_OF_DAY = new Date("2026-03-21T00:00:00.000Z").getTime();
         const END_OF_DAY = new Date("2026-03-21T23:59:59.999Z").getTime();
 
-        await repo.getSessionsForOrg(ORG_ID, START_OF_DAY, END_OF_DAY);
+        await repo.findSessionsByOrganization(ORG_ID, START_OF_DAY, END_OF_DAY);
 
         expect(mockDb.query.scheduledSessions.findMany).toHaveBeenCalledTimes(1);
         const args = mockDb.query.scheduledSessions.findMany.mock.calls[0][0];

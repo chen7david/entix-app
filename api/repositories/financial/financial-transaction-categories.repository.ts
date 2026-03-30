@@ -33,21 +33,14 @@ export class FinancialTransactionCategoriesRepository {
         return category ?? null;
     }
 
-    /**
-     * Finds a category by ID.
-     */
-    async findById(id: string): Promise<FinancialTransactionCategory | null> {
+    async findCategoryById(id: string): Promise<FinancialTransactionCategory | null> {
         const category = await this.db.query.financialTransactionCategories.findFirst({
             where: eq(financialTransactionCategories.id, id),
         });
         return category ?? null;
     }
 
-    /**
-     * Returns all categories, including archived ones.
-     * Typically used for admin management views.
-     */
-    async findAll(): Promise<FinancialTransactionCategory[]> {
+    async findCategories(): Promise<FinancialTransactionCategory[]> {
         return this.db.select().from(financialTransactionCategories);
     }
 

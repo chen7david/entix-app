@@ -1,7 +1,7 @@
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import { addDays, addMonths, addWeeks } from "date-fns";
-import { HTTPException } from "hono/http-exception";
 import { nanoid } from "nanoid";
+import { BaseService } from "./base.service";
 
 export type CreateSessionDTO = {
     title: string;
@@ -25,8 +25,10 @@ export type UpdateSessionDTO = {
     status?: "scheduled" | "completed" | "cancelled";
 };
 
-export class SessionScheduleService {
-    constructor(private sessionRepo: SessionScheduleRepository) {}
+export class SessionScheduleService extends BaseService {
+    constructor(private sessionRepo: SessionScheduleRepository) {
+        super();
+    }
 
     private calculateNextOccurrence(startTime: number, frequency: string, offset: number): number {
         const date = new Date(startTime);
@@ -83,8 +85,41 @@ export class SessionScheduleService {
         return createdSessions;
     }
 
+    async findSessionsByOrganization(
+        organizationId: string,
+        startDate?: number,
+        endDate?: number,
+        limit: number = 25,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
+        return await this.sessionRepo.findSessionsByOrganization(
+            organizationId,
+            startDate,
+            endDate,
+            limit,
+            cursor,
+            direction,
+            search
+        );
+    }
+
+    async findSessionById(organizationId: string, sessionId: string) {
+        return await this.sessionRepo.findSessionById(organizationId, sessionId);
+    }
+
+    async getSessionById(organizationId: string, sessionId: string) {
+        const session = await this.findSessionById(organizationId, sessionId);
+        return this.assertExists(session, `Session ${sessionId} not found`);
+    }
+
     async getScheduleMetrics(organizationId: string, startDate?: number, endDate?: number) {
-        return this.sessionRepo.getScheduleMetricsForOrg(organizationId, startDate, endDate);
+        return this.sessionRepo.findScheduleMetricsByOrganization(
+            organizationId,
+            startDate,
+            endDate
+        );
     }
 
     async getAnalyticsSessions(
@@ -93,7 +128,7 @@ export class SessionScheduleService {
         endDate?: number,
         tzOffset?: string
     ) {
-        return this.sessionRepo.getSessionTrendsForOrg(
+        return this.sessionRepo.findSessionTrendsByOrganization(
             organizationId,
             startDate,
             endDate,
@@ -107,7 +142,7 @@ export class SessionScheduleService {
         endDate?: number,
         tzOffset?: string
     ) {
-        return this.sessionRepo.getAttendanceTrendsForOrg(
+        return this.sessionRepo.findAttendanceTrendsByOrganization(
             organizationId,
             startDate,
             endDate,
@@ -124,10 +159,7 @@ export class SessionScheduleService {
     }
 
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
-        const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
-        if (!currentSession) {
-            throw new HTTPException(404, { message: "Session not found" });
-        }
+        const currentSession = await this.getSessionById(organizationId, sessionId);
 
         if (!data.updateForward || !currentSession.seriesId) {
             await this.sessionRepo.updateSessionDetails(organizationId, sessionId, {
@@ -217,10 +249,7 @@ export class SessionScheduleService {
             notes?: string | null;
         }[]
     ) {
-        const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
-        if (!currentSession) {
-            throw new HTTPException(404, { message: "Session not found" });
-        }
+        await this.getSessionById(organizationId, sessionId);
 
         if (attendances.length > 0) {
             await this.sessionRepo.updateAttendance(sessionId, attendances);
@@ -230,10 +259,7 @@ export class SessionScheduleService {
     }
 
     async deleteSession(organizationId: string, sessionId: string, deleteForward: boolean) {
-        const currentSession = await this.sessionRepo.getSessionById(organizationId, sessionId);
-        if (!currentSession) {
-            throw new HTTPException(404, { message: "Session not found" });
-        }
+        const currentSession = await this.getSessionById(organizationId, sessionId);
 
         if (!deleteForward || !currentSession.seriesId) {
             await this.sessionRepo.deleteSessionSingle(organizationId, sessionId);

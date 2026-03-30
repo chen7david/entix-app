@@ -18,31 +18,6 @@ export class MemberRepository {
     constructor(private db: AppDb) {}
 
     /**
-     * Add a user as a member to an organization
-     * Uses direct DB insertion since server-side auth doesn't expose organization methods
-     */
-    async addMember(input: AddMemberInput): Promise<schema.AuthMember> {
-        const memberId = nanoid();
-        const now = new Date();
-
-        await this.db.insert(schema.authMembers).values({
-            id: memberId,
-            organizationId: input.organizationId,
-            userId: input.userId,
-            role: input.role,
-            createdAt: now,
-        });
-
-        return {
-            id: memberId,
-            userId: input.userId,
-            organizationId: input.organizationId,
-            role: input.role,
-            createdAt: now,
-        };
-    }
-
-    /**
      * Check if a user is already a member of an organization
      */
     async isMember(userId: string, organizationId: string): Promise<boolean> {
@@ -84,20 +59,32 @@ export class MemberRepository {
     }
 
     /**
-     * Prepare a query to add a member for batching with conflict handling
+     * Internal query builder for adding a member.
+     * Used for batching operations (e.g. in RegistrationService).
      */
-    prepareAdd(id: string, organizationId: string, userId: string, role: string) {
-        const now = new Date();
-        return this.db
-            .insert(schema.authMembers)
-            .values({
-                id,
-                organizationId,
-                userId,
-                role,
-                createdAt: now,
-            })
-            .onConflictDoNothing();
+    createMemberQuery(id: string, organizationId: string, userId: string, role: string) {
+        return this.db.insert(schema.authMembers).values({
+            id,
+            organizationId,
+            userId,
+            role,
+            createdAt: new Date(),
+        });
+    }
+
+    /**
+     * Add a member to an organization and return the actual DB record.
+     */
+    async add(organizationId: string, userId: string, role: string): Promise<schema.AuthMember> {
+        const id = nanoid();
+        const results = await this.createMemberQuery(id, organizationId, userId, role).returning();
+
+        const inserted = results[0];
+        if (!inserted) {
+            throw new Error("Failed to insert member");
+        }
+
+        return inserted;
     }
 
     /**
