@@ -12,30 +12,46 @@ export const todo = sqliteTable("todo", {
 });
 ```
 
-## 2. Repository Layer
-Create `api/repositories/todo.repository.ts`. Encapsulate Drizzle queries.
+### 2. Create the Repository (Read/Write)
+Repositories are "dumb": they only handle D1/Drizzle database access. They must not include business logic or throw `AppError` subclasses. Use `find*` naming; return `null` if not found.
+
 ```typescript
-export class TodoRepository {
+// repositories/financial/transaction.repository.ts
+export class TransactionRepository {
     constructor(private db: AppDb) {}
-    async findAll() {
-        return await this.db.select().from(schema.todo);
+
+    async findById(id: string): Promise<Transaction | null> {
+        return await this.db.query.transactions.findFirst({
+            where: eq(transactions.id, id),
+        }) ?? null;
     }
 }
 ```
 
-## 3. Service Layer
-Create `api/services/todo.service.ts`. Business logic lives here.
+### 3. Create the Service (Orchestration)
+Services handle business logic and orchestration. They extend `BaseService` and provide `find*` (returns null) and `get*` (throws `NotFoundError`) methods.
+
 ```typescript
-export class TodoService {
-    constructor(private repo: TodoRepository) {}
-    async getTodos() {
-        return await this.repo.findAll();
+// services/financial/transaction.service.ts
+export class TransactionService extends BaseService {
+    constructor(private repo: TransactionRepository) {
+        super();
+    }
+
+    async findTransaction(id: string) {
+        return await this.repo.findById(id);
+    }
+
+    async getTransaction(id: string) {
+        const tx = await this.findTransaction(id);
+        return this.assertExists(tx, `Transaction ${id} not found`);
     }
 }
 ```
 
-## 4. Factory Function
-Add a factory to `api/factories/todo.factory.ts` (or existing ones) to instantiate with dependencies.
+### 4. Create the Factory (Dependency Injection)
+Register your new repository and service in their respective factories. **Never inject external API clients (BetterAuth, Stripe) into Repositories.** Use the factories (or existing ones) to instantiate with dependencies.
+
 ```typescript
 export const getTodoService = (c: Context) => {
     const db = getDbClient(c);
@@ -45,13 +61,17 @@ export const getTodoService = (c: Context) => {
 ```
 
 ## 5. Handler & Route
-Define the route in `api/routes/todo.routes.ts` using `@hono/zod-openapi`.
+Define the route in `api/routes/todo.routes.ts`. 
+
+> [!IMPORTANT]
+> **No Direct Repository Access (DRA)**: Handlers must **strictly** only interact with Services. Never call `getRepository` inside a route handler.
+
 ```typescript
 const todoHandler = new AppOpenApi();
-todoHandler.openapi(getTodosRoute, async (c) => {
+todoHandler.openapi(getTodoRoute, async (c) => {
     const service = getTodoService(c);
-    const todos = await service.getTodos();
-    return c.json(todos, 200);
+    const todo = await service.getTodo(c.req.param("id"));
+    return c.json(todo, 200);
 });
 ```
 
@@ -82,5 +102,5 @@ export const MyComponent = () => {
 
 [Why use the Service-Repository pattern?](../why/service-repository.md)
 
-Last updated: {Date: current}
+Last updated: Mar 30, 2026
 [Back to Documentation Guide](../how-to-write-docs.md)

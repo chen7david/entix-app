@@ -1,103 +1,110 @@
-import { and, eq, isNull } from "drizzle-orm";
 import type { AppDb } from "@api/factories/db.factory";
-import { financialAccounts } from "@shared/db/schema/financial-accounts.schema";
-import { generateId } from "@shared/lib/id";
+import {
+    type FinancialAccount,
+    financialAccounts,
+    type NewFinancialAccount,
+} from "@shared/db/schema";
+import { generateAccountId } from "@shared/lib";
+import { and, eq, sql } from "drizzle-orm";
 
-export type CreateFinancialAccountInput = {
-    ownerId: string;
-    ownerType: "user" | "org";
-    currencyId: string;
-    name: string;
-};
+/**
+ * Repository for financial account database operations.
+ * Financial accounts are never hard-deleted to preserve ledger integrity.
+ * Use `deactivate()` to block transactions, or `archive()` to hide from UI.
+ */
+export class FinancialAccountsRepository {
+    constructor(private readonly db: AppDb) {}
 
-export function createFinancialAccountsRepository(db: AppDb) {
-    return {
-        /**
-         * Create a new financial account.
-         * Uses D1 batch for consistency.
-         */
-        async create(input: CreateFinancialAccountInput) {
-            const now = new Date();
-            const id = generateId("facc");
+    /**
+     * Creates a new financial account.
+     * @throws Error if the insert fails to return the record.
+     */
+    async create(input: NewFinancialAccount): Promise<FinancialAccount> {
+        const now = new Date();
+        const id = generateAccountId();
 
-            const [rows] = await db.batch([
-                db
-                    .insert(financialAccounts)
-                    .values({
-                        id,
-                        ownerId: input.ownerId,
-                        ownerType: input.ownerType,
-                        currencyId: input.currencyId,
-                        name: input.name,
-                        balanceCents: 0,
-                        isActive: true,
-                        archivedAt: null,
-                        createdAt: now,
-                        updatedAt: now,
-                    })
-                    .returning(),
-            ]);
+        const [account] = await this.db
+            .insert(financialAccounts)
+            .values({
+                id,
+                ownerId: input.ownerId,
+                ownerType: input.ownerType,
+                currencyId: input.currencyId,
+                name: input.name,
+                createdAt: now,
+                updatedAt: now,
+                balanceCents: 0,
+                isActive: true,
+            })
+            .returning();
 
-            return rows[0];
-        },
+        return account ?? null;
+    }
 
-        /**
-         * Find a financial account by its unique ID.
-         */
-        async findById(id: string) {
-            return db.query.financialAccounts.findFirst({
-                where: eq(financialAccounts.id, id),
-            });
-        },
+    /**
+     * Finds an account by its unique ID.
+     * Returns null if not found.
+     */
+    async findById(id: string): Promise<FinancialAccount | null> {
+        const account = await this.db.query.financialAccounts.findFirst({
+            where: eq(financialAccounts.id, id),
+        });
+        return account ?? null;
+    }
 
-        /**
-         * Find all active and non-archived accounts for a specific owner.
-         */
-        async findActiveByOwner(ownerId: string, ownerType: "user" | "org") {
-            return db
-                .select()
-                .from(financialAccounts)
-                .where(
-                    and(
-                        eq(financialAccounts.ownerId, ownerId),
-                        eq(financialAccounts.ownerType, ownerType),
-                        eq(financialAccounts.isActive, true),
-                        isNull(financialAccounts.archivedAt)
-                    )
+    /**
+     * Retrieves all active, non-archived accounts for a specific owner.
+     */
+    async findActiveByOwner(
+        ownerId: string,
+        ownerType: "user" | "org"
+    ): Promise<FinancialAccount[]> {
+        return this.db
+            .select()
+            .from(financialAccounts)
+            .where(
+                and(
+                    eq(financialAccounts.ownerId, ownerId),
+                    eq(financialAccounts.ownerType, ownerType),
+                    eq(financialAccounts.isActive, true),
+                    sql`${financialAccounts.archivedAt} IS NULL`
                 )
-                .all();
-        },
+            );
+    }
 
-        /**
-         * Deactivate an account. It remains visible in administrative views but is blocked from transactions.
-         */
-        async deactivate(id: string) {
-            const [rows] = await db.batch([
-                db
-                    .update(financialAccounts)
-                    .set({ isActive: false, updatedAt: new Date() })
-                    .where(eq(financialAccounts.id, id))
-                    .returning(),
-            ]);
-            return rows[0];
-        },
+    /**
+     * Deactivates an account (sets isActive to false).
+     * Used to block new transactions.
+     * @throws Error if the account ID is not found.
+     */
+    async deactivate(id: string): Promise<FinancialAccount> {
+        const [account] = await this.db
+            .update(financialAccounts)
+            .set({
+                isActive: false,
+                updatedAt: new Date(),
+            })
+            .where(eq(financialAccounts.id, id))
+            .returning();
 
-        /**
-         * Archive an account. It is hidden from standard user-facing UI, but the record and its history are preserved.
-         */
-        async archive(id: string) {
-            const now = new Date();
-            const [rows] = await db.batch([
-                db
-                    .update(financialAccounts)
-                    .set({ archivedAt: now, updatedAt: now })
-                    .where(eq(financialAccounts.id, id))
-                    .returning(),
-            ]);
-            return rows[0];
-        },
+        return account ?? null;
+    }
 
-        // Note: Administrative delete methods are intentionally omitted. Financial data is never hard deleted.
-    };
+    /**
+     * Archives an account (sets archivedAt timestamp).
+     * Used to hide the account from standard UI views.
+     * @throws Error if the account ID is not found.
+     */
+    async archive(id: string): Promise<FinancialAccount> {
+        const [account] = await this.db
+            .update(financialAccounts)
+            .set({
+                archivedAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .where(eq(financialAccounts.id, id))
+            .returning();
+
+        return account ?? null;
+    }
 }
-

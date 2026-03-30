@@ -37,7 +37,7 @@ describe("AuthUser Integration Test", () => {
 
         await db.insert(user).values(newUser);
 
-        const repo = new UserRepository(db, {} as any);
+        const repo = new UserRepository(db);
         await repo.updateUser(newUser.id, { emailVerified: true });
 
         const updatedUser = await db.query.authUsers.findFirst({

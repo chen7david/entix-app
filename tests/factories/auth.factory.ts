@@ -1,42 +1,56 @@
-import type { SignUpWithOrgDTO } from "@shared/schemas/dto/auth.dto";
+import type * as schema from "@shared/db/schema";
+import { nanoid } from "nanoid";
+import { vi } from "vitest";
 
-export function createMockSignUpWithOrgPayload(
-    overrides: Partial<SignUpWithOrgDTO> = {}
-): SignUpWithOrgDTO {
-    const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
+/**
+ * Creates a mocked Better Auth client for unit testing Services.
+ */
+export const createMockAuth = () => ({
+    api: {
+        signUpEmail: vi.fn(),
+        requestPasswordReset: vi.fn(),
+        // Add other auth.api methods as needed
+    },
+});
 
+export type MockAuth = ReturnType<typeof createMockAuth>;
+
+/**
+ * Creates a mock payload for the signup-with-org endpoint.
+ */
+export const createMockSignUpWithOrgPayload = (overrides: any = {}) => {
+    const id = Date.now();
     return {
-        email: `test.user.${uniqueId}@example.com`,
-        password: "password123",
-        name: "Test User",
-        organizationName: `Test Org ${uniqueId}`,
+        email: `test.${id}@example.com`,
+        name: "Test AuthUser",
+        password: "Password123!",
+        organizationName: `Test Org ${id}`,
         ...overrides,
     };
-}
+};
 
-export function createMockUserPayload(
-    overrides: Partial<Omit<SignUpWithOrgDTO, "organizationName">> = {}
-): Omit<SignUpWithOrgDTO, "organizationName"> {
-    const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
-
+/**
+ * Creates a mock user record as it would appear in the database.
+ */
+export const createMockUserDbRecord = (
+    overrides: Partial<schema.AuthUser> = {}
+): schema.AuthUser => {
+    const now = new Date();
     return {
-        email: `test.user.${uniqueId}@example.com`,
-        password: "password123",
+        id: nanoid(),
+        xid: nanoid(8).toUpperCase(),
         name: "Test User",
-        ...overrides,
-    };
-}
-
-export function createMockUserDbRecord(overrides: any = {}) {
-    const uniqueId = Date.now().toString() + Math.floor(Math.random() * 1000).toString();
-
-    return {
-        id: `usr_${uniqueId}`,
-        name: `Test User ${uniqueId}`,
-        email: `test.user.${uniqueId}@example.com`,
+        email: `user.${Date.now()}@example.com`,
         emailVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        image: null,
+        createdAt: now,
+        updatedAt: now,
+        role: "user",
+        banned: false,
+        banReason: null,
+        banExpires: null,
+        theme: "system",
+        timezone: null,
         ...overrides,
     };
-}
+};

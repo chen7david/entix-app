@@ -1,6 +1,5 @@
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { getUserRepository } from "@api/factories/repository.factory";
-import { getRegistrationService } from "@api/factories/service.factory";
+import { getRegistrationService, getUserService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { MemberRoutes } from "./member.routes";
@@ -17,7 +16,7 @@ export class MemberHandler {
             "Creating new member"
         );
         const registrationService = getRegistrationService(ctx);
-        const userRepo = getUserRepository(ctx);
+        const userService = getUserService(ctx);
 
         try {
             const result = await registrationService.createUserAndMember(
@@ -29,7 +28,7 @@ export class MemberHandler {
 
             const resetUrl = `${ctx.var.frontendUrl}/auth/reset-password`;
             ctx.var.logger.info({ email, resetUrl }, "Sending password reset email");
-            await userRepo.sendPasswordResetEmail(email, resetUrl);
+            await userService.sendPasswordResetEmail(email, resetUrl);
 
             ctx.var.logger.info(
                 { userId: result.user.id, memberId: result.member.id },

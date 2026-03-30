@@ -43,6 +43,13 @@
       "when": 1774825616760,
       "tag": "0005_tough_kabuki",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1774859785118,
+      "tag": "0006_sturdy_betty_ross",
+      "breakpoints": true
     }
   ]
 }

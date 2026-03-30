@@ -1,4 +1,5 @@
 import type { AppContext } from "@api/helpers/types.helpers";
+import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
 import { DashboardService } from "@api/services/dashboard.service";
 import { MailService } from "@api/services/mailer.service";
@@ -26,7 +27,7 @@ import {
 import { getUploadService } from "./upload.factory";
 
 export const getUserService = (ctx: AppContext) => {
-    return new UserService(getUserRepository(ctx));
+    return new UserService(getUserRepository(ctx), auth(ctx));
 };
 
 export const getUserProfileService = (ctx: AppContext) => {

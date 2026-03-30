@@ -1,6 +1,8 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import { auth } from "@api/lib/auth/auth";
 import { DashboardRepository } from "@api/repositories/dashboard.repository";
+import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
+import { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
+import { FinancialTransactionCategoriesRepository } from "@api/repositories/financial/financial-transaction-categories.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
@@ -12,8 +14,20 @@ import { UserRepository } from "@api/repositories/user.repository";
 import { UserProfileRepository } from "@api/repositories/user-profile.repository";
 import { getDbClient } from "./db.factory";
 
+export const getFinancialAccountsRepository = (ctx: AppContext) => {
+    return new FinancialAccountsRepository(getDbClient(ctx));
+};
+
+export const getFinancialCurrenciesRepository = (ctx: AppContext) => {
+    return new FinancialCurrenciesRepository(getDbClient(ctx));
+};
+
+export const getFinancialTransactionCategoriesRepository = (ctx: AppContext) => {
+    return new FinancialTransactionCategoriesRepository(getDbClient(ctx));
+};
+
 export const getUserRepository = (ctx: AppContext) => {
-    return new UserRepository(getDbClient(ctx), auth(ctx));
+    return new UserRepository(getDbClient(ctx));
 };
 
 export const getUserProfileRepository = (ctx: AppContext) => {
