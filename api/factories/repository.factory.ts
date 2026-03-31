@@ -3,6 +3,7 @@ import { DashboardRepository } from "@api/repositories/dashboard.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import { FinancialTransactionCategoriesRepository } from "@api/repositories/financial/financial-transaction-categories.repository";
+import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
@@ -24,6 +25,10 @@ export const getFinancialCurrenciesRepository = (ctx: AppContext) => {
 
 export const getFinancialTransactionCategoriesRepository = (ctx: AppContext) => {
     return new FinancialTransactionCategoriesRepository(getDbClient(ctx));
+};
+
+export const getFinancialTransactionsRepository = (ctx: AppContext) => {
+    return new FinancialTransactionsRepository(getDbClient(ctx));
 };
 
 export const getUserRepository = (ctx: AppContext) => {

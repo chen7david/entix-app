@@ -41,7 +41,7 @@ export class FinancialAccountsRepository {
         return account ?? null;
     }
 
-    async findAccountById(id: string): Promise<FinancialAccount | null> {
+    async findById(id: string): Promise<FinancialAccount | null> {
         const account = await this.db.query.financialAccounts.findFirst({
             where: eq(financialAccounts.id, id),
         });

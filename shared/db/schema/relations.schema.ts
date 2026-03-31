@@ -1,5 +1,10 @@
 import { relations } from "drizzle-orm";
 import { authAccounts, authSessions, authUsers } from "./auth.schema";
+import { financialAccounts } from "./financial-accounts.schema";
+import { financialCurrencies } from "./financial-currencies.schema";
+import { financialTransactionCategories } from "./financial-transaction-categories.schema";
+import { financialTransactionLines } from "./financial-transaction-lines.schema";
+import { financialTransactions } from "./financial-transactions.schema";
 import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
@@ -178,3 +183,61 @@ export const userSocialMediasRelations = relations(userSocialMedias, ({ one }) =
         references: [socialMediaTypes.id],
     }),
 }));
+
+export const financialAccountsRelations = relations(financialAccounts, ({ one, many }) => ({
+    currency: one(financialCurrencies, {
+        fields: [financialAccounts.currencyId],
+        references: [financialCurrencies.id],
+    }),
+    sourceTransactions: many(financialTransactions, { relationName: "sourceAccount" }),
+    destinationTransactions: many(financialTransactions, { relationName: "destinationAccount" }),
+    lines: many(financialTransactionLines),
+}));
+
+export const financialTransactionsRelations = relations(financialTransactions, ({ one, many }) => ({
+    sourceAccount: one(financialAccounts, {
+        fields: [financialTransactions.sourceAccountId],
+        references: [financialAccounts.id],
+        relationName: "sourceAccount",
+    }),
+    destinationAccount: one(financialAccounts, {
+        fields: [financialTransactions.destinationAccountId],
+        references: [financialAccounts.id],
+        relationName: "destinationAccount",
+    }),
+    currency: one(financialCurrencies, {
+        fields: [financialTransactions.currencyId],
+        references: [financialCurrencies.id],
+    }),
+    category: one(financialTransactionCategories, {
+        fields: [financialTransactions.categoryId],
+        references: [financialTransactionCategories.id],
+    }),
+    lines: many(financialTransactionLines),
+}));
+
+export const financialTransactionLinesRelations = relations(
+    financialTransactionLines,
+    ({ one }) => ({
+        transaction: one(financialTransactions, {
+            fields: [financialTransactionLines.transactionId],
+            references: [financialTransactions.id],
+        }),
+        account: one(financialAccounts, {
+            fields: [financialTransactionLines.accountId],
+            references: [financialAccounts.id],
+        }),
+    })
+);
+
+export const financialCurrenciesRelations = relations(financialCurrencies, ({ many }) => ({
+    accounts: many(financialAccounts),
+    transactions: many(financialTransactions),
+}));
+
+export const financialTransactionCategoriesRelations = relations(
+    financialTransactionCategories,
+    ({ many }) => ({
+        transactions: many(financialTransactions),
+    })
+);

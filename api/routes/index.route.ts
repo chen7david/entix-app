@@ -6,6 +6,7 @@ import { memberRoutes } from "./orgs/members.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
 import { uploadRoutes } from "./orgs/uploads.index";
+import { walletRoutes } from "./orgs/wallet.index";
 import { socialMediaRoutes } from "./social-media/social-media.index";
 import { userRoutes } from "./users/users.index";
 
@@ -19,5 +20,6 @@ export const routes = [
     mediaRoutes,
     playlistRoutes,
     scheduleRoutes,
+    walletRoutes,
     socialMediaRoutes,
 ];

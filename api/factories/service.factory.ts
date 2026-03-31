@@ -2,6 +2,7 @@ import type { AppContext } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
 import { DashboardService } from "@api/services/dashboard.service";
+import { FinancialService } from "@api/services/financial.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
 import { MemberService } from "@api/services/member.service";
@@ -14,8 +15,11 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
+import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
+    getFinancialAccountsRepository,
+    getFinancialTransactionsRepository,
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
@@ -89,5 +93,13 @@ export const getMemberImportService = (ctx: AppContext) => {
         getMemberRepository(ctx),
         getUserProfileRepository(ctx),
         getSocialMediaRepository(ctx)
+    );
+};
+
+export const getFinancialService = (ctx: AppContext) => {
+    return new FinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx)
     );
 };
