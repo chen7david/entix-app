@@ -98,11 +98,6 @@ export const OrgAccountCardGrid: React.FC<Props> = ({
                                         {isFunding ? "General Fund" : "Custom Account"}
                                     </Text>
                                 </Space>
-                                {isFunding && (
-                                    <Tag color="blue-inverse" style={{ fontSize: 9, margin: 0 }}>
-                                        FUNDING
-                                    </Tag>
-                                )}
                             </div>
 
                             <Statistic
@@ -144,13 +139,23 @@ export const OrgAccountCardGrid: React.FC<Props> = ({
                                     alignItems: "center",
                                 }}
                             >
-                                <Tag
-                                    color="success"
-                                    icon={<CheckCircleOutlined />}
-                                    style={{ fontSize: 10, margin: 0, borderRadius: 4 }}
-                                >
-                                    ACTIVE
-                                </Tag>
+                                <Space size={4}>
+                                    <Tag
+                                        color="success"
+                                        icon={<CheckCircleOutlined />}
+                                        style={{ fontSize: 10, margin: 0, borderRadius: 4 }}
+                                    >
+                                        ACTIVE
+                                    </Tag>
+                                    {isFunding && (
+                                        <Tag
+                                            color="purple"
+                                            style={{ fontSize: 10, margin: 0, borderRadius: 4 }}
+                                        >
+                                            FUNDING
+                                        </Tag>
+                                    )}
+                                </Space>
                                 <Text
                                     style={{ fontSize: 10, opacity: 0.3, fontFamily: "monospace" }}
                                 >
