@@ -1,17 +1,17 @@
-import { PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { useOrganization } from "@web/src/features/organization";
 import {
     TransactionTable,
     TransferDrawer,
     useTransactionHistory,
     useWalletBalance,
-    WalletSummaryCard,
 } from "@web/src/features/wallet";
 import { useSession } from "@web/src/lib/auth-client";
-import { Button, Card, Col, Row, Space, Typography } from "antd";
+import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
 import { useState } from "react";
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export const WalletPage = () => {
     const { data: session } = useSession();
@@ -72,12 +72,76 @@ export const WalletPage = () => {
             </Row>
 
             <Row gutter={[24, 24]}>
-                <Col span={24} lg={8}>
-                    <WalletSummaryCard accounts={summary?.accounts} loading={isLoadingBalance} />
+                <Col span={24}>
+                    <Title level={4} style={{ marginBottom: 16 }}>
+                        Your Accounts
+                    </Title>
+                    <Row gutter={[16, 16]}>
+                        {isLoadingBalance ? (
+                            [1, 2].map((i) => (
+                                <Col xs={24} sm={12} md={8} lg={6} key={i}>
+                                    <Card loading />
+                                </Col>
+                            ))
+                        ) : summary?.accounts.length ? (
+                            summary.accounts.map((acc) => {
+                                const config =
+                                    FINANCIAL_CURRENCY_CONFIG[
+                                        acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
+                                    ];
+                                return (
+                                    <Col xs={24} sm={12} md={8} lg={6} key={acc.id}>
+                                        <Card
+                                            hoverable
+                                            style={{
+                                                borderStyle: acc.isActive ? "solid" : "dashed",
+                                                opacity: acc.isActive ? 1 : 0.6,
+                                            }}
+                                        >
+                                            <Statistic
+                                                title={
+                                                    <div className="flex items-center gap-2">
+                                                        <Text strong>{acc.name}</Text>
+                                                        <Tooltip
+                                                            title={
+                                                                acc.isActive ? "Active" : "Inactive"
+                                                            }
+                                                        >
+                                                            <InfoCircleOutlined
+                                                                style={{
+                                                                    color: acc.isActive
+                                                                        ? "#52c41a"
+                                                                        : "#faad14",
+                                                                    fontSize: 12,
+                                                                }}
+                                                            />
+                                                        </Tooltip>
+                                                    </div>
+                                                }
+                                                value={acc.balanceCents / 100}
+                                                precision={2}
+                                                prefix={config?.symbol}
+                                                suffix={config?.code}
+                                                valueStyle={{ fontSize: 24, fontWeight: 600 }}
+                                            />
+                                        </Card>
+                                    </Col>
+                                );
+                            })
+                        ) : (
+                            <Col span={24}>
+                                <Card style={{ textAlign: "center", padding: "40px 0" }}>
+                                    <Text type="secondary">
+                                        No active accounts found in this organization.
+                                    </Text>
+                                </Card>
+                            </Col>
+                        )}
+                    </Row>
                 </Col>
 
-                <Col span={24} lg={16}>
-                    <Card title="Transaction History">
+                <Col span={24}>
+                    <Card title="Recent Transactions">
                         <TransactionTable
                             transactions={history?.data}
                             loading={isFetchingHistory}
