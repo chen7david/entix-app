@@ -16,20 +16,22 @@ export const useCreateAccount = (orgId?: string) => {
     return useMutation({
         mutationFn: async (input: CreateAccountInput) => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/wallet/accounts`, {
+            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/accounts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),
             });
-            if (!res.ok) throw new Error("Failed to create account");
-            return res.json();
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to create account");
+            return data;
         },
         onSuccess: () => {
             message.success("Account created successfully");
             queryClient.invalidateQueries({ queryKey: ["walletBalance", orgId] });
+            queryClient.invalidateQueries({ queryKey: ["orgCurrencies", orgId] });
         },
-        onError: () => {
-            message.error("Failed to create account. Please try again.");
+        onError: (err: any) => {
+            message.error(err.message || "Failed to create account. Please try again.");
         },
     });
 };

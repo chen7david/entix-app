@@ -1,0 +1,152 @@
+import {
+    getAdminFinancialService,
+    getOrgFinancialService,
+    getUserFinancialService,
+} from "@api/factories/service.factory";
+import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
+import type { FinanceRoutes } from "@api/routes/orgs/finance.routes";
+
+export class FinanceHandler {
+    static getWalletBalance: AppHandler<typeof FinanceRoutes.getBalance> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const summary = await getOrgFinancialService(ctx).getOrgSummary(organizationId);
+        return ctx.json(summary, HttpStatusCodes.OK);
+    };
+
+    static getTransactionHistory: AppHandler<typeof FinanceRoutes.getTransactions> = async (
+        ctx
+    ) => {
+        const organizationId = ctx.get("organizationId");
+        const { page, pageSize } = ctx.req.valid("query");
+
+        const history = await getOrgFinancialService(ctx).getTransactionHistory(organizationId, {
+            page: page ?? 1,
+            pageSize: pageSize ?? 20,
+        });
+
+        return ctx.json(
+            {
+                data: history,
+                page: page ?? 1,
+                pageSize: pageSize ?? 20,
+            },
+            HttpStatusCodes.OK
+        );
+    };
+
+    static executeTransfer: AppHandler<typeof FinanceRoutes.executeTransfer> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const body = ctx.req.valid("json");
+
+        const txId = await getOrgFinancialService(ctx).executeTransfer({
+            organizationId,
+            ...body,
+        });
+
+        return ctx.json({ txId }, HttpStatusCodes.CREATED);
+    };
+
+    static adminCredit: AppHandler<typeof FinanceRoutes.adminCredit> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const body = ctx.req.valid("json");
+
+        const txId = await getAdminFinancialService(ctx).adminCredit({
+            organizationId,
+            ...body,
+        });
+
+        return ctx.json({ txId }, HttpStatusCodes.CREATED);
+    };
+
+    static adminDebit: AppHandler<typeof FinanceRoutes.adminDebit> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const body = ctx.req.valid("json");
+
+        const txId = await getAdminFinancialService(ctx).adminDebit({
+            organizationId,
+            ...body,
+        });
+
+        return ctx.json({ txId }, HttpStatusCodes.CREATED);
+    };
+
+    static createAccount: AppHandler<typeof FinanceRoutes.createAccount> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const body = ctx.req.valid("json");
+
+        const result = await getOrgFinancialService(ctx).createOrgAccount(
+            {
+                name: body.name,
+                currencyId: body.currencyId,
+                organizationId,
+            },
+            { allowMultiple: true }
+        );
+
+        if (!result.success || !result.account) {
+            return ctx.json(
+                { message: result.message || "Failed to create account" },
+                result.alreadyExists ? HttpStatusCodes.CONFLICT : HttpStatusCodes.BAD_REQUEST
+            );
+        }
+
+        return ctx.json(result.account, HttpStatusCodes.CREATED);
+    };
+
+    static listAccounts: AppHandler<typeof FinanceRoutes.listAccounts> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const accounts = await getOrgFinancialService(ctx).listOrgAccounts(organizationId);
+        return ctx.json({ accounts }, HttpStatusCodes.OK);
+    };
+
+    static deactivateAccount: AppHandler<typeof FinanceRoutes.deactivateAccount> = async (ctx) => {
+        const { accountId } = ctx.req.valid("param");
+        // We will implement deactivateAccount on the OrgFinancialService
+        const account = await getOrgFinancialService(ctx).deactivateAccount(accountId);
+        return ctx.json(account, HttpStatusCodes.OK);
+    };
+
+    static adminGetOrgAccounts: AppHandler<typeof FinanceRoutes.adminGetOrgAccounts> = async (
+        ctx
+    ) => {
+        const { organizationId } = ctx.req.valid("param");
+        const accounts = await getAdminFinancialService(ctx).getAnyOrgAccounts(organizationId);
+        return ctx.json({ accounts }, HttpStatusCodes.OK);
+    };
+
+    static adminGetTreasuryBalance: AppHandler<typeof FinanceRoutes.adminGetTreasuryBalance> =
+        async (ctx) => {
+            const balance = await getAdminFinancialService(ctx).getTreasuryBalance();
+            return ctx.json(balance, HttpStatusCodes.OK);
+        };
+
+    static getOrgCurrencyStatus: AppHandler<typeof FinanceRoutes.getOrgCurrencyStatus> = async (
+        ctx
+    ) => {
+        const organizationId = ctx.get("organizationId");
+        const currencies = await getOrgFinancialService(ctx).getOrgCurrencyStatus(organizationId);
+        return ctx.json({ currencies }, HttpStatusCodes.OK);
+    };
+
+    static activateCurrency: AppHandler<typeof FinanceRoutes.activateCurrency> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const { currencyId } = ctx.req.valid("json");
+        const account = await getOrgFinancialService(ctx).activateCurrency(
+            organizationId,
+            currencyId
+        );
+        return ctx.json(account, HttpStatusCodes.CREATED);
+    };
+
+    static initializeUserWallet: AppHandler<typeof FinanceRoutes.initializeUserWallet> = async (
+        ctx
+    ) => {
+        const { organizationId, userId } = ctx.req.valid("param");
+        const results = await getUserFinancialService(ctx).provisionUserAccounts(
+            userId,
+            organizationId
+        );
+        return ctx.json({ success: true, results }, HttpStatusCodes.OK);
+    };
+}

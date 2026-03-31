@@ -1,11 +1,12 @@
 import { ConflictError } from "@api/errors/app.error";
-import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrganizationRepository } from "@api/repositories/organization.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
+import { FINANCIAL_CURRENCIES } from "@shared";
 import { hashPassword } from "better-auth/crypto";
 import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
+import type { UserFinancialService } from "./financial/user-financial.service";
 
 type SignupData = {
     email: string;
@@ -19,7 +20,7 @@ export class RegistrationService extends BaseService {
         private userRepo: UserRepository,
         private orgRepo: OrganizationRepository,
         private memberRepo: MemberRepository,
-        private financialAccountsRepo: FinancialAccountsRepository
+        private userFinancialService: UserFinancialService
     ) {
         super();
     }
@@ -68,21 +69,19 @@ export class RegistrationService extends BaseService {
 
         await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
-        // Auto-provision personal accounts for the user
-        await Promise.all([
-            this.financialAccountsRepo.create({
-                name: "Points",
-                currencyId: "fcur_etd",
-                ownerType: "user",
-                ownerId: uId,
-            }),
-            this.financialAccountsRepo.create({
-                name: "Savings",
-                currencyId: "fcur_cny",
-                ownerType: "user",
-                ownerId: uId,
-            }),
-        ]);
+        // Auto-provision personal accounts for the user ( Ticket 5 refactor)
+        await this.userFinancialService.createUserAccount({
+            name: "Points",
+            currencyId: FINANCIAL_CURRENCIES.ETD,
+            userId: uId,
+            orgId: oId,
+        });
+        await this.userFinancialService.createUserAccount({
+            name: "Savings",
+            currencyId: FINANCIAL_CURRENCIES.USD,
+            userId: uId,
+            orgId: oId,
+        });
 
         return {
             user: {
@@ -124,21 +123,19 @@ export class RegistrationService extends BaseService {
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
 
-        // Auto-provision personal accounts for the user
-        await Promise.all([
-            this.financialAccountsRepo.create({
-                name: "Points",
-                currencyId: "fcur_etd",
-                ownerType: "user",
-                ownerId: uId,
-            }),
-            this.financialAccountsRepo.create({
-                name: "Savings",
-                currencyId: "fcur_cny",
-                ownerType: "user",
-                ownerId: uId,
-            }),
-        ]);
+        // Auto-provision personal accounts for the user ( Ticket 5 refactor)
+        await this.userFinancialService.createUserAccount({
+            name: "Points",
+            currencyId: FINANCIAL_CURRENCIES.ETD,
+            userId: uId,
+            orgId: organizationId,
+        });
+        await this.userFinancialService.createUserAccount({
+            name: "Savings",
+            currencyId: FINANCIAL_CURRENCIES.USD,
+            userId: uId,
+            orgId: organizationId,
+        });
 
         return {
             member: {

@@ -8,6 +8,7 @@ export const financialCurrencies = sqliteTable(
         code: text("code").notNull().unique().$type<string>(), // ISO 4217, typically 3 uppercase
         name: text("name").notNull(),
         symbol: text("symbol").notNull(),
+        defaultAccountName: text("default_account_name").notNull().default("Savings"),
         archivedAt: integer("archived_at", { mode: "timestamp_ms" }), // null = active
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()

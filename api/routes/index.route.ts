@@ -1,12 +1,13 @@
 import { emailInsightsRoutes } from "./admin/email-insights.index";
 import { adminOrgsRoutes } from "./admin/orgs.index";
 import { authRoutes } from "./auth/auth.index";
+import { financeRoutes } from "./orgs/finance.index";
 import { mediaRoutes } from "./orgs/media.index";
+import { memberWalletRoutes } from "./orgs/member-wallet.index";
 import { memberRoutes } from "./orgs/members.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
 import { uploadRoutes } from "./orgs/uploads.index";
-import { walletRoutes } from "./orgs/wallet.index";
 import { socialMediaRoutes } from "./social-media/social-media.index";
 import { userRoutes } from "./users/users.index";
 
@@ -20,6 +21,7 @@ export const routes = [
     mediaRoutes,
     playlistRoutes,
     scheduleRoutes,
-    walletRoutes,
+    financeRoutes,
+    memberWalletRoutes,
     socialMediaRoutes,
 ];

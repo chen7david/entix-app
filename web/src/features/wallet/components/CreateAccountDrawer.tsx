@@ -1,3 +1,4 @@
+import { FINANCIAL_CURRENCIES, FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { Button, Drawer, Form, Input, Select, Space } from "antd";
 import type React from "react";
 import { useCreateAccount } from "../hooks/useCreateAccount";
@@ -13,12 +14,14 @@ export const CreateAccountDrawer: React.FC<Props> = ({ open, onClose, orgId }) =
     const { mutate, isPending } = useCreateAccount(orgId);
 
     const onFinish = (values: { name: string; currencyId: string }) => {
+        if (!orgId) return;
+
         mutate(
             {
                 name: values.name,
                 currencyId: values.currencyId,
                 ownerType: "org",
-                ownerId: orgId!,
+                ownerId: orgId,
             },
             {
                 onSuccess: () => {
@@ -58,14 +61,27 @@ export const CreateAccountDrawer: React.FC<Props> = ({ open, onClose, orgId }) =
                 <Form.Item
                     name="currencyId"
                     label="Currency"
-                    initialValue="fcur_cny"
+                    initialValue={FINANCIAL_CURRENCIES.USD}
                     rules={[{ required: true }]}
                 >
                     <Select>
-                        <Select.Option value="fcur_usd">USD — US Dollar</Select.Option>
-                        <Select.Option value="fcur_cad">CAD — Canadian Dollar</Select.Option>
-                        <Select.Option value="fcur_cny">CNY — Chinese Yuan</Select.Option>
-                        <Select.Option value="fcur_etd">ETD — Entix Dollar</Select.Option>
+                        {[
+                            FINANCIAL_CURRENCIES.USD,
+                            FINANCIAL_CURRENCIES.CAD,
+                            FINANCIAL_CURRENCIES.CNY,
+                            FINANCIAL_CURRENCIES.EUR,
+                            FINANCIAL_CURRENCIES.ETD,
+                        ].map((id) => {
+                            const config =
+                                FINANCIAL_CURRENCY_CONFIG[
+                                    id as keyof typeof FINANCIAL_CURRENCY_CONFIG
+                                ];
+                            return (
+                                <Select.Option key={id} value={id}>
+                                    {config.code} — {config.name}
+                                </Select.Option>
+                            );
+                        })}
                     </Select>
                 </Form.Item>
             </Form>

@@ -2,7 +2,9 @@ import type { AppContext } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
 import { DashboardService } from "@api/services/dashboard.service";
-import { FinancialService } from "@api/services/financial.service";
+import { AdminFinancialService } from "@api/services/financial/admin-financial.service";
+import { OrgFinancialService } from "@api/services/financial/org-financial.service";
+import { UserFinancialService } from "@api/services/financial/user-financial.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
 import { MemberService } from "@api/services/member.service";
@@ -15,10 +17,12 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
+import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
     getFinancialAccountsRepository,
     getFinancialCurrenciesRepository,
+    getFinancialOrgSettingsRepository,
     getFinancialTransactionsRepository,
     getMediaRepository,
     getMemberRepository,
@@ -52,7 +56,7 @@ export const getRegistrationService = (ctx: AppContext) => {
         getUserRepository(ctx),
         getOrganizationRepository(ctx),
         getMemberRepository(ctx),
-        getFinancialAccountsRepository(ctx)
+        getUserFinancialService(ctx)
     );
 };
 
@@ -97,10 +101,29 @@ export const getMemberImportService = (ctx: AppContext) => {
     );
 };
 
-export const getFinancialService = (ctx: AppContext) => {
-    return new FinancialService(
+export const getOrgFinancialService = (ctx: AppContext) => {
+    return new OrgFinancialService(
+        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx),
         getFinancialCurrenciesRepository(ctx)
+    );
+};
+
+export const getUserFinancialService = (ctx: AppContext) => {
+    return new UserFinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx),
+        getFinancialCurrenciesRepository(ctx),
+        getFinancialOrgSettingsRepository(ctx)
+    );
+};
+
+export const getAdminFinancialService = (ctx: AppContext) => {
+    return new AdminFinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx)
     );
 };

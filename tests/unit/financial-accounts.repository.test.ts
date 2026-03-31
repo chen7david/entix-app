@@ -1,5 +1,5 @@
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
-import { financialAccounts, financialCurrencies } from "@shared/db/schema";
+import { authOrganizations, financialAccounts, financialCurrencies } from "@shared/db/schema";
 import { financialCurrencySeed } from "@shared/db/seed/financial-currencies";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, type TestDb } from "../lib/utils";
@@ -13,6 +13,7 @@ describe("financialAccountsRepository", () => {
         ownerId: "user_test_01",
         ownerType: "user" as const,
         currencyId: "fcur_usd",
+        organizationId: "org_test_01",
         name: "Personal Wallet",
         ...overrides,
     });
@@ -30,9 +31,18 @@ describe("financialAccountsRepository", () => {
          */
         await db.delete(financialAccounts);
         await db.delete(financialCurrencies);
+        await db.delete(authOrganizations);
 
         // Seed required currencies
         await db.insert(financialCurrencies).values(financialCurrencySeed);
+
+        // Seed a test organization
+        await db.insert(authOrganizations).values({
+            id: "org_test_01",
+            name: "Test Organization",
+            slug: "test-org",
+            createdAt: new Date(),
+        });
     });
 
     // ─── create ──────────────────────────────────────────────────────────────────
@@ -58,6 +68,7 @@ describe("financialAccountsRepository", () => {
                     ownerId: "org_test_01",
                     ownerType: "org",
                     currencyId: "fcur_cad",
+                    organizationId: null,
                     name: "Store Revenue",
                 })
             );
@@ -68,7 +79,7 @@ describe("financialAccountsRepository", () => {
         it("allows multiple accounts per owner", async () => {
             await repo.create(BASE_INPUT);
             await repo.create(makeInput({ name: "Savings" }));
-            const results = await repo.findActiveByOwner("user_test_01", "user");
+            const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(2);
         });
 
@@ -98,7 +109,7 @@ describe("financialAccountsRepository", () => {
 
     describe("findActiveByOwner", () => {
         it("returns empty array when no accounts exist", async () => {
-            const results = await repo.findActiveByOwner("user_test_01", "user");
+            const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(0);
         });
 
@@ -107,7 +118,7 @@ describe("financialAccountsRepository", () => {
             const inactive = await repo.create(makeInput({ name: "Inactive" }));
             await repo.deactivate(inactive.id);
 
-            const results = await repo.findActiveByOwner("user_test_01", "user");
+            const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(1);
             expect(results[0].id).toBe(active.id);
         });
@@ -117,7 +128,7 @@ describe("financialAccountsRepository", () => {
             const archived = await repo.create(makeInput({ name: "Archived" }));
             await repo.archive(archived.id);
 
-            const results = await repo.findActiveByOwner("user_test_01", "user");
+            const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(1);
             expect(results[0].id).toBe(active.id);
         });
@@ -128,11 +139,12 @@ describe("financialAccountsRepository", () => {
                 makeInput({
                     ownerId: "org_test_01",
                     ownerType: "org",
+                    organizationId: null,
                     name: "Org Revenue",
                 })
             );
 
-            const results = await repo.findActiveByOwner("user_test_01", "user");
+            const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(1);
             expect(results[0].ownerType).toBe("user");
         });

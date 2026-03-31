@@ -7,7 +7,7 @@ export const useAdminOrgAccounts = (organizationId?: string) => {
         queryKey: ["adminOrgAccounts", organizationId],
         queryFn: async () => {
             if (!organizationId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${organizationId}/wallet/accounts/admin`);
+            const res = await fetch(`${API_V1}/orgs/${organizationId}/finance/accounts/admin`);
             if (!res.ok) throw new Error("Failed to fetch org accounts");
             return res.json();
         },

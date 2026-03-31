@@ -1,4 +1,9 @@
-import { PLATFORM_TREASURY_ACCOUNT_ID } from "@shared/db/seed/financial.seed";
+import {
+    FINANCIAL_ACCOUNTS,
+    FINANCIAL_CATEGORIES,
+    FINANCIAL_CURRENCIES,
+    FINANCIAL_CURRENCY_CONFIG,
+} from "@shared";
 import { Button, Drawer, Form, Input, InputNumber, Select, Space } from "antd";
 import type React from "react";
 import { useAdminCredit } from "../hooks/useAdminCredit";
@@ -25,8 +30,8 @@ export const AdminCreditDrawer: React.FC<Props> = ({ open, onClose, organization
         mutate(
             {
                 organizationId,
-                categoryId: "fcat_cash_deposit",
-                platformTreasuryAccountId: PLATFORM_TREASURY_ACCOUNT_ID,
+                categoryId: FINANCIAL_CATEGORIES.CASH_DEPOSIT,
+                platformTreasuryAccountId: FINANCIAL_ACCOUNTS.PLATFORM_TREASURY,
                 destinationAccountId: values.destinationAccountId,
                 currencyId: values.currencyId,
                 amountCents: Math.round(values.amountDollars * 100),
@@ -76,14 +81,27 @@ export const AdminCreditDrawer: React.FC<Props> = ({ open, onClose, organization
                 <Form.Item
                     name="currencyId"
                     label="Currency"
-                    initialValue="fcur_usd"
+                    initialValue={FINANCIAL_CURRENCIES.USD}
                     rules={[{ required: true }]}
                 >
                     <Select>
-                        <Select.Option value="fcur_usd">USD — US Dollar</Select.Option>
-                        <Select.Option value="fcur_etd">ETD — Entix Dollar</Select.Option>
-                        <Select.Option value="fcur_cad">CAD — Canadian Dollar</Select.Option>
-                        <Select.Option value="fcur_cny">CNY — Chinese Yuan</Select.Option>
+                        {[
+                            FINANCIAL_CURRENCIES.USD,
+                            FINANCIAL_CURRENCIES.ETD,
+                            FINANCIAL_CURRENCIES.CAD,
+                            FINANCIAL_CURRENCIES.CNY,
+                            FINANCIAL_CURRENCIES.EUR,
+                        ].map((id) => {
+                            const config =
+                                FINANCIAL_CURRENCY_CONFIG[
+                                    id as keyof typeof FINANCIAL_CURRENCY_CONFIG
+                                ];
+                            return (
+                                <Select.Option key={id} value={id}>
+                                    {config.code} — {config.name}
+                                </Select.Option>
+                            );
+                        })}
                     </Select>
                 </Form.Item>
 

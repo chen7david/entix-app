@@ -19,17 +19,26 @@ export type TransactionHistoryResponse = {
     pageSize: number;
 };
 
-export const useTransactionHistory = (orgId?: string, page = 1, pageSize = 20) => {
+export const useTransactionHistory = (
+    id?: string,
+    ownerType: "user" | "org" = "org",
+    page = 1,
+    pageSize = 20
+) => {
     return useQuery<TransactionHistoryResponse>({
-        queryKey: ["transactionHistory", orgId, page, pageSize],
+        queryKey: ["transactionHistory", id, ownerType, page, pageSize],
         queryFn: async () => {
-            if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(
-                `${API_V1}/orgs/${orgId}/wallet/transactions?page=${page}&pageSize=${pageSize}`
-            );
+            if (!id) throw new Error("ID required");
+
+            const url =
+                ownerType === "org"
+                    ? `${API_V1}/orgs/${id}/finance/transactions?page=${page}&pageSize=${pageSize}`
+                    : `${API_V1}/orgs/${id}/members/${id}/wallet/transactions?page=${page}&pageSize=${pageSize}`;
+
+            const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch transaction history");
             return res.json();
         },
-        enabled: !!orgId,
+        enabled: !!id,
     });
 };

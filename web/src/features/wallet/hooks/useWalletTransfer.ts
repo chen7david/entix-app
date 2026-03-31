@@ -16,7 +16,7 @@ export const useWalletTransfer = (orgId?: string) => {
     return useMutation({
         mutationFn: async (data: TransferInput) => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/wallet/transfer`, {
+            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/transfer`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(data),

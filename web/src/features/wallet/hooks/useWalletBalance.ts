@@ -13,15 +13,24 @@ export type WalletSummary = {
     accounts: WalletAccount[];
 };
 
-export const useWalletBalance = (orgId?: string) => {
+export const useWalletBalance = (
+    id?: string,
+    ownerType: "user" | "org" = "org",
+    orgId?: string
+) => {
     return useQuery<WalletSummary>({
-        queryKey: ["walletBalance", orgId],
+        queryKey: ["walletBalance", id, ownerType, orgId],
         queryFn: async () => {
-            if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/wallet/balance`);
+            if (!id) throw new Error("ID required");
+            const url =
+                ownerType === "org"
+                    ? `${API_V1}/orgs/${id}/finance/summary`
+                    : `${API_V1}/orgs/${orgId}/members/${id}/wallet/summary`;
+
+            const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch wallet balance");
             return res.json();
         },
-        enabled: !!orgId,
+        enabled: !!id,
     });
 };

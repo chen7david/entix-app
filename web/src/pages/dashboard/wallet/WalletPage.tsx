@@ -1,19 +1,21 @@
 import { PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { useOrganization } from "@web/src/features/organization";
 import {
-    CreateAccountDrawer,
     TransactionTable,
     TransferDrawer,
     useTransactionHistory,
     useWalletBalance,
     WalletSummaryCard,
 } from "@web/src/features/wallet";
+import { useSession } from "@web/src/lib/auth-client";
 import { Button, Card, Col, Row, Space, Typography } from "antd";
 import { useState } from "react";
 
 const { Title } = Typography;
 
 export const WalletPage = () => {
+    const { data: session } = useSession();
+    const userId = session?.user?.id;
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
@@ -25,13 +27,13 @@ export const WalletPage = () => {
         data: summary,
         isLoading: isLoadingBalance,
         refetch: refetchBalance,
-    } = useWalletBalance(orgId);
+    } = useWalletBalance(userId, "user", orgId);
 
     const {
         data: history,
         isFetching: isFetchingHistory,
         refetch: refetchHistory,
-    } = useTransactionHistory(orgId, page, pageSize);
+    } = useTransactionHistory(userId, "user", page, pageSize);
 
     const handleRefresh = () => {
         refetchBalance();
@@ -42,7 +44,12 @@ export const WalletPage = () => {
         <div style={{ padding: 24 }}>
             <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
                 <Col>
-                    <Title level={2}>Wallet & Ledger</Title>
+                    <Title level={2} style={{ marginBottom: 4 }}>
+                        Personal Wallet
+                    </Title>
+                    <Typography.Text type="secondary">
+                        Manage your personal financial accounts within this organization.
+                    </Typography.Text>
                 </Col>
                 <Col>
                     <Space>

@@ -1,6 +1,7 @@
 export * from "./auth.schema";
 export * from "./financial-accounts.schema";
 export * from "./financial-currencies.schema";
+export * from "./financial-org-settings.schema";
 export * from "./financial-transaction-categories.schema";
 export * from "./financial-transaction-lines.schema";
 export * from "./financial-transactions.schema";

@@ -30,6 +30,7 @@ export class FinancialAccountsRepository {
                 ownerId: input.ownerId,
                 ownerType: input.ownerType,
                 currencyId: input.currencyId,
+                organizationId: input.organizationId,
                 name: input.name,
                 createdAt: now,
                 updatedAt: now,
@@ -53,7 +54,8 @@ export class FinancialAccountsRepository {
      */
     async findActiveByOwner(
         ownerId: string,
-        ownerType: "user" | "org"
+        ownerType: "user" | "org",
+        organizationId?: string
     ): Promise<FinancialAccount[]> {
         return this.db
             .select()
@@ -62,6 +64,9 @@ export class FinancialAccountsRepository {
                 and(
                     eq(financialAccounts.ownerId, ownerId),
                     eq(financialAccounts.ownerType, ownerType),
+                    organizationId
+                        ? eq(financialAccounts.organizationId, organizationId)
+                        : sql`${financialAccounts.organizationId} IS NULL`,
                     eq(financialAccounts.isActive, true),
                     sql`${financialAccounts.archivedAt} IS NULL`
                 )
@@ -102,5 +107,73 @@ export class FinancialAccountsRepository {
             .returning();
 
         return account ?? null;
+    }
+
+    /**
+     * Finds active accounts for an organization.
+     */
+    async getOrgAccounts(orgId: string): Promise<FinancialAccount[]> {
+        return this.db.query.financialAccounts.findMany({
+            where: and(
+                eq(financialAccounts.ownerId, orgId),
+                eq(financialAccounts.ownerType, "org"),
+                eq(financialAccounts.isActive, true)
+            ),
+        });
+    }
+
+    /**
+     * Checks if an account already exists for an owner with the same name and currency.
+     */
+    async existsByNameAndCurrency(
+        ownerId: string,
+        name: string,
+        currencyId: string,
+        organizationId?: string
+    ): Promise<boolean> {
+        const [existing] = await this.db
+            .select({ id: financialAccounts.id })
+            .from(financialAccounts)
+            .where(
+                and(
+                    eq(financialAccounts.ownerId, ownerId),
+                    eq(financialAccounts.name, name),
+                    eq(financialAccounts.currencyId, currencyId),
+                    organizationId
+                        ? eq(financialAccounts.organizationId, organizationId)
+                        : sql`${financialAccounts.organizationId} IS NULL`
+                )
+            )
+            .limit(1);
+
+        return !!existing;
+    }
+
+    /**
+     * Checks if an account already exists for an owner and currency.
+     */
+    async existsByOwnerAndCurrency(
+        ownerId: string,
+        ownerType: "user" | "org",
+        currencyId: string,
+        organizationId?: string
+    ): Promise<boolean> {
+        const [existing] = await this.db
+            .select({ id: financialAccounts.id })
+            .from(financialAccounts)
+            .where(
+                and(
+                    eq(financialAccounts.ownerId, ownerId),
+                    eq(financialAccounts.ownerType, ownerType),
+                    eq(financialAccounts.currencyId, currencyId),
+                    organizationId
+                        ? eq(financialAccounts.organizationId, organizationId)
+                        : sql`${financialAccounts.organizationId} IS NULL`,
+                    eq(financialAccounts.isActive, true)
+                )
+            )
+            .limit(1);
+
+        return !!existing;
     }
 }

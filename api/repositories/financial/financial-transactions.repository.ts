@@ -158,4 +158,51 @@ export class FinancialTransactionsRepository {
             offset,
         });
     }
+
+    /**
+     * Fetches transaction lines for all accounts owned by a specific owner.
+     * Required for UserFinancialService to show personal wallets' history.
+     */
+    async findByOwner(
+        ownerId: string,
+        ownerType: "user" | "org",
+        { page, pageSize }: PaginationInput,
+        organizationId?: string
+    ) {
+        const offset = (page - 1) * pageSize;
+
+        // Since D1/Drizzle relations don't easily support deep filtering on joins for pagination,
+        // we first get the IDs of the accounts owned by the user.
+        const ownerAccounts = await this.db.query.financialAccounts.findMany({
+            where: and(
+                eq(financialAccounts.ownerId, ownerId),
+                eq(financialAccounts.ownerType, ownerType),
+                organizationId
+                    ? eq(financialAccounts.organizationId, organizationId)
+                    : sql`${financialAccounts.organizationId} IS NULL`
+            ),
+            columns: { id: true },
+        });
+
+        const accountIds = ownerAccounts.map((a) => a.id);
+        if (accountIds.length === 0) return [];
+
+        return this.db.query.financialTransactionLines.findMany({
+            where: sql`${financialTransactionLines.accountId} IN ${accountIds}`,
+            with: {
+                transaction: {
+                    with: {
+                        sourceAccount: true,
+                        destinationAccount: true,
+                        category: true,
+                        currency: true,
+                    },
+                },
+                account: true,
+            },
+            orderBy: [desc(financialTransactionLines.createdAt)],
+            limit: pageSize,
+            offset,
+        });
+    }
 }

@@ -9,6 +9,7 @@ import {
     SearchOutlined,
     TeamOutlined,
     UserOutlined,
+    WalletOutlined,
 } from "@ant-design/icons";
 import { getAvatarUrl } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
@@ -27,6 +28,7 @@ import {
     UserProfileForm,
     useRemoveAvatar,
 } from "@web/src/features/user-profiles";
+import { useInitializeWallet } from "@web/src/features/wallet/hooks/useInitializeWallet";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
@@ -105,6 +107,9 @@ export const OrganizationMembersPage = () => {
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
+    const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(
+        activeOrganization?.id || ""
+    );
 
     const handleCreateMember = async (values: any) => {
         try {
@@ -257,6 +262,16 @@ export const OrganizationMembersPage = () => {
                         onClick: (e) => {
                             e.domEvent.stopPropagation();
                             handleResendVerification(record.user?.email);
+                        },
+                    },
+                    {
+                        key: "initialize-wallet",
+                        label: "Initialize Wallet",
+                        icon: <WalletOutlined />,
+                        disabled: isInitializing,
+                        onClick: (e) => {
+                            e.domEvent.stopPropagation();
+                            initializeWallet(record.userId as string);
                         },
                     },
                     {

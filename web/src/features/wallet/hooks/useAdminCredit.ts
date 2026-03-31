@@ -18,7 +18,7 @@ export const useAdminCredit = () => {
 
     return useMutation({
         mutationFn: async (input: AdminCreditInput) => {
-            const res = await fetch(`${API_V1}/orgs/${input.organizationId}/wallet/admin/credit`, {
+            const res = await fetch(`${API_V1}/orgs/${input.organizationId}/finance/admin/credit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),

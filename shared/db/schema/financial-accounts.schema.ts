@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
-import { check, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { financialCurrencies } from "./financial-currencies.schema";
+import { authOrganizations } from "./organization.schema";
 
 export const financialAccounts = sqliteTable(
     "financial_accounts",
@@ -11,6 +12,7 @@ export const financialAccounts = sqliteTable(
         currencyId: text("currency_id")
             .notNull()
             .references(() => financialCurrencies.id),
+        organizationId: text("organization_id").references(() => authOrganizations.id),
         name: text("name").notNull(),
         balanceCents: integer("balance_cents").notNull().default(0),
         isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
@@ -25,6 +27,16 @@ export const financialAccounts = sqliteTable(
     (t) => [
         check("owner_type_check", sql`${t.ownerType} IN ('user', 'org')`),
         check("balance_non_negative", sql`${t.balanceCents} >= 0`),
+        check(
+            "org_scoped_user_accounts",
+            sql`(${t.ownerType} = 'org' AND ${t.organizationId} IS NULL) OR (${t.ownerType} = 'user' AND ${t.organizationId} IS NOT NULL)`
+        ),
+        uniqueIndex("owner_org_name_currency_idx").on(
+            t.ownerId,
+            t.organizationId,
+            t.name,
+            t.currencyId
+        ),
     ]
 );
 

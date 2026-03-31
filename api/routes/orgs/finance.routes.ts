@@ -45,13 +45,13 @@ const adminDebitSchema = z.object({
     description: z.string().optional(),
 });
 
-export const WalletRoutes = {
+export const FinanceRoutes = {
     tags,
 
     getBalance: createRoute({
         tags,
         method: HttpMethods.GET,
-        path: "/orgs/{organizationId}/wallet/balance",
+        path: "/orgs/{organizationId}/finance/summary",
         summary: "Get organization wallet balance summary",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -67,7 +67,7 @@ export const WalletRoutes = {
     getTransactions: createRoute({
         tags,
         method: HttpMethods.GET,
-        path: "/orgs/{organizationId}/wallet/transactions",
+        path: "/orgs/{organizationId}/finance/transactions",
         summary: "Get paginated transaction history for the organization",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -93,7 +93,7 @@ export const WalletRoutes = {
     executeTransfer: createRoute({
         tags,
         method: HttpMethods.POST,
-        path: "/orgs/{organizationId}/wallet/transfer",
+        path: "/orgs/{organizationId}/finance/transfer",
         summary: "Execute an internal transfer between accounts",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -110,7 +110,7 @@ export const WalletRoutes = {
     adminCredit: createRoute({
         tags,
         method: HttpMethods.POST,
-        path: "/orgs/{organizationId}/wallet/admin/credit",
+        path: "/orgs/{organizationId}/finance/admin/credit",
         summary: "Platform-initiated credit to an account",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -127,7 +127,7 @@ export const WalletRoutes = {
     adminDebit: createRoute({
         tags,
         method: HttpMethods.POST,
-        path: "/orgs/{organizationId}/wallet/admin/debit",
+        path: "/orgs/{organizationId}/finance/admin/debit",
         summary: "Platform-initiated debit from an account",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -144,7 +144,7 @@ export const WalletRoutes = {
     createAccount: createRoute({
         tags,
         method: HttpMethods.POST,
-        path: "/orgs/{organizationId}/wallet/accounts",
+        path: "/orgs/{organizationId}/finance/accounts",
         summary: "Create a new financial account for the organization",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -155,13 +155,21 @@ export const WalletRoutes = {
                 createFinancialAccountResponseSchema,
                 "Account created successfully"
             ),
+            [HttpStatusCodes.CONFLICT]: jsonContent(
+                z.object({ message: z.string() }),
+                "Account already exists"
+            ),
+            [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+                z.object({ message: z.string() }),
+                "Invalid request"
+            ),
         },
     }),
 
     listAccounts: createRoute({
         tags,
         method: HttpMethods.GET,
-        path: "/orgs/{organizationId}/wallet/accounts",
+        path: "/orgs/{organizationId}/finance/accounts",
         summary: "List all active financial accounts for the organization",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -177,7 +185,7 @@ export const WalletRoutes = {
     deactivateAccount: createRoute({
         tags,
         method: HttpMethods.PATCH,
-        path: "/orgs/{organizationId}/wallet/accounts/{accountId}/deactivate",
+        path: "/orgs/{organizationId}/finance/accounts/{accountId}/deactivate",
         summary: "Deactivate a financial account (blocks future transactions)",
         request: {
             params: z.object({
@@ -196,7 +204,7 @@ export const WalletRoutes = {
     adminGetOrgAccounts: createRoute({
         tags: ["Wallet", "Admin"],
         method: HttpMethods.GET,
-        path: "/orgs/{organizationId}/wallet/accounts/admin",
+        path: "/orgs/{organizationId}/finance/accounts/admin",
         summary: "Super admin: get all accounts for any org including balances",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -212,7 +220,7 @@ export const WalletRoutes = {
     adminGetTreasuryBalance: createRoute({
         tags: ["Wallet", "Admin"],
         method: HttpMethods.GET,
-        path: "/wallet/treasury/balance",
+        path: "/admin/finance/treasury/balance",
         summary: "Super admin: get platform treasury account balance",
         request: {},
         responses: {
@@ -258,6 +266,28 @@ export const WalletRoutes = {
             [HttpStatusCodes.CREATED]: jsonContent(
                 createFinancialAccountResponseSchema,
                 "Currency activated — General Fund account created"
+            ),
+        },
+    }),
+
+    initializeUserWallet: createRoute({
+        tags,
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/members/{userId}/initialize-wallet",
+        summary: "Manually provision default accounts for a member (idempotent)",
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                userId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                z.object({
+                    success: z.boolean(),
+                    results: z.array(z.any()),
+                }),
+                "Wallet initialization completed"
             ),
         },
     }),
