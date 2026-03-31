@@ -64,6 +64,15 @@ Services handle business actions. They think in terms of domain concepts and wor
 | Delete a member | `deleteMember` | `removeMember` / `kickUser` |
 | Update a role | `updateMember` | `changeRole` / `promoteUser` |
 
+### **The find* vs get* Distinction**
+
+| Feature | `find*` (Nullable) | `get*` (Required) |
+| :--- | :--- | :--- |
+| **Return Type** | `T | null` | `T` (never null) |
+| **Behavior** | Safe; returns null if missing | Throws `NotFoundError` if missing |
+| **Usage** | Repositories & Services | Services ONLY |
+| **Intent** | Optional lookup | Mandatory existence |
+
 ## 4. API Layer (Handlers & Routes)
 
 - **Route Constant**: `{action}{Domain}Route` (e.g., `createPlaylistRoute`).

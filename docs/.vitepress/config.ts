@@ -28,19 +28,16 @@ export default defineConfig({
                     { text: "OpenAPI & Routes", link: "/how-to/03-openapi-and-routes" },
                     { text: "Factories & DI", link: "/how-to/04-factory-and-di" },
                     { text: "Testing Guide", link: "/how-to/05-testing" },
+                    { text: "Git Workflow", link: "/how-to/06-git-workflow" },
                 ],
             },
             {
-              text: "Frontend",
-              items: [
-                  { text: "Navigation", link: "/frontend/01-navigation" },
-              ],
+                text: "Frontend",
+                items: [{ text: "Navigation", link: "/frontend/01-navigation" }],
             },
             {
                 text: "Conventions",
-                items: [
-                    { text: "Naming Rules", link: "/conventions/01-naming" },
-                ],
+                items: [{ text: "Naming Rules", link: "/conventions/01-naming" }],
             },
             {
                 text: "Principles (Why?)",

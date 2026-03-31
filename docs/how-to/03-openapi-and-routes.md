@@ -47,10 +47,18 @@ export class PlaylistHandlers {
         const playlistService = getPlaylistService(ctx);
         const playlist = await playlistService.getPlaylist(playlistId, organizationId);
 
-        return ctx.json(playlist, HttpStatusCodes.OK);
+        return ctx.json(playlists, HttpStatusCodes.OK);
     };
 }
 ```
+
+## ⚠️ Common Mistakes (Avoid)
+
+1. **Using `z.any()`**: Never use `z.any()` for schemas. It defeats the purpose of type safety and documentation.
+2. **Missing 404 Responses**: If a handler calls a `get*` service method, the route **must** define a `404` response in its `responses` object.
+3. **Leaking Logic into Handlers**: Handlers should only handle HTTP concerns. If you have an `if` statement checking business conditions, it belongs in a Service.
+4. **Incorrect Route Naming**: Route constants should follow the `{action}{Domain}Route` pattern (e.g., `listPlaylistsRoute`), not just `{Domain}Route`.
+5. **Direct Repository Access**: Never call a repository factory inside a handler. Always use a service.
 
 ## 3. `AppError` Mapping
 

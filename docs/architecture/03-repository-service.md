@@ -46,6 +46,27 @@ export class UserService extends BaseService {
 }
 ```
 
+## 🏗 Wrong vs Right
+
+| Aspect | ❌ Wrong (Avoid) | ✅ Right (Do) |
+| :--- | :--- | :--- |
+| **Logic** | Checking permissions in `UserRepository` | Checking permissions in `UserService` |
+| **Exceptions** | Throwing `NotFoundError` in a repository | Throwing `NotFoundError` in a service |
+| **Dependency** | Importing `BetterAuth` into a repository | Injecting `Auth` context into a service |
+| **Access** | Handler calling a repository factory | Handler calling a service factory |
+| **Persistence** | Service using `db.insert(...)` directly | Service calling `repo.insert(...)` |
+
+## 🏷 Naming by Intent
+
+- **Repository methods** are named after **data operations**: `findUserById`, `insertMember`, `updateOrganization`.
+- **Service methods** are named after **business intent**: `inviteUser`, `transferOwnership`, `leaveOrganization`.
+
+| Action | Repository Method | Service Method |
+| :--- | :--- | :--- |
+| Create a membership | `insertMember` | `addMember` (simple) or `inviteUser` (complex) |
+| Remove an entity | `deletePlaylist` | `archivePlaylist` or `removePlaylist` |
+| Update a state | `updateMember` | `changeRole` or `promoteUser` |
+
 ## Why This Pattern?
 
 -   **Testability**: You can unit test Services by mocking simple Repository interfaces.
