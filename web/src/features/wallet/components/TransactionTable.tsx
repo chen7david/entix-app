@@ -45,8 +45,8 @@ export const TransactionTable = ({
             key: "amount",
             render: (_: unknown, record: Transaction) => (
                 <span style={{ fontWeight: "bold" }}>
-                    {record.currency.symbol}
-                    {(record.amountCents / 100).toFixed(2)} {record.currency.code}
+                    {record.currency?.symbol}
+                    {(record.amountCents / 100).toFixed(2)} {record.currency?.code}
                 </span>
             ),
         },

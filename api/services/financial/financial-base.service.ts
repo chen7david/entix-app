@@ -4,6 +4,7 @@ import type {
     CreateTransactionInput,
     FinancialTransactionsRepository,
 } from "@api/repositories/financial/financial-transactions.repository";
+import { getTreasuryAccountId } from "@shared";
 import { BadRequestError } from "../../errors/app.error";
 import { BaseService } from "../base.service";
 
@@ -27,15 +28,24 @@ export abstract class FinancialBaseService extends BaseService {
      * Includes a strict currency mismatch guard to prevent cross-currency transfers.
      */
     protected async executeTransaction(input: CreateTransactionInput) {
-        // 1. Currency Mismatch Guard (Shared logic used by all domains)
-        const [source, destination] = await Promise.all([
+        // 1. Core Record Existence Guard (Source, Destination, and Category)
+        const [source, destination, category] = await Promise.all([
             this.accountsRepo.findById(input.sourceAccountId),
             this.accountsRepo.findById(input.destinationAccountId),
+            this.db.query.financialTransactionCategories.findFirst({
+                where: (categories, { eq }) => eq(categories.id, input.categoryId),
+            }),
         ]);
 
         if (!source || !destination) {
             throw new BadRequestError(
                 `Source (${input.sourceAccountId}) or destination (${input.destinationAccountId}) account not found`
+            );
+        }
+
+        if (!category) {
+            throw new BadRequestError(
+                `Invalid transaction category: "${input.categoryId}". Ensure financial foundations are seeded.`
             );
         }
 
@@ -48,7 +58,20 @@ export abstract class FinancialBaseService extends BaseService {
             );
         }
 
-        // 2. Insufficient Funds Guard (Shared logic for all transfers)
+        // 2. Treasury Guard: Only General Fund accounts can transact with platform treasury
+        const treasuryId = getTreasuryAccountId(input.currencyId);
+        if (source.id === treasuryId || destination.id === treasuryId) {
+            const orgAccount = source.id === treasuryId ? destination : source;
+
+            if (!orgAccount.isFundingAccount) {
+                throw new BadRequestError(
+                    "Only General Fund accounts can transact with the platform treasury. " +
+                        "Custom accounts must receive funds via internal transfer from a General Fund account."
+                );
+            }
+        }
+
+        // 3. Insufficient Funds Guard (Shared logic for all transfers)
         if (source.balanceCents < input.amountCents) {
             throw new BadRequestError("Insufficient treasury funds");
         }

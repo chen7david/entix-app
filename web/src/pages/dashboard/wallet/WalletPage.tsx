@@ -33,7 +33,7 @@ export const WalletPage = () => {
         data: history,
         isFetching: isFetchingHistory,
         refetch: refetchHistory,
-    } = useTransactionHistory(userId, "user", page, pageSize);
+    } = useTransactionHistory(userId, "user", page, pageSize, orgId);
 
     const handleRefresh = () => {
         refetchBalance();

@@ -123,7 +123,24 @@ export class UserFinancialService extends FinancialBaseService {
      * Returns personal transaction history for a user within a specific organization.
      */
     async getTransactionHistory(userId: string, orgId: string, pagination: PaginationInput) {
-        const data = await this.transactionsRepo.findByOwner(userId, "user", pagination, orgId);
+        const lines = await this.transactionsRepo.findByOwner(userId, "user", pagination, orgId);
+
+        // Normalize TransactionLines into the flat Transaction DTO expected by the frontend
+        const data = lines.map((line) => {
+            const tx = line.transaction;
+            return {
+                id: tx.id,
+                amountCents: tx.amountCents,
+                status: tx.status,
+                description: tx.description,
+                transactionDate: tx.transactionDate,
+                sourceAccount: tx.sourceAccount,
+                destinationAccount: tx.destinationAccount,
+                category: tx.category,
+                currency: tx.currency,
+            };
+        });
+
         return {
             data,
             page: pagination.page,

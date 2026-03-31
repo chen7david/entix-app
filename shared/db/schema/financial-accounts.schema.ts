@@ -23,6 +23,9 @@ export const financialAccounts = sqliteTable(
         updatedAt: integer("updated_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+        isFundingAccount: integer("is_funding_account", { mode: "boolean" })
+            .notNull()
+            .default(false),
     },
     (t) => [
         check("owner_type_check", sql`${t.ownerType} IN ('user', 'org')`),

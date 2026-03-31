@@ -7,9 +7,8 @@ export class AdminFinanceHandler {
     static getTreasuryBalance: AppHandler<typeof AdminFinanceRoutes.getTreasuryBalance> = async (
         ctx
     ) => {
-        const { currencyId } = ctx.req.valid("query");
-        const balance = await getAdminFinancialService(ctx).getTreasuryBalance(currencyId);
-        return ctx.json(balance, HttpStatusCodes.OK);
+        const accounts = await getAdminFinancialService(ctx).getTreasuryBalance();
+        return ctx.json({ accounts }, HttpStatusCodes.OK);
     };
 
     static getOrgAccounts: AppHandler<typeof AdminFinanceRoutes.getOrgAccounts> = async (ctx) => {

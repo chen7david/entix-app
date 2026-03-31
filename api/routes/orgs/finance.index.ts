@@ -11,4 +11,5 @@ export const financeRoutes = createRouter()
     .openapi(FinanceRoutes.deactivateAccount, FinanceHandler.deactivateAccount)
     .openapi(FinanceRoutes.getOrgCurrencyStatus, FinanceHandler.getOrgCurrencyStatus)
     .openapi(FinanceRoutes.activateCurrency, FinanceHandler.activateCurrency)
+    .openapi(FinanceRoutes.reverseTransaction, FinanceHandler.reverseTransaction)
     .openapi(FinanceRoutes.initializeUserWallet, FinanceHandler.initializeUserWallet);

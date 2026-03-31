@@ -14,21 +14,34 @@ export class FinanceHandler {
         ctx
     ) => {
         const { organizationId } = ctx.req.valid("param");
-        const { page, pageSize } = ctx.req.valid("query");
+        const query = ctx.req.valid("query");
 
-        const history = await getOrgFinancialService(ctx).getTransactionHistory(organizationId, {
-            page: page ?? 1,
-            pageSize: pageSize ?? 20,
-        });
+        const history = await getOrgFinancialService(ctx).getTransactionHistory(
+            organizationId,
+            query
+        );
 
         return ctx.json(
             {
                 data: history,
-                page: page ?? 1,
-                pageSize: pageSize ?? 20,
+                page: query.page,
+                pageSize: query.pageSize,
             },
             HttpStatusCodes.OK
         );
+    };
+
+    static reverseTransaction: AppHandler<typeof FinanceRoutes.reverseTransaction> = async (
+        ctx
+    ) => {
+        const { organizationId, txId } = ctx.req.valid("param");
+        const { reason } = ctx.req.valid("json");
+        const reversalTxId = await getOrgFinancialService(ctx).reverseTransaction(
+            txId,
+            organizationId,
+            reason
+        );
+        return ctx.json({ txId: reversalTxId }, HttpStatusCodes.CREATED);
     };
 
     static executeTransfer: AppHandler<typeof FinanceRoutes.executeTransfer> = async (ctx) => {

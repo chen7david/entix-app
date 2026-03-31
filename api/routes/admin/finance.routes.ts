@@ -7,11 +7,7 @@ import {
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
 import { createRoute } from "@hono/zod-openapi";
-import {
-    executeTransferResponseSchema,
-    FINANCIAL_CURRENCIES,
-    listFinancialAccountsResponseSchema,
-} from "@shared";
+import { executeTransferResponseSchema, listFinancialAccountsResponseSchema } from "@shared";
 import { z } from "zod";
 
 const tags = ["Admin - Finance"];
@@ -42,19 +38,11 @@ export const AdminFinanceRoutes = {
         method: HttpMethods.GET,
         path: "/admin/finance/treasury/balance",
         middleware: [requireAuth, requireSuperAdmin] as const,
-        summary: "Super admin: get platform treasury account balance",
-        request: {
-            query: z.object({
-                currencyId: z.string().optional().default(FINANCIAL_CURRENCIES.USD),
-            }),
-        },
+        summary: "Super admin: get all platform treasury account balances",
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                z.object({
-                    balanceCents: z.number(),
-                    balanceFormatted: z.string(),
-                }),
-                "Treasury balance fetched successfully"
+                listFinancialAccountsResponseSchema,
+                "Treasury balances fetched successfully"
             ),
         },
     }),

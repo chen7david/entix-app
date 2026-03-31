@@ -7,6 +7,7 @@ export type WalletAccount = {
     balanceCents: number;
     currencyId: string;
     isActive: boolean;
+    isFundingAccount: boolean;
 };
 
 export type WalletSummary = {
@@ -22,6 +23,9 @@ export const useWalletBalance = (
         queryKey: ["walletBalance", id, ownerType, orgId],
         queryFn: async () => {
             if (!id) throw new Error("ID required");
+            if (ownerType === "user" && !orgId)
+                throw new Error("Organization ID required for member wallets");
+
             const url =
                 ownerType === "org"
                     ? `${API_V1}/orgs/${id}/finance/summary`
@@ -31,6 +35,6 @@ export const useWalletBalance = (
             if (!res.ok) throw new Error("Failed to fetch wallet balance");
             return res.json();
         },
-        enabled: !!id,
+        enabled: ownerType === "org" ? !!id : !!id && !!orgId,
     });
 };

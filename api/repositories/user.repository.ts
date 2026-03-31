@@ -90,6 +90,7 @@ export class UserRepository {
                 ...row.user,
                 user: row.user,
                 userId: row.user.id,
+                organizationId: row.member.organizationId,
                 role: row.member.role,
                 createdAt: row.member.createdAt,
                 updatedAt: row.user.updatedAt,

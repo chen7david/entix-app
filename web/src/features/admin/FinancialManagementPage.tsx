@@ -5,7 +5,7 @@ import { AdminCreditDrawer } from "@web/src/features/wallet/components/AdminCred
 import { useAdminOrgAccounts } from "@web/src/features/wallet/hooks/useAdminOrgAccounts";
 import { useTreasuryBalance } from "@web/src/features/wallet/hooks/useTreasuryBalance";
 import type { WalletAccount } from "@web/src/features/wallet/hooks/useWalletBalance";
-import { Alert, Button, Card, Col, Empty, Row, Select, Statistic, Tag, Typography } from "antd";
+import { Button, Card, Col, Empty, Row, Select, Statistic, Tag, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";
 
@@ -21,157 +21,243 @@ export const FinancialManagementPage: React.FC = () => {
     const { data: orgAccountsData, isLoading: isLoadingAccounts } =
         useAdminOrgAccounts(selectedOrgId);
 
-    const lowTreasury = treasury && treasury.balanceCents < 1_000_000_00; // alert below $1M
-
     const handleCardClick = (account: WalletAccount) => {
         setSelectedAccount(account);
         setCreditDrawerOpen(true);
     };
 
     return (
-        <div className="p-6">
-            <Title level={2}>Financial Management</Title>
+        <div style={{ padding: 24 }}>
+            <Title level={2} style={{ marginBottom: 32 }}>
+                Financial Oversight
+            </Title>
 
             {/* Treasury Health */}
-            <Card style={{ marginBottom: 24 }}>
-                <Row gutter={24} align="middle">
-                    <Col>
-                        <Statistic
-                            title="Platform Treasury Balance"
-                            value={treasury?.balanceFormatted ?? "Loading..."}
-                            valueStyle={{ color: lowTreasury ? "#cf1322" : "#3f8600" }}
-                            loading={isLoadingTreasury}
-                        />
-                    </Col>
-                    {lowTreasury && !isLoadingTreasury && (
-                        <Col>
-                            <Alert
-                                type="warning"
-                                title="Treasury balance is below $1,000,000 — top up required"
-                                showIcon
-                            />
-                        </Col>
-                    )}
-                </Row>
-            </Card>
+            <div style={{ marginBottom: 32 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                    <Title level={4} style={{ margin: 0 }}>
+                        Platform Treasury
+                    </Title>
+                    <Tag color="geekblue" bordered={false} style={{ margin: 0 }}>
+                        LIQUIDITY
+                    </Tag>
+                </div>
 
-            {/* Org Selector */}
-            <Card title="Select Organization" style={{ marginBottom: 24 }}>
-                <Select
-                    style={{ width: 400 }}
-                    placeholder="Select an organization to manage"
-                    onChange={setSelectedOrgId}
-                    showSearch
-                    loading={isLoadingOrgs}
-                    options={orgs?.map((o: any) => ({ label: o.name, value: o.id }))}
-                    optionFilterProp="label"
-                />
-            </Card>
+                {isLoadingTreasury ? (
+                    <Row gutter={[16, 16]}>
+                        {[1, 2, 3, 4].map((i) => (
+                            <Col xs={24} sm={12} lg={6} key={i}>
+                                <Card loading />
+                            </Col>
+                        ))}
+                    </Row>
+                ) : (
+                    <Row gutter={[16, 16]}>
+                        {treasury?.map((acc: WalletAccount) => {
+                            const config =
+                                FINANCIAL_CURRENCY_CONFIG[
+                                    acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
+                                ];
+                            const isLow = acc.balanceCents < 100_000_00; // $1,000 alert
 
-            {/* Org Accounts */}
-            {!selectedOrgId ? (
-                <Card bordered={false} style={{ background: "transparent" }}>
-                    <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={
-                            <Text type="secondary">
-                                Select an organization above to view its accounts
-                            </Text>
-                        }
-                    />
-                </Card>
-            ) : (
-                <Card
-                    title="Organization Accounts"
-                    extra={
-                        <Button
-                            type="primary"
-                            onClick={() => {
-                                setSelectedAccount(undefined);
-                                setCreditDrawerOpen(true);
-                            }}
-                            disabled={!orgAccountsData?.accounts?.length}
-                        >
-                            Credit Account
-                        </Button>
-                    }
-                    loading={isLoadingAccounts}
-                >
-                    {orgAccountsData?.accounts && orgAccountsData.accounts.length > 0 ? (
-                        <Row gutter={[16, 16]}>
-                            {orgAccountsData.accounts.map((acc) => (
-                                <Col xs={24} sm={12} md={8} lg={6} key={acc.id}>
+                            return (
+                                <Col xs={24} sm={12} lg={6} key={acc.id}>
                                     <Card
                                         hoverable
                                         variant="borderless"
                                         onClick={() => handleCardClick(acc)}
-                                        style={{ height: "100%" }}
+                                        style={{
+                                            height: "100%",
+                                            borderLeft: isLow
+                                                ? "4px solid var(--ant-color-warning)"
+                                                : undefined,
+                                        }}
                                     >
                                         <Statistic
                                             title={
                                                 <div
                                                     style={{
                                                         display: "flex",
-                                                        alignItems: "center",
                                                         justifyContent: "space-between",
+                                                        alignItems: "center",
                                                     }}
                                                 >
-                                                    <span
+                                                    <Text
+                                                        strong
+                                                        type="secondary"
                                                         style={{
-                                                            maxWidth: "70%",
-                                                            overflow: "hidden",
-                                                            textOverflow: "ellipsis",
-                                                            whiteSpace: "nowrap",
+                                                            fontSize: 11,
+                                                            textTransform: "uppercase",
                                                         }}
                                                     >
                                                         {acc.name}
-                                                    </span>
-                                                    {acc.isActive && (
+                                                    </Text>
+                                                    {isLow && (
                                                         <Tag
-                                                            color="green"
-                                                            icon={<CheckCircleOutlined />}
-                                                            style={{ marginRight: 0 }}
+                                                            color="warning"
+                                                            bordered={false}
+                                                            style={{ margin: 0 }}
                                                         >
-                                                            Active
+                                                            Low Balance
                                                         </Tag>
                                                     )}
                                                 </div>
                                             }
-                                            value={(acc.balanceCents / 100).toFixed(2)}
-                                            prefix={
-                                                FINANCIAL_CURRENCY_CONFIG[
-                                                    acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
-                                                ]?.symbol ?? "$"
+                                            value={acc.balanceCents / 100}
+                                            precision={2}
+                                            prefix={config?.symbol}
+                                            suffix={
+                                                <Text
+                                                    type="secondary"
+                                                    style={{ fontSize: 12, marginLeft: 4 }}
+                                                >
+                                                    {config?.code}
+                                                </Text>
                                             }
-                                            suffix={acc.currencyId.split("_")[1].toUpperCase()}
+                                            valueStyle={{ fontWeight: 700 }}
                                         />
                                         <div style={{ marginTop: 12 }}>
-                                            <Text type="secondary" style={{ fontSize: 11 }}>
-                                                ID: {acc.id}
+                                            <Text
+                                                type="secondary"
+                                                style={{
+                                                    fontSize: 9,
+                                                    fontFamily: "monospace",
+                                                    opacity: 0.5,
+                                                }}
+                                            >
+                                                {acc.id}
                                             </Text>
                                         </div>
                                     </Card>
                                 </Col>
-                            ))}
-                        </Row>
-                    ) : (
-                        !isLoadingAccounts && (
+                            );
+                        })}
+                    </Row>
+                )}
+            </div>
+
+            <Row gutter={24}>
+                <Col xs={24} lg={8}>
+                    <Card title="Organization Context" style={{ height: "100%" }}>
+                        <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
+                            Switch between organizations to view ledger balances and perform
+                            administrative credits.
+                        </Text>
+                        <Select
+                            style={{ width: "100%" }}
+                            size="large"
+                            placeholder="Search organizations..."
+                            onChange={setSelectedOrgId}
+                            showSearch
+                            loading={isLoadingOrgs}
+                            options={orgs?.map((o: any) => ({ label: o.name, value: o.id }))}
+                            optionFilterProp="label"
+                        />
+                    </Card>
+                </Col>
+
+                <Col xs={24} lg={16}>
+                    {!selectedOrgId ? (
+                        <Card
+                            style={{
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                background: "var(--ant-color-fill-quaternary)",
+                                border: "1px dashed var(--ant-color-border)",
+                            }}
+                        >
                             <Empty
                                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                                description={
-                                    <div style={{ textAlign: "center" }}>
-                                        <Text strong>No active financial accounts yet.</Text>
-                                        <br />
-                                        <Text type="secondary">
-                                            Ask the organization admin to activate currencies first.
-                                        </Text>
-                                    </div>
-                                }
+                                description="Select an organization to begin stewardship"
                             />
-                        )
+                        </Card>
+                    ) : (
+                        <Card
+                            title="Managed Accounts"
+                            extra={
+                                <Button
+                                    type="primary"
+                                    onClick={() => {
+                                        setSelectedAccount(undefined);
+                                        setCreditDrawerOpen(true);
+                                    }}
+                                    disabled={!orgAccountsData?.accounts?.length}
+                                >
+                                    Debit/Credit Adjustment
+                                </Button>
+                            }
+                            loading={isLoadingAccounts}
+                        >
+                            {orgAccountsData?.accounts && orgAccountsData.accounts.length > 0 ? (
+                                <Row gutter={[12, 12]}>
+                                    {orgAccountsData.accounts.map((acc) => (
+                                        <Col xs={24} sm={12} key={acc.id}>
+                                            <Card
+                                                hoverable
+                                                size="small"
+                                                onClick={() => handleCardClick(acc)}
+                                            >
+                                                <Statistic
+                                                    title={
+                                                        <div
+                                                            style={{
+                                                                display: "flex",
+                                                                alignItems: "center",
+                                                                justifyContent: "space-between",
+                                                            }}
+                                                        >
+                                                            <Text strong style={{ fontSize: 12 }}>
+                                                                {acc.name}
+                                                            </Text>
+                                                            {acc.isActive && (
+                                                                <Tag
+                                                                    color="success"
+                                                                    bordered={false}
+                                                                    icon={<CheckCircleOutlined />}
+                                                                    style={{
+                                                                        margin: 0,
+                                                                        fontSize: 10,
+                                                                    }}
+                                                                >
+                                                                    Active
+                                                                </Tag>
+                                                            )}
+                                                        </div>
+                                                    }
+                                                    value={(acc.balanceCents / 100).toFixed(2)}
+                                                    prefix={
+                                                        FINANCIAL_CURRENCY_CONFIG[
+                                                            acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
+                                                        ]?.symbol ?? "$"
+                                                    }
+                                                    suffix={
+                                                        <Text
+                                                            type="secondary"
+                                                            style={{ fontSize: 10 }}
+                                                        >
+                                                            {acc.currencyId.split("_").pop()}
+                                                        </Text>
+                                                    }
+                                                    valueStyle={{ fontSize: 20, fontWeight: 600 }}
+                                                />
+                                            </Card>
+                                        </Col>
+                                    ))}
+                                </Row>
+                            ) : (
+                                !isLoadingAccounts && (
+                                    <Empty
+                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                        description="No active accounts for this organization"
+                                    />
+                                )
+                            )}
+                        </Card>
                     )}
-                </Card>
-            )}
+                </Col>
+            </Row>
 
             <AdminCreditDrawer
                 open={creditDrawerOpen}

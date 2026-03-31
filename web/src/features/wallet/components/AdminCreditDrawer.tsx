@@ -1,10 +1,5 @@
-import {
-    FINANCIAL_CATEGORIES,
-    FINANCIAL_CURRENCIES,
-    FINANCIAL_CURRENCY_CONFIG,
-    getTreasuryAccountId,
-} from "@shared";
-import { Button, Drawer, Form, Input, InputNumber, Select, Space, Typography } from "antd";
+import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCY_CONFIG, getTreasuryAccountId } from "@shared";
+import { Button, Drawer, Form, Input, InputNumber, Select, Typography } from "antd";
 import React from "react";
 
 const { Text } = Typography;
@@ -20,6 +15,9 @@ type Props = {
     preSelectedAccount?: WalletAccount;
 };
 
+// Common reasons for administrative credit
+const COMMON_REASONS = ["Funding", "System Correction", "Support Grant", "Reimbursement", "Other"];
+
 export const AdminCreditDrawer: React.FC<Props> = ({
     open,
     onClose,
@@ -30,23 +28,63 @@ export const AdminCreditDrawer: React.FC<Props> = ({
     const [form] = Form.useForm();
     const { mutate, isPending } = useAdminCredit();
 
+    const [reasonType, setReasonType] = React.useState<string>(COMMON_REASONS[0]);
+
     // Sync form with pre-selected account when drawer opens
     React.useEffect(() => {
-        if (open && preSelectedAccount) {
-            form.setFieldsValue({
-                destinationAccountId: preSelectedAccount.id,
-                currencyId: preSelectedAccount.currencyId,
-            });
+        if (open) {
+            let targetAccount = preSelectedAccount;
+
+            // If no account is pre-selected, find the funding account (General Fund)
+            if (!targetAccount && accounts && accounts.length > 0) {
+                targetAccount = accounts.find((a) => a.isFundingAccount) || accounts[0];
+            }
+
+            if (targetAccount) {
+                form.setFieldsValue({
+                    destinationAccountId: targetAccount.id,
+                    currencyId: targetAccount.currencyId,
+                    reasonSelect: COMMON_REASONS[0],
+                });
+                setReasonType(COMMON_REASONS[0]);
+            } else {
+                form.setFieldsValue({
+                    reasonSelect: COMMON_REASONS[0],
+                });
+                setReasonType(COMMON_REASONS[0]);
+            }
         }
-    }, [open, preSelectedAccount, form]);
+    }, [open, preSelectedAccount, accounts, form]);
+
+    const handleAccountChange = (accountId: string) => {
+        const account = accounts?.find((a) => a.id === accountId);
+        if (account) {
+            form.setFieldValue("currencyId", account.currencyId);
+        }
+    };
+
+    const handleReasonChange = (value: string) => {
+        setReasonType(value);
+        if (value !== "Other") {
+            form.setFieldValue("description", value);
+        } else {
+            form.setFieldValue("description", "");
+        }
+    };
 
     const onFinish = (values: {
         destinationAccountId: string;
         currencyId: string;
         amountDollars: number;
+        reasonSelect: string;
         description?: string;
     }) => {
         if (!organizationId) return;
+
+        // Use the select value or the custom description
+        const finalDescription =
+            values.reasonSelect === "Other" ? values.description : values.reasonSelect;
+
         mutate(
             {
                 organizationId,
@@ -55,7 +93,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                 destinationAccountId: values.destinationAccountId,
                 currencyId: values.currencyId,
                 amountCents: Math.round(values.amountDollars * 100),
-                description: values.description,
+                description: finalDescription,
             },
             {
                 onSuccess: () => {
@@ -83,64 +121,50 @@ export const AdminCreditDrawer: React.FC<Props> = ({
             open={open}
             onClose={onClose}
             extra={
-                <Space>
-                    <Button onClick={onClose} disabled={isPending}>
-                        Cancel
-                    </Button>
-                    <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                        Confirm Credit
-                    </Button>
-                </Space>
+                <Button type="primary" onClick={() => form.submit()} loading={isPending}>
+                    Confirm Credit
+                </Button>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>
-                {!preSelectedAccount && (
-                    <>
-                        <Form.Item
-                            name="destinationAccountId"
-                            label="Destination Account"
-                            rules={[{ required: true }]}
-                        >
-                            <Select placeholder="Select account to credit">
-                                {accounts?.map((acc) => (
-                                    <Select.Option key={acc.id} value={acc.id}>
-                                        {acc.name} — Balance: {(acc.balanceCents / 100).toFixed(2)}
-                                    </Select.Option>
-                                ))}
-                            </Select>
-                        </Form.Item>
+                {/* Always need currencyId for the API mutate call */}
+                <Form.Item name="currencyId" hidden>
+                    <Input />
+                </Form.Item>
 
-                        <Form.Item
-                            name="currencyId"
-                            label="Currency"
-                            initialValue={FINANCIAL_CURRENCIES.USD}
-                            rules={[{ required: true }]}
+                {!preSelectedAccount ? (
+                    <Form.Item
+                        name="destinationAccountId"
+                        label="Destination Account"
+                        rules={[{ required: true }]}
+                    >
+                        <Select
+                            size="large"
+                            placeholder="Select account to credit"
+                            onChange={handleAccountChange}
                         >
-                            <Select>
-                                {Object.values(FINANCIAL_CURRENCIES).map((id) => {
-                                    const config =
-                                        FINANCIAL_CURRENCY_CONFIG[
-                                            id as keyof typeof FINANCIAL_CURRENCY_CONFIG
-                                        ];
-                                    return (
-                                        <Select.Option key={id} value={id}>
-                                            {config.code} — {config.name}
-                                        </Select.Option>
-                                    );
-                                })}
-                            </Select>
-                        </Form.Item>
-                    </>
-                )}
-
-                {preSelectedAccount && (
+                            {accounts?.map((acc) => (
+                                <Select.Option key={acc.id} value={acc.id}>
+                                    <div className="flex justify-between items-center">
+                                        <span>{acc.name}</span>
+                                        <Text type="secondary" style={{ fontSize: 10 }}>
+                                            {FINANCIAL_CURRENCY_CONFIG[
+                                                acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
+                                            ]?.code || acc.currencyId}
+                                        </Text>
+                                    </div>
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Form.Item>
+                ) : (
                     <div
                         style={{
                             marginBottom: 24,
                             padding: "16px",
-                            background: "#fafafa",
+                            background: "var(--ant-color-fill-quaternary)",
                             borderRadius: "8px",
-                            border: "1px solid #f0f0f0",
+                            border: "1px solid var(--ant-color-border-secondary)",
                         }}
                     >
                         <Text type="secondary" style={{ fontSize: 12 }}>
@@ -157,11 +181,8 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                                 {currencyConfig?.code}
                             </Text>
                         </div>
-                        {/* Hidden fields to ensure form.submit() still works */}
+                        {/* Hidden field to ensure form.submit() still works */}
                         <Form.Item name="destinationAccountId" hidden>
-                            <Input />
-                        </Form.Item>
-                        <Form.Item name="currencyId" hidden>
                             <Input />
                         </Form.Item>
                     </div>
@@ -173,6 +194,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     rules={[{ required: true }, { type: "number", min: 0.01 }]}
                 >
                     <InputNumber
+                        size="large"
                         min={0.01}
                         step={1}
                         precision={2}
@@ -182,9 +204,29 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     />
                 </Form.Item>
 
-                <Form.Item name="description" label="Reason (optional)">
-                    <Input.TextArea rows={2} placeholder="e.g. Opening balance, Support credit" />
+                <Form.Item name="reasonSelect" label="Reason" rules={[{ required: true }]}>
+                    <Select size="large" onChange={handleReasonChange}>
+                        {COMMON_REASONS.map((r) => (
+                            <Select.Option key={r} value={r}>
+                                {r}
+                            </Select.Option>
+                        ))}
+                    </Select>
                 </Form.Item>
+
+                {reasonType === "Other" && (
+                    <Form.Item
+                        name="description"
+                        label="Specifiy Reason"
+                        rules={[{ required: true, message: "Please specify the reason" }]}
+                    >
+                        <Input.TextArea
+                            size="large"
+                            rows={2}
+                            placeholder="Provide details for this manual adjustment..."
+                        />
+                    </Form.Item>
+                )}
             </Form>
         </Drawer>
     );

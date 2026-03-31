@@ -50,24 +50,46 @@ export const FinanceRoutes = {
         tags,
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/transactions",
-        summary: "Get paginated transaction history for the organization",
+        summary: "Get paginated transaction history for the organization with filters",
         request: {
             params: z.object({ organizationId: z.string() }),
             query: z.object({
-                page: z
-                    .string()
-                    .optional()
-                    .transform((v) => (v ? parseInt(v, 10) : 1)),
-                pageSize: z
-                    .string()
-                    .optional()
-                    .transform((v) => (v ? parseInt(v, 10) : 20)),
+                page: z.coerce.number().min(1).default(1),
+                pageSize: z.coerce.number().min(1).max(100).default(20),
+                startDate: z.string().optional(),
+                endDate: z.string().optional(),
+                minAmount: z.coerce.number().optional(),
+                maxAmount: z.coerce.number().optional(),
+                txId: z.string().optional(),
+                accountId: z.string().optional(),
+                status: z.enum(["pending", "completed", "reversed"]).optional(),
+                categoryId: z.string().optional(),
             }),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
                 transactionHistoryResponseSchema,
                 "Transactions fetched successfully"
+            ),
+        },
+    }),
+
+    reverseTransaction: createRoute({
+        tags,
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/finance/transactions/{txId}/reverse",
+        summary: "Reverse a transaction by creating a mirror reversal",
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                txId: z.string(),
+            }),
+            body: jsonContentRequired(z.object({ reason: z.string().min(1) }), "Reversal reason"),
+        },
+        responses: {
+            [HttpStatusCodes.CREATED]: jsonContent(
+                executeTransferResponseSchema,
+                "Reversal transaction created"
             ),
         },
     }),

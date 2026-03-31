@@ -4,7 +4,7 @@ import {
     financialTransactionLines,
     financialTransactions,
 } from "@shared/db/schema";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 export type CreateTransactionInput = {
@@ -23,6 +23,17 @@ export type PaginationInput = {
     pageSize: number;
 };
 
+export type TransactionFilters = PaginationInput & {
+    startDate?: string;
+    endDate?: string;
+    minAmount?: number;
+    maxAmount?: number;
+    txId?: string;
+    accountId?: string;
+    status?: "pending" | "completed" | "reversed";
+    categoryId?: string;
+};
+
 /**
  * Financial transactions are NEVER hard-deleted to preserve ledger integrity.
  * All writes go through FinancialService.executeTransaction() via db.batch()
@@ -32,6 +43,27 @@ export type PaginationInput = {
  */
 export class FinancialTransactionsRepository {
     constructor(private readonly db: AppDb) {}
+
+    async findById(id: string) {
+        return this.db.query.financialTransactions.findFirst({
+            where: eq(financialTransactions.id, id),
+            with: {
+                sourceAccount: true,
+                destinationAccount: true,
+                category: true,
+                currency: true,
+            },
+        });
+    }
+
+    async markReversed(txId: string) {
+        return this.db
+            .update(financialTransactions)
+            .set({
+                status: "reversed",
+            })
+            .where(eq(financialTransactions.id, txId));
+    }
 
     /**
      * Returns the four raw D1-compatible statements needed for one
@@ -125,10 +157,45 @@ export class FinancialTransactionsRepository {
         return txId;
     }
 
-    async findByOrg(organizationId: string, { page, pageSize }: PaginationInput) {
-        const offset = (page - 1) * pageSize;
+    async findByOrg(organizationId: string, filters: TransactionFilters) {
+        const conditions = [eq(financialTransactions.organizationId, organizationId)];
+
+        if (filters.startDate) {
+            conditions.push(
+                gte(financialTransactions.transactionDate, new Date(filters.startDate))
+            );
+        }
+        if (filters.endDate) {
+            conditions.push(lte(financialTransactions.transactionDate, new Date(filters.endDate)));
+        }
+        if (filters.minAmount) {
+            conditions.push(gte(financialTransactions.amountCents, filters.minAmount));
+        }
+        if (filters.maxAmount) {
+            conditions.push(lte(financialTransactions.amountCents, filters.maxAmount));
+        }
+        if (filters.txId) {
+            conditions.push(like(financialTransactions.id, `%${filters.txId}%`));
+        }
+        if (filters.status) {
+            conditions.push(eq(financialTransactions.status, filters.status));
+        }
+        if (filters.categoryId) {
+            conditions.push(eq(financialTransactions.categoryId, filters.categoryId));
+        }
+        if (filters.accountId) {
+            conditions.push(
+                or(
+                    eq(financialTransactions.sourceAccountId, filters.accountId),
+                    eq(financialTransactions.destinationAccountId, filters.accountId)
+                ) as any
+            );
+        }
+
+        const offset = (filters.page - 1) * filters.pageSize;
+
         return this.db.query.financialTransactions.findMany({
-            where: eq(financialTransactions.organizationId, organizationId),
+            where: and(...conditions),
             with: {
                 sourceAccount: true,
                 destinationAccount: true,
@@ -136,7 +203,7 @@ export class FinancialTransactionsRepository {
                 currency: true,
             },
             orderBy: [desc(financialTransactions.transactionDate)],
-            limit: pageSize,
+            limit: filters.pageSize,
             offset,
         });
     }

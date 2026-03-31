@@ -3,7 +3,7 @@ import type { FinancialAccountsRepository } from "@api/repositories/financial/fi
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type {
     FinancialTransactionsRepository,
-    PaginationInput,
+    TransactionFilters,
 } from "@api/repositories/financial/financial-transactions.repository";
 import { FinancialBaseService } from "./financial-base.service";
 
@@ -39,6 +39,32 @@ export class OrgFinancialService extends FinancialBaseService {
             ...input,
             transactionDate: new Date(),
         });
+    }
+
+    /**
+     * Reverses a completed transaction by creating a mirror rebuttal.
+     */
+    async reverseTransaction(txId: string, organizationId: string, reason: string) {
+        const original = await this.transactionsRepo.findById(txId);
+        if (!original) throw new Error("Transaction not found");
+        if (original.status === "reversed") throw new Error("Transaction already reversed");
+
+        // Execute mirror transaction (swap source and destination)
+        const reversalTxId = await this.executeTransaction({
+            organizationId,
+            categoryId: "fcat_refund",
+            sourceAccountId: original.destinationAccountId,
+            destinationAccountId: original.sourceAccountId,
+            currencyId: original.currencyId,
+            amountCents: original.amountCents,
+            description: `Reversal of ${txId}: ${reason}`,
+            transactionDate: new Date(),
+        });
+
+        // Mark original as officially reversed in the database
+        await this.transactionsRepo.markReversed(txId);
+
+        return reversalTxId;
     }
 
     /**
@@ -104,6 +130,7 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId: input.currencyId,
             name: input.name,
             organizationId: null, // Scoped accounts are only for users
+            isFundingAccount: false, // Custom accounts are never funding accounts
         });
 
         return { success: true, account };
@@ -127,14 +154,15 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId,
             organizationId: null,
             name: `General Fund — ${target.code}`,
+            isFundingAccount: true, // Auto-set at activation
         });
     }
 
     /**
-     * Returns paginated transaction history for the organization.
+     * Returns paginated transaction history for the organization with filters.
      */
-    async getTransactionHistory(orgId: string, pagination: PaginationInput) {
-        return this.transactionsRepo.findByOrg(orgId, pagination);
+    async getTransactionHistory(orgId: string, filters: TransactionFilters) {
+        return this.transactionsRepo.findByOrg(orgId, filters);
     }
 
     /**

@@ -1,7 +1,6 @@
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { getTreasuryAccountId } from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -69,21 +68,11 @@ export class AdminFinancialService extends FinancialBaseService {
     }
 
     /**
-     * Returns the current balance of the platform treasury account for a given currency.
+     * Returns the current balance of all platform treasury accounts.
      */
-    async getTreasuryBalance(currencyId: string = "fcur_usd") {
-        const treasuryId = getTreasuryAccountId(currencyId);
-        const treasury = this.assertExists(
-            await this.accountsRepo.findById(treasuryId),
-            `Platform treasury account for ${currencyId} not found`
-        );
-
-        return {
-            balanceCents: treasury.balanceCents,
-            balanceFormatted: `${(treasury.balanceCents / 100).toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-            })}`,
-        };
+    async getTreasuryBalance() {
+        const allAccounts = await this.accountsRepo.findActiveByOwner("platform", "org");
+        return allAccounts.filter((a) => a.id.startsWith("facc_treasury_"));
     }
 
     /**
@@ -92,6 +81,7 @@ export class AdminFinancialService extends FinancialBaseService {
      * for super-admin views (e.g., FinancialManagementPage).
      */
     async getAnyOrgAccounts(orgId: string) {
-        return this.accountsRepo.findActiveByOwner(orgId, "org");
+        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org");
+        return accounts.filter((a) => a.isFundingAccount === true);
     }
 }

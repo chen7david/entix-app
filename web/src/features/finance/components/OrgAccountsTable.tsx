@@ -1,7 +1,9 @@
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
-import { Badge, Table } from "antd";
+import { Badge, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import type { WalletAccount } from "../../wallet/hooks/useWalletBalance";
+
+const { Text } = Typography;
 
 type OrgAccountsTableProps = {
     accounts?: WalletAccount[];
@@ -14,7 +16,7 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             title: "Account Name",
             dataIndex: "name",
             key: "name",
-            render: (text) => <strong>{text}</strong>,
+            render: (text) => <Text strong>{text}</Text>,
         },
         {
             title: "Currency",
@@ -24,9 +26,12 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
                 const config =
                     FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
                 return config ? (
-                    <span>
-                        {config.code} ({config.symbol})
-                    </span>
+                    <Text>
+                        {config.code}{" "}
+                        <Text type="secondary" style={{ fontSize: 11 }}>
+                            ({config.symbol})
+                        </Text>
+                    </Text>
                 ) : (
                     currencyId
                 );
@@ -41,8 +46,15 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
                     FINANCIAL_CURRENCY_CONFIG[
                         record.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
                     ];
-                const value = (cents / 100).toFixed(2);
-                return `${config?.symbol || ""}${value}`;
+                const value = (cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
+                return (
+                    <Text strong style={{ fontFamily: "monospace" }}>
+                        <Text type="secondary" style={{ marginRight: 4 }}>
+                            {config?.symbol || ""}
+                        </Text>
+                        {value}
+                    </Text>
+                );
             },
             align: "right",
         },
@@ -53,7 +65,11 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             render: (isActive) => (
                 <Badge
                     status={isActive ? "success" : "default"}
-                    text={isActive ? "Active" : "Deactivated"}
+                    text={
+                        <Text type={isActive ? undefined : "secondary"} style={{ fontSize: 13 }}>
+                            {isActive ? "Active" : "Deactivated"}
+                        </Text>
+                    }
                 />
             ),
         },

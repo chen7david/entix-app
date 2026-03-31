@@ -1,5 +1,5 @@
 import { CheckCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Row, Statistic, Tag, Typography } from "antd";
+import { Badge, Button, Card, Col, Row, Statistic, Tag, Typography } from "antd";
 import type React from "react";
 import type { CurrencyWithStatus } from "../hooks/useOrgCurrencies";
 
@@ -16,22 +16,39 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
         {currencies.map((currency) => (
             <Col xs={24} sm={12} md={6} key={currency.id}>
                 <Card
-                    bordered
+                    size="small"
                     style={{
-                        opacity: currency.isActivated ? 1 : 0.6,
+                        height: "100%",
                         borderStyle: currency.isActivated ? "solid" : "dashed",
+                        background: currency.isActivated
+                            ? undefined
+                            : "var(--ant-color-fill-quaternary)",
                     }}
                     actions={
                         currency.isActivated
-                            ? undefined
+                            ? [
+                                  <Badge
+                                      key="status"
+                                      status={currency.isActivated ? "success" : "default"}
+                                      text={
+                                          <Text
+                                              type={currency.isActivated ? undefined : "secondary"}
+                                              style={{ fontSize: 13 }}
+                                          >
+                                              {currency.isActivated ? "Active" : "Deactivated"}
+                                          </Text>
+                                      }
+                                  />,
+                              ]
                             : [
                                   <Button
                                       key="activate"
                                       type="primary"
-                                      size="small"
+                                      size="middle"
                                       icon={<PlusOutlined />}
                                       loading={activating}
                                       onClick={() => onActivate(currency.id)}
+                                      block
                                   >
                                       Activate
                                   </Button>,
@@ -41,23 +58,49 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                     {currency.isActivated ? (
                         <Statistic
                             title={
-                                <span>
-                                    {currency.name}{" "}
-                                    <Tag color="green" icon={<CheckCircleOutlined />}>
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        gap: 8,
+                                        alignItems: "center",
+                                        marginBottom: 4,
+                                    }}
+                                >
+                                    <Text strong style={{ fontSize: 13 }}>
+                                        {currency.name}
+                                    </Text>
+                                    <Tag
+                                        color="success"
+                                        bordered={false}
+                                        icon={<CheckCircleOutlined />}
+                                        style={{ margin: 0, fontSize: 10 }}
+                                    >
                                         Active
                                     </Tag>
-                                </span>
+                                </div>
                             }
                             value={(currency.balanceCents ?? 0) / 100}
                             precision={2}
-                            prefix={currency.symbol}
-                            suffix={currency.code}
+                            prefix={
+                                <Text type="secondary" style={{ marginRight: 4 }}>
+                                    {currency.symbol}
+                                </Text>
+                            }
+                            suffix={
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    {currency.code}
+                                </Text>
+                            }
+                            valueStyle={{ fontSize: 24, fontWeight: 700 }}
                         />
                     ) : (
-                        <div style={{ textAlign: "center", padding: "12px 0" }}>
-                            <Text style={{ fontSize: 24 }}>{currency.symbol}</Text>
-                            <br />
-                            <Text strong>{currency.code}</Text>
+                        <div style={{ textAlign: "center", padding: "16px 0" }}>
+                            <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>
+                                {currency.symbol}
+                            </div>
+                            <Text strong style={{ fontSize: 16 }}>
+                                {currency.code}
+                            </Text>
                             <br />
                             <Text type="secondary" style={{ fontSize: 12 }}>
                                 {currency.name}
