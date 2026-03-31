@@ -1,7 +1,7 @@
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { FINANCIAL_ACCOUNTS } from "@shared";
+import { getTreasuryAccountId } from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -69,17 +69,18 @@ export class AdminFinancialService extends FinancialBaseService {
     }
 
     /**
-     * Returns the current balance of the platform treasury account.
+     * Returns the current balance of the platform treasury account for a given currency.
      */
-    async getTreasuryBalance() {
+    async getTreasuryBalance(currencyId: string = "fcur_usd") {
+        const treasuryId = getTreasuryAccountId(currencyId);
         const treasury = this.assertExists(
-            await this.accountsRepo.findById(FINANCIAL_ACCOUNTS.PLATFORM_TREASURY),
-            "Platform treasury account not found"
+            await this.accountsRepo.findById(treasuryId),
+            `Platform treasury account for ${currencyId} not found`
         );
 
         return {
             balanceCents: treasury.balanceCents,
-            balanceFormatted: `$${(treasury.balanceCents / 100).toLocaleString("en-US", {
+            balanceFormatted: `${(treasury.balanceCents / 100).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
             })}`,
         };

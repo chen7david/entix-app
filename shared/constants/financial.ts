@@ -18,6 +18,9 @@ export const FINANCIAL_CURRENCIES = {
     CAD: "fcur_cad",
     CNY: "fcur_cny",
     EUR: "fcur_eur",
+    SRD: "fcur_srd",
+    AUD: "fcur_aud",
+    BTC: "fcur_btc",
 } as const;
 
 export const FINANCIAL_CURRENCY_CONFIG = {
@@ -51,6 +54,24 @@ export const FINANCIAL_CURRENCY_CONFIG = {
         symbol: "E$",
         defaultAccountName: "Points (ETD)",
     },
+    [FINANCIAL_CURRENCIES.SRD]: {
+        code: "SRD",
+        name: "Surinamese Dollar",
+        symbol: "$",
+        defaultAccountName: "Savings (SRD)",
+    },
+    [FINANCIAL_CURRENCIES.AUD]: {
+        code: "AUD",
+        name: "Australian Dollar",
+        symbol: "A$",
+        defaultAccountName: "Savings (AUD)",
+    },
+    [FINANCIAL_CURRENCIES.BTC]: {
+        code: "BTC",
+        name: "Bitcoin",
+        symbol: "₿",
+        defaultAccountName: "Wallet (BTC)",
+    },
 } as const;
 
 export const FINANCIAL_CATEGORIES = {
@@ -61,7 +82,14 @@ export const FINANCIAL_CATEGORIES = {
     INTERNAL_TRANSFER: "fcat_internal_transfer",
 } as const;
 
+/**
+ * Returns the deterministic platform treasury account ID for a given currency.
+ * This ensures that every currency has a valid source for admin credits.
+ */
+export const getTreasuryAccountId = (currencyId: string) => `facc_treasury_${currencyId}`;
+
 export const FINANCIAL_ACCOUNTS = {
+    // Deprecated: Use getTreasuryAccountId(currencyId) instead for multi-currency support.
     PLATFORM_TREASURY: "facc_platform_treasury",
 } as const;
 

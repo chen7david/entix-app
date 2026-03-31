@@ -4,6 +4,7 @@ import type {
     CreateTransactionInput,
     FinancialTransactionsRepository,
 } from "@api/repositories/financial/financial-transactions.repository";
+import { BadRequestError } from "../../errors/app.error";
 import { BaseService } from "../base.service";
 
 /**
@@ -33,19 +34,26 @@ export abstract class FinancialBaseService extends BaseService {
         ]);
 
         if (!source || !destination) {
-            throw new Error("Source or destination account not found");
+            throw new BadRequestError(
+                `Source (${input.sourceAccountId}) or destination (${input.destinationAccountId}) account not found`
+            );
         }
 
         if (
             source.currencyId !== destination.currencyId ||
             source.currencyId !== input.currencyId
         ) {
-            throw new Error(
+            throw new BadRequestError(
                 `Currency mismatch: Source (${source.currencyId}), Destination (${destination.currencyId}), and Transaction (${input.currencyId}) must all match.`
             );
         }
 
-        // 2. Delegate to repository for atomic D1 batch execution
+        // 2. Insufficient Funds Guard (Shared logic for all transfers)
+        if (source.balanceCents < input.amountCents) {
+            throw new BadRequestError("Insufficient treasury funds");
+        }
+
+        // 3. Delegate to repository for atomic D1 batch execution
         return this.transactionsRepo.executeTransaction(input);
     }
 

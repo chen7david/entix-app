@@ -18,12 +18,17 @@ export const useAdminCredit = () => {
 
     return useMutation({
         mutationFn: async (input: AdminCreditInput) => {
-            const res = await fetch(`${API_V1}/orgs/${input.organizationId}/finance/admin/credit`, {
+            const res = await fetch(`${API_V1}/admin/finance/orgs/${input.organizationId}/credit`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),
             });
-            if (!res.ok) throw new Error("Credit failed");
+
+            if (!res.ok) {
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.message || "Credit failed");
+            }
+
             return res.json();
         },
         onSuccess: (_, vars) => {
@@ -31,8 +36,8 @@ export const useAdminCredit = () => {
             queryClient.invalidateQueries({ queryKey: ["adminOrgAccounts", vars.organizationId] });
             queryClient.invalidateQueries({ queryKey: ["treasuryBalance"] });
         },
-        onError: () => {
-            message.error("Credit failed. Check treasury balance.");
+        onError: (error) => {
+            message.error(error.message);
         },
     });
 };

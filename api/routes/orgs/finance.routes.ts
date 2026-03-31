@@ -27,24 +27,6 @@ const transferSchema = z.object({
     description: z.string().optional(),
 });
 
-const adminCreditSchema = z.object({
-    categoryId: z.string().min(1),
-    platformTreasuryAccountId: z.string().min(1),
-    destinationAccountId: z.string().min(1),
-    currencyId: z.string().min(1),
-    amountCents: z.number().int().positive(),
-    description: z.string().optional(),
-});
-
-const adminDebitSchema = z.object({
-    categoryId: z.string().min(1),
-    sourceAccountId: z.string().min(1),
-    platformTreasuryAccountId: z.string().min(1),
-    currencyId: z.string().min(1),
-    amountCents: z.number().int().positive(),
-    description: z.string().optional(),
-});
-
 export const FinanceRoutes = {
     tags,
 
@@ -107,40 +89,6 @@ export const FinanceRoutes = {
         },
     }),
 
-    adminCredit: createRoute({
-        tags,
-        method: HttpMethods.POST,
-        path: "/orgs/{organizationId}/finance/admin/credit",
-        summary: "Platform-initiated credit to an account",
-        request: {
-            params: z.object({ organizationId: z.string() }),
-            body: jsonContentRequired(adminCreditSchema, "Credit details"),
-        },
-        responses: {
-            [HttpStatusCodes.CREATED]: jsonContent(
-                executeTransferResponseSchema, // Using same txId response
-                "Credit executed successfully"
-            ),
-        },
-    }),
-
-    adminDebit: createRoute({
-        tags,
-        method: HttpMethods.POST,
-        path: "/orgs/{organizationId}/finance/admin/debit",
-        summary: "Platform-initiated debit from an account",
-        request: {
-            params: z.object({ organizationId: z.string() }),
-            body: jsonContentRequired(adminDebitSchema, "Debit details"),
-        },
-        responses: {
-            [HttpStatusCodes.CREATED]: jsonContent(
-                executeTransferResponseSchema,
-                "Debit executed successfully"
-            ),
-        },
-    }),
-
     createAccount: createRoute({
         tags,
         method: HttpMethods.POST,
@@ -197,39 +145,6 @@ export const FinanceRoutes = {
             [HttpStatusCodes.OK]: jsonContent(
                 createFinancialAccountResponseSchema,
                 "Account deactivated successfully"
-            ),
-        },
-    }),
-
-    adminGetOrgAccounts: createRoute({
-        tags: ["Wallet", "Admin"],
-        method: HttpMethods.GET,
-        path: "/orgs/{organizationId}/finance/accounts/admin",
-        summary: "Super admin: get all accounts for any org including balances",
-        request: {
-            params: z.object({ organizationId: z.string() }),
-        },
-        responses: {
-            [HttpStatusCodes.OK]: jsonContent(
-                listFinancialAccountsResponseSchema,
-                "Accounts fetched"
-            ),
-        },
-    }),
-
-    adminGetTreasuryBalance: createRoute({
-        tags: ["Wallet", "Admin"],
-        method: HttpMethods.GET,
-        path: "/admin/finance/treasury/balance",
-        summary: "Super admin: get platform treasury account balance",
-        request: {},
-        responses: {
-            [HttpStatusCodes.OK]: jsonContent(
-                z.object({
-                    balanceCents: z.number(),
-                    balanceFormatted: z.string(),
-                }),
-                "Treasury balance"
             ),
         },
     }),

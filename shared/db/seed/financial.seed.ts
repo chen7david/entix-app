@@ -1,24 +1,20 @@
 import type { AppDb } from "@api/factories/db.factory";
 import {
-    FINANCIAL_ACCOUNTS,
     FINANCIAL_CATEGORIES,
     FINANCIAL_CURRENCIES,
     FINANCIAL_CURRENCY_CONFIG,
+    getTreasuryAccountId,
 } from "@shared";
 import { financialAccounts, financialCurrencies, financialTransactionCategories } from "../schema";
 
 export const seedFinancials = async (db: AppDb) => {
+    const allCurrencies = Object.values(FINANCIAL_CURRENCIES);
+
     // Seed currencies
     await db
         .insert(financialCurrencies)
         .values(
-            [
-                FINANCIAL_CURRENCIES.USD,
-                FINANCIAL_CURRENCIES.CAD,
-                FINANCIAL_CURRENCIES.CNY,
-                FINANCIAL_CURRENCIES.EUR,
-                FINANCIAL_CURRENCIES.ETD,
-            ].map((id) => ({
+            allCurrencies.map((id) => ({
                 id,
                 ...FINANCIAL_CURRENCY_CONFIG[id as keyof typeof FINANCIAL_CURRENCY_CONFIG],
             }))
@@ -57,20 +53,25 @@ export const seedFinancials = async (db: AppDb) => {
         ])
         .onConflictDoNothing();
 
-    // Seed platform treasury account
-    // This account is the system-side counterparty for all admin payouts.
-    // It is pre-funded at a large balance and is never exposed to users.
-    await db
-        .insert(financialAccounts)
-        .values({
-            id: FINANCIAL_ACCOUNTS.PLATFORM_TREASURY,
-            ownerId: "org_platform", // Core platform org
-            ownerType: "org",
-            currencyId: FINANCIAL_CURRENCIES.USD,
-            organizationId: null,
-            name: "Platform Treasury",
-            balanceCents: 100_000_000_00, // $100,000,000 float — adjust as needed
-            isActive: true,
-        })
-        .onConflictDoNothing();
+    // Seed platform treasury accounts
+    // We create one treasury account for every currency in the system.
+    // These accounts are the system-side counterparties for all admin layouts/rewards.
+    // They are pre-funded with a large float and never exposed to end-users directly.
+    for (const currencyId of allCurrencies) {
+        const config =
+            FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
+        await db
+            .insert(financialAccounts)
+            .values({
+                id: getTreasuryAccountId(currencyId),
+                ownerId: "org_platform", // Core platform org
+                ownerType: "org",
+                currencyId,
+                organizationId: null,
+                name: `Platform Treasury — ${config.code}`,
+                balanceCents: 1_000_000_000_00, // $1,000,000,000 float — adjust as needed
+                isActive: true,
+            })
+            .onConflictDoNothing();
+    }
 };

@@ -6,6 +6,7 @@ export const useTreasuryBalance = () => {
         queryKey: ["treasuryBalance"],
         queryFn: async () => {
             const res = await fetch(`${API_V1}/admin/finance/treasury/balance`);
+            if (res.status === 404) return null;
             if (!res.ok) throw new Error("Failed to fetch treasury balance");
             return res.json();
         },

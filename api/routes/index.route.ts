@@ -1,4 +1,5 @@
 import { emailInsightsRoutes } from "./admin/email-insights.index";
+import { adminFinanceRoutes } from "./admin/finance.index";
 import { adminOrgsRoutes } from "./admin/orgs.index";
 import { authRoutes } from "./auth/auth.index";
 import { financeRoutes } from "./orgs/finance.index";
@@ -17,6 +18,7 @@ export const routes = [
     memberRoutes,
     emailInsightsRoutes,
     adminOrgsRoutes,
+    adminFinanceRoutes,
     uploadRoutes,
     mediaRoutes,
     playlistRoutes,

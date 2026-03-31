@@ -4,7 +4,10 @@ import { AppError } from "../errors/app.error";
 import type { AppContext } from "../helpers/types.helpers";
 
 export const globalErrorHandler = async (err: Error, ctx: AppContext) => {
-    ctx.var.logger.error({ err }, "Caught error");
+    // Verbose logging for debugging the 500 error
+    console.error(`❌ [ERROR]: ${err.name} - ${err.message}`);
+    console.error(err.stack);
+    ctx.var.logger.error({ err, stack: err.stack }, "Caught error");
 
     if (err instanceof ZodError) {
         const flattened = z.treeifyError(err);
