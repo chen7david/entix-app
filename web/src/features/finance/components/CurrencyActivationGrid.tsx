@@ -39,22 +39,20 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                     }
                 >
                     {currency.isActivated ? (
-                        <>
-                            <Statistic
-                                title={
-                                    <span>
-                                        {currency.name}{" "}
-                                        <Tag color="green" icon={<CheckCircleOutlined />}>
-                                            Active
-                                        </Tag>
-                                    </span>
-                                }
-                                value={(currency.balanceCents ?? 0) / 100}
-                                precision={2}
-                                prefix={currency.symbol}
-                                suffix={currency.code}
-                            />
-                        </>
+                        <Statistic
+                            title={
+                                <span>
+                                    {currency.name}{" "}
+                                    <Tag color="green" icon={<CheckCircleOutlined />}>
+                                        Active
+                                    </Tag>
+                                </span>
+                            }
+                            value={(currency.balanceCents ?? 0) / 100}
+                            precision={2}
+                            prefix={currency.symbol}
+                            suffix={currency.code}
+                        />
                     ) : (
                         <div style={{ textAlign: "center", padding: "12px 0" }}>
                             <Text style={{ fontSize: 24 }}>{currency.symbol}</Text>

@@ -123,6 +123,11 @@ export class UserFinancialService extends FinancialBaseService {
      * Returns personal transaction history for a user within a specific organization.
      */
     async getTransactionHistory(userId: string, orgId: string, pagination: PaginationInput) {
-        return this.transactionsRepo.findByOwner(userId, "user", pagination, orgId);
+        const data = await this.transactionsRepo.findByOwner(userId, "user", pagination, orgId);
+        return {
+            data,
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+        };
     }
 }

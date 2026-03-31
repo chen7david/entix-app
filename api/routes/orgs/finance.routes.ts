@@ -75,11 +75,11 @@ export const FinanceRoutes = {
                 page: z
                     .string()
                     .optional()
-                    .transform((v) => (v ? parseInt(v) : 1)),
+                    .transform((v) => (v ? parseInt(v, 10) : 1)),
                 pageSize: z
                     .string()
                     .optional()
-                    .transform((v) => (v ? parseInt(v) : 20)),
+                    .transform((v) => (v ? parseInt(v, 10) : 20)),
             }),
         },
         responses: {

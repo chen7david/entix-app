@@ -1,6 +1,6 @@
-import { getServiceFactory } from "@api/factories/service.factory";
+import { getUserFinancialService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
-import type { AppRouteHandler } from "@api/helpers/types.helpers";
+import type { AppHandler } from "@api/helpers/types.helpers";
 import type { MemberWalletRoutes } from "./member-wallet.routes";
 
 /**
@@ -9,7 +9,7 @@ import type { MemberWalletRoutes } from "./member-wallet.routes";
  * 1. The caller is the user themselves (params.userId === ctx.userId)
  * 2. The caller is an admin or owner of the specified organization
  */
-const authorizeWalletAccess = (c: any, userId: string, organizationId: string): boolean => {
+const authorizeWalletAccess = (c: any, userId: string, _organizationId: string): boolean => {
     const callerId = c.get("userId");
     const callerRole = c.get("role"); // requireOrgMembership middleware sets this
 
@@ -19,7 +19,7 @@ const authorizeWalletAccess = (c: any, userId: string, organizationId: string): 
     return false;
 };
 
-export const getSummary: AppRouteHandler<typeof MemberWalletRoutes.getSummary> = async (c) => {
+export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = async (c) => {
     const { organizationId, userId } = c.req.valid("param");
 
     if (!authorizeWalletAccess(c, userId, organizationId)) {
@@ -29,15 +29,13 @@ export const getSummary: AppRouteHandler<typeof MemberWalletRoutes.getSummary> =
         );
     }
 
-    const service = getServiceFactory(c).getUserFinancialService();
+    const service = getUserFinancialService(c);
     const result = await service.getUserSummary(userId, organizationId);
 
     return c.json(result, HttpStatusCodes.OK);
 };
 
-export const getTransactions: AppRouteHandler<typeof MemberWalletRoutes.getTransactions> = async (
-    c
-) => {
+export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactions> = async (c) => {
     const { organizationId, userId } = c.req.valid("param");
     const { page, pageSize } = c.req.valid("query");
 
@@ -48,13 +46,13 @@ export const getTransactions: AppRouteHandler<typeof MemberWalletRoutes.getTrans
         );
     }
 
-    const service = getServiceFactory(c).getUserFinancialService();
+    const service = getUserFinancialService(c);
     const result = await service.getTransactionHistory(userId, organizationId, { page, pageSize });
 
     return c.json(result, HttpStatusCodes.OK);
 };
 
-export const initializeWallet: AppRouteHandler<typeof MemberWalletRoutes.initializeWallet> = async (
+export const initializeWallet: AppHandler<typeof MemberWalletRoutes.initializeWallet> = async (
     c
 ) => {
     const { organizationId, userId } = c.req.valid("param");
@@ -66,7 +64,7 @@ export const initializeWallet: AppRouteHandler<typeof MemberWalletRoutes.initial
         );
     }
 
-    const service = getServiceFactory(c).getUserFinancialService();
+    const service = getUserFinancialService(c);
     await service.provisionUserAccounts(userId, organizationId);
 
     return c.json(

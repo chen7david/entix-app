@@ -28,8 +28,6 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
         settingsRepo
     );
 
-    const orgId = "org_123";
-
     it("should enforce ledger hardening rules (sequential flow)", async () => {
         const userId = "user_456";
         const orgId = "org_123";
