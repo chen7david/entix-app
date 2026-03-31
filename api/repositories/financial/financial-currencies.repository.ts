@@ -1,10 +1,11 @@
 import type { AppDb } from "@api/factories/db.factory";
 import {
     type FinancialCurrency,
+    financialAccounts,
     financialCurrencies,
     type NewFinancialCurrency,
 } from "@shared/db/schema";
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
 /**
@@ -77,5 +78,35 @@ export class FinancialCurrenciesRepository {
             .returning();
 
         return currency ?? null;
+    }
+
+    /**
+     * Returns all platform currencies with activation status for this org.
+     * Joins active currencies with existing org financial accounts.
+     */
+    async findAllWithOrgStatus(orgId: string): Promise<any[]> {
+        const allCurrencies = await this.db.query.financialCurrencies.findMany({
+            where: isNull(financialCurrencies.archivedAt),
+        });
+
+        const orgAccounts = await this.db.query.financialAccounts.findMany({
+            where: and(
+                eq(financialAccounts.ownerId, orgId),
+                eq(financialAccounts.ownerType, "org"),
+                isNull(financialAccounts.archivedAt)
+            ),
+        });
+
+        const activatedCurrencyIds = new Set(orgAccounts.map((a) => a.currencyId));
+
+        return allCurrencies.map((currency) => {
+            const account = orgAccounts.find((a) => a.currencyId === currency.id);
+            return {
+                ...currency,
+                isActivated: activatedCurrencyIds.has(currency.id),
+                accountId: account?.id ?? null,
+                balanceCents: account?.balanceCents ?? null,
+            };
+        });
     }
 }

@@ -8,6 +8,7 @@ import { createRoute } from "@hono/zod-openapi";
 import {
     createFinancialAccountResponseSchema,
     createFinancialAccountSchema,
+    currencyListWithStatusResponseSchema,
     executeTransferResponseSchema,
     listFinancialAccountsResponseSchema,
     transactionHistoryResponseSchema,
@@ -188,6 +189,75 @@ export const WalletRoutes = {
             [HttpStatusCodes.OK]: jsonContent(
                 createFinancialAccountResponseSchema,
                 "Account deactivated successfully"
+            ),
+        },
+    }),
+
+    adminGetOrgAccounts: createRoute({
+        tags: ["Wallet", "Admin"],
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/wallet/accounts/admin",
+        summary: "Super admin: get all accounts for any org including balances",
+        request: {
+            params: z.object({ organizationId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                listFinancialAccountsResponseSchema,
+                "Accounts fetched"
+            ),
+        },
+    }),
+
+    adminGetTreasuryBalance: createRoute({
+        tags: ["Wallet", "Admin"],
+        method: HttpMethods.GET,
+        path: "/wallet/treasury/balance",
+        summary: "Super admin: get platform treasury account balance",
+        request: {},
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                z.object({
+                    balanceCents: z.number(),
+                    balanceFormatted: z.string(),
+                }),
+                "Treasury balance"
+            ),
+        },
+    }),
+
+    getOrgCurrencyStatus: createRoute({
+        tags,
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/finance/currencies",
+        summary: "Get all platform currencies with activation status for this org",
+        request: {
+            params: z.object({ organizationId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                currencyListWithStatusResponseSchema,
+                "Currency status fetched"
+            ),
+        },
+    }),
+
+    activateCurrency: createRoute({
+        tags,
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/finance/currencies/activate",
+        summary: "Activate a currency for this org by creating a General Fund account",
+        request: {
+            params: z.object({ organizationId: z.string() }),
+            body: jsonContentRequired(
+                z.object({ currencyId: z.string().min(1) }),
+                "Currency to activate"
+            ),
+        },
+        responses: {
+            [HttpStatusCodes.CREATED]: jsonContent(
+                createFinancialAccountResponseSchema,
+                "Currency activated — General Fund account created"
             ),
         },
     }),

@@ -5,10 +5,10 @@ import type { WalletRoutes } from "@api/routes/orgs/wallet.routes";
 
 export class WalletHandler {
     static getWalletBalance: AppHandler<typeof WalletRoutes.getBalance> = async (ctx) => {
-        const organizationId = ctx.get("organizationId");
+        const userId = ctx.get("userId");
         const financialService = getFinancialService(ctx);
 
-        const summary = await financialService.getWalletSummary(organizationId, "org");
+        const summary = await financialService.getWalletSummary(userId, "user");
         return ctx.json(summary, HttpStatusCodes.OK);
     };
 
@@ -88,10 +88,10 @@ export class WalletHandler {
     };
 
     static listAccounts: AppHandler<typeof WalletRoutes.listAccounts> = async (ctx) => {
-        const organizationId = ctx.get("organizationId");
+        const userId = ctx.get("userId");
         const financialService = getFinancialService(ctx);
 
-        const accounts = await financialService.listAccounts(organizationId, "org");
+        const accounts = await financialService.listAccounts(userId, "user");
         return ctx.json({ accounts }, HttpStatusCodes.OK);
     };
 
@@ -101,5 +101,38 @@ export class WalletHandler {
 
         const account = await financialService.deactivateAccount(accountId);
         return ctx.json(account, HttpStatusCodes.OK);
+    };
+
+    static adminGetOrgAccounts: AppHandler<typeof WalletRoutes.adminGetOrgAccounts> = async (
+        ctx
+    ) => {
+        const { organizationId } = ctx.req.valid("param");
+        const financialService = getFinancialService(ctx);
+        const accounts = await financialService.getOrgAccounts(organizationId);
+        return ctx.json({ accounts }, HttpStatusCodes.OK);
+    };
+
+    static adminGetTreasuryBalance: AppHandler<typeof WalletRoutes.adminGetTreasuryBalance> =
+        async (ctx) => {
+            const financialService = getFinancialService(ctx);
+            const balance = await financialService.getTreasuryBalance();
+            return ctx.json(balance, HttpStatusCodes.OK);
+        };
+
+    static getOrgCurrencyStatus: AppHandler<typeof WalletRoutes.getOrgCurrencyStatus> = async (
+        ctx
+    ) => {
+        const organizationId = ctx.get("organizationId");
+        const financialService = getFinancialService(ctx);
+        const currencies = await financialService.getOrgCurrencyStatus(organizationId);
+        return ctx.json({ currencies }, HttpStatusCodes.OK);
+    };
+
+    static activateCurrency: AppHandler<typeof WalletRoutes.activateCurrency> = async (ctx) => {
+        const organizationId = ctx.get("organizationId");
+        const { currencyId } = ctx.req.valid("json");
+        const financialService = getFinancialService(ctx);
+        const account = await financialService.activateCurrency(organizationId, currencyId);
+        return ctx.json(account, HttpStatusCodes.CREATED);
     };
 }

@@ -15,10 +15,10 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
-import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
     getFinancialAccountsRepository,
+    getFinancialCurrenciesRepository,
     getFinancialTransactionsRepository,
     getMediaRepository,
     getMemberRepository,
@@ -51,7 +51,8 @@ export const getRegistrationService = (ctx: AppContext) => {
     return new RegistrationService(
         getUserRepository(ctx),
         getOrganizationRepository(ctx),
-        getMemberRepository(ctx)
+        getMemberRepository(ctx),
+        getFinancialAccountsRepository(ctx)
     );
 };
 
@@ -98,8 +99,8 @@ export const getMemberImportService = (ctx: AppContext) => {
 
 export const getFinancialService = (ctx: AppContext) => {
     return new FinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
-        getFinancialTransactionsRepository(ctx)
+        getFinancialTransactionsRepository(ctx),
+        getFinancialCurrenciesRepository(ctx)
     );
 };

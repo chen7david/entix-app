@@ -1,10 +1,11 @@
-import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
+import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type {
     CreateTransactionInput,
     FinancialTransactionsRepository,
     PaginationInput,
 } from "@api/repositories/financial/financial-transactions.repository";
+import { PLATFORM_TREASURY_ACCOUNT_ID } from "@shared/db/seed/financial.seed";
 import { BaseService } from "./base.service";
 
 /**
@@ -15,9 +16,9 @@ import { BaseService } from "./base.service";
  */
 export class FinancialService extends BaseService {
     constructor(
-        private readonly db: AppDb,
         private readonly accountsRepo: FinancialAccountsRepository,
-        private readonly transactionsRepo: FinancialTransactionsRepository
+        private readonly transactionsRepo: FinancialTransactionsRepository,
+        private readonly currenciesRepo: FinancialCurrenciesRepository
     ) {
         super();
     }
@@ -28,13 +29,7 @@ export class FinancialService extends BaseService {
      * insert debit + credit lines — all in one D1 batch.
      */
     async executeTransaction(input: CreateTransactionInput) {
-        const { txId, statements } = this.transactionsRepo.prepareInsertStatements(input);
-
-        // Note: Casting to any because Drizzle's D1 types are sometimes
-        // strict about the exact shape of BatchItem.
-        await this.db.batch(statements as any);
-
-        return txId;
+        return this.transactionsRepo.executeTransaction(input);
     }
 
     /**
@@ -137,5 +132,50 @@ export class FinancialService extends BaseService {
 
     async deactivateAccount(accountId: string) {
         return this.accountsRepo.deactivate(accountId);
+    }
+
+    /**
+     * Returns all platform currencies with activation status for this org.
+     */
+    async getOrgCurrencyStatus(orgId: string) {
+        return this.currenciesRepo.findAllWithOrgStatus(orgId);
+    }
+
+    /**
+     * Activates a currency for an org by creating a General Fund account.
+     */
+    async activateCurrency(orgId: string, currencyId: string) {
+        const currencies = await this.currenciesRepo.findAllWithOrgStatus(orgId);
+        const target = currencies.find((c) => c.id === currencyId);
+
+        if (!target) throw new Error("Currency not found");
+        if (target.isActivated) {
+            throw new Error(`Currency ${target.code} is already activated for this organization`);
+        }
+
+        return this.accountsRepo.create({
+            ownerId: orgId,
+            ownerType: "org",
+            currencyId,
+            name: `General Fund — ${target.code}`,
+        });
+    }
+
+    async getOrgAccounts(organizationId: string) {
+        return this.accountsRepo.findActiveByOwner(organizationId, "org");
+    }
+
+    async getTreasuryBalance() {
+        const treasury = this.assertExists(
+            await this.accountsRepo.findById(PLATFORM_TREASURY_ACCOUNT_ID),
+            "Platform treasury account not found"
+        );
+
+        return {
+            balanceCents: treasury.balanceCents,
+            balanceFormatted: `$${(treasury.balanceCents / 100).toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+            })}`,
+        };
     }
 }

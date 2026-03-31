@@ -20,7 +20,6 @@ export const WalletPage = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [isTransferOpen, setIsTransferOpen] = useState(false);
-    const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
 
     const {
         data: summary,
@@ -54,7 +53,6 @@ export const WalletPage = () => {
                         >
                             Refresh
                         </Button>
-                        <Button onClick={() => setIsCreateAccountOpen(true)}>New Account</Button>
                         <Button
                             type="primary"
                             icon={<PlusCircleOutlined />}
@@ -92,12 +90,6 @@ export const WalletPage = () => {
                 onClose={() => setIsTransferOpen(false)}
                 orgId={orgId}
                 accounts={summary?.accounts}
-            />
-
-            <CreateAccountDrawer
-                open={isCreateAccountOpen}
-                onClose={() => setIsCreateAccountOpen(false)}
-                orgId={orgId}
             />
         </div>
     );

@@ -1,4 +1,4 @@
-import { Table, Tag, Tooltip } from "antd";
+import { Table, Tag, Tooltip, theme } from "antd";
 import type { Transaction } from "../hooks/useTransactionHistory";
 
 type TransactionTableProps = {
@@ -17,6 +17,7 @@ export const TransactionTable = ({
     pageSize,
     onPageChange,
 }: TransactionTableProps) => {
+    const { token } = theme.useToken();
     const columns = [
         {
             title: "Date",
@@ -82,17 +83,19 @@ export const TransactionTable = ({
     ];
 
     return (
-        <Table
-            dataSource={transactions}
-            columns={columns}
-            rowKey="id"
-            loading={loading}
-            pagination={{
-                current: page,
-                pageSize: pageSize,
-                onChange: onPageChange,
-                total: transactions?.length || 0, // Simplified: API would provide total in real scenario
-            }}
-        />
+        <div style={{ background: token.colorBgContainer, borderRadius: token.borderRadiusLG }}>
+            <Table
+                dataSource={transactions}
+                columns={columns}
+                rowKey="id"
+                loading={loading}
+                pagination={{
+                    current: page,
+                    pageSize: pageSize,
+                    onChange: onPageChange,
+                    total: transactions?.length || 0,
+                }}
+            />
+        </div>
     );
 };

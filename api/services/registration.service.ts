@@ -1,4 +1,5 @@
 import { ConflictError } from "@api/errors/app.error";
+import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrganizationRepository } from "@api/repositories/organization.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
@@ -17,7 +18,8 @@ export class RegistrationService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private orgRepo: OrganizationRepository,
-        private memberRepo: MemberRepository
+        private memberRepo: MemberRepository,
+        private financialAccountsRepo: FinancialAccountsRepository
     ) {
         super();
     }
@@ -66,6 +68,22 @@ export class RegistrationService extends BaseService {
 
         await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
+        // Auto-provision personal accounts for the user
+        await Promise.all([
+            this.financialAccountsRepo.create({
+                name: "Points",
+                currencyId: "fcur_etd",
+                ownerType: "user",
+                ownerId: uId,
+            }),
+            this.financialAccountsRepo.create({
+                name: "Savings",
+                currencyId: "fcur_cny",
+                ownerType: "user",
+                ownerId: uId,
+            }),
+        ]);
+
         return {
             user: {
                 id: uId,
@@ -105,6 +123,22 @@ export class RegistrationService extends BaseService {
         const memberQuery = this.memberRepo.createMemberQuery(memberId, organizationId, uId, role);
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
+
+        // Auto-provision personal accounts for the user
+        await Promise.all([
+            this.financialAccountsRepo.create({
+                name: "Points",
+                currencyId: "fcur_etd",
+                ownerType: "user",
+                ownerId: uId,
+            }),
+            this.financialAccountsRepo.create({
+                name: "Savings",
+                currencyId: "fcur_cny",
+                ownerType: "user",
+                ownerId: uId,
+            }),
+        ]);
 
         return {
             member: {

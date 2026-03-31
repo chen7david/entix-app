@@ -7,6 +7,7 @@ import { ErrorFallback } from "./components/error/ErrorFallback";
 import { GuestRoute } from "./components/guards/GuestRoute";
 import { OrgGuard } from "./components/guards/OrgGuard";
 import { ProtectedRoute } from "./components/guards/ProtectedRoute";
+import { FinancialManagementPage } from "./features/admin/FinancialManagementPage";
 import { AuthProvider, useAuth } from "./features/auth/context/AuthContext";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
@@ -21,6 +22,8 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { SignInPage } from "./pages/auth/SignInPage";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
+import { FinanceAccountsPage } from "./pages/dashboard/finance/FinanceAccountsPage";
+import { FinanceTransactionsPage } from "./pages/dashboard/finance/FinanceTransactionsPage";
 import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
 import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
 import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
@@ -199,6 +202,20 @@ export default function App() {
                                                 path="uploads"
                                                 element={<OrganizationUploadsPage />}
                                             />
+                                            <Route path="finance">
+                                                <Route
+                                                    index
+                                                    element={<Navigate to="accounts" replace />}
+                                                />
+                                                <Route
+                                                    path="accounts"
+                                                    element={<FinanceAccountsPage />}
+                                                />
+                                                <Route
+                                                    path="transactions"
+                                                    element={<FinanceTransactionsPage />}
+                                                />
+                                            </Route>
                                         </Route>
                                     </Route>
                                 </Route>
@@ -214,6 +231,10 @@ export default function App() {
                                         <Route
                                             path="admin/emails"
                                             element={<EmailInsightsPage />}
+                                        />
+                                        <Route
+                                            path="admin/financial"
+                                            element={<FinancialManagementPage />}
                                         />
                                     </Route>
                                 </Route>

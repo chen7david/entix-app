@@ -1,4 +1,5 @@
-import { Button, Drawer, Form, Input, InputNumber, message, Select, Space } from "antd";
+import { useActivatedCurrencies } from "@web/src/features/finance";
+import { App, Button, Drawer, Form, Input, InputNumber, Select, Space } from "antd";
 import type { WalletAccount } from "../hooks/useWalletBalance";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
@@ -11,7 +12,9 @@ type TransferDrawerProps = {
 
 export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawerProps) => {
     const [form] = Form.useForm();
+    const { message } = App.useApp();
     const { mutate, isPending } = useWalletTransfer(orgId);
+    const { data: currencyData } = useActivatedCurrencies(orgId);
 
     const onFinish = (values: TransferInput) => {
         mutate(values, {
@@ -102,14 +105,14 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                 <Form.Item
                     label="Currency"
                     name="currencyId"
-                    initialValue="fcur_usd"
-                    rules={[{ required: true }]}
+                    rules={[{ required: true, message: "Please select a currency" }]}
                 >
-                    <Select>
-                        <Select.Option value="fcur_usd">USD ($)</Select.Option>
-                        <Select.Option value="fcur_cad">CAD (CA$)</Select.Option>
-                        <Select.Option value="fcur_cny">CNY (¥)</Select.Option>
-                        <Select.Option value="fcur_etd">ETD (E$)</Select.Option>
+                    <Select placeholder="Select currency">
+                        {currencyData?.currencies?.map((c) => (
+                            <Select.Option key={c.id} value={c.id}>
+                                {c.symbol} {c.code} — {c.name}
+                            </Select.Option>
+                        ))}
                     </Select>
                 </Form.Item>
 

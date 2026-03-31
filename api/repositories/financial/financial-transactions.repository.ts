@@ -115,6 +115,16 @@ export class FinancialTransactionsRepository {
         };
     }
 
+    /**
+     * Executes a complete double-entry transaction atomically.
+     * Services should use this instead of direct db.batch calls.
+     */
+    async executeTransaction(input: CreateTransactionInput): Promise<string> {
+        const { txId, statements } = this.prepareInsertStatements(input);
+        await this.db.batch(statements as any);
+        return txId;
+    }
+
     async findByOrg(organizationId: string, { page, pageSize }: PaginationInput) {
         const offset = (page - 1) * pageSize;
         return this.db.query.financialTransactions.findMany({

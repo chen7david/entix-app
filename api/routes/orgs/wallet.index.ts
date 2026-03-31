@@ -10,4 +10,8 @@ export const walletRoutes = createRouter()
     .openapi(WalletRoutes.adminDebit, WalletHandler.adminDebit)
     .openapi(WalletRoutes.createAccount, WalletHandler.createAccount)
     .openapi(WalletRoutes.listAccounts, WalletHandler.listAccounts)
-    .openapi(WalletRoutes.deactivateAccount, WalletHandler.deactivateAccount);
+    .openapi(WalletRoutes.deactivateAccount, WalletHandler.deactivateAccount)
+    .openapi(WalletRoutes.adminGetOrgAccounts, WalletHandler.adminGetOrgAccounts)
+    .openapi(WalletRoutes.adminGetTreasuryBalance, WalletHandler.adminGetTreasuryBalance)
+    .openapi(WalletRoutes.getOrgCurrencyStatus, WalletHandler.getOrgCurrencyStatus)
+    .openapi(WalletRoutes.activateCurrency, WalletHandler.activateCurrency);

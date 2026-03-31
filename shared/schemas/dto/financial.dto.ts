@@ -53,3 +53,17 @@ export const createFinancialAccountResponseSchema = financialAccountSchema;
 export const listFinancialAccountsResponseSchema = z.object({
     accounts: z.array(financialAccountSchema),
 });
+
+export const currencyWithStatusSchema = z.object({
+    id: z.string(),
+    code: z.string(),
+    name: z.string(),
+    symbol: z.string(),
+    isActivated: z.boolean(),
+    accountId: z.string().nullable(),
+    balanceCents: z.number().nullable(),
+});
+
+export const currencyListWithStatusResponseSchema = z.object({
+    currencies: z.array(currencyWithStatusSchema),
+});
