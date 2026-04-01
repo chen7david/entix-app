@@ -3,9 +3,9 @@ import { z } from "zod";
 export const createSessionSchema = z.object({
     title: z.string().min(1, "Title is required").max(100, "Title is too long"),
     description: z.string().optional(),
-    startTime: z
-        .number()
-        .refine((val) => val > Date.now(), { message: "Session must be scheduled in the future" }),
+    startTime: z.number().refine((val) => val > Date.now() - 60000, {
+        message: "Session cannot be scheduled in the past. Please select a future time.",
+    }),
     durationMinutes: z
         .number()
         .min(15, "Minimum duration is 15 minutes")
