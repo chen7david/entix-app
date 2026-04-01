@@ -16,12 +16,14 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             title: "Account Name",
             dataIndex: "name",
             key: "name",
+            width: 200,
             render: (text) => <Text strong>{text}</Text>,
         },
         {
             title: "Currency",
             dataIndex: "currencyId",
             key: "currency",
+            width: 120,
             render: (currencyId) => {
                 const config =
                     FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
@@ -41,6 +43,7 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             title: "Balance",
             dataIndex: "balanceCents",
             key: "balance",
+            width: 150,
             render: (cents, record) => {
                 const config =
                     FINANCIAL_CURRENCY_CONFIG[
@@ -62,6 +65,7 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             title: "Status",
             dataIndex: "isActive",
             key: "status",
+            width: 120,
             render: (isActive) => (
                 <Badge
                     status={isActive ? "success" : "default"}
@@ -82,6 +86,7 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             columns={columns}
             loading={loading}
             pagination={{ pageSize: 10 }}
+            scroll={{ x: "max-content" }}
         />
     );
 };

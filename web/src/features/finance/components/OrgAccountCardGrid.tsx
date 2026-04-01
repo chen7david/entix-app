@@ -1,5 +1,5 @@
-import { CheckCircleOutlined, LockOutlined, WalletOutlined } from "@ant-design/icons";
-import { Card, Col, Row, Space, Statistic, Tag, Typography, theme } from "antd";
+import { LockOutlined, WalletOutlined } from "@ant-design/icons";
+import { Card, Col, Flex, Grid, Row, Space, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
 import type { WalletAccount } from "../../wallet/hooks/useWalletBalance";
 
@@ -13,10 +13,11 @@ type Props = {
 
 export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccountClick }) => {
     const { token } = theme.useToken();
+    const screens = Grid.useBreakpoint();
 
     if (loading && (!accounts || accounts.length === 0)) {
         return (
-            <div className="py-20 text-center">
+            <div className="py-20 text-center border border-dashed rounded-xl bg-slate-100/30">
                 <Text type="secondary">Loading treasury accounts...</Text>
             </div>
         );
@@ -30,52 +31,72 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                     <Col xs={24} sm={12} lg={8} xl={6} key={account.id}>
                         <Card
                             hoverable
-                            variant="borderless"
+                            style={{
+                                borderRadius: 12,
+                                transition: "all 0.2s ease-in-out",
+                                background: token.colorBgContainer,
+                                border: `1px solid ${token.colorBorderSecondary}`,
+                                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+                            }}
                             onClick={() => onAccountClick(account)}
                             styles={{
                                 body: {
-                                    padding: "20px",
+                                    padding: screens.md ? "16px" : "12px",
                                 },
                             }}
                         >
-                            <div
-                                style={{
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "flex-start",
-                                    marginBottom: 12,
-                                }}
+                            <Flex
+                                justify="space-between"
+                                align="center"
+                                style={{ marginBottom: 16 }}
                             >
                                 <Space align="center" size={8}>
                                     {isFunding ? (
                                         <LockOutlined
-                                            style={{ color: token.colorPrimary, fontSize: 14 }}
+                                            style={{ color: token.colorPrimary, fontSize: 13 }}
                                         />
                                     ) : (
                                         <WalletOutlined
-                                            style={{ color: token.colorTextTertiary, fontSize: 14 }}
+                                            style={{ color: token.colorTextTertiary, fontSize: 13 }}
                                         />
                                     )}
                                     <Text
                                         strong
                                         type="secondary"
                                         style={{
-                                            fontSize: 10,
+                                            fontSize: 9,
                                             textTransform: "uppercase",
-                                            letterSpacing: "0.05em",
+                                            letterSpacing: "0.06em",
+                                            color: token.colorTextQuaternary,
                                         }}
                                     >
                                         {isFunding ? "General Fund" : "Custom Account"}
                                     </Text>
                                 </Space>
-                            </div>
+                                {isFunding && (
+                                    <Tag
+                                        color="blue"
+                                        bordered={false}
+                                        style={{
+                                            margin: 0,
+                                            fontSize: 9,
+                                            fontWeight: 700,
+                                            borderRadius: 4,
+                                            padding: "0 6px",
+                                        }}
+                                    >
+                                        DEFAULT
+                                    </Tag>
+                                )}
+                            </Flex>
 
                             <Statistic
                                 title={
                                     <Text
                                         strong
-                                        style={{ fontSize: 16, display: "block", marginBottom: 8 }}
+                                        style={{ fontSize: 14, display: "block", marginBottom: 4 }}
                                         title={account.name}
+                                        ellipsis
                                     >
                                         {account.name}
                                     </Text>
@@ -83,9 +104,10 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                                 value={account.balanceCents / 100}
                                 precision={2}
                                 valueStyle={{
-                                    fontSize: "1.5rem",
-                                    fontWeight: 700,
+                                    fontSize: 24,
+                                    fontWeight: 800,
                                     color: token.colorText,
+                                    letterSpacing: "-0.01em",
                                 }}
                                 suffix={
                                     <Text
@@ -101,37 +123,36 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                                 }
                             />
 
-                            <div
+                            <Flex
+                                justify="space-between"
+                                align="center"
                                 style={{
                                     marginTop: 16,
-                                    display: "flex",
-                                    justifyContent: "space-between",
-                                    alignItems: "center",
+                                    paddingTop: 12,
+                                    borderTop: `1px solid ${token.colorBorderSecondary}`,
                                 }}
                             >
-                                <Space size={4}>
-                                    <Tag
-                                        color="success"
-                                        icon={<CheckCircleOutlined />}
-                                        style={{ fontSize: 10, margin: 0, borderRadius: 4 }}
-                                    >
-                                        ACTIVE
-                                    </Tag>
-                                    {isFunding && (
-                                        <Tag
-                                            color="purple"
-                                            style={{ fontSize: 10, margin: 0, borderRadius: 4 }}
-                                        >
-                                            FUNDING
-                                        </Tag>
-                                    )}
-                                </Space>
                                 <Text
-                                    style={{ fontSize: 10, opacity: 0.3, fontFamily: "monospace" }}
+                                    style={{
+                                        fontSize: 10,
+                                        fontWeight: 600,
+                                        color: token.colorTextQuaternary,
+                                        textTransform: "uppercase",
+                                    }}
+                                >
+                                    ID
+                                </Text>
+                                <Text
+                                    style={{
+                                        fontSize: 10,
+                                        opacity: 0.3,
+                                        fontFamily: "monospace",
+                                        color: token.colorTextSecondary,
+                                    }}
                                 >
                                     {account.id.split("_").pop()?.slice(0, 8).toUpperCase()}
                                 </Text>
-                            </div>
+                            </Flex>
                         </Card>
                     </Col>
                 );

@@ -1,5 +1,5 @@
 import { ThunderboltOutlined } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared";
+import { createSessionSchema, getAvatarUrl } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
@@ -23,7 +23,9 @@ import {
     TimePicker,
     Tooltip,
     Typography,
+    theme,
 } from "antd";
+import { createSchemaFieldRule } from "antd-zod";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
@@ -62,7 +64,8 @@ export const SessionDetailsDrawer = ({
     onSaveAttendance,
     onDelete,
 }: Props) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
+    const { token } = theme.useToken();
     const [form] = Form.useForm();
     const [memberSearch, setMemberSearch] = useState("");
     const [debouncedMemberSearch] = useDebouncedValue(memberSearch, {
@@ -190,7 +193,11 @@ export const SessionDetailsDrawer = ({
 
             await onSave(payload);
             setIsSubmitting(false);
-        } catch {
+        } catch (e: any) {
+            notification.error({
+                message: "Save Failed",
+                description: e.message || "Failed to save session details.",
+            });
             setIsSubmitting(false);
         }
     };
@@ -206,8 +213,13 @@ export const SessionDetailsDrawer = ({
             if (partsMapping.length > 0) {
                 await onSaveAttendance(session.id, partsMapping);
             }
+            notification.success({ message: "Attendance saved successfully" });
             setIsSubmitting(false);
-        } catch {
+        } catch (e: any) {
+            notification.error({
+                message: "Save Failed",
+                description: e.message || "Failed to save attendance logs.",
+            });
             setIsSubmitting(false);
         }
     };
@@ -309,9 +321,12 @@ export const SessionDetailsDrawer = ({
                                         session.id,
                                         val as "scheduled" | "completed" | "cancelled"
                                     );
-                                    message.success("Status saved successfully");
-                                } catch (_e) {
-                                    message.error("Failed to update status");
+                                    notification.success({ message: "Status saved successfully" });
+                                } catch (e: any) {
+                                    notification.error({
+                                        message: "Update Failed",
+                                        description: e.message || "Failed to update status",
+                                    });
                                 }
                             }
                         }}
@@ -362,7 +377,10 @@ export const SessionDetailsDrawer = ({
                                 onClick={async () => {
                                     const selectedIds = form.getFieldValue("userIds") || [];
                                     if (selectedIds.length === 0) {
-                                        message.warning("Select members first to generate a title");
+                                        notification.warning({
+                                            message: "Selection Required",
+                                            description: "Select members first to generate a title",
+                                        });
                                         return;
                                     }
 
@@ -375,7 +393,10 @@ export const SessionDetailsDrawer = ({
                                         .filter(Boolean);
 
                                     if (names.length === 0) {
-                                        message.warning("No member names found in cache");
+                                        notification.warning({
+                                            message: "Cache Empty",
+                                            description: "No member names found in fetch cache",
+                                        });
                                         setIsGeneratingTitle(false);
                                         return;
                                     }
@@ -391,7 +412,10 @@ export const SessionDetailsDrawer = ({
                                     }
 
                                     form.setFieldsValue({ title: generatedTitle });
-                                    message.success("Title generated from members");
+                                    notification.success({
+                                        message: "Success",
+                                        description: "Title generated from members",
+                                    });
                                     setIsGeneratingTitle(false);
                                 }}
                                 style={{
@@ -409,7 +433,7 @@ export const SessionDetailsDrawer = ({
                         </Tooltip>
                     </div>
                 }
-                rules={[{ required: true, message: "Please input title" }]}
+                rules={[createSchemaFieldRule(createSessionSchema.pick({ title: true }))]}
             >
                 <Input placeholder="Session Title" />
             </Form.Item>
@@ -436,7 +460,9 @@ export const SessionDetailsDrawer = ({
                 <Form.Item
                     name="durationMinutes"
                     label="Duration"
-                    rules={[{ required: true, message: "Required" }]}
+                    rules={[
+                        createSchemaFieldRule(createSessionSchema.pick({ durationMinutes: true })),
+                    ]}
                 >
                     <Select
                         options={[
@@ -668,7 +694,11 @@ export const SessionDetailsDrawer = ({
                                     checkedChildren="Absent"
                                     unCheckedChildren="Present"
                                     checked={log.absent}
-                                    style={{ backgroundColor: log.absent ? "#ff4d4f" : "#52c41a" }}
+                                    style={{
+                                        backgroundColor: log.absent
+                                            ? token.colorError
+                                            : token.colorSuccess,
+                                    }}
                                     onChange={(checked) => {
                                         const defaultType = log.absenceType || "Sick";
                                         setAttendanceDict({
@@ -768,12 +798,15 @@ export const SessionDetailsDrawer = ({
                     style={{
                         marginBottom: 24,
                         padding: 16,
-                        border: "1px solid rgba(255, 77, 79, 0.3)", // Translucent red border
-                        backgroundColor: "rgba(255, 77, 79, 0.05)", // Very subtle red tint
+                        border: `1px solid ${token.colorErrorBorder}`,
+                        backgroundColor: token.colorErrorBg,
                         borderRadius: 8,
                     }}
                 >
-                    <Text strong style={{ fontSize: 16, display: "block", color: "#ff4d4f" }}>
+                    <Text
+                        strong
+                        style={{ fontSize: 16, display: "block", color: token.colorError }}
+                    >
                         Danger Zone
                     </Text>
 

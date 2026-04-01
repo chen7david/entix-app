@@ -53,7 +53,7 @@ export class RegistrationService extends BaseService {
             : await hashPassword(nanoid(32));
 
         const userQuery = this.userRepo.prepareInsert(uId, input.email, input.name, emailVerified);
-        const accountQuery = this.userRepo.prepareInsertAccount(
+        const accountQuery = this.userRepo.prepareAccountInsert(
             acctId,
             uId,
             "credential",
@@ -108,7 +108,7 @@ export class RegistrationService extends BaseService {
         const hashedPassword = await hashPassword(dummyPassword);
 
         const userQuery = this.userRepo.prepareInsert(uId, email, name, emailVerified);
-        const accountQuery = this.userRepo.prepareInsertAccount(
+        const accountQuery = this.userRepo.prepareAccountInsert(
             acctId,
             uId,
             "credential",

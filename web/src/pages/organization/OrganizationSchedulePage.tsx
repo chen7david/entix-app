@@ -8,6 +8,7 @@ import {
     TeamOutlined,
 } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useOrganization } from "@web/src/features/organization";
 import type { SessionSubmitPayload } from "@web/src/features/schedule";
@@ -20,6 +21,8 @@ import {
     Col,
     DatePicker,
     Empty,
+    Flex,
+    Grid,
     Input,
     List,
     Result,
@@ -33,6 +36,7 @@ import {
     theme,
 } from "antd";
 import { useEffect, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { useSearchParams } from "react-router";
 
 const { RangePicker } = DatePicker;
@@ -42,6 +46,7 @@ const { Title, Text } = Typography;
 export const OrganizationSchedulePage = () => {
     const { activeOrganization } = useOrganization();
     const { token } = theme.useToken();
+    const screens = Grid.useBreakpoint();
 
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -164,6 +169,20 @@ export const OrganizationSchedulePage = () => {
         setDrawerOpen(false);
     };
 
+    const handleUpdateStatus = async (
+        sessionId: string,
+        status: "scheduled" | "completed" | "cancelled"
+    ) => {
+        await updateSessionStatus.mutateAsync({
+            sessionId,
+            payload: { status },
+        });
+    };
+
+    const handleSaveAttendance = async (sessionId: string, attendances: any[]) => {
+        await updateAttendance.mutateAsync({ sessionId, attendances });
+    };
+
     if (error) {
         return (
             <Result
@@ -175,49 +194,64 @@ export const OrganizationSchedulePage = () => {
     }
 
     return (
-        <>
+        <ErrorBoundary FallbackComponent={ErrorFallback}>
             <Toolbar />
             <div className="p-6">
-                <div className="flex justify-between items-end mb-6 w-full gap-4">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
+                <Flex
+                    vertical={!screens.md}
+                    justify="space-between"
+                    align={screens.md ? "center" : "start"}
+                    gap={16}
+                    style={{ marginBottom: 32 }}
+                >
+                    <div style={{ flex: 1 }}>
+                        <Title level={2} style={{ marginBottom: 4, margin: 0 }}>
                             Schedule
                         </Title>
-                        <Text type="secondary">Manage and track organization sessions</Text>
+                        <Text type="secondary" style={{ fontSize: 13 }}>
+                            Manage and track organization sessions.
+                        </Text>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-                            Schedule Session
-                        </Button>
-                    </div>
-                </div>
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={handleCreate}
+                        size="large"
+                    >
+                        Schedule Session
+                    </Button>
+                </Flex>
 
                 {/* Metrics Layer */}
                 <Row gutter={16} style={{ marginBottom: 24 }}>
                     <Col span={8}>
-                        <Card variant="borderless" className="shadow-sm">
+                        <Card style={{ border: `1px solid ${token.colorBorderSecondary}` }}>
                             <Statistic
                                 title="Total Sessions"
                                 value={metrics?.total || 0}
-                                prefix={<ClockCircleOutlined style={{ color: "#1890ff" }} />}
+                                prefix={
+                                    <ClockCircleOutlined style={{ color: token.colorPrimary }} />
+                                }
                             />
                         </Card>
                     </Col>
                     <Col span={8}>
-                        <Card variant="borderless" className="shadow-sm">
+                        <Card style={{ border: `1px solid ${token.colorBorderSecondary}` }}>
                             <Statistic
                                 title="Completed"
                                 value={metrics?.completed || 0}
-                                prefix={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
+                                prefix={
+                                    <CheckCircleOutlined style={{ color: token.colorSuccess }} />
+                                }
                             />
                         </Card>
                     </Col>
                     <Col span={8}>
-                        <Card variant="borderless" className="shadow-sm">
+                        <Card style={{ border: `1px solid ${token.colorBorderSecondary}` }}>
                             <Statistic
                                 title="Cancelled"
                                 value={metrics?.cancelled || 0}
-                                prefix={<CloseCircleOutlined style={{ color: "#ff4d4f" }} />}
+                                prefix={<CloseCircleOutlined style={{ color: token.colorError }} />}
                             />
                         </Card>
                     </Col>
@@ -442,6 +476,7 @@ export const OrganizationSchedulePage = () => {
                             onClick={() => fetchNextPage()}
                             loading={isFetchingNextPage}
                             type="dashed"
+                            size="large"
                         >
                             Load More Sessions
                         </Button>
@@ -454,17 +489,10 @@ export const OrganizationSchedulePage = () => {
                 onClose={() => setDrawerOpen(false)}
                 session={selectedSession}
                 onSave={handleSave}
-                onUpdateStatus={async (sessionId, status) => {
-                    await updateSessionStatus.mutateAsync({
-                        sessionId,
-                        payload: { status },
-                    });
-                }}
-                onSaveAttendance={async (sessionId, attendances) => {
-                    await updateAttendance.mutateAsync({ sessionId, attendances });
-                }}
+                onUpdateStatus={handleUpdateStatus}
+                onSaveAttendance={handleSaveAttendance}
                 onDelete={handleDelete}
             />
-        </>
+        </ErrorBoundary>
     );
 };

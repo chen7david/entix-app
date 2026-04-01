@@ -1,5 +1,5 @@
-import { CheckCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Row, Statistic, Tag, Typography, theme } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
+import { Button, Card, Col, Empty, Flex, Grid, Row, Statistic, Typography, theme } from "antd";
 import type React from "react";
 import type { CurrencyWithStatus } from "../hooks/useOrgCurrencies";
 
@@ -13,6 +13,22 @@ type Props = {
 
 export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate, activating }) => {
     const { token } = theme.useToken();
+    const screens = Grid.useBreakpoint();
+
+    if (currencies.length === 0) {
+        return (
+            <div className="py-12 border border-dashed rounded-xl flex items-center justify-center bg-slate-100/50 dark:bg-slate-900/50">
+                <Empty
+                    description={
+                        <Text type="secondary" className="text-xs">
+                            No currencies available for this action.
+                        </Text>
+                    }
+                />
+            </div>
+        );
+    }
+
     return (
         <Row gutter={[24, 24]}>
             {currencies.map((currency) => (
@@ -22,22 +38,21 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                         hoverable
                         style={{
                             height: "100%",
-                            borderRadius: 16,
-                            transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                            // Active: White + Soft Shadow | Inactive: Muted BG
+                            borderRadius: 12,
+                            transition: "all 0.2s ease-in-out",
                             background: currency.isActivated
-                                ? "#FFFFFF"
+                                ? token.colorBgContainer
                                 : token.colorFillQuaternary,
                             border: currency.isActivated
-                                ? "1px solid rgba(0,0,0,0.08)"
-                                : "1px solid transparent",
+                                ? `1px solid ${token.colorBorderSecondary}`
+                                : `1px dashed ${token.colorBorder}`,
                             boxShadow: currency.isActivated
-                                ? "0 4px 18px -4px rgba(0,0,0,0.06), 0 2px 8px -2px rgba(0,0,0,0.04)"
+                                ? "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)"
                                 : "none",
                         }}
                         styles={{
                             body: {
-                                padding: "24px",
+                                padding: screens.md ? "16px" : "12px",
                                 height: "100%",
                                 display: "flex",
                                 flexDirection: "column",
@@ -59,29 +74,14 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                                         <Text
                                             strong
                                             style={{
-                                                fontSize: 11,
+                                                fontSize: 10,
                                                 textTransform: "uppercase",
-                                                letterSpacing: "0.1em",
+                                                letterSpacing: "0.05em",
                                                 color: token.colorTextTertiary,
                                             }}
                                         >
                                             {currency.name}
                                         </Text>
-                                        <Tag
-                                            bordered={false}
-                                            icon={<CheckCircleOutlined />}
-                                            style={{
-                                                margin: 0,
-                                                fontSize: 10,
-                                                borderRadius: 6,
-                                                fontWeight: 700,
-                                                background: "#ECFDF5", // Light Emerald
-                                                color: "#059669", // Emerald 600
-                                                padding: "2px 8px",
-                                            }}
-                                        >
-                                            ACTIVE
-                                        </Tag>
                                     </div>
                                     <Statistic
                                         value={(currency.balanceCents ?? 0) / 100}
@@ -111,9 +111,9 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                                             </Text>
                                         }
                                         valueStyle={{
-                                            fontSize: 32,
-                                            fontWeight: 850,
-                                            letterSpacing: "-0.03em",
+                                            fontSize: 24,
+                                            fontWeight: 800,
+                                            letterSpacing: "-0.02em",
                                             color: token.colorText,
                                         }}
                                     />
@@ -121,33 +121,56 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                                 <div
                                     style={{
                                         display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        paddingTop: 16,
-                                        borderTop: "1px solid rgba(0,0,0,0.04)",
+                                        flexDirection: "column",
+                                        gap: 8,
+                                        paddingTop: 12,
+                                        borderTop: `1px solid ${token.colorBorderSecondary}`,
                                     }}
                                 >
-                                    <Text
-                                        type="secondary"
-                                        style={{
-                                            fontSize: 10,
-                                            fontWeight: 600,
-                                            color: token.colorTextQuaternary,
-                                            textTransform: "uppercase",
-                                        }}
-                                    >
-                                        System Primary
-                                    </Text>
-                                    <Text
-                                        style={{
-                                            fontSize: 10,
-                                            opacity: 0.3,
-                                            fontFamily: "monospace",
-                                            color: token.colorTextSecondary,
-                                        }}
-                                    >
-                                        {currency.accountId?.split("_").pop()?.toUpperCase()}
-                                    </Text>
+                                    <Flex justify="space-between" align="center">
+                                        <Text
+                                            type="secondary"
+                                            style={{
+                                                fontSize: 10,
+                                                fontWeight: 600,
+                                                color: token.colorTextQuaternary,
+                                                textTransform: "uppercase",
+                                            }}
+                                        >
+                                            Latest Activity
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                fontSize: 10,
+                                                color: token.colorTextQuaternary,
+                                            }}
+                                        >
+                                            None
+                                        </Text>
+                                    </Flex>
+                                    <Flex justify="space-between" align="center">
+                                        <Text
+                                            type="secondary"
+                                            style={{
+                                                fontSize: 10,
+                                                fontWeight: 600,
+                                                color: token.colorTextQuaternary,
+                                                textTransform: "uppercase",
+                                            }}
+                                        >
+                                            Primary Acc.
+                                        </Text>
+                                        <Text
+                                            style={{
+                                                fontSize: 10,
+                                                opacity: 0.3,
+                                                fontFamily: "monospace",
+                                                color: token.colorTextSecondary,
+                                            }}
+                                        >
+                                            {currency.accountId?.split("_").pop()?.toUpperCase()}
+                                        </Text>
+                                    </Flex>
                                 </div>
                             </>
                         ) : (
@@ -198,8 +221,8 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                                     style={{
                                         borderRadius: 8,
                                         fontWeight: 600,
-                                        height: 40,
-                                        boxShadow: "0 2px 0 rgba(0,0,0,0.02)",
+                                        height: 44,
+                                        boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
                                     }}
                                 >
                                     Activate Wallet

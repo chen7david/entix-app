@@ -25,7 +25,7 @@ export class UserProfileHandler {
         const { userId } = ctx.req.valid("param");
         const body = ctx.req.valid("json");
         const service = getUserProfileService(ctx);
-        await service.addPhoneNumber(userId, body);
+        await service.addPhone(userId, body);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 
@@ -33,14 +33,14 @@ export class UserProfileHandler {
         const { userId, id } = ctx.req.valid("param");
         const body = ctx.req.valid("json");
         const service = getUserProfileService(ctx);
-        await service.updatePhoneNumber(id, userId, body);
+        await service.updatePhone(id, userId, body);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 
     static deletePhone: AppHandler<typeof UserProfileRoutes.deletePhone> = async (ctx) => {
         const { userId, id } = ctx.req.valid("param");
         const service = getUserProfileService(ctx);
-        await service.deletePhoneNumber(id, userId);
+        await service.deletePhone(id, userId);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 

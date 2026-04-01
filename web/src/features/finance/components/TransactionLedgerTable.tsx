@@ -32,7 +32,6 @@ export const TransactionLedgerTable: React.FC<Props> = ({
     const [reason, setReason] = useState("");
 
     const columns: ColumnsType<TransactionRecord> = [
-        // ... columns logic remains the same (truncated for replace_file_content)
         {
             title: "Transaction ID",
             dataIndex: "id",
@@ -78,6 +77,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
         {
             title: "Source → Destination",
             key: "flow",
+            width: 320,
             render: (_, record) => (
                 <div className="flex items-center gap-2 max-w-[300px]">
                     <div className="flex flex-col min-w-0">
@@ -171,7 +171,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
                     showSizeChanger: true,
                     pageSizeOptions: ["20", "40", "60", "100"],
                 }}
-                scroll={{ x: 1000 }}
+                scroll={{ x: "max-content" }}
             />
 
             <Modal

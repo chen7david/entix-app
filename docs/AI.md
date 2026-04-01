@@ -26,6 +26,7 @@
     - **Existence check**: `existsById`, `existsByUserId`.
     - **Actions**: `insert`, `update`, `delete`, `deactivate`, `archive`.
 6.  **Data Integrity**: Coerce `undefined` to `null` on all database reads (`?? null`).
+7.  **Cursor Pagination Mandate**: Every list route MUST support cursor pagination. Offset-based pagination is prohibited for scalability. Use `buildCursorPagination` and `processPaginatedResult` helpers.
 
 ## 🗺️ Layer Responsibilities
 | Layer | File Pattern | Allowed Dependencies | Prohibited |

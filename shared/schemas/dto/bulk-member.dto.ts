@@ -33,7 +33,7 @@ export const bulkMemberItemSchema = z.object({
         .optional()
         .nullable()
         .openapi({ example: { firstName: "John", lastName: "Doe", sex: "male" } }),
-    phoneNumbers: z
+    phones: z
         .array(
             z.object({
                 id: z.string().optional(),
@@ -76,7 +76,7 @@ export const bulkMemberItemSchema = z.object({
                 },
             ],
         }),
-    socialMedia: z
+    socials: z
         .array(
             z.object({
                 id: z.string().optional(),

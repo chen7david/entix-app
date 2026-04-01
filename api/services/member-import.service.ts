@@ -149,7 +149,7 @@ export class MemberImportService {
                     memberSet.add(targetUserId);
 
                     userBatch.push(
-                        this.userRepo.prepareInsertAccountRaw({
+                        this.userRepo.prepareAccountInsertRaw({
                             id: nanoid(),
                             userId: targetUserId,
                             accountId: targetUserId,
@@ -183,11 +183,11 @@ export class MemberImportService {
                     );
                 }
 
-                if (input.phoneNumbers && input.phoneNumbers.length > 0) {
-                    userBatch.push(this.profileRepo.prepareDeletePhoneNumbers(targetUserId));
-                    for (const p of input.phoneNumbers) {
+                if (input.phones && input.phones.length > 0) {
+                    userBatch.push(this.profileRepo.preparePhoneDelete(targetUserId));
+                    for (const p of input.phones) {
                         userBatch.push(
-                            this.profileRepo.prepareInsertPhoneNumber({
+                            this.profileRepo.preparePhoneInsert({
                                 id: p.id || nanoid(),
                                 userId: targetUserId,
                                 countryCode: p.countryCode,
@@ -203,10 +203,10 @@ export class MemberImportService {
                 }
 
                 if (input.addresses && input.addresses.length > 0) {
-                    userBatch.push(this.profileRepo.prepareDeleteAddresses(targetUserId));
+                    userBatch.push(this.profileRepo.prepareAddressDelete(targetUserId));
                     for (const a of input.addresses) {
                         userBatch.push(
-                            this.profileRepo.prepareInsertAddress({
+                            this.profileRepo.prepareAddressInsert({
                                 id: a.id || nanoid(),
                                 userId: targetUserId,
                                 country: a.country,
@@ -223,13 +223,13 @@ export class MemberImportService {
                     }
                 }
 
-                if (input.socialMedia && input.socialMedia.length > 0) {
-                    userBatch.push(this.profileRepo.prepareDeleteSocialMedias(targetUserId));
-                    for (const s of input.socialMedia) {
+                if (input.socials && input.socials.length > 0) {
+                    userBatch.push(this.profileRepo.prepareSocialMediaDelete(targetUserId));
+                    for (const s of input.socials) {
                         const typeId = socialTypeMap.get(s.type.toLowerCase());
                         if (typeId) {
                             userBatch.push(
-                                this.profileRepo.prepareInsertSocialMedia({
+                                this.profileRepo.prepareSocialMediaInsert({
                                     id: s.id || nanoid(),
                                     userId: targetUserId,
                                     socialMediaTypeId: typeId as string,

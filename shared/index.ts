@@ -10,6 +10,7 @@ export * from "./schemas/dto/financial.dto";
 export * from "./schemas/dto/member.dto";
 export * from "./schemas/dto/organization.dto";
 export * from "./schemas/dto/playlist.dto";
+export * from "./schemas/dto/session.dto";
 export * from "./schemas/dto/social-media.dto";
 export * from "./schemas/dto/upload.dto";
 export * from "./schemas/dto/user.dto";

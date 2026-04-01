@@ -18,12 +18,12 @@ export class UserProfileService extends BaseService {
     }
 
     async getProfileAggregate(userId: string) {
-        const [profile, phoneNumbers, addresses] = await Promise.all([
+        const [profile, phones, addresses] = await Promise.all([
             this.findProfileByUserId(userId),
-            this.profileRepo.findPhoneNumbers(userId),
+            this.profileRepo.findPhones(userId),
             this.profileRepo.findAddresses(userId),
         ]);
-        return { profile, phoneNumbers, addresses };
+        return { profile, phones, addresses };
     }
 
     async upsertProfile(
@@ -49,7 +49,7 @@ export class UserProfileService extends BaseService {
         return await this.profileRepo.find(userId);
     }
 
-    async addPhoneNumber(
+    async addPhone(
         userId: string,
         data: Omit<
             typeof schema.userPhoneNumbers.$inferInsert,
@@ -57,24 +57,24 @@ export class UserProfileService extends BaseService {
         >
     ) {
         if (data.isPrimary) {
-            await this.profileRepo.unsetOtherPrimaryPhoneNumbers(userId, "new_placeholder"); // Will unset all
+            await this.profileRepo.unsetOtherPrimaryPhones(userId, "new_placeholder"); // Will unset all
         }
-        await this.profileRepo.insertPhoneNumber({ ...data, userId });
+        await this.profileRepo.insertPhone({ ...data, userId });
     }
 
-    async updatePhoneNumber(
+    async updatePhone(
         id: string,
         userId: string,
         data: Partial<typeof schema.userPhoneNumbers.$inferInsert>
     ) {
         if (data.isPrimary) {
-            await this.profileRepo.unsetOtherPrimaryPhoneNumbers(userId, id);
+            await this.profileRepo.unsetOtherPrimaryPhones(userId, id);
         }
-        await this.profileRepo.updatePhoneNumber(id, userId, data);
+        await this.profileRepo.updatePhone(id, userId, data);
     }
 
-    async deletePhoneNumber(id: string, userId: string) {
-        await this.profileRepo.deletePhoneNumber(id, userId);
+    async deletePhone(id: string, userId: string) {
+        await this.profileRepo.deletePhone(id, userId);
     }
 
     async addAddress(

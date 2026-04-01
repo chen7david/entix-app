@@ -120,7 +120,7 @@ export class UserRepository {
     /**
      * Prepare a query to insert an account for batching.
      */
-    prepareInsertAccount(id: string, userId: string, providerId: string, passwordHash: string) {
+    prepareAccountInsert(id: string, userId: string, providerId: string, passwordHash: string) {
         const now = new Date();
         return this.db.insert(schema.authAccounts).values({
             id,
@@ -154,7 +154,7 @@ export class UserRepository {
     /**
      * Prepare a query to insert an account for batching (raw data).
      */
-    prepareInsertAccountRaw(data: schema.NewAuthAccount) {
+    prepareAccountInsertRaw(data: schema.NewAuthAccount) {
         return this.db.insert(schema.authAccounts).values(data).onConflictDoNothing();
     }
 

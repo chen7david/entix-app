@@ -79,6 +79,7 @@ export const OrganizationUploadsPage = () => {
             title: "File Name",
             dataIndex: "originalName",
             key: "originalName",
+            width: 250,
             render: (name: string, record: UploadDto) => (
                 <div className="flex items-center gap-3 min-w-0 max-w-[400px]">
                     {getFileIcon(record.contentType)}
@@ -99,18 +100,21 @@ export const OrganizationUploadsPage = () => {
             title: "Size",
             dataIndex: "fileSize",
             key: "fileSize",
+            width: 120,
             render: (size: number) => formatBytes(size),
         },
         {
             title: "Type",
             dataIndex: "contentType",
             key: "contentType",
+            width: 120,
             render: (type: string) => <Tag>{type.split("/")[1] || type}</Tag>,
         },
         {
             title: "Status",
             dataIndex: "status",
             key: "status",
+            width: 120,
             render: (status: string) => (
                 <Tag
                     color={
@@ -129,11 +133,14 @@ export const OrganizationUploadsPage = () => {
             title: "Uploaded At",
             dataIndex: "createdAt",
             key: "createdAt",
+            width: 200,
             render: (date: number) => new Date(date).toLocaleString(),
         },
         {
             title: "Actions",
             key: "actions",
+            width: 80,
+            fixed: "right" as const,
             render: (_: unknown, record: UploadDto) => (
                 <Tooltip title="Delete File">
                     <Button
@@ -222,6 +229,7 @@ export const OrganizationUploadsPage = () => {
                     columns={columns}
                     rowKey="id"
                     pagination={{ pageSize: 10 }}
+                    scroll={{ x: "max-content" }}
                 />
 
                 <Modal
