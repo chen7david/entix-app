@@ -77,13 +77,14 @@ export abstract class FinancialBaseService extends BaseService {
         }
 
         // 3. Delegate to repository for atomic D1 batch execution
-        return this.transactionsRepo.executeTransaction(input);
+        return this.transactionsRepo.insert(input);
     }
 
     /**
      * Deactivates an account to prevent further transactions.
      */
     async deactivateAccount(accountId: string) {
-        return this.accountsRepo.deactivate(accountId);
+        const account = await this.accountsRepo.deactivate(accountId);
+        return this.assertExists(account, `Account ${accountId} not found`);
     }
 }

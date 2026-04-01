@@ -20,7 +20,7 @@ export class MemberRepository {
     /**
      * Check if a user is already a member of an organization
      */
-    async isMember(userId: string, organizationId: string): Promise<boolean> {
+    async exists(userId: string, organizationId: string): Promise<boolean> {
         const member = await this.db.query.authMembers.findFirst({
             where: and(
                 eq(schema.authMembers.userId, userId),
@@ -34,10 +34,7 @@ export class MemberRepository {
      * Find membership details for a user in an organization
      * Returns null if user is not a member
      */
-    async findMembership(
-        userId: string,
-        organizationId: string
-    ): Promise<schema.AuthMember | null> {
+    async find(userId: string, organizationId: string): Promise<schema.AuthMember | null> {
         const member = await this.db.query.authMembers.findFirst({
             where: and(
                 eq(schema.authMembers.userId, userId),
@@ -45,24 +42,14 @@ export class MemberRepository {
             ),
         });
 
-        if (!member) {
-            return null;
-        }
-
-        return {
-            id: member.id,
-            userId: member.userId,
-            organizationId: member.organizationId,
-            role: member.role,
-            createdAt: member.createdAt,
-        };
+        return member ?? null;
     }
 
     /**
      * Internal query builder for adding a member.
      * Used for batching operations (e.g. in RegistrationService).
      */
-    createMemberQuery(id: string, organizationId: string, userId: string, role: string) {
+    prepareInsertQuery(id: string, organizationId: string, userId: string, role: string) {
         return this.db.insert(schema.authMembers).values({
             id,
             organizationId,
@@ -75,22 +62,21 @@ export class MemberRepository {
     /**
      * Add a member to an organization and return the actual DB record.
      */
-    async add(organizationId: string, userId: string, role: string): Promise<schema.AuthMember> {
+    async insert(
+        organizationId: string,
+        userId: string,
+        role: string
+    ): Promise<schema.AuthMember | null> {
         const id = nanoid();
-        const results = await this.createMemberQuery(id, organizationId, userId, role).returning();
+        const results = await this.prepareInsertQuery(id, organizationId, userId, role).returning();
 
-        const inserted = results[0];
-        if (!inserted) {
-            throw new Error("Failed to insert member");
-        }
-
-        return inserted;
+        return results[0] ?? null;
     }
 
     /**
      * Find all memberships for a list of user IDs in an organization
      */
-    async findMembershipsByUserIds(organizationId: string, userIds: string[]) {
+    async findByUserIds(organizationId: string, userIds: string[]) {
         if (userIds.length === 0) return [];
         return await this.db.query.authMembers.findMany({
             where: and(

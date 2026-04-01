@@ -46,7 +46,7 @@ export class MemberImportService {
             const existingUsers: any[] = [];
             for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = uniqueEmails.slice(i, i + QUERY_CHUNK_SIZE);
-                const chunkResults = await this.userRepo.findUsersByEmails(chunk);
+                const chunkResults = await this.userRepo.findByEmails(chunk);
                 existingUsers.push(...chunkResults);
             }
 
@@ -56,7 +56,7 @@ export class MemberImportService {
             ];
             for (let i = 0; i < inputIds.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = inputIds.slice(i, i + QUERY_CHUNK_SIZE);
-                const chunkResults = await this.userRepo.findUsersByIds(chunk);
+                const chunkResults = await this.userRepo.findByIds(chunk);
                 // Avoid duplicates if email and id queries overlaps
                 for (const u of chunkResults) {
                     if (!existingUsers.find((eu) => eu.id === u.id)) {
@@ -72,15 +72,12 @@ export class MemberImportService {
             const existingMembers: any[] = [];
             for (let i = 0; i < userIds.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = userIds.slice(i, i + QUERY_CHUNK_SIZE);
-                const chunkResults = await this.memberRepo.findMembershipsByUserIds(
-                    organizationId,
-                    chunk
-                );
+                const chunkResults = await this.memberRepo.findByUserIds(organizationId, chunk);
                 existingMembers.push(...chunkResults);
             }
             const memberSet = new Set(existingMembers.map((m) => m.userId));
 
-            const socialTypes = await this.socialRepo.findSocialMediaTypes();
+            const socialTypes = await this.socialRepo.findAllTypes();
             const socialTypeMap = new Map(
                 socialTypes.map((t: schema.SocialMediaType) => [t.name.toLowerCase(), t.id])
             );
@@ -117,7 +114,7 @@ export class MemberImportService {
                     userMapByEmail.set(input.email, targetUserId);
                     userMapById.set(targetUserId, input.email);
                     userBatch.push(
-                        this.userRepo.prepareUpsertUser({
+                        this.userRepo.prepareUpsert({
                             id: targetUserId,
                             email: input.email,
                             name: input.name,
@@ -131,7 +128,7 @@ export class MemberImportService {
                     results.created++;
                 } else {
                     userBatch.push(
-                        this.userRepo.prepareUpdateUser(targetUserId, {
+                        this.userRepo.prepareUpdate(targetUserId, {
                             name: input.name,
                             image: input.avatarUrl,
                             updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
@@ -141,7 +138,7 @@ export class MemberImportService {
 
                 if (isNewUser || !memberSet.has(targetUserId)) {
                     userBatch.push(
-                        this.memberRepo.createMemberQuery(
+                        this.memberRepo.prepareInsertQuery(
                             nanoid(),
                             organizationId,
                             targetUserId,
@@ -152,7 +149,7 @@ export class MemberImportService {
                     memberSet.add(targetUserId);
 
                     userBatch.push(
-                        this.userRepo.prepareInsertAccount({
+                        this.userRepo.prepareInsertAccountRaw({
                             id: nanoid(),
                             userId: targetUserId,
                             accountId: targetUserId,
@@ -166,7 +163,7 @@ export class MemberImportService {
 
                 if (input.profile) {
                     userBatch.push(
-                        this.profileRepo.prepareUpsertProfile({
+                        this.profileRepo.prepareUpsert({
                             id: input.profile.id || nanoid(),
                             userId: targetUserId,
                             firstName: input.profile.firstName,

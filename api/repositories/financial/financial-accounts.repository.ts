@@ -17,29 +17,32 @@ export class FinancialAccountsRepository {
 
     /**
      * Creates a new financial account.
-     * @throws Error if the insert fails to return the record.
      */
-    async create(input: NewFinancialAccount): Promise<FinancialAccount> {
-        const now = new Date();
-        const id = generateAccountId();
+    async insert(input: NewFinancialAccount): Promise<FinancialAccount | null> {
+        try {
+            const now = new Date();
+            const id = generateAccountId();
 
-        const [account] = await this.db
-            .insert(financialAccounts)
-            .values({
-                id,
-                ownerId: input.ownerId,
-                ownerType: input.ownerType,
-                currencyId: input.currencyId,
-                organizationId: input.organizationId,
-                name: input.name,
-                createdAt: now,
-                updatedAt: now,
-                balanceCents: 0,
-                isActive: true,
-            })
-            .returning();
+            const [account] = await this.db
+                .insert(financialAccounts)
+                .values({
+                    id,
+                    ownerId: input.ownerId,
+                    ownerType: input.ownerType,
+                    currencyId: input.currencyId,
+                    organizationId: input.organizationId,
+                    name: input.name,
+                    createdAt: now,
+                    updatedAt: now,
+                    balanceCents: 0,
+                    isActive: true,
+                })
+                .returning();
 
-        return account ?? null;
+            return account ?? null;
+        } catch (_err) {
+            return null;
+        }
     }
 
     async findById(id: string): Promise<FinancialAccount | null> {
@@ -76,9 +79,8 @@ export class FinancialAccountsRepository {
     /**
      * Deactivates an account (sets isActive to false).
      * Used to block new transactions.
-     * @throws Error if the account ID is not found.
      */
-    async deactivate(id: string): Promise<FinancialAccount> {
+    async deactivate(id: string): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
             .set({
@@ -94,9 +96,8 @@ export class FinancialAccountsRepository {
     /**
      * Archives an account (sets archivedAt timestamp).
      * Used to hide the account from standard UI views.
-     * @throws Error if the account ID is not found.
      */
-    async archive(id: string): Promise<FinancialAccount> {
+    async archive(id: string): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
             .set({
@@ -112,7 +113,7 @@ export class FinancialAccountsRepository {
     /**
      * Updates the display name of an account.
      */
-    async updateName(id: string, name: string): Promise<FinancialAccount> {
+    async updateName(id: string, name: string): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
             .set({
@@ -128,7 +129,7 @@ export class FinancialAccountsRepository {
     /**
      * Finds active, non-archived accounts for an organization.
      */
-    async getOrgAccounts(orgId: string): Promise<FinancialAccount[]> {
+    async findAllByOrg(orgId: string): Promise<FinancialAccount[]> {
         return this.db.query.financialAccounts.findMany({
             where: and(
                 eq(financialAccounts.ownerId, orgId),

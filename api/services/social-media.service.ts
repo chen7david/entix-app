@@ -12,14 +12,14 @@ export class SocialMediaService extends BaseService {
      * Find all global social media types (e.g., Twitter, LinkedIn).
      */
     async findSocialMediaTypes(): Promise<schema.SocialMediaType[]> {
-        return await this.socialRepo.findSocialMediaTypes();
+        return await this.socialRepo.findAllTypes();
     }
 
     /**
      * Find all linked social media accounts for a user.
      */
     async findSocialMediasByUserId(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
-        return await this.socialRepo.findSocialMediasByUserId(userId);
+        return await this.socialRepo.findAllByUser(userId);
     }
 
     /**
@@ -33,7 +33,7 @@ export class SocialMediaService extends BaseService {
         if (!socialMediaTypeId || !urlOrHandle) {
             throw new BadRequestError("Social media identity payload missing explicitly.");
         }
-        await this.socialRepo.insertUserSocialMedia({
+        await this.socialRepo.insert({
             userId,
             socialMediaTypeId,
             urlOrHandle,
@@ -52,7 +52,7 @@ export class SocialMediaService extends BaseService {
         if (!socialMediaTypeId || !urlOrHandle) {
             throw new BadRequestError("Social media identity payload missing explicitly.");
         }
-        await this.socialRepo.updateUserSocialMedia(id, userId, {
+        await this.socialRepo.update(id, userId, {
             socialMediaTypeId,
             urlOrHandle,
         });
@@ -62,6 +62,6 @@ export class SocialMediaService extends BaseService {
      * Remove a social media link from a user's profile.
      */
     async unlinkSocialMedia(id: string, userId: string): Promise<void> {
-        await this.socialRepo.deleteUserSocialMedia(id, userId);
+        await this.socialRepo.delete(id, userId);
     }
 }

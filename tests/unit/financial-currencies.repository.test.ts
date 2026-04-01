@@ -19,36 +19,39 @@ describe("FinancialCurrenciesRepository", () => {
         await db.delete(financialCurrencies);
     });
 
-    describe("create", () => {
+    describe("insert", () => {
         it("creates a currency with a generated ID", async () => {
-            const currency = await repo.create(BASE_INPUT);
+            const currency = await repo.insert(BASE_INPUT);
+            if (!currency) throw new Error("Insert failed");
             expect(currency.id).toMatch(/^fcur_/);
             expect(currency.code).toBe("TST");
             expect(currency.archivedAt).toBeNull();
         });
 
-        it("throws on duplicate code (DB constraint)", async () => {
-            await repo.create(BASE_INPUT);
-            await expect(repo.create(BASE_INPUT)).rejects.toThrow();
+        it("returns null on duplicate code (DB constraint)", async () => {
+            await repo.insert(BASE_INPUT);
+            const second = await repo.insert(BASE_INPUT);
+            expect(second).toBeNull();
         });
     });
 
-    describe("findCurrencyById", () => {
+    describe("findById", () => {
         it("returns currency when found", async () => {
-            const created = await repo.create(BASE_INPUT);
-            const found = await repo.findCurrencyById(created.id);
+            const created = await repo.insert(BASE_INPUT);
+            if (!created) throw new Error("Insert failed");
+            const found = await repo.findById(created.id);
             expect(found?.id).toBe(created.id);
         });
 
         it("returns null when not found", async () => {
-            const found = await repo.findCurrencyById("fcur_ghost");
+            const found = await repo.findById("fcur_ghost");
             expect(found).toBeNull();
         });
     });
 
     describe("findByCode", () => {
         it("returns currency when found (case-insensitive)", async () => {
-            await repo.create(BASE_INPUT);
+            await repo.insert(BASE_INPUT);
             const found = await repo.findByCode("tst");
             expect(found?.code).toBe("TST");
         });
@@ -59,13 +62,15 @@ describe("FinancialCurrenciesRepository", () => {
         });
     });
 
-    describe("findActive", () => {
+    describe("findAllActive", () => {
         it("only returns non-archived currencies", async () => {
-            const active = await repo.create(BASE_INPUT);
-            const archived = await repo.create({ code: "ARC", name: "Archived", symbol: "A" });
+            const active = await repo.insert(BASE_INPUT);
+            if (!active) throw new Error("Insert failed");
+            const archived = await repo.insert({ code: "ARC", name: "Archived", symbol: "A" });
+            if (!archived) throw new Error("Insert failed");
             await repo.archive(archived.id);
 
-            const results = await repo.findActive();
+            const results = await repo.findAllActive();
             expect(results).toHaveLength(1);
             expect(results[0].id).toBe(active.id);
         });
@@ -73,7 +78,8 @@ describe("FinancialCurrenciesRepository", () => {
 
     describe("archive", () => {
         it("sets archivedAt timestamp", async () => {
-            const currency = await repo.create(BASE_INPUT);
+            const currency = await repo.insert(BASE_INPUT);
+            if (!currency) throw new Error("Insert failed");
             const updated = await repo.archive(currency.id);
             expect(updated?.archivedAt).toBeInstanceOf(Date);
         });

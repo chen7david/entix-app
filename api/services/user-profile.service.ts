@@ -9,7 +9,7 @@ export class UserProfileService extends BaseService {
     }
 
     async findProfileByUserId(userId: string) {
-        return await this.profileRepo.findProfileByUserId(userId);
+        return await this.profileRepo.find(userId);
     }
 
     async getProfileByUserId(userId: string) {
@@ -20,8 +20,8 @@ export class UserProfileService extends BaseService {
     async getProfileAggregate(userId: string) {
         const [profile, phoneNumbers, addresses] = await Promise.all([
             this.findProfileByUserId(userId),
-            this.profileRepo.findPhoneNumbersByUserId(userId),
-            this.profileRepo.findAddressesByUserId(userId),
+            this.profileRepo.findPhoneNumbers(userId),
+            this.profileRepo.findAddresses(userId),
         ]);
         return { profile, phoneNumbers, addresses };
     }
@@ -30,14 +30,14 @@ export class UserProfileService extends BaseService {
         userId: string,
         data: Partial<Omit<schema.UserProfile, "id" | "userId" | "createdAt" | "updatedAt">>
     ) {
-        const existing = await this.profileRepo.findProfileByUserId(userId);
+        const existing = await this.profileRepo.find(userId);
         if (existing) {
-            await this.profileRepo.updateProfile(userId, data);
+            await this.profileRepo.update(userId, data);
         } else {
             if (!data.firstName || !data.lastName || !data.sex) {
                 throw new BadRequestError("Missing required fundamental profile attributes.");
             }
-            await this.profileRepo.insertProfile({
+            await this.profileRepo.insert({
                 userId,
                 firstName: data.firstName,
                 lastName: data.lastName,
@@ -46,7 +46,7 @@ export class UserProfileService extends BaseService {
                 birthDate: data.birthDate,
             });
         }
-        return await this.profileRepo.findProfileByUserId(userId);
+        return await this.profileRepo.find(userId);
     }
 
     async addPhoneNumber(

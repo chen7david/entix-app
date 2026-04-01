@@ -17,25 +17,22 @@ export class MemberService extends BaseService {
     /**
      * Check if a user is a member of an organization.
      */
-    async isMember(userId: string, organizationId: string): Promise<boolean> {
-        return await this.memberRepo.isMember(userId, organizationId);
+    async existsMember(userId: string, organizationId: string): Promise<boolean> {
+        return await this.memberRepo.exists(userId, organizationId);
     }
 
     /**
      * Find membership details (returns null if not found).
      */
-    async findMembership(
-        userId: string,
-        organizationId: string
-    ): Promise<schema.AuthMember | null> {
-        return await this.memberRepo.findMembership(userId, organizationId);
+    async findMember(userId: string, organizationId: string): Promise<schema.AuthMember | null> {
+        return await this.memberRepo.find(userId, organizationId);
     }
 
     /**
      * Get membership details (throws NotFoundError if not found).
      */
-    async getMembership(userId: string, organizationId: string): Promise<schema.AuthMember> {
-        const member = await this.findMembership(userId, organizationId);
+    async getMember(userId: string, organizationId: string): Promise<schema.AuthMember> {
+        const member = await this.findMember(userId, organizationId);
         return this.assertExists(
             member,
             `User ${userId} is not a member of organization ${organizationId}`
@@ -46,25 +43,29 @@ export class MemberService extends BaseService {
      * Add a user to an organization.
      * Throws ConflictError if user is already a member.
      */
-    async addMember(input: AddMemberInput): Promise<schema.AuthMember> {
-        const existing = await this.findMembership(input.userId, input.organizationId);
+    async insertMember(input: AddMemberInput): Promise<schema.AuthMember> {
+        const existing = await this.findMember(input.userId, input.organizationId);
         if (existing) {
             throw new ConflictError(
                 `User ${input.userId} is already a member of organization ${input.organizationId}`
             );
         }
 
-        return await this.memberRepo.add(input.organizationId, input.userId, input.role);
+        const member = await this.memberRepo.insert(input.organizationId, input.userId, input.role);
+        if (!member) {
+            throw new Error("Failed to insert member");
+        }
+        return member;
     }
 
     /**
      * Find all memberships for a list of user IDs in an organization.
      */
-    async findMembershipsByUserIds(organizationId: string, userIds: string[]) {
+    async findMembersByUserIds(organizationId: string, userIds: string[]) {
         if (userIds.length === 0) {
             return [];
         }
-        return await this.memberRepo.findMembershipsByUserIds(organizationId, userIds);
+        return await this.memberRepo.findByUserIds(organizationId, userIds);
     }
 
     /**
@@ -77,7 +78,7 @@ export class MemberService extends BaseService {
     /**
      * Find all members with full profiles for export.
      */
-    async findAllDetailed(organizationId: string) {
+    async findMembersDetailed(organizationId: string) {
         return await this.memberRepo.findAllDetailed(organizationId);
     }
 }

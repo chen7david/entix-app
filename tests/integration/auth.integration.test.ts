@@ -95,7 +95,7 @@ describe("Auth Integration Test", () => {
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
         const spy = vi
-            .spyOn(MemberRepository.prototype, "createMemberQuery")
+            .spyOn(MemberRepository.prototype, "prepareInsertQuery")
             .mockImplementation(function (this: any) {
                 return this.db.insert(schema.authMembers).values({
                     id: "pre-existing-conflict", // Will conflict

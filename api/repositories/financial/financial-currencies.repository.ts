@@ -19,22 +19,26 @@ export class FinancialCurrenciesRepository {
      * Creates a new currency.
      * Generates a prefixed ID if not provided (though code is often used as ID).
      */
-    async create(input: NewFinancialCurrency): Promise<FinancialCurrency> {
-        const id = `fcur_${nanoid(10)}`;
+    async insert(input: NewFinancialCurrency): Promise<FinancialCurrency | null> {
+        try {
+            const id = `fcur_${nanoid(10)}`;
 
-        const [currency] = await this.db
-            .insert(financialCurrencies)
-            .values({
-                ...input,
-                id,
-                archivedAt: null,
-            })
-            .returning();
+            const [currency] = await this.db
+                .insert(financialCurrencies)
+                .values({
+                    ...input,
+                    id,
+                    archivedAt: null,
+                })
+                .returning();
 
-        return currency ?? null;
+            return currency ?? null;
+        } catch (_err) {
+            return null;
+        }
     }
 
-    async findCurrencyById(id: string): Promise<FinancialCurrency | null> {
+    async findById(id: string): Promise<FinancialCurrency | null> {
         const currency = await this.db.query.financialCurrencies.findFirst({
             where: eq(financialCurrencies.id, id),
         });
@@ -51,7 +55,7 @@ export class FinancialCurrenciesRepository {
         return currency ?? null;
     }
 
-    async findCurrencies(): Promise<FinancialCurrency[]> {
+    async findAll(): Promise<FinancialCurrency[]> {
         return this.db.select().from(financialCurrencies);
     }
 
@@ -59,7 +63,7 @@ export class FinancialCurrenciesRepository {
      * Returns only active (non-archived) currencies.
      * Used for user-facing selection dropdowns.
      */
-    async findActive(): Promise<FinancialCurrency[]> {
+    async findAllActive(): Promise<FinancialCurrency[]> {
         return this.db
             .select()
             .from(financialCurrencies)
@@ -68,9 +72,8 @@ export class FinancialCurrenciesRepository {
 
     /**
      * Archives a currency by setting the archivedAt timestamp.
-     * @throws Error if the currency is not found.
      */
-    async archive(id: string): Promise<FinancialCurrency> {
+    async archive(id: string): Promise<FinancialCurrency | null> {
         const [currency] = await this.db
             .update(financialCurrencies)
             .set({ archivedAt: new Date() })

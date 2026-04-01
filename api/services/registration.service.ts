@@ -30,7 +30,7 @@ export class RegistrationService extends BaseService {
             throw new ConflictError("Organization name is required for registration");
         }
 
-        const existingUser = await this.userRepo.findUserByEmail(input.email);
+        const existingUser = await this.userRepo.findByEmail(input.email);
         if (existingUser) {
             throw new ConflictError("User already exists");
         }
@@ -52,20 +52,15 @@ export class RegistrationService extends BaseService {
             ? await hashPassword(input.password)
             : await hashPassword(nanoid(32));
 
-        const userQuery = this.userRepo.prepareCreateUser(
-            uId,
-            input.email,
-            input.name,
-            emailVerified
-        );
-        const accountQuery = this.userRepo.prepareCreateAccount(
+        const userQuery = this.userRepo.prepareInsert(uId, input.email, input.name, emailVerified);
+        const accountQuery = this.userRepo.prepareInsertAccount(
             acctId,
             uId,
             "credential",
             hashedPassword
         );
-        const orgQuery = this.orgRepo.prepareCreate(oId, organizationName, slug);
-        const memberQuery = this.memberRepo.createMemberQuery(memberId, oId, uId, "owner");
+        const orgQuery = this.orgRepo.prepareInsert(oId, organizationName, slug);
+        const memberQuery = this.memberRepo.prepareInsertQuery(memberId, oId, uId, "owner");
 
         await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
@@ -99,7 +94,7 @@ export class RegistrationService extends BaseService {
     }
 
     async createUserAndMember(email: string, name: string, organizationId: string, role: string) {
-        const existingUser = await this.userRepo.findUserByEmail(email);
+        const existingUser = await this.userRepo.findByEmail(email);
         if (existingUser) {
             throw new ConflictError("User with this email already exists");
         }
@@ -112,14 +107,14 @@ export class RegistrationService extends BaseService {
         const dummyPassword = nanoid(32);
         const hashedPassword = await hashPassword(dummyPassword);
 
-        const userQuery = this.userRepo.prepareCreateUser(uId, email, name, emailVerified);
-        const accountQuery = this.userRepo.prepareCreateAccount(
+        const userQuery = this.userRepo.prepareInsert(uId, email, name, emailVerified);
+        const accountQuery = this.userRepo.prepareInsertAccount(
             acctId,
             uId,
             "credential",
             hashedPassword
         );
-        const memberQuery = this.memberRepo.createMemberQuery(memberId, organizationId, uId, role);
+        const memberQuery = this.memberRepo.prepareInsertQuery(memberId, organizationId, uId, role);
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
 

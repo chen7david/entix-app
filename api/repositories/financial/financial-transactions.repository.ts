@@ -45,7 +45,7 @@ export class FinancialTransactionsRepository {
     constructor(private readonly db: AppDb) {}
 
     async findById(id: string) {
-        return this.db.query.financialTransactions.findFirst({
+        const transaction = await this.db.query.financialTransactions.findFirst({
             where: eq(financialTransactions.id, id),
             with: {
                 sourceAccount: true,
@@ -54,9 +54,10 @@ export class FinancialTransactionsRepository {
                 currency: true,
             },
         });
+        return transaction ?? null;
     }
 
-    async markReversed(txId: string) {
+    async reverse(txId: string) {
         return this.db
             .update(financialTransactions)
             .set({
@@ -76,7 +77,7 @@ export class FinancialTransactionsRepository {
      * 3. Insert financial_transactions record
      * 4. Insert two financial_transaction_lines (debit + credit pair)
      */
-    prepareInsertStatements(input: CreateTransactionInput) {
+    prepareStatements(input: CreateTransactionInput) {
         const txId = nanoid();
         const debitLineId = nanoid();
         const creditLineId = nanoid();
@@ -151,13 +152,13 @@ export class FinancialTransactionsRepository {
      * Executes a complete double-entry transaction atomically.
      * Services should use this instead of direct db.batch calls.
      */
-    async executeTransaction(input: CreateTransactionInput): Promise<string> {
-        const { txId, statements } = this.prepareInsertStatements(input);
+    async insert(input: CreateTransactionInput): Promise<string> {
+        const { txId, statements } = this.prepareStatements(input);
         await this.db.batch(statements as any);
         return txId;
     }
 
-    async findByOrg(organizationId: string, filters: TransactionFilters) {
+    async findByOrgId(organizationId: string, filters: TransactionFilters) {
         const conditions = [eq(financialTransactions.organizationId, organizationId)];
 
         if (filters.startDate) {
@@ -208,7 +209,7 @@ export class FinancialTransactionsRepository {
         });
     }
 
-    async findByAccount(accountId: string, { page, pageSize }: PaginationInput) {
+    async findByAccountId(accountId: string, { page, pageSize }: PaginationInput) {
         const offset = (page - 1) * pageSize;
         return this.db.query.financialTransactionLines.findMany({
             where: eq(financialTransactionLines.accountId, accountId),
@@ -230,7 +231,11 @@ export class FinancialTransactionsRepository {
      * Fetches transaction lines for all accounts owned by a specific owner.
      * Required for UserFinancialService to show personal wallets' history.
      */
-    async findByOwner(
+    /**
+     * Fetches transaction lines for all accounts owned by a specific owner.
+     * Required for UserFinancialService to show personal wallets' history.
+     */
+    async findByOwnerId(
         ownerId: string,
         ownerType: "user" | "org",
         { page, pageSize }: PaginationInput,

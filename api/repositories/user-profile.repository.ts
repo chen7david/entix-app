@@ -5,32 +5,45 @@ import { and, eq, ne } from "drizzle-orm";
 export class UserProfileRepository {
     constructor(private db: AppDb) {}
 
-    async findProfileByUserId(userId: string): Promise<schema.UserProfile | null> {
-        const profile = await this.db.query.userProfiles.findFirst({
-            where: eq(schema.userProfiles.userId, userId),
-        });
-        return profile ?? null;
+    async find(userId: string): Promise<schema.UserProfile | null> {
+        return (
+            (await this.db.query.userProfiles.findFirst({
+                where: eq(schema.userProfiles.userId, userId),
+            })) ?? null
+        );
     }
 
-    async insertProfile(data: schema.NewUserProfile): Promise<void> {
-        await this.db.insert(schema.userProfiles).values(data);
+    async insert(data: schema.NewUserProfile): Promise<void> {
+        try {
+            await this.db.insert(schema.userProfiles).values(data);
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
-    async updateProfile(userId: string, data: Partial<schema.NewUserProfile>): Promise<void> {
-        await this.db
-            .update(schema.userProfiles)
-            .set(data)
-            .where(eq(schema.userProfiles.userId, userId));
+    async update(userId: string, data: Partial<schema.NewUserProfile>): Promise<void> {
+        try {
+            await this.db
+                .update(schema.userProfiles)
+                .set(data)
+                .where(eq(schema.userProfiles.userId, userId));
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
-    async findPhoneNumbersByUserId(userId: string): Promise<schema.UserPhoneNumber[]> {
+    async findPhoneNumbers(userId: string): Promise<schema.UserPhoneNumber[]> {
         return await this.db.query.userPhoneNumbers.findMany({
             where: eq(schema.userPhoneNumbers.userId, userId),
         });
     }
 
     async insertPhoneNumber(data: schema.NewUserPhoneNumber): Promise<void> {
-        await this.db.insert(schema.userPhoneNumbers).values(data);
+        try {
+            await this.db.insert(schema.userPhoneNumbers).values(data);
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     async updatePhoneNumber(
@@ -38,20 +51,34 @@ export class UserProfileRepository {
         userId: string,
         data: Partial<schema.NewUserPhoneNumber>
     ): Promise<void> {
-        await this.db
-            .update(schema.userPhoneNumbers)
-            .set(data)
-            .where(
-                and(eq(schema.userPhoneNumbers.id, id), eq(schema.userPhoneNumbers.userId, userId))
-            );
+        try {
+            await this.db
+                .update(schema.userPhoneNumbers)
+                .set(data)
+                .where(
+                    and(
+                        eq(schema.userPhoneNumbers.id, id),
+                        eq(schema.userPhoneNumbers.userId, userId)
+                    )
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     async deletePhoneNumber(id: string, userId: string): Promise<void> {
-        await this.db
-            .delete(schema.userPhoneNumbers)
-            .where(
-                and(eq(schema.userPhoneNumbers.id, id), eq(schema.userPhoneNumbers.userId, userId))
-            );
+        try {
+            await this.db
+                .delete(schema.userPhoneNumbers)
+                .where(
+                    and(
+                        eq(schema.userPhoneNumbers.id, id),
+                        eq(schema.userPhoneNumbers.userId, userId)
+                    )
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     async unsetOtherPrimaryPhoneNumbers(userId: string, excludeId: string): Promise<void> {
@@ -66,14 +93,18 @@ export class UserProfileRepository {
             );
     }
 
-    async findAddressesByUserId(userId: string): Promise<schema.UserAddress[]> {
+    async findAddresses(userId: string): Promise<schema.UserAddress[]> {
         return await this.db.query.userAddresses.findMany({
             where: eq(schema.userAddresses.userId, userId),
         });
     }
 
     async insertAddress(data: schema.NewUserAddress): Promise<void> {
-        await this.db.insert(schema.userAddresses).values(data);
+        try {
+            await this.db.insert(schema.userAddresses).values(data);
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     async updateAddress(
@@ -81,31 +112,50 @@ export class UserProfileRepository {
         userId: string,
         data: Partial<schema.NewUserAddress>
     ): Promise<void> {
-        await this.db
-            .update(schema.userAddresses)
-            .set(data)
-            .where(and(eq(schema.userAddresses.id, id), eq(schema.userAddresses.userId, userId)));
+        try {
+            await this.db
+                .update(schema.userAddresses)
+                .set(data)
+                .where(
+                    and(eq(schema.userAddresses.id, id), eq(schema.userAddresses.userId, userId))
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     async deleteAddress(id: string, userId: string): Promise<void> {
-        await this.db
-            .delete(schema.userAddresses)
-            .where(and(eq(schema.userAddresses.id, id), eq(schema.userAddresses.userId, userId)));
+        try {
+            await this.db
+                .delete(schema.userAddresses)
+                .where(
+                    and(eq(schema.userAddresses.id, id), eq(schema.userAddresses.userId, userId))
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     async unsetOtherPrimaryAddresses(userId: string, excludeId: string): Promise<void> {
-        await this.db
-            .update(schema.userAddresses)
-            .set({ isPrimary: false })
-            .where(
-                and(eq(schema.userAddresses.userId, userId), ne(schema.userAddresses.id, excludeId))
-            );
+        try {
+            await this.db
+                .update(schema.userAddresses)
+                .set({ isPrimary: false })
+                .where(
+                    and(
+                        eq(schema.userAddresses.userId, userId),
+                        ne(schema.userAddresses.id, excludeId)
+                    )
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     /**
      * Prepare a query to upsert a profile for batching
      */
-    prepareUpsertProfile(data: schema.NewUserProfile) {
+    prepareUpsert(data: schema.NewUserProfile) {
         return this.db
             .insert(schema.userProfiles)
             .values(data)

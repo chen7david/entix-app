@@ -83,7 +83,7 @@ export class UserFinancialService extends FinancialBaseService {
             }
         }
 
-        const account = await this.accountsRepo.create({
+        const account = await this.accountsRepo.insert({
             ...input,
             ownerId: input.userId,
             ownerType: "user",
@@ -101,7 +101,7 @@ export class UserFinancialService extends FinancialBaseService {
         const currenciesToProvision: string[] = JSON.parse(settings.autoProvisionCurrencies);
 
         // Fetch currency defaults
-        const allCurrencies = await this.currenciesRepo.findActive();
+        const allCurrencies = await this.currenciesRepo.findAllActive();
         const currencyMap = new Map(allCurrencies.map((c) => [c.id, c.defaultAccountName]));
 
         const results = await Promise.all(
@@ -123,7 +123,7 @@ export class UserFinancialService extends FinancialBaseService {
      * Returns personal transaction history for a user within a specific organization.
      */
     async getTransactionHistory(userId: string, orgId: string, pagination: PaginationInput) {
-        const lines = await this.transactionsRepo.findByOwner(userId, "user", pagination, orgId);
+        const lines = await this.transactionsRepo.findByOwnerId(userId, "user", pagination, orgId);
 
         // Normalize TransactionLines into the flat Transaction DTO expected by the frontend
         const data = lines.map((line) => {

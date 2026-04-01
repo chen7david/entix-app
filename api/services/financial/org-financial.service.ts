@@ -35,7 +35,7 @@ export class OrgFinancialService extends FinancialBaseService {
         description?: string;
     }) {
         // Enforce shared transaction logic from base
-        return this.transactionsRepo.executeTransaction({
+        return this.transactionsRepo.insert({
             ...input,
             transactionDate: new Date(),
         });
@@ -62,7 +62,7 @@ export class OrgFinancialService extends FinancialBaseService {
         });
 
         // Mark original as officially reversed in the database
-        await this.transactionsRepo.markReversed(txId);
+        await this.transactionsRepo.reverse(txId);
 
         return reversalTxId;
     }
@@ -124,7 +124,7 @@ export class OrgFinancialService extends FinancialBaseService {
             }
         }
 
-        const account = await this.accountsRepo.create({
+        const account = await this.accountsRepo.insert({
             ownerId: input.organizationId,
             ownerType: "org",
             currencyId: input.currencyId,
@@ -148,7 +148,7 @@ export class OrgFinancialService extends FinancialBaseService {
             throw new Error(`Currency ${target.code} is already activated`);
         }
 
-        return this.accountsRepo.create({
+        const account = await this.accountsRepo.insert({
             ownerId: orgId,
             ownerType: "org",
             currencyId,
@@ -156,13 +156,15 @@ export class OrgFinancialService extends FinancialBaseService {
             name: `General Fund — ${target.code}`,
             isFundingAccount: true, // Auto-set at activation
         });
+
+        return this.assertExists(account, "Failed to create General Fund account");
     }
 
     /**
      * Returns paginated transaction history for the organization with filters.
      */
     async getTransactionHistory(orgId: string, filters: TransactionFilters) {
-        return this.transactionsRepo.findByOrg(orgId, filters);
+        return this.transactionsRepo.findByOrgId(orgId, filters);
     }
 
     /**

@@ -10,10 +10,10 @@ describe("UserService", () => {
 
     beforeEach(() => {
         mockRepo = {
-            findUserById: vi.fn(),
-            findUserByEmail: vi.fn(),
-            updateUser: vi.fn(),
-            findUsersByOrganization: vi.fn(),
+            findById: vi.fn(),
+            findByEmail: vi.fn(),
+            update: vi.fn(),
+            findAllByOrg: vi.fn(),
         };
         mockAuth = createMockAuth();
         service = new UserService(mockRepo as unknown as UserRepository, mockAuth as any);
@@ -58,34 +58,34 @@ describe("UserService", () => {
         const mockUser = { id: "u_1", email: "test@x.com", name: "X" };
 
         it("findUserById returns record or null", async () => {
-            mockRepo.findUserById.mockResolvedValue(mockUser);
+            mockRepo.findById.mockResolvedValue(mockUser);
             expect(await service.findUserById("u_1")).toEqual(mockUser);
 
-            mockRepo.findUserById.mockResolvedValue(null);
+            mockRepo.findById.mockResolvedValue(null);
             expect(await service.findUserById("ghost")).toBeNull();
         });
 
         it("getUserById returns record or throws", async () => {
-            mockRepo.findUserById.mockResolvedValue(mockUser);
+            mockRepo.findById.mockResolvedValue(mockUser);
             expect(await service.getUserById("u_1")).toEqual(mockUser);
 
-            mockRepo.findUserById.mockResolvedValue(null);
+            mockRepo.findById.mockResolvedValue(null);
             await expect(service.getUserById("ghost")).rejects.toThrow(/not found/);
         });
 
         it("findUserByEmail returns record or null", async () => {
-            mockRepo.findUserByEmail.mockResolvedValue(mockUser);
+            mockRepo.findByEmail.mockResolvedValue(mockUser);
             expect(await service.findUserByEmail("test@x.com")).toEqual(mockUser);
 
-            mockRepo.findUserByEmail.mockResolvedValue(null);
+            mockRepo.findByEmail.mockResolvedValue(null);
             expect(await service.findUserByEmail("missing@x.com")).toBeNull();
         });
 
         it("getUserByEmail returns record or throws", async () => {
-            mockRepo.findUserByEmail.mockResolvedValue(mockUser);
+            mockRepo.findByEmail.mockResolvedValue(mockUser);
             expect(await service.getUserByEmail("test@x.com")).toEqual(mockUser);
 
-            mockRepo.findUserByEmail.mockResolvedValue(null);
+            mockRepo.findByEmail.mockResolvedValue(null);
             await expect(service.getUserByEmail("missing@x.com")).rejects.toThrow(/not found/);
         });
     });

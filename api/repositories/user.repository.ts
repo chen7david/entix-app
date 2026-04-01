@@ -14,7 +14,7 @@ export class UserRepository {
      * Find user by email address.
      * Returns null if not found.
      */
-    async findUserByEmail(email: string): Promise<schema.AuthUser | null> {
+    async findByEmail(email: string): Promise<schema.AuthUser | null> {
         return (
             (await this.db.query.authUsers.findFirst({
                 where: eq(schema.authUsers.email, email),
@@ -26,10 +26,10 @@ export class UserRepository {
      * Find user by ID.
      * Returns null if not found.
      */
-    async findUserById(userId: string): Promise<schema.AuthUser | null> {
+    async findById(id: string): Promise<schema.AuthUser | null> {
         return (
             (await this.db.query.authUsers.findFirst({
-                where: eq(schema.authUsers.id, userId),
+                where: eq(schema.authUsers.id, id),
             })) ?? null
         );
     }
@@ -37,14 +37,18 @@ export class UserRepository {
     /**
      * Update an existing user's data.
      */
-    async updateUser(userId: string, data: Partial<schema.NewAuthUser>): Promise<void> {
-        await this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, userId));
+    async update(id: string, data: Partial<schema.NewAuthUser>): Promise<void> {
+        try {
+            await this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, id));
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     /**
      * Find users belonging to an organization with cursor pagination.
      */
-    async findUsersByOrganization(
+    async findAllByOrg(
         organizationId: string,
         limit: number,
         cursor?: string,
@@ -99,10 +103,7 @@ export class UserRepository {
         };
     }
 
-    /**
-     * Prepare a query to create a user for batching.
-     */
-    prepareCreateUser(id: string, email: string, name: string, emailVerified: boolean) {
+    prepareInsert(id: string, email: string, name: string, emailVerified: boolean) {
         const now = new Date();
         return this.db.insert(schema.authUsers).values({
             id,
@@ -117,9 +118,9 @@ export class UserRepository {
     }
 
     /**
-     * Prepare a query to create an account for batching.
+     * Prepare a query to insert an account for batching.
      */
-    prepareCreateAccount(id: string, userId: string, providerId: string, passwordHash: string) {
+    prepareInsertAccount(id: string, userId: string, providerId: string, passwordHash: string) {
         const now = new Date();
         return this.db.insert(schema.authAccounts).values({
             id,
@@ -132,10 +133,7 @@ export class UserRepository {
         });
     }
 
-    /**
-     * Prepare a query to upsert a user for batching.
-     */
-    prepareUpsertUser(data: schema.NewAuthUser) {
+    prepareUpsert(data: schema.NewAuthUser) {
         return this.db
             .insert(schema.authUsers)
             .values(data)
@@ -149,17 +147,14 @@ export class UserRepository {
             });
     }
 
-    /**
-     * Prepare a query to update a user for batching.
-     */
-    prepareUpdateUser(userId: string, data: Partial<schema.NewAuthUser>) {
-        return this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, userId));
+    prepareUpdate(id: string, data: Partial<schema.NewAuthUser>) {
+        return this.db.update(schema.authUsers).set(data).where(eq(schema.authUsers.id, id));
     }
 
     /**
-     * Prepare a query to insert an account for batching.
+     * Prepare a query to insert an account for batching (raw data).
      */
-    prepareInsertAccount(data: schema.NewAuthAccount) {
+    prepareInsertAccountRaw(data: schema.NewAuthAccount) {
         return this.db.insert(schema.authAccounts).values(data).onConflictDoNothing();
     }
 
@@ -174,17 +169,14 @@ export class UserRepository {
     /**
      * Find multiple users by their email addresses.
      */
-    async findUsersByEmails(emails: string[]): Promise<schema.AuthUser[]> {
+    async findByEmails(emails: string[]): Promise<schema.AuthUser[]> {
         if (emails.length === 0) return [];
         return await this.db.query.authUsers.findMany({
             where: (u, { inArray }) => inArray(u.email, emails),
         });
     }
 
-    /**
-     * Find multiple users by their IDs.
-     */
-    async findUsersByIds(ids: string[]): Promise<schema.AuthUser[]> {
+    async findByIds(ids: string[]): Promise<schema.AuthUser[]> {
         if (ids.length === 0) return [];
         return await this.db.query.authUsers.findMany({
             where: (u, { inArray }) => inArray(u.id, ids),

@@ -36,7 +36,7 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
         const spy = vi
-            .spyOn(MemberRepository.prototype, "createMemberQuery")
+            .spyOn(MemberRepository.prototype, "prepareInsertQuery")
             .mockImplementation(function (this: any) {
                 const getDbClient = require("@api/factories/db.factory").getDbClient;
                 return getDbClient((this as any).ctx)

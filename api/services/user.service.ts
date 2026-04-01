@@ -59,8 +59,8 @@ export class UserService extends BaseService {
      * Find user by ID.
      * Returns null if not found.
      */
-    async findUserById(userId: string) {
-        return await this.userRepo.findUserById(userId);
+    async findUserById(id: string) {
+        return await this.userRepo.findById(id);
     }
 
     /**
@@ -77,7 +77,7 @@ export class UserService extends BaseService {
      * Returns null if not found.
      */
     async findUserByEmail(email: string) {
-        return await this.userRepo.findUserByEmail(email);
+        return await this.userRepo.findByEmail(email);
     }
 
     /**
@@ -96,19 +96,13 @@ export class UserService extends BaseService {
         direction: "next" | "prev" = "next",
         search?: string
     ) {
-        return await this.userRepo.findUsersByOrganization(
-            organizationId,
-            limit,
-            cursor,
-            direction,
-            search
-        );
+        return await this.userRepo.findAllByOrg(organizationId, limit, cursor, direction, search);
     }
 
     async updateUser(
-        userId: string,
+        id: string,
         data: Partial<{ email: string; name: string; image: string | null }>
     ) {
-        return await this.userRepo.updateUser(userId, data);
+        return await this.userRepo.update(id, data);
     }
 }

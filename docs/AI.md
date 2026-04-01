@@ -7,6 +7,7 @@
 > Read this before generating any code for Entix-App.
 
 ## 🧱 Core Stack
+## 🧱 Core Stack
 - **Runtime**: Cloudflare Workers (Edge-native V8 isolates).
 - **Framework**: Hono with `@hono/zod-openapi`.
 - **Database**: Cloudflare D1 (SQLite) via Drizzle ORM.
@@ -15,13 +16,16 @@
 - **Styles**: Tailwind CSS v4 + Ant Design.
 
 ## 🛡️ Strict Architectural Rules (Never Violate)
-1.  **Dumb Repositories**: Repositories MUST NOT import Auth, Stripe, or external clients.
+1.  **Dumb Repositories**: Repositories MUST NOT import Auth, Stripe, or external clients. Allowed Dependencies: `AppDb` (Drizzle) only.
 2.  **No Exceptions in Repos**: Repositories must return `null` for not-found. Never throw `AppError`.
 3.  **Service Isolation**: Handlers never call repositories. Services never use `db` directly.
 4.  **BaseService Protocol**: Services MUST extend `BaseService`. Use `assertExists()` for `get*` methods.
-5.  **Nullable Find**: `find*` equals `T | null`. `get*` equals `T` or throw `NotFoundError`.
-6.  **Naming Standards**: DB tables: plural snake_case. Columns: snake_case (DB), camelCase (TS).
-7.  **Data Integrity**: Coerce `undefined` to `null` on all database reads (`?? null`).
+5.  **Naming Standards (Rule 35)**: Repository methods should be concise and avoid domain redundancy. 
+    - **Single lookup**: `findById`, `findByCode`.
+    - **Collection lookup**: `findAll`, `findByOrgId`.
+    - **Existence check**: `existsById`, `existsByUserId`.
+    - **Actions**: `insert`, `update`, `delete`, `deactivate`, `archive`.
+6.  **Data Integrity**: Coerce `undefined` to `null` on all database reads (`?? null`).
 
 ## 🗺️ Layer Responsibilities
 | Layer | File Pattern | Allowed Dependencies | Prohibited |
@@ -32,7 +36,9 @@
 | **Factory** | `*.factory.ts` | `ctx` bindings | Business logic |
 
 ## 🏷️ Naming Quick Reference
-- **Repo Methods**: `find*`, `insert*`, `update*`, `delete*`, `exists*`, `prepare*`, `executeBatch`.
+- **Repo Single**: `findById`, `findByEmail`, `findByCode`.
+- **Repo Collection**: `findAll`, `findByOrgId`, `findByUserId`.
+- **Repo Actions**: `insert`, `update`, `delete`, `deactivate`, `archive`, `prepareInsert`.
 - **Service Reads**: `find*` (nullable), `get*` (throws).
 - **Service Actions**: Business verbs (`addMember`, `transferOwnership`).
 - **Input DTOs**: `{Action}{Domain}Input` (e.g., `CreatePlaylistInput`).

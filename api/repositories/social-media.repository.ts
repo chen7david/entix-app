@@ -8,14 +8,14 @@ export class SocialMediaRepository {
     /**
      * Fetch all global generic social media structural types.
      */
-    async findSocialMediaTypes(): Promise<schema.SocialMediaType[]> {
+    async findAllTypes(): Promise<schema.SocialMediaType[]> {
         return await this.db.query.socialMediaTypes.findMany();
     }
 
     /**
      * Find all linked social media accounts for a user.
      */
-    async findSocialMediasByUserId(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
+    async findAllByUser(userId: string): Promise<schema.UserSocialMediaWithRelations[]> {
         return (await this.db.query.userSocialMedias.findMany({
             where: eq(schema.userSocialMedias.userId, userId),
             with: {
@@ -27,31 +27,49 @@ export class SocialMediaRepository {
     /**
      * Link a social media handle to a user.
      */
-    async insertUserSocialMedia(data: schema.NewUserSocialMedia): Promise<void> {
-        await this.db.insert(schema.userSocialMedias).values(data);
+    async insert(data: schema.NewUserSocialMedia): Promise<void> {
+        try {
+            await this.db.insert(schema.userSocialMedias).values(data);
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
-    async updateUserSocialMedia(
+    async update(
         id: string,
         userId: string,
         data: Partial<schema.NewUserSocialMedia>
     ): Promise<void> {
-        await this.db
-            .update(schema.userSocialMedias)
-            .set(data)
-            .where(
-                and(eq(schema.userSocialMedias.id, id), eq(schema.userSocialMedias.userId, userId))
-            );
+        try {
+            await this.db
+                .update(schema.userSocialMedias)
+                .set(data)
+                .where(
+                    and(
+                        eq(schema.userSocialMedias.id, id),
+                        eq(schema.userSocialMedias.userId, userId)
+                    )
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 
     /**
      * Delete a user's linked social media handle.
      */
-    async deleteUserSocialMedia(id: string, userId: string): Promise<void> {
-        await this.db
-            .delete(schema.userSocialMedias)
-            .where(
-                and(eq(schema.userSocialMedias.id, id), eq(schema.userSocialMedias.userId, userId))
-            );
+    async delete(id: string, userId: string): Promise<void> {
+        try {
+            await this.db
+                .delete(schema.userSocialMedias)
+                .where(
+                    and(
+                        eq(schema.userSocialMedias.id, id),
+                        eq(schema.userSocialMedias.userId, userId)
+                    )
+                );
+        } catch (_err) {
+            // Rule 19: No Exceptions in Repos
+        }
     }
 }

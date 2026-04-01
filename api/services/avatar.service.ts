@@ -34,7 +34,7 @@ export class AvatarService extends BaseService {
      * Update a user's avatar using a completed upload.
      */
     async updateAvatar(targetUserId: string, uploadId: string, _callerId: string) {
-        const user = await this.userRepo.findUserById(targetUserId);
+        const user = await this.userRepo.findById(targetUserId);
         this.assertExists(user, `User with ID ${targetUserId} not found`);
 
         const newUpload = await this.uploadService.getUserUploadById(uploadId, targetUserId);
@@ -48,7 +48,7 @@ export class AvatarService extends BaseService {
             throw new BadRequestError("Avatar upload must be an image");
         }
 
-        await this.userRepo.updateUser(targetUserId, {
+        await this.userRepo.update(targetUserId, {
             image: newUpload.url,
         });
 
@@ -62,14 +62,14 @@ export class AvatarService extends BaseService {
      * Remove a user's avatar (sets image column to null).
      */
     async removeAvatar(targetUserId: string) {
-        const user = await this.userRepo.findUserById(targetUserId);
+        const user = await this.userRepo.findById(targetUserId);
         this.assertExists(user, `User with ID ${targetUserId} not found`);
 
         if (!user?.image) {
             throw new NotFoundError("No avatar to remove");
         }
 
-        await this.userRepo.updateUser(targetUserId, {
+        await this.userRepo.update(targetUserId, {
             image: null,
         });
 
