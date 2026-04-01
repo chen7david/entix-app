@@ -11,19 +11,14 @@ import {
     financialTransactionCategories,
 } from "@shared/db/schema";
 
-export const seedFinancials = async (db: AppDb) => {
-    const allCurrencies = Object.values(FINANCIAL_CURRENCIES);
+export const financialCurrencySeed = Object.values(FINANCIAL_CURRENCIES).map((id) => ({
+    id,
+    ...FINANCIAL_CURRENCY_CONFIG[id as keyof typeof FINANCIAL_CURRENCY_CONFIG],
+}));
 
+export const seedFinancials = async (db: AppDb) => {
     // Seed currencies
-    await db
-        .insert(financialCurrencies)
-        .values(
-            allCurrencies.map((id) => ({
-                id,
-                ...FINANCIAL_CURRENCY_CONFIG[id as keyof typeof FINANCIAL_CURRENCY_CONFIG],
-            }))
-        )
-        .onConflictDoNothing();
+    await db.insert(financialCurrencies).values(financialCurrencySeed).onConflictDoNothing();
 
     // Seed transaction categories
     await db
@@ -61,6 +56,7 @@ export const seedFinancials = async (db: AppDb) => {
     // We create one treasury account for every currency in the system.
     // These accounts are the system-side counterparties for all admin layouts/rewards.
     // They are pre-funded with a large float and never exposed to end-users directly.
+    const allCurrencies = Object.values(FINANCIAL_CURRENCIES);
     for (const currencyId of allCurrencies) {
         const config =
             FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];

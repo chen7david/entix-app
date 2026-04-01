@@ -1,6 +1,6 @@
+import { financialCurrencySeed } from "@api/db/seed/financial.seed";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { authOrganizations, financialAccounts, financialCurrencies } from "@shared/db/schema";
-import { financialCurrencySeed } from "@shared/db/seed/financial-currencies";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, type TestDb } from "../lib/utils";
 

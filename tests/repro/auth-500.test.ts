@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
-import { seedFinancials } from "@shared/db/seed/financial.seed";
+import { seedFinancials } from "@api/db/seed/financial.seed";
 import { drizzle } from "drizzle-orm/d1";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb } from "../lib/utils";

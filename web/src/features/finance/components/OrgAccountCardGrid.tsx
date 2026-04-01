@@ -1,5 +1,5 @@
 import { CheckCircleOutlined, LockOutlined, WalletOutlined } from "@ant-design/icons";
-import { Button, Card, Col, Row, Space, Statistic, Tag, Typography, theme } from "antd";
+import { Card, Col, Row, Space, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
 import type { WalletAccount } from "../../wallet/hooks/useWalletBalance";
 
@@ -9,15 +9,9 @@ type Props = {
     accounts: WalletAccount[];
     loading?: boolean;
     onAccountClick: (account: WalletAccount) => void;
-    onTransferClick?: (account: WalletAccount) => void;
 };
 
-export const OrgAccountCardGrid: React.FC<Props> = ({
-    accounts,
-    loading,
-    onAccountClick,
-    onTransferClick,
-}) => {
+export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccountClick }) => {
     const { token } = theme.useToken();
 
     if (loading && (!accounts || accounts.length === 0)) {
