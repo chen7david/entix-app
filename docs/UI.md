@@ -1,3 +1,4 @@
+::: v-pre
 # UI.md — Frontend Architecture & Design Standards
 # Entix-App Web Layer
 
@@ -548,3 +549,4 @@ Every component shipped to production MUST pass the following checklist before t
 
 *UI.md — Entix-App Frontend Standards*
 *Established: 2026-04-01*
+:::

@@ -20,6 +20,7 @@ import {
     Select,
     Skeleton,
     Space,
+    Statistic,
     Typography,
     theme,
 } from "antd";
@@ -180,11 +181,20 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
                                         }}
                                     />
                                 </div>
-                                <Title level={3} style={{ margin: 0, marginBottom: 4 }}>
-                                    {(account.balanceCents / 100).toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                    })}
-                                </Title>
+                                <Statistic
+                                    value={account.balanceCents / 100}
+                                    precision={2}
+                                    valueStyle={{
+                                        fontSize: token.fontSizeXL,
+                                        fontWeight: 600,
+                                        marginTop: -4,
+                                    }}
+                                    suffix={
+                                        <Text type="secondary" style={{ fontSize: 14 }}>
+                                            {meta?.symbol || "$"}
+                                        </Text>
+                                    }
+                                />
                                 <Text
                                     type="secondary"
                                     style={{ fontSize: 9, opacity: 0.5, fontFamily: "monospace" }}

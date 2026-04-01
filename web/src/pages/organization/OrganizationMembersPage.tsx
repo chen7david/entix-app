@@ -66,7 +66,7 @@ import { useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
-const OrganizationMembersPageBase = () => {
+const OrganizationMembersPageBase: React.FC = () => {
     const { token } = theme.useToken();
     const { message } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -397,6 +397,7 @@ const OrganizationMembersPageBase = () => {
                                 title="Total Members"
                                 value={totalMembers}
                                 prefix={<TeamOutlined />}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
                             />
                         </Card>
                     </Col>
@@ -406,6 +407,7 @@ const OrganizationMembersPageBase = () => {
                                 title="Admins"
                                 value={adminCount}
                                 prefix={<SafetyOutlined />}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
                             />
                         </Card>
                     </Col>
@@ -415,6 +417,7 @@ const OrganizationMembersPageBase = () => {
                                 title="Owners"
                                 value={ownerCount}
                                 prefix={<CrownOutlined />}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
                             />
                         </Card>
                     </Col>

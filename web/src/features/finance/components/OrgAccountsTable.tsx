@@ -85,8 +85,10 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             rowKey="id"
             columns={columns}
             loading={loading}
-            pagination={{ pageSize: 10 }}
+            pagination={{ pageSize: 12 }}
             scroll={{ x: "max-content" }}
+            tableLayout="fixed"
+            size="middle"
         />
     );
 };

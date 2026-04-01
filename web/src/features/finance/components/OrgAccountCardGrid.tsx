@@ -104,8 +104,8 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                                 value={account.balanceCents / 100}
                                 precision={2}
                                 valueStyle={{
-                                    fontSize: 24,
-                                    fontWeight: 800,
+                                    fontSize: token.fontSizeXL,
+                                    fontWeight: 700,
                                     color: token.colorText,
                                     letterSpacing: "-0.01em",
                                 }}
