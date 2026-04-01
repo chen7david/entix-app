@@ -99,4 +99,35 @@ export const AdminFinanceRoutes = {
             ),
         },
     }),
+    updateAccount: createRoute({
+        tags,
+        method: HttpMethods.PATCH,
+        path: "/admin/finance/accounts/{id}",
+        middleware: [requireAuth, requireSuperAdmin] as const,
+        summary: "Super admin: update account label",
+        request: {
+            params: z.object({ id: z.string() }),
+            body: jsonContentRequired(z.object({ name: z.string().min(1) }), "Update details"),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.any(), "Account updated successfully"),
+        },
+    }),
+    archiveAccount: createRoute({
+        tags,
+        method: HttpMethods.PATCH,
+        path: "/admin/finance/accounts/{id}/archive",
+        middleware: [requireAuth, requireSuperAdmin] as const,
+        summary: "Super admin: archive account (soft delete)",
+        request: {
+            params: z.object({ id: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(z.any(), "Account archived successfully"),
+            [HttpStatusCodes.BAD_REQUEST]: jsonContent(
+                z.object({ message: z.string() }),
+                "Invalid archiving request (e.g. non-zero balance)"
+            ),
+        },
+    }),
 };

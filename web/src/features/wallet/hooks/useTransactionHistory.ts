@@ -24,19 +24,24 @@ export const useTransactionHistory = (
     ownerType: "user" | "org" = "org",
     page = 1,
     pageSize = 20,
-    orgId?: string
+    orgId?: string,
+    accountId?: string
 ) => {
     return useQuery<TransactionHistoryResponse>({
-        queryKey: ["transactionHistory", id, ownerType, page, pageSize, orgId],
+        queryKey: ["transactionHistory", id, ownerType, page, pageSize, orgId, accountId],
         queryFn: async () => {
             if (!id) throw new Error("ID required");
             if (ownerType === "user" && !orgId)
                 throw new Error("Organization ID required for member transactions");
 
-            const url =
+            let url =
                 ownerType === "org"
                     ? `${API_V1}/orgs/${id}/finance/transactions?page=${page}&pageSize=${pageSize}`
                     : `${API_V1}/orgs/${orgId}/members/${id}/wallet/transactions?page=${page}&pageSize=${pageSize}`;
+
+            if (ownerType === "org" && accountId) {
+                url += `&accountId=${accountId}`;
+            }
 
             const res = await fetch(url);
             if (!res.ok) throw new Error("Failed to fetch transaction history");

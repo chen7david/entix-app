@@ -80,8 +80,31 @@ export class AdminFinancialService extends FinancialBaseService {
      * This bypasses the typical "user vs org" scope checks and is intended
      * for super-admin views (e.g., FinancialManagementPage).
      */
+    /**
+     * Lists all active accounts for any given organization.
+     * This bypasses the typical "user vs org" scope checks and is intended
+     * for super-admin views (e.g., FinancialManagementPage).
+     */
     async getAnyOrgAccounts(orgId: string) {
         const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org");
         return accounts.filter((a) => a.isFundingAccount === true);
+    }
+    /**
+     * Updates the name/label of any financial account.
+     */
+    async updateAccount(id: string, name: string) {
+        return this.accountsRepo.updateName(id, name);
+    }
+    /**
+     * Archives a financial account.
+     * Logic: Only allowed if the balance is zero to prevent hidden funds.
+     */
+    async archiveAccount(id: string) {
+        const account = await this.accountsRepo.findById(id);
+        if (!account) throw new Error("Account not found");
+        if (account.balanceCents !== 0) {
+            throw new Error("Cannot archive an account with a non-zero balance. Please transfer funds out first.");
+        }
+        return this.accountsRepo.archive(id);
     }
 }

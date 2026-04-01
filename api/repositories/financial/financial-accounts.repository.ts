@@ -110,14 +110,31 @@ export class FinancialAccountsRepository {
     }
 
     /**
-     * Finds active accounts for an organization.
+     * Updates the display name of an account.
+     */
+    async updateName(id: string, name: string): Promise<FinancialAccount> {
+        const [account] = await this.db
+            .update(financialAccounts)
+            .set({
+                name,
+                updatedAt: new Date(),
+            })
+            .where(eq(financialAccounts.id, id))
+            .returning();
+
+        return account ?? null;
+    }
+
+    /**
+     * Finds active, non-archived accounts for an organization.
      */
     async getOrgAccounts(orgId: string): Promise<FinancialAccount[]> {
         return this.db.query.financialAccounts.findMany({
             where: and(
                 eq(financialAccounts.ownerId, orgId),
                 eq(financialAccounts.ownerType, "org"),
-                eq(financialAccounts.isActive, true)
+                eq(financialAccounts.isActive, true),
+                sql`${financialAccounts.archivedAt} IS NULL`
             ),
         });
     }

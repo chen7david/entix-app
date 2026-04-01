@@ -8,14 +8,14 @@ const { Text } = Typography;
 type Props = {
     accounts: WalletAccount[];
     loading?: boolean;
-    onCreditClick: (account: WalletAccount) => void;
+    onAccountClick: (account: WalletAccount) => void;
     onTransferClick?: (account: WalletAccount) => void;
 };
 
 export const OrgAccountCardGrid: React.FC<Props> = ({
     accounts,
     loading,
-    onCreditClick,
+    onAccountClick,
     onTransferClick,
 }) => {
     const { token } = theme.useToken();
@@ -37,36 +37,12 @@ export const OrgAccountCardGrid: React.FC<Props> = ({
                         <Card
                             hoverable
                             variant="borderless"
+                            onClick={() => onAccountClick(account)}
                             styles={{
                                 body: {
                                     padding: "20px",
                                 },
                             }}
-                            actions={[
-                                isFunding ? (
-                                    <Button
-                                        key="credit"
-                                        type="link"
-                                        size="small"
-                                        block
-                                        onClick={() => onCreditClick(account)}
-                                        style={{ fontSize: 11, fontWeight: 600 }}
-                                    >
-                                        ADMIN CREDIT
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        key="transfer"
-                                        type="link"
-                                        size="small"
-                                        block
-                                        onClick={() => onTransferClick?.(account)}
-                                        style={{ fontSize: 11, fontWeight: 600 }}
-                                    >
-                                        INTERNAL TRANSFER
-                                    </Button>
-                                ),
-                            ]}
                         >
                             <div
                                 style={{

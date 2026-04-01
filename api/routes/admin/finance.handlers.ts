@@ -40,4 +40,23 @@ export class AdminFinanceHandler {
 
         return ctx.json({ txId }, HttpStatusCodes.CREATED);
     };
+
+    static updateAccount: AppHandler<typeof AdminFinanceRoutes.updateAccount> = async (ctx) => {
+        const { id } = ctx.req.valid("param");
+        const { name } = ctx.req.valid("json");
+
+        const account = await getAdminFinancialService(ctx).updateAccount(id, name);
+        return ctx.json({ account }, HttpStatusCodes.OK);
+    };
+
+    static archiveAccount: AppHandler<typeof AdminFinanceRoutes.archiveAccount> = async (ctx) => {
+        const { id } = ctx.req.valid("param");
+
+        try {
+            await getAdminFinancialService(ctx).archiveAccount(id);
+            return ctx.json({ success: true }, HttpStatusCodes.OK);
+        } catch (error: any) {
+            return ctx.json({ message: error.message }, HttpStatusCodes.BAD_REQUEST);
+        }
+    };
 }

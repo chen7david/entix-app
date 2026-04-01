@@ -1,10 +1,12 @@
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { useActivateCurrency } from "@web/src/features/finance/hooks/useActivateCurrency";
 import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
 import { useOrganization } from "@web/src/features/organization";
 import { CreateAccountDrawer } from "@web/src/features/wallet/components/CreateAccountDrawer";
+import type { WalletAccount } from "@web/src/features/wallet/hooks/useWalletBalance";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
 
 import { Button, Card, Col, Divider, Row, Tag, Typography } from "antd";
@@ -17,6 +19,8 @@ export const FinanceAccountsPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
+    const [isManageDrawerOpen, setIsManageDrawerOpen] = useState(false);
+    const [selectedAccount, setSelectedAccount] = useState<WalletAccount | null>(null);
 
     const { data: currenciesData, isLoading: isLoadingCurrencies } = useOrgCurrencies(orgId);
     const { mutate: activate, isPending: isActivating } = useActivateCurrency(orgId);
@@ -26,6 +30,11 @@ export const FinanceAccountsPage: React.FC = () => {
 
     const activated = currenciesData?.currencies.filter((c) => c.isActivated) ?? [];
     const available = currenciesData?.currencies.filter((c) => !c.isActivated) ?? [];
+
+    const handleAccountClick = (account: WalletAccount) => {
+        setSelectedAccount(account);
+        setIsManageDrawerOpen(true);
+    };
 
     return (
         <>
@@ -61,7 +70,7 @@ export const FinanceAccountsPage: React.FC = () => {
                         <OrgAccountCardGrid
                             accounts={balanceData?.accounts || []}
                             loading={isLoadingBalance}
-                            onCreditClick={() => {}}
+                            onAccountClick={handleAccountClick}
                         />
                     </Col>
 
@@ -124,6 +133,12 @@ export const FinanceAccountsPage: React.FC = () => {
                     )}
                 </Row>
 
+                <ManageAccountDrawer
+                    open={isManageDrawerOpen}
+                    onClose={() => setIsManageDrawerOpen(false)}
+                    account={selectedAccount}
+                    orgId={orgId}
+                />
                 <CreateAccountDrawer
                     open={isCreateDrawerOpen}
                     onClose={() => setIsCreateDrawerOpen(false)}

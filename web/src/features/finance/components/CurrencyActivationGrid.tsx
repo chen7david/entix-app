@@ -1,5 +1,5 @@
 import { CheckCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { Badge, Button, Card, Col, Row, Statistic, Tag, Typography } from "antd";
+import { Badge, Button, Card, Col, Row, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
 import type { CurrencyWithStatus } from "../hooks/useOrgCurrencies";
 
@@ -11,20 +11,32 @@ type Props = {
     activating?: boolean;
 };
 
-export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate, activating }) => (
-    <Row gutter={[16, 16]}>
-        {currencies.map((currency) => (
-            <Col xs={24} sm={12} md={6} key={currency.id}>
-                <Card
-                    size="small"
-                    style={{
-                        height: "100%",
-                        borderStyle: currency.isActivated ? "solid" : "dashed",
-                        background: currency.isActivated
-                            ? undefined
-                            : "var(--ant-color-fill-quaternary)",
-                    }}
-                    actions={
+export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate, activating }) => {
+    const { token } = theme.useToken();
+    return (
+        <Row gutter={[16, 16]}>
+            {currencies.map((currency) => (
+                <Col xs={24} sm={12} md={6} key={currency.id}>
+                    <Card
+                        size="small"
+                        style={{
+                            height: "100%",
+                            borderStyle: currency.isActivated ? "solid" : "dashed",
+                        }}
+                        styles={{
+                            body: {
+                                background: currency.isActivated
+                                    ? undefined
+                                    : token.colorFillTertiary,
+                            },
+                            actions: {
+                                background: currency.isActivated
+                                    ? undefined
+                                    : token.colorFillTertiary,
+                                borderTop: "none",
+                            },
+                        }}
+                        actions={
                         currency.isActivated
                             ? [
                                   <Badge
@@ -109,6 +121,7 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                     )}
                 </Card>
             </Col>
-        ))}
-    </Row>
-);
+            ))}
+        </Row>
+    );
+};
