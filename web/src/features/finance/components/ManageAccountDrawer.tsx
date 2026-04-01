@@ -129,7 +129,7 @@ export const ManageAccountDrawer: React.FC<Props> = ({ open, onClose, account, o
                 </Form.Item>
             </Form>
 
-            <Divider orientation="left" style={{ margin: "32px 0 16px" }}>
+            <Divider titlePlacement="left" style={{ margin: "32px 0 16px" }}>
                 Recent Activity
             </Divider>
 
@@ -162,7 +162,7 @@ export const ManageAccountDrawer: React.FC<Props> = ({ open, onClose, account, o
                 )}
             />
 
-            <Divider orientation="left" style={{ margin: "32px 0 16px" }}>
+            <Divider titlePlacement="left" style={{ margin: "32px 0 16px" }}>
                 Administrative Actions
             </Divider>
             <Card
