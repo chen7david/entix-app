@@ -1,10 +1,84 @@
-::: v-pre
+:::v-pre
+<!-- AI_CONTEXT
+Stack: React 19, Ant Design 6, Tailwind v4, Jotai, React Query 5,
+       React Router 7, Vite, Vitest, TypeScript, Cloudflare Workers
+Target: Mobile-first fintech SaaS, dark/light mode, WCAG AA
+Enforce: All rules below are MANDATORY. Violations = bugs.
+-->
+
 # UI.md — Frontend Architecture & Design Standards
 # Entix-App Web Layer
 
 > This document defines the mandatory rules for all frontend development on the Entix-App
 > web layer. Every rule is numbered for reference in code reviews and audit reports.
 > Violations should be treated as bugs, not style preferences.
+
+## Rule Index
+| #  | Rule                      | Section           |
+|----|---------------------------|-------------------|
+| 1  | State Tool Mandate        | 1. Core Stack     |
+| 2  | React Query Fetching      | 1. Core Stack     |
+| 3  | Jotai Scope               | 1. Core Stack     |
+| 4  | Router URL State          | 1. Core Stack     |
+| 5  | Axios Instance            | 1. Core Stack     |
+| 63 | Dependency Version Sync   | 1. Core Stack     |
+| 6  | Directory Structure       | 2. Architecture   |
+| 7  | Page Orchestrator         | 2. Architecture   |
+| 8  | UI Component Purity       | 2. Architecture   |
+| 9  | Naming Conventions        | 2. Architecture   |
+| 40 | Container/Presentational  | 2. Architecture   |
+| 41 | No Direct APIs            | 2. Architecture   |
+| 52 | Reusable Mandate          | 2. Architecture   |
+| 56 | Split Conditions          | 2. Architecture   |
+| 57 | Feature Module            | 2. Architecture   |
+| 58 | Factory Naming            | 2. Architecture   |
+| 59 | Helper Rules              | 2. Architecture   |
+| 61 | File Colocation           | 2. Architecture   |
+| 10 | xs-First Layout           | 3. Mobile UX      |
+| 11 | Touch Target (44px)       | 3. Mobile UX      |
+| 12 | No Hover-Only             | 3. Mobile UX      |
+| 13 | Mobile Baseline Testing   | 3. Mobile UX      |
+| 39 | iOS Anti-Zoom             | 3. Mobile UX      |
+| 46 | Flex Responsive           | 3. Mobile UX      |
+| 49 | Responsive Tables         | 3. Mobile UX      |
+| 14 | Source of Truth (Tokens)  | 4. Design System  |
+| 15 | Fintech Palette           | 4. Design System  |
+| 16 | Ant Design Primitives     | 4. Design System  |
+| 17 | Icon Library              | 4. Design System  |
+| 45 | Global controlHeight      | 4. Design System  |
+| 50 | Spacing Scale             | 4. Design System  |
+| 51 | Typography Hierarchy      | 4. Design System  |
+| 53 | Color Contrast (WCAG)     | 4. Design System  |
+| 54 | Text Casing               | 4. Design System  |
+| 18 | Form Zod Binding          | 5. Forms          |
+| 19 | Controlled Inputs         | 5. Forms          |
+| 47 | Zod Date Validation       | 5. Forms          |
+| 20 | Hook Per Domain           | 6. Data Fetching  |
+| 21 | Mandatory staleTime       | 6. Data Fetching  |
+| 22 | Infinite Scrolling        | 6. Data Fetching  |
+| 23 | No Derivation in Effect   | 6. Data Fetching  |
+| 60 | Hook Naming Precision     | 6. Data Fetching  |
+| 24 | Stable Dependencies       | 7. Optimization   |
+| 25 | No Inline Object Props    | 7. Optimization   |
+| 26 | Deliberate Memoization    | 7. Optimization   |
+| 27 | Bounded Lists             | 7. Optimization   |
+| 28 | Stable List Keys          | 7. Optimization   |
+| 29 | Debounce & Throttle       | 7. Optimization   |
+| 30 | Lazy Loading Pages        | 7. Optimization   |
+| 31 | Media Assets              | 7. Optimization   |
+| 42 | No Logic in JSX           | 7. Optimization   |
+| 43 | Three-State Rendering     | 7. Optimization   |
+| 44 | No Side Effects           | 7. Optimization   |
+| 32 | Error Boundaries          | 8. Error Handling |
+| 33 | Meaningful Fallbacks      | 8. Error Handling |
+| 34 | Silent Failure Prohibition| 8. Error Handling |
+| 48 | App.useApp Access         | 8. Error Handling |
+| 35 | Unit Test Mandate         | 9. Testing        |
+| 36 | Hook Test Mandate         | 9. Testing        |
+| 37 | Semantic HTML             | 10. Accessibility |
+| 38 | ARIA Labels               | 10. Accessibility |
+| 55 | Accessibility Checklist   | 10. Accessibility |
+| 62 | Document Maintenance      | 11. Maintenance   |
 
 ---
 
@@ -13,13 +87,13 @@
 ### Rule 1 — State Tool Mandate
 Each type of state has exactly one owner. Never mix responsibilities.
 
-| State Type          | Tool               |
-|---------------------|--------------------|
-| Server data         | React Query        |
-| Global UI state     | Jotai              |
-| Local component     | `useState`         |
-| URL / nav state     | React Router       |
-| Form state          | Ant Design `Form`  |
+| State Type       | Tool              |
+|------------------|-------------------|
+| Server data      | React Query       |
+| Global UI state  | Jotai             |
+| Local component  | `useState`        |
+| URL / nav state  | React Router      |
+| Form state       | Ant Design `Form` |
 
 ### Rule 2 — React Query is the Only Fetching Layer
 - Never use `useEffect` + `useState` to fetch data.
@@ -27,19 +101,23 @@ Each type of state has exactly one owner. Never mix responsibilities.
 - All server interaction goes through a `useQuery` or `useMutation` hook.
 
 ### Rule 3 — Jotai Scope
-- Jotai atoms are for ephemeral client UI state only: modal visibility, sidebar state,
-  selected rows, active tabs.
+- Atoms are for ephemeral client UI state only: modal visibility, sidebar state, selected rows, active tabs.
 - Never store server data in a Jotai atom.
 - Atoms MUST be declared at module level. Never declare an atom inside a component.
 
 ### Rule 4 — React Router for URL-Driven State
-- Filters, pagination cursors, active tabs, and search terms that should survive a
-  page refresh MUST live in the URL as query params, not in Jotai or useState.
+- Filters, pagination cursors, active tabs, and search terms that should survive a page refresh MUST live in the URL as query params, not in Jotai or `useState`.
 
 ### Rule 5 — Axios Instance
 - All HTTP calls MUST use the shared Axios instance from `lib/axios.ts`.
 - Never instantiate `axios.create()` in a feature file.
 - Never call `fetch()` directly.
+
+### Rule 63 — Dependency Version Synchronization
+Developers and AI assistants MUST verify the exact version of core dependencies in `package.json` before implementation.
+- **Ant Design (Current: v6)**: Use CSS-in-JS tokens and the `App` component. Avoid deprecated patterns from v4/v5 — static `notification` imports, old `Menu` structures.
+- **React (Current: v19)**: Leverage new hooks (`use`, `Transitions`). Avoid deprecated lifecycle methods.
+- Using a deprecated API or a version-mismatched pattern is a documented bug.
 
 ---
 
@@ -49,13 +127,13 @@ Each type of state has exactly one owner. Never mix responsibilities.
 ```text
 src/
   components/
-    ui/ ← Pure presentational. No hooks that fetch. No Jotai. Props only.
-    features/ ← Domain-specific. May use React Query hooks and Jotai.
-    layouts/ ← Page shells and responsive wrappers.
-  hooks/ ← One file per backend domain: use-member.ts, use-finance.ts
-  pages/ ← Route-level components. Thin orchestrators only.
-  lib/ ← Shared utilities, axios instance, query client config.
-  theme/ ← tokens.ts and Ant Design theme config.
+    ui/           ← Pure presentational. No hooks. No Jotai. Props only.
+    features/     ← Domain-specific. Uses React Query hooks and Jotai.
+    layouts/      ← Page shells and responsive wrappers.
+  hooks/          ← Domain hooks: useMemberList.ts, useFinanceStats.ts
+  pages/          ← Route components. Thin orchestrators only.
+  lib/            ← Shared utilities, axios instance, query client config.
+  theme/          ← tokens.ts and Ant Design theme config.
 ```
 
 ### Rule 7 — Page Components are Orchestrators Only
@@ -64,178 +142,189 @@ src/
 - Page files are named `[route].page.tsx` in kebab-case.
 
 ### Rule 8 — UI Component Purity
-- Components in `components/ui/` receive data and callbacks via props only.
+- Components in `ui/` receive data and callbacks via props only.
 - No React Query, no Jotai, no API calls inside `ui/` components.
 - These components must be fully testable with props alone.
 
 ### Rule 9 — Naming Conventions
-| Entity              | Convention                              | Example                    |
-|---------------------|-----------------------------------------|----------------------------|
-| Components          | PascalCase `.tsx`                       | `MemberCard.tsx`           |
-| Hooks               | camelCase, `use-` prefix                | `use-member.ts`            |
-| Pages               | kebab-case, `.page.tsx` suffix          | `member-list.page.tsx`     |
-| Utility files       | kebab-case                              | `format-currency.ts`       |
-| Query keys          | Domain-first string arrays              | `['members', orgId]`       |
+| Entity         | Convention                   | Example                  |
+|----------------|------------------------------|--------------------------|
+| Components     | PascalCase `.tsx`            | `MemberCard.tsx`         |
+| Hooks          | camelCase, `use-` prefix     | `use-member.ts`          |
+| Pages          | kebab-case, `.page.tsx`      | `member-list.page.tsx`   |
+| Utility files  | kebab-case                   | `format-currency.ts`     |
+| Query keys     | Domain-first string arrays   | `['members', orgId]`     |
+
+### Rule 40 — Component Size & Single Responsibility
+A component MUST be split when it exceeds **150 lines** (hard limit). Use a Container/Presentational split:
+- **Container** — owns the hook, manages data orchestration, passes data as props.
+- **Presentational** — pure visual rendering, receives data via props, lives in `ui/`.
+- **Skeleton** — separate file, never inline conditional skeletons.
+
+```ts
+// ✅ Correct split
+export function MemberCardContainer() {
+    const { data } = useMemberById(id);
+    return <MemberCard member={data} />;
+}
+export function MemberCard({ member }: Props) {
+    return <div>...</div>;
+}
+```
+
+### Rule 41 — No APIs Directly in Components
+Components MUST NEVER call `axios` or `fetch` directly. All server interaction goes through a hook in `src/hooks/`. This applies to mutations too — no `axios.post()` inline in a click handler.
+
+```ts
+// ❌ Prohibited
+const handleSubmit = async () => { await axios.post('/api/members', data); };
+
+// ✅ Correct
+const { mutate: createMember } = useCreateMember();
+const handleSubmit = () => createMember(data);
+```
 
 ### Rule 52 — Reusable Component Mandate
-When two or more places in the codebase render the same visual pattern, a shared component MUST be created in `components/ui/`. Copy-pasting JSX between feature components is prohibited.
+When a visual pattern appears in two or more places, extract it to `components/ui/`. Extract the **second** time it is used — not the third.
+- Shared components MUST accept all visual variations via props.
+- Shared components have zero knowledge of domain logic.
 
-Common patterns that MUST be extracted:
+Common patterns to extract:
 
-| Pattern | Shared Component |
-|---------|------------------|
-| Metric/stat card | `MetricCard` |
-| Empty state with CTA | `EmptyState` |
-| Page header with actions | `PageHeader` |
-| Confirmation modal | `ConfirmModal` |
-| Avatar with fallback | `UserAvatar` |
-| Status/role badge | `StatusBadge` |
-| Loading skeleton for cards | `CardSkeleton` |
-
-- A shared component is justified the second time a pattern appears — not the third.
-- Shared components MUST accept all visual variations via props, not via internal conditionals tied to domain logic.
-- Never create a shared component that imports from a feature folder — `ui/` components have zero knowledge of domain concerns.
+| Pattern                  | Component       |
+|--------------------------|-----------------|
+| Metric/stat card         | `MetricCard`    |
+| Empty state with CTA     | `EmptyState`    |
+| Page header with actions | `PageHeader`    |
+| Confirmation modal       | `ConfirmModal`  |
+| Avatar with fallback     | `UserAvatar`    |
+| Status/role badge        | `StatusBadge`   |
+| Card loading skeleton    | `CardSkeleton`  |
 
 ### Rule 56 — When to Split a Component
-A component MUST be split when any one of the following is true:
-- It exceeds 150 lines (Rule 40 reinforced — this is the hard limit).
-- It has more than one reason to change — if a UI change and a data change would both require editing the same file, it needs splitting.
-- It contains nested conditional rendering more than 2 levels deep — extract each branch into a named component.
-- It manages unrelated state — e.g. a component tracking both a modal's open state and a form's dirty state for two different features.
-- It is reused in two or more places — extract immediately on the second usage, not the third.
-- It contains a self-contained visual region with its own heading, data, and actions (e.g. a stats card, a danger zone, a filter bar).
+Split when **any one** of the following is true:
+- File exceeds 150 lines.
+- It has more than one reason to change (UI change vs data change).
+- Nested conditional rendering exceeds 2 levels deep.
+- It manages unrelated state across two different concerns.
+- It is reused in two or more places.
+- It contains a self-contained visual region with its own heading, data, and actions.
 
-**Do NOT split preemptively.** Extract components only when one of the above conditions is actually met. Premature decomposition creates indirection without benefit.
-
-```ts
-// ❌ Split too early — no real reason yet
-<MemberCardNameSection />   // just renders a <p>
-
-// ✅ Split because it has its own state, heading, and actions
-<MemberDangerZone member={member} onRemove={onRemove} />
-```
+Do NOT split preemptively — extract only when a condition is met.
 
 ### Rule 57 — Feature Module Structure
-Each domain feature MUST be self-contained in a `features/[domain]/` folder. A feature module owns everything specific to that domain.
+Each domain MUST be self-contained in `features/[domain]/`.
 
 ```text
-src/
-  features/
-    members/
-      components/       ← domain-specific components (not shared)
-        MemberCard.tsx
-        MemberFilters.tsx
-      MembersFeature.tsx ← feature root, composed into a page
-    finance/
-      components/
-        CurrencyGrid.tsx
-        AccountCard.tsx
-      FinanceFeature.tsx
+src/features/
+  members/
+    components/        ← domain-specific, not shared
+      MemberCard.tsx
+      MemberFilters.tsx
+    MembersFeature.tsx ← only export consumed by pages
+  finance/
+    components/
+      CurrencyGrid.tsx
+    FinanceFeature.tsx
 ```
 
-Rules for feature modules:
-- A feature folder MUST NOT import from another feature folder. Cross-feature dependencies go through `components/ui/` (shared) or `hooks/` (shared data).
-- The feature root file (e.g. `MembersFeature.tsx`) is the only export consumed by pages — pages never import directly from `features/[domain]/components/`.
-- Feature components MAY use React Query hooks and Jotai atoms scoped to their domain.
+- Feature folders MUST NOT import from other feature folders.
+- Cross-feature dependencies go through `components/ui/` or `hooks/`.
+- Pages import only the feature root file, never internal components directly.
 
 ### Rule 58 — Factory & Provider Naming
-Factories, providers, and context files follow strict naming conventions.
+| Pattern                  | Convention           | Example              |
+|--------------------------|----------------------|----------------------|
+| React Context            | `[Domain]Context`    | `AuthContext`        |
+| Context Provider         | `[Domain]Provider`   | `AuthProvider`       |
+| Context consumer hook    | `use[Domain]`        | `useAuth`            |
+| Factory function         | `create[Thing]`      | `createQueryClient`  |
+| Config file              | `[thing].config.ts`  | `query.config.ts`    |
+| Constants file           | `[domain].constants.ts` | `finance.constants.ts` |
+| Type definition file     | `[domain].types.ts`  | `member.types.ts`    |
 
-| Pattern | Convention | Example |
-|---------|------------|---------|
-| React Context | `[Domain]Context` | `AuthContext` |
-| Context Provider component | `[Domain]Provider` | `AuthProvider` |
-| Context consumer hook | `use[Domain]` | `useAuth` |
-| Factory function (returns instance) | `create[Thing]` | `createQueryClient` |
-| Config/setup file | `[thing].config.ts` | `query.config.ts` |
-| Constants file | `[domain].constants.ts` | `finance.constants.ts` |
-| Type definition file | `[domain].types.ts` | `member.types.ts` |
+- Factory functions MUST be pure — no side effects.
+- App-wide providers live in `src/providers/`. Domain-scoped providers are co-located in their feature folder.
 
-- Never name a context file `context.ts` without a domain prefix.
-- Factory functions MUST be pure — they return a new instance each call with no side effects.
-- Providers MUST live in `src/providers/` if they wrap the entire app, or co-located in their feature folder if scoped to that domain.
-
-### Rule 59 — Helper & Utility Rules
-Helpers and utilities are pure functions with no side effects and no React dependencies. They live in `src/lib/` (app-wide) or co-located in their feature folder (domain-scoped).
-
-**When to write a helper vs a hook:**
-- **Pure transformation** (format date, calculate total) → Helper in `lib/`.
-- **Logic that needs React state or lifecycle** → Custom hook in `hooks/`.
-- **Logic that needs React Query** → Custom hook in `hooks/`.
-- **Logic shared across features with no React dependency** → Helper in `lib/`.
-
-```ts
-// Helpers — verb describing the transformation
-formatCurrency(amount, currency)
-calculateDuration(start, end)
-
-// Hooks — use + noun describing what it manages
-useMemberList()
-useSessionForm()
-```
-
-- Helper functions MUST be pure — same input always produces same output, no external state reads.
-- Never put business logic (e.g. permission checks, pricing rules) in a helper. Business logic belongs in a hook or service layer.
+### Rule 59 — Helper vs Hook
+- **Pure transformation** (format date, calculate total) → Helper in `src/lib/`.
+- **Logic needing React state or lifecycle** → Custom hook in `src/hooks/`.
+- **Logic needing React Query** → Custom hook in `src/hooks/`.
+- Helper functions MUST be pure. Never put business logic (permission checks, pricing rules) in a helper.
 - Helper files MUST have 100% unit test coverage.
 
 ### Rule 61 — Component File Colocation
-Tests, types, and styles for a component MUST be co-located in the same folder as the component.
+Tests, types, and barrel exports MUST be co-located in the component folder.
 
 ```text
 features/members/components/
   MemberCard/
     MemberCard.tsx
-    MemberCard.test.tsx    ← co-located test
-    MemberCard.types.ts    ← local types if complex
-    index.ts               ← barrel export
+    MemberCard.test.tsx
+    MemberCard.types.ts
+    index.ts            ← barrel export, re-exports only, no logic
 ```
 
 - Every component folder MUST have an `index.ts` barrel export.
-- Barrel exports MUST only re-export — never contain logic.
-- Exception: `components/ui/` — simple single-file components do not need a subfolder until they accumulate a test and types file.
+- Exception: simple single-file `ui/` components do not need a subfolder until they accumulate a test and types file.
 
 ---
 
 ## 3. Mobile-First UX
 
 ### Rule 10 — xs-First Layout Mandate
-- All layouts MUST be designed at `xs` (≤576px) first.
-- Desktop breakpoints (`md`, `lg`, `xl`) are enhancements, not the base.
-- Use Ant Design's `Col`/`Row` grid with responsive span props exclusively for layout.
+- All layouts MUST be designed at `xs` (≤576px) first. Desktop breakpoints are enhancements.
+- Use Ant Design `Col`/`Row` grid with responsive span props for layout.
 - No hardcoded pixel widths on containers. Use `%`, `vw`, or the grid system.
 
 ### Rule 11 — Touch Target Minimum
-- All interactive elements (buttons, icon buttons, links, form controls) MUST have a
-  minimum tap target of 44×44px.
-- Use Ant Design size props (`size="large"`) or Tailwind padding utilities to enforce this.
+- All interactive elements MUST have a minimum tap target of 44×44px.
+- Enforced globally via `controlHeight: 44` in `theme/tokens.ts` (Rule 45).
 
 ### Rule 12 — No Hover-Only Interactions
-- Any UX affordance that relies solely on `:hover` MUST have an equivalent tap/click behavior.
+- Any UI affordance relying solely on `:hover` MUST have a tap/click equivalent.
 - Tooltips that only appear on hover are prohibited on mobile-critical paths.
 
 ### Rule 13 — Mobile Baseline Testing
-- Every new page or feature MUST be visually verified at 390px width (iPhone 14 baseline)
-  using Chrome DevTools Mobile Inspector before it is considered complete.
+- Every new page or feature MUST be visually verified at 390px (iPhone 14 baseline) using Chrome DevTools Mobile Inspector before it is considered complete.
 
-### Rule 49 — Responsive Table Behavior
-Ant Design Table components MUST be horizontally scrollable on mobile with the actions column pinned on-screen. Never let an actions column scroll out of view.
+### Rule 39 — iOS Input Anti-Zoom
+All form inputs, textareas, and selects MUST render at minimum **16px font size** on mobile. iOS Safari zooms the viewport on focus of any input below 16px and does **not** zoom back out after blur.
+- Enforced via `fontSizeLG: 16` in `tokens.ts`.
+- Safety net in `index.css`:
+```css
+@media (max-width: 576px) {
+  input, textarea, select { font-size: 16px !important; }
+}
+```
+- Never use `maximum-scale=1` in the viewport meta tag — it disables user pinch-zoom and violates WCAG 2.1.
 
-Implement this with `scroll={{ x: 'max-content' }}` on the table and `fixed: 'right'` on the actions column definition:
+### Rule 46 — Ant Design Flex Responsive Pattern
+Ant Design `Flex` does NOT support responsive object props on `vertical`. Use `Grid.useBreakpoint()`:
 
 ```ts
-// ✅ Correct — table scrolls, actions stay visible
+// ❌ Does not work
+<Flex vertical={{ xs: true, md: false }}>
+
+// ✅ Correct
+const { xs } = Grid.useBreakpoint();
+<Flex vertical={xs} justify="space-between">
+```
+
+### Rule 49 — Responsive Tables
+Tables MUST be horizontally scrollable on mobile with the actions column pinned on-screen.
+
+```ts
 <Table
-    dataSource={members}
     rowKey="id"
     scroll={{ x: 'max-content' }}
+    tableLayout="fixed"
     columns={[
         { title: 'Name', dataIndex: 'name', width: 200 },
-        { title: 'Role', dataIndex: 'role', width: 150 },
-        { title: 'Joined', dataIndex: 'createdAt', width: 150 },
         {
             title: 'Actions',
             key: 'actions',
-            fixed: 'right',   // ← pinned
+            fixed: 'right',
             width: 100,
             render: (_, record) => <ActionMenu record={record} />,
         },
@@ -243,107 +332,106 @@ Implement this with `scroll={{ x: 'max-content' }}` on the table and `fixed: 'ri
 />
 ```
 
-**Additional requirements:**
-- Always set explicit width on every column when using `scroll={{ x }}` — Ant Design requires this for fixed columns to calculate the scroll container correctly. Omitting widths causes layout bugs.
-- The actions column width MUST be the minimum needed to fit its content — never use a wide fixed column that consumes too much of the mobile viewport.
-- Verify all tables at 390px in Chrome DevTools as part of the mobile audit (Rule 13).
+- Always set explicit `width` on every column when using `scroll={{ x }}`.
+- Amount/currency columns MUST use `align: 'right'` (fintech standard).
+- Verify all tables at 390px as part of the mobile audit (Rule 13).
 
 ---
 
 ## 4. Design System & Theming
 
-### Rule 14 — Single Source of Truth for Tokens
-- All design tokens (colors, spacing, radius, typography) are defined in
-  `src/theme/tokens.ts`.
-- Tailwind v4 theme variables are configured in `src/index.css` and MUST map to the
-  same token values to ensure Ant Design and Tailwind stay in sync.
+### Rule 14 — Single Source of Truth
+- All design tokens are defined in `src/theme/tokens.ts`.
+- Tailwind v4 variables in `src/index.css` MUST map to the same token values.
 - Never hardcode color hex values in component files.
 
-### Rule 15 — Premium Fintech Palette
-| Role        | Token              | Value       |
-|-------------|--------------------|-------------|
-| Primary     | `color-primary`    | `#2563eb`   |
-| Neutral base| `color-neutral-*`  | Slate scale |
-| Success     | `color-success`    | Emerald     |
-| Danger      | `color-danger`     | Rose        |
-| Warning     | `color-warning`    | Amber       |
+### Rule 15 — Fintech Palette
+| Role         | Token             | Value       |
+|--------------|-------------------|-------------|
+| Primary      | `colorPrimary`    | `#2563eb`   |
+| Neutral base | `colorNeutral-*`  | Slate scale |
+| Success      | `colorSuccess`    | Emerald     |
+| Danger       | `colorError`      | Rose        |
+| Warning      | `colorWarning`    | Amber       |
 
-### Rule 16 — Ant Design Component Usage
-- Use Ant Design primitives for all UI chrome. Never build a custom button, input,
-  modal, dropdown, or table if Ant Design provides one.
-- Do not override Ant Design component internals via CSS class selectors.
-  Use the `styles` / `classNames` / `token` API exclusively for customization.
+### Rule 16 — Ant Design Primitives
+- Use Ant Design primitives for all UI chrome. Never build a custom button, input, modal, dropdown, or table if Ant Design provides one.
+- Never override Ant Design internals via CSS class selectors. Use the `styles` / `classNames` / `token` API exclusively.
 
 ### Rule 17 — Icon Library
-- Default icon library: `@ant-design/icons`.
-- Lucide icons are permitted ONLY if the required icon does not exist in Ant Design Icons.
-  When used, add a comment explaining why: `// Not available in @ant-design/icons`.
-- Never mix icon sizing conventions. Use Ant Design's `style={{ fontSize }}` consistently.
+- Default: `@ant-design/icons`.
+- Lucide is permitted ONLY when a required icon is absent from Ant Design Icons. Add a comment: `// Not available in @ant-design/icons`.
+- Never mix icon sizing conventions. Use `style={{ fontSize }}` consistently.
+
+### Rule 45 — Global controlHeight
+Never set `height: 44px` on individual components. Set it once in `tokens.ts` to cascade globally:
+
+```ts
+controlHeight: 44,
+controlHeightLG: 48,
+controlHeightSM: 32,
+fontSizeLG: 16,     // also satisfies Rule 39
+```
 
 ### Rule 50 — Spacing Scale
-All padding, margin, and gap values MUST come from the Ant Design spacing scale via `token.padding*` and `token.margin*` tokens, or Tailwind's spacing scale. Never use arbitrary pixel values for spacing in component files.
+Never use arbitrary pixel values for spacing. Use `token.padding*` and `token.margin*`:
 
-| Token | Value | Use |
-|-------|-------|-----|
-| `token.paddingXS` | 8px | Tight internal padding (tags, badges) |
-| `token.paddingSM` | 12px | Compact elements (table cells, small cards) |
-| `token.padding`   | 16px | Default component padding |
-| `token.paddingLG` | 24px | Section padding, card bodies |
-| `token.paddingXL` | 32px | Page-level section gaps |
-| `token.paddingXXL`| 48px | Hero sections, major page divisions |
+| Token             | Value | Use                              |
+|-------------------|-------|----------------------------------|
+| `token.paddingXS` | 8px   | Tags, badges                     |
+| `token.paddingSM` | 12px  | Table cells, compact cards       |
+| `token.padding`   | 16px  | Default component padding        |
+| `token.paddingLG` | 24px  | Card bodies, section padding     |
+| `token.paddingXL` | 32px  | Page-level section gaps          |
+| `token.paddingXXL`| 48px  | Hero sections, major divisions   |
 
-- Card body padding MUST be `token.paddingLG` (24px) on desktop, `token.padding` (16px) on mobile (xs).
-- Page-level horizontal padding MUST be consistent across all pages — define once in the shared layout component, never per-page.
-- Never mix Tailwind spacing utilities and inline `style={{ padding }}` on the same element.
+- Card body padding: `token.paddingLG` (24px) on desktop, `token.padding` (16px) on mobile.
+- Page-level horizontal padding MUST be defined once in the shared layout, never per-page.
 
 ### Rule 51 — Typography Hierarchy
-Text styles MUST follow a consistent hierarchy using Ant Design Typography components. Never use raw `<h1>`–`<h6>` or `<p>` tags styled manually with Tailwind font utilities.
+Use Ant Design `Typography` components exclusively. Never use raw `<h1>`–`<h6>` or `<p>` tags styled with Tailwind font utilities.
 
-| Level | Component | Use |
-|-------|-----------|-----|
-| Page title | `<Typography.Title level={2}>` | One per page, top of content |
-| Section header | `<Typography.Title level={4}>` | Card titles, drawer sections |
-| Sub-label | `<Typography.Text strong>` | Field labels, stat labels |
-| Body | `<Typography.Text>` | Descriptions, helper text |
-| Muted/secondary | `<Typography.Text type="secondary">` | Placeholders, empty states, timestamps |
-| Danger | `<Typography.Text type="danger">` | Error messages, destructive labels |
-| Code/IDs | `<Typography.Text code>` | Account IDs, reference numbers |
+| Level           | Component                         | Use                              |
+|-----------------|-----------------------------------|----------------------------------|
+| Page title      | `<Typography.Title level={2}>`    | One per page                     |
+| Section header  | `<Typography.Title level={4}>`    | Card titles, drawer sections     |
+| Sub-label       | `<Typography.Text strong>`        | Field labels, stat labels        |
+| Body block      | `<Typography.Paragraph>`          | Block-level paragraphs           |
+| Body inline     | `<Typography.Text>`               | Inline descriptions, helper text |
+| Secondary       | `<Typography.Text type="secondary">` | Timestamps, placeholders      |
+| Danger          | `<Typography.Text type="danger">` | Error messages                   |
+| Code/IDs        | `<Typography.Text code>`          | Account IDs, reference numbers   |
+| Statistics      | `<Statistic>`                     | All monetary/numeric values      |
 
-- Never use `text-xl`, `text-2xl`, or other Tailwind font-size utilities for content hierarchy. Reserve Tailwind typography utilities for layout-level text (e.g. nav labels) only.
-- All monetary values and numeric statistics MUST use `<Statistic>` from Ant Design — never a raw `<span>` with a large font size.
-- Font weight MUST only be controlled via `strong`, `type`, or `token` — never via `font-bold` in content components.
+- Never use `text-xl`, `text-2xl`, or Tailwind font-size utilities for content hierarchy.
+- `<Statistic>` MUST always have a meaningful `title` prop.
+- Font weight controlled via `strong` or token only — never via `font-bold`.
 
-### Rule 53 — Color Usage & Contrast
-All text/background color combinations MUST meet WCAG AA contrast minimum (4.5:1 for normal text, 3:1 for large text and UI components). This is not optional — it is a baseline accessibility and professionalism standard used by every major product (Apple, Stripe, Linear).
-
-Enforcement rules:
-- Never use `type="secondary"` text (`token.colorTextSecondary`) on a non-white background without verifying contrast.
-- Never place light-colored text on `colorFillQuaternary` or `colorFillTertiary` backgrounds without testing.
-- Status colors (success, warning, danger) MUST use the Ant Design semantic background + foreground token pairs — never a raw color on a white background alone:
+### Rule 53 — Color Contrast & Dark Mode
+All text/background combinations MUST meet WCAG AA minimum (4.5:1 normal text, 3:1 large text). Dark mode MUST be explicitly verified for every new component.
+- Status colors MUST use paired semantic tokens:
 ```ts
-// ✅ Correct — paired tokens ensure contrast
+// ✅ Correct — paired tokens ensure contrast in both modes
 background: token.colorSuccessBg
-color: token.colorSuccess
-border: token.colorSuccessBorder
+color:      token.colorSuccess
+border:     token.colorSuccessBorder
 ```
-- Dark mode MUST be explicitly verified for every new component — token pairs that look fine in light mode can fail contrast in dark mode.
+- Never place `type="secondary"` text on a non-white background without verifying contrast.
 
-### Rule 54 — Capitalization & Text Casing
-Text casing MUST follow platform conventions. Never use `text-uppercase` CSS or `toUpperCase()` to style content — casing is a content decision, not a style decision.
+### Rule 54 — Text Casing
+| Context             | Rule                                      |
+|---------------------|-------------------------------------------|
+| Page titles         | Title Case                                |
+| Section headers     | Title Case                                |
+| Button labels       | Title Case (`Save Changes`, not `SAVE`)   |
+| Form labels         | Sentence case (`First name`)              |
+| Table column headers| Title Case                                |
+| Status badges       | ALL CAPS only for short codes (`KYC`, `2FA`) |
+| Body text           | Sentence case                             |
+| Navigation items    | Title Case                                |
 
-| Context | Rule |
-|---------|------|
-| Page titles | Title Case |
-| Section headers | Title Case |
-| Button labels | Title Case (Save Changes, not SAVE CHANGES) |
-| Form labels | Sentence case (First name, not First Name) |
-| Table column headers | Title Case |
-| Status tags/badges | ALL CAPS only for short codes (e.g. KYC, 2FA) |
-| Body/description text | Sentence case |
-| Navigation items | Title Case |
-
-- ALL CAPS body text is prohibited — it reduces readability and signals poor design craft.
-- Avoid title-casing full sentences. "Are you sure you want to delete this member?" is correct. "Are You Sure You Want To Delete This Member?" is not.
+- `ALL CAPS` body text and `text-transform: uppercase` in styles are prohibited.
+- Never title-case full sentences in confirmation dialogs.
 
 ---
 
@@ -352,39 +440,42 @@ Text casing MUST follow platform conventions. Never use `text-uppercase` CSS or 
 ### Rule 18 — Ant Design Form + Zod Mandate
 - All forms MUST use Ant Design `Form` with `antd-zod` for schema binding.
 - No manual validation logic inside components.
-- Zod schemas for forms that mirror API inputs MUST be defined in `shared/` and
-  imported in both the frontend form and the backend handler.
+- Zod schemas that mirror API inputs MUST be defined in `shared/` and imported in both the form and the backend handler.
 
-### Rule 19 — No Uncontrolled Inputs
+### Rule 19 — Controlled Inputs
 - All form inputs MUST be controlled through Ant Design `Form.Item`.
 - Never use `ref`-based or uncontrolled input patterns for form data collection.
 
+### Rule 47 — Zod Date Validation
+Scheduled datetime fields MUST include a future-date refinement using a `Date` object comparison — never `Date.now()` directly as it returns a number, not a `Date`:
+
+```ts
+startTime: z.coerce.date().refine(
+    (date) => date > new Date(Date.now() - 60000), // 1-min grace window
+    { message: "Must be scheduled in the future" }
+)
+```
+
 ---
 
-## 6. Data Fetching & React Query Standards
+## 6. Data Fetching & React Query
 
-### Rule 20 — Hook File Per Domain
-- One React Query hook file per backend domain: `use-member.ts`, `use-finance.ts`, etc.
-- Hook files live in `src/hooks/`.
+### Rule 20 — Hook Per Domain
+- One React Query hook file per backend domain in `src/hooks/`.
 - Export one `useQuery` wrapper and one `useMutation` wrapper per operation.
 
-### Rule 21 — staleTime is Mandatory
-- Every `useQuery` call MUST declare an explicit `staleTime`.
-- Default `staleTime: 0` is prohibited — it causes a refetch on every component mount.
-- Recommended defaults: `staleTime: 1000 * 60` (1 min) for reference data,
-  `staleTime: 1000 * 30` (30 sec) for transactional data.
+### Rule 21 — Mandatory staleTime
+- Every `useQuery` MUST declare an explicit `staleTime`. Default `staleTime: 0` is prohibited.
+- Reference data: `staleTime: 1000 * 60` (1 min).
+- Transactional data: `staleTime: 1000 * 30` (30 sec).
 
-### Rule 22 — Paginated Queries
-- All list queries MUST use cursor-based pagination via `useInfiniteQuery` or
-  query-param cursor pattern.
-- Offset-based pagination is prohibited.
-- Use `placeholderData: keepPreviousData` on all paginated and filtered queries to
-  prevent empty flashes between page transitions.
+### Rule 22 — Cursor Pagination
+- All list queries MUST use cursor-based pagination via `useInfiniteQuery`. Offset-based pagination is prohibited.
+- Use `placeholderData: keepPreviousData` on all paginated and filtered queries.
 
 ### Rule 23 — No Data Derivation in useEffect
-- Never use `useEffect` to derive or transform data from a `useQuery` result into
-  local state.
-- Use the `select` option in `useQuery` to transform data at the query level.
+- Never use `useEffect` to derive data from a `useQuery` result into local state.
+- Use the `select` option in `useQuery` instead:
 
 ```ts
 // ✅ Correct
@@ -397,21 +488,12 @@ const { data: activeMembers } = useQuery({
 ```
 
 ### Rule 60 — Hook Naming Precision
-Hook names MUST describe exactly what they return or manage — not just the domain.
+Hook names MUST describe exactly what they return or do:
+- **Query hooks**: `use[Domain][Shape]` → `useMemberList`, `useSessionById`
+- **Mutation hooks**: `use[Verb][Domain]` → `useCreateMember`, `useDeactivateAccount`
+- **UI state hooks**: `use[What it controls]` → `useModalState`, `useFilterState`
 
-```ts
-// ✅ Precise
-useMemberList()           // returns paginated list
-useMemberById(id)         // returns single member
-useCreateMember()         // returns mutation for creating
-useUpdateMemberRole()     // returns mutation for role update
-```
-
-Rules:
-- Query hooks are named after what they return: `use[Domain][Shape]` → `useMemberList`, `useSessionById`.
-- Mutation hooks are named after what they do: `use[Verb][Domain]` → `useCreateMember`, `useDeactivateAccount`.
-- Hooks that manage local UI state are named after what they control: `useModalState`, `useFilterState`, `useTableSelection`.
-- Never export two concerns from one hook file under a generic name — split them.
+Never export two unrelated concerns from one hook file.
 
 ---
 
@@ -419,8 +501,7 @@ Rules:
 
 ### Rule 24 — Stable useEffect Dependencies
 - Every `useEffect` MUST have an explicit dependency array.
-- Never place non-primitive values (objects, arrays, functions) in a dependency array
-  without first stabilizing them with `useMemo` or `useCallback`.
+- Never place non-primitive values in a dependency array without stabilizing with `useMemo` or `useCallback`.
 
 ```ts
 // ✅ Stable reference
@@ -428,125 +509,147 @@ const filters = useMemo(() => ({ status: 'active' }), []);
 useEffect(() => fetchData(filters), [filters]);
 ```
 
-### Rule 25 — No Inline Object/Function Props on Memoized Components
-- Never pass inline objects, arrays, or arrow functions as props to `React.memo`
-  components or as dependencies to `useCallback`/`useMemo`.
+### Rule 25 — No Inline Object/Function Props
+Never pass inline objects, arrays, or arrow functions as props to `React.memo` components or as `useCallback`/`useMemo` dependencies.
 
 ### Rule 26 — Deliberate Memoization
-- Do not wrap every component in `React.memo` by default.
-- Apply memoization only where a component demonstrably re-renders with unchanged props.
+Do not wrap every component in `React.memo` by default. Apply only where a component demonstrably re-renders with unchanged props.
 
-| Scenario | Tool |
-|----------|------|
-| Expensive pure computation | `useMemo` |
-| Stable callback passed to child | `useCallback` |
-| Component re-renders with unchanged props | `React.memo` |
-| Server data transformation | `select` option |
+| Scenario                                   | Tool            |
+|--------------------------------------------|-----------------|
+| Expensive pure computation                 | `useMemo`       |
+| Stable callback passed to child            | `useCallback`   |
+| Component re-renders with unchanged props  | `React.memo`    |
+| Server data transformation                 | `select` option |
 
-### Rule 27 — Unbounded Lists are Prohibited
-- Any list rendering more than 50 items MUST use one of:
-  - Cursor-based pagination with React Query `useInfiniteQuery`
-  - A virtualized list component
-- Never render an unbounded array directly to the DOM.
+### Rule 27 — Bounded Lists
+Any list rendering more than 50 items MUST use cursor pagination (`useInfiniteQuery`) or a virtualized list. Never render an unbounded array.
 
 ### Rule 28 — Stable List Keys
-- All list `key` props MUST be stable unique IDs from the data.
-- Array indices as keys are prohibited for any dynamic list.
-- Ant Design `Table` MUST always set `rowKey` to a stable unique field.
+All `key` props MUST be stable unique IDs from the data. Array indices as keys are prohibited for dynamic lists. Ant Design `Table` MUST always set `rowKey` to a stable field.
 
-### Rule 29 — Debounce & Throttle Mandate
+### Rule 29 — Debounce & Throttle
 - All search inputs MUST be debounced using `@tanstack/react-pacer`.
-- All `scroll`, `resize`, and `mousemove` event handlers MUST be throttled.
-- Never call a React Query mutation inside a loop. Batch operations must go through
-  a single API endpoint that accepts arrays.
+- All `scroll`, `resize`, and `mousemove` handlers MUST be throttled.
+- Never call a React Query mutation inside a loop — batch via a single array-accepting endpoint.
 
 ### Rule 30 — Lazy Loading Pages
-- All page-level components MUST be lazy-loaded with `React.lazy` + `Suspense`.
-- No page component may be included in the main bundle.
+All page-level components MUST be lazy-loaded. No page may be in the main bundle.
 
 ```ts
-// ✅ Correct
 const MemberListPage = React.lazy(() => import('./pages/member-list.page'));
 ```
 
 ### Rule 31 — Media & Heavy Assets
-- All media (images, video) served via Uppy/R2 MUST use presigned URLs.
-- Never proxy binary data through a Cloudflare Worker.
-- Vidstack player components MUST be lazy-loaded. Video player libraries must
-  never block initial render.
+- All media served via Uppy/R2 MUST use presigned URLs. Never proxy binary data through a Cloudflare Worker.
+- Vidstack player components MUST be lazy-loaded.
+
+### Rule 42 — No Logic Inside JSX
+Never perform filtering, sorting, or mapping inline inside JSX. All derivations MUST happen before the return or in a `useMemo`.
+
+```ts
+// ❌ Prohibited
+return data.filter(m => m.active).map(m => <MemberCard key={m.id} member={m} />);
+
+// ✅ Correct
+const activeMembers = useMemo(() => data?.filter(m => m.active) ?? [], [data]);
+return activeMembers.map(m => <MemberCard key={m.id} member={m} />);
+```
+
+### Rule 43 — Three-State List Rendering
+Every list rendered from server data MUST explicitly handle three states:
+
+```ts
+if (isLoading) return <CardSkeleton />;
+if (!members.length) return <Empty description="No members found" />;
+return members.map(m => <MemberCard key={m.id} member={m} />);
+```
+
+### Rule 44 — No Side Effects in Render
+Components MUST NOT produce side effects inside the render body. No `console.log`, no DOM writes, no `localStorage` access. Encapsulate in `useEffect` or a dedicated custom hook.
 
 ---
 
 ## 8. Error Handling
 
 ### Rule 32 — Error Boundary Placement
-- Every route-level page MUST be wrapped in a `react-error-boundary` `ErrorBoundary`.
-- Every independently fetching section (a card or panel with its own `useQuery`) MUST
-  have its own `ErrorBoundary` so a single widget failure cannot crash the page.
+- Every route-level page MUST be wrapped in an `ErrorBoundary`.
+- Every independently fetching section (card or panel with its own `useQuery`) MUST have its own `ErrorBoundary`.
 
 ### Rule 33 — Meaningful Fallbacks
-- Every `ErrorBoundary` MUST render a meaningful fallback UI — never a blank `<div>`
-  or `null`.
-- Fallbacks must include a user-facing message and, where appropriate, a retry action.
+- Every `ErrorBoundary` MUST render a meaningful fallback — never `null` or a blank `<div>`.
+- Fallbacks MUST include a user-facing message and, where appropriate, a retry action.
 
-### Rule 34 — No Silent Failures
+### Rule 34 — Silent Failure Prohibition
 - `useMutation` calls MUST handle `onError` explicitly.
-- Never allow a failed mutation to fail silently. At minimum, display an Ant Design
-  `notification.error` or `message.error`.
+- Never allow a failed mutation to fail silently. Display `notification.error` or `message.error` at minimum.
+
+### Rule 48 — App.useApp for Notifications
+Never use static `notification.error()` or `message.error()` imports. Always access via `App.useApp()` for context-aware rendering:
+
+```ts
+const { notification, message } = App.useApp();
+```
 
 ---
 
 ## 9. Testing
 
 ### Rule 35 — Component Test Mandate
-- Every `ui/` component MUST have a corresponding test in `tests/unit/`.
+- Every `ui/` component MUST have a co-located test covering default render, prop variations, and user interaction callbacks.
 - Tests use `@testing-library/react` and `vitest`.
-- Tests MUST cover: default render, prop variations, and user interaction callbacks.
 
 ### Rule 36 — Hook Test Mandate
-- Every custom hook in `hooks/` MUST have a unit test using `@testing-library/react`
-  `renderHook`.
-- Mock React Query and Jotai dependencies — never test against a live API in unit tests.
+- Every custom hook in `hooks/` MUST have a unit test using `renderHook`.
+- Mock React Query and Jotai — never test against a live API in unit tests.
 
 ---
 
 ## 10. Accessibility
 
 ### Rule 37 — Semantic HTML
-- Use semantic HTML elements (`<nav>`, `<main>`, `<section>`, `<article>`, `<header>`,
-  `<footer>`) for page structure.
+- Use semantic elements (`<nav>`, `<main>`, `<section>`, `<header>`, `<footer>`) for page structure.
 - Never use `<div>` or `<span>` for interactive elements. Use `<button>` or `<a>`.
 
 ### Rule 38 — ARIA Labels
-- All icon-only buttons MUST have an `aria-label`.
-- All form inputs MUST have an associated `<label>` via Ant Design `Form.Item`'s `label` prop.
+- All icon-only buttons MUST have a descriptive `aria-label`.
+- All form inputs MUST have an associated label via Ant Design `Form.Item`'s `label` prop.
 
-### Rule 55 — Enforced Accessibility Checklist
-Every component shipped to production MUST pass the following checklist before the PR is merged. This reflects standards enforced by Apple, Stripe, and other professional-grade products.
+### Rule 55 — Accessibility Checklist
+Every component MUST pass this checklist before a PR is merged:
 
 **Keyboard navigation:**
-- All interactive elements MUST be reachable via Tab key.
-- Modal and drawer focus MUST be trapped inside the overlay while open.
-- Escape MUST close all modals, drawers, and dropdowns.
+- All interactive elements reachable via `Tab` key.
+- Focus MUST be trapped inside modals and drawers while open.
+- `Escape` MUST close all modals, drawers, and dropdowns.
 
-**Screen reader support:**
-- Dynamic content changes (loading states, success/error messages) MUST use aria-live regions or Ant Design's notification system so screen readers announce them.
-- All images and icons that carry meaning MUST have alt text or `aria-label`. Decorative icons MUST have `aria-hidden="true"`.
+**Screen readers:**
+- Dynamic content changes (loading, success, errors) MUST use `aria-live` regions or Ant Design's notification system.
+- Meaningful images and icons MUST have `alt` or `aria-label`. Decorative icons MUST have `aria-hidden="true"`.
 
 **Color independence:**
-- Never convey information by color alone. Every color-coded state (success, error, warning) MUST also have a text label, icon, or pattern accompanying it.
-
+- Never convey information by color alone. Every color-coded state MUST also have a text label or icon.
 ```ts
-// ✅ Color + label
+// ✅ Color + label — never color alone
 <Badge color="green" text="Active" />
 ```
 
 **Motion:**
-- Respect `prefers-reduced-motion`. Never use auto-playing animations on critical UI paths.
-- Ant Design's animation can be globally reduced via `motionDuration: '0s'` in tokens.
+- Respect `prefers-reduced-motion`. No auto-playing animations on critical UI paths.
+- Disable globally in tokens when needed: `motionDuration: '0s'`.
+
+---
+
+## 11. Maintenance
+
+### Rule 62 — Document Maintenance
+When a new architectural pattern is established or an existing rule is refined, this document MUST be updated as a single commit before the task is closed.
+- Rule numbers are **permanent reference handles** and MUST NOT be renumbered, even if reordered between sections.
+- Retired rules MUST be marked `[DEPRECATED]` — never deleted — to preserve historical PR references.
+- Every update MUST include a version bump and update to the Rule Index and AI Context header if the stack evolves.
 
 ---
 
 *UI.md — Entix-App Frontend Standards*
-*Established: 2026-04-01*
+*Version: 1.2.1 (Last Updated: 2026-04-01)*
 :::
