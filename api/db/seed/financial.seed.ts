@@ -5,7 +5,11 @@ import {
     FINANCIAL_CURRENCY_CONFIG,
     getTreasuryAccountId,
 } from "@shared";
-import { financialAccounts, financialCurrencies, financialTransactionCategories } from "@shared/db/schema";
+import {
+    financialAccounts,
+    financialCurrencies,
+    financialTransactionCategories,
+} from "@shared/db/schema";
 
 export const seedFinancials = async (db: AppDb) => {
     const allCurrencies = Object.values(FINANCIAL_CURRENCIES);

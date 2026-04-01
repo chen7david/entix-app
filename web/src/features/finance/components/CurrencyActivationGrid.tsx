@@ -37,90 +37,92 @@ export const CurrencyActivationGrid: React.FC<Props> = ({ currencies, onActivate
                             },
                         }}
                         actions={
-                        currency.isActivated
-                            ? [
-                                  <Badge
-                                      key="status"
-                                      status={currency.isActivated ? "success" : "default"}
-                                      text={
-                                          <Text
-                                              type={currency.isActivated ? undefined : "secondary"}
-                                              style={{ fontSize: 13 }}
-                                          >
-                                              {currency.isActivated ? "Active" : "Deactivated"}
-                                          </Text>
-                                      }
-                                  />,
-                              ]
-                            : [
-                                  <Button
-                                      key="activate"
-                                      type="primary"
-                                      size="middle"
-                                      icon={<PlusOutlined />}
-                                      loading={activating}
-                                      onClick={() => onActivate(currency.id)}
-                                      block
-                                  >
-                                      Activate
-                                  </Button>,
-                              ]
-                    }
-                >
-                    {currency.isActivated ? (
-                        <Statistic
-                            title={
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        gap: 8,
-                                        alignItems: "center",
-                                        marginBottom: 4,
-                                    }}
-                                >
-                                    <Text strong style={{ fontSize: 13 }}>
-                                        {currency.name}
-                                    </Text>
-                                    <Tag
-                                        color="success"
-                                        bordered={false}
-                                        icon={<CheckCircleOutlined />}
-                                        style={{ margin: 0, fontSize: 10 }}
+                            currency.isActivated
+                                ? [
+                                      <Badge
+                                          key="status"
+                                          status={currency.isActivated ? "success" : "default"}
+                                          text={
+                                              <Text
+                                                  type={
+                                                      currency.isActivated ? undefined : "secondary"
+                                                  }
+                                                  style={{ fontSize: 13 }}
+                                              >
+                                                  {currency.isActivated ? "Active" : "Deactivated"}
+                                              </Text>
+                                          }
+                                      />,
+                                  ]
+                                : [
+                                      <Button
+                                          key="activate"
+                                          type="primary"
+                                          size="middle"
+                                          icon={<PlusOutlined />}
+                                          loading={activating}
+                                          onClick={() => onActivate(currency.id)}
+                                          block
+                                      >
+                                          Activate
+                                      </Button>,
+                                  ]
+                        }
+                    >
+                        {currency.isActivated ? (
+                            <Statistic
+                                title={
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            gap: 8,
+                                            alignItems: "center",
+                                            marginBottom: 4,
+                                        }}
                                     >
-                                        Active
-                                    </Tag>
-                                </div>
-                            }
-                            value={(currency.balanceCents ?? 0) / 100}
-                            precision={2}
-                            prefix={
-                                <Text type="secondary" style={{ marginRight: 4 }}>
+                                        <Text strong style={{ fontSize: 13 }}>
+                                            {currency.name}
+                                        </Text>
+                                        <Tag
+                                            color="success"
+                                            bordered={false}
+                                            icon={<CheckCircleOutlined />}
+                                            style={{ margin: 0, fontSize: 10 }}
+                                        >
+                                            Active
+                                        </Tag>
+                                    </div>
+                                }
+                                value={(currency.balanceCents ?? 0) / 100}
+                                precision={2}
+                                prefix={
+                                    <Text type="secondary" style={{ marginRight: 4 }}>
+                                        {currency.symbol}
+                                    </Text>
+                                }
+                                suffix={
+                                    <Text type="secondary" style={{ fontSize: 12 }}>
+                                        {currency.code}
+                                    </Text>
+                                }
+                                valueStyle={{ fontSize: 24, fontWeight: 700 }}
+                            />
+                        ) : (
+                            <div style={{ textAlign: "center", padding: "16px 0" }}>
+                                <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>
                                     {currency.symbol}
-                                </Text>
-                            }
-                            suffix={
-                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                </div>
+                                <Text strong style={{ fontSize: 16 }}>
                                     {currency.code}
                                 </Text>
-                            }
-                            valueStyle={{ fontSize: 24, fontWeight: 700 }}
-                        />
-                    ) : (
-                        <div style={{ textAlign: "center", padding: "16px 0" }}>
-                            <div style={{ fontSize: 32, marginBottom: 8, opacity: 0.3 }}>
-                                {currency.symbol}
+                                <br />
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                    {currency.name}
+                                </Text>
                             </div>
-                            <Text strong style={{ fontSize: 16 }}>
-                                {currency.code}
-                            </Text>
-                            <br />
-                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                {currency.name}
-                            </Text>
-                        </div>
-                    )}
-                </Card>
-            </Col>
+                        )}
+                    </Card>
+                </Col>
             ))}
         </Row>
     );

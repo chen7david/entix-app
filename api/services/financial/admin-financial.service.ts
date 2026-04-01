@@ -103,7 +103,9 @@ export class AdminFinancialService extends FinancialBaseService {
         const account = await this.accountsRepo.findById(id);
         if (!account) throw new Error("Account not found");
         if (account.balanceCents !== 0) {
-            throw new Error("Cannot archive an account with a non-zero balance. Please transfer funds out first.");
+            throw new Error(
+                "Cannot archive an account with a non-zero balance. Please transfer funds out first."
+            );
         }
         return this.accountsRepo.archive(id);
     }

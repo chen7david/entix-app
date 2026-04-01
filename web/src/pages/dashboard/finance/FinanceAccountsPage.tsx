@@ -1,6 +1,6 @@
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
+import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { useActivateCurrency } from "@web/src/features/finance/hooks/useActivateCurrency";
 import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
