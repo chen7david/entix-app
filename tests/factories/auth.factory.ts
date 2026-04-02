@@ -1,3 +1,4 @@
+import type { SignUpWithOrgDTO } from "@shared/schemas/dto/auth.dto";
 import type * as schema from "@shared/db/schema";
 import { nanoid } from "nanoid";
 import { vi } from "vitest";
@@ -18,7 +19,7 @@ export type MockAuth = ReturnType<typeof createMockAuth>;
 /**
  * Creates a mock payload for the signup-with-org endpoint.
  */
-export const createMockSignUpWithOrgPayload = (overrides: any = {}) => {
+export const createMockSignUpWithOrgPayload = (overrides: Partial<SignUpWithOrgDTO> = {}) => {
     const id = Date.now();
     return {
         email: `test.${id}@example.com`,

@@ -9,31 +9,25 @@ import {
 } from "@shared/schemas/dto/financial.dto";
 import { eq } from "drizzle-orm";
 import { assert, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 import { createAuthenticatedOrg, createSuperAdmin } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
 
 /**
- * Enhanced logging helper for integration tests.
- * Captures raw response status and flattens Zod errors for easier debugging.
+ * Asserts that a response is successful and validates the body against a Zod schema.
+ * Uses strict envelope validation — no silent fallback to unwrapped data.
  */
-async function assertOk(response: Response, schema: any, context: string) {
+async function assertOk<T>(response: Response, schema: z.ZodType<T>, context: string): Promise<T> {
     const status = response.status;
-    const body = (await response.json()) as any;
+    const body = (await response.json()) as unknown;
 
     if (status >= 400) {
         console.error(`[TEST ERROR] ${context}: ${status}`, body);
         throw new Error(`${context} failed with status ${status}`);
     }
 
-    // Robust validation: try parsing the whole envelope first, then fallback to unwrapped data
-    let parsed = schema.safeParse(body);
-    if (!parsed.success && body.data) {
-        const nestedParsed = schema.safeParse(body.data);
-        if (nestedParsed.success) {
-            parsed = nestedParsed;
-        }
-    }
+    const parsed = schema.safeParse(body);
 
     if (!parsed.success) {
         console.error(`[ZOD ERROR] ${context}:`, parsed.error.flatten());
@@ -47,7 +41,7 @@ describe("Finance Integration Tests", () => {
     let client: TestClient;
     let adminClient: TestClient;
     let orgId: string;
-    let db: any; // Type as needed, but here we just need access
+    let db: any;
     const treasuryId = getTreasuryAccountId(FINANCIAL_CURRENCIES.USD);
 
     beforeEach(async () => {
@@ -75,7 +69,7 @@ describe("Finance Integration Tests", () => {
                 "Get Org Currency Status"
             );
 
-            const usd = status.data.find((c: any) => c.code === "USD");
+            const usd = status.data.find((c) => c.code === "USD");
             if (!usd) throw new Error("USD not found");
 
             let sourceAccountId: string;
@@ -129,8 +123,8 @@ describe("Finance Integration Tests", () => {
                 "Get Org Currency Status (Mismatch Test)"
             );
 
-            const usd = status.data.find((c: any) => c.code === "USD");
-            const eur = status.data.find((c: any) => c.code === "EUR");
+            const usd = status.data.find((c) => c.code === "USD");
+            const eur = status.data.find((c) => c.code === "EUR");
             assert(usd, "USD currency not found in status list");
             assert(eur, "EUR currency not found in status list");
 
@@ -144,7 +138,6 @@ describe("Finance Integration Tests", () => {
             const usdAccount = await assertOk(activateUsd, financialAccountSchema, "Activate USD");
             const eurAccount = await assertOk(activateEur, financialAccountSchema, "Activate EUR");
 
-            // Try to transfer USD from a USD account to a EUR account using currencyId=EUR
             const transferRes = await client.orgs.finance.executeTransfer(orgId, {
                 categoryId: "fcat_internal_transfer",
                 sourceAccountId: usdAccount.id,
@@ -167,7 +160,7 @@ describe("Finance Integration Tests", () => {
                 currencyListWithStatusResponseSchema,
                 "Get Org Status (Archive Test)"
             );
-            const usd = status.data.find((c: any) => c.code === "USD");
+            const usd = status.data.find((c) => c.code === "USD");
             assert(usd, "USD currency not found in status list");
 
             const createRes = await client.orgs.finance.createAccount(orgId, {
@@ -194,10 +187,9 @@ describe("Finance Integration Tests", () => {
                 currencyListWithStatusResponseSchema,
                 "Get Org Status (Non-Zero Test)"
             );
-            const usd = status.data.find((c: any) => c.code === "USD");
+            const usd = status.data.find((c) => c.code === "USD");
             assert(usd, "USD currency not found in status list");
 
-            // Activate USD (creates a funding account)
             const activateRes = await client.orgs.finance.activateCurrency(orgId, {
                 currencyId: usd.id,
             });
@@ -208,7 +200,6 @@ describe("Finance Integration Tests", () => {
             );
             const accountId = account.id;
 
-            // Credit the funding account from treasury (which is allowed)
             const creditRes = await adminClient.admin.finance.adminCredit(orgId, {
                 categoryId: "fcat_cash_deposit",
                 platformTreasuryAccountId: treasuryId,
@@ -218,7 +209,6 @@ describe("Finance Integration Tests", () => {
             });
             expect(creditRes.status).toBe(HttpStatusCodes.CREATED);
 
-            // Attempt to archive the account with balance
             const archiveRes = await adminClient.admin.finance.archiveAccount(accountId);
             expect(archiveRes.status).toBe(HttpStatusCodes.BAD_REQUEST);
             const body = (await archiveRes.json()) as { error: string };

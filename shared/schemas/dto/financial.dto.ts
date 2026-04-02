@@ -32,9 +32,9 @@ export const walletSummaryResponseSchema = z.object({
 });
 
 export const transactionHistoryResponseSchema = z.object({
-    data: z.array(z.any()), // Can be more specific later if relations are complex
-    page: z.number(),
-    pageSize: z.number(),
+    data: z.array(financialTransactionSchema),
+    nextCursor: z.string().nullable(),
+    prevCursor: z.string().nullable(),
 });
 
 export const executeTransferResponseSchema = z.object({
@@ -115,12 +115,12 @@ export const transactionResultSchema = z.object({
     txId: z.string(),
 });
 
-export const paginationSchema = z.object({
-    page: z.number().int().min(1).default(1),
-    pageSize: z.number().int().min(1).max(100).default(20),
+export const cursorPaginationSchema = z.object({
+    cursor: z.string().optional(),
+    limit: z.number().int().min(1).max(100).default(20),
 });
 
-export const transactionFiltersSchema = paginationSchema.extend({
+export const transactionFiltersSchema = cursorPaginationSchema.extend({
     startDate: z.string().optional(),
     endDate: z.string().optional(),
     minAmount: z.number().optional(),
@@ -137,5 +137,5 @@ export type ExecuteTransferRequest = z.infer<typeof executeTransferRequestSchema
 export type ReverseTransactionRequest = z.infer<typeof reverseTransactionRequestSchema>;
 export type ActivateCurrencyRequest = z.infer<typeof activateCurrencyRequestSchema>;
 export type TransactionResult = z.infer<typeof transactionResultSchema>;
-export type PaginationInput = z.infer<typeof paginationSchema>;
+export type CursorPaginationInput = z.infer<typeof cursorPaginationSchema>;
 export type TransactionFilters = z.infer<typeof transactionFiltersSchema>;

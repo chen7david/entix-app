@@ -55,6 +55,11 @@ export type FinancialAccount = typeof financialAccounts.$inferSelect;
  * Repository input schema for financial accounts.
  * Explicitly overrides fields with DB defaults to be strictly REQUIRED
  * in the persistence layer (Rule 78/85).
+ *
+ * Business rules enforced at Zod layer (mirrors DB check constraint `org_scoped_user_accounts`):
+ * - ownerType 'user' MUST have organizationId set (non-null)
+ * - ownerType 'org'  MUST have organizationId as null
+ * Violating these rules at the app layer avoids a raw DB constraint 500 error.
  */
 export const createAccountRepoInputSchema = createInsertSchema(financialAccounts, {
     id: z.string().min(1),
@@ -63,12 +68,26 @@ export const createAccountRepoInputSchema = createInsertSchema(financialAccounts
     createdAt: z.date(),
     updatedAt: z.date(),
 }).extend({
-    // Explicitly allow optional fields to ensure spread compatibility
     balanceCents: z.number().int().optional(),
     isActive: z.boolean().optional(),
     isFundingAccount: z.boolean().optional(),
     archivedAt: z.date().nullable().optional(),
     organizationId: z.string().nullable().optional(),
+}).superRefine((data, ctx) => {
+    if (data.ownerType === "user" && !data.organizationId) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "organizationId is required for user-owned accounts",
+            path: ["organizationId"],
+        });
+    }
+    if (data.ownerType === "org" && data.organizationId != null) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "organizationId must be null for org-owned accounts",
+            path: ["organizationId"],
+        });
+    }
 });
 
 export type CreateAccountRepoInput = z.infer<typeof createAccountRepoInputSchema>;
