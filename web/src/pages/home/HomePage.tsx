@@ -68,7 +68,7 @@ export const HomePage: React.FC = () => {
                         </Card>
                     </Col>
                     <Col xs={24} lg={8}>
-                        <Space direction="vertical" className="w-full" size="middle">
+                        <Space orientation="vertical" className="w-full" size="middle">
                             <Card
                                 title={
                                     <span>
@@ -78,7 +78,7 @@ export const HomePage: React.FC = () => {
                                 }
                                 className="shadow-sm"
                             >
-                                <Space direction="vertical" className="w-full">
+                                <Space orientation="vertical" className="w-full">
                                     <Button
                                         block
                                         icon={<TeamOutlined />}
@@ -173,7 +173,7 @@ export const HomePage: React.FC = () => {
                                     </div>
                                 ) : (
                                     <Alert
-                                        message="Healthy Engagement"
+                                        title="Healthy Engagement"
                                         description="All members have been active recently."
                                         type="success"
                                         showIcon

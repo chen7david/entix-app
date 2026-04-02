@@ -2,7 +2,7 @@ import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.hel
 import { createRoute } from "@hono/zod-openapi";
 import {
     transactionHistoryResponseSchema,
-    walletSummaryResponseSchema,
+    walletSummaryDTOSchema,
 } from "@shared/schemas/dto/financial.dto";
 import { z } from "zod";
 
@@ -24,7 +24,7 @@ export const MemberWalletRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                walletSummaryResponseSchema,
+                walletSummaryDTOSchema,
                 "Personal wallet summary fetched successfully"
             ),
             [HttpStatusCodes.FORBIDDEN]: jsonContent(

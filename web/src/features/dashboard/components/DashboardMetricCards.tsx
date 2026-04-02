@@ -26,7 +26,7 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
             <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                 {[1, 2, 3, 4].map((i) => (
                     <Col xs={24} sm={12} lg={6} key={i}>
-                        <Card bordered={false} className="shadow-sm">
+                        <Card variant="borderless" className="shadow-sm">
                             <Skeleton active paragraph={{ rows: 1 }} />
                         </Card>
                     </Col>
@@ -38,7 +38,7 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
     return (
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
             <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-blue-500">
+                <Card variant="borderless" className="shadow-sm border-l-4 border-blue-500">
                     <Statistic
                         title="Total Members"
                         value={metrics?.totalMembers || 0}
@@ -47,7 +47,7 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-green-500">
+                <Card variant="borderless" className="shadow-sm border-l-4 border-green-500">
                     <Statistic
                         title="Active Sessions"
                         value={metrics?.activeSessions || 0}
@@ -56,19 +56,21 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-orange-500">
+                <Card variant="borderless" className="shadow-sm border-l-4 border-orange-500">
                     <Statistic
                         title="Engagement Risk"
                         value={metrics?.engagementRisk || 0}
-                        valueStyle={{
-                            color: (metrics?.engagementRisk || 0) > 0 ? "#fa8c16" : undefined,
+                        styles={{
+                            content: {
+                                color: (metrics?.engagementRisk || 0) > 0 ? "#fa8c16" : undefined,
+                            },
                         }}
                         prefix={<WarningOutlined className="text-orange-500 mr-2" />}
                     />
                 </Card>
             </Col>
             <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-purple-500">
+                <Card variant="borderless" className="shadow-sm border-l-4 border-purple-500">
                     <Statistic
                         title="Storage Used"
                         value={formatBytes(metrics?.totalStorage || 0)}
