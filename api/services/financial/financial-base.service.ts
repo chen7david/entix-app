@@ -24,6 +24,12 @@ export abstract class FinancialBaseService extends BaseService {
     /**
      * Executes a core double-entry transaction.
      * Enforces currency matching, balance checks, and bidirectional treasury guards.
+     *
+     * Atomicity: delegates to `transactionsRepo.insert()` which issues a single
+     * `db.batch([debit, credit, insertHeader, insertDebitLine, insertCreditLine])`.
+     * All 5 statements succeed or all fail together — D1 batch semantics guarantee this.
+     * The debit statement includes a balance guard in its WHERE clause; if `rows_written === 0`
+     * the batch still commits but the service detects this and throws BadRequestError.
      */
     async executeTransaction(input: {
         organizationId: string;
@@ -33,7 +39,7 @@ export abstract class FinancialBaseService extends BaseService {
         currencyId: string;
         amountCents: number;
         description?: string | null;
-        transactionDate?: Date; // Optional, defaults to now
+        transactionDate?: Date;
     }): Promise<string> {
         const [source, destination] = await Promise.all([
             this.accountsRepo.findById(input.sourceAccountId),
@@ -44,12 +50,10 @@ export abstract class FinancialBaseService extends BaseService {
             throw new NotFoundError("Source or destination account not found");
         }
 
-        // Ledger Hardening: Currency Isolation
         if (source.currencyId !== input.currencyId || destination.currencyId !== input.currencyId) {
             throw new BadRequestError("Currency mismatch between accounts and transaction");
         }
 
-        // Safety Guard: Treasury Protection (Bidirectional via accountType)
         const sourceIsTreasury = source.accountType === "platform_treasury";
         const destIsTreasury = destination.accountType === "platform_treasury";
 
@@ -64,18 +68,15 @@ export abstract class FinancialBaseService extends BaseService {
             );
         }
 
-        // Balance Check (Atomic inside repo, but we fail fast here too)
         if (source.balanceCents < input.amountCents) {
             throw new BadRequestError("Insufficient funds");
         }
 
-        // Generate IDs and timestamps (Rule 78)
         const now = new Date();
         const txId = `tx_${nanoid()}`;
         const debitLineId = `txl_${nanoid()}`;
         const creditLineId = `txl_${nanoid()}`;
 
-        // Validate at Service Boundary (Rule 85)
         const repoInput = createTransactionRepoInputSchema.parse({
             ...input,
             id: txId,

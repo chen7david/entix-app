@@ -1,3 +1,4 @@
+import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
     type CreateTransactionRepoInput,
@@ -5,15 +6,24 @@ import {
     financialTransactionLines,
     financialTransactions,
 } from "@shared/db/schema";
-import type { PaginationInput, TransactionFilters } from "@shared/schemas/dto/financial.dto";
-import { and, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
+import type { CursorPaginationInput, TransactionFilters } from "@shared/schemas/dto/financial.dto";
+import { and, desc, eq, gt, gte, like, lt, lte, or, sql } from "drizzle-orm";
+import type { D1Result } from "@cloudflare/workers-types";
 
 /**
  * Financial transactions are NEVER hard-deleted to preserve ledger integrity.
  * All writes go through FinancialService.executeTransaction() via db.batch()
  * to guarantee atomicity on Cloudflare D1.
  *
- * This repository primarily handles prepared statements for atomic batching.
+ * Atomicity note: `insert()` calls `db.batch()` with 5 prepared statements
+ * (debit, credit, tx header, debit line, credit line). D1 batch semantics
+ * guarantee all-or-nothing execution. The debit statement includes a balance
+ * guard in its WHERE clause — if rows_written === 0, BadRequestError is thrown.
+ *
+ * Note on `db.batch(statements as any)`: Drizzle returns SQLiteUpdateBase objects
+ * which don't satisfy D1's ReadonlyArray<D1PreparedStatement> type. This is a
+ * known Drizzle/D1 typing gap. The cast is intentional and the result is
+ * narrowed to D1Result[] immediately after.
  */
 export class FinancialTransactionsRepository {
     constructor(private readonly db: AppDb) {}
@@ -34,21 +44,19 @@ export class FinancialTransactionsRepository {
     async reverse(txId: string) {
         return this.db
             .update(financialTransactions)
-            .set({
-                status: "reversed",
-            })
+            .set({ status: "reversed" })
             .where(eq(financialTransactions.id, txId));
     }
 
     /**
-     * Prepares the SQL statements required for an atomic double-entry transaction.
-     * 1. Debit the source account (with balance guard)
-     * 2. Credit the destination account
-     * 3. Insert the transaction header
-     * 4. Insert the transaction lines
+     * Prepares the 5 SQL statements required for an atomic double-entry transaction:
+     * 1. Debit source account (with balance + active guard in WHERE)
+     * 2. Credit destination account
+     * 3. Insert transaction header
+     * 4. Insert debit line
+     * 5. Insert credit line
      */
     prepareStatements(input: CreateTransactionRepoInput) {
-        // 1. Debit Source
         const debitStatement = this.db
             .update(financialAccounts)
             .set({
@@ -63,7 +71,6 @@ export class FinancialTransactionsRepository {
                 )
             );
 
-        // 2. Credit Destination
         const creditStatement = this.db
             .update(financialAccounts)
             .set({
@@ -77,7 +84,6 @@ export class FinancialTransactionsRepository {
                 )
             );
 
-        // 3. Insert Transaction Header
         const insertStatement = this.db.insert(financialTransactions).values({
             id: input.id,
             organizationId: input.organizationId,
@@ -92,7 +98,6 @@ export class FinancialTransactionsRepository {
             status: "completed",
         });
 
-        // 4. Insert Transaction Lines (for audit trail)
         const debitLineStatement = this.db.insert(financialTransactionLines).values({
             id: input.debitLineId,
             transactionId: input.id,
@@ -122,19 +127,28 @@ export class FinancialTransactionsRepository {
 
     /**
      * Atomic double-entry insert using D1 batch.
+     * Returns the transaction ID on success.
+     * Throws BadRequestError if the debit balance guard fails (rows_written === 0).
      */
     async insert(input: CreateTransactionRepoInput): Promise<string> {
         const statements = this.prepareStatements(input);
-        const [debitResult] = await this.db.batch(statements as any);
+        // Cast is required: Drizzle returns SQLiteUpdateBase, not D1PreparedStatement.
+        // Known Drizzle/D1 typing gap — result narrowed explicitly below.
+        const [debitResult] = (await this.db.batch(statements as any)) as [D1Result, ...D1Result[]];
 
-        // Verify the debit actually hit a row (balance check + active check)
         if (debitResult.meta.rows_written === 0) {
-            throw new Error("Insufficient funds, inactive account, or currency mismatch");
+            throw new BadRequestError(
+                "Insufficient funds or account is inactive — transaction aborted"
+            );
         }
 
         return input.id;
     }
 
+    /**
+     * Cursor-paginated transaction list for an organization with optional filters.
+     * Cursor is encoded as `transactionDate_ISO|id` to handle timestamp ties.
+     */
     async findByOrgId(organizationId: string, filters: TransactionFilters) {
         const conditions = [eq(financialTransactions.organizationId, organizationId)];
 
@@ -166,13 +180,28 @@ export class FinancialTransactionsRepository {
                 or(
                     eq(financialTransactions.sourceAccountId, filters.accountId),
                     eq(financialTransactions.destinationAccountId, filters.accountId)
-                ) as any
+                ) as ReturnType<typeof eq>
             );
         }
 
-        const offset = (filters.page - 1) * filters.pageSize;
+        // Cursor: decode "<isoDate>|<id>" to resume after a specific record
+        if (filters.cursor) {
+            const [cursorDate, cursorId] = filters.cursor.split("|");
+            if (cursorDate && cursorId) {
+                conditions.push(
+                    or(
+                        lt(financialTransactions.transactionDate, new Date(cursorDate)),
+                        and(
+                            eq(financialTransactions.transactionDate, new Date(cursorDate)),
+                            lt(financialTransactions.id, cursorId)
+                        )
+                    ) as ReturnType<typeof eq>
+                );
+            }
+        }
 
-        return this.db.query.financialTransactions.findMany({
+        const limit = filters.limit ?? 20;
+        const rows = await this.db.query.financialTransactions.findMany({
             where: and(...conditions),
             with: {
                 sourceAccount: true,
@@ -180,48 +209,78 @@ export class FinancialTransactionsRepository {
                 category: true,
                 currency: true,
             },
-            orderBy: [desc(financialTransactions.transactionDate)],
-            limit: filters.pageSize,
-            offset,
+            orderBy: [desc(financialTransactions.transactionDate), desc(financialTransactions.id)],
+            limit: limit + 1, // fetch one extra to determine if there is a next page
         });
+
+        const hasMore = rows.length > limit;
+        const data = hasMore ? rows.slice(0, limit) : rows;
+        const lastRow = data.at(-1);
+        const nextCursor = hasMore && lastRow
+            ? `${lastRow.transactionDate.toISOString()}|${lastRow.id}`
+            : null;
+
+        return { data, nextCursor, prevCursor: filters.cursor ?? null };
     }
 
-    async findByAccountId(accountId: string, { page, pageSize }: PaginationInput) {
-        const offset = (page - 1) * pageSize;
-        return this.db.query.financialTransactionLines.findMany({
-            where: eq(financialTransactionLines.accountId, accountId),
+    /**
+     * Cursor-paginated transaction lines for a specific account.
+     * Cursor is encoded as `createdAt_ISO|id`.
+     */
+    async findByAccountId(accountId: string, pagination: CursorPaginationInput) {
+        const conditions = [eq(financialTransactionLines.accountId, accountId)];
+
+        if (pagination.cursor) {
+            const [cursorDate, cursorId] = pagination.cursor.split("|");
+            if (cursorDate && cursorId) {
+                conditions.push(
+                    or(
+                        lt(financialTransactionLines.createdAt, new Date(cursorDate)),
+                        and(
+                            eq(financialTransactionLines.createdAt, new Date(cursorDate)),
+                            lt(financialTransactionLines.id, cursorId)
+                        )
+                    ) as ReturnType<typeof eq>
+                );
+            }
+        }
+
+        const limit = pagination.limit ?? 20;
+        const rows = await this.db.query.financialTransactionLines.findMany({
+            where: and(...conditions),
             with: {
                 transaction: {
-                    with: {
-                        category: true,
-                        currency: true,
-                    },
+                    with: { category: true, currency: true },
                 },
             },
-            orderBy: [desc(financialTransactionLines.createdAt)],
-            limit: pageSize,
-            offset,
+            orderBy: [
+                desc(financialTransactionLines.createdAt),
+                desc(financialTransactionLines.id),
+            ],
+            limit: limit + 1,
         });
+
+        const hasMore = rows.length > limit;
+        const data = hasMore ? rows.slice(0, limit) : rows;
+        const lastRow = data.at(-1);
+        const nextCursor = hasMore && lastRow
+            ? `${lastRow.createdAt.toISOString()}|${lastRow.id}`
+            : null;
+
+        return { data, nextCursor, prevCursor: pagination.cursor ?? null };
     }
 
     /**
-     * Fetches transaction lines for all accounts owned by a specific owner.
-     * Required for UserFinancialService to show personal wallets' history.
-     */
-    /**
-     * Fetches transaction lines for all accounts owned by a specific owner.
-     * Required for UserFinancialService to show personal wallets' history.
+     * Cursor-paginated transaction lines for all accounts owned by a specific user.
+     * Required for UserFinancialService personal wallet history.
+     * Cursor is encoded as `createdAt_ISO|id`.
      */
     async findByOwnerId(
         ownerId: string,
         ownerType: "user" | "org",
-        { page, pageSize }: PaginationInput,
+        pagination: CursorPaginationInput,
         organizationId?: string
     ) {
-        const offset = (page - 1) * pageSize;
-
-        // Since D1/Drizzle relations don't easily support deep filtering on joins for pagination,
-        // we first get the IDs of the accounts owned by the user.
         const ownerAccounts = await this.db.query.financialAccounts.findMany({
             where: and(
                 eq(financialAccounts.ownerId, ownerId),
@@ -234,10 +293,28 @@ export class FinancialTransactionsRepository {
         });
 
         const accountIds = ownerAccounts.map((a) => a.id);
-        if (accountIds.length === 0) return [];
+        if (accountIds.length === 0) return { data: [], nextCursor: null, prevCursor: null };
 
-        return this.db.query.financialTransactionLines.findMany({
-            where: sql`${financialTransactionLines.accountId} IN ${accountIds}`,
+        const conditions = [sql`${financialTransactionLines.accountId} IN ${accountIds}`];
+
+        if (pagination.cursor) {
+            const [cursorDate, cursorId] = pagination.cursor.split("|");
+            if (cursorDate && cursorId) {
+                conditions.push(
+                    or(
+                        lt(financialTransactionLines.createdAt, new Date(cursorDate)),
+                        and(
+                            eq(financialTransactionLines.createdAt, new Date(cursorDate)),
+                            lt(financialTransactionLines.id, cursorId)
+                        )
+                    ) as ReturnType<typeof eq>
+                );
+            }
+        }
+
+        const limit = pagination.limit ?? 20;
+        const rows = await this.db.query.financialTransactionLines.findMany({
+            where: and(...conditions),
             with: {
                 transaction: {
                     with: {
@@ -249,9 +326,20 @@ export class FinancialTransactionsRepository {
                 },
                 account: true,
             },
-            orderBy: [desc(financialTransactionLines.createdAt)],
-            limit: pageSize,
-            offset,
+            orderBy: [
+                desc(financialTransactionLines.createdAt),
+                desc(financialTransactionLines.id),
+            ],
+            limit: limit + 1,
         });
+
+        const hasMore = rows.length > limit;
+        const data = hasMore ? rows.slice(0, limit) : rows;
+        const lastRow = data.at(-1);
+        const nextCursor = hasMore && lastRow
+            ? `${lastRow.createdAt.toISOString()}|${lastRow.id}`
+            : null;
+
+        return { data, nextCursor, prevCursor: pagination.cursor ?? null };
     }
 }

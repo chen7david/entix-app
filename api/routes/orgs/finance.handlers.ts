@@ -15,20 +15,11 @@ export class FinanceHandler {
     ) => {
         const { organizationId } = ctx.req.valid("param");
         const query = ctx.req.valid("query");
-
-        const history = await getOrgFinancialService(ctx).getTransactionHistory(
+        const result = await getOrgFinancialService(ctx).getTransactionHistory(
             organizationId,
             query
         );
-
-        return ctx.json(
-            {
-                data: history,
-                page: query.page,
-                pageSize: query.pageSize,
-            },
-            HttpStatusCodes.OK
-        );
+        return ctx.json(result, HttpStatusCodes.OK);
     };
 
     static reverseTransaction: AppHandler<typeof FinanceRoutes.reverseTransaction> = async (
@@ -47,42 +38,27 @@ export class FinanceHandler {
     static executeTransfer: AppHandler<typeof FinanceRoutes.executeTransfer> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const body = ctx.req.valid("json");
-
         const txId = await getOrgFinancialService(ctx).executeTransfer({
             organizationId,
             ...body,
         });
-
         return ctx.json({ data: { txId } }, HttpStatusCodes.CREATED);
     };
 
     static createAccount: AppHandler<typeof FinanceRoutes.createAccount> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const body = ctx.req.valid("json");
-
-        const result = await getOrgFinancialService(ctx).createOrgAccount(
-            {
-                name: body.name,
-                currencyId: body.currencyId,
-                organizationId,
-            },
+        // Service throws ConflictError on duplicate — no branching needed here (Rule 3)
+        const account = await getOrgFinancialService(ctx).createOrgAccount(
+            { name: body.name, currencyId: body.currencyId, organizationId },
             { allowMultiple: true }
         );
-
-        if (!result.success || !result.account) {
-            return ctx.json(
-                { message: result.message || "Failed to create account" },
-                result.alreadyExists ? HttpStatusCodes.CONFLICT : HttpStatusCodes.BAD_REQUEST
-            );
-        }
-
-        return ctx.json({ data: result.account }, HttpStatusCodes.CREATED);
+        return ctx.json({ data: account }, HttpStatusCodes.CREATED);
     };
 
     static listAccounts: AppHandler<typeof FinanceRoutes.listAccounts> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const accounts = await getOrgFinancialService(ctx).listOrgAccounts(organizationId);
-
         return ctx.json({ data: accounts }, HttpStatusCodes.OK);
     };
 

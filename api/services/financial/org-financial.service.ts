@@ -1,4 +1,4 @@
-import { NotFoundError } from "@api/errors/app.error";
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
@@ -35,7 +35,6 @@ export class OrgFinancialService extends FinancialBaseService {
         amountCents: number;
         description?: string;
     }) {
-        // Use shared logic from FinancialBaseService to enforce guards
         return this.executeTransaction({
             ...input,
             transactionDate: new Date(),
@@ -48,9 +47,10 @@ export class OrgFinancialService extends FinancialBaseService {
     async reverseTransaction(txId: string, organizationId: string, reason: string) {
         const original = await this.transactionsRepo.findById(txId);
         if (!original) throw new NotFoundError("Transaction not found");
-        if (original.status === "reversed") throw new Error("Transaction already reversed");
+        if (original.status === "reversed") {
+            throw new ConflictError("Transaction already reversed");
+        }
 
-        // Execute mirror transaction (swap source and destination)
         const reversalTxId = await this.executeTransaction({
             organizationId,
             categoryId: "fcat_refund",
@@ -62,7 +62,6 @@ export class OrgFinancialService extends FinancialBaseService {
             transactionDate: new Date(),
         });
 
-        // Mark original as officially reversed in the database
         await this.transactionsRepo.reverse(txId);
 
         return reversalTxId;
@@ -84,7 +83,9 @@ export class OrgFinancialService extends FinancialBaseService {
     }
 
     /**
-     * Creates an organizational account with strict name uniqueness.
+     * Creates an organizational account with strict name+currency uniqueness.
+     * Throws ConflictError if a duplicate exists (Rule 13/25) so the handler
+     * stays clean (Rule 3) — no success/failure union returned.
      */
     async createOrgAccount(
         input: {
@@ -94,21 +95,17 @@ export class OrgFinancialService extends FinancialBaseService {
         },
         options: { allowMultiple?: boolean } = { allowMultiple: true }
     ) {
-        // 1. Name + Currency Uniqueness
         const nameExists = await this.accountsRepo.existsByNameAndCurrency(
             input.organizationId,
             input.name,
             input.currencyId
         );
         if (nameExists) {
-            return {
-                success: false,
-                alreadyExists: true,
-                message: `An account named "${input.name}" in this currency already exists for this organization.`,
-            };
+            throw new ConflictError(
+                `An account named "${input.name}" in this currency already exists for this organization.`
+            );
         }
 
-        // 2. Currency Uniqueness (if not allowing multiple)
         if (!options.allowMultiple) {
             const exists = await this.accountsRepo.existsByOwnerAndCurrency(
                 input.organizationId,
@@ -116,12 +113,9 @@ export class OrgFinancialService extends FinancialBaseService {
                 input.currencyId
             );
             if (exists) {
-                return {
-                    success: false,
-                    alreadyExists: true,
-                    message:
-                        "An active account for this currency already exists. Set 'allowMultiple' to true for custom labeled accounts.",
-                };
+                throw new ConflictError(
+                    "An active account for this currency already exists. Set 'allowMultiple' to true for custom labeled accounts."
+                );
             }
         }
 
@@ -132,16 +126,14 @@ export class OrgFinancialService extends FinancialBaseService {
             ownerType: "org",
             currencyId: input.currencyId,
             name: input.name,
-            organizationId: null, // Scoped accounts are only for users
-            isFundingAccount: false, // Custom accounts are never funding accounts
+            organizationId: null,
+            isFundingAccount: false,
             accountType: "standard",
             createdAt: now,
             updatedAt: now,
         });
 
-        const account = await this.accountsRepo.insert(accountInput);
-
-        return { success: true, account };
+        return this.accountsRepo.insert(accountInput);
     }
 
     /**
@@ -153,7 +145,7 @@ export class OrgFinancialService extends FinancialBaseService {
 
         if (!target) throw new NotFoundError("Currency not found");
         if (target.isActivated) {
-            throw new Error(`Currency ${target.code} is already activated`);
+            throw new ConflictError(`Currency ${target.code} is already activated`);
         }
 
         const now = new Date();
@@ -164,7 +156,7 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId,
             organizationId: null,
             name: `General Fund — ${target.code}`,
-            isFundingAccount: true, // Auto-set at activation
+            isFundingAccount: true,
             accountType: "standard",
             createdAt: now,
             updatedAt: now,

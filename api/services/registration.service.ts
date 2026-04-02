@@ -52,7 +52,7 @@ export class RegistrationService extends BaseService {
             const oId = nanoid();
             const acctId = nanoid();
             const memberId = nanoid();
-            const emailVerified = false; // By default BetterAuth sets this false
+            const emailVerified = false;
 
             const hashedPassword = input.password
                 ? await hashPassword(input.password)
@@ -74,23 +74,35 @@ export class RegistrationService extends BaseService {
             const memberQuery = this.memberRepo.prepareInsertQuery(memberId, oId, uId, "owner");
 
             // TODO: Wallet creation is currently outside the D1 batch, making it non-atomic.
-            // If createUserAccount fails after the org/member batch succeeds, the org exists
-            // without a wallet. Tracked in [issue/task reference]. For now, the try/catch
-            // ensures the error surfaces clearly rather than silently.
+            // If wallet provisioning fails after the org/member batch succeeds, the org exists
+            // without a wallet. Tracked for Ticket 5 refactor. Both accounts are provisioned
+            // unconditionally and failures are logged individually so one failure doesn't
+            // silently abort the other.
             await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
-            // Auto-provision personal accounts for the user ( Ticket 5 refactor)
-            await this.userFinancialService.createUserAccount({
-                name: "Points",
-                currencyId: FINANCIAL_CURRENCIES.ETD,
-                userId: uId,
-                orgId: oId,
-            });
-            await this.userFinancialService.createUserAccount({
-                name: "Savings",
-                currencyId: FINANCIAL_CURRENCIES.USD,
-                userId: uId,
-                orgId: oId,
+            // Auto-provision personal accounts — run unconditionally, log individual failures
+            await Promise.allSettled([
+                this.userFinancialService.createUserAccount({
+                    name: "Points",
+                    currencyId: FINANCIAL_CURRENCIES.ETD,
+                    userId: uId,
+                    orgId: oId,
+                }),
+                this.userFinancialService.createUserAccount({
+                    name: "Savings",
+                    currencyId: FINANCIAL_CURRENCIES.USD,
+                    userId: uId,
+                    orgId: oId,
+                }),
+            ]).then((results) => {
+                for (const result of results) {
+                    if (result.status === "rejected") {
+                        this.logger.error(
+                            { err: result.reason, userId: uId, orgId: oId },
+                            "Wallet provisioning failed during signup"
+                        );
+                    }
+                }
             });
 
             return {
@@ -106,7 +118,7 @@ export class RegistrationService extends BaseService {
                     slug,
                 },
             };
-        } catch (err) {
+        } catch (err: unknown) {
             if (err instanceof ConflictError) throw err;
 
             this.logger.error({ err, input }, "Failed to setup organization during signup");
@@ -139,21 +151,31 @@ export class RegistrationService extends BaseService {
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
 
-        // Auto-provision personal accounts for the user ( Ticket 5 refactor)
-        await this.userFinancialService.createUserAccount({
-            name: "Points",
-            currencyId: FINANCIAL_CURRENCIES.ETD,
-            userId: uId,
-            orgId: organizationId,
-        });
-        await this.userFinancialService.createUserAccount({
-            name: "Savings",
-            currencyId: FINANCIAL_CURRENCIES.USD,
-            userId: uId,
-            orgId: organizationId,
+        // Auto-provision personal accounts — run unconditionally, log individual failures
+        await Promise.allSettled([
+            this.userFinancialService.createUserAccount({
+                name: "Points",
+                currencyId: FINANCIAL_CURRENCIES.ETD,
+                userId: uId,
+                orgId: organizationId,
+            }),
+            this.userFinancialService.createUserAccount({
+                name: "Savings",
+                currencyId: FINANCIAL_CURRENCIES.USD,
+                userId: uId,
+                orgId: organizationId,
+            }),
+        ]).then((results) => {
+            for (const result of results) {
+                if (result.status === "rejected") {
+                    this.logger.error(
+                        { err: result.reason, userId: uId, orgId: organizationId },
+                        "Wallet provisioning failed during member creation"
+                    );
+                }
+            }
         });
 
-        // 🚀 Orchestrate Email (Fire-and-forget per Rule 14)
         const resetUrl = `${this.frontendUrl}/auth/reset-password`;
         this.userService.sendPasswordResetEmail(email, resetUrl).catch((err: unknown) => {
             this.logger.error(

@@ -14,23 +14,21 @@ export class FinancialAccountsRepository {
 
     /**
      * Creates a new financial account.
+     * Errors propagate naturally — the global error handler surfaces the original
+     * stack trace. Callers must perform duplicate checks before calling insert().
      */
     async insert(input: CreateAccountRepoInput): Promise<FinancialAccount | null> {
-        try {
-            const [account] = await this.db
-                .insert(financialAccounts)
-                .values({
-                    ...input,
-                    balanceCents: input.balanceCents ?? 0,
-                    isActive: input.isActive ?? true,
-                    isFundingAccount: input.isFundingAccount ?? false,
-                })
-                .returning();
+        const [account] = await this.db
+            .insert(financialAccounts)
+            .values({
+                ...input,
+                balanceCents: input.balanceCents ?? 0,
+                isActive: input.isActive ?? true,
+                isFundingAccount: input.isFundingAccount ?? false,
+            })
+            .returning();
 
-            return account ?? null;
-        } catch (_err) {
-            return null;
-        }
+        return account ?? null;
     }
 
     async findById(id: string): Promise<FinancialAccount | null> {
@@ -40,9 +38,6 @@ export class FinancialAccountsRepository {
         return account ?? null;
     }
 
-    /**
-     * Retrieves all active, non-archived accounts for a specific owner.
-     */
     async findActiveByOwner(
         ownerId: string,
         ownerType: "user" | "org",
@@ -64,59 +59,33 @@ export class FinancialAccountsRepository {
             );
     }
 
-    /**
-     * Deactivates an account (sets isActive to false).
-     * Used to block new transactions.
-     */
     async deactivate(id: string, updatedAt: Date): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
-            .set({
-                isActive: false,
-                updatedAt,
-            })
+            .set({ isActive: false, updatedAt })
             .where(eq(financialAccounts.id, id))
             .returning();
-
         return account ?? null;
     }
 
-    /**
-     * Archives an account (sets archivedAt timestamp).
-     * Used to hide the account from standard UI views.
-     */
     async archive(id: string, updatedAt: Date): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
-            .set({
-                archivedAt: updatedAt,
-                updatedAt,
-            })
+            .set({ archivedAt: updatedAt, updatedAt })
             .where(eq(financialAccounts.id, id))
             .returning();
-
         return account ?? null;
     }
 
-    /**
-     * Updates the display name of an account.
-     */
     async updateName(id: string, name: string, updatedAt: Date): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
-            .set({
-                name,
-                updatedAt,
-            })
+            .set({ name, updatedAt })
             .where(eq(financialAccounts.id, id))
             .returning();
-
         return account ?? null;
     }
 
-    /**
-     * Finds active, non-archived accounts for an organization.
-     */
     async findAllByOrg(orgId: string): Promise<FinancialAccount[]> {
         return this.db.query.financialAccounts.findMany({
             where: and(
@@ -128,9 +97,6 @@ export class FinancialAccountsRepository {
         });
     }
 
-    /**
-     * Checks if an account already exists for an owner with the same name and currency.
-     */
     async existsByNameAndCurrency(
         ownerId: string,
         name: string,
@@ -151,13 +117,9 @@ export class FinancialAccountsRepository {
                 )
             )
             .limit(1);
-
         return !!existing;
     }
 
-    /**
-     * Checks if an account already exists for an owner and currency.
-     */
     async existsByOwnerAndCurrency(
         ownerId: string,
         ownerType: "user" | "org",
@@ -179,7 +141,6 @@ export class FinancialAccountsRepository {
                 )
             )
             .limit(1);
-
         return !!existing;
     }
 }
