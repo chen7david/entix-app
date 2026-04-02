@@ -1,5 +1,10 @@
 import { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
-import { financialCurrencies } from "@shared/db/schema";
+import {
+    financialAccounts,
+    financialCurrencies,
+    financialTransactionLines,
+    financialTransactions,
+} from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, type TestDb } from "../lib/utils";
 
@@ -16,6 +21,11 @@ describe("FinancialCurrenciesRepository", () => {
     beforeEach(async () => {
         db = await createTestDb();
         repo = new FinancialCurrenciesRepository(db);
+
+        // Delete in full dependency order to avoid FK constraint failures
+        await db.delete(financialTransactionLines);
+        await db.delete(financialTransactions);
+        await db.delete(financialAccounts);
         await db.delete(financialCurrencies);
     });
 

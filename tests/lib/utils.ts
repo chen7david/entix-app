@@ -1,7 +1,16 @@
 import { applyD1Migrations, env } from "cloudflare:test";
-import { FINANCIAL_CURRENCIES, FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import {
+    FINANCIAL_CATEGORIES,
+    FINANCIAL_CURRENCIES,
+    FINANCIAL_CURRENCY_CONFIG,
+    getTreasuryAccountId,
+} from "@shared";
 import * as schema from "@shared/db/schema";
-import { financialCurrencies as currencyTable } from "@shared/db/schema";
+import {
+    financialAccounts as accountTable,
+    financialTransactionCategories as categoryTable,
+    financialCurrencies as currencyTable,
+} from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
 
 const migrationFiles = import.meta.glob("/api/db/migrations/*.sql", {
@@ -35,6 +44,49 @@ export async function createTestDb() {
 
     for (const c of currencies) {
         await db.insert(currencyTable).values(c).onConflictDoNothing();
+    }
+
+    // Seed Mandatory Financial Categories
+    const categories = Object.values(FINANCIAL_CATEGORIES).map((id) => ({
+        id,
+        name: id.replace("fcat_", "").replace("_", " ").toUpperCase(),
+        description: `Automated seed for ${id}`,
+        isExpense: false,
+        isRevenue: false,
+    }));
+
+    for (const cat of categories) {
+        await db.insert(categoryTable).values(cat).onConflictDoNothing();
+    }
+
+    // Seed Platform Treasury Accounts for all currencies
+    for (const currencyId of allCurrencies) {
+        const treasuryId = getTreasuryAccountId(currencyId);
+        await db
+            .insert(accountTable)
+            .values({
+                id: treasuryId,
+                ownerId: "platform",
+                ownerType: "org",
+                organizationId: null,
+                currencyId,
+                name: `Platform Treasury (${currencyId.split("_")[1].toUpperCase()})`,
+                balanceCents: 1000000000, // Seed with 10M units (cents)
+                isFundingAccount: true,
+                isActive: true,
+                accountType: "platform_treasury",
+                updatedAt: new Date(),
+                createdAt: new Date(),
+            })
+            .onConflictDoUpdate({
+                target: accountTable.id,
+                set: {
+                    balanceCents: 1000000000,
+                    isActive: true,
+                    isFundingAccount: true,
+                    accountType: "platform_treasury",
+                },
+            });
     }
 
     return db;

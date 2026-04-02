@@ -26,7 +26,7 @@ describe("Permission-Based Authorization Tests", () => {
 
             expect(res.status).toBe(201);
             const body = await parseJson<CreateMemberResponseDTO>(res);
-            expect(body.user.email).toBe(payload.email);
+            expect(body.data.user.email).toBe(payload.email);
         });
     });
 
@@ -50,7 +50,7 @@ describe("Permission-Based Authorization Tests", () => {
 
             expect(res.status).toBe(201);
             const body = await parseJson<CreateMemberResponseDTO>(res);
-            expect(body.user.email).toBe(payload.email);
+            expect(body.data.user.email).toBe(payload.email);
         });
     });
 
@@ -107,7 +107,7 @@ describe("Permission-Based Authorization Tests", () => {
 
             expect(res.status).toBe(201);
             const body = await parseJson<CreateMemberResponseDTO>(res);
-            expect(body.user.email).toBe(payload.email);
+            expect(body.data.user.email).toBe(payload.email);
         });
     });
 

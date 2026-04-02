@@ -14,7 +14,7 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
     const [form] = Form.useForm();
     const { message } = App.useApp();
     const { mutate, isPending } = useWalletTransfer(orgId);
-    const { data: currencyData } = useActivatedCurrencies(orgId);
+    const { currencies } = useActivatedCurrencies(orgId);
 
     const onFinish = (values: TransferInput) => {
         mutate(values, {
@@ -108,7 +108,7 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                     rules={[{ required: true, message: "Please select a currency" }]}
                 >
                     <Select placeholder="Select currency">
-                        {currencyData?.currencies?.map((c) => (
+                        {currencies?.map((c) => (
                             <Select.Option key={c.id} value={c.id}>
                                 {c.symbol} {c.code} — {c.name}
                             </Select.Option>

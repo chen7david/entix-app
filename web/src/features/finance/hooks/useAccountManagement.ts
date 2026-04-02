@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { parseApiError } from "@web/src/utils/api";
 
 /**
  * Hook to update the display label (name) of a financial account.
@@ -14,14 +15,12 @@ export const useUpdateAccount = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ name }),
             });
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.message || "Failed to update account label");
-            }
+            if (!res.ok) await parseApiError(res);
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
+            queryClient.invalidateQueries({ queryKey: ["adminOrgAccounts"] });
         },
     });
 };
@@ -38,14 +37,12 @@ export const useArchiveAccount = () => {
             const res = await fetch(`${API_V1}/admin/finance/accounts/${id}/archive`, {
                 method: "PATCH",
             });
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.message || "Failed to archive account");
-            }
+            if (!res.ok) await parseApiError(res);
             return res.json();
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
+            queryClient.invalidateQueries({ queryKey: ["adminOrgAccounts"] });
         },
     });
 };

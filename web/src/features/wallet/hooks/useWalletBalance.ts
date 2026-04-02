@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { parseApiError } from "@web/src/utils/api";
 
 export type WalletAccount = {
     id: string;
@@ -14,12 +15,16 @@ export type WalletSummary = {
     accounts: WalletAccount[];
 };
 
+type WalletSummaryResponse = {
+    data: WalletSummary;
+};
+
 export const useWalletBalance = (
     id?: string,
     ownerType: "user" | "org" = "org",
     orgId?: string
 ) => {
-    return useQuery<WalletSummary>({
+    return useQuery({
         queryKey: ["walletBalance", id, ownerType, orgId],
         queryFn: async () => {
             if (!id) throw new Error("ID required");
@@ -32,9 +37,10 @@ export const useWalletBalance = (
                     : `${API_V1}/orgs/${orgId}/members/${id}/wallet/summary`;
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch wallet balance");
-            return res.json();
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as WalletSummaryResponse;
         },
+        select: (res) => res?.data,
         enabled: ownerType === "org" ? !!id : !!id && !!orgId,
     });
 };

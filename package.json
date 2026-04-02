@@ -46,6 +46,7 @@
         "concurrently": "^9.2.1",
         "date-fns": "^4.1.0",
         "drizzle-orm": "^0.45.1",
+        "drizzle-zod": "^0.8.3",
         "hono": "^4.10.8",
         "hono-pino": "^0.10.3",
         "jotai": "^2.16.1",

@@ -6,29 +6,17 @@ import {
 } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
-import { createRoute } from "@hono/zod-openapi";
-import { executeTransferResponseSchema, listFinancialAccountsResponseSchema } from "@shared";
-import { z } from "zod";
+import { createRoute, z } from "@hono/zod-openapi";
+import {
+    adminCreditRequestSchema,
+    adminDebitRequestSchema,
+    financialAccountSchema,
+    listFinancialAccountsResponseSchema,
+    transactionResultSchema,
+} from "@shared";
+import { successResponseSchema } from "@shared/schemas/dto/base.dto";
 
 const tags = ["Admin - Finance"];
-
-const adminCreditSchema = z.object({
-    categoryId: z.string().min(1),
-    platformTreasuryAccountId: z.string().min(1),
-    destinationAccountId: z.string().min(1),
-    currencyId: z.string().min(1),
-    amountCents: z.number().int().positive(),
-    description: z.string().optional(),
-});
-
-const adminDebitSchema = z.object({
-    categoryId: z.string().min(1),
-    sourceAccountId: z.string().min(1),
-    platformTreasuryAccountId: z.string().min(1),
-    currencyId: z.string().min(1),
-    amountCents: z.number().int().positive(),
-    description: z.string().optional(),
-});
 
 export const AdminFinanceRoutes = {
     tags,
@@ -72,11 +60,11 @@ export const AdminFinanceRoutes = {
         summary: "Super admin: platform-initiated credit to an account",
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: jsonContentRequired(adminCreditSchema, "Credit details"),
+            body: jsonContentRequired(adminCreditRequestSchema, "Credit details"),
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(
-                executeTransferResponseSchema,
+                z.object({ data: transactionResultSchema }),
                 "Credit executed successfully"
             ),
         },
@@ -90,11 +78,11 @@ export const AdminFinanceRoutes = {
         summary: "Super admin: platform-initiated debit from an account",
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: jsonContentRequired(adminDebitSchema, "Debit details"),
+            body: jsonContentRequired(adminDebitRequestSchema, "Debit details"),
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(
-                executeTransferResponseSchema,
+                z.object({ data: transactionResultSchema }),
                 "Debit executed successfully"
             ),
         },
@@ -110,7 +98,10 @@ export const AdminFinanceRoutes = {
             body: jsonContentRequired(z.object({ name: z.string().min(1) }), "Update details"),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.any(), "Account updated successfully"),
+            [HttpStatusCodes.OK]: jsonContent(
+                z.object({ data: financialAccountSchema }),
+                "Account updated successfully"
+            ),
         },
     }),
     archiveAccount: createRoute({
@@ -123,9 +114,12 @@ export const AdminFinanceRoutes = {
             params: z.object({ id: z.string() }),
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.any(), "Account archived successfully"),
+            [HttpStatusCodes.OK]: jsonContent(
+                successResponseSchema,
+                "Account archived successfully"
+            ),
             [HttpStatusCodes.BAD_REQUEST]: jsonContent(
-                z.object({ message: z.string() }),
+                z.object({ error: z.string() }),
                 "Invalid archiving request (e.g. non-zero balance)"
             ),
         },

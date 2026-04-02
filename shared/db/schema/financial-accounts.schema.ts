@@ -1,5 +1,7 @@
 import { sql } from "drizzle-orm";
 import { check, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
 import { financialCurrencies } from "./financial-currencies.schema";
 import { authOrganizations } from "./organization.schema";
 
@@ -26,6 +28,10 @@ export const financialAccounts = sqliteTable(
         isFundingAccount: integer("is_funding_account", { mode: "boolean" })
             .notNull()
             .default(false),
+        accountType: text("account_type")
+            .$type<"standard" | "platform_treasury">()
+            .notNull()
+            .default("standard"),
     },
     (t) => [
         check("owner_type_check", sql`${t.ownerType} IN ('user', 'org')`),
@@ -46,10 +52,35 @@ export const financialAccounts = sqliteTable(
 export type FinancialAccount = typeof financialAccounts.$inferSelect;
 
 /**
- * Tight insert type for financial accounts.
- * Omit auto-generated and default fields to ensure callers only provide essential data.
+ * Repository input schema for financial accounts.
+ * Explicitly overrides fields with DB defaults to be strictly REQUIRED
+ * in the persistence layer (Rule 78/85).
  */
-export type NewFinancialAccount = Omit<
-    typeof financialAccounts.$inferInsert,
-    "id" | "createdAt" | "updatedAt" | "balanceCents" | "isActive" | "archivedAt"
->;
+export const createAccountRepoInputSchema = createInsertSchema(financialAccounts, {
+    id: z.string().min(1),
+    ownerType: z.enum(["user", "org"]),
+    accountType: z.enum(["standard", "platform_treasury"]),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+}).extend({
+    // Explicitly allow optional fields to ensure spread compatibility
+    balanceCents: z.number().int().optional(),
+    isActive: z.boolean().optional(),
+    isFundingAccount: z.boolean().optional(),
+    archivedAt: z.date().nullable().optional(),
+    organizationId: z.string().nullable().optional(),
+});
+
+export type CreateAccountRepoInput = z.infer<typeof createAccountRepoInputSchema>;
+
+/**
+ * Lean frontend type for financial account creation.
+ * Derived from the DTO layer to isolate frontend from persistence fields.
+ */
+export type NewFinancialAccount = {
+    name: string;
+    currencyId: string;
+    ownerId: string;
+    ownerType: "user" | "org";
+    organizationId?: string | null;
+};

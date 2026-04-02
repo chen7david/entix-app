@@ -16,7 +16,7 @@ export class MediaHandlers {
             search,
             type
         );
-        return ctx.json(paginatedResult, HttpStatusCodes.OK);
+        return ctx.json({ data: paginatedResult }, HttpStatusCodes.OK);
     };
 
     static createMedia: AppHandler<typeof MediaRoutes.createMedia> = async (ctx) => {

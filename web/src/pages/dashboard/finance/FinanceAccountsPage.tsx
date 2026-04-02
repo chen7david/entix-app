@@ -30,8 +30,8 @@ export const FinanceAccountsPage: React.FC = () => {
     // Fetch ALL active accounts for the org
     const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(orgId, "org");
 
-    const activated = currenciesData?.currencies.filter((c) => c.isActivated) ?? [];
-    const available = currenciesData?.currencies.filter((c) => !c.isActivated) ?? [];
+    const activated = currenciesData?.filter((c) => c.isActivated) ?? [];
+    const available = currenciesData?.filter((c) => !c.isActivated) ?? [];
 
     const handleAccountClick = (account: WalletAccount) => {
         setSelectedAccount(account);
@@ -76,10 +76,10 @@ export const FinanceAccountsPage: React.FC = () => {
                             </Title>
                             <Tag
                                 color="blue"
-                                bordered={false}
+                                variant="filled"
                                 style={{ borderRadius: 6, fontWeight: 600 }}
                             >
-                                {balanceData?.accounts.length || 0}
+                                {balanceData?.accounts?.length || 0}
                             </Tag>
                         </Flex>
                         <OrgAccountCardGrid
@@ -163,6 +163,7 @@ export const FinanceAccountsPage: React.FC = () => {
                     onClose={() => setIsManageDrawerOpen(false)}
                     account={selectedAccount}
                     orgId={orgId}
+                    size="default"
                 />
                 <CreateAccountDrawer
                     open={isCreateDrawerOpen}

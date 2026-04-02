@@ -1,38 +1,12 @@
 import type { AppDb } from "@api/factories/db.factory";
 import {
+    type CreateTransactionRepoInput,
     financialAccounts,
     financialTransactionLines,
     financialTransactions,
 } from "@shared/db/schema";
+import type { PaginationInput, TransactionFilters } from "@shared/schemas/dto/financial.dto";
 import { and, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
-import { nanoid } from "nanoid";
-
-export type CreateTransactionInput = {
-    organizationId: string;
-    categoryId: string;
-    sourceAccountId: string;
-    destinationAccountId: string;
-    currencyId: string;
-    amountCents: number;
-    description?: string;
-    transactionDate: Date;
-};
-
-export type PaginationInput = {
-    page: number;
-    pageSize: number;
-};
-
-export type TransactionFilters = PaginationInput & {
-    startDate?: string;
-    endDate?: string;
-    minAmount?: number;
-    maxAmount?: number;
-    txId?: string;
-    accountId?: string;
-    status?: "pending" | "completed" | "reversed";
-    categoryId?: string;
-};
 
 /**
  * Financial transactions are NEVER hard-deleted to preserve ledger integrity.
@@ -67,95 +41,98 @@ export class FinancialTransactionsRepository {
     }
 
     /**
-     * Returns the four raw D1-compatible statements needed for one
-     * complete double-entry transaction. Intended to be passed directly
-     * into db.batch([...]) inside FinancialService.executeTransaction().
-     *
-     * Statements (in order):
-     * 1. Debit source account (balance - amountCents)
-     * 2. Credit destination account (balance + amountCents)
-     * 3. Insert financial_transactions record
-     * 4. Insert two financial_transaction_lines (debit + credit pair)
+     * Prepares the SQL statements required for an atomic double-entry transaction.
+     * 1. Debit the source account (with balance guard)
+     * 2. Credit the destination account
+     * 3. Insert the transaction header
+     * 4. Insert the transaction lines
      */
-    prepareStatements(input: CreateTransactionInput) {
-        const txId = nanoid();
-        const debitLineId = nanoid();
-        const creditLineId = nanoid();
-        const now = new Date();
-
-        const debitSourceAccount = this.db
+    prepareStatements(input: CreateTransactionRepoInput) {
+        // 1. Debit Source
+        const debitStatement = this.db
             .update(financialAccounts)
             .set({
                 balanceCents: sql`${financialAccounts.balanceCents} - ${input.amountCents}`,
-                updatedAt: now,
+                updatedAt: input.createdAt,
             })
             .where(
                 and(
                     eq(financialAccounts.id, input.sourceAccountId),
-                    sql`${financialAccounts.balanceCents} >= ${input.amountCents}`
+                    eq(financialAccounts.isActive, true),
+                    gte(financialAccounts.balanceCents, input.amountCents)
                 )
             );
 
-        const creditDestinationAccount = this.db
+        // 2. Credit Destination
+        const creditStatement = this.db
             .update(financialAccounts)
             .set({
                 balanceCents: sql`${financialAccounts.balanceCents} + ${input.amountCents}`,
-                updatedAt: now,
+                updatedAt: input.createdAt,
             })
-            .where(eq(financialAccounts.id, input.destinationAccountId));
+            .where(
+                and(
+                    eq(financialAccounts.id, input.destinationAccountId),
+                    eq(financialAccounts.isActive, true)
+                )
+            );
 
-        const insertTransaction = this.db.insert(financialTransactions).values({
-            id: txId,
+        // 3. Insert Transaction Header
+        const insertStatement = this.db.insert(financialTransactions).values({
+            id: input.id,
             organizationId: input.organizationId,
             categoryId: input.categoryId,
             sourceAccountId: input.sourceAccountId,
             destinationAccountId: input.destinationAccountId,
             currencyId: input.currencyId,
             amountCents: input.amountCents,
-            status: "completed",
-            description: input.description ?? null,
+            description: input.description,
             transactionDate: input.transactionDate,
-            createdAt: now,
+            createdAt: input.createdAt,
+            status: "completed",
         });
 
-        const insertLines = this.db.insert(financialTransactionLines).values([
-            {
-                id: debitLineId,
-                transactionId: txId,
-                accountId: input.sourceAccountId,
-                direction: "debit",
-                amountCents: input.amountCents,
-                createdAt: now,
-            },
-            {
-                id: creditLineId,
-                transactionId: txId,
-                accountId: input.destinationAccountId,
-                direction: "credit",
-                amountCents: input.amountCents,
-                createdAt: now,
-            },
-        ]);
+        // 4. Insert Transaction Lines (for audit trail)
+        const debitLineStatement = this.db.insert(financialTransactionLines).values({
+            id: input.debitLineId,
+            transactionId: input.id,
+            accountId: input.sourceAccountId,
+            amountCents: input.amountCents,
+            direction: "debit",
+            createdAt: input.createdAt,
+        });
 
-        return {
-            txId,
-            statements: [
-                debitSourceAccount,
-                creditDestinationAccount,
-                insertTransaction,
-                insertLines,
-            ],
-        };
+        const creditLineStatement = this.db.insert(financialTransactionLines).values({
+            id: input.creditLineId,
+            transactionId: input.id,
+            accountId: input.destinationAccountId,
+            amountCents: input.amountCents,
+            direction: "credit",
+            createdAt: input.createdAt,
+        });
+
+        return [
+            debitStatement,
+            creditStatement,
+            insertStatement,
+            debitLineStatement,
+            creditLineStatement,
+        ] as const;
     }
 
     /**
-     * Executes a complete double-entry transaction atomically.
-     * Services should use this instead of direct db.batch calls.
+     * Atomic double-entry insert using D1 batch.
      */
-    async insert(input: CreateTransactionInput): Promise<string> {
-        const { txId, statements } = this.prepareStatements(input);
-        await this.db.batch(statements as any);
-        return txId;
+    async insert(input: CreateTransactionRepoInput): Promise<string> {
+        const statements = this.prepareStatements(input);
+        const [debitResult] = await this.db.batch(statements as any);
+
+        // Verify the debit actually hit a row (balance check + active check)
+        if (debitResult.meta.rows_written === 0) {
+            throw new Error("Insufficient funds, inactive account, or currency mismatch");
+        }
+
+        return input.id;
     }
 
     async findByOrgId(organizationId: string, filters: TransactionFilters) {

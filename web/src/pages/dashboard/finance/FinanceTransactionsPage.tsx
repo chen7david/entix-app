@@ -153,16 +153,16 @@ export const FinanceTransactionsPage: React.FC = () => {
 
                 {/* Table */}
                 <TransactionLedgerTable
-                    transactions={data?.data || []}
+                    transactions={data?.items || []}
                     loading={isLoading}
                     onReverse={(txId, reason) => reverse({ txId, reason })}
                     isReversing={isReversing ? variables?.txId : null}
                     pagination={{
                         current: page,
                         pageSize: pageSize,
-                        total: data?.data?.length
-                            ? data.data.length < pageSize
-                                ? (page - 1) * pageSize + data.data.length
+                        total: data?.items?.length
+                            ? data.items.length < pageSize
+                                ? (page - 1) * pageSize + data.items.length
                                 : 1000
                             : 0,
                         onChange: (p, ps) => {

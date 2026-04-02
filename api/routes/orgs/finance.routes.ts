@@ -4,28 +4,22 @@ import {
     jsonContent,
     jsonContentRequired,
 } from "@api/helpers/http.helpers";
-import { createRoute } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import {
+    activateCurrencyRequestSchema,
     createFinancialAccountResponseSchema,
     createFinancialAccountSchema,
     currencyListWithStatusResponseSchema,
-    executeTransferResponseSchema,
+    executeTransferRequestSchema,
     listFinancialAccountsResponseSchema,
+    reverseTransactionRequestSchema,
     transactionHistoryResponseSchema,
+    transactionResultSchema,
     walletSummaryResponseSchema,
 } from "@shared";
-import { z } from "zod";
+import { successResponseSchema } from "@shared/schemas/dto/base.dto";
 
 const tags = ["Wallet"];
-
-const transferSchema = z.object({
-    categoryId: z.string().min(1),
-    sourceAccountId: z.string().min(1),
-    destinationAccountId: z.string().min(1),
-    currencyId: z.string().min(1),
-    amountCents: z.number().int().positive(),
-    description: z.string().optional(),
-});
 
 export const FinanceRoutes = {
     tags,
@@ -40,7 +34,7 @@ export const FinanceRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                walletSummaryResponseSchema,
+                z.object({ data: walletSummaryResponseSchema }),
                 "Wallet balance fetched successfully"
             ),
         },
@@ -84,11 +78,11 @@ export const FinanceRoutes = {
                 organizationId: z.string(),
                 txId: z.string(),
             }),
-            body: jsonContentRequired(z.object({ reason: z.string().min(1) }), "Reversal reason"),
+            body: jsonContentRequired(reverseTransactionRequestSchema, "Reversal reason"),
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(
-                executeTransferResponseSchema,
+                z.object({ data: transactionResultSchema }),
                 "Reversal transaction created"
             ),
         },
@@ -101,11 +95,11 @@ export const FinanceRoutes = {
         summary: "Execute an internal transfer between accounts",
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: jsonContentRequired(transferSchema, "Transfer details"),
+            body: jsonContentRequired(executeTransferRequestSchema, "Transfer details"),
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(
-                executeTransferResponseSchema,
+                z.object({ data: transactionResultSchema }),
                 "Transfer executed successfully"
             ),
         },
@@ -122,7 +116,7 @@ export const FinanceRoutes = {
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(
-                createFinancialAccountResponseSchema,
+                z.object({ data: createFinancialAccountResponseSchema }),
                 "Account created successfully"
             ),
             [HttpStatusCodes.CONFLICT]: jsonContent(
@@ -165,7 +159,7 @@ export const FinanceRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                createFinancialAccountResponseSchema,
+                successResponseSchema,
                 "Account deactivated successfully"
             ),
         },
@@ -194,14 +188,11 @@ export const FinanceRoutes = {
         summary: "Activate a currency for this org by creating a General Fund account",
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: jsonContentRequired(
-                z.object({ currencyId: z.string().min(1) }),
-                "Currency to activate"
-            ),
+            body: jsonContentRequired(activateCurrencyRequestSchema, "Currency to activate"),
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(
-                createFinancialAccountResponseSchema,
+                z.object({ data: createFinancialAccountResponseSchema }),
                 "Currency activated — General Fund account created"
             ),
         },
@@ -220,10 +211,7 @@ export const FinanceRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                z.object({
-                    success: z.boolean(),
-                    results: z.array(z.any()),
-                }),
+                successResponseSchema,
                 "Wallet initialization completed"
             ),
         },

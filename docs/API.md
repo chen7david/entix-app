@@ -62,8 +62,9 @@
 | 42  | When to Write Tests         | Test Patterns          |
 | 43  | Factory Registration        | Feature Workflow       |
 | 44  | Workflow Order              | Feature Workflow       |
-| 45  | When to Update API.md       | Documentation          |
-| 46  | Typecheck Gate              | Verification           |
+| 45  | Narrow Error Catching       | Error Handling         |
+| 46  | When to Update API.md       | Documentation          |
+| 47  | Typecheck Gate              | Verification           |
 
 ---
 
@@ -204,14 +205,27 @@ throw new AppError(409, 'Member already exists in this organization');
 Handlers MUST NOT wrap service calls in `try/catch`.
 The shared error middleware handles all `AppError` and `HTTPException` globally.
 
-### Rule 15 — No Generic Errors
-Never throw `new Error(...)` anywhere in the stack.
-All thrown errors MUST be `AppError` instances with a meaningful HTTP status and message.
+### Rule 15 — No Generic Errors [MANDATORY]
+Never throw `new Error(...)` anywhere in the stack, especially in Services.
+All thrown errors MUST be `AppError` subclasses with a meaningful HTTP status. Generic `Error` objects bypass structured logging and context enrichment in the global error handler.
 
 ### Rule 16 — Repo Constraint Handling
 Database constraint violations thrown by Drizzle inside a Repository MUST be caught
 in the Service layer, not the Repository. Repositories propagate raw Drizzle errors
 upward — Services interpret them.
+
+### Rule 45 — Narrow Error Catching [MANDATORY]
+Never type caught errors as `any`. Use `unknown` and narrow with `instanceof`. `catch (error: any)` is strictly prohibited as it defeats TypeScript's type safety during critical error restoration. All services MUST type caught errors as `unknown`.
+
+```ts
+// ✅ Correct
+try { ... } catch (error: unknown) {
+  if (error instanceof ConflictError) { ... }
+}
+
+// ❌ Prohibited
+try { ... } catch (error: any) { ... }
+```
 
 ---
 

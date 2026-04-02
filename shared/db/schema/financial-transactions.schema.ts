@@ -1,5 +1,7 @@
 import { sql } from "drizzle-orm";
 import { check, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
 import { financialAccounts } from "./financial-accounts.schema";
 import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
@@ -45,6 +47,22 @@ export const financialTransactions = sqliteTable(
 );
 
 export type FinancialTransaction = typeof financialTransactions.$inferSelect;
+
+/**
+ * Repository input schema for financial transactions.
+ * Includes synthetic fields for the atomic double-entry lines (Rule 78).
+ */
+export const createTransactionRepoInputSchema = createInsertSchema(financialTransactions, {
+    id: z.string().min(1),
+    createdAt: z.date(),
+    transactionDate: z.date(),
+}).extend({
+    debitLineId: z.string().min(1),
+    creditLineId: z.string().min(1),
+});
+
+export type CreateTransactionRepoInput = z.infer<typeof createTransactionRepoInputSchema>;
+
 export type NewFinancialTransaction = Omit<
     typeof financialTransactions.$inferInsert,
     "id" | "createdAt"

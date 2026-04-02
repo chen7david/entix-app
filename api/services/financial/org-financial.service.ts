@@ -1,10 +1,11 @@
+import { NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
-import type {
-    FinancialTransactionsRepository,
-    TransactionFilters,
-} from "@api/repositories/financial/financial-transactions.repository";
+import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { createAccountRepoInputSchema } from "@shared/db/schema";
+import type { TransactionFilters } from "@shared/schemas/dto/financial.dto";
+import { nanoid } from "nanoid";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -34,8 +35,8 @@ export class OrgFinancialService extends FinancialBaseService {
         amountCents: number;
         description?: string;
     }) {
-        // Enforce shared transaction logic from base
-        return this.transactionsRepo.insert({
+        // Use shared logic from FinancialBaseService to enforce guards
+        return this.executeTransaction({
             ...input,
             transactionDate: new Date(),
         });
@@ -46,7 +47,7 @@ export class OrgFinancialService extends FinancialBaseService {
      */
     async reverseTransaction(txId: string, organizationId: string, reason: string) {
         const original = await this.transactionsRepo.findById(txId);
-        if (!original) throw new Error("Transaction not found");
+        if (!original) throw new NotFoundError("Transaction not found");
         if (original.status === "reversed") throw new Error("Transaction already reversed");
 
         // Execute mirror transaction (swap source and destination)
@@ -124,14 +125,21 @@ export class OrgFinancialService extends FinancialBaseService {
             }
         }
 
-        const account = await this.accountsRepo.insert({
+        const now = new Date();
+        const accountInput = createAccountRepoInputSchema.parse({
+            id: `acc_${nanoid()}`,
             ownerId: input.organizationId,
             ownerType: "org",
             currencyId: input.currencyId,
             name: input.name,
             organizationId: null, // Scoped accounts are only for users
             isFundingAccount: false, // Custom accounts are never funding accounts
+            accountType: "standard",
+            createdAt: now,
+            updatedAt: now,
         });
+
+        const account = await this.accountsRepo.insert(accountInput);
 
         return { success: true, account };
     }
@@ -143,21 +151,28 @@ export class OrgFinancialService extends FinancialBaseService {
         const currencies = await this.currenciesRepo.findAllWithOrgStatus(orgId);
         const target = currencies.find((c) => c.id === currencyId);
 
-        if (!target) throw new Error("Currency not found");
+        if (!target) throw new NotFoundError("Currency not found");
         if (target.isActivated) {
             throw new Error(`Currency ${target.code} is already activated`);
         }
 
-        const account = await this.accountsRepo.insert({
+        const now = new Date();
+        const accountInput = createAccountRepoInputSchema.parse({
+            id: `acc_${nanoid()}`,
             ownerId: orgId,
             ownerType: "org",
             currencyId,
             organizationId: null,
             name: `General Fund — ${target.code}`,
             isFundingAccount: true, // Auto-set at activation
+            accountType: "standard",
+            createdAt: now,
+            updatedAt: now,
         });
 
-        return this.assertExists(account, "Failed to create General Fund account");
+        const account = await this.accountsRepo.insert(accountInput);
+
+        return this.assertExists(account, "Account not found");
     }
 
     /**

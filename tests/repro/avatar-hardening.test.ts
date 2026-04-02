@@ -24,7 +24,7 @@ describe("Avatar Hardening", () => {
         await createTestDb();
         const { cookie, orgData } = await createAuthenticatedOrg({ app, env });
         client = createTestClient(app, env, cookie);
-        userId = orgData.user.id;
+        userId = orgData.data.user.id;
     });
 
     it("should return 409 Conflict when upload is not completed", async () => {

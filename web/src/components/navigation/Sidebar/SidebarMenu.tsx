@@ -85,10 +85,26 @@ export const SidebarMenu: React.FC = () => {
         ...(activeOrganization && isAdminOrOwner
             ? [
                   {
-                      label: "Organizations",
-                      key: AppRoutes.org.manage.index,
-                      icon: <BankOutlined />,
-                      disabled: !slug,
+                      label: "Finance",
+                      key: "finance_group",
+                      icon: <DollarOutlined />,
+                      children: [
+                          {
+                              label: "Accounts",
+                              key: "/finance/accounts",
+                              icon: <BankOutlined />,
+                          },
+                          {
+                              label: "Transactions",
+                              key: "/finance/transactions",
+                              icon: <TransactionOutlined />,
+                          },
+                          {
+                              label: "Payments",
+                              key: "/finance/payments",
+                              icon: <WalletOutlined />,
+                          },
+                      ],
                   },
                   {
                       label: "Media",
@@ -128,26 +144,10 @@ export const SidebarMenu: React.FC = () => {
                       icon: <UserAddOutlined />,
                   },
                   {
-                      label: "Finance",
-                      key: "finance_group",
-                      icon: <DollarOutlined />,
-                      children: [
-                          {
-                              label: "Accounts",
-                              key: "/finance/accounts",
-                              icon: <BankOutlined />,
-                          },
-                          {
-                              label: "Transactions",
-                              key: "/finance/transactions",
-                              icon: <TransactionOutlined />,
-                          },
-                          {
-                              label: "Payments",
-                              key: "/finance/payments",
-                              icon: <WalletOutlined />,
-                          },
-                      ],
+                      label: "Organizations",
+                      key: AppRoutes.org.manage.index,
+                      icon: <BankOutlined />,
+                      disabled: !slug,
                   },
                   {
                       label: "Files & Uploads",

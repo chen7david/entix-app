@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { parseApiError } from "@web/src/utils/api";
 
 export type CurrencyWithStatus = {
     id: string;
@@ -12,14 +13,15 @@ export type CurrencyWithStatus = {
 };
 
 export const useOrgCurrencies = (orgId?: string) => {
-    return useQuery<{ currencies: CurrencyWithStatus[] }>({
+    return useQuery({
         queryKey: ["orgCurrencies", orgId],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
             const res = await fetch(`${API_V1}/orgs/${orgId}/finance/currencies`);
-            if (!res.ok) throw new Error("Failed to fetch currencies");
-            return res.json();
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as { data: CurrencyWithStatus[] };
         },
+        select: (res) => res?.data,
         enabled: !!orgId,
         staleTime: 1000 * 60 * 60 * 24, // 24 hours — currencies rarely change
         gcTime: 1000 * 60 * 60 * 24,
@@ -29,10 +31,9 @@ export const useOrgCurrencies = (orgId?: string) => {
 // Convenience selector — only activated currencies for dropdowns
 export const useActivatedCurrencies = (orgId?: string) => {
     const query = useOrgCurrencies(orgId);
+
     return {
         ...query,
-        data: query.data
-            ? { currencies: query.data.currencies.filter((c) => c.isActivated) }
-            : undefined,
+        currencies: query.data ? query.data.filter((c) => c.isActivated) : [],
     };
 };

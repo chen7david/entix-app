@@ -1,11 +1,9 @@
+import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
-import type {
-    CreateTransactionInput,
-    FinancialTransactionsRepository,
-} from "@api/repositories/financial/financial-transactions.repository";
-import { getTreasuryAccountId } from "@shared";
-import { BadRequestError } from "../../errors/app.error";
+import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { createTransactionRepoInputSchema } from "@shared/db/schema";
+import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
 /**
@@ -24,67 +22,78 @@ export abstract class FinancialBaseService extends BaseService {
     }
 
     /**
-     * Executes an atomic double-entry transaction.
-     * Includes a strict currency mismatch guard to prevent cross-currency transfers.
+     * Executes a core double-entry transaction.
+     * Enforces currency matching, balance checks, and bidirectional treasury guards.
      */
-    protected async executeTransaction(input: CreateTransactionInput) {
-        // 1. Core Record Existence Guard (Source, Destination, and Category)
-        const [source, destination, category] = await Promise.all([
+    async executeTransaction(input: {
+        organizationId: string;
+        categoryId: string;
+        sourceAccountId: string;
+        destinationAccountId: string;
+        currencyId: string;
+        amountCents: number;
+        description?: string | null;
+        transactionDate?: Date; // Optional, defaults to now
+    }): Promise<string> {
+        const [source, destination] = await Promise.all([
             this.accountsRepo.findById(input.sourceAccountId),
             this.accountsRepo.findById(input.destinationAccountId),
-            this.db.query.financialTransactionCategories.findFirst({
-                where: (categories, { eq }) => eq(categories.id, input.categoryId),
-            }),
         ]);
 
         if (!source || !destination) {
-            throw new BadRequestError(
-                `Source (${input.sourceAccountId}) or destination (${input.destinationAccountId}) account not found`
+            throw new NotFoundError("Source or destination account not found");
+        }
+
+        // Ledger Hardening: Currency Isolation
+        if (source.currencyId !== input.currencyId || destination.currencyId !== input.currencyId) {
+            throw new BadRequestError("Currency mismatch between accounts and transaction");
+        }
+
+        // Safety Guard: Treasury Protection (Bidirectional via accountType)
+        const sourceIsTreasury = source.accountType === "platform_treasury";
+        const destIsTreasury = destination.accountType === "platform_treasury";
+
+        if (sourceIsTreasury && !destination.isFundingAccount) {
+            throw new ForbiddenError(
+                "Only funding accounts can withdraw from the platform treasury"
+            );
+        }
+        if (destIsTreasury && !source.isFundingAccount) {
+            throw new ForbiddenError(
+                "Only funding accounts can deposit into the platform treasury"
             );
         }
 
-        if (!category) {
-            throw new BadRequestError(
-                `Invalid transaction category: "${input.categoryId}". Ensure financial foundations are seeded.`
-            );
-        }
-
-        if (
-            source.currencyId !== destination.currencyId ||
-            source.currencyId !== input.currencyId
-        ) {
-            throw new BadRequestError(
-                `Currency mismatch: Source (${source.currencyId}), Destination (${destination.currencyId}), and Transaction (${input.currencyId}) must all match.`
-            );
-        }
-
-        // 2. Treasury Guard: Only General Fund accounts can transact with platform treasury
-        const treasuryId = getTreasuryAccountId(input.currencyId);
-        if (source.id === treasuryId || destination.id === treasuryId) {
-            const orgAccount = source.id === treasuryId ? destination : source;
-
-            if (!orgAccount.isFundingAccount) {
-                throw new BadRequestError(
-                    "Only General Fund accounts can transact with the platform treasury. " +
-                        "Custom accounts must receive funds via internal transfer from a General Fund account."
-                );
-            }
-        }
-
-        // 3. Insufficient Funds Guard (Shared logic for all transfers)
+        // Balance Check (Atomic inside repo, but we fail fast here too)
         if (source.balanceCents < input.amountCents) {
-            throw new BadRequestError("Insufficient treasury funds");
+            throw new BadRequestError("Insufficient funds");
         }
 
-        // 3. Delegate to repository for atomic D1 batch execution
-        return this.transactionsRepo.insert(input);
+        // Generate IDs and timestamps (Rule 78)
+        const now = new Date();
+        const txId = `tx_${nanoid()}`;
+        const debitLineId = `txl_${nanoid()}`;
+        const creditLineId = `txl_${nanoid()}`;
+
+        // Validate at Service Boundary (Rule 85)
+        const repoInput = createTransactionRepoInputSchema.parse({
+            ...input,
+            id: txId,
+            transactionDate: input.transactionDate ?? now,
+            createdAt: now,
+            debitLineId,
+            creditLineId,
+        });
+
+        return this.transactionsRepo.insert(repoInput);
     }
 
     /**
      * Deactivates an account to prevent further transactions.
      */
     async deactivateAccount(accountId: string) {
-        const account = await this.accountsRepo.deactivate(accountId);
+        const now = new Date();
+        const account = await this.accountsRepo.deactivate(accountId, now);
         return this.assertExists(account, `Account ${accountId} not found`);
     }
 }

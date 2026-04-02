@@ -2,10 +2,10 @@ import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
-import type {
-    FinancialTransactionsRepository,
-    PaginationInput,
-} from "@api/repositories/financial/financial-transactions.repository";
+import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { createAccountRepoInputSchema } from "@shared/db/schema";
+import { generateAccountId } from "@shared/lib";
+import type { PaginationInput } from "@shared/schemas/dto/financial.dto";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -83,12 +83,21 @@ export class UserFinancialService extends FinancialBaseService {
             }
         }
 
-        const account = await this.accountsRepo.insert({
+        const accountId = generateAccountId();
+        const now = new Date();
+
+        const accountInput = createAccountRepoInputSchema.parse({
             ...input,
+            id: accountId,
             ownerId: input.userId,
             ownerType: "user",
             organizationId: input.orgId,
+            createdAt: now,
+            updatedAt: now,
+            accountType: "standard",
         });
+
+        const account = await this.accountsRepo.insert(accountInput);
 
         return { success: true, account };
     }

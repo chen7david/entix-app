@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
 
@@ -40,11 +41,12 @@ export const usePlaylists = () => {
     const { data: playlists = [], isLoading: isLoadingPlaylists } = useQuery({
         queryKey: ["playlists", orgId],
         queryFn: async () => {
-            if (!orgId) return [];
+            if (!orgId) return { data: [] };
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists`);
-            if (!res.ok) throw new Error("Failed to fetch playlists");
-            return (await res.json()) as Playlist[];
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as { data: Playlist[] };
         },
+        select: (res) => res?.data,
         enabled: !!orgId,
     });
 
@@ -57,7 +59,7 @@ export const usePlaylists = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),
             });
-            if (!res.ok) throw new Error("Failed to create playlist");
+            if (!res.ok) await parseApiError(res);
             return (await res.json()) as Playlist;
         },
         onSuccess: () => {
@@ -65,8 +67,8 @@ export const usePlaylists = () => {
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
-        onError: () => {
-            message.error("Failed to sequence playlist");
+        onError: (error: Error) => {
+            message.error(error.message || "Failed to create playlist");
         },
     });
 
@@ -85,7 +87,7 @@ export const usePlaylists = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updates),
             });
-            if (!res.ok) throw new Error("Failed to patch playlist");
+            if (!res.ok) await parseApiError(res);
             return (await res.json()) as Playlist;
         },
         onSuccess: () => {
@@ -93,8 +95,8 @@ export const usePlaylists = () => {
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
-        onError: () => {
-            message.error("Failed to commit settings");
+        onError: (error: Error) => {
+            message.error(error.message || "Failed to update playlist");
         },
     });
 
@@ -105,11 +107,14 @@ export const usePlaylists = () => {
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`, {
                 method: "DELETE",
             });
-            if (!res.ok) throw new Error("Failed to delete playlist");
+            if (!res.ok) await parseApiError(res);
         },
         onSuccess: () => {
-            message.success("Playlist shattered");
+            message.success("Playlist deleted");
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
+        },
+        onError: (error: Error) => {
+            message.error(error.message || "Failed to delete playlist");
         },
     });
 
@@ -117,7 +122,7 @@ export const usePlaylists = () => {
     const getSequence = async (playlistId: string): Promise<PlaylistMediaSequenceItem[]> => {
         if (!orgId) return [];
         const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`);
-        if (!res.ok) throw new Error("Failed to fetch sequence mappings");
+        if (!res.ok) await parseApiError(res);
         return await res.json();
     };
 
@@ -135,14 +140,13 @@ export const usePlaylists = () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ mediaIds }),
             });
-            if (!res.ok) throw new Error("Failed to sync structural order");
+            if (!res.ok) await parseApiError(res);
         },
         onSuccess: (_, variables) => {
-            // We can silently rewrite the query cache here or let React rely on local state
             queryClient.invalidateQueries({ queryKey: ["playlistSequence", variables.playlistId] });
         },
-        onError: () => {
-            message.error("Failed to persist the media order");
+        onError: (error: Error) => {
+            message.error(error.message || "Failed to persist the media order");
         },
     });
 

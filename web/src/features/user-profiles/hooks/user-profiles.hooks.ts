@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { parseApiError } from "@web/src/utils/api";
 
 export const useUserProfile = (userId?: string) => {
     const queryClient = useQueryClient();
@@ -8,7 +9,7 @@ export const useUserProfile = (userId?: string) => {
         queryKey: ["userProfile", userId],
         queryFn: async () => {
             const res = await fetch(`${API_V1}/users/${userId}/profile`);
-            if (!res.ok) throw new Error("Failed to fetch profile");
+            if (!res.ok) await parseApiError(res);
             return res.json();
         },
         enabled: !!userId,
@@ -21,7 +22,7 @@ export const useUserProfile = (userId?: string) => {
                 headers: payload ? { "Content-Type": "application/json" } : undefined,
                 body: payload ? JSON.stringify(payload) : undefined,
             });
-            if (!res.ok) throw new Error(`Request failed: ${pathSuffix}`);
+            if (!res.ok) await parseApiError(res);
             return res.json();
         };
     };

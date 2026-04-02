@@ -1,6 +1,12 @@
 import { financialCurrencySeed } from "@api/db/seed/financial.seed";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
-import { authOrganizations, financialAccounts, financialCurrencies } from "@shared/db/schema";
+import {
+    authOrganizations,
+    type CreateAccountRepoInput,
+    financialAccounts,
+    financialCurrencies,
+} from "@shared/db/schema";
+import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, type TestDb } from "../lib/utils";
 
@@ -9,16 +15,22 @@ describe("financialAccountsRepository", () => {
     let repo: FinancialAccountsRepository;
 
     // Factory for variations in test data
-    const makeInput = (overrides = {}) => ({
+    const makeAccountInput = (
+        overrides?: Partial<CreateAccountRepoInput>
+    ): CreateAccountRepoInput => ({
+        id: `facc_${nanoid()}`,
         ownerId: "user_test_01",
-        ownerType: "user" as const,
+        ownerType: "user",
         currencyId: "fcur_usd",
         organizationId: "org_test_01",
         name: "Personal Wallet",
+        accountType: "standard",
+        createdAt: new Date(),
+        updatedAt: new Date(),
         ...overrides,
     });
 
-    const BASE_INPUT = makeInput();
+    const BASE_INPUT = makeAccountInput();
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -65,7 +77,7 @@ describe("financialAccountsRepository", () => {
 
         it("creates an org account", async () => {
             const account = await repo.insert(
-                makeInput({
+                makeAccountInput({
                     ownerId: "org_test_01",
                     ownerType: "org",
                     currencyId: "fcur_cad",
@@ -80,13 +92,13 @@ describe("financialAccountsRepository", () => {
 
         it("allows multiple accounts per owner", async () => {
             await repo.insert(BASE_INPUT);
-            await repo.insert(makeInput({ name: "Savings" }));
+            await repo.insert(makeAccountInput({ name: "Savings" }));
             const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(2);
         });
 
         it("returns null on unknown currencyId (FK violation)", async () => {
-            const account = await repo.insert(makeInput({ currencyId: "fcur_nonexistent" }));
+            const account = await repo.insert(makeAccountInput({ currencyId: "fcur_nonexistent" }));
             expect(account).toBeNull();
         });
     });
@@ -118,9 +130,9 @@ describe("financialAccountsRepository", () => {
         it("excludes deactivated accounts", async () => {
             const active = await repo.insert(BASE_INPUT);
             if (!active) throw new Error("Insert failed");
-            const inactive = await repo.insert(makeInput({ name: "Inactive" }));
+            const inactive = await repo.insert(makeAccountInput({ name: "Inactive" }));
             if (!inactive) throw new Error("Insert failed");
-            await repo.deactivate(inactive.id);
+            await repo.deactivate(inactive.id, new Date());
 
             const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(1);
@@ -130,9 +142,9 @@ describe("financialAccountsRepository", () => {
         it("excludes archived accounts", async () => {
             const active = await repo.insert(BASE_INPUT);
             if (!active) throw new Error("Insert failed");
-            const archived = await repo.insert(makeInput({ name: "Archived" }));
+            const archived = await repo.insert(makeAccountInput({ name: "Archived" }));
             if (!archived) throw new Error("Insert failed");
-            await repo.archive(archived.id);
+            await repo.archive(archived.id, new Date());
 
             const results = await repo.findActiveByOwner("user_test_01", "user", "org_test_01");
             expect(results).toHaveLength(1);
@@ -142,7 +154,7 @@ describe("financialAccountsRepository", () => {
         it("does not return other owners accounts", async () => {
             await repo.insert(BASE_INPUT);
             await repo.insert(
-                makeInput({
+                makeAccountInput({
                     ownerId: "org_test_01",
                     ownerType: "org",
                     organizationId: null,
@@ -162,19 +174,19 @@ describe("financialAccountsRepository", () => {
         it("sets isActive to false", async () => {
             const account = await repo.insert(BASE_INPUT);
             if (!account) throw new Error("Insert failed");
-            const updated = await repo.deactivate(account.id);
+            const updated = await repo.deactivate(account.id, new Date());
             expect(updated?.isActive).toBe(false);
         });
 
         it("returns null when account not found", async () => {
-            const result = await repo.deactivate("facc_ghost");
+            const result = await repo.deactivate("facc_ghost", new Date());
             expect(result).toBeNull();
         });
 
         it("deactivated account is still findable by id", async () => {
             const account = await repo.insert(BASE_INPUT);
             if (!account) throw new Error("Insert failed");
-            await repo.deactivate(account.id);
+            await repo.deactivate(account.id, new Date());
             const found = await repo.findById(account.id);
             expect(found).not.toBeNull();
             expect(found?.isActive).toBe(false);
@@ -187,19 +199,19 @@ describe("financialAccountsRepository", () => {
         it("sets archivedAt to a timestamp", async () => {
             const account = await repo.insert(BASE_INPUT);
             if (!account) throw new Error("Insert failed");
-            const updated = await repo.archive(account.id);
+            const updated = await repo.archive(account.id, new Date());
             expect(updated?.archivedAt).toBeInstanceOf(Date);
         });
 
         it("returns null when account not found", async () => {
-            const result = await repo.archive("facc_ghost");
+            const result = await repo.archive("facc_ghost", new Date());
             expect(result).toBeNull();
         });
 
         it("archived account is still findable by id", async () => {
             const account = await repo.insert(BASE_INPUT);
             if (!account) throw new Error("Insert failed");
-            await repo.archive(account.id);
+            await repo.archive(account.id, new Date());
             const found = await repo.findById(account.id);
             expect(found?.archivedAt).not.toBeNull();
         });
@@ -207,8 +219,8 @@ describe("financialAccountsRepository", () => {
         it("account can be both deactivated and archived", async () => {
             const account = await repo.insert(BASE_INPUT);
             if (!account) throw new Error("Insert failed");
-            await repo.deactivate(account.id);
-            await repo.archive(account.id);
+            await repo.deactivate(account.id, new Date());
+            await repo.archive(account.id, new Date());
             const found = await repo.findById(account.id);
             expect(found?.isActive).toBe(false);
             expect(found?.archivedAt).toBeInstanceOf(Date);

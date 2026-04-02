@@ -7,7 +7,7 @@ export class FinanceHandler {
     static getWalletBalance: AppHandler<typeof FinanceRoutes.getBalance> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const summary = await getOrgFinancialService(ctx).getOrgSummary(organizationId);
-        return ctx.json(summary, HttpStatusCodes.OK);
+        return ctx.json({ data: summary }, HttpStatusCodes.OK);
     };
 
     static getTransactionHistory: AppHandler<typeof FinanceRoutes.getTransactions> = async (
@@ -41,7 +41,7 @@ export class FinanceHandler {
             organizationId,
             reason
         );
-        return ctx.json({ txId: reversalTxId }, HttpStatusCodes.CREATED);
+        return ctx.json({ data: { txId: reversalTxId } }, HttpStatusCodes.CREATED);
     };
 
     static executeTransfer: AppHandler<typeof FinanceRoutes.executeTransfer> = async (ctx) => {
@@ -53,7 +53,7 @@ export class FinanceHandler {
             ...body,
         });
 
-        return ctx.json({ txId }, HttpStatusCodes.CREATED);
+        return ctx.json({ data: { txId } }, HttpStatusCodes.CREATED);
     };
 
     static createAccount: AppHandler<typeof FinanceRoutes.createAccount> = async (ctx) => {
@@ -76,19 +76,20 @@ export class FinanceHandler {
             );
         }
 
-        return ctx.json(result.account, HttpStatusCodes.CREATED);
+        return ctx.json({ data: result.account }, HttpStatusCodes.CREATED);
     };
 
     static listAccounts: AppHandler<typeof FinanceRoutes.listAccounts> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const accounts = await getOrgFinancialService(ctx).listOrgAccounts(organizationId);
-        return ctx.json({ accounts }, HttpStatusCodes.OK);
+
+        return ctx.json({ data: accounts }, HttpStatusCodes.OK);
     };
 
     static deactivateAccount: AppHandler<typeof FinanceRoutes.deactivateAccount> = async (ctx) => {
         const { accountId } = ctx.req.valid("param");
-        const account = await getOrgFinancialService(ctx).deactivateAccount(accountId);
-        return ctx.json(account, HttpStatusCodes.OK);
+        await getOrgFinancialService(ctx).deactivateAccount(accountId);
+        return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 
     static getOrgCurrencyStatus: AppHandler<typeof FinanceRoutes.getOrgCurrencyStatus> = async (
@@ -96,7 +97,7 @@ export class FinanceHandler {
     ) => {
         const { organizationId } = ctx.req.valid("param");
         const currencies = await getOrgFinancialService(ctx).getOrgCurrencyStatus(organizationId);
-        return ctx.json({ currencies }, HttpStatusCodes.OK);
+        return ctx.json({ data: currencies }, HttpStatusCodes.OK);
     };
 
     static activateCurrency: AppHandler<typeof FinanceRoutes.activateCurrency> = async (ctx) => {
@@ -106,17 +107,14 @@ export class FinanceHandler {
             organizationId,
             currencyId
         );
-        return ctx.json(account, HttpStatusCodes.CREATED);
+        return ctx.json({ data: account }, HttpStatusCodes.CREATED);
     };
 
     static initializeUserWallet: AppHandler<typeof FinanceRoutes.initializeUserWallet> = async (
         ctx
     ) => {
         const { organizationId, userId } = ctx.req.valid("param");
-        const results = await getUserFinancialService(ctx).provisionUserAccounts(
-            userId,
-            organizationId
-        );
-        return ctx.json({ success: true, results }, HttpStatusCodes.OK);
+        await getUserFinancialService(ctx).provisionUserAccounts(userId, organizationId);
+        return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 }

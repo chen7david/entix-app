@@ -6,6 +6,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
 
@@ -23,9 +24,11 @@ type UpdateMediaInput = {
 };
 
 type PaginatedResponse<T> = {
-    items: T[];
-    nextCursor: string | null;
-    prevCursor: string | null;
+    data: {
+        items: T[];
+        nextCursor: string | null;
+        prevCursor: string | null;
+    };
 };
 
 export const useMedia = (type?: "video" | "audio", search?: string) => {
@@ -44,7 +47,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
     } = useInfiniteQuery({
         queryKey: ["media", orgId, type, search],
         queryFn: async ({ pageParam }) => {
-            if (!orgId) return { items: [], nextCursor: null, prevCursor: null };
+            if (!orgId) return { data: { items: [], nextCursor: null, prevCursor: null } };
 
             const params = new URLSearchParams();
             if (type) params.append("type", type);
@@ -56,16 +59,16 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
             params.append("limit", "15");
 
             const res = await fetch(`/api/v1/orgs/${orgId}/media?${params.toString()}`);
-            if (!res.ok) throw new Error("Failed to fetch media");
+            if (!res.ok) await parseApiError(res);
             return (await res.json()) as PaginatedResponse<Media>;
         },
         enabled: !!orgId,
         initialPageParam: null as string | null,
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        getNextPageParam: (lastPage) => lastPage.data.nextCursor,
         placeholderData: keepPreviousData,
     });
 
-    const media = mediaPages?.pages.flatMap((page) => page.items) ?? [];
+    const media = mediaPages?.pages.flatMap((page) => page.data.items) ?? [];
 
     // Create Media
     const createMediaMutation = useMutation({
@@ -76,7 +79,7 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(input),
             });
-            if (!res.ok) throw new Error("Failed to create media file");
+            if (!res.ok) await parseApiError(res);
             return await res.json();
         },
         onSuccess: () => {
@@ -85,8 +88,8 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
             // Invalidate uploads so the pending uploads drop from the standalone upload table
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
-        onError: () => {
-            message.error("Could not create media. Ensure the upload completed.");
+        onError: (error: Error) => {
+            message.error(error.message || "Could not create media. Ensure the upload completed.");
         },
     });
 
@@ -105,15 +108,15 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updates),
             });
-            if (!res.ok) throw new Error("Failed to update media");
+            if (!res.ok) await parseApiError(res);
             return await res.json();
         },
         onSuccess: () => {
             message.success("Media successfully updated");
             queryClient.invalidateQueries({ queryKey: ["media", orgId] });
         },
-        onError: () => {
-            message.error("Failed to update media details.");
+        onError: (error: Error) => {
+            message.error(error.message || "Failed to update media details.");
         },
     });
 
@@ -124,14 +127,14 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
             const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}`, {
                 method: "DELETE",
             });
-            if (!res.ok) throw new Error("Failed to delete media");
+            if (!res.ok) await parseApiError(res);
         },
         onSuccess: () => {
             message.success("Media strictly deleted from database and bucket");
             queryClient.invalidateQueries({ queryKey: ["media", orgId] });
         },
-        onError: () => {
-            message.error("Failed to sweep media asset.");
+        onError: (error: Error) => {
+            message.error(error.message || "Failed to sweep media asset.");
         },
     });
 
@@ -142,12 +145,9 @@ export const useMedia = (type?: "video" | "audio", search?: string) => {
             const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}/play`, {
                 method: "POST",
             });
-            if (!res.ok) throw new Error("Telemetry increment failed");
+            if (!res.ok) await parseApiError(res);
         },
-        // We purposely do NOT invalidate the query strictly for this,
-        // because we don't need UI-blocking loaders triggering on an anonymous play count ticker.
         onSuccess: () => {
-            // Silently refresh the list in the background
             queryClient.invalidateQueries({ queryKey: ["media", orgId] });
         },
     });

@@ -1,3 +1,4 @@
+import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
@@ -76,14 +77,6 @@ export class AdminFinancialService extends FinancialBaseService {
     }
 
     /**
-     * Lists all active accounts for any given organization.
-     * This bypasses the typical "user vs org" scope checks and is intended
-     * for super-admin views (e.g., FinancialManagementPage).
-     */
-    /**
-     * Lists all active accounts for any given organization.
-     * This bypasses the typical "user vs org" scope checks and is intended
-     * for super-admin views (e.g., FinancialManagementPage).
      */
     async getAnyOrgAccounts(orgId: string) {
         const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org");
@@ -93,7 +86,11 @@ export class AdminFinancialService extends FinancialBaseService {
      * Updates the name/label of any financial account.
      */
     async updateAccount(id: string, name: string) {
-        return this.accountsRepo.updateName(id, name);
+        const account = await this.accountsRepo.findById(id);
+        this.assertExists(account, "Account not found");
+        const now = new Date();
+        const updated = await this.accountsRepo.updateName(id, name, now);
+        return this.assertExists(updated, "Account not found");
     }
     /**
      * Archives a financial account.
@@ -101,12 +98,14 @@ export class AdminFinancialService extends FinancialBaseService {
      */
     async archiveAccount(id: string) {
         const account = await this.accountsRepo.findById(id);
-        if (!account) throw new Error("Account not found");
-        if (account.balanceCents !== 0) {
-            throw new Error(
-                "Cannot archive an account with a non-zero balance. Please transfer funds out first."
+        const verifiedAccount = this.assertExists(account, "Account not found");
+
+        if (verifiedAccount.balanceCents !== 0) {
+            throw new BadRequestError(
+                `Cannot archive an account with a non-zero balance. Current balance: ${verifiedAccount.balanceCents} cents. Please transfer funds out first.`
             );
         }
-        return this.accountsRepo.archive(id);
+        const now = new Date();
+        return this.accountsRepo.archive(id, now);
     }
 }

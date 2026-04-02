@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { parseApiError } from "@web/src/utils/api";
 
 export type TransactionRecord = {
     id: string;
@@ -38,7 +39,7 @@ export type TransactionFilters = {
 };
 
 export const useTransactions = (orgId?: string, filters: TransactionFilters = {}) => {
-    return useQuery<TransactionsResponse>({
+    return useQuery({
         queryKey: ["transactions", orgId, filters],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
@@ -57,9 +58,14 @@ export const useTransactions = (orgId?: string, filters: TransactionFilters = {}
             const url = `${API_V1}/orgs/${orgId}/finance/transactions?${params.toString()}`;
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch transactions");
-            return res.json();
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as TransactionsResponse;
         },
+        select: (res) => ({
+            items: res.data,
+            page: res.page,
+            pageSize: res.pageSize,
+        }),
         enabled: !!orgId,
     });
 };

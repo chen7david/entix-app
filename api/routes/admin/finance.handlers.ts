@@ -8,13 +8,13 @@ export class AdminFinanceHandler {
         ctx
     ) => {
         const accounts = await getAdminFinancialService(ctx).getTreasuryBalance();
-        return ctx.json({ accounts }, HttpStatusCodes.OK);
+        return ctx.json({ data: accounts }, HttpStatusCodes.OK);
     };
 
     static getOrgAccounts: AppHandler<typeof AdminFinanceRoutes.getOrgAccounts> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const accounts = await getAdminFinancialService(ctx).getAnyOrgAccounts(organizationId);
-        return ctx.json({ accounts }, HttpStatusCodes.OK);
+        return ctx.json({ data: accounts }, HttpStatusCodes.OK);
     };
 
     static adminCredit: AppHandler<typeof AdminFinanceRoutes.adminCredit> = async (ctx) => {
@@ -26,7 +26,7 @@ export class AdminFinanceHandler {
             ...body,
         });
 
-        return ctx.json({ txId }, HttpStatusCodes.CREATED);
+        return ctx.json({ data: { txId } }, HttpStatusCodes.CREATED);
     };
 
     static adminDebit: AppHandler<typeof AdminFinanceRoutes.adminDebit> = async (ctx) => {
@@ -38,7 +38,7 @@ export class AdminFinanceHandler {
             ...body,
         });
 
-        return ctx.json({ txId }, HttpStatusCodes.CREATED);
+        return ctx.json({ data: { txId } }, HttpStatusCodes.CREATED);
     };
 
     static updateAccount: AppHandler<typeof AdminFinanceRoutes.updateAccount> = async (ctx) => {
@@ -46,17 +46,13 @@ export class AdminFinanceHandler {
         const { name } = ctx.req.valid("json");
 
         const account = await getAdminFinancialService(ctx).updateAccount(id, name);
-        return ctx.json({ account }, HttpStatusCodes.OK);
+        return ctx.json({ data: account }, HttpStatusCodes.OK);
     };
 
     static archiveAccount: AppHandler<typeof AdminFinanceRoutes.archiveAccount> = async (ctx) => {
         const { id } = ctx.req.valid("param");
 
-        try {
-            await getAdminFinancialService(ctx).archiveAccount(id);
-            return ctx.json({ success: true }, HttpStatusCodes.OK);
-        } catch (error: any) {
-            return ctx.json({ message: error.message }, HttpStatusCodes.BAD_REQUEST);
-        }
+        await getAdminFinancialService(ctx).archiveAccount(id);
+        return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 }

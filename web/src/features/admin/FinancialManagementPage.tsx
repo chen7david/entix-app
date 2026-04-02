@@ -183,16 +183,16 @@ export const FinancialManagementPage: React.FC = () => {
                                         setSelectedAccount(undefined);
                                         setCreditDrawerOpen(true);
                                     }}
-                                    disabled={!orgAccountsData?.accounts?.length}
+                                    disabled={!orgAccountsData?.length}
                                 >
                                     Debit/Credit Adjustment
                                 </Button>
                             }
                             loading={isLoadingAccounts}
                         >
-                            {orgAccountsData?.accounts && orgAccountsData.accounts.length > 0 ? (
+                            {orgAccountsData && orgAccountsData.length > 0 ? (
                                 <Row gutter={[12, 12]}>
-                                    {orgAccountsData.accounts.map((acc) => (
+                                    {orgAccountsData.map((acc) => (
                                         <Col xs={24} sm={12} key={acc.id}>
                                             <Card
                                                 hoverable
@@ -263,7 +263,7 @@ export const FinancialManagementPage: React.FC = () => {
                 open={creditDrawerOpen}
                 onClose={() => setCreditDrawerOpen(false)}
                 organizationId={selectedOrgId}
-                accounts={orgAccountsData?.accounts}
+                accounts={orgAccountsData}
                 preSelectedAccount={selectedAccount}
             />
         </div>

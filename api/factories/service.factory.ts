@@ -56,7 +56,10 @@ export const getRegistrationService = (ctx: AppContext) => {
         getUserRepository(ctx),
         getOrganizationRepository(ctx),
         getMemberRepository(ctx),
-        getUserFinancialService(ctx)
+        getUserFinancialService(ctx),
+        getUserService(ctx),
+        ctx.var.frontendUrl,
+        ctx.var.logger
     );
 };
 

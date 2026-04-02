@@ -1,16 +1,13 @@
 import type { AppDb } from "@api/factories/db.factory";
 import {
+    type CreateAccountRepoInput,
     type FinancialAccount,
     financialAccounts,
-    type NewFinancialAccount,
 } from "@shared/db/schema";
-import { generateAccountId } from "@shared/lib";
 import { and, eq, sql } from "drizzle-orm";
 
 /**
  * Repository for financial account database operations.
- * Financial accounts are never hard-deleted to preserve ledger integrity.
- * Use `deactivate()` to block transactions, or `archive()` to hide from UI.
  */
 export class FinancialAccountsRepository {
     constructor(private readonly db: AppDb) {}
@@ -18,24 +15,15 @@ export class FinancialAccountsRepository {
     /**
      * Creates a new financial account.
      */
-    async insert(input: NewFinancialAccount): Promise<FinancialAccount | null> {
+    async insert(input: CreateAccountRepoInput): Promise<FinancialAccount | null> {
         try {
-            const now = new Date();
-            const id = generateAccountId();
-
             const [account] = await this.db
                 .insert(financialAccounts)
                 .values({
-                    id,
-                    ownerId: input.ownerId,
-                    ownerType: input.ownerType,
-                    currencyId: input.currencyId,
-                    organizationId: input.organizationId,
-                    name: input.name,
-                    createdAt: now,
-                    updatedAt: now,
-                    balanceCents: 0,
-                    isActive: true,
+                    ...input,
+                    balanceCents: input.balanceCents ?? 0,
+                    isActive: input.isActive ?? true,
+                    isFundingAccount: input.isFundingAccount ?? false,
                 })
                 .returning();
 
@@ -80,12 +68,12 @@ export class FinancialAccountsRepository {
      * Deactivates an account (sets isActive to false).
      * Used to block new transactions.
      */
-    async deactivate(id: string): Promise<FinancialAccount | null> {
+    async deactivate(id: string, updatedAt: Date): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
             .set({
                 isActive: false,
-                updatedAt: new Date(),
+                updatedAt,
             })
             .where(eq(financialAccounts.id, id))
             .returning();
@@ -97,12 +85,12 @@ export class FinancialAccountsRepository {
      * Archives an account (sets archivedAt timestamp).
      * Used to hide the account from standard UI views.
      */
-    async archive(id: string): Promise<FinancialAccount | null> {
+    async archive(id: string, updatedAt: Date): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
             .set({
-                archivedAt: new Date(),
-                updatedAt: new Date(),
+                archivedAt: updatedAt,
+                updatedAt,
             })
             .where(eq(financialAccounts.id, id))
             .returning();
@@ -113,12 +101,12 @@ export class FinancialAccountsRepository {
     /**
      * Updates the display name of an account.
      */
-    async updateName(id: string, name: string): Promise<FinancialAccount | null> {
+    async updateName(id: string, name: string, updatedAt: Date): Promise<FinancialAccount | null> {
         const [account] = await this.db
             .update(financialAccounts)
             .set({
                 name,
-                updatedAt: new Date(),
+                updatedAt,
             })
             .where(eq(financialAccounts.id, id))
             .returning();

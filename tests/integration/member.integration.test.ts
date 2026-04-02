@@ -25,9 +25,8 @@ describe("Member Creation Integration Tests", () => {
 
         expect(res.status).toBe(201);
         const body = (await res.json()) as CreateMemberResponseDTO;
-
-        expect(body.user.email).toBe(payload.email);
-        expect(body.member.role).toBe(payload.role);
+        expect(body.data.member.role).toBe(payload.role);
+        expect(body.data.user.email).toBe(payload.email);
     });
 
     it("should fail when user with email already exists", async () => {
@@ -53,7 +52,7 @@ describe("Member Creation Integration Tests", () => {
 
         expect(res.status).toBe(201);
         const body = (await res.json()) as CreateMemberResponseDTO;
-        expect(body.member.role).toBe("admin");
+        expect(body.data.member.role).toBe(payload.role);
     });
 
     it("should fail when user lacks permission (unauthorized member)", async () => {

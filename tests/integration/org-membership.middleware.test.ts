@@ -75,7 +75,7 @@ describe("Organization Membership Middleware Tests", () => {
         expect(res.status).toBe(201);
 
         const body = await parseJson<CreateMemberResponseDTO>(res);
-        expect(body.member).toBeDefined();
-        expect(body.member.organizationId).toBe(orgId);
+        expect(body.data.member).toBeDefined();
+        expect(body.data.member.organizationId).toBe(orgId);
     });
 });

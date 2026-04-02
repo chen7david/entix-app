@@ -33,9 +33,16 @@ type Props = {
     onClose: () => void;
     account: WalletAccount | null;
     orgId?: string;
+    size?: "default" | "large";
 };
 
-export const ManageAccountDrawer: React.FC<Props> = ({ open, onClose, account, orgId }) => {
+export const ManageAccountDrawer: React.FC<Props> = ({
+    open,
+    onClose,
+    account,
+    orgId,
+    size = "default",
+}) => {
     const { token } = theme.useToken();
     const [form] = Form.useForm();
     const { mutate: update, isPending: isUpdating } = useUpdateAccount();
@@ -91,10 +98,13 @@ export const ManageAccountDrawer: React.FC<Props> = ({ open, onClose, account, o
         <Drawer
             title="Manage Treasury Account"
             placement="right"
-            width={440}
+            size={size}
             onClose={onClose}
             open={open}
-            styles={{ body: { paddingBottom: 80 } }}
+            styles={{
+                body: { paddingBottom: 80 },
+                wrapper: { width: size === "default" ? 440 : undefined },
+            }}
             extra={
                 <Button
                     type="primary"
