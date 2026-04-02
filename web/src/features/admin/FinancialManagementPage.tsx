@@ -1,10 +1,9 @@
 import { CheckCircleOutlined } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { useAdminOrganizations } from "@web/src/features/admin/hooks/useAdminOrganizations";
 import { AdminCreditDrawer } from "@web/src/features/wallet/components/AdminCreditDrawer";
 import { useAdminOrgAccounts } from "@web/src/features/wallet/hooks/useAdminOrgAccounts";
 import { useTreasuryBalance } from "@web/src/features/wallet/hooks/useTreasuryBalance";
-import { type WalletAccountDTO } from "@shared";
 import { Button, Card, Col, Empty, Row, Select, Statistic, Tag, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";

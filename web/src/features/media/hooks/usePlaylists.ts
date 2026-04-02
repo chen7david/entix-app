@@ -1,8 +1,8 @@
-import {
-    type CreatePlaylistDTO,
-    type PlaylistDTO,
-    type PlaylistMediaItemDTO,
-    type UpdatePlaylistDTO,
+import type {
+    CreatePlaylistDTO,
+    PlaylistDTO,
+    PlaylistMediaItemDTO,
+    UpdatePlaylistDTO,
 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";

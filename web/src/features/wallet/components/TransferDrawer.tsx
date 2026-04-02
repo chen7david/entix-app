@@ -1,5 +1,5 @@
+import type { WalletAccountDTO } from "@shared";
 import { useActivatedCurrencies } from "@web/src/features/finance";
-import { type WalletAccountDTO } from "@shared";
 import { App, Button, Drawer, Form, Input, InputNumber, Select, Space } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
