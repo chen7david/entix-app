@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-export const financialAccountSchema = z.object({
+export const walletAccountDTOSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
     ownerType: z.enum(["user", "org"]),
@@ -8,10 +8,19 @@ export const financialAccountSchema = z.object({
     name: z.string(),
     balanceCents: z.number(),
     isActive: z.boolean(),
+    isFundingAccount: z.boolean(), // Matches DB schema (required)
     archivedAt: z.union([z.string(), z.date()]).nullable(),
     createdAt: z.union([z.string(), z.date()]),
     updatedAt: z.union([z.string(), z.date()]),
 });
+
+export type WalletAccountDTO = z.infer<typeof walletAccountDTOSchema>;
+
+export const walletSummaryDTOSchema = z.object({
+    accounts: z.array(walletAccountDTOSchema),
+});
+
+export type WalletSummaryDTO = z.infer<typeof walletSummaryDTOSchema>;
 
 export const financialTransactionSchema = z.object({
     id: z.string(),
@@ -25,10 +34,6 @@ export const financialTransactionSchema = z.object({
     description: z.string().nullable(),
     transactionDate: z.string().or(z.date()),
     createdAt: z.string().or(z.date()),
-});
-
-export const walletSummaryResponseSchema = z.object({
-    accounts: z.array(financialAccountSchema),
 });
 
 export const transactionHistoryResponseSchema = z.object({
@@ -48,10 +53,10 @@ export const createFinancialAccountSchema = z.object({
     ownerId: z.string().min(1),
 });
 
-export const createFinancialAccountResponseSchema = financialAccountSchema;
+export const createFinancialAccountResponseSchema = walletAccountDTOSchema;
 
 export const listFinancialAccountsResponseSchema = z.object({
-    data: z.array(financialAccountSchema),
+    data: z.array(walletAccountDTOSchema),
 });
 
 export const currencyWithStatusSchema = z.object({
@@ -95,10 +100,6 @@ export const executeTransferRequestSchema = z.object({
     currencyId: z.string().min(1),
     amountCents: z.number().int().positive(),
     description: z.string().optional(),
-});
-
-export const successResponseSchema = z.object({
-    success: z.boolean(),
 });
 
 export const reverseTransactionRequestSchema = z.object({

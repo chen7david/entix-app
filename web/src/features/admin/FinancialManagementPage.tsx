@@ -4,7 +4,7 @@ import { useAdminOrganizations } from "@web/src/features/admin/hooks/useAdminOrg
 import { AdminCreditDrawer } from "@web/src/features/wallet/components/AdminCreditDrawer";
 import { useAdminOrgAccounts } from "@web/src/features/wallet/hooks/useAdminOrgAccounts";
 import { useTreasuryBalance } from "@web/src/features/wallet/hooks/useTreasuryBalance";
-import type { WalletAccount } from "@web/src/features/wallet/hooks/useWalletBalance";
+import { type WalletAccountDTO } from "@shared";
 import { Button, Card, Col, Empty, Row, Select, Statistic, Tag, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";
@@ -14,14 +14,14 @@ const { Title, Text } = Typography;
 export const FinancialManagementPage: React.FC = () => {
     const [selectedOrgId, setSelectedOrgId] = useState<string>();
     const [creditDrawerOpen, setCreditDrawerOpen] = useState(false);
-    const [selectedAccount, setSelectedAccount] = useState<WalletAccount>();
+    const [selectedAccount, setSelectedAccount] = useState<WalletAccountDTO>();
 
     const { data: treasury, isLoading: isLoadingTreasury } = useTreasuryBalance();
     const { data: orgs, isLoading: isLoadingOrgs } = useAdminOrganizations();
     const { data: orgAccountsData, isLoading: isLoadingAccounts } =
         useAdminOrgAccounts(selectedOrgId);
 
-    const handleCardClick = (account: WalletAccount) => {
+    const handleCardClick = (account: WalletAccountDTO) => {
         setSelectedAccount(account);
         setCreditDrawerOpen(true);
     };
@@ -53,7 +53,7 @@ export const FinancialManagementPage: React.FC = () => {
                     </Row>
                 ) : (
                     <Row gutter={[16, 16]}>
-                        {treasury?.map((acc: WalletAccount) => {
+                        {treasury?.map((acc: WalletAccountDTO) => {
                             const config =
                                 FINANCIAL_CURRENCY_CONFIG[
                                     acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG

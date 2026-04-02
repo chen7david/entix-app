@@ -1,4 +1,4 @@
-import { API_V1, type OrgRole } from "@shared";
+import { API_V1, type MemberDTO, type OrgRole, type PaginatedResponse } from "@shared";
 import {
     type InfiniteData,
     keepPreviousData,
@@ -11,12 +11,6 @@ import { authClient } from "@web/src/lib/auth-client";
 import { parseApiError } from "@web/src/utils/api";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
-
-type PaginatedMembersResponse = {
-    items: any[];
-    nextCursor: string | null;
-    prevCursor: string | null;
-};
 
 export const useMembers = (searchQuery?: string) => {
     const queryClient = useQueryClient();
@@ -32,15 +26,16 @@ export const useMembers = (searchQuery?: string) => {
         hasNextPage,
         isFetchingNextPage,
     } = useInfiniteQuery<
-        PaginatedMembersResponse,
+        PaginatedResponse<MemberDTO>,
         Error,
-        InfiniteData<PaginatedMembersResponse>,
+        InfiniteData<PaginatedResponse<MemberDTO>>,
         string[],
         string | undefined
     >({
         queryKey,
         queryFn: async ({ pageParam }) => {
-            if (!activeOrganization?.id) return { items: [], nextCursor: null, prevCursor: null };
+            if (!activeOrganization?.id)
+                return { items: [], total: 0, nextCursor: null, prevCursor: null };
 
             const params = new URLSearchParams({ limit: "10" }); // UI prefers small pages
             if (pageParam) params.set("cursor", pageParam);
@@ -51,7 +46,7 @@ export const useMembers = (searchQuery?: string) => {
             );
             if (!res.ok) await parseApiError(res);
 
-            return (await res.json()) as PaginatedMembersResponse;
+            return (await res.json()) as PaginatedResponse<MemberDTO>;
         },
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: undefined,
@@ -62,7 +57,7 @@ export const useMembers = (searchQuery?: string) => {
     // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.
     const members = useMemo(() => {
         if (!membersPages) return [];
-        return membersPages.pages.flatMap((p: PaginatedMembersResponse) => p.items);
+        return membersPages.pages.flatMap((p) => p.items);
     }, [membersPages]);
 
     // Securely acquire the current member's role via BetterAuth reactive primitive session context.

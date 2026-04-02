@@ -4,6 +4,7 @@ export * from "./constants/financial";
 export * from "./constants/routes";
 export * from "./db/schema/index";
 export * from "./schemas/dto/auth.dto";
+export * from "./schemas/dto/base.dto";
 export * from "./schemas/dto/bulk-member.dto";
 export * from "./schemas/dto/email-insights.dto";
 export * from "./schemas/dto/financial.dto";

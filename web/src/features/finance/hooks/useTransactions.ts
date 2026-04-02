@@ -1,4 +1,4 @@
-import { API_V1 } from "@shared";
+import { API_V1, type PaginatedResponse, type TransactionFilters } from "@shared";
 import { useQuery } from "@tanstack/react-query";
 import { parseApiError } from "@web/src/utils/api";
 
@@ -24,21 +24,10 @@ export type TransactionsResponse = {
     data: TransactionRecord[];
     page: number;
     pageSize: number;
+    total?: number; // Added for optional compatibility with PaginatedResponse
 };
 
-export type TransactionFilters = {
-    page?: number;
-    pageSize?: number;
-    startDate?: string;
-    endDate?: string;
-    minAmount?: number;
-    maxAmount?: number;
-    txId?: string;
-    accountId?: string;
-    status?: string;
-};
-
-export const useTransactions = (orgId?: string, filters: TransactionFilters = {}) => {
+export const useTransactions = (orgId?: string, filters: Partial<TransactionFilters> = {}) => {
     return useQuery({
         queryKey: ["transactions", orgId, filters],
         queryFn: async () => {
@@ -61,10 +50,11 @@ export const useTransactions = (orgId?: string, filters: TransactionFilters = {}
             if (!res.ok) await parseApiError(res);
             return (await res.json()) as TransactionsResponse;
         },
-        select: (res) => ({
+        select: (res): PaginatedResponse<TransactionRecord> => ({
             items: res.data,
-            page: res.page,
-            pageSize: res.pageSize,
+            total: res.total ?? 0,
+            nextCursor: null, // Offset-based currently
+            prevCursor: null,
         }),
         enabled: !!orgId,
     });

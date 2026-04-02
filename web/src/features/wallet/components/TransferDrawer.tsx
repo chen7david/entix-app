@@ -1,13 +1,13 @@
 import { useActivatedCurrencies } from "@web/src/features/finance";
+import { type WalletAccountDTO } from "@shared";
 import { App, Button, Drawer, Form, Input, InputNumber, Select, Space } from "antd";
-import type { WalletAccount } from "../hooks/useWalletBalance";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
 type TransferDrawerProps = {
     open: boolean;
     onClose: () => void;
     orgId?: string;
-    accounts?: WalletAccount[];
+    accounts?: WalletAccountDTO[];
 };
 
 export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawerProps) => {

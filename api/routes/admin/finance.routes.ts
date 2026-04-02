@@ -10,9 +10,9 @@ import { createRoute, z } from "@hono/zod-openapi";
 import {
     adminCreditRequestSchema,
     adminDebitRequestSchema,
-    financialAccountSchema,
     listFinancialAccountsResponseSchema,
     transactionResultSchema,
+    walletAccountDTOSchema,
 } from "@shared";
 import { successResponseSchema } from "@shared/schemas/dto/base.dto";
 
@@ -99,7 +99,7 @@ export const AdminFinanceRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                z.object({ data: financialAccountSchema }),
+                z.object({ data: walletAccountDTOSchema }),
                 "Account updated successfully"
             ),
         },

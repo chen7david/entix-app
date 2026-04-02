@@ -1,22 +1,9 @@
-import { API_V1 } from "@shared";
+import { API_V1, type WalletSummaryDTO } from "@shared";
 import { useQuery } from "@tanstack/react-query";
 import { parseApiError } from "@web/src/utils/api";
 
-export type WalletAccount = {
-    id: string;
-    name: string;
-    balanceCents: number;
-    currencyId: string;
-    isActive: boolean;
-    isFundingAccount: boolean;
-};
-
-export type WalletSummary = {
-    accounts: WalletAccount[];
-};
-
 type WalletSummaryResponse = {
-    data: WalletSummary;
+    data: WalletSummaryDTO;
 };
 
 export const useWalletBalance = (

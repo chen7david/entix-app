@@ -15,7 +15,7 @@ import {
     reverseTransactionRequestSchema,
     transactionHistoryResponseSchema,
     transactionResultSchema,
-    walletSummaryResponseSchema,
+    walletSummaryDTOSchema,
 } from "@shared";
 import { successResponseSchema } from "@shared/schemas/dto/base.dto";
 
@@ -34,7 +34,7 @@ export const FinanceRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                z.object({ data: walletSummaryResponseSchema }),
+                z.object({ data: walletSummaryDTOSchema }),
                 "Wallet balance fetched successfully"
             ),
         },
