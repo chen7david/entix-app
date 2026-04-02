@@ -1,3 +1,4 @@
+import type { WalletAccountDTO } from "@shared";
 import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
@@ -7,7 +8,6 @@ import { useActivateCurrency } from "@web/src/features/finance/hooks/useActivate
 import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
 import { useOrganization } from "@web/src/features/organization";
 import { CreateAccountDrawer } from "@web/src/features/wallet/components/CreateAccountDrawer";
-import type { WalletAccount } from "@web/src/features/wallet/hooks/useWalletBalance";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
 import { Button, Card, Col, Divider, Flex, Grid, Row, Tag, Typography } from "antd";
 import type React from "react";
@@ -22,7 +22,7 @@ export const FinanceAccountsPage: React.FC = () => {
     const orgId = activeOrganization?.id;
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [isManageDrawerOpen, setIsManageDrawerOpen] = useState(false);
-    const [selectedAccount, setSelectedAccount] = useState<WalletAccount | null>(null);
+    const [selectedAccount, setSelectedAccount] = useState<WalletAccountDTO | null>(null);
 
     const { data: currenciesData, isLoading: isLoadingCurrencies } = useOrgCurrencies(orgId);
     const { mutate: activate, isPending: isActivating } = useActivateCurrency(orgId);
@@ -33,7 +33,7 @@ export const FinanceAccountsPage: React.FC = () => {
     const activated = currenciesData?.filter((c) => c.isActivated) ?? [];
     const available = currenciesData?.filter((c) => !c.isActivated) ?? [];
 
-    const handleAccountClick = (account: WalletAccount) => {
+    const handleAccountClick = (account: WalletAccountDTO) => {
         setSelectedAccount(account);
         setIsManageDrawerOpen(true);
     };

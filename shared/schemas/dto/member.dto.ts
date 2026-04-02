@@ -9,6 +9,7 @@ export const memberDTOSchema = z.object({
     name: z.string().optional().openapi({ example: "John Doe" }),
     email: z.string().optional().openapi({ example: "john@example.com" }),
     avatarUrl: z.string().nullable().optional(),
+    emailVerified: z.boolean().optional(),
 });
 
 export type MemberDTO = z.infer<typeof memberDTOSchema>;

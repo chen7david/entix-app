@@ -4,15 +4,15 @@ import React from "react";
 
 const { Text } = Typography;
 
+import type { WalletAccountDTO } from "@shared";
 import { useAdminCredit } from "../hooks/useAdminCredit";
-import type { WalletAccount } from "../hooks/useWalletBalance";
 
 type Props = {
     open: boolean;
     onClose: () => void;
     organizationId?: string;
-    accounts?: WalletAccount[];
-    preSelectedAccount?: WalletAccount;
+    accounts?: WalletAccountDTO[];
+    preSelectedAccount?: WalletAccountDTO;
 };
 
 // Common reasons for administrative credit

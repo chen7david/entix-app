@@ -91,14 +91,15 @@ export class UserRepository {
         return {
             ...result,
             items: result.items.map((row) => ({
-                ...row.user,
-                user: row.user,
+                id: row.member.id,
                 userId: row.user.id,
                 organizationId: row.member.organizationId,
                 role: row.member.role,
                 createdAt: row.member.createdAt,
-                updatedAt: row.user.updatedAt,
-                id: row.user.id,
+                name: row.user.name,
+                email: row.user.email,
+                avatarUrl: row.user.image,
+                emailVerified: row.user.emailVerified,
             })),
         };
     }

@@ -1,14 +1,14 @@
 import { LockOutlined, WalletOutlined } from "@ant-design/icons";
+import type { WalletAccountDTO } from "@shared";
 import { Card, Col, Flex, Grid, Row, Space, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
-import type { WalletAccount } from "../../wallet/hooks/useWalletBalance";
 
 const { Text } = Typography;
 
 type Props = {
-    accounts: WalletAccount[];
+    accounts: WalletAccountDTO[];
     loading?: boolean;
-    onAccountClick: (account: WalletAccount) => void;
+    onAccountClick: (account: WalletAccountDTO) => void;
 };
 
 export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccountClick }) => {

@@ -11,7 +11,7 @@ import {
     UserOutlined,
     WalletOutlined,
 } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared";
+import { getAvatarUrl, type MemberDTO } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
@@ -93,7 +93,7 @@ const OrganizationMembersPageBase: React.FC = () => {
         setSearchParams(newParams, { replace: true });
     }, [debouncedSearch, setSearchParams, searchParams]);
     const [createForm] = Form.useForm();
-    const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
+    const [selectedMember, setSelectedMember] = useState<MemberDTO | null>(null);
     const { activeOrganization } = useOrganization();
     const { metrics, isLoadingMetrics: loadingMetrics } = useBulkMembers(activeOrganization?.id);
 
@@ -199,20 +199,21 @@ const OrganizationMembersPageBase: React.FC = () => {
     const adminCount = metrics?.adminCount ?? 0;
     const ownerCount = metrics?.ownerCount ?? 0;
 
-    const columns: ColumnsType<Record<string, unknown>> = useMemo(
+    const columns: ColumnsType<MemberDTO> = useMemo(
         () => [
             {
                 title: "User",
-                dataIndex: "user",
                 key: "user",
                 width: 250,
-                render: (user: Record<string, unknown>, record: any) => (
+                render: (_: any, record: MemberDTO) => (
                     <div
                         className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded transition-colors min-h-[44px]"
                         onClick={() => setSelectedMember(record)}
                     >
                         <Avatar
-                            src={user?.image ? getAvatarUrl(user.image as string, "sm") : undefined}
+                            src={
+                                record.avatarUrl ? getAvatarUrl(record.avatarUrl, "sm") : undefined
+                            }
                             icon={<UserOutlined />}
                         />
                         <div className="flex flex-col">
@@ -221,10 +222,10 @@ const OrganizationMembersPageBase: React.FC = () => {
                                 style={{ color: token.colorPrimary }}
                                 className="transition-colors"
                             >
-                                {user.name as string}
+                                {record.name}
                             </Typography.Text>
                             <Typography.Text type="secondary" className="text-xs">
-                                {user.email as string}
+                                {record.email}
                             </Typography.Text>
                         </div>
                     </div>
@@ -279,7 +280,7 @@ const OrganizationMembersPageBase: React.FC = () => {
                 align: "right",
                 width: 80,
                 fixed: "right",
-                render: (_: any, record: any) => {
+                render: (_: any, record: MemberDTO) => {
                     const items: MenuProps["items"] = [
                         {
                             key: "resend-verification",
@@ -287,7 +288,7 @@ const OrganizationMembersPageBase: React.FC = () => {
                             icon: <MailOutlined />,
                             onClick: (e) => {
                                 e.domEvent.stopPropagation();
-                                handleResendVerification(record.user?.email);
+                                if (record.email) handleResendVerification(record.email);
                             },
                         },
                         {
@@ -297,7 +298,7 @@ const OrganizationMembersPageBase: React.FC = () => {
                             disabled: isInitializing,
                             onClick: (e) => {
                                 e.domEvent.stopPropagation();
-                                initializeWallet(record.userId as string);
+                                initializeWallet(record.userId);
                             },
                         },
                         {
@@ -306,7 +307,7 @@ const OrganizationMembersPageBase: React.FC = () => {
                             icon: <LockOutlined />,
                             onClick: (e) => {
                                 e.domEvent.stopPropagation();
-                                handleResendPassword(record.user?.email);
+                                if (record.email) handleResendPassword(record.email);
                             },
                         },
                         {
@@ -314,10 +315,10 @@ const OrganizationMembersPageBase: React.FC = () => {
                             label: "Remove Picture",
                             icon: <DeleteOutlined />,
                             danger: true,
-                            disabled: !record.user?.image,
+                            disabled: !record.avatarUrl,
                             onClick: (e) => {
                                 e.domEvent.stopPropagation();
-                                handleRemoveAvatar(record.user?.id as string);
+                                handleRemoveAvatar(record.userId);
                             },
                         },
                     ];
@@ -532,16 +533,15 @@ const OrganizationMembersPageBase: React.FC = () => {
                             const activeMember =
                                 members?.find((m: any) => m.id === selectedMember.id) ||
                                 selectedMember;
-                            const user = activeMember.user as Record<string, unknown> | undefined;
                             return (
                                 <div className="flex flex-col gap-6 pt-2 pb-6">
                                     <div className="text-center mb-6">
                                         {activeOrganization ? (
                                             <AvatarDropzone
                                                 organizationId={activeOrganization.id}
-                                                userId={activeMember.userId as string}
+                                                userId={activeMember.userId}
                                                 currentImageUrl={getAvatarUrl(
-                                                    user?.image as string,
+                                                    activeMember.avatarUrl || null,
                                                     "xl"
                                                 )}
                                                 size={96}
@@ -551,7 +551,10 @@ const OrganizationMembersPageBase: React.FC = () => {
                                             <Avatar
                                                 size={96}
                                                 icon={<UserOutlined />}
-                                                src={getAvatarUrl(user?.image as string, "xl")}
+                                                src={getAvatarUrl(
+                                                    activeMember.avatarUrl || null,
+                                                    "xl"
+                                                )}
                                                 className="mx-auto"
                                             />
                                         )}
@@ -559,14 +562,20 @@ const OrganizationMembersPageBase: React.FC = () => {
                                             level={4}
                                             style={{ marginTop: "16px", marginBottom: "4px" }}
                                         >
-                                            {user?.name as string}
+                                            {activeMember.name}
                                         </Title>
-                                        <Text type="secondary">{user?.email as string}</Text>
+                                        <Text type="secondary">{activeMember.email}</Text>
                                         <div className="mt-2">
                                             <Tag
-                                                color={user?.emailVerified ? "success" : "warning"}
+                                                color={
+                                                    activeMember.emailVerified
+                                                        ? "success"
+                                                        : "warning"
+                                                }
                                             >
-                                                {user?.emailVerified ? "Verified" : "Unverified"}
+                                                {activeMember.emailVerified
+                                                    ? "Verified"
+                                                    : "Unverified"}
                                             </Tag>
                                         </div>
                                     </div>
@@ -579,18 +588,14 @@ const OrganizationMembersPageBase: React.FC = () => {
                                                 key: "1",
                                                 label: "Personal Info",
                                                 children: (
-                                                    <UserProfileForm
-                                                        userId={activeMember.userId as string}
-                                                    />
+                                                    <UserProfileForm userId={activeMember.userId} />
                                                 ),
                                             },
                                             {
                                                 key: "2",
                                                 label: "Contact Details",
                                                 children: (
-                                                    <UserContactList
-                                                        userId={activeMember.userId as string}
-                                                    />
+                                                    <UserContactList userId={activeMember.userId} />
                                                 ),
                                             },
                                             {

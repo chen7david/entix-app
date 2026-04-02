@@ -4,9 +4,8 @@ import {
     InfoCircleOutlined,
     SaveOutlined,
 } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { useTransactionHistory } from "@web/src/features/wallet/hooks/useTransactionHistory";
-import type { WalletAccount } from "@web/src/features/wallet/hooks/useWalletBalance";
 import {
     Button,
     Card,
@@ -31,7 +30,7 @@ const { Title, Text } = Typography;
 type Props = {
     open: boolean;
     onClose: () => void;
-    account: WalletAccount | null;
+    account: WalletAccountDTO | null;
     orgId?: string;
     size?: "default" | "large";
 };

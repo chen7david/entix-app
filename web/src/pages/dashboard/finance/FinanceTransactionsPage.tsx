@@ -22,6 +22,8 @@ import { useState } from "react";
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
+type TransactionStatus = "pending" | "completed" | "reversed";
+
 export const FinanceTransactionsPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
@@ -32,7 +34,7 @@ export const FinanceTransactionsPage: React.FC = () => {
     const [dateRange, setDateRange] = useState<[any, any] | null>(null);
     const [minAmount, setMinAmount] = useState<number | null>(null);
     const [maxAmount, setMaxAmount] = useState<number | null>(null);
-    const [status, setStatus] = useState<string | undefined>(undefined);
+    const [status, setStatus] = useState<TransactionStatus | undefined>();
     const [searchId, setSearchId] = useState("");
 
     const { data, isLoading } = useTransactions(orgId, {

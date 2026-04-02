@@ -1,17 +1,16 @@
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { Badge, Table, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type { WalletAccount } from "../../wallet/hooks/useWalletBalance";
 
 const { Text } = Typography;
 
 type OrgAccountsTableProps = {
-    accounts?: WalletAccount[];
+    accounts?: WalletAccountDTO[];
     loading?: boolean;
 };
 
 export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) => {
-    const columns: ColumnsType<WalletAccount> = [
+    const columns: ColumnsType<WalletAccountDTO> = [
         {
             title: "Account Name",
             dataIndex: "name",
