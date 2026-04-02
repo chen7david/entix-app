@@ -7,7 +7,18 @@ import {
 } from "@ant-design/icons";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
-import { Alert, Button, Card, Collapse, Divider, Space, Statistic, Typography, Upload } from "antd";
+import {
+    Alert,
+    Button,
+    Card,
+    Collapse,
+    Divider,
+    Space,
+    Statistic,
+    Typography,
+    theme,
+    Upload,
+} from "antd";
 import type React from "react";
 
 const { Title, Text, Paragraph } = Typography;
@@ -16,6 +27,7 @@ const { Panel } = Collapse;
 
 export const MemberImportExportPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
+    const { token } = theme.useToken();
     const { exportMembers, importMembers, isImporting, importResult } = useBulkMembers(
         activeOrganization?.id
     );
@@ -57,7 +69,7 @@ export const MemberImportExportPage: React.FC = () => {
                 createdAt: "2023-01-01T00:00:00Z",
                 updatedAt: "2023-01-01T00:00:00Z",
             },
-            phoneNumbers: [
+            phones: [
                 {
                     id: "phone_123",
                     countryCode: "+1",
@@ -83,7 +95,7 @@ export const MemberImportExportPage: React.FC = () => {
                     updatedAt: "2023-01-01T00:00:00Z",
                 },
             ],
-            socialMedia: [
+            socials: [
                 {
                     id: "soc_123",
                     type: "LinkedIn",
@@ -132,12 +144,12 @@ export const MemberImportExportPage: React.FC = () => {
                             showUploadList={false}
                             disabled={isImporting}
                         >
-                            <p className="ant-upload-drag-icon">
+                            <Paragraph className="ant-upload-drag-icon">
                                 <UploadOutlined className="text-blue-500" />
-                            </p>
-                            <p className="ant-upload-text">
+                            </Paragraph>
+                            <Paragraph className="ant-upload-text">
                                 Click or drag JSON file to this area to import
-                            </p>
+                            </Paragraph>
                         </Dragger>
                     </Card>
                 </div>
@@ -205,7 +217,7 @@ export const MemberImportExportPage: React.FC = () => {
                                         sex, birthDate, timestamps)
                                     </li>
                                     <li>
-                                        <code>phoneNumbers</code> (Array of{" "}
+                                        <code>phones</code> (Array of{" "}
                                         {`{ id, countryCode, number, extension, label, isPrimary, timestamps }`}
                                         )
                                     </li>
@@ -215,7 +227,7 @@ export const MemberImportExportPage: React.FC = () => {
                                         )
                                     </li>
                                     <li>
-                                        <code>socialMedia</code> (Array of{" "}
+                                        <code>socials</code> (Array of{" "}
                                         {`{ id, type, urlOrHandle, timestamps }`})
                                     </li>
                                 </ul>
@@ -228,22 +240,26 @@ export const MemberImportExportPage: React.FC = () => {
                     <Card title="Latest Import Result" className="shadow-sm border-blue-200">
                         <Space direction="vertical" className="w-full">
                             <div className="flex gap-4">
-                                <Statistic title="Processed" value={importResult.total} />
+                                <Statistic
+                                    title="Processed"
+                                    value={importResult.total}
+                                    valueStyle={{ fontSize: token.fontSizeXL }}
+                                />
                                 <Statistic
                                     title="Created"
                                     value={importResult.created}
-                                    valueStyle={{ color: "#3f8600" }}
+                                    valueStyle={{ color: "#3f8600", fontSize: token.fontSizeXL }}
                                     prefix={<CheckCircleOutlined />}
                                 />
                                 <Statistic
                                     title="Linked"
                                     value={importResult.linked}
-                                    valueStyle={{ color: "#108ee9" }}
+                                    valueStyle={{ color: "#108ee9", fontSize: token.fontSizeXL }}
                                 />
                                 <Statistic
                                     title="Failed"
                                     value={importResult.failed}
-                                    valueStyle={{ color: "#cf1322" }}
+                                    valueStyle={{ color: "#cf1322", fontSize: token.fontSizeXL }}
                                     prefix={<ExclamationCircleOutlined />}
                                 />
                             </div>

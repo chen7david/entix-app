@@ -3,6 +3,7 @@ import type { SocialMediaRepository } from "@api/repositories/social-media.repos
 import type { UserRepository } from "@api/repositories/user.repository";
 import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
 import type { OrgRole } from "@shared/auth/permissions";
+import type * as schema from "@shared/db/schema";
 import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 import { nanoid } from "nanoid";
 
@@ -45,7 +46,7 @@ export class MemberImportService {
             const existingUsers: any[] = [];
             for (let i = 0; i < uniqueEmails.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = uniqueEmails.slice(i, i + QUERY_CHUNK_SIZE);
-                const chunkResults = await this.userRepo.findUsersByEmails(chunk);
+                const chunkResults = await this.userRepo.findByEmails(chunk);
                 existingUsers.push(...chunkResults);
             }
 
@@ -55,7 +56,7 @@ export class MemberImportService {
             ];
             for (let i = 0; i < inputIds.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = inputIds.slice(i, i + QUERY_CHUNK_SIZE);
-                const chunkResults = await this.userRepo.findUsersByIds(chunk);
+                const chunkResults = await this.userRepo.findByIds(chunk);
                 // Avoid duplicates if email and id queries overlaps
                 for (const u of chunkResults) {
                     if (!existingUsers.find((eu) => eu.id === u.id)) {
@@ -71,16 +72,15 @@ export class MemberImportService {
             const existingMembers: any[] = [];
             for (let i = 0; i < userIds.length; i += QUERY_CHUNK_SIZE) {
                 const chunk = userIds.slice(i, i + QUERY_CHUNK_SIZE);
-                const chunkResults = await this.memberRepo.findMembershipsByUserIds(
-                    organizationId,
-                    chunk
-                );
+                const chunkResults = await this.memberRepo.findByUserIds(organizationId, chunk);
                 existingMembers.push(...chunkResults);
             }
             const memberSet = new Set(existingMembers.map((m) => m.userId));
 
-            const socialTypes = await this.socialRepo.findAllSocialMediaTypes();
-            const socialTypeMap = new Map(socialTypes.map((t) => [t.name.toLowerCase(), t.id]));
+            const socialTypes = await this.socialRepo.findAllTypes();
+            const socialTypeMap = new Map(
+                socialTypes.map((t: schema.SocialMediaType) => [t.name.toLowerCase(), t.id])
+            );
 
             const enforcedRole: OrgRole = "member";
 
@@ -114,7 +114,7 @@ export class MemberImportService {
                     userMapByEmail.set(input.email, targetUserId);
                     userMapById.set(targetUserId, input.email);
                     userBatch.push(
-                        this.userRepo.prepareUpsertUser({
+                        this.userRepo.prepareUpsert({
                             id: targetUserId,
                             email: input.email,
                             name: input.name,
@@ -128,7 +128,7 @@ export class MemberImportService {
                     results.created++;
                 } else {
                     userBatch.push(
-                        this.userRepo.prepareUpdateUser(targetUserId, {
+                        this.userRepo.prepareUpdate(targetUserId, {
                             name: input.name,
                             image: input.avatarUrl,
                             updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
@@ -138,7 +138,7 @@ export class MemberImportService {
 
                 if (isNewUser || !memberSet.has(targetUserId)) {
                     userBatch.push(
-                        this.memberRepo.prepareAdd(
+                        this.memberRepo.prepareInsertQuery(
                             nanoid(),
                             organizationId,
                             targetUserId,
@@ -149,7 +149,7 @@ export class MemberImportService {
                     memberSet.add(targetUserId);
 
                     userBatch.push(
-                        this.userRepo.prepareInsertAccount({
+                        this.userRepo.prepareAccountInsertRaw({
                             id: nanoid(),
                             userId: targetUserId,
                             accountId: targetUserId,
@@ -163,7 +163,7 @@ export class MemberImportService {
 
                 if (input.profile) {
                     userBatch.push(
-                        this.profileRepo.prepareUpsertProfile({
+                        this.profileRepo.prepareUpsert({
                             id: input.profile.id || nanoid(),
                             userId: targetUserId,
                             firstName: input.profile.firstName,
@@ -183,11 +183,11 @@ export class MemberImportService {
                     );
                 }
 
-                if (input.phoneNumbers && input.phoneNumbers.length > 0) {
-                    userBatch.push(this.profileRepo.prepareDeletePhoneNumbers(targetUserId));
-                    for (const p of input.phoneNumbers) {
+                if (input.phones && input.phones.length > 0) {
+                    userBatch.push(this.profileRepo.preparePhoneDelete(targetUserId));
+                    for (const p of input.phones) {
                         userBatch.push(
-                            this.profileRepo.prepareInsertPhoneNumber({
+                            this.profileRepo.preparePhoneInsert({
                                 id: p.id || nanoid(),
                                 userId: targetUserId,
                                 countryCode: p.countryCode,
@@ -203,10 +203,10 @@ export class MemberImportService {
                 }
 
                 if (input.addresses && input.addresses.length > 0) {
-                    userBatch.push(this.profileRepo.prepareDeleteAddresses(targetUserId));
+                    userBatch.push(this.profileRepo.prepareAddressDelete(targetUserId));
                     for (const a of input.addresses) {
                         userBatch.push(
-                            this.profileRepo.prepareInsertAddress({
+                            this.profileRepo.prepareAddressInsert({
                                 id: a.id || nanoid(),
                                 userId: targetUserId,
                                 country: a.country,
@@ -223,16 +223,16 @@ export class MemberImportService {
                     }
                 }
 
-                if (input.socialMedia && input.socialMedia.length > 0) {
-                    userBatch.push(this.profileRepo.prepareDeleteSocialMedias(targetUserId));
-                    for (const s of input.socialMedia) {
+                if (input.socials && input.socials.length > 0) {
+                    userBatch.push(this.profileRepo.prepareSocialMediaDelete(targetUserId));
+                    for (const s of input.socials) {
                         const typeId = socialTypeMap.get(s.type.toLowerCase());
                         if (typeId) {
                             userBatch.push(
-                                this.profileRepo.prepareInsertSocialMedia({
+                                this.profileRepo.prepareSocialMediaInsert({
                                     id: s.id || nanoid(),
                                     userId: targetUserId,
-                                    socialMediaTypeId: typeId,
+                                    socialMediaTypeId: typeId as string,
                                     urlOrHandle: s.urlOrHandle,
                                     createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
                                     updatedAt: s.updatedAt ? new Date(s.updatedAt) : new Date(),

@@ -1,5 +1,5 @@
+import { getAssetUrl, getAvatarUrl, getImageUrl } from "@shared/utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getAssetUrl, getAvatarUrl, getImageUrl } from "../../shared/utils/image-url";
 
 describe("image-url utilities", () => {
     beforeEach(() => {

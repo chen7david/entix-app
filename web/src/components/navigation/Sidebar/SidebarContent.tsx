@@ -1,15 +1,29 @@
 import {
+    EyeInvisibleOutlined,
+    EyeOutlined,
     LogoutOutlined,
     MoreOutlined,
     SafetyOutlined,
     SettingOutlined,
     UserOutlined,
 } from "@ant-design/icons";
-import { AppRoutes, getAvatarUrl } from "@shared";
+import { AppRoutes, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
-import { Avatar, Button, Dropdown, type MenuProps, Skeleton, Typography, theme } from "antd";
+import { useWalletBalance } from "@web/src/features/wallet";
+import { useSession } from "@web/src/lib/auth-client";
+import {
+    Avatar,
+    Button,
+    Dropdown,
+    type MenuProps,
+    Skeleton,
+    Tooltip,
+    Typography,
+    theme,
+} from "antd";
 import type React from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { SidebarMenu } from "./SidebarMenu";
 import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
@@ -17,12 +31,40 @@ import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
 const { Text } = Typography;
 
 export const SidebarContent: React.FC = () => {
-    const { user, isLoading, isSuperAdmin } = useAuth();
+    const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
+    const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
     const navigate = useNavigate();
     const slug = activeOrganization?.slug || "";
     const { token } = theme.useToken();
+
+    // Local Storage Visibility Toggle
+    const [isBalanceVisible, setIsBalanceVisible] = useState(() => {
+        if (typeof window === "undefined") return false;
+        return localStorage.getItem("wallet_balance_visible") === "true";
+    });
+
+    useEffect(() => {
+        localStorage.setItem("wallet_balance_visible", isBalanceVisible.toString());
+    }, [isBalanceVisible]);
+
+    const userId = session?.user?.id;
+    const orgId = activeOrganization?.id;
+
+    const {
+        data: summary,
+        isLoading: isWalletLoading,
+        isError,
+    } = useWalletBalance(userId, "user", orgId);
+
+    const etdAccount = summary?.accounts.find((a) => a.currencyId === FINANCIAL_CURRENCIES.ETD);
+    const hasWallet = !!etdAccount;
+    const isAdmin =
+        activeOrganization?.members?.find((m: any) => m.userId === userId)?.role === "admin" ||
+        activeOrganization?.members?.find((m: any) => m.userId === userId)?.role === "owner";
+
+    const balanceValue = etdAccount ? (etdAccount.balanceCents / 100).toFixed(2) : "0.00";
 
     const handleMenuClick: MenuProps["onClick"] = (e) => {
         if (e.key === "logout") {
@@ -89,7 +131,7 @@ export const SidebarContent: React.FC = () => {
         <div className="flex flex-col h-full">
             {/* User Profile (Top) */}
             <div className="p-4">
-                {isLoading ? (
+                {isAuthLoading ? (
                     <Skeleton active avatar paragraph={{ rows: 1 }} />
                 ) : (
                     <div className="flex items-center gap-3 overflow-hidden">
@@ -99,13 +141,60 @@ export const SidebarContent: React.FC = () => {
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
                         />
-                        <div className="flex flex-col min-w-0">
+                        <div className="flex flex-col min-w-0 flex-1">
                             <Text strong className="truncate text-sm">
                                 {user?.name}
                             </Text>
-                            <Text type="secondary" className="truncate text-xs">
-                                {user?.email}
-                            </Text>
+
+                            {!isError && (
+                                <div className="flex items-center gap-2 group">
+                                    {isWalletLoading ? (
+                                        <Text type="secondary" className="text-xs">
+                                            E$ ——
+                                        </Text>
+                                    ) : hasWallet ? (
+                                        <>
+                                            <Text type="secondary" className="text-xs font-mono">
+                                                E$ {isBalanceVisible ? balanceValue : "••••••"}
+                                            </Text>
+                                            <Button
+                                                type="text"
+                                                size="small"
+                                                className="h-4 w-4 flex items-center justify-center p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                icon={
+                                                    isBalanceVisible ? (
+                                                        <EyeInvisibleOutlined
+                                                            style={{ fontSize: 10 }}
+                                                        />
+                                                    ) : (
+                                                        <EyeOutlined style={{ fontSize: 10 }} />
+                                                    )
+                                                }
+                                                onClick={() =>
+                                                    setIsBalanceVisible(!isBalanceVisible)
+                                                }
+                                            />
+                                        </>
+                                    ) : (
+                                        <Tooltip
+                                            title={
+                                                isAdmin
+                                                    ? "Go to Members to initialize wallet"
+                                                    : undefined
+                                            }
+                                        >
+                                            <Text
+                                                type="secondary"
+                                                className="text-[10px] opacity-60 italic"
+                                            >
+                                                {isAdmin
+                                                    ? "Wallet not set up — initialize in Members"
+                                                    : "Wallet not set up"}
+                                            </Text>
+                                        </Tooltip>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}

@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { parseApiError } from "@web/src/utils/api";
 
 export interface SessionTrend {
     date: string;
@@ -28,7 +29,7 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
             const url = `${API_V1}/orgs/${organizationId}/analytics/sessions${queryString ? `?${queryString}` : ""}`;
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch session analytics");
+            if (!res.ok) await parseApiError(res);
             return res.json();
         },
         enabled: !!organizationId,
@@ -45,7 +46,7 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
             const url = `${API_V1}/orgs/${organizationId}/analytics/attendance${queryString ? `?${queryString}` : ""}`;
 
             const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch attendance analytics");
+            if (!res.ok) await parseApiError(res);
             return res.json();
         },
         enabled: !!organizationId,

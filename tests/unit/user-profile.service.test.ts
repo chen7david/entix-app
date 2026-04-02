@@ -21,7 +21,7 @@ describe("UserProfileService Unit Test", () => {
         const newUser = createMockUser({ name: "Phone Test", email: "phone@example.com" });
         await db.insert(user).values(newUser);
 
-        await service.addPhoneNumber(newUser.id, {
+        await service.addPhone(newUser.id, {
             countryCode: "+1",
             number: "1111111111",
             extension: null,
@@ -29,7 +29,7 @@ describe("UserProfileService Unit Test", () => {
             isPrimary: true,
         });
 
-        await service.addPhoneNumber(newUser.id, {
+        await service.addPhone(newUser.id, {
             countryCode: "+1",
             number: "2222222222",
             extension: null,

@@ -40,7 +40,9 @@ export const MediaRoutes = {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: createPaginatedResponseSchema(MediaResponseSchema),
+                        schema: z.object({
+                            data: createPaginatedResponseSchema(MediaResponseSchema),
+                        }),
                     },
                 },
                 description: "List of media files",

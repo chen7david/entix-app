@@ -120,6 +120,7 @@ export const UserTable: React.FC = () => {
         {
             title: "User",
             key: "user",
+            width: 250,
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
                     <Avatar
@@ -142,6 +143,7 @@ export const UserTable: React.FC = () => {
             title: "Role",
             dataIndex: "role",
             key: "role",
+            width: 120,
             render: (role: string) => (
                 <Tag color={role === "admin" ? "gold" : "blue"}>{role.toUpperCase()}</Tag>
             ),
@@ -149,6 +151,7 @@ export const UserTable: React.FC = () => {
         {
             title: "Status",
             key: "status",
+            width: 120,
             render: (_: any, record: any) =>
                 record.banned ? <Tag color="error">BANNED</Tag> : <Tag color="success">ACTIVE</Tag>,
         },
@@ -156,11 +159,14 @@ export const UserTable: React.FC = () => {
             title: "Joined",
             dataIndex: "createdAt",
             key: "createdAt",
+            width: 150,
             render: (date: string) => dayjs(date).format("MMM D, YYYY"),
         },
         {
             title: "Actions",
             key: "actions",
+            width: 80,
+            fixed: "right" as const,
             render: (_: any, record: any) => {
                 const items: MenuProps["items"] = [
                     {
@@ -226,6 +232,7 @@ export const UserTable: React.FC = () => {
                 rowKey="id"
                 loading={isPending}
                 pagination={{ pageSize: 10 }}
+                scroll={{ x: "max-content" }}
                 onRow={(record) => ({
                     onClick: () => setSelectedUser(record),
                     className:

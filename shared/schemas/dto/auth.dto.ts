@@ -58,16 +58,18 @@ export const signUpWithOrgSchema = z.object({
 export type SignUpWithOrgDTO = z.infer<typeof signUpWithOrgSchema>;
 
 export const signUpWithOrgResponseSchema = z.object({
-    user: z.object({
-        id: z.string(),
-        email: z.string(),
-        name: z.string(),
-        role: z.string(),
-    }),
-    organization: z.object({
-        id: z.string(),
-        name: z.string(),
-        slug: z.string(),
+    data: z.object({
+        user: z.object({
+            id: z.string(),
+            email: z.string(),
+            name: z.string(),
+            role: z.string(),
+        }),
+        organization: z.object({
+            id: z.string(),
+            name: z.string(),
+            slug: z.string(),
+        }),
     }),
 });
 

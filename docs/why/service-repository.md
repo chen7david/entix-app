@@ -8,5 +8,5 @@ We use this pattern to separate business logic from data access.
 3. **Consistency**: Changes to the DB schema only require updates to the Repository, not the entire app.
 4. **Clean Handlers**: HTTP handlers stay slim, only handling input parsing and output formatting.
 
-Last updated: 2026-03-12
-[Back to Documentation Guide](../how-to-write-docs.md)
+Last updated: 2026-03-30
+[Back to Documentation Hub](../index.md)

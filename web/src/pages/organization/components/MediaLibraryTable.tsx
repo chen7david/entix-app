@@ -76,6 +76,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
             title: "Title",
             dataIndex: "title",
             key: "title",
+            width: 300,
             render: (text: string, record: Media) => (
                 <div className="flex items-center gap-3">
                     {record.mimeType.startsWith("video/") ? (
@@ -106,11 +107,14 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
             title: "Plays",
             dataIndex: "playCount",
             key: "playCount",
+            width: 100,
             render: (count: number) => <Text className="font-mono">{count.toLocaleString()}</Text>,
         },
         {
             title: "Actions",
             key: "actions",
+            width: 80,
+            fixed: "right" as const,
             render: (_: any, record: Media) => (
                 <div onClick={(e) => e.stopPropagation()}>
                     <Space size="middle">
@@ -175,6 +179,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                 rowKey="id"
                 loading={isLoadingMedia}
                 pagination={false}
+                scroll={{ x: "max-content" }}
                 onRow={(record) => ({
                     onClick: () => handlePlayMedia(record),
                     className: "cursor-pointer",

@@ -73,6 +73,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
         {
             title: "Organization",
             key: "name",
+            width: 250,
             render: (_: any, record: any) => (
                 <div className="flex items-center gap-3">
                     <div
@@ -80,7 +81,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             width: 36,
                             height: 36,
                             borderRadius: 8,
-                            background: "#646cff",
+                            background: "#2563eb",
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
@@ -103,6 +104,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
             title: "Slug",
             dataIndex: "slug",
             key: "slug",
+            width: 150,
             render: (slug: string) => <Tag>{slug}</Tag>,
             responsive: ["md" as const],
         },
@@ -110,6 +112,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
             title: "Created",
             dataIndex: "createdAt",
             key: "createdAt",
+            width: 150,
             render: (date: string) => (
                 <span className="flex items-center gap-1 text-gray-500 text-sm">
                     <CalendarOutlined />
@@ -121,7 +124,8 @@ export const GlobalOrganizationsPage: React.FC = () => {
         {
             title: "Actions",
             key: "actions",
-            width: 60,
+            width: 80,
+            fixed: "right" as const,
             render: () => {
                 const items: MenuProps["items"] = [{ key: "view", label: "View Details" }];
                 return (
@@ -201,6 +205,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
                     rowKey="id"
                     loading={isLoading}
                     pagination={{ pageSize: 15, showSizeChanger: false }}
+                    scroll={{ x: "max-content" }}
                 />
             </div>
 

@@ -19,16 +19,17 @@ export class PlaylistRepository {
         return playlist;
     }
 
-    async findById(id: string, organizationId: string): Promise<schema.Playlist | undefined> {
-        return await this.db.query.playlists.findFirst({
+    async findPlaylistById(id: string, organizationId: string): Promise<schema.Playlist | null> {
+        const playlist = await this.db.query.playlists.findFirst({
             where: and(
                 eq(schema.playlists.id, id),
                 eq(schema.playlists.organizationId, organizationId)
             ),
         });
+        return playlist ?? null;
     }
 
-    async findAllByOrganization(organizationId: string): Promise<schema.Playlist[]> {
+    async findPlaylistsByOrganization(organizationId: string): Promise<schema.Playlist[]> {
         return await this.db
             .select()
             .from(schema.playlists)
@@ -40,7 +41,7 @@ export class PlaylistRepository {
         id: string,
         organizationId: string,
         updates: Partial<Pick<schema.Playlist, "title" | "description" | "coverArtUrl">>
-    ): Promise<schema.Playlist | undefined> {
+    ): Promise<schema.Playlist | null> {
         const [updated] = await this.db
             .update(schema.playlists)
             .set({ ...updates, updatedAt: new Date() })
@@ -51,7 +52,7 @@ export class PlaylistRepository {
                 )
             )
             .returning();
-        return updated;
+        return updated ?? null;
     }
 
     async delete(id: string, organizationId: string): Promise<boolean> {
@@ -85,7 +86,7 @@ export class PlaylistRepository {
         }
     }
 
-    async getMediaSequence(playlistId: string): Promise<schema.PlaylistMedia[]> {
+    async findMediaSequence(playlistId: string): Promise<schema.PlaylistMedia[]> {
         return await this.db
             .select()
             .from(schema.playlistMedia)

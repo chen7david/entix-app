@@ -51,7 +51,7 @@ describe("Bulk Member Integration Tests", () => {
                     sex: "male",
                     birthDate: "1990-01-01",
                 },
-                phoneNumbers: [
+                phones: [
                     {
                         countryCode: "+1",
                         number: "5551234",
@@ -71,7 +71,7 @@ describe("Bulk Member Integration Tests", () => {
                         isPrimary: true,
                     },
                 ],
-                socialMedia: [{ type: "GitHub", urlOrHandle: "fullcontact" }],
+                socials: [{ type: "GitHub", urlOrHandle: "fullcontact" }],
             },
         ];
 

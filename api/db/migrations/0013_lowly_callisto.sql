@@ -1,0 +1,2 @@
+ALTER TABLE `financial_accounts` ADD `is_default_funding` integer DEFAULT false NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX `one_default_funding_per_currency_idx` ON `financial_accounts` (`owner_id`,`currency_id`,`is_default_funding`) WHERE is_default_funding = 1;

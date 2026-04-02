@@ -13,4 +13,6 @@ mountAuthMiddleware(app);
 mountRoutes({ app, routes, prefix: "/api/v1" });
 mountBetterAuth(app);
 
+configureOpenApi(app);
+
 export default app;

@@ -25,13 +25,13 @@ describe("Auth Integration Test", () => {
         expect(res.status).toBe(201);
         const body = (await res.json()) as SignUpWithOrgResponseDTO;
 
-        expect(body).toHaveProperty("user");
-        expect(body.user).toHaveProperty("id");
-        expect(body.user.email).toBe(payload.email);
-        expect(body.user.role).toBe("owner");
+        expect(body).toHaveProperty("data");
+        expect(body.data).toHaveProperty("user");
+        expect(body.data.user.email).toBe(payload.email);
+        expect(body.data.user.role).toBe("owner");
 
-        expect(body).toHaveProperty("organization");
-        expect(body.organization.name).toBe(payload.organizationName);
+        expect(body.data).toHaveProperty("organization");
+        expect(body.data.organization.name).toBe(payload.organizationName);
     });
 
     it("POST /api/v1/auth/signup-with-org should return error for existing user", async () => {
@@ -94,17 +94,17 @@ describe("Auth Integration Test", () => {
 
         const { MemberRepository } = await import("@api/repositories/member.repository");
         const { vi } = await import("vitest");
-        const spy = vi.spyOn(MemberRepository.prototype, "prepareAdd").mockImplementation(function (
-            this: any
-        ) {
-            return this.db.insert(schema.authMembers).values({
-                id: "pre-existing-conflict", // Will conflict
-                organizationId: "dummy-org", // Must match foreign key
-                userId: "dummy-user", // Must match foreign key
-                role: "owner",
-                createdAt: new Date(),
+        const spy = vi
+            .spyOn(MemberRepository.prototype, "prepareInsertQuery")
+            .mockImplementation(function (this: any) {
+                return this.db.insert(schema.authMembers).values({
+                    id: "pre-existing-conflict", // Will conflict
+                    organizationId: "dummy-org", // Must match foreign key
+                    userId: "dummy-user", // Must match foreign key
+                    role: "owner",
+                    createdAt: new Date(),
+                });
             });
-        });
 
         const res = await client.auth.signUpWithOrg(payload);
 
@@ -172,6 +172,6 @@ describe("Auth Integration Test", () => {
 
         const fullOrgBody = (await res.json()) as any;
         expect(fullOrgBody).toHaveProperty("id");
-        expect(fullOrgBody.name).toBe(orgData.organization.name);
+        expect(fullOrgBody.name).toBe(orgData.data.organization.name);
     });
 });

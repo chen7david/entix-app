@@ -12,8 +12,13 @@ export const CenteredResult: React.FC<ResultProps> = (props) => (
     </CenteredView>
 );
 
-export const CenteredSpin: React.FC<SpinProps> = (props) => (
+export const CenteredSpin: React.FC<SpinProps & { children?: React.ReactNode }> = ({
+    children,
+    ...props
+}) => (
     <CenteredView>
-        <Spin size="large" {...props} />
+        <Spin size="large" {...props}>
+            {children || <div style={{ padding: 50 }} />}
+        </Spin>
     </CenteredView>
 );

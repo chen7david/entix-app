@@ -29,7 +29,7 @@ export const AvatarDropzone = ({
     size = 120,
     className = "",
 }: AvatarDropzoneProps) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { token } = useToken();
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
@@ -45,7 +45,10 @@ export const AvatarDropzone = ({
         if (fileObj.size > maxSize) {
             const errorMsg = "Profile picture must be smaller than 5MB";
             onError?.(new Error(errorMsg));
-            message.error(errorMsg);
+            notification.error({
+                message: "Upload Failed",
+                description: errorMsg,
+            });
             return;
         }
 
@@ -116,7 +119,10 @@ export const AvatarDropzone = ({
         } catch (err: any) {
             console.error("Avatar upload error:", err);
             onError?.(err);
-            message.error(err.message || "Failed to upload profile picture");
+            notification.error({
+                message: "Upload Failed",
+                description: err.message || "Failed to upload profile picture",
+            });
         } finally {
             setUploading(false);
         }
@@ -140,10 +146,11 @@ export const AvatarDropzone = ({
             >
                 <Upload
                     {...uploadProps}
+                    aria-label="Upload profile picture"
                     className="w-full h-full block [&_.ant-upload]:w-full [&_.ant-upload]:h-full [&_.ant-upload]:block relative group cursor-pointer"
                 >
                     <div
-                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed group-hover:border-[#646cff] transition-colors"
+                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed group-hover:border-[var(--ant-color-primary)] transition-colors"
                         style={{
                             width: size,
                             height: size,
@@ -165,7 +172,12 @@ export const AvatarDropzone = ({
                             />
 
                             {/* Hover Overlay */}
-                            <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-[#646cff]/80 text-white pointer-events-none">
+                            <div
+                                className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 text-white pointer-events-none"
+                                style={{
+                                    backgroundColor: `${token.colorPrimary}CC`, // 80% opacity
+                                }}
+                            >
                                 {uploading ? (
                                     <Spin className="text-white" />
                                 ) : (
@@ -180,7 +192,10 @@ export const AvatarDropzone = ({
                         </div>
 
                         {/* Floating Upload Indicator Badge */}
-                        <div className="absolute bottom-0 right-0 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-[#646cff] group-hover:border-[#646cff] transition-colors pointer-events-none z-10">
+                        <div
+                            className="absolute bottom-0 right-0 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-[var(--ant-color-primary)] group-hover:border-[var(--ant-color-primary)] transition-colors pointer-events-none z-10"
+                            aria-hidden="true"
+                        >
                             <CloudUploadOutlined className="text-base" />
                         </div>
                     </div>

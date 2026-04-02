@@ -2,7 +2,7 @@ import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Typography } from "antd";
 import type React from "react";
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 export const LessonsPage: React.FC = () => {
     return (
@@ -10,7 +10,7 @@ export const LessonsPage: React.FC = () => {
             <Toolbar />
             <div className="p-6">
                 <Title level={2}>Lessons</Title>
-                <p>Welcome to the Lessons page.</p>
+                <Paragraph>Welcome to the Orders page.</Paragraph>
             </div>
         </>
     );

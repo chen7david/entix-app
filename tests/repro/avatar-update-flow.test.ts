@@ -68,7 +68,8 @@ describe("Avatar Update Flow", () => {
 
         expect(patchRes.status).toBe(404);
         const body = (await patchRes.json()) as any;
-        expect(body.message).toBe("Upload not found");
+        expect(body.message).toContain("User upload");
+        expect(body.message).toContain("not found");
     });
 
     it("should successfully remove avatar via the consolidated DELETE route (admin acting on member)", async () => {

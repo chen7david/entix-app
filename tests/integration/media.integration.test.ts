@@ -19,7 +19,7 @@ describe("Media Routes Integration Tests", () => {
         const { cookie, orgId: id, orgData } = await createAuthenticatedOrg({ app, env });
         client = createTestClient(app, env, cookie);
         orgId = id;
-        userId = orgData.user.id;
+        userId = orgData.data.user.id;
         db = getDbClient({ env } as any);
     });
 
@@ -44,25 +44,25 @@ describe("Media Routes Integration Tests", () => {
             expect(res1.status).toBe(200);
 
             const body1 = (await res1.json()) as any;
-            expect(body1.items).toHaveLength(10);
-            expect(body1.nextCursor).not.toBeNull();
-            expect(body1.prevCursor).not.toBeNull();
+            expect(body1.data.items).toHaveLength(10);
+            expect(body1.data.nextCursor).not.toBeNull();
+            expect(body1.data.prevCursor).not.toBeNull();
 
-            expect(body1.items[0].id).toBe("media-0");
-            expect(body1.items[9].id).toBe("media-9");
+            expect(body1.data.items[0].id).toBe("media-0");
+            expect(body1.data.items[9].id).toBe("media-9");
 
             const res2 = await client.orgs.media.list(orgId, {
                 limit: 10,
-                cursor: body1.nextCursor,
+                cursor: body1.data.nextCursor,
                 direction: "next",
             });
             expect(res2.status).toBe(200);
 
             const body2 = (await res2.json()) as any;
-            expect(body2.items).toHaveLength(5);
-            expect(body2.nextCursor).toBeNull(); // No more items successfully intercepted implicitly
-            expect(body2.items[0].id).toBe("media-10");
-            expect(body2.items[4].id).toBe("media-14");
+            expect(body2.data.items).toHaveLength(5);
+            expect(body2.data.nextCursor).toBeNull(); // No more items successfully intercepted implicitly
+            expect(body2.data.items[0].id).toBe("media-10");
+            expect(body2.data.items[4].id).toBe("media-14");
         });
     });
 });

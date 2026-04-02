@@ -22,10 +22,11 @@ export class MediaRepository {
         return media;
     }
 
-    async findById(id: string, organizationId: string): Promise<schema.Media | undefined> {
-        return await this.db.query.media.findFirst({
+    async findById(id: string, organizationId: string): Promise<schema.Media | null> {
+        const media = await this.db.query.media.findFirst({
             where: and(eq(schema.media.id, id), eq(schema.media.organizationId, organizationId)),
         });
+        return media ?? null;
     }
 
     async findAllByOrganization(
@@ -79,13 +80,13 @@ export class MediaRepository {
         id: string,
         organizationId: string,
         updates: Partial<Pick<schema.Media, "title" | "description" | "coverArtUrl">>
-    ): Promise<schema.Media | undefined> {
+    ): Promise<schema.Media | null> {
         const [updated] = await this.db
             .update(schema.media)
             .set({ ...updates, updatedAt: new Date() })
             .where(and(eq(schema.media.id, id), eq(schema.media.organizationId, organizationId)))
             .returning();
-        return updated;
+        return updated ?? null;
     }
 
     async incrementPlayCount(id: string, organizationId: string): Promise<void> {

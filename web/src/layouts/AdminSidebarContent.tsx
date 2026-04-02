@@ -2,6 +2,7 @@ import {
     ApartmentOutlined,
     ArrowLeftOutlined,
     DashboardOutlined,
+    DollarOutlined,
     LogoutOutlined,
     MailOutlined,
     MoreOutlined,
@@ -76,6 +77,11 @@ export const AdminSidebarContent: React.FC = () => {
             label: "Email Insights",
             key: AppRoutes.admin.emails,
             icon: <MailOutlined />,
+        },
+        {
+            label: "Financial",
+            key: "/admin/financial",
+            icon: <DollarOutlined />,
         },
     ];
 

@@ -1,7 +1,9 @@
 import type { AppEnv } from "@api/helpers/types.helpers";
 import type { Hono } from "hono";
+import { createAdminFinanceClient } from "./admin-finance.client";
 import { createAuthClient } from "./auth.client";
 import { createRequester } from "./base-requester";
+import { createFinanceClient } from "./finance.client";
 import { createMediaClient } from "./media.client";
 import { createMembersClient } from "./members.client";
 import { createScheduleClient } from "./schedule.client";
@@ -30,11 +32,13 @@ export function createTestClient(app: Hono<AppEnv>, env: any, cookie?: string) {
 
     return {
         auth: createAuthClient(request),
+        admin: createAdminFinanceClient(request),
         orgs: {
             members: createMembersClient(request),
             users: createUsersClient(request),
             media: createMediaClient(request),
             schedule: createScheduleClient(request),
+            finance: createFinanceClient(request),
         },
         /**
          * Low-level escape hatch for one-off requests
@@ -46,6 +50,11 @@ export function createTestClient(app: Hono<AppEnv>, env: any, cookie?: string) {
 
 export type TestClient = ReturnType<typeof createTestClient>;
 
+export type {
+    ActivateCurrencyRequest,
+    ExecuteTransferRequest,
+    ReverseTransactionRequest,
+} from "@shared/schemas/dto/financial.dto";
 export type { AuthClient } from "./auth.client";
 export type { Requester } from "./base-requester";
 export type { MediaClient } from "./media.client";

@@ -9,18 +9,20 @@ export const createMemberSchema = z.object({
 export type CreateMemberDTO = z.infer<typeof createMemberSchema>;
 
 export const createMemberResponseSchema = z.object({
-    member: z.object({
-        id: z.string(),
-        userId: z.string(),
-        organizationId: z.string(),
-        role: z.string(),
-        createdAt: z.date(),
-    }),
-    user: z.object({
-        id: z.string(),
-        email: z.string(),
-        name: z.string(),
-        emailVerified: z.boolean(),
+    data: z.object({
+        member: z.object({
+            id: z.string(),
+            userId: z.string(),
+            organizationId: z.string(),
+            role: z.string(),
+            createdAt: z.date(),
+        }),
+        user: z.object({
+            id: z.string(),
+            email: z.string(),
+            name: z.string(),
+            emailVerified: z.boolean(),
+        }),
     }),
 });
 

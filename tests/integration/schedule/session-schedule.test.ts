@@ -17,7 +17,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
                 )
             ),
             addAttendances: vi.fn().mockResolvedValue([]),
-            getSessionById: vi.fn(),
+            findSessionById: vi.fn(),
             updateSessionDetails: vi.fn(),
             deleteAllSessionAttendances: vi.fn(),
             deleteFollowingSessions: vi.fn(),
@@ -74,7 +74,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("cascades an update forward flawlessly replacing downstream sequences", async () => {
         const mockOriginalStartDate = new Date("2026-03-20T10:00:00Z").getTime();
-        mockRepo.getSessionById.mockResolvedValue({
+        mockRepo.findSessionById.mockResolvedValue({
             id: "sess_anchor",
             seriesId: "series_123",
             startTime: mockOriginalStartDate,

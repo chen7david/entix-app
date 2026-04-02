@@ -1,7 +1,5 @@
 import { createContext, useContext } from "react";
 
-// import type { Organization } from 'better-auth/types';
-
 interface OrgContextType {
     activeOrganization: any | null;
     loading: boolean;

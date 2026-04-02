@@ -43,7 +43,7 @@ export const getEmailAndPasswordConfig = (
                 );
 
                 const userRepo = getUserRepository(ctx);
-                await userRepo.updateUser(user.id, { emailVerified: true });
+                await userRepo.update(user.id, { emailVerified: true });
             },
         },
     };

@@ -42,7 +42,7 @@ export const requireOrgMembership = createMiddleware<AppEnv>(async (ctx, next) =
     }
 
     const memberRepo = getMemberRepository(ctx);
-    const membership = await memberRepo.findMembership(userId, organizationId);
+    const membership = await memberRepo.find(userId, organizationId);
 
     if (!membership) {
         throw new ForbiddenError(`You are not a member of organization: ${organizationId}`);

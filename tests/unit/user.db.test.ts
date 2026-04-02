@@ -28,7 +28,7 @@ describe("AuthUser Integration Test", () => {
         expect(result[0].email).toBe(newUser.email);
     });
 
-    it("should update user data via UserRepository.updateUser", async () => {
+    it("should update user data via UserRepository.update", async () => {
         const newUser = createMockUser({
             name: "Update Test AuthUser",
             email: "update@example.com",
@@ -37,8 +37,8 @@ describe("AuthUser Integration Test", () => {
 
         await db.insert(user).values(newUser);
 
-        const repo = new UserRepository(db, {} as any);
-        await repo.updateUser(newUser.id, { emailVerified: true });
+        const repo = new UserRepository(db);
+        await repo.update(newUser.id, { emailVerified: true });
 
         const updatedUser = await db.query.authUsers.findFirst({
             where: eq(user.id, newUser.id),

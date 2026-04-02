@@ -17,10 +17,11 @@ export class OrganizationRepository {
     /**
      * Find organization by slug
      */
-    async findBySlug(slug: string): Promise<schema.AuthOrganization | undefined> {
-        return await this.db.query.authOrganizations.findFirst({
+    async findBySlug(slug: string): Promise<schema.AuthOrganization | null> {
+        const organization = await this.db.query.authOrganizations.findFirst({
             where: eq(schema.authOrganizations.slug, slug),
         });
+        return organization ?? null;
     }
 
     /**
@@ -36,15 +37,17 @@ export class OrganizationRepository {
     /**
      * Find organization by ID
      */
-    async findById(id: string): Promise<schema.AuthOrganization | undefined> {
-        return await this.db.query.authOrganizations.findFirst({
+    async findById(id: string): Promise<schema.AuthOrganization | null> {
+        const organization = await this.db.query.authOrganizations.findFirst({
             where: eq(schema.authOrganizations.id, id),
         });
+        return organization ?? null;
     }
 
-    /** Prepare a query to create an organization for batching
+    /**
+     * Prepare a query to insert an organization for batching.
      */
-    prepareCreate(id: string, name: string, slug: string) {
+    prepareInsert(id: string, name: string, slug: string) {
         const now = new Date();
         return this.db.insert(schema.authOrganizations).values({
             id,

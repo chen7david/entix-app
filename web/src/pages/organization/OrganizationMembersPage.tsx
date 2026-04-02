@@ -9,9 +9,12 @@ import {
     SearchOutlined,
     TeamOutlined,
     UserOutlined,
+    WalletOutlined,
 } from "@ant-design/icons";
 import { getAvatarUrl } from "@shared";
+import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/features/auth";
 import { AvatarDropzone } from "@web/src/features/media";
@@ -27,11 +30,13 @@ import {
     UserProfileForm,
     useRemoveAvatar,
 } from "@web/src/features/user-profiles";
+import { useInitializeWallet } from "@web/src/features/wallet/hooks/useInitializeWallet";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
 import type { MenuProps } from "antd";
 import {
+    App,
     Avatar,
     Button,
     Card,
@@ -41,7 +46,6 @@ import {
     Form,
     Input,
     Modal,
-    message,
     Row,
     Select,
     Skeleton,
@@ -52,14 +56,19 @@ import {
     Tag,
     Tooltip,
     Typography,
+    theme,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useEffect, useState } from "react";
+import { createSchemaFieldRule } from "antd-zod";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
 import { useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
-export const OrganizationMembersPage = () => {
+const OrganizationMembersPageBase: React.FC = () => {
+    const { token } = theme.useToken();
+    const { message } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Bind search state generically to url string matching native architecture persistence
@@ -105,6 +114,9 @@ export const OrganizationMembersPage = () => {
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
+    const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(
+        activeOrganization?.id || ""
+    );
 
     const handleCreateMember = async (values: any) => {
         try {
@@ -116,14 +128,17 @@ export const OrganizationMembersPage = () => {
         }
     };
 
-    const handleRemoveAvatar = async (memberUserId: string) => {
-        try {
-            await removeAvatarMutation.mutateAsync(memberUserId);
-            message.success("Profile picture removed successfully");
-        } catch {
-            message.error("Failed to remove profile picture");
-        }
-    };
+    const handleRemoveAvatar = useCallback(
+        async (memberUserId: string) => {
+            try {
+                await removeAvatarMutation.mutateAsync(memberUserId);
+                message.success("Profile picture removed successfully");
+            } catch {
+                message.error("Failed to remove profile picture");
+            }
+        },
+        [removeAvatarMutation, message]
+    );
 
     // Permissions check using better-auth client helper
     const canUpdateMember = checkPermission({ permissions: { member: ["update"] } });
@@ -147,149 +162,188 @@ export const OrganizationMembersPage = () => {
         }
     };
 
-    const handleResendPassword = async (email: string) => {
-        if (!email) return;
-        const { error } = await requestPasswordReset({
-            email,
-            redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
-        if (error) {
-            message.error(`Failed to send password reset: ${error.message}`);
-        } else {
-            message.success("Password reset email sent");
-        }
-    };
+    const handleResendPassword = useCallback(
+        async (email: string) => {
+            if (!email) return;
+            const { error } = await requestPasswordReset({
+                email,
+                redirectTo: `${window.location.origin}/auth/reset-password`,
+            });
+            if (error) {
+                message.error(`Failed to send password reset: ${error.message}`);
+            } else {
+                message.success("Password reset email sent");
+            }
+        },
+        [message]
+    );
 
-    const handleResendVerification = async (email: string) => {
-        if (!email) return;
-        const { error } = await sendVerificationEmail({
-            email,
-            callbackURL: window.location.origin,
-        });
-        if (error) {
-            message.error(`Failed to send verification email: ${error.message}`);
-        } else {
-            message.success("Verification email sent");
-        }
-    };
+    const handleResendVerification = useCallback(
+        async (email: string) => {
+            if (!email) return;
+            const { error } = await sendVerificationEmail({
+                email,
+                callbackURL: window.location.origin,
+            });
+            if (error) {
+                message.error(`Failed to send verification email: ${error.message}`);
+            } else {
+                message.success("Verification email sent");
+            }
+        },
+        [message]
+    );
 
     // Compute role counts from organization-wide metrics if available, fallback to list (list is paginated so list-based stats are inaccurate)
     const totalMembers = metrics?.totalMembers ?? members?.length ?? 0;
     const adminCount = metrics?.adminCount ?? 0;
     const ownerCount = metrics?.ownerCount ?? 0;
 
-    const columns: ColumnsType<Record<string, unknown>> = [
-        {
-            title: "User",
-            dataIndex: "user",
-            key: "user",
-            render: (user: Record<string, unknown>, record: any) => (
-                <div
-                    className="flex items-center gap-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded transition-colors"
-                    onClick={() => setSelectedMember(record)}
-                >
-                    <Avatar
-                        src={user?.image ? getAvatarUrl(user.image as string, "sm") : undefined}
-                        icon={<UserOutlined />}
-                    />
-                    <div className="flex flex-col">
-                        <Typography.Text
-                            strong
-                            className="text-[#646cff] hover:text-[#747bff] transition-colors"
-                        >
-                            {user.name as string}
-                        </Typography.Text>
-                        <Typography.Text type="secondary" className="text-xs">
-                            {user.email as string}
-                        </Typography.Text>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            title: "Role",
-            dataIndex: "role",
-            key: "role",
-            render: (role: unknown) => {
-                const memberRoles = String(role || "")
-                    .split(",")
-                    .map((r) => r.trim())
-                    .filter(Boolean);
-                return (
-                    <Space wrap>
-                        {memberRoles.map((r) => (
-                            <Tag
-                                key={r}
-                                color={
-                                    r === "owner" ? "purple" : r === "admin" ? "#646cff" : "default"
-                                }
+    const columns: ColumnsType<Record<string, unknown>> = useMemo(
+        () => [
+            {
+                title: "User",
+                dataIndex: "user",
+                key: "user",
+                width: 250,
+                render: (user: Record<string, unknown>, record: any) => (
+                    <div
+                        className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded transition-colors min-h-[44px]"
+                        onClick={() => setSelectedMember(record)}
+                    >
+                        <Avatar
+                            src={user?.image ? getAvatarUrl(user.image as string, "sm") : undefined}
+                            icon={<UserOutlined />}
+                        />
+                        <div className="flex flex-col">
+                            <Typography.Text
+                                strong
+                                style={{ color: token.colorPrimary }}
+                                className="transition-colors"
                             >
-                                {r.toUpperCase()}
-                            </Tag>
-                        ))}
-                    </Space>
-                );
-            },
-        },
-        {
-            title: "Joined At",
-            dataIndex: "createdAt",
-            key: "createdAt",
-            render: (date: string) => {
-                return (
-                    <Tooltip title={DateUtils.toDate(date).toLocaleString()}>
-                        {DateUtils.fromNow(date)}
-                    </Tooltip>
-                );
-            },
-        },
-        {
-            title: "",
-            key: "actions",
-            align: "right",
-            width: 50,
-            render: (_: any, record: any) => {
-                const items: MenuProps["items"] = [
-                    {
-                        key: "resend-verification",
-                        label: "Resend Verification Email",
-                        icon: <MailOutlined />,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleResendVerification(record.user?.email);
-                        },
-                    },
-                    {
-                        key: "resend-password",
-                        label: "Resend Password Reset",
-                        icon: <LockOutlined />,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleResendPassword(record.user?.email);
-                        },
-                    },
-                    {
-                        key: "remove-picture",
-                        label: "Remove Picture",
-                        icon: <DeleteOutlined />,
-                        danger: true,
-                        disabled: !record.user?.image,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleRemoveAvatar(record.user?.id as string);
-                        },
-                    },
-                ];
-                return (
-                    <div onClick={(e) => e.stopPropagation()}>
-                        <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
-                            <Button type="text" icon={<MoreOutlined />} />
-                        </Dropdown>
+                                {user.name as string}
+                            </Typography.Text>
+                            <Typography.Text type="secondary" className="text-xs">
+                                {user.email as string}
+                            </Typography.Text>
+                        </div>
                     </div>
-                );
+                ),
             },
-        },
-    ];
+            {
+                title: "Role",
+                dataIndex: "role",
+                key: "role",
+                width: 200,
+                render: (role: unknown) => {
+                    const memberRoles = String(role || "")
+                        .split(",")
+                        .map((r) => r.trim())
+                        .filter(Boolean);
+                    return (
+                        <Space wrap>
+                            {memberRoles.map((r) => (
+                                <Tag
+                                    key={r}
+                                    color={
+                                        r === "owner"
+                                            ? "purple"
+                                            : r === "admin"
+                                              ? token.colorPrimary
+                                              : "default"
+                                    }
+                                >
+                                    {r.toUpperCase()}
+                                </Tag>
+                            ))}
+                        </Space>
+                    );
+                },
+            },
+            {
+                title: "Joined At",
+                dataIndex: "createdAt",
+                key: "createdAt",
+                width: 150,
+                render: (date: string) => {
+                    return (
+                        <Tooltip title={DateUtils.toDate(date).toLocaleString()}>
+                            {DateUtils.fromNow(date)}
+                        </Tooltip>
+                    );
+                },
+            },
+            {
+                title: "",
+                key: "actions",
+                align: "right",
+                width: 80,
+                fixed: "right",
+                render: (_: any, record: any) => {
+                    const items: MenuProps["items"] = [
+                        {
+                            key: "resend-verification",
+                            label: "Resend Verification Email",
+                            icon: <MailOutlined />,
+                            onClick: (e) => {
+                                e.domEvent.stopPropagation();
+                                handleResendVerification(record.user?.email);
+                            },
+                        },
+                        {
+                            key: "initialize-wallet",
+                            label: "Initialize Wallet",
+                            icon: <WalletOutlined />,
+                            disabled: isInitializing,
+                            onClick: (e) => {
+                                e.domEvent.stopPropagation();
+                                initializeWallet(record.userId as string);
+                            },
+                        },
+                        {
+                            key: "resend-password",
+                            label: "Resend Password Reset",
+                            icon: <LockOutlined />,
+                            onClick: (e) => {
+                                e.domEvent.stopPropagation();
+                                handleResendPassword(record.user?.email);
+                            },
+                        },
+                        {
+                            key: "remove-picture",
+                            label: "Remove Picture",
+                            icon: <DeleteOutlined />,
+                            danger: true,
+                            disabled: !record.user?.image,
+                            onClick: (e) => {
+                                e.domEvent.stopPropagation();
+                                handleRemoveAvatar(record.user?.id as string);
+                            },
+                        },
+                    ];
+                    return (
+                        <div onClick={(e) => e.stopPropagation()} className="p-1">
+                            <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
+                                <Button
+                                    type="text"
+                                    icon={<MoreOutlined />}
+                                    className="flex items-center justify-center min-w-[44px] min-h-[44px]"
+                                />
+                            </Dropdown>
+                        </div>
+                    );
+                },
+            },
+        ],
+        [
+            isInitializing,
+            token.colorPrimary,
+            initializeWallet,
+            handleResendVerification,
+            handleResendPassword,
+            handleRemoveAvatar,
+        ]
+    );
 
     if (loading && members.length === 0) {
         return <Skeleton active />;
@@ -303,14 +357,14 @@ export const OrganizationMembersPage = () => {
         <>
             <Toolbar />
             <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
                     <div>
                         <Title level={2} style={{ marginBottom: 4 }}>
                             Members
                         </Title>
                         <Text type="secondary">Manage organization members and roles</Text>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
                         {currentUserRoles && currentUserRoles.length > 0 ? (
                             <Space>
                                 {currentUserRoles.map((r: string) => (
@@ -328,6 +382,7 @@ export const OrganizationMembersPage = () => {
                             type="primary"
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateModalOpen(true)}
+                            className="min-h-[40px]"
                         >
                             Create New Member
                         </Button>
@@ -342,6 +397,7 @@ export const OrganizationMembersPage = () => {
                                 title="Total Members"
                                 value={totalMembers}
                                 prefix={<TeamOutlined />}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
                             />
                         </Card>
                     </Col>
@@ -351,6 +407,7 @@ export const OrganizationMembersPage = () => {
                                 title="Admins"
                                 value={adminCount}
                                 prefix={<SafetyOutlined />}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
                             />
                         </Card>
                     </Col>
@@ -360,6 +417,7 @@ export const OrganizationMembersPage = () => {
                                 title="Owners"
                                 value={ownerCount}
                                 prefix={<CrownOutlined />}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
                             />
                         </Card>
                     </Col>
@@ -387,6 +445,7 @@ export const OrganizationMembersPage = () => {
                     rowKey={(record: any) => record.id || record.userId}
                     pagination={false}
                     loading={loading && !isFetchingNextPage}
+                    scroll={{ x: "max-content" }}
                 />
 
                 {hasNextPage && (
@@ -417,7 +476,7 @@ export const OrganizationMembersPage = () => {
                         <Form.Item
                             name="name"
                             label="Full Name"
-                            rules={[{ required: true, message: "Please input the full name!" }]}
+                            rules={[createSchemaFieldRule(createMemberSchema.pick({ name: true }))]}
                         >
                             <Input placeholder="John Doe" />
                         </Form.Item>
@@ -426,8 +485,7 @@ export const OrganizationMembersPage = () => {
                             name="email"
                             label="Email Address"
                             rules={[
-                                { required: true, message: "Please input the email address!" },
-                                { type: "email", message: "Please enter a valid email!" },
+                                createSchemaFieldRule(createMemberSchema.pick({ email: true })),
                             ]}
                         >
                             <Input placeholder="colleague@example.com" />
@@ -436,7 +494,7 @@ export const OrganizationMembersPage = () => {
                         <Form.Item
                             name="role"
                             label="Role"
-                            rules={[{ required: true, message: "Please select a role!" }]}
+                            rules={[createSchemaFieldRule(createMemberSchema.pick({ role: true }))]}
                         >
                             <Select>
                                 <Select.Option value="member">Member</Select.Option>
@@ -562,3 +620,9 @@ export const OrganizationMembersPage = () => {
         </>
     );
 };
+
+export const OrganizationMembersPage = () => (
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <OrganizationMembersPageBase />
+    </ErrorBoundary>
+);

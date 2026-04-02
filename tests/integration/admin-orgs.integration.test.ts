@@ -43,8 +43,8 @@ describe("Admin Organizations Integration", () => {
             const db = getDbClient(ctxMock);
             const repo = new OrganizationRepository(db);
 
-            await repo.prepareCreate(nanoid(), "Test Org 1", "test-org-1").execute();
-            await repo.prepareCreate(nanoid(), "Test Org 2", "test-org-2").execute();
+            await repo.prepareInsert(nanoid(), "Test Org 1", "test-org-1").execute();
+            await repo.prepareInsert(nanoid(), "Test Org 2", "test-org-2").execute();
 
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);

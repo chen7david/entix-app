@@ -1,8 +1,8 @@
-import { MemberRepository } from "@api/repositories/member.repository";
+import { MemberService } from "@api/services/member.service";
 import { vi } from "vitest";
 
 export function mockMemberAddFailure() {
-    vi.spyOn(MemberRepository.prototype, "addMember").mockRejectedValueOnce(
+    vi.spyOn(MemberService.prototype, "insertMember").mockRejectedValueOnce(
         new Error("Mocked failure during addMember")
     );
 }

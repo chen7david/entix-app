@@ -1,4 +1,3 @@
-import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import { getRegistrationService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
@@ -12,28 +11,18 @@ export class AuthHandler {
 
         const registrationService = getRegistrationService(ctx);
 
-        try {
-            const result = await registrationService.signupWithOrg({
-                email,
-                name,
-                password,
-                organizationName,
-            });
+        const result = await registrationService.signupWithOrg({
+            email,
+            name,
+            password,
+            organizationName,
+        });
 
-            ctx.var.logger.info(
-                { userId: result.user.id, orgId: result.organization.id },
-                "Signup with organization completed"
-            );
+        ctx.var.logger.info(
+            { userId: result.user.id, orgId: result.organization.id },
+            "Signup with organization completed"
+        );
 
-            return ctx.json(result, HttpStatusCodes.CREATED);
-        } catch (error: any) {
-            ctx.var.logger.error({ error }, "Error during organization setup, rolling back");
-
-            if (error instanceof ConflictError) {
-                throw error;
-            }
-
-            throw new InternalServerError("Failed to setup organization, please try again");
-        }
+        return ctx.json({ data: result }, HttpStatusCodes.CREATED);
     };
 }
