@@ -156,4 +156,38 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
         const body = (await res.json()) as any;
         expect(body.data.accounts.length).toBe(0);
     });
+
+    it("should provision ETD and CNY wallets by default and handle idempotency", async () => {
+        // 1. Create a brand new organization (this triggers the new schema defaults via signup-with-org)
+        const { cookie, orgId, orgData } = await createAuthenticatedOrg({ app, env });
+        const newUserId = orgData.data.user.id;
+        const client = createTestClient(app, env, cookie);
+
+        // 2. Verify exactly two wallets exist automatically: ETD and CNY
+        const summaryRes = await client.request(
+            `/api/v1/orgs/${orgId}/members/${newUserId}/wallet/summary`,
+            {
+                method: "GET",
+            }
+        );
+        expect(summaryRes.status).toBe(200);
+        const summary = (await summaryRes.json()) as any;
+        const accounts = summary.data.accounts;
+
+        console.log("Auto-Provisioned Accounts after Signup:", JSON.stringify(accounts, null, 2));
+
+        expect(accounts.length).toBe(2);
+        const codes = accounts.map((a: any) => a.currencyId).sort();
+        expect(codes).toEqual(["fcur_cny", "fcur_etd"].sort());
+        expect(codes).not.toContain("fcur_usd");
+
+        // 3. Verify idempotency: calling initialize again should return 409 Conflict
+        const initRes = await client.request(
+            `/api/v1/orgs/${orgId}/members/${newUserId}/wallet/initialize`,
+            {
+                method: "POST",
+            }
+        );
+        expect(initRes.status).toBe(409);
+    });
 });

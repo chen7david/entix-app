@@ -2,7 +2,6 @@ import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrganizationRepository } from "@api/repositories/organization.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
-import { FINANCIAL_CURRENCIES } from "@shared";
 import { hashPassword } from "better-auth/crypto";
 import type { PinoLogger } from "hono-pino";
 import { nanoid } from "nanoid";
@@ -79,19 +78,8 @@ export class RegistrationService extends BaseService {
             // ensures the error surfaces clearly rather than silently.
             await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
-            // Auto-provision personal accounts for the user ( Ticket 5 refactor)
-            await this.userFinancialService.createUserAccount({
-                name: "Points",
-                currencyId: FINANCIAL_CURRENCIES.ETD,
-                userId: uId,
-                orgId: oId,
-            });
-            await this.userFinancialService.createUserAccount({
-                name: "Savings",
-                currencyId: FINANCIAL_CURRENCIES.USD,
-                userId: uId,
-                orgId: oId,
-            });
+            // Auto-provision personal accounts for the user (Ticket 5 refactor)
+            await this.userFinancialService.provisionUserAccounts(uId, oId);
 
             return {
                 user: {
@@ -139,19 +127,8 @@ export class RegistrationService extends BaseService {
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
 
-        // Auto-provision personal accounts for the user ( Ticket 5 refactor)
-        await this.userFinancialService.createUserAccount({
-            name: "Points",
-            currencyId: FINANCIAL_CURRENCIES.ETD,
-            userId: uId,
-            orgId: organizationId,
-        });
-        await this.userFinancialService.createUserAccount({
-            name: "Savings",
-            currencyId: FINANCIAL_CURRENCIES.USD,
-            userId: uId,
-            orgId: organizationId,
-        });
+        // Auto-provision personal accounts for the user (Ticket 5 refactor)
+        await this.userFinancialService.provisionUserAccounts(uId, organizationId);
 
         // 🚀 Orchestrate Email (Fire-and-forget per Rule 14)
         const resetUrl = `${this.frontendUrl}/auth/reset-password`;
