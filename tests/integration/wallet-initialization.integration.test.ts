@@ -141,7 +141,7 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
         const client = createTestClient(app, env, authCookie);
 
         // 1. Setup: A Member ID that is NOT the User ID
-        const fakeUserId = "member_id_123"; 
+        const fakeUserId = "member_id_123";
 
         // 2. Fetch summary using the Member ID as the path param
         const res = await client.request(
