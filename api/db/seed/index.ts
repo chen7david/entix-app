@@ -31,7 +31,7 @@ function getLocalD1Path(): string {
         }
 
         return dbPath;
-    } catch (error) {
+    } catch (_error) {
         throw new Error(
             "Failed to resolve local D1 path via 'find' command. Please ensure 'find' is in your PATH."
         );

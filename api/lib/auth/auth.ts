@@ -1,5 +1,4 @@
 import { getDbClient } from "@api/factories/db.factory";
-import { patchD1Adapter } from "@api/helpers/auth-adapter.helpers";
 import type { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
 import { MailService } from "@api/services/mailer.service";
 import * as schema from "@shared/db/schema";

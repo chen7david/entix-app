@@ -72,14 +72,18 @@ export class AdminFinancialService extends FinancialBaseService {
      * Returns the current balance of all platform treasury accounts.
      */
     async getTreasuryBalance() {
-        const allAccounts = await this.accountsRepo.findActiveByOwner("platform", "org");
+        const allAccounts = await this.accountsRepo.findActiveByOwner(
+            "platform",
+            "org",
+            "platform"
+        );
         return allAccounts.filter((a) => a.id.startsWith("facc_treasury_"));
     }
 
     /**
      */
     async getAnyOrgAccounts(orgId: string) {
-        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org");
+        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
         return accounts.filter((a) => a.isFundingAccount === true);
     }
     /**

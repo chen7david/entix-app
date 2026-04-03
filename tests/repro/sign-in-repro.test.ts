@@ -1,8 +1,6 @@
 import { env } from "cloudflare:test";
 import { auth } from "@api/lib/auth/auth";
-import * as schema from "@shared/db/schema";
-import { drizzle } from "drizzle-orm/d1";
-import { describe, expect, it } from "vitest";
+import { describe, it } from "vitest";
 
 describe("Sign In Repro", () => {
     it("should sign in successfully with root admin", async () => {
