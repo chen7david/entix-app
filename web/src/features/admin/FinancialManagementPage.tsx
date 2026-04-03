@@ -1,7 +1,10 @@
 import type { WalletAccountDTO } from "@shared";
 import { useAdminOrganizations } from "@web/src/features/admin/hooks/useAdminOrganizations";
 import { AdminCreditDrawer } from "@web/src/features/wallet/components/AdminCreditDrawer";
-import { FinancialAccountCard } from "@web/src/features/wallet/components/FinancialAccountCard";
+import {
+    FinancialAccountCard,
+    type FinancialAccountData,
+} from "@web/src/features/wallet/components/FinancialAccountCard";
 import { useAdminOrgAccounts } from "@web/src/features/wallet/hooks/useAdminOrgAccounts";
 import { useTreasuryBalance } from "@web/src/features/wallet/hooks/useTreasuryBalance";
 import { Button, Card, Col, Empty, Row, Select, Tag, Typography } from "antd";
@@ -20,8 +23,8 @@ export const FinancialManagementPage: React.FC = () => {
     const { data: orgAccountsData, isLoading: isLoadingAccounts } =
         useAdminOrgAccounts(selectedOrgId);
 
-    const handleCardClick = (account: WalletAccountDTO) => {
-        setSelectedAccount(account);
+    const handleCardClick = (account: FinancialAccountData) => {
+        setSelectedAccount(account as WalletAccountDTO);
         setCreditDrawerOpen(true);
     };
 
@@ -57,7 +60,7 @@ export const FinancialManagementPage: React.FC = () => {
                                 <FinancialAccountCard
                                     account={acc}
                                     onClick={handleCardClick}
-                                    badgeLabel="TREASURY"
+                                    accountState="active"
                                 />
                             </Col>
                         ))}
@@ -126,6 +129,7 @@ export const FinancialManagementPage: React.FC = () => {
                                             <FinancialAccountCard
                                                 account={acc}
                                                 onClick={handleCardClick}
+                                                accountState="active"
                                             />
                                         </Col>
                                     ))}

@@ -1,5 +1,8 @@
 import type { WalletAccountDTO } from "@shared";
-import { FinancialAccountCard } from "@web/src/features/wallet/components/FinancialAccountCard";
+import {
+    FinancialAccountCard,
+    type FinancialAccountData,
+} from "@web/src/features/wallet/components/FinancialAccountCard";
 import { Col, Row, Typography } from "antd";
 import type React from "react";
 
@@ -8,7 +11,7 @@ const { Text } = Typography;
 type Props = {
     accounts: WalletAccountDTO[];
     loading?: boolean;
-    onAccountClick: (account: WalletAccountDTO) => void;
+    onAccountClick: (account: FinancialAccountData) => void;
 };
 
 export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccountClick }) => {
@@ -27,7 +30,7 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                     <FinancialAccountCard
                         account={account}
                         onClick={onAccountClick}
-                        isPrimaryBranding={true}
+                        accountState={account.isActive ? "active" : "available"}
                     />
                 </Col>
             ))}
