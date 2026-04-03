@@ -4,8 +4,8 @@ import {
     DeleteOutlined,
     MailOutlined,
     PlusOutlined,
-    SearchOutlined,
 } from "@ant-design/icons";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
 import {
@@ -21,12 +21,11 @@ import {
     Select,
     Space,
     Statistic,
-    Table,
     Tag,
     Typography,
 } from "antd";
 import dayjs from "dayjs";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -71,14 +70,18 @@ export const OrganizationInvitationsPage = () => {
     const pendingCount = invitations?.filter((i: any) => i.status === "pending").length || 0;
     const acceptedCount = invitations?.filter((i: any) => i.status === "accepted").length || 0;
 
+    const filteredInvitations = useMemo(() => {
+        if (!invitations) return [];
+        if (!searchText) return invitations;
+        const lowerSearch = searchText.toLowerCase();
+        return invitations.filter((i: any) => i.email?.toLowerCase().includes(lowerSearch));
+    }, [invitations, searchText]);
+
     const columns = [
         {
             title: "Email",
             dataIndex: "email",
             key: "email",
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (value: any, record: any) =>
-                record.email?.toLowerCase().includes(value.toLowerCase()),
         },
         {
             title: "Role",
@@ -107,28 +110,6 @@ export const OrganizationInvitationsPage = () => {
             dataIndex: "expiresAt",
             key: "expiresAt",
             render: (date: string) => dayjs(date).format("MMM D, YYYY"),
-        },
-        {
-            title: "Actions",
-            key: "actions",
-            render: (_: any, record: any) => (
-                <Popconfirm
-                    title="Cancel Invitation"
-                    description="Are you sure you want to cancel this invitation?"
-                    onConfirm={() => handleCancel(record.id)}
-                    okText="Yes"
-                    cancelText="No"
-                >
-                    <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        size="small"
-                        loading={isCancelingInvitation}
-                    >
-                        Revoke
-                    </Button>
-                </Popconfirm>
-            ),
         },
     ];
 
@@ -187,24 +168,44 @@ export const OrganizationInvitationsPage = () => {
                     </Col>
                 </Row>
 
-                {/* Search */}
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search invitations..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-xs"
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
+                <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                    <DataTableWithFilters
+                        config={{
+                            columns,
+                            data: filteredInvitations,
+                            loading,
+                            filters: [
+                                {
+                                    type: "search",
+                                    key: "email",
+                                    placeholder: "Search invitations by email...",
+                                },
+                            ],
+                            onFiltersChange: (f: Record<string, any>) =>
+                                setSearchText(f.email || ""),
+                            pagination: null,
+                            actions: (record: any) => (
+                                <Popconfirm
+                                    title="Cancel Invitation"
+                                    description="Are you sure you want to cancel this invitation?"
+                                    onConfirm={() => handleCancel(record.id)}
+                                    okText="Yes"
+                                    cancelText="No"
+                                >
+                                    <Button
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        size="small"
+                                        type="text"
+                                        loading={isCancelingInvitation}
+                                    >
+                                        Revoke
+                                    </Button>
+                                </Popconfirm>
+                            ),
+                        }}
                     />
                 </div>
-
-                <Table
-                    dataSource={invitations}
-                    columns={columns}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{ pageSize: 10 }}
-                />
 
                 <Modal
                     title="Invite Member"

@@ -4,6 +4,7 @@ import {
     keepPreviousData,
     useInfiniteQuery,
     useMutation,
+    useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
@@ -12,32 +13,66 @@ import { parseApiError } from "@web/src/utils/api";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
 
-export const useMembers = (searchQuery?: string) => {
+export interface UseMembersOptions {
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
+}
+
+export const useMembers = (searchQuery?: string, options?: UseMembersOptions) => {
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const { isSuperAdmin } = useAuth();
 
-    const queryKey = ["organizationMembers", activeOrganization?.id, searchQuery];
+    const isPagedMode = options?.cursor !== undefined || options?.limit !== undefined;
 
-    const {
-        data: membersPages,
-        isLoading: loadingMembers,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-    } = useInfiniteQuery<
+    // Paged Query (Discrete pages)
+    const pagedQuery = useQuery({
+        queryKey: [
+            "organizationMembers",
+            "paged",
+            activeOrganization?.id,
+            searchQuery,
+            options?.cursor,
+            options?.limit,
+            options?.direction,
+        ],
+        queryFn: async () => {
+            if (!activeOrganization?.id)
+                return { items: [], total: 0, nextCursor: null, prevCursor: null };
+
+            const params = new URLSearchParams({
+                limit: (options?.limit ?? 10).toString(),
+            });
+            if (options?.cursor) params.set("cursor", options.cursor);
+            if (options?.direction) params.set("direction", options.direction);
+            if (searchQuery) params.set("search", searchQuery);
+
+            const res = await fetch(
+                `${API_V1}/orgs/${activeOrganization.id}/users?${params.toString()}`
+            );
+            if (!res.ok) await parseApiError(res);
+
+            return (await res.json()) as PaginatedResponse<MemberDTO>;
+        },
+        enabled: !!activeOrganization?.id && isPagedMode,
+        placeholderData: keepPreviousData,
+    });
+
+    // Infinite Query (Legacy / Load More)
+    const infiniteQuery = useInfiniteQuery<
         PaginatedResponse<MemberDTO>,
         Error,
         InfiniteData<PaginatedResponse<MemberDTO>>,
         string[],
         string | undefined
     >({
-        queryKey,
+        queryKey: ["organizationMembers", "infinite", activeOrganization?.id, searchQuery],
         queryFn: async ({ pageParam }) => {
             if (!activeOrganization?.id)
                 return { items: [], total: 0, nextCursor: null, prevCursor: null };
 
-            const params = new URLSearchParams({ limit: "10" }); // UI prefers small pages
+            const params = new URLSearchParams({ limit: "10" });
             if (pageParam) params.set("cursor", pageParam);
             if (searchQuery) params.set("search", searchQuery);
 
@@ -50,18 +85,17 @@ export const useMembers = (searchQuery?: string) => {
         },
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: undefined,
-        enabled: !!activeOrganization?.id,
+        enabled: !!activeOrganization?.id && !isPagedMode,
         placeholderData: keepPreviousData,
     });
 
-    // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.
+    // Unified Result Mapping
     const members = useMemo(() => {
-        if (!membersPages) return [];
-        return membersPages.pages.flatMap((p) => p.items);
-    }, [membersPages]);
+        if (isPagedMode) return pagedQuery.data?.items ?? [];
+        if (!infiniteQuery.data) return [];
+        return infiniteQuery.data.pages.flatMap((p) => p.items);
+    }, [isPagedMode, pagedQuery.data, infiniteQuery.data]);
 
-    // Securely acquire the current member's role via BetterAuth reactive primitive session context.
-    // This avoids race conditions where searching the paginated/filtered members array failed if you weren't on Page 1.
     const activeMember = authClient.useActiveMember();
 
     const userRoles = useMemo(() => {
@@ -110,9 +144,9 @@ export const useMembers = (searchQuery?: string) => {
 
     const listMembers = useCallback(async () => {
         return queryClient.refetchQueries({
-            queryKey: ["organizationMembers", activeOrganization?.id],
+            queryKey: ["organizationMembers"],
         });
-    }, [queryClient, activeOrganization?.id]);
+    }, [queryClient]);
 
     const updateMemberRoles = useCallback(
         async (memberId: string, roles: string[]) => {
@@ -130,7 +164,12 @@ export const useMembers = (searchQuery?: string) => {
 
     return {
         members,
-        loadingMembers,
+        loadingMembers: isPagedMode ? pagedQuery.isLoading : infiniteQuery.isLoading,
+        nextCursor: isPagedMode ? (pagedQuery.data?.nextCursor ?? null) : null,
+        prevCursor: isPagedMode ? (pagedQuery.data?.prevCursor ?? null) : null,
+        hasNextPage: isPagedMode ? !!pagedQuery.data?.nextCursor : !!infiniteQuery.hasNextPage,
+        hasPrevPage: isPagedMode ? !!pagedQuery.data?.prevCursor : false,
+        isFetchingNextPage: isPagedMode ? pagedQuery.isFetching : infiniteQuery.isFetchingNextPage,
         userRoles,
         checkPermission,
         updateMemberRoles,
@@ -138,8 +177,6 @@ export const useMembers = (searchQuery?: string) => {
         listMembers,
         isUpdatingRole,
         isRemovingMember,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
+        fetchNextPage: infiniteQuery.fetchNextPage,
     };
 };

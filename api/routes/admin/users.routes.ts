@@ -2,26 +2,26 @@ import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.hel
 import { requireAuth } from "@api/middleware/auth.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
 import { createRoute } from "@hono/zod-openapi";
-import { paginatedOrganizationResponseSchema } from "@shared/schemas/dto/organization.dto";
+import { paginatedUserResponseSchema } from "@shared/schemas/dto/user.dto";
 import { PaginationQuerySchema } from "@shared/schemas/pagination.schema";
 
-const tags = ["Admin - Organizations"];
+const tags = ["Admin - Users"];
 
-export const AdminOrgsRoutes = {
+export const AdminUsersRoutes = {
     tags,
 
     list: createRoute({
-        tags: tags,
+        tags,
         method: HttpMethods.GET,
-        path: "/admin/organizations",
+        path: "/admin/users",
         middleware: [requireAuth, requireSuperAdmin] as const,
         request: {
             query: PaginationQuerySchema,
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                paginatedOrganizationResponseSchema,
-                "List of all organizations globally"
+                paginatedUserResponseSchema,
+                "List of all users globally"
             ),
         },
     }),

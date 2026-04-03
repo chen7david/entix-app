@@ -75,7 +75,7 @@ export const WalletPage = () => {
 
     const handleNext = () => {
         if (history?.nextCursor) {
-            setCursorStack((prev) => [...prev, history.nextCursor!]);
+            setCursorStack((prev) => [...prev, history.nextCursor as string]);
         }
     };
 

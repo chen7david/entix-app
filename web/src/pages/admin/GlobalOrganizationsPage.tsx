@@ -3,57 +3,67 @@ import {
     CalendarOutlined,
     MoreOutlined,
     PlusOutlined,
-    SearchOutlined,
     UserAddOutlined,
 } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAdminCreateUserWithOrg, useAdminOrganizations } from "@web/src/features/admin";
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
 import { CreateOrganizationForm } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
-import {
-    App,
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    Input,
-    Modal,
-    Row,
-    Statistic,
-    Table,
-    Tag,
-    Typography,
-} from "antd";
+import { App, Button, Card, Col, Dropdown, Modal, Row, Statistic, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const { Title, Text } = Typography;
 
 export const GlobalOrganizationsPage: React.FC = () => {
     const { message } = App.useApp();
-    const { data: organizations = [], isLoading, refetch } = useAdminOrganizations();
+    const [searchText, setSearchText] = useState("");
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>();
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+
+    const [debouncedSearch] = useDebouncedValue(searchText, {
+        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
+    });
+
+    const {
+        data: orgData,
+        isLoading,
+        refetch,
+    } = useAdminOrganizations(debouncedSearch || undefined, {
+        cursor: currentCursor,
+        limit: 10,
+    });
+
     const { mutate: createUserWithOrg, isPending: isCreatingUserWithOrg } =
         useAdminCreateUserWithOrg();
 
     const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
     const [isCreateUserWithOrgModalOpen, setIsCreateUserWithOrgModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState("");
 
-    const [debouncedSearch, control] = useDebouncedValue(
-        searchText,
-        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
-        (state) => ({ isPending: state.isPending })
-    );
+    // Reset cursor when search changes
+    useEffect(() => {
+        setCurrentCursor(undefined);
+        setCursorStack([]);
+    }, []);
 
-    const filteredOrgs = organizations.filter(
-        (org: any) =>
-            org.name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            org.slug?.toLowerCase().includes(debouncedSearch.toLowerCase())
-    );
+    const handleNext = () => {
+        if (orgData?.nextCursor) {
+            setCursorStack((prev) => [...prev, currentCursor || ""]);
+            setCurrentCursor(orgData.nextCursor);
+        }
+    };
+
+    const handlePrev = () => {
+        const prevStack = [...cursorStack];
+        const prevCursor = prevStack.pop();
+        setCursorStack(prevStack);
+        setCurrentCursor(prevCursor);
+    };
 
     const handleCreateUserWithOrg = (values: SignUpWithOrgValues) => {
         createUserWithOrg(values, {
@@ -62,6 +72,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
                     `Organization "${values.organizationName}" and user created successfully`
                 );
                 setIsCreateUserWithOrgModalOpen(false);
+                refetch();
             },
             onError: (error: Error) => {
                 message.error(error.message || "Failed to create user and organization");
@@ -81,7 +92,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             width: 36,
                             height: 36,
                             borderRadius: 8,
-                            background: "#2563eb",
+                            background: "var(--ant-color-primary)",
                             color: "#fff",
                             display: "flex",
                             alignItems: "center",
@@ -113,27 +124,13 @@ export const GlobalOrganizationsPage: React.FC = () => {
             dataIndex: "createdAt",
             key: "createdAt",
             width: 150,
-            render: (date: string) => (
+            render: (date: number) => (
                 <span className="flex items-center gap-1 text-gray-500 text-sm">
                     <CalendarOutlined />
                     {dayjs(date).format("MMM D, YYYY")}
                 </span>
             ),
             responsive: ["lg" as const],
-        },
-        {
-            title: "Actions",
-            key: "actions",
-            width: 80,
-            fixed: "right" as const,
-            render: () => {
-                const items: MenuProps["items"] = [{ key: "view", label: "View Details" }];
-                return (
-                    <Dropdown menu={{ items }} trigger={["click"]}>
-                        <Button type="text" icon={<MoreOutlined />} />
-                    </Dropdown>
-                );
-            },
         },
     ];
 
@@ -171,42 +168,55 @@ export const GlobalOrganizationsPage: React.FC = () => {
                 {/* Stats */}
                 <Row gutter={16} className="mb-8">
                     <Col xs={24} sm={8}>
-                        <Card loading={isLoading} className="border-gray-200 shadow-sm">
+                        <Card
+                            loading={isLoading}
+                            className="border-gray-200 shadow-sm border-none bg-white/50 backdrop-blur-sm"
+                        >
                             <Statistic
-                                title="Total Organizations"
-                                value={organizations.length}
+                                title="Platform Organizations"
+                                value={orgData?.items?.length || 0}
                                 prefix={<ApartmentOutlined className="text-blue-500" />}
                             />
                         </Card>
                     </Col>
                 </Row>
 
-                {/* Search */}
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search organizations by name or slug..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-sm"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
-                        suffix={
-                            control.state.isPending ? (
-                                <span className="text-xs text-gray-400 italic">typing...</span>
-                            ) : null
-                        }
+                {/* Table */}
+                <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                    <DataTableWithFilters
+                        config={{
+                            columns,
+                            data: orgData?.items || [],
+                            loading: isLoading,
+                            filters: [
+                                {
+                                    type: "search",
+                                    key: "search",
+                                    placeholder: "Search organizations...",
+                                },
+                            ],
+                            onFiltersChange: (f: Record<string, any>) =>
+                                setSearchText(f.search || ""),
+                            pagination: {
+                                pageSize: 10,
+                                hasNextPage: !!orgData?.nextCursor,
+                                hasPrevPage: cursorStack.length > 0,
+                                onNext: handleNext,
+                                onPrev: handlePrev,
+                            },
+                            actions: () => {
+                                const items: MenuProps["items"] = [
+                                    { key: "view", label: "View Details" },
+                                ];
+                                return (
+                                    <Dropdown menu={{ items }} trigger={["click"]}>
+                                        <Button type="text" icon={<MoreOutlined />} />
+                                    </Dropdown>
+                                );
+                            },
+                        }}
                     />
                 </div>
-
-                {/* Table */}
-                <Table
-                    columns={columns}
-                    dataSource={filteredOrgs}
-                    rowKey="id"
-                    loading={isLoading}
-                    pagination={{ pageSize: 15, showSizeChanger: false }}
-                    scroll={{ x: "max-content" }}
-                />
             </div>
 
             {/* Create Organization Modal */}

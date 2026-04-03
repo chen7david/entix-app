@@ -149,7 +149,7 @@ export const FinancialManagementPage: React.FC = () => {
                             onChange={setSelectedOrgId}
                             showSearch
                             loading={isLoadingOrgs}
-                            options={orgs?.map((o: any) => ({ label: o.name, value: o.id }))}
+                            options={orgs?.items?.map((o: any) => ({ label: o.name, value: o.id }))}
                             optionFilterProp="label"
                         />
                     </Card>

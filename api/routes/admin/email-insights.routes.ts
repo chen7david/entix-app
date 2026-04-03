@@ -4,9 +4,9 @@ import { requireSuperAdmin } from "@api/middleware/require-super-admin.middlewar
 import { createRoute, z } from "@hono/zod-openapi";
 import {
     emailDetailSchema,
-    emailListQuerySchema,
-    emailListResponseSchema,
+    paginatedEmailResponseSchema,
 } from "@shared/schemas/dto/email-insights.dto";
+import { PaginationQuerySchema } from "@shared/schemas/pagination.schema";
 
 const tags = ["Admin - Email Insights"];
 
@@ -19,12 +19,12 @@ export const EmailInsightsRoutes = {
         path: "/admin/emails",
         middleware: [requireAuth, requireSuperAdmin] as const,
         request: {
-            query: emailListQuerySchema,
+            query: PaginationQuerySchema,
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                emailListResponseSchema,
-                "List of sent emails from Resend"
+                paginatedEmailResponseSchema,
+                "Standardized paginated list of sent emails from Resend"
             ),
         },
     }),

@@ -6,7 +6,6 @@ import {
     MoreOutlined,
     PlusOutlined,
     SafetyOutlined,
-    SearchOutlined,
     TeamOutlined,
     UserOutlined,
     WalletOutlined,
@@ -14,6 +13,7 @@ import {
 import { getAvatarUrl, type MemberDTO } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/features/auth";
@@ -51,7 +51,6 @@ import {
     Skeleton,
     Space,
     Statistic,
-    Table,
     Tabs,
     Tag,
     Tooltip,
@@ -76,7 +75,7 @@ const OrganizationMembersPageBase: React.FC = () => {
     const [searchText, setSearchText] = useState(searchParams.get("q") || "");
 
     // Defer pushing expensive re-renders and network bounds rapidly on keystroke loops
-    const [debouncedSearch, control] = useDebouncedValue(
+    const [debouncedSearch] = useDebouncedValue(
         searchText,
         { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
         (state) => ({ isPending: state.isPending })
@@ -92,6 +91,9 @@ const OrganizationMembersPageBase: React.FC = () => {
         }
         setSearchParams(newParams, { replace: true });
     }, [debouncedSearch, setSearchParams, searchParams]);
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<MemberDTO | null>(null);
     const { activeOrganization } = useOrganization();
@@ -104,10 +106,35 @@ const OrganizationMembersPageBase: React.FC = () => {
         removeMember,
         checkPermission,
         userRoles: currentUserRoles,
-        fetchNextPage,
+        nextCursor,
         hasNextPage,
-        isFetchingNextPage,
-    } = useMembers(debouncedSearch);
+        hasPrevPage,
+    } = useMembers(debouncedSearch, {
+        cursor: currentCursor,
+        limit: 10,
+    });
+
+    // Reset cursor when search changes
+    useEffect(() => {
+        setCurrentCursor(undefined);
+        setCursorStack([]);
+    }, []);
+
+    const handleNext = useCallback(() => {
+        if (nextCursor) {
+            setCursorStack((prev) => [...prev, currentCursor || ""]);
+            setCurrentCursor(nextCursor);
+        }
+    }, [nextCursor, currentCursor]);
+
+    const handlePrev = useCallback(() => {
+        if (cursorStack.length > 0) {
+            const newStack = [...cursorStack];
+            const prev = newStack.pop();
+            setCursorStack(newStack);
+            setCurrentCursor(prev || undefined);
+        }
+    }, [cursorStack]);
 
     const { user } = useAuth();
     const currentUserId = user?.id;
@@ -194,8 +221,8 @@ const OrganizationMembersPageBase: React.FC = () => {
         [message]
     );
 
-    // Compute role counts from organization-wide metrics if available, fallback to list (list is paginated so list-based stats are inaccurate)
-    const totalMembers = metrics?.totalMembers ?? members?.length ?? 0;
+    // Compute role counts from organization-wide metrics if available
+    const totalMembers = metrics?.totalMembers ?? metrics?.totalMembers ?? 0;
     const adminCount = metrics?.adminCount ?? 0;
     const ownerCount = metrics?.ownerCount ?? 0;
 
@@ -274,79 +301,11 @@ const OrganizationMembersPageBase: React.FC = () => {
                     );
                 },
             },
-            {
-                title: "",
-                key: "actions",
-                align: "right",
-                width: 80,
-                fixed: "right",
-                render: (_: any, record: MemberDTO) => {
-                    const items: MenuProps["items"] = [
-                        {
-                            key: "resend-verification",
-                            label: "Resend Verification Email",
-                            icon: <MailOutlined />,
-                            onClick: (e) => {
-                                e.domEvent.stopPropagation();
-                                if (record.email) handleResendVerification(record.email);
-                            },
-                        },
-                        {
-                            key: "initialize-wallet",
-                            label: "Initialize Wallet",
-                            icon: <WalletOutlined />,
-                            disabled: isInitializing,
-                            onClick: (e) => {
-                                e.domEvent.stopPropagation();
-                                initializeWallet(record.userId);
-                            },
-                        },
-                        {
-                            key: "resend-password",
-                            label: "Resend Password Reset",
-                            icon: <LockOutlined />,
-                            onClick: (e) => {
-                                e.domEvent.stopPropagation();
-                                if (record.email) handleResendPassword(record.email);
-                            },
-                        },
-                        {
-                            key: "remove-picture",
-                            label: "Remove Picture",
-                            icon: <DeleteOutlined />,
-                            danger: true,
-                            disabled: !record.avatarUrl,
-                            onClick: (e) => {
-                                e.domEvent.stopPropagation();
-                                handleRemoveAvatar(record.userId);
-                            },
-                        },
-                    ];
-                    return (
-                        <div onClick={(e) => e.stopPropagation()} className="p-1">
-                            <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
-                                <Button
-                                    type="text"
-                                    icon={<MoreOutlined />}
-                                    className="flex items-center justify-center min-w-[44px] min-h-[44px]"
-                                />
-                            </Dropdown>
-                        </div>
-                    );
-                },
-            },
         ],
-        [
-            isInitializing,
-            token.colorPrimary,
-            initializeWallet,
-            handleResendVerification,
-            handleResendPassword,
-            handleRemoveAvatar,
-        ]
+        [token.colorPrimary]
     );
 
-    if (loading && members.length === 0) {
+    if (loading && members.length === 0 && !currentCursor) {
         return <Skeleton active />;
     }
 
@@ -424,42 +383,75 @@ const OrganizationMembersPageBase: React.FC = () => {
                     </Col>
                 </Row>
 
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search members..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-xs"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
-                        suffix={
-                            control.state.isPending ? (
-                                <span className="text-xs text-gray-400 italic">typing...</span>
-                            ) : null
-                        }
+                <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                    <DataTableWithFilters<MemberDTO>
+                        config={{
+                            columns,
+                            data: members,
+                            loading: loading,
+                            filters: [
+                                {
+                                    type: "search",
+                                    key: "q",
+                                    placeholder: "Search members by name or email...",
+                                },
+                            ],
+                            onFiltersChange: (f: Record<string, any>) => setSearchText(f.q || ""),
+                            pagination: {
+                                hasNextPage,
+                                hasPrevPage,
+                                pageSize: 10,
+                                onNext: handleNext,
+                                onPrev: handlePrev,
+                            },
+                            actions: (record: MemberDTO) => {
+                                const items: MenuProps["items"] = [
+                                    {
+                                        key: "resend-verification",
+                                        label: "Resend Verification Email",
+                                        icon: <MailOutlined />,
+                                        onClick: () => {
+                                            if (record.email)
+                                                handleResendVerification(record.email);
+                                        },
+                                    },
+                                    {
+                                        key: "initialize-wallet",
+                                        label: "Initialize Wallet",
+                                        icon: <WalletOutlined />,
+                                        disabled: isInitializing,
+                                        onClick: () => {
+                                            initializeWallet(record.userId);
+                                        },
+                                    },
+                                    {
+                                        key: "resend-password",
+                                        label: "Resend Password Reset",
+                                        icon: <LockOutlined />,
+                                        onClick: () => {
+                                            if (record.email) handleResendPassword(record.email);
+                                        },
+                                    },
+                                    {
+                                        key: "remove-picture",
+                                        label: "Remove Picture",
+                                        icon: <DeleteOutlined />,
+                                        danger: true,
+                                        disabled: !record.avatarUrl,
+                                        onClick: () => {
+                                            handleRemoveAvatar(record.userId);
+                                        },
+                                    },
+                                ];
+                                return (
+                                    <Dropdown menu={{ items }} trigger={["click"]}>
+                                        <Button type="text" icon={<MoreOutlined />} />
+                                    </Dropdown>
+                                );
+                            },
+                        }}
                     />
                 </div>
-
-                <Table
-                    dataSource={members}
-                    columns={columns}
-                    rowKey={(record: any) => record.id || record.userId}
-                    pagination={false}
-                    loading={loading && !isFetchingNextPage}
-                    scroll={{ x: "max-content" }}
-                />
-
-                {hasNextPage && (
-                    <div className="flex justify-center mt-6">
-                        <Button
-                            onClick={() => fetchNextPage()}
-                            loading={isFetchingNextPage}
-                            type="dashed"
-                        >
-                            Load More Members
-                        </Button>
-                    </div>
-                )}
 
                 {/* Create New Member Modal */}
                 <Modal

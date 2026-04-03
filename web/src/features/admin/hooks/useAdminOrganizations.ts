@@ -1,18 +1,38 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
 
-export const useAdminOrganizations = () => {
+export const useAdminOrganizations = (
+    search?: string,
+    options?: { cursor?: string; limit?: number; direction?: "next" | "prev" }
+) => {
     return useQuery({
-        queryKey: ["admin", "organizations"],
+        queryKey: [
+            "admin",
+            "organizations",
+            search,
+            options?.cursor,
+            options?.limit,
+            options?.direction,
+        ],
         queryFn: async () => {
-            const response = await fetch("/api/v1/admin/organizations");
+            const url = new URL("/api/v1/admin/organizations", window.location.origin);
+            if (search) url.searchParams.set("search", search);
+            if (options?.cursor) url.searchParams.set("cursor", options.cursor);
+            if (options?.limit) url.searchParams.set("limit", options.limit.toString());
+            if (options?.direction) url.searchParams.set("direction", options.direction);
+
+            const response = await fetch(url.toString());
             if (!response.ok) {
                 const error = await response
                     .json()
                     .catch(() => ({ message: "Failed to fetch global organizations" }));
                 throw new Error(error.message || "Failed to fetch global organizations");
             }
-            return response.json();
+            return response.json() as Promise<{
+                items: any[];
+                nextCursor: string | null;
+                prevCursor: string | null;
+            }>;
         },
         placeholderData: keepPreviousData,
     });

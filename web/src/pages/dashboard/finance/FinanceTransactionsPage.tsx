@@ -61,7 +61,7 @@ export const FinanceTransactionsPage: React.FC = () => {
 
     const handleNext = () => {
         if (data?.nextCursor) {
-            setCursorStack((prev) => [...prev, data.nextCursor!]);
+            setCursorStack((prev) => [...prev, data.nextCursor as string]);
         }
     };
 

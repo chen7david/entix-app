@@ -177,6 +177,48 @@ export class UserRepository {
         });
     }
 
+    /**
+     * Find all users with cursor pagination for global admin view.
+     */
+    async findAllAdminPaginated(
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            schema.authUsers.createdAt,
+            schema.authUsers.id,
+            cursor,
+            direction
+        );
+
+        const filters = [];
+        if (cursorWhere) filters.push(cursorWhere);
+
+        if (search) {
+            const searchFilter = or(
+                like(schema.authUsers.name, `%${search}%`),
+                like(schema.authUsers.email, `%${search}%`)
+            );
+            if (searchFilter) {
+                filters.push(searchFilter);
+            }
+        }
+
+        const items = await this.db
+            .select()
+            .from(schema.authUsers)
+            .where(filters.length > 0 ? and(...filters) : undefined)
+            .orderBy(...orderBy)
+            .limit(limit + 1);
+
+        return processPaginatedResult(items, limit, direction, (row) => ({
+            primary: row.createdAt.getTime(),
+            secondary: row.id,
+        }));
+    }
+
     async findByIds(ids: string[]): Promise<schema.AuthUser[]> {
         if (ids.length === 0) return [];
         return await this.db.query.authUsers.findMany({

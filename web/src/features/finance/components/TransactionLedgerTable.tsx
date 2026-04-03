@@ -61,7 +61,6 @@ export const TransactionLedgerTable: React.FC<Props> = ({
                           )
                         : undefined,
                     onFiltersChange,
-                    onPaginationChange: () => {}, // handled by pagination.onNext / onPrev
                 }}
             />
 

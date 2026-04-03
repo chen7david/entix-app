@@ -5,9 +5,12 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { getAssetUrl, type UploadDto } from "@shared";
-import { Button, Table, Tag, Tooltip } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { Button, Tag, Tooltip, Typography } from "antd";
 import type React from "react";
+import { useState } from "react";
+
+const { Text } = Typography;
 
 type Props = {
     uploads: UploadDto[];
@@ -16,6 +19,8 @@ type Props = {
 };
 
 export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting }) => {
+    const [search, setSearch] = useState("");
+
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return "0 Bytes";
         const k = 1024;
@@ -31,7 +36,11 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
         return <FileOutlined className="text-gray-500" />;
     };
 
-    const columns: ColumnsType<UploadDto> = [
+    const filteredUploads = uploads.filter(
+        (u) => !search || u.originalName.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const columns = [
         {
             title: "File Name",
             dataIndex: "originalName",
@@ -59,8 +68,10 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
             dataIndex: "fileSize",
             key: "fileSize",
             width: 120,
-            align: "right",
-            render: (size: number) => formatBytes(size),
+            align: "right" as const,
+            render: (size: number) => (
+                <Text className="font-mono text-xs">{formatBytes(size)}</Text>
+            ),
         },
         {
             title: "Type",
@@ -99,8 +110,8 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
             title: "Actions",
             key: "actions",
             width: 70,
-            fixed: "right",
-            align: "center",
+            fixed: "right" as const,
+            align: "center" as const,
             render: (_: unknown, record: UploadDto) => (
                 <Tooltip title="Delete File">
                     <Button
@@ -116,14 +127,25 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
     ];
 
     return (
-        <Table
-            dataSource={uploads}
-            columns={columns}
-            rowKey="id"
-            pagination={{ pageSize: 12 }}
-            scroll={{ x: "max-content" }}
-            tableLayout="fixed"
-            size="middle"
+        <DataTableWithFilters
+            config={{
+                columns,
+                data: filteredUploads,
+                rowKey: "id",
+                filters: [
+                    {
+                        type: "search",
+                        key: "search",
+                        placeholder: "Search file name...",
+                    },
+                ],
+                onFiltersChange: (filters: Record<string, any>) => {
+                    setSearch(filters.search || "");
+                },
+                pagination: {
+                    pageSize: 12,
+                },
+            }}
         />
     );
 };

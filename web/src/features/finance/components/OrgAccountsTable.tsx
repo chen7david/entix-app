@@ -1,6 +1,7 @@
 import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
-import { Badge, Table, Typography } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { Badge, Typography } from "antd";
+import { useState } from "react";
 
 const { Text } = Typography;
 
@@ -10,20 +11,35 @@ type OrgAccountsTableProps = {
 };
 
 export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) => {
-    const columns: ColumnsType<WalletAccountDTO> = [
+    const [filters, setFilters] = useState<Record<string, any>>({});
+
+    const filteredAccounts = (accounts || []).filter((account) => {
+        const matchesSearch =
+            !filters.search || account.name.toLowerCase().includes(filters.search.toLowerCase());
+
+        const matchesStatus =
+            filters.status === undefined ||
+            filters.status === "all" ||
+            (filters.status === "active" && account.isActive) ||
+            (filters.status === "deactivated" && !account.isActive);
+
+        return matchesSearch && matchesStatus;
+    });
+
+    const columns = [
         {
             title: "Account Name",
             dataIndex: "name",
             key: "name",
             width: 200,
-            render: (text) => <Text strong>{text}</Text>,
+            render: (text: string) => <Text strong>{text}</Text>,
         },
         {
             title: "Currency",
             dataIndex: "currencyId",
             key: "currency",
             width: 120,
-            render: (currencyId) => {
+            render: (currencyId: string) => {
                 const config =
                     FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
                 return config ? (
@@ -43,14 +59,14 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
             dataIndex: "balanceCents",
             key: "balance",
             width: 150,
-            render: (cents, record) => {
+            render: (cents: number, record: WalletAccountDTO) => {
                 const config =
                     FINANCIAL_CURRENCY_CONFIG[
                         record.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
                     ];
                 const value = (cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2 });
                 return (
-                    <Text strong style={{ fontFamily: "monospace" }}>
+                    <Text strong className="font-mono">
                         <Text type="secondary" style={{ marginRight: 4 }}>
                             {config?.symbol || ""}
                         </Text>
@@ -58,14 +74,14 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
                     </Text>
                 );
             },
-            align: "right",
+            align: "right" as const,
         },
         {
             title: "Status",
             dataIndex: "isActive",
             key: "status",
             width: 120,
-            render: (isActive) => (
+            render: (isActive: boolean) => (
                 <Badge
                     status={isActive ? "success" : "default"}
                     text={
@@ -79,15 +95,34 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
     ];
 
     return (
-        <Table
-            dataSource={accounts}
-            rowKey="id"
-            columns={columns}
-            loading={loading}
-            pagination={{ pageSize: 12 }}
-            scroll={{ x: "max-content" }}
-            tableLayout="fixed"
-            size="middle"
+        <DataTableWithFilters
+            config={{
+                columns,
+                data: filteredAccounts,
+                rowKey: "id",
+                loading,
+                filters: [
+                    {
+                        type: "search",
+                        key: "search",
+                        placeholder: "Search account name...",
+                    },
+                    {
+                        type: "select",
+                        key: "status",
+                        placeholder: "Filter by status",
+                        options: [
+                            { label: "All Statuses", value: "all" },
+                            { label: "Active", value: "active" },
+                            { label: "Deactivated", value: "deactivated" },
+                        ],
+                    },
+                ],
+                onFiltersChange: setFilters,
+                pagination: {
+                    pageSize: 12,
+                },
+            }}
         />
     );
 };

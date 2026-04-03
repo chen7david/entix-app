@@ -67,9 +67,9 @@ describe("Email Insights Integration", () => {
 
             expect(res.status).toBe(200);
             const body = await parseJson<any>(res);
-            expect(body.object).toBe("list");
-            expect(body.data.length).toBe(1);
-            expect(body.data[0].id).toBe("1");
+            expect(Array.isArray(body.items)).toBe(true);
+            expect(body.items.length).toBe(1);
+            expect(body.items[0].id).toBe("1");
 
             spy.mockRestore();
         });

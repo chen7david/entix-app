@@ -3,9 +3,9 @@ import {
     EyeOutlined,
     MailOutlined,
     MoreOutlined,
-    SearchOutlined,
     TeamOutlined,
 } from "@ant-design/icons";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { useInvitations, useMembers, useOrganization } from "@web/src/features/organization";
@@ -15,11 +15,9 @@ import {
     Card,
     Col,
     Dropdown,
-    Input,
     Row,
     Skeleton,
     Statistic,
-    Table,
     Tag,
     Tooltip,
     Typography,
@@ -33,13 +31,22 @@ export const OrganizationListPage = () => {
     const { organizations, loading, activeOrganization } = useOrganization();
     const { members } = useMembers();
     const { invitations } = useInvitations();
-    const [searchText, setSearchText] = useState("");
+    const [search, setSearch] = useState("");
 
     // Sort: active org on top
     const sortedOrgs = [...(organizations || [])].sort((a, b) => {
         if (a.id === activeOrganization?.id) return -1;
         if (b.id === activeOrganization?.id) return 1;
         return 0;
+    });
+
+    const filteredOrgs = sortedOrgs.filter((org) => {
+        if (!search) return true;
+        const lowerSearch = search.toLowerCase();
+        return (
+            org.name.toLowerCase().includes(lowerSearch) ||
+            org.slug.toLowerCase().includes(lowerSearch)
+        );
     });
 
     const columns = [
@@ -75,10 +82,6 @@ export const OrganizationListPage = () => {
                     </div>
                 </div>
             ),
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (value: any, record: any) =>
-                record.name.toLowerCase().includes(value.toLowerCase()) ||
-                record.slug.toLowerCase().includes(value.toLowerCase()),
         },
         {
             title: "Slug",
@@ -127,8 +130,8 @@ export const OrganizationListPage = () => {
     return (
         <>
             <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
+            <div className="p-8">
+                <div className="flex justify-between items-center mb-8">
                     <div>
                         <Title level={2} style={{ marginBottom: 4 }}>
                             Manage Organizations
@@ -138,54 +141,57 @@ export const OrganizationListPage = () => {
                 </div>
 
                 {/* Stats Cards */}
-                <Row gutter={16} className="mb-6">
+                <Row gutter={16} className="mb-8">
                     <Col xs={24} sm={8}>
-                        <Card>
+                        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
                             <Statistic
                                 title="Current Organization"
                                 value={activeOrganization?.name || "None"}
-                                prefix={<AppstoreOutlined />}
+                                prefix={<AppstoreOutlined className="text-blue-500" />}
                             />
                         </Card>
                     </Col>
                     <Col xs={24} sm={8}>
-                        <Card>
+                        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
                             <Statistic
                                 title="Members"
                                 value={members?.length || 0}
-                                prefix={<TeamOutlined />}
+                                prefix={<TeamOutlined className="text-purple-500" />}
                             />
                         </Card>
                     </Col>
                     <Col xs={24} sm={8}>
-                        <Card>
+                        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
                             <Statistic
                                 title="Pending Invitations"
                                 value={invitations?.length || 0}
-                                prefix={<MailOutlined />}
+                                prefix={<MailOutlined className="text-orange-500" />}
                             />
                         </Card>
                     </Col>
                 </Row>
 
-                {/* Search */}
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search organizations..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-xs"
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
+                {/* Organizations Table */}
+                <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                    <DataTableWithFilters
+                        config={{
+                            columns,
+                            data: filteredOrgs,
+                            rowKey: "id",
+                            filters: [
+                                {
+                                    type: "search",
+                                    key: "search",
+                                    placeholder: "Search organizations...",
+                                },
+                            ],
+                            onFiltersChange: (f: Record<string, any>) => setSearch(f.search || ""),
+                            pagination: {
+                                pageSize: 12,
+                            },
+                        }}
                     />
                 </div>
-
-                {/* Organizations Table */}
-                <Table
-                    columns={columns}
-                    dataSource={sortedOrgs}
-                    rowKey="id"
-                    pagination={{ pageSize: 10 }}
-                />
             </div>
         </>
     );

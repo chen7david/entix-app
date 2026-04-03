@@ -9,11 +9,12 @@ const { Title, Text } = Typography;
 
 export const AdminDashboardPage: React.FC = () => {
     const { user } = useAuth();
-    const { data: users } = useAdminUsers();
+    const { data: userData } = useAdminUsers();
+    const users = userData?.items || [];
 
-    const totalUsers = users?.length || 0;
-    const adminUsers = users?.filter((u: any) => u.role === "admin").length || 0;
-    const bannedUsers = users?.filter((u: any) => u.banned).length || 0;
+    const totalUsers = users.length || 0;
+    const adminUsers = users.filter((u: any) => u.role === "admin").length || 0;
+    const bannedUsers = users.filter((u: any) => u.banned).length || 0;
 
     return (
         <>

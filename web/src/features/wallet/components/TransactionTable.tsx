@@ -32,7 +32,6 @@ export const TransactionTable = ({
                 loading,
                 filters,
                 onFiltersChange,
-                onPaginationChange: () => {}, // handled by pagination.onNext / onPrev
             }}
         />
     );

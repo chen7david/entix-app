@@ -125,4 +125,16 @@ export class UserService extends BaseService {
             headers: new Headers(), // Empty headers to bypass session-scoped checks
         });
     }
+
+    /**
+     * List all users globally with cursor pagination (Admin only).
+     */
+    async listUsersAdminPaginated(
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
+        return await this.userRepo.findAllAdminPaginated(limit, cursor, direction, search);
+    }
 }
