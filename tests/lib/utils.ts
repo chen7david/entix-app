@@ -59,6 +59,17 @@ export async function createTestDb() {
         await db.insert(categoryTable).values(cat).onConflictDoNothing();
     }
 
+    // Ensure 'platform' organization exists for treasury scoping
+    await db
+        .insert(schema.authOrganizations)
+        .values({
+            id: "platform",
+            name: "Platform",
+            slug: "platform",
+            createdAt: new Date(),
+        })
+        .onConflictDoNothing();
+
     // Seed Platform Treasury Accounts for all currencies
     for (const currencyId of allCurrencies) {
         const treasuryId = getTreasuryAccountId(currencyId);
@@ -68,7 +79,7 @@ export async function createTestDb() {
                 id: treasuryId,
                 ownerId: "platform",
                 ownerType: "org",
-                organizationId: null,
+                organizationId: "platform",
                 currencyId,
                 name: `Platform Treasury (${currencyId.split("_")[1].toUpperCase()})`,
                 balanceCents: 1000000000, // Seed with 10M units (cents)

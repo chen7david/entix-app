@@ -1,3 +1,4 @@
+import { InternalServerError } from "@api/errors/app.error";
 import type { UserRepository } from "@api/repositories/user.repository";
 import type { Auth } from "better-auth";
 import { BaseService } from "./base.service";
@@ -39,7 +40,7 @@ export class UserService extends BaseService {
         });
 
         if (!result) {
-            throw new Error("User creation failed: No result returned from Auth API");
+            throw new InternalServerError("User creation failed: No result returned from Auth API");
         }
 
         return result as CreateUserResult;

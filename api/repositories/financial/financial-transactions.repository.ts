@@ -1,12 +1,40 @@
+import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
     type CreateTransactionRepoInput,
     financialAccounts,
+    financialCurrencies,
+    financialTransactionCategories,
     financialTransactionLines,
     financialTransactions,
 } from "@shared/db/schema";
-import type { PaginationInput, TransactionFilters } from "@shared/schemas/dto/financial.dto";
-import { and, desc, eq, gte, like, lte, or, sql } from "drizzle-orm";
+import type { TransactionFilters } from "@shared/schemas/dto/financial.dto";
+import { and, desc, eq, gte, like, lt, lte, or, sql } from "drizzle-orm";
+
+/**
+ * Encodes transactionDate + id into a base64 cursor for stable pagination.
+ */
+export function encodeTransactionCursor(tx: {
+    transactionDate: Date | string;
+    id: string;
+}): string {
+    const dateStr =
+        tx.transactionDate instanceof Date ? tx.transactionDate.toISOString() : tx.transactionDate;
+    return Buffer.from(JSON.stringify({ date: dateStr, id: tx.id })).toString("base64");
+}
+
+/**
+ * Decodes a base64 cursor and validates its shape.
+ */
+function decodeTransactionCursor(cursor: string): { date: string; id: string } {
+    try {
+        const decoded = JSON.parse(Buffer.from(cursor, "base64").toString("utf-8"));
+        if (!decoded.date || !decoded.id) throw new Error();
+        return decoded;
+    } catch {
+        throw new BadRequestError("Invalid pagination cursor");
+    }
+}
 
 /**
  * Financial transactions are NEVER hard-deleted to preserve ledger integrity.
@@ -129,7 +157,7 @@ export class FinancialTransactionsRepository {
 
         // Verify the debit actually hit a row (balance check + active check)
         if (debitResult.meta.rows_written === 0) {
-            throw new Error("Insufficient funds, inactive account, or currency mismatch");
+            throw new BadRequestError("Insufficient funds, inactive account, or currency mismatch");
         }
 
         return input.id;
@@ -170,38 +198,88 @@ export class FinancialTransactionsRepository {
             );
         }
 
-        const offset = (filters.page - 1) * filters.pageSize;
+        // Apply Cursor Pagination
+        if (filters.cursor) {
+            const decoded = decodeTransactionCursor(filters.cursor);
+            conditions.push(
+                or(
+                    lt(financialTransactions.transactionDate, new Date(decoded.date)),
+                    and(
+                        eq(financialTransactions.transactionDate, new Date(decoded.date)),
+                        lt(financialTransactions.id, decoded.id)
+                    )
+                ) as any
+            );
+        }
 
-        return this.db.query.financialTransactions.findMany({
-            where: and(...conditions),
-            with: {
-                sourceAccount: true,
-                destinationAccount: true,
-                category: true,
-                currency: true,
-            },
-            orderBy: [desc(financialTransactions.transactionDate)],
-            limit: filters.pageSize,
-            offset,
-        });
+        const rows = await this.db
+            .select({
+                transaction: financialTransactions,
+                category: financialTransactionCategories,
+                currency: financialCurrencies,
+            })
+            .from(financialTransactions)
+            .innerJoin(
+                financialTransactionCategories,
+                eq(financialTransactions.categoryId, financialTransactionCategories.id)
+            )
+            .innerJoin(
+                financialCurrencies,
+                eq(financialTransactions.currencyId, financialCurrencies.id)
+            )
+            .where(and(...conditions))
+            .orderBy(desc(financialTransactions.transactionDate), desc(financialTransactions.id))
+            .limit(filters.pageSize);
+
+        return rows.map((row) => ({
+            ...row.transaction,
+            category: row.category,
+            currency: row.currency,
+        }));
     }
 
-    async findByAccountId(accountId: string, { page, pageSize }: PaginationInput) {
-        const offset = (page - 1) * pageSize;
-        return this.db.query.financialTransactionLines.findMany({
-            where: eq(financialTransactionLines.accountId, accountId),
-            with: {
-                transaction: {
-                    with: {
-                        category: true,
-                        currency: true,
-                    },
-                },
-            },
-            orderBy: [desc(financialTransactionLines.createdAt)],
-            limit: pageSize,
-            offset,
-        });
+    async findByAccountId(
+        accountId: string,
+        { cursor, pageSize }: { cursor?: string; pageSize: number }
+    ) {
+        const conditions = [eq(financialTransactionLines.accountId, accountId)];
+
+        if (cursor) {
+            const decoded = decodeTransactionCursor(cursor);
+            conditions.push(
+                or(
+                    lt(financialTransactions.transactionDate, new Date(decoded.date)),
+                    and(
+                        eq(financialTransactions.transactionDate, new Date(decoded.date)),
+                        lt(financialTransactionLines.id, decoded.id)
+                    )
+                ) as any
+            );
+        }
+
+        const rows = await this.db
+            .select({
+                line: financialTransactionLines,
+                transaction: financialTransactions,
+            })
+            .from(financialTransactionLines)
+            .innerJoin(
+                financialTransactions,
+                eq(financialTransactionLines.transactionId, financialTransactions.id)
+            )
+            .where(and(...conditions))
+            .orderBy(
+                desc(financialTransactions.transactionDate),
+                desc(financialTransactionLines.id)
+            )
+            .limit(pageSize);
+
+        // Map back to the shape expected by callers (lines with transaction relation)
+        // Since caller expects the 'with' relation shape, we manually structure it.
+        return rows.map((row) => ({
+            ...row.line,
+            transaction: row.transaction,
+        }));
     }
 
     /**
@@ -215,13 +293,9 @@ export class FinancialTransactionsRepository {
     async findByOwnerId(
         ownerId: string,
         ownerType: "user" | "org",
-        { page, pageSize }: PaginationInput,
+        { cursor, pageSize }: { cursor?: string; pageSize: number },
         organizationId?: string
     ) {
-        const offset = (page - 1) * pageSize;
-
-        // Since D1/Drizzle relations don't easily support deep filtering on joins for pagination,
-        // we first get the IDs of the accounts owned by the user.
         const ownerAccounts = await this.db.query.financialAccounts.findMany({
             where: and(
                 eq(financialAccounts.ownerId, ownerId),
@@ -236,22 +310,44 @@ export class FinancialTransactionsRepository {
         const accountIds = ownerAccounts.map((a) => a.id);
         if (accountIds.length === 0) return [];
 
-        return this.db.query.financialTransactionLines.findMany({
-            where: sql`${financialTransactionLines.accountId} IN ${accountIds}`,
-            with: {
-                transaction: {
-                    with: {
-                        sourceAccount: true,
-                        destinationAccount: true,
-                        category: true,
-                        currency: true,
-                    },
-                },
-                account: true,
-            },
-            orderBy: [desc(financialTransactionLines.createdAt)],
-            limit: pageSize,
-            offset,
-        });
+        const conditions = [sql`${financialTransactionLines.accountId} IN ${accountIds}`];
+
+        if (cursor) {
+            const decoded = decodeTransactionCursor(cursor);
+            conditions.push(
+                or(
+                    lt(financialTransactions.transactionDate, new Date(decoded.date)),
+                    and(
+                        eq(financialTransactions.transactionDate, new Date(decoded.date)),
+                        lt(financialTransactionLines.id, decoded.id)
+                    )
+                ) as any
+            );
+        }
+
+        const rows = await this.db
+            .select({
+                line: financialTransactionLines,
+                transaction: financialTransactions,
+                account: financialAccounts,
+            })
+            .from(financialTransactionLines)
+            .innerJoin(
+                financialTransactions,
+                eq(financialTransactionLines.transactionId, financialTransactions.id)
+            )
+            .innerJoin(financialAccounts, eq(financialTransactionLines.accountId, financialAccounts.id))
+            .where(and(...conditions))
+            .orderBy(
+                desc(financialTransactions.transactionDate),
+                desc(financialTransactionLines.id)
+            )
+            .limit(pageSize);
+
+        return rows.map((row) => ({
+            ...row.line,
+            transaction: row.transaction,
+            account: row.account,
+        }));
     }
 }

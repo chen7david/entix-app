@@ -3,6 +3,7 @@ export * from "./constants/api";
 export * from "./constants/financial";
 export * from "./constants/routes";
 export * from "./db/schema/index";
+export * from "./lib/id";
 export * from "./schemas/dto/auth.dto";
 export * from "./schemas/dto/base.dto";
 export * from "./schemas/dto/bulk-member.dto";

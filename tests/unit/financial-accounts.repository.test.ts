@@ -1,3 +1,4 @@
+import { BadRequestError } from "@api/errors/app.error";
 import { financialCurrencySeed } from "@api/db/seed/financial.seed";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import {
@@ -81,7 +82,7 @@ describe("financialAccountsRepository", () => {
                     ownerId: "org_test_01",
                     ownerType: "org",
                     currencyId: "fcur_cad",
-                    organizationId: null,
+                    organizationId: "org_test_01",
                     name: "Store Revenue",
                 })
             );
@@ -97,9 +98,10 @@ describe("financialAccountsRepository", () => {
             expect(results).toHaveLength(2);
         });
 
-        it("returns null on unknown currencyId (FK violation)", async () => {
-            const account = await repo.insert(makeAccountInput({ currencyId: "fcur_nonexistent" }));
-            expect(account).toBeNull();
+        it("throws BadRequestError on unknown currencyId (FK violation)", async () => {
+            await expect(
+                repo.insert(makeAccountInput({ currencyId: "fcur_nonexistent" }))
+            ).rejects.toThrow(BadRequestError);
         });
     });
 
@@ -157,7 +159,7 @@ describe("financialAccountsRepository", () => {
                 makeAccountInput({
                     ownerId: "org_test_01",
                     ownerType: "org",
-                    organizationId: null,
+                    organizationId: "org_test_01",
                     name: "Org Revenue",
                 })
             );

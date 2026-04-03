@@ -25,7 +25,7 @@ import { createTestDb } from "../lib/utils";
 describe("Avatar Update Flow", () => {
     let client: TestClient;
     let orgId: string;
-    let firstMemberId: string;
+    let firstUserId: string;
 
     beforeEach(async () => {
         await createTestDb();
@@ -44,11 +44,11 @@ describe("Avatar Update Flow", () => {
 
         const listRes = await client.orgs.users.list(orgId);
         const listBody = (await listRes.json()) as any;
-        firstMemberId = listBody.items[0].id;
+        firstUserId = listBody.items[0].userId;
     });
 
     it("should route presigned URL request to the user avatar endpoint (not org uploads)", async () => {
-        const res = await client.request(`/api/v1/users/${firstMemberId}/avatar/presigned-url`, {
+        const res = await client.request(`/api/v1/users/${firstUserId}/avatar/presigned-url`, {
             method: "POST",
             body: { originalName: "avatar.jpg", contentType: "image/jpeg", fileSize: 1024 },
         });
@@ -61,7 +61,7 @@ describe("Avatar Update Flow", () => {
     it("should reject avatar PATCH when uploadId is from org uploads (different table)", async () => {
         const fakeOrgUploadId = "org-scoped-upload-id-that-does-not-exist-in-user-uploads";
 
-        const patchRes = await client.request(`/api/v1/users/${firstMemberId}/avatar`, {
+        const patchRes = await client.request(`/api/v1/users/${firstUserId}/avatar`, {
             method: "PATCH",
             body: { uploadId: fakeOrgUploadId },
         });
@@ -73,7 +73,7 @@ describe("Avatar Update Flow", () => {
     });
 
     it("should successfully remove avatar via the consolidated DELETE route (admin acting on member)", async () => {
-        const deleteRes = await client.request(`/api/v1/users/${firstMemberId}/avatar`, {
+        const deleteRes = await client.request(`/api/v1/users/${firstUserId}/avatar`, {
             method: "DELETE",
         });
 

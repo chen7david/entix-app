@@ -5,19 +5,20 @@ import { FINANCIAL_CURRENCIES, getTreasuryAccountId } from "@shared";
 import { financialAccounts } from "@shared/db/schema";
 import {
     currencyListWithStatusResponseSchema,
-    financialAccountSchema,
+    walletAccountDTOSchema,
 } from "@shared/schemas/dto/financial.dto";
 import { eq } from "drizzle-orm";
 import { assert, beforeEach, describe, expect, it } from "vitest";
+import type { z } from "zod";
 import { createAuthenticatedOrg, createSuperAdmin } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
 
-/**
- * Enhanced logging helper for integration tests.
- * Captures raw response status and flattens Zod errors for easier debugging.
- */
-async function assertOk(response: Response, schema: any, context: string) {
+async function assertOk<T extends z.ZodTypeAny>(
+    response: Response,
+    schema: T,
+    context: string
+): Promise<z.infer<T>> {
     const status = response.status;
     const body = (await response.json()) as any;
 
@@ -85,7 +86,7 @@ describe("Finance Integration Tests", () => {
                 });
                 const account = await assertOk(
                     activateRes,
-                    financialAccountSchema,
+                    walletAccountDTOSchema,
                     "Activate USD Currency"
                 );
                 sourceAccountId = account.id;
@@ -102,7 +103,7 @@ describe("Finance Integration Tests", () => {
             });
             const destAccount = await assertOk(
                 createRes,
-                financialAccountSchema,
+                walletAccountDTOSchema,
                 "Create Savings Account"
             );
             const destAccountId = destAccount.id;
@@ -141,8 +142,8 @@ describe("Finance Integration Tests", () => {
                 currencyId: eur.id,
             });
 
-            const usdAccount = await assertOk(activateUsd, financialAccountSchema, "Activate USD");
-            const eurAccount = await assertOk(activateEur, financialAccountSchema, "Activate EUR");
+            const usdAccount = await assertOk(activateUsd, walletAccountDTOSchema, "Activate USD");
+            const eurAccount = await assertOk(activateEur, walletAccountDTOSchema, "Activate EUR");
 
             // Try to transfer USD from a USD account to a EUR account using currencyId=EUR
             const transferRes = await client.orgs.finance.executeTransfer(orgId, {
@@ -178,7 +179,7 @@ describe("Finance Integration Tests", () => {
             });
             const account = await assertOk(
                 createRes,
-                financialAccountSchema,
+                walletAccountDTOSchema,
                 "Create Archive Account"
             );
 
@@ -203,7 +204,7 @@ describe("Finance Integration Tests", () => {
             });
             const account = await assertOk(
                 activateRes,
-                financialAccountSchema,
+                walletAccountDTOSchema,
                 "Activate Funding Account"
             );
             const accountId = account.id;

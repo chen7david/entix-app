@@ -1,1 +1,0 @@
-ALTER TABLE `financial_accounts` ADD `dummy` text;

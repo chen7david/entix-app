@@ -37,7 +37,7 @@ export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = asyn
 
 export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactions> = async (c) => {
     const { organizationId, userId } = c.req.valid("param");
-    const { page, pageSize } = c.req.valid("query");
+    const query = c.req.valid("query");
 
     if (!authorizeWalletAccess(c, userId, organizationId)) {
         return c.json(
@@ -47,7 +47,7 @@ export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactio
     }
 
     const service = getUserFinancialService(c);
-    const result = await service.getTransactionHistory(userId, organizationId, { page, pageSize });
+    const result = await service.getTransactionHistory(userId, organizationId, query);
 
     return c.json(result, HttpStatusCodes.OK);
 };

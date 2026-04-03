@@ -13,6 +13,7 @@ import {
     executeTransferRequestSchema,
     listFinancialAccountsResponseSchema,
     reverseTransactionRequestSchema,
+    transactionFiltersSchema,
     transactionHistoryResponseSchema,
     transactionResultSchema,
     walletSummaryDTOSchema,
@@ -47,18 +48,7 @@ export const FinanceRoutes = {
         summary: "Get paginated transaction history for the organization with filters",
         request: {
             params: z.object({ organizationId: z.string() }),
-            query: z.object({
-                page: z.coerce.number().min(1).default(1),
-                pageSize: z.coerce.number().min(1).max(100).default(20),
-                startDate: z.string().optional(),
-                endDate: z.string().optional(),
-                minAmount: z.coerce.number().optional(),
-                maxAmount: z.coerce.number().optional(),
-                txId: z.string().optional(),
-                accountId: z.string().optional(),
-                status: z.enum(["pending", "completed", "reversed"]).optional(),
-                categoryId: z.string().optional(),
-            }),
+            query: transactionFiltersSchema,
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(

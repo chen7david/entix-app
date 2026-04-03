@@ -92,19 +92,19 @@ export class UserRepository {
             ...result,
             items: result.items.map((row) => ({
                 id: row.member.id,
-                userId: row.user.id,
                 organizationId: row.member.organizationId,
-                role: row.member.role,
-                createdAt: row.member.createdAt,
+                userId: row.user.id,
                 name: row.user.name,
                 email: row.user.email,
                 avatarUrl: row.user.image,
                 emailVerified: row.user.emailVerified,
+                role: row.member.role,
+                createdAt: row.member.createdAt,
             })),
         };
     }
 
-    prepareInsert(id: string, email: string, name: string, emailVerified: boolean) {
+    prepareInsert(id: string, email: string, name: string, emailVerified: boolean = false) {
         const now = new Date();
         return this.db.insert(schema.authUsers).values({
             id,

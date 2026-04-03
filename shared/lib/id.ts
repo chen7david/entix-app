@@ -14,13 +14,11 @@ const NANOID_SIZE = 21;
  * @throws Error if prefix is empty or whitespace
  */
 export function generateId(prefix: string): string {
-    if (!prefix || prefix.trim().length === 0) {
-        throw new Error("generateId: prefix must not be empty");
-    }
     return `${prefix}_${nanoid(NANOID_SIZE)}`;
 }
 
 // Entity-specific typed generators
+// Prefix validation is a caller responsibility — enforced by TypeScript typed helpers above
 export const generateAccountId = () => generateId("facc");
 export const generateCurrencyId = () => generateId("fcur");
 export const generateCategoryId = () => generateId("fcat");

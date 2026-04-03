@@ -52,7 +52,7 @@ export class RegistrationService extends BaseService {
             const oId = nanoid();
             const acctId = nanoid();
             const memberId = nanoid();
-            const emailVerified = false; // By default BetterAuth sets this false
+            const emailVerified = false; // By default BetterAuth sets this false/unverified
 
             const hashedPassword = input.password
                 ? await hashPassword(input.password)
@@ -106,7 +106,7 @@ export class RegistrationService extends BaseService {
                     slug,
                 },
             };
-        } catch (err) {
+        } catch (err: unknown) {
             if (err instanceof ConflictError) throw err;
 
             this.logger.error({ err, input }, "Failed to setup organization during signup");

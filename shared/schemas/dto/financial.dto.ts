@@ -36,10 +36,16 @@ export const financialTransactionSchema = z.object({
     createdAt: z.string().or(z.date()),
 });
 
+export const transactionCursorSchema = z.object({
+    date: z.string().or(z.date()),
+    id: z.string(),
+});
+
+export type TransactionCursor = z.infer<typeof transactionCursorSchema>;
+
 export const transactionHistoryResponseSchema = z.object({
-    data: z.array(z.any()), // Can be more specific later if relations are complex
-    page: z.number(),
-    pageSize: z.number(),
+    data: z.array(financialTransactionSchema),
+    nextCursor: z.string().nullable(),
 });
 
 export const executeTransferResponseSchema = z.object({
@@ -117,7 +123,7 @@ export const transactionResultSchema = z.object({
 });
 
 export const paginationSchema = z.object({
-    page: z.number().int().min(1).default(1),
+    cursor: z.string().optional(),
     pageSize: z.number().int().min(1).max(100).default(20),
 });
 

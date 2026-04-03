@@ -6,6 +6,7 @@ import {
     getTreasuryAccountId,
 } from "@shared";
 import {
+    authOrganizations,
     financialAccounts,
     financialCurrencies,
     financialTransactionCategories,
@@ -57,6 +58,18 @@ export const seedFinancials = async (db: AppDb) => {
     // These accounts are the system-side counterparties for all admin layouts/rewards.
     // They are pre-funded with a large float and never exposed to end-users directly.
     const allCurrencies = Object.values(FINANCIAL_CURRENCIES);
+
+    // Ensure 'platform' organization exists for treasury scoping
+    await db
+        .insert(authOrganizations)
+        .values({
+            id: "platform",
+            name: "Platform",
+            slug: "platform",
+            createdAt: new Date(),
+        })
+        .onConflictDoNothing();
+
     for (const currencyId of allCurrencies) {
         const config =
             FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
@@ -64,10 +77,10 @@ export const seedFinancials = async (db: AppDb) => {
             .insert(financialAccounts)
             .values({
                 id: getTreasuryAccountId(currencyId),
-                ownerId: "org_platform", // Core platform org
+                ownerId: "platform", // Consolidated platform org ID
                 ownerType: "org",
                 currencyId,
-                organizationId: null,
+                organizationId: "platform",
                 name: `Platform Treasury — ${config.code}`,
                 balanceCents: 1_000_000_000_00, // $1,000,000,000 float — adjust as needed
                 isActive: true,

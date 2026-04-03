@@ -21,14 +21,7 @@ export class FinanceHandler {
             query
         );
 
-        return ctx.json(
-            {
-                data: history,
-                page: query.page,
-                pageSize: query.pageSize,
-            },
-            HttpStatusCodes.OK
-        );
+        return ctx.json(history, HttpStatusCodes.OK);
     };
 
     static reverseTransaction: AppHandler<typeof FinanceRoutes.reverseTransaction> = async (
@@ -60,7 +53,7 @@ export class FinanceHandler {
         const { organizationId } = ctx.req.valid("param");
         const body = ctx.req.valid("json");
 
-        const result = await getOrgFinancialService(ctx).createOrgAccount(
+        const account = await getOrgFinancialService(ctx).createOrgAccount(
             {
                 name: body.name,
                 currencyId: body.currencyId,
@@ -69,14 +62,7 @@ export class FinanceHandler {
             { allowMultiple: true }
         );
 
-        if (!result.success || !result.account) {
-            return ctx.json(
-                { message: result.message || "Failed to create account" },
-                result.alreadyExists ? HttpStatusCodes.CONFLICT : HttpStatusCodes.BAD_REQUEST
-            );
-        }
-
-        return ctx.json({ data: result.account }, HttpStatusCodes.CREATED);
+        return ctx.json({ data: account }, HttpStatusCodes.CREATED);
     };
 
     static listAccounts: AppHandler<typeof FinanceRoutes.listAccounts> = async (ctx) => {

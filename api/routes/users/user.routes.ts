@@ -1,7 +1,7 @@
 import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute } from "@hono/zod-openapi";
-import { userSchema } from "@shared/index";
+import { memberDTOSchema } from "@shared/index";
 import {
     createPaginatedResponseSchema,
     PaginationQuerySchema,
@@ -22,7 +22,7 @@ export class UserRoutes {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                createPaginatedResponseSchema(userSchema),
+                createPaginatedResponseSchema(memberDTOSchema),
                 "Paginated list of users in organization"
             ),
         },

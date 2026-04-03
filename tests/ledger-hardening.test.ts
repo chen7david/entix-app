@@ -76,7 +76,7 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
             },
             { allowMultiple: true }
         );
-        expect(gf.success, gf.message).toBe(true);
+        expect(gf.id).toBeDefined();
 
         // Create Payroll in same currency (Should succeed now)
         const pr = await orgService.createOrgAccount(
@@ -87,8 +87,8 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
             },
             { allowMultiple: true }
         );
-        expect(pr.success, pr.message).toBe(true);
-        expect(pr.account?.name).toBe("Payroll");
+        expect(pr.id).toBeDefined();
+        expect(pr.name).toBe("Payroll");
 
         // --- 2. Name Uniqueness Relaxation (Name + Currency Scoped) ---
 
@@ -101,10 +101,8 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
             },
             { allowMultiple: true }
         );
-        expect(pr2.success, "Should succeed because it is in a different currency (EUR)").toBe(
-            true
-        );
-        expect(pr2.account?.name).toBe("Payroll");
+        expect(pr2.id).toBeDefined();
+        expect(pr2.name).toBe("Payroll");
 
         // --- 3. User Wallet Restrictions (SOFT CONSTRAINT) ---
 
@@ -117,19 +115,17 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
         });
 
         // Try second USD account (Should fail even with different name if allowMultiple is false)
-        const stash = await userService.createUserAccount(
-            {
-                name: "Secret Stash",
-                currencyId: FINANCIAL_CURRENCIES.USD,
-                userId: userId,
-                orgId: orgId,
-            },
-            { allowMultiple: false }
-        );
-        expect(stash.success, "Should fail because USD wallet already exists for user").toBe(false);
-        expect(stash.message).toContain(
-            "An active wallet for this currency already exists for this user"
-        );
+        await expect(
+            userService.createUserAccount(
+                {
+                    name: "Secret Stash",
+                    currencyId: FINANCIAL_CURRENCIES.USD,
+                    userId: userId,
+                    orgId: orgId,
+                },
+                { allowMultiple: false }
+            )
+        ).rejects.toThrow(/already exists/);
 
         // Allow multiple if explicitly requested
         const travel = await userService.createUserAccount(
@@ -141,7 +137,7 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
             },
             { allowMultiple: true }
         );
-        expect(travel.success).toBe(true);
+        expect(travel.id).toBeDefined();
 
         // --- 4. Org-Scoping (Model B Verification) ---
         const otherOrgId = "org_789";
@@ -154,10 +150,7 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
             orgId: otherOrgId,
         });
 
-        expect(
-            otherOrgSavings.success,
-            "Should allow identically named 'Savings' in a different organization membership"
-        ).toBe(true);
+        expect(otherOrgSavings.id).toBeDefined();
 
         const summaryOrgA = await userService.getUserSummary(userId, orgId);
         const summaryOrgB = await userService.getUserSummary(userId, otherOrgId);

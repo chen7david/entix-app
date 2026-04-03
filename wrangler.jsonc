@@ -21,7 +21,7 @@
                 "R2_BUCKET_NAME": "entix-app-development",
                 "R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
                 "PUBLIC_CDN_URL": "https://development-cdn.entix.org",
-                "SKIP_EMAIL_VERIFICATION": "true"
+                "SKIP_EMAIL_VERIFICATION": "false"
             },
             "d1_databases": [
                 {

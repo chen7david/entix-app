@@ -1,3 +1,4 @@
+import { InternalServerError } from "@api/errors/app.error";
 import type { AwsClient } from "aws4fetch";
 
 export type BucketConfig = {
@@ -54,7 +55,9 @@ export class BucketService {
         });
 
         if (!response.ok) {
-            throw new Error(`R2 Upload Error: ${response.statusText} (${await response.text()})`);
+            throw new InternalServerError(
+                `R2 Upload Error: ${response.statusText} (${await response.text()})`
+            );
         }
 
         return {
@@ -93,12 +96,6 @@ export class BucketService {
         }
 
         const errorText = await response.text().catch(() => "Unknown error");
-        const error = new Error(`R2 Delete Error: ${response.statusText}`) as Error & {
-            status?: number;
-            body?: string;
-        };
-        error.status = response.status;
-        error.body = errorText;
-        throw error;
+        throw new InternalServerError(`R2 Delete Error: ${response.statusText} - ${errorText}`);
     }
 }

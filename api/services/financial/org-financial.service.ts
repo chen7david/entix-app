@@ -1,11 +1,13 @@
-import { NotFoundError } from "@api/errors/app.error";
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
-import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import {
+    encodeTransactionCursor,
+    type FinancialTransactionsRepository,
+} from "@api/repositories/financial/financial-transactions.repository";
+import { type FinancialAccount, generateAccountId, type TransactionFilters } from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
-import type { TransactionFilters } from "@shared/schemas/dto/financial.dto";
-import { nanoid } from "nanoid";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -48,7 +50,7 @@ export class OrgFinancialService extends FinancialBaseService {
     async reverseTransaction(txId: string, organizationId: string, reason: string) {
         const original = await this.transactionsRepo.findById(txId);
         if (!original) throw new NotFoundError("Transaction not found");
-        if (original.status === "reversed") throw new Error("Transaction already reversed");
+        if (original.status === "reversed") throw new ConflictError("Transaction already reversed");
 
         // Execute mirror transaction (swap source and destination)
         const reversalTxId = await this.executeTransaction({
@@ -72,7 +74,7 @@ export class OrgFinancialService extends FinancialBaseService {
      * Returns all active accounts for an organization.
      */
     async getOrgSummary(orgId: string) {
-        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org");
+        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
         return { accounts };
     }
 
@@ -80,11 +82,12 @@ export class OrgFinancialService extends FinancialBaseService {
      * Lists all active financial accounts for the organization.
      */
     async listOrgAccounts(orgId: string) {
-        return this.accountsRepo.findActiveByOwner(orgId, "org");
+        return this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
     }
 
     /**
      * Creates an organizational account with strict name uniqueness.
+     * Throws ConflictError if duplicate exists.
      */
     async createOrgAccount(
         input: {
@@ -93,19 +96,18 @@ export class OrgFinancialService extends FinancialBaseService {
             organizationId: string;
         },
         options: { allowMultiple?: boolean } = { allowMultiple: true }
-    ) {
+    ): Promise<FinancialAccount> {
         // 1. Name + Currency Uniqueness
         const nameExists = await this.accountsRepo.existsByNameAndCurrency(
             input.organizationId,
             input.name,
-            input.currencyId
+            input.currencyId,
+            input.organizationId
         );
         if (nameExists) {
-            return {
-                success: false,
-                alreadyExists: true,
-                message: `An account named "${input.name}" in this currency already exists for this organization.`,
-            };
+            throw new ConflictError(
+                `An account named "${input.name}" in this currency already exists for this organization.`
+            );
         }
 
         // 2. Currency Uniqueness (if not allowing multiple)
@@ -113,35 +115,31 @@ export class OrgFinancialService extends FinancialBaseService {
             const exists = await this.accountsRepo.existsByOwnerAndCurrency(
                 input.organizationId,
                 "org",
-                input.currencyId
+                input.currencyId,
+                input.organizationId
             );
             if (exists) {
-                return {
-                    success: false,
-                    alreadyExists: true,
-                    message:
-                        "An active account for this currency already exists. Set 'allowMultiple' to true for custom labeled accounts.",
-                };
+                throw new ConflictError(
+                    "An active account for this currency already exists. Set 'allowMultiple' to true for custom labeled accounts."
+                );
             }
         }
 
         const now = new Date();
         const accountInput = createAccountRepoInputSchema.parse({
-            id: `acc_${nanoid()}`,
+            id: generateAccountId(),
             ownerId: input.organizationId,
             ownerType: "org",
             currencyId: input.currencyId,
             name: input.name,
-            organizationId: null, // Scoped accounts are only for users
-            isFundingAccount: false, // Custom accounts are never funding accounts
+            organizationId: input.organizationId, // All accounts are org-scoped
+            isFundingAccount: false,
             accountType: "standard",
             createdAt: now,
             updatedAt: now,
         });
 
-        const account = await this.accountsRepo.insert(accountInput);
-
-        return { success: true, account };
+        return this.accountsRepo.insert(accountInput);
     }
 
     /**
@@ -153,18 +151,18 @@ export class OrgFinancialService extends FinancialBaseService {
 
         if (!target) throw new NotFoundError("Currency not found");
         if (target.isActivated) {
-            throw new Error(`Currency ${target.code} is already activated`);
+            throw new ConflictError(`Currency ${target.code} is already activated`);
         }
 
         const now = new Date();
         const accountInput = createAccountRepoInputSchema.parse({
-            id: `acc_${nanoid()}`,
+            id: generateAccountId(),
             ownerId: orgId,
             ownerType: "org",
             currencyId,
-            organizationId: null,
+            organizationId: orgId,
             name: `General Fund — ${target.code}`,
-            isFundingAccount: true, // Auto-set at activation
+            isFundingAccount: true,
             accountType: "standard",
             createdAt: now,
             updatedAt: now,
@@ -179,7 +177,17 @@ export class OrgFinancialService extends FinancialBaseService {
      * Returns paginated transaction history for the organization with filters.
      */
     async getTransactionHistory(orgId: string, filters: TransactionFilters) {
-        return this.transactionsRepo.findByOrgId(orgId, filters);
+        const transactions = await this.transactionsRepo.findByOrgId(orgId, filters);
+
+        // Find last element for next cursor encoding
+        const lastTx =
+            transactions.length >= filters.pageSize ? transactions[transactions.length - 1] : null;
+        const nextCursor = lastTx ? encodeTransactionCursor(lastTx) : null;
+
+        return {
+            data: transactions,
+            nextCursor,
+        };
     }
 
     /**
