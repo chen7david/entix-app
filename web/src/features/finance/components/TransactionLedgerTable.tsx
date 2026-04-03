@@ -68,9 +68,10 @@ export const TransactionLedgerTable: React.FC<Props> = ({
             render: (name, record) => (
                 <Tag
                     color={record.categoryId.includes("refund") ? "orange" : "blue"}
+                    variant="filled"
                     className="rounded-full px-3"
                 >
-                    {name}
+                    {name ?? "Uncategorized"}
                 </Tag>
             ),
         },
@@ -81,8 +82,12 @@ export const TransactionLedgerTable: React.FC<Props> = ({
             render: (_, record) => (
                 <div className="flex items-center gap-2 max-w-[300px]">
                     <div className="flex flex-col min-w-0">
-                        <Text strong className="truncate text-xs" title={record.sourceAccount.name}>
-                            {record.sourceAccount.name}
+                        <Text
+                            strong
+                            className="truncate text-xs"
+                            title={record.sourceAccount?.name ?? "Unknown Account"}
+                        >
+                            {record.sourceAccount?.name ?? "Unknown Account"}
                         </Text>
                     </div>
                     <ArrowRightOutlined className="text-zinc-300 flex-shrink-0" />
@@ -90,9 +95,9 @@ export const TransactionLedgerTable: React.FC<Props> = ({
                         <Text
                             strong
                             className="truncate text-xs"
-                            title={record.destinationAccount.name}
+                            title={record.destinationAccount?.name ?? "Unknown Account"}
                         >
-                            {record.destinationAccount.name}
+                            {record.destinationAccount?.name ?? "Unknown Account"}
                         </Text>
                     </div>
                 </div>
@@ -107,7 +112,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
             render: (amount, record) => (
                 <div className="flex flex-col items-end">
                     <Text strong className="text-base tabular-nums">
-                        {record.currency.symbol}
+                        {record.currency?.symbol ?? ""}
                         {(amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                     </Text>
                     <Text

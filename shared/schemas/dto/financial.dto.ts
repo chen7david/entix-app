@@ -124,14 +124,15 @@ export const transactionResultSchema = z.object({
 
 export const paginationSchema = z.object({
     cursor: z.string().optional(),
-    pageSize: z.number().int().min(1).max(100).default(20),
+    page: z.coerce.number().optional(),
+    pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export const transactionFiltersSchema = paginationSchema.extend({
     startDate: z.string().optional(),
     endDate: z.string().optional(),
-    minAmount: z.number().optional(),
-    maxAmount: z.number().optional(),
+    minAmount: z.coerce.number().optional(),
+    maxAmount: z.coerce.number().optional(),
     txId: z.string().optional(),
     accountId: z.string().optional(),
     status: z.enum(["pending", "completed", "reversed"]).optional(),

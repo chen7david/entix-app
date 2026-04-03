@@ -14,11 +14,12 @@ import {
     useAdminUsers,
     useBanUser,
     useImpersonateUser,
+    useResendVerification,
     useSetUserRole,
     useUnbanUser,
 } from "@web/src/features/admin";
 import { UserContactList, UserProfileForm } from "@web/src/features/user-profiles";
-import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
+import { requestPasswordReset } from "@web/src/lib/auth-client";
 import type { MenuProps } from "antd";
 import {
     App,
@@ -103,17 +104,14 @@ export const UserTable: React.FC = () => {
         }
     };
 
-    const handleResendVerification = async (email: string) => {
+    const { mutate: resendVerification } = useResendVerification();
+
+    const handleResendVerification = (email: string) => {
         if (!email) return;
-        const { error } = await sendVerificationEmail({
-            email,
-            callbackURL: window.location.origin,
+        resendVerification(email, {
+            onSuccess: () => message.success("Verification email sent"),
+            onError: (error: Error) => message.error(error.message),
         });
-        if (error) {
-            message.error(`Failed to send verification email: ${error.message}`);
-        } else {
-            message.success("Verification email sent");
-        }
     };
 
     const columns = [

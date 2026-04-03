@@ -25,7 +25,7 @@ export const MemberWalletRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                walletSummaryDTOSchema,
+                z.object({ data: walletSummaryDTOSchema }),
                 "Personal wallet summary fetched successfully"
             ),
             [HttpStatusCodes.FORBIDDEN]: jsonContent(

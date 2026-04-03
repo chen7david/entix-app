@@ -212,11 +212,20 @@ export class FinancialTransactionsRepository {
             );
         }
 
+
         const rows = await this.db
             .select({
                 transaction: financialTransactions,
                 category: financialTransactionCategories,
                 currency: financialCurrencies,
+                sourceAccount: {
+                    id: sql<string>`src.id`,
+                    name: sql<string>`src.name`,
+                },
+                destinationAccount: {
+                    id: sql<string>`dest.id`,
+                    name: sql<string>`dest.name`,
+                },
             })
             .from(financialTransactions)
             .innerJoin(
@@ -227,6 +236,14 @@ export class FinancialTransactionsRepository {
                 financialCurrencies,
                 eq(financialTransactions.currencyId, financialCurrencies.id)
             )
+            .leftJoin(
+                sql`${financialAccounts} as src`,
+                eq(financialTransactions.sourceAccountId, sql`src.id`)
+            )
+            .leftJoin(
+                sql`${financialAccounts} as dest`,
+                eq(financialTransactions.destinationAccountId, sql`dest.id`)
+            )
             .where(and(...conditions))
             .orderBy(desc(financialTransactions.transactionDate), desc(financialTransactions.id))
             .limit(filters.pageSize);
@@ -235,6 +252,8 @@ export class FinancialTransactionsRepository {
             ...row.transaction,
             category: row.category,
             currency: row.currency,
+            sourceAccount: row.sourceAccount,
+            destinationAccount: row.destinationAccount,
         }));
     }
 
@@ -330,6 +349,16 @@ export class FinancialTransactionsRepository {
                 line: financialTransactionLines,
                 transaction: financialTransactions,
                 account: financialAccounts,
+                category: financialTransactionCategories,
+                currency: financialCurrencies,
+                sourceAccount: {
+                    id: sql<string>`src.id`,
+                    name: sql<string>`src.name`,
+                },
+                destinationAccount: {
+                    id: sql<string>`dest.id`,
+                    name: sql<string>`dest.name`,
+                },
             })
             .from(financialTransactionLines)
             .innerJoin(
@@ -340,6 +369,22 @@ export class FinancialTransactionsRepository {
                 financialAccounts,
                 eq(financialTransactionLines.accountId, financialAccounts.id)
             )
+            .innerJoin(
+                financialTransactionCategories,
+                eq(financialTransactions.categoryId, financialTransactionCategories.id)
+            )
+            .innerJoin(
+                financialCurrencies,
+                eq(financialTransactions.currencyId, financialCurrencies.id)
+            )
+            .leftJoin(
+                sql`${financialAccounts} as src`,
+                eq(financialTransactions.sourceAccountId, sql`src.id`)
+            )
+            .leftJoin(
+                sql`${financialAccounts} as dest`,
+                eq(financialTransactions.destinationAccountId, sql`dest.id`)
+            )
             .where(and(...conditions))
             .orderBy(
                 desc(financialTransactions.transactionDate),
@@ -349,7 +394,13 @@ export class FinancialTransactionsRepository {
 
         return rows.map((row) => ({
             ...row.line,
-            transaction: row.transaction,
+            transaction: {
+                ...row.transaction,
+                category: row.category,
+                currency: row.currency,
+                sourceAccount: row.sourceAccount,
+                destinationAccount: row.destinationAccount,
+            },
             account: row.account,
         }));
     }

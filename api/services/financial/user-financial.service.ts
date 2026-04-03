@@ -151,6 +151,10 @@ export class UserFinancialService extends FinancialBaseService {
                 description: tx.description,
                 transactionDate: tx.transactionDate,
                 createdAt: tx.createdAt,
+                category: (tx as any).category,
+                currency: (tx as any).currency,
+                sourceAccount: (tx as any).sourceAccount,
+                destinationAccount: (tx as any).destinationAccount,
             };
         });
 

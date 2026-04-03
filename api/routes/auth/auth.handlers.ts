@@ -1,4 +1,4 @@
-import { getRegistrationService } from "@api/factories/service.factory";
+import { getRegistrationService, getUserService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { AuthRoutes } from "./auth.routes";
@@ -24,5 +24,16 @@ export class AuthHandler {
         );
 
         return ctx.json({ data: result }, HttpStatusCodes.CREATED);
+    };
+
+    static resendVerificationAdmin: AppHandler<typeof AuthRoutes.resendVerificationAdmin> = async (
+        ctx
+    ) => {
+        const { email } = ctx.req.valid("json");
+
+        const userService = getUserService(ctx);
+        await userService.resendVerificationEmailAdmin(email);
+
+        return ctx.body(null, HttpStatusCodes.OK);
     };
 }

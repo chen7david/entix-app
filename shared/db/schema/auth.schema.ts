@@ -9,7 +9,7 @@ export const authUsers = sqliteTable("auth_users", {
         .notNull(),
     name: text("name").notNull(),
     email: text("email").notNull().unique(),
-    emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(false),
+    emailVerified: integer("email_verified", { mode: "boolean" }).notNull().default(sql`0`),
     image: text("image"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
         .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
@@ -19,7 +19,7 @@ export const authUsers = sqliteTable("auth_users", {
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
     role: text("role").default("user").notNull(),
-    banned: integer("banned", { mode: "boolean" }).default(false).notNull(),
+    banned: integer("banned", { mode: "boolean" }).default(sql`0`).notNull(),
     banReason: text("ban_reason"),
     banExpires: integer("ban_expires", { mode: "timestamp_ms" }),
     theme: text("theme").default("system"),

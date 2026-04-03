@@ -74,7 +74,7 @@ export const FinanceTransactionsPage: React.FC = () => {
                 </div>
 
                 {/* Filter Bar */}
-                <Card style={{ marginBottom: 24 }} bodyStyle={{ padding: 16 }}>
+                <Card style={{ marginBottom: 24 }} styles={{ body: { padding: 16 } }}>
                     <Row gutter={[16, 16]} align="middle">
                         <Col xs={24} lg={8}>
                             <Input

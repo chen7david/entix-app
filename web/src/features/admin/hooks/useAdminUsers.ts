@@ -68,3 +68,16 @@ export const useSetUserRole = () => {
         },
     });
 };
+
+export const useResendVerification = () => {
+    return useMutation({
+        mutationFn: async (email: string) => {
+            const res = await authClient.$fetch("/admin/resend-verification", {
+                method: "POST",
+                body: { email },
+            });
+            if (res.error) throw new Error(res.error.message);
+            return res.data;
+        },
+    });
+};

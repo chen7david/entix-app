@@ -32,7 +32,7 @@ export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = asyn
     const service = getUserFinancialService(c);
     const result = await service.getUserSummary(userId, organizationId);
 
-    return c.json(result, HttpStatusCodes.OK);
+    return c.json({ data: result }, HttpStatusCodes.OK);
 };
 
 export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactions> = async (c) => {

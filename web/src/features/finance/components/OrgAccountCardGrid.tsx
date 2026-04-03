@@ -76,7 +76,7 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                                 {isFunding && (
                                     <Tag
                                         color="blue"
-                                        bordered={false}
+                                        variant="filled"
                                         style={{
                                             margin: 0,
                                             fontSize: 9,
@@ -103,11 +103,13 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                                 }
                                 value={account.balanceCents / 100}
                                 precision={2}
-                                valueStyle={{
-                                    fontSize: token.fontSizeXL,
-                                    fontWeight: 700,
-                                    color: token.colorText,
-                                    letterSpacing: "-0.01em",
+                                styles={{
+                                    content: {
+                                        fontSize: token.fontSizeXL,
+                                        fontWeight: 700,
+                                        color: token.colorText,
+                                        letterSpacing: "-0.01em",
+                                    },
                                 }}
                                 suffix={
                                     <Text
