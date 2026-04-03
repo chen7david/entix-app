@@ -100,4 +100,60 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
 
         expect(res.status).toBe(200);
     });
+
+    it("should allow an org owner/admin to view another member's' wallet summary", async () => {
+        const db = await createTestDb();
+        const client = createTestClient(app, env, authCookie);
+
+        // 1. Setup: Create another user in the same org
+        const otherUserId = "other-user-id";
+        await db.insert(schema.authUsers).values({
+            id: otherUserId,
+            email: "other@example.com",
+            name: "Other User",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        await db.insert(schema.authMembers).values({
+            id: "other-member-id",
+            userId: otherUserId,
+            organizationId: orgId,
+            role: "member",
+            createdAt: new Date(),
+        });
+
+        // 2. Fetch the other user's wallet summary as the current admin
+        const res = await client.request(
+            `/api/v1/orgs/${orgId}/members/${otherUserId}/wallet/summary`,
+            {
+                method: "GET",
+            }
+        );
+
+        // 3. Assert success (200 OK because current session is an owner/admin of the org)
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as any;
+        expect(body.data.accounts).toBeDefined();
+    });
+
+    it("should return empty accounts if an invalid ID (like a Member ID) is used as User ID", async () => {
+        const client = createTestClient(app, env, authCookie);
+
+        // 1. Setup: A Member ID that is NOT the User ID
+        const fakeUserId = "member_id_123"; 
+
+        // 2. Fetch summary using the Member ID as the path param
+        const res = await client.request(
+            `/api/v1/orgs/${orgId}/members/${fakeUserId}/wallet/summary`,
+            {
+                method: "GET",
+            }
+        );
+
+        // 3. Assert success (200 OK) but empty accounts
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as any;
+        expect(body.data.accounts.length).toBe(0);
+    });
 });

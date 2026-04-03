@@ -11,9 +11,11 @@ import type { MemberWalletRoutes } from "./member-wallet.routes";
  */
 const authorizeWalletAccess = (c: any, userId: string, _organizationId: string): boolean => {
     const callerId = c.get("userId");
-    const callerRole = c.get("role"); // requireOrgMembership middleware sets this
+    const callerRole = c.get("membershipRole"); // requireOrgMembership middleware sets this
+    const isSuperAdmin = c.get("isSuperAdmin");
 
     if (callerId === userId) return true;
+    if (isSuperAdmin) return true;
     if (callerRole === "admin" || callerRole === "owner") return true;
 
     return false;

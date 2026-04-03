@@ -255,7 +255,7 @@ export const FinancePaymentsPage: React.FC = () => {
                                 </Card>
 
                                 <MemberAccountAdminPanel
-                                    memberId={selectedMember.id}
+                                    memberId={selectedMember.userId}
                                     orgId={effectiveOrgId}
                                     memberName={currentUser?.name || "System Admin"}
                                 />
