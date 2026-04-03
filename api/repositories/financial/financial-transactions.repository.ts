@@ -212,7 +212,6 @@ export class FinancialTransactionsRepository {
             );
         }
 
-
         const rows = await this.db
             .select({
                 transaction: financialTransactions,

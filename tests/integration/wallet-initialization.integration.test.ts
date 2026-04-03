@@ -39,12 +39,15 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
         });
 
         // 2. Verify visibility in Summary
-        const summaryRes = await client.request(`/api/v1/orgs/${orgId}/members/${userId}/wallet/summary`, {
-            method: "GET",
-        });
+        const summaryRes = await client.request(
+            `/api/v1/orgs/${orgId}/members/${userId}/wallet/summary`,
+            {
+                method: "GET",
+            }
+        );
         expect(summaryRes.status).toBe(200);
-        const summary = await summaryRes.json() as any;
-        
+        const summary = (await summaryRes.json()) as any;
+
         console.log("Summary Accounts:", JSON.stringify(summary.data.accounts, null, 2));
         expect(summary.data.accounts.length).toBeGreaterThanOrEqual(1);
         const testWallet = summary.data.accounts.find((a: any) => a.id === "test-wallet-id");
@@ -53,35 +56,47 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
         // 3. Attempt to initialize (provision) wallets
         // Note: provisioning uses org settings which might include the same currency
         // We'll set up org settings to include ETD
-        await db.insert(schema.financialOrgSettings).values({
-            id: `fos_${orgId}`,
-            organizationId: orgId,
-            autoProvisionCurrencies: JSON.stringify([currencyId]),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        }).onConflictDoUpdate({
-            target: [schema.financialOrgSettings.organizationId],
-            set: { autoProvisionCurrencies: JSON.stringify([currencyId]), updatedAt: new Date() }
-        });
+        await db
+            .insert(schema.financialOrgSettings)
+            .values({
+                id: `fos_${orgId}`,
+                organizationId: orgId,
+                autoProvisionCurrencies: JSON.stringify([currencyId]),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+                target: [schema.financialOrgSettings.organizationId],
+                set: {
+                    autoProvisionCurrencies: JSON.stringify([currencyId]),
+                    updatedAt: new Date(),
+                },
+            });
 
-        const initRes = await client.request(`/api/v1/orgs/${orgId}/members/${userId}/wallet/initialize`, {
-            method: "POST",
-        });
+        const initRes = await client.request(
+            `/api/v1/orgs/${orgId}/members/${userId}/wallet/initialize`,
+            {
+                method: "POST",
+            }
+        );
 
         // 4. Assert Conflict
         // If the wallet already exists, it should throw 409 Conflict
         expect(initRes.status).toBe(409);
-        const error = await initRes.json() as any;
+        const error = (await initRes.json()) as any;
         expect(error.message).toContain("already exists");
     });
 
     it("should handle pageSize as a string in transaction history", async () => {
         const client = createTestClient(app, env, authCookie);
-        
+
         // Use a string for pageSize to simulate a real browser query param
-        const res = await client.request(`/api/v1/orgs/${orgId}/members/${userId}/wallet/transactions?page=1&pageSize=20`, {
-            method: "GET",
-        });
+        const res = await client.request(
+            `/api/v1/orgs/${orgId}/members/${userId}/wallet/transactions?page=1&pageSize=20`,
+            {
+                method: "GET",
+            }
+        );
 
         expect(res.status).toBe(200);
     });

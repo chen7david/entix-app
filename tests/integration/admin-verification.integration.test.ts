@@ -17,10 +17,12 @@ describe("Admin Verification Resend Integration", () => {
         // 1. Setup: Create a regular user who is UNVERIFIED
         const targetEmail = "unverified@example.com";
         const db = await createTestDb();
-        
+
         // Mock the service method to avoid Better Auth "email not enabled" errors in test env
         const { UserService } = await import("@api/services/user.service");
-        const spy = vi.spyOn(UserService.prototype, "resendVerificationEmailAdmin").mockResolvedValue(undefined);
+        const spy = vi
+            .spyOn(UserService.prototype, "resendVerificationEmailAdmin")
+            .mockResolvedValue(undefined);
 
         await db.insert(schema.authUsers).values({
             id: "target-user-id",
@@ -48,7 +50,7 @@ describe("Admin Verification Resend Integration", () => {
     it("POST /api/v1/auth/admin/resend-verification should fail for non-admin user", async () => {
         // 1. Setup: Create a regular user who is UNVERIFIED
         const targetEmail = "unverified@example.com";
-        
+
         // 2. Auth: Create a regular user session (NOT super admin)
         const regularCookie = await getAuthCookie({
             app,
@@ -70,7 +72,7 @@ describe("Admin Verification Resend Integration", () => {
 
     it("POST /api/v1/auth/admin/resend-verification should fail for unauthenticated request", async () => {
         const targetEmail = "unverified@example.com";
-        
+
         // 1. Auth: No cookie
         const client = createTestClient(app, env);
 
