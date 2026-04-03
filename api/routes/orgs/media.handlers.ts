@@ -6,7 +6,9 @@ import type { MediaRoutes } from "./media.routes";
 export class MediaHandlers {
     static listMedia: AppHandler<typeof MediaRoutes.listMedia> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
-        const { type, limit, cursor, direction, search } = ctx.req.valid("query");
+        const queryParams = ctx.req.valid("query");
+        const { limit, direction, search, cursor, ...filters } = queryParams;
+        const type = (filters as any).type as "video" | "audio";
         const mediaService = getMediaService(ctx);
         const paginatedResult = await mediaService.listMedia(
             organizationId,

@@ -132,9 +132,15 @@ export class UserFinancialService extends FinancialBaseService {
     async getTransactionHistory(
         userId: string,
         orgId: string,
-        pagination: { cursor?: string; pageSize: number }
+        pagination: { cursor?: string; limit: number },
+        filters: any = {}
     ) {
-        const lines = await this.transactionsRepo.findByOwnerId(userId, "user", pagination, orgId);
+        const lines = await this.transactionsRepo.findByOwnerId(
+            userId,
+            "user",
+            { ...pagination, ...filters },
+            orgId
+        );
 
         // Normalize TransactionLines into the flat Transaction DTO expected by the frontend
         const data = lines.map((line) => {
@@ -159,7 +165,7 @@ export class UserFinancialService extends FinancialBaseService {
         });
 
         // Find last element for next cursor encoding
-        const lastLine = lines.length >= pagination.pageSize ? lines[lines.length - 1] : null;
+        const lastLine = lines.length >= pagination.limit ? lines[lines.length - 1] : null;
         const nextCursor = lastLine
             ? encodeTransactionCursor({
                   transactionDate: lastLine.transaction.transactionDate,

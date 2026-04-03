@@ -49,7 +49,13 @@ export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactio
     }
 
     const service = getUserFinancialService(c);
-    const result = await service.getTransactionHistory(userId, organizationId, query);
+    const { cursor, limit, ...filters } = query;
+    const result = await service.getTransactionHistory(
+        userId,
+        organizationId,
+        { cursor, limit },
+        filters
+    );
 
     return c.json(result, HttpStatusCodes.OK);
 };

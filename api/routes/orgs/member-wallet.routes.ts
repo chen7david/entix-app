@@ -1,7 +1,7 @@
 import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { createRoute } from "@hono/zod-openapi";
 import {
-    paginationSchema,
+    transactionFiltersSchema,
     transactionHistoryResponseSchema,
     walletSummaryDTOSchema,
 } from "@shared/schemas/dto/financial.dto";
@@ -45,7 +45,7 @@ export const MemberWalletRoutes = {
                 organizationId: z.string().openapi({ description: "Organization ID" }),
                 userId: z.string().openapi({ description: "User ID" }),
             }),
-            query: paginationSchema,
+            query: transactionFiltersSchema,
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(

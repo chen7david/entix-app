@@ -50,10 +50,10 @@ export const ManageAccountDrawer: React.FC<Props> = ({
     const { data: history, isLoading: isLoadingHistory } = useTransactionHistory(
         orgId, // orgId is the primary ID for org-level history
         "org",
-        1,
-        3,
+        undefined, // cursor (first page)
+        3, // limit
         undefined,
-        account?.id // Filter by this specific account
+        { accountId: account?.id } // Filter by this specific account
     );
 
     useEffect(() => {

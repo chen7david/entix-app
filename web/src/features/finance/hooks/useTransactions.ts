@@ -11,7 +11,7 @@ export type TransactionRecord = {
     currencyId: string;
     amountCents: number;
     status: "pending" | "completed" | "reversed";
-    description?: string;
+    description: string | null;
     transactionDate: string;
     createdAt: string;
     sourceAccount: { name: string };
@@ -22,9 +22,7 @@ export type TransactionRecord = {
 
 export type TransactionsResponse = {
     data: TransactionRecord[];
-    page: number;
-    pageSize: number;
-    total?: number; // Added for optional compatibility with PaginatedResponse
+    nextCursor: string | null;
 };
 
 export const useTransactions = (orgId?: string, filters: Partial<TransactionFilters> = {}) => {
@@ -34,8 +32,8 @@ export const useTransactions = (orgId?: string, filters: Partial<TransactionFilt
             if (!orgId) throw new Error("Organization ID required");
 
             const params = new URLSearchParams();
-            if (filters.page) params.append("page", filters.page.toString());
-            if (filters.pageSize) params.append("pageSize", filters.pageSize.toString());
+            if (filters.cursor) params.append("cursor", filters.cursor);
+            if (filters.limit) params.append("limit", filters.limit.toString());
             if (filters.startDate) params.append("startDate", filters.startDate);
             if (filters.endDate) params.append("endDate", filters.endDate);
             if (filters.minAmount) params.append("minAmount", filters.minAmount.toString());
@@ -52,8 +50,7 @@ export const useTransactions = (orgId?: string, filters: Partial<TransactionFilt
         },
         select: (res): PaginatedResponse<TransactionRecord> => ({
             items: res.data,
-            total: res.total ?? 0,
-            nextCursor: null, // Offset-based currently
+            nextCursor: res.nextCursor,
             prevCursor: null,
         }),
         enabled: !!orgId,

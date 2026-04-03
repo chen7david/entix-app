@@ -198,7 +198,6 @@ export class FinancialTransactionsRepository {
             );
         }
 
-        // Apply Cursor Pagination
         if (filters.cursor) {
             const decoded = decodeTransactionCursor(filters.cursor);
             conditions.push(
@@ -245,7 +244,7 @@ export class FinancialTransactionsRepository {
             )
             .where(and(...conditions))
             .orderBy(desc(financialTransactions.transactionDate), desc(financialTransactions.id))
-            .limit(filters.pageSize);
+            .limit(filters.limit ?? 20);
 
         return rows.map((row) => ({
             ...row.transaction,
@@ -292,26 +291,20 @@ export class FinancialTransactionsRepository {
             )
             .limit(pageSize);
 
-        // Map back to the shape expected by callers (lines with transaction relation)
-        // Since caller expects the 'with' relation shape, we manually structure it.
         return rows.map((row) => ({
             ...row.line,
             transaction: row.transaction,
         }));
     }
 
-    /**
-     * Fetches transaction lines for all accounts owned by a specific owner.
-     * Required for UserFinancialService to show personal wallets' history.
-     */
-    /**
-     * Fetches transaction lines for all accounts owned by a specific owner.
-     * Required for UserFinancialService to show personal wallets' history.
-     */
     async findByOwnerId(
         ownerId: string,
         ownerType: "user" | "org",
-        { cursor, pageSize }: { cursor?: string; pageSize: number },
+        {
+            cursor,
+            limit = 20,
+            ...filters
+        }: { cursor?: string; limit?: number } & Partial<TransactionFilters>,
         organizationId?: string
     ) {
         const ownerAccounts = await this.db.query.financialAccounts.findMany({
@@ -329,6 +322,21 @@ export class FinancialTransactionsRepository {
         if (accountIds.length === 0) return [];
 
         const conditions = [sql`${financialTransactionLines.accountId} IN ${accountIds}`];
+
+        if (filters.startDate) {
+            conditions.push(
+                gte(financialTransactions.transactionDate, new Date(filters.startDate))
+            );
+        }
+        if (filters.endDate) {
+            conditions.push(lte(financialTransactions.transactionDate, new Date(filters.endDate)));
+        }
+        if (filters.txId) {
+            conditions.push(like(financialTransactions.id, `%${filters.txId}%`));
+        }
+        if (filters.status) {
+            conditions.push(eq(financialTransactions.status, filters.status));
+        }
 
         if (cursor) {
             const decoded = decodeTransactionCursor(cursor);
@@ -389,7 +397,7 @@ export class FinancialTransactionsRepository {
                 desc(financialTransactions.transactionDate),
                 desc(financialTransactionLines.id)
             )
-            .limit(pageSize);
+            .limit(limit);
 
         return rows.map((row) => ({
             ...row.line,

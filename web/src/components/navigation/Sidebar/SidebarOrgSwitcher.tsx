@@ -144,7 +144,7 @@ export const SidebarOrgSwitcher: React.FC = () => {
             onOpenChange={setOpen}
             placement="topLeft"
             arrow={false}
-            styles={{ body: { padding: 4, borderRadius: 10 } }}
+            overlayInnerStyle={{ padding: 4, borderRadius: 10 }}
         >
             <div
                 style={{

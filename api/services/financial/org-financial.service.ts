@@ -173,15 +173,14 @@ export class OrgFinancialService extends FinancialBaseService {
         return this.assertExists(account, "Account not found");
     }
 
-    /**
-     * Returns paginated transaction history for the organization with filters.
-     */
     async getTransactionHistory(orgId: string, filters: TransactionFilters) {
         const transactions = await this.transactionsRepo.findByOrgId(orgId, filters);
 
         // Find last element for next cursor encoding
         const lastTx =
-            transactions.length >= filters.pageSize ? transactions[transactions.length - 1] : null;
+            transactions.length >= (filters.limit ?? 20)
+                ? transactions[transactions.length - 1]
+                : null;
         const nextCursor = lastTx ? encodeTransactionCursor(lastTx) : null;
 
         return {

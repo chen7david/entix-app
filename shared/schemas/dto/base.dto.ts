@@ -40,7 +40,6 @@ export type IdResponseDTO = z.infer<typeof idResponseSchema>;
  */
 export type PaginatedResponse<T> = {
     items: T[];
-    total: number;
     nextCursor: string | null;
     prevCursor: string | null;
 };

@@ -42,3 +42,28 @@ media-player::part(provider) {
     margin: 0px;
     background-color: black;
 }
+
+@layer components {
+    .data-table-pro-container .ant-table-thead > tr > th {
+        background: var(--ant-color-fill-tertiary);
+        border-bottom: 1px solid var(--ant-color-border-secondary);
+        color: var(--ant-color-text);
+        @apply font-bold px-8 py-5 text-[11px] uppercase tracking-wider;
+    }
+
+    .data-table-pro-container .ant-table-tbody > tr > td {
+        @apply px-8 py-5 border-b border-transparent text-sm transition-colors;
+        color: var(--ant-color-text-secondary);
+        border-color: var(--ant-color-border-quary);
+    }
+
+    .data-table-pro-container .ant-table-row:hover > td {
+        background: var(--ant-color-fill-alter);
+    }
+
+    .data-table-pro-container .ant-table-column-fixed-right {
+        background: var(--ant-color-bg-container);
+        border-left: 1px solid var(--ant-color-border-secondary);
+        box-shadow: -4px 0 12px -4px rgba(0, 0, 0, 0.08);
+    }
+}

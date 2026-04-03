@@ -6,7 +6,9 @@ import type { ScheduleRoutes } from "./schedule.routes";
 export class ScheduleHandlers {
     static listSessions: AppHandler<typeof ScheduleRoutes.listSessions> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
-        const { startDate, endDate, limit, cursor, direction, search } = ctx.req.valid("query");
+        const queryParams = ctx.req.valid("query");
+        const { limit, direction, search, cursor, ...filters } = queryParams;
+        const { startDate, endDate } = filters as any;
 
         const service = getSessionScheduleService(ctx);
         const paginatedResult = await service.findSessionsByOrganization(
