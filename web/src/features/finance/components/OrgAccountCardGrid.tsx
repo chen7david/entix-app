@@ -24,7 +24,11 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
         <Row gutter={[16, 16]}>
             {accounts.map((account) => (
                 <Col xs={24} sm={12} lg={8} xl={6} key={account.id}>
-                    <FinancialAccountCard account={account} onClick={onAccountClick} />
+                    <FinancialAccountCard
+                        account={account}
+                        onClick={onAccountClick}
+                        isPrimaryBranding={true}
+                    />
                 </Col>
             ))}
         </Row>

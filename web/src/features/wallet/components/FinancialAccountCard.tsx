@@ -10,6 +10,7 @@ interface FinancialAccountCardProps {
     onClick: (account: WalletAccountDTO) => void;
     lowBalanceThresholdCents?: number;
     badgeLabel?: string;
+    isPrimaryBranding?: boolean;
 }
 
 const getCurrencyColor = (currencyId: string) => {
@@ -31,6 +32,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
     onClick,
     lowBalanceThresholdCents = 100_000_00, // Default to $1,000 if not provided
     badgeLabel,
+    isPrimaryBranding,
 }) => {
     const { token } = theme.useToken();
     const config =
@@ -40,6 +42,13 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
     const currencyColor = getCurrencyColor(account.currencyId);
     const treasuryColor = "#00843D";
 
+    // Use primary theme color if branding is requested
+    const effectiveColor = isPrimaryBranding
+        ? token.colorPrimary
+        : badgeLabel === "TREASURY"
+          ? treasuryColor
+          : currencyColor;
+
     return (
         <Card
             hoverable
@@ -48,8 +57,8 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                 borderRadius: 12,
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 background: token.colorBgContainer,
-                border: `1px solid ${isLowBalance ? token.colorWarning : currencyColor ? `${currencyColor}66` : token.colorBorderSecondary}`,
-                boxShadow: `0 4px 12px -2px ${currencyColor ? `${currencyColor}12` : "rgba(0, 0, 0, 0.05)"}`,
+                border: `1px solid ${isLowBalance ? token.colorWarning : effectiveColor ? `${effectiveColor}66` : token.colorBorderSecondary}`,
+                boxShadow: `0 4px 12px -2px ${effectiveColor ? `${effectiveColor}12` : "rgba(0, 0, 0, 0.05)"}`,
                 height: "100%",
             }}
             styles={{
@@ -62,12 +71,12 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                 <Space align="center" size={10}>
                     {isFunding ? (
                         <LockOutlined
-                            style={{ color: currencyColor || token.colorPrimary, fontSize: 13 }}
+                            style={{ color: effectiveColor || token.colorPrimary, fontSize: 13 }}
                         />
                     ) : (
                         <WalletOutlined
                             style={{
-                                color: currencyColor || token.colorTextTertiary,
+                                color: effectiveColor || token.colorTextTertiary,
                                 fontSize: 13,
                             }}
                         />
@@ -78,7 +87,9 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                             fontSize: 10,
                             textTransform: "uppercase",
                             letterSpacing: "0.08em",
-                            color: currencyColor ? `${currencyColor}CC` : token.colorTextQuaternary,
+                            color: effectiveColor
+                                ? `${effectiveColor}CC`
+                                : token.colorTextQuaternary,
                         }}
                     >
                         {isFunding ? "General Fund" : "Custom Account"}
@@ -147,7 +158,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                             marginLeft: 4,
                             textTransform: "uppercase",
                             fontWeight: 600,
-                            color: currencyColor || token.colorTextSecondary,
+                            color: effectiveColor || token.colorTextSecondary,
                             opacity: 0.8,
                         }}
                     >
