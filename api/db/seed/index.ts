@@ -1,11 +1,10 @@
-import Database from "better-sqlite3";
-import { drizzle } from "drizzle-orm/better-sqlite3";
+import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { seedFinancials } from "./financial.seed";
 import * as schema from "@shared/db/schema";
-
-import { execSync } from "node:child_process";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+import { seedFinancials } from "./financial.seed";
 
 /**
  * Resolves the absolute path to the local D1 SQLite database file.
@@ -13,9 +12,11 @@ import { execSync } from "node:child_process";
  */
 function getLocalD1Path(): string {
     const d1Base = path.resolve(".wrangler/state");
-    
+
     if (!existsSync(d1Base)) {
-        throw new Error(`Wrangler state directory not found at ${d1Base}. Have you run migrations locally?`);
+        throw new Error(
+            `Wrangler state directory not found at ${d1Base}. Have you run migrations locally?`
+        );
     }
 
     // Find the first .sqlite file recursively
@@ -24,12 +25,16 @@ function getLocalD1Path(): string {
         const dbPath = execSync(findCmd, { encoding: "utf-8" }).trim();
 
         if (!dbPath) {
-            throw new Error("No .sqlite database file found in .wrangler/state. Run migrations first.");
+            throw new Error(
+                "No .sqlite database file found in .wrangler/state. Run migrations first."
+            );
         }
 
         return dbPath;
     } catch (error) {
-        throw new Error("Failed to resolve local D1 path via 'find' command. Please ensure 'find' is in your PATH.");
+        throw new Error(
+            "Failed to resolve local D1 path via 'find' command. Please ensure 'find' is in your PATH."
+        );
     }
 }
 
@@ -46,7 +51,8 @@ async function seedRootAdmin(db: any) {
     console.log("[SEED] Ensuring Root Admin and baseline organization...");
 
     // 1. Root User
-    await db.insert(schema.authUsers)
+    await db
+        .insert(schema.authUsers)
         .values({
             id: rootId,
             xid: "ROOTADMIN",
@@ -63,7 +69,8 @@ async function seedRootAdmin(db: any) {
         });
 
     // 2. Test Org
-    await db.insert(schema.authOrganizations)
+    await db
+        .insert(schema.authOrganizations)
         .values({
             id: orgId,
             name: "Test Org",
@@ -73,21 +80,24 @@ async function seedRootAdmin(db: any) {
         .onConflictDoNothing();
 
     // 3. Auth Account (Credential)
-    await db.insert(schema.authAccounts)
+    await db
+        .insert(schema.authAccounts)
         .values({
             id: accountId,
             accountId: "root@admin.com",
             providerId: "credential",
             userId: rootId,
             // Hashed 'root123'
-            password: "75d6de8e87453904bdb786b8ed47b057:5af447d3a01933ef579d8b64b7b65b100155be0a682304e7f1781394ee57d014c09ae644b0659de66d4022df1be32580c85df7f2256a22f51ea59d2373e22f29",
+            password:
+                "75d6de8e87453904bdb786b8ed47b057:5af447d3a01933ef579d8b64b7b65b100155be0a682304e7f1781394ee57d014c09ae644b0659de66d4022df1be32580c85df7f2256a22f51ea59d2373e22f29",
             createdAt: now,
             updatedAt: now,
         })
         .onConflictDoNothing();
 
     // 4. Org Membership
-    await db.insert(schema.authMembers)
+    await db
+        .insert(schema.authMembers)
         .values({
             id: "E2QTyceWPwpj-n_1I5lyR",
             organizationId: orgId,
@@ -107,7 +117,7 @@ async function main() {
 
     try {
         console.log("[SEED] Initializing database seeds...");
-        
+
         // Ensure root admin exists (idempotent)
         await seedRootAdmin(db);
 

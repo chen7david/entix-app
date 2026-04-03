@@ -1,5 +1,5 @@
-import { BadRequestError } from "@api/errors/app.error";
 import { financialCurrencySeed } from "@api/db/seed/financial.seed";
+import { BadRequestError } from "@api/errors/app.error";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import {
     authOrganizations,

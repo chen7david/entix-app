@@ -1,8 +1,8 @@
 import { env } from "cloudflare:test";
-import { drizzle } from "drizzle-orm/d1";
-import { describe, it, expect } from "vitest";
 import { auth } from "@api/lib/auth/auth";
 import * as schema from "@shared/db/schema";
+import { drizzle } from "drizzle-orm/d1";
+import { describe, expect, it } from "vitest";
 
 describe("Sign In Repro", () => {
     it("should sign in successfully with root admin", async () => {
@@ -12,21 +12,21 @@ describe("Sign In Repro", () => {
                 ...env,
                 FRONTEND_URL: "http://localhost:3000",
                 BETTER_AUTH_SECRET: "secret",
-                SKIP_EMAIL_VERIFICATION: "false"
+                SKIP_EMAIL_VERIFICATION: "false",
             },
             executionCtx: { waitUntil: () => {} },
-            var: { frontendUrl: "http://localhost:3000" }
+            var: { frontendUrl: "http://localhost:3000" },
         } as any;
 
         const authInstance = auth(ctx);
-        
+
         try {
             console.log("Attempting sign-in...");
             const response = await authInstance.api.signInEmail({
                 body: {
                     email: "root@admin.com",
-                    password: "root123"
-                }
+                    password: "root123",
+                },
             });
 
             console.log("Sign In Success Response:", JSON.stringify(response, null, 2));

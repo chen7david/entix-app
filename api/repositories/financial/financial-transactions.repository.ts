@@ -336,7 +336,10 @@ export class FinancialTransactionsRepository {
                 financialTransactions,
                 eq(financialTransactionLines.transactionId, financialTransactions.id)
             )
-            .innerJoin(financialAccounts, eq(financialTransactionLines.accountId, financialAccounts.id))
+            .innerJoin(
+                financialAccounts,
+                eq(financialTransactionLines.accountId, financialAccounts.id)
+            )
             .where(and(...conditions))
             .orderBy(
                 desc(financialTransactions.transactionDate),
