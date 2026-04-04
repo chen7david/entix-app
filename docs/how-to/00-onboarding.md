@@ -2,9 +2,12 @@
 
 This guide explains how to set up your local development environment and safely transition from the bootstrap `root` account to your own administrative user.
 
+> [!IMPORTANT]
+> **Environment Variables First**: You must configure your environment variables before the application will function. Detailed documentation on setting up environment variables for both local development and Cloudflare Workers will be provided in a separate document soon.
+
 ## 1. Environment Configuration
 
-Before running the application, you must set up your environment variables.
+Before running the application, you must set up your baseline environment variables.
 
 1.  **Local Development**: Create a `.dev.vars` file in the project root (used by Wrangler).
     ```bash
@@ -25,12 +28,26 @@ npm run db:reset:dev
 
 ## 3. The "Bootstrap" Workflow
 
-Once the database is reset, follow these steps to set up your primary developer account:
+Once the database is reset, follow these steps to set up your primary developer account. This process involves moving from the **Platform** (system) layer to a **Tenant** (user) layer.
+
+### System vs. Tenant Organizations
+- **Platform**: An internal system organization that owns the **Treasury** and **System Adjustment** accounts. It is not meant for user membership.
+- **Test Org**: A sample tenant organization. This is where the `root` user is placed by default so you have a functional dashboard to start with.
+
+---
 
 ### Step A: Initial Login
 - **URL**: `http://localhost:3000` (or your dev port)
-- **Email**: `root@admin.com`
-- **Password**: `r00tme`
+
+**Email**:
+```text
+root@admin.com
+```
+
+**Password**:
+```text
+r00tme
+```
 
 ### Step B: Create Your Organization
 1. Navigate to the **Admin Dashboard**.

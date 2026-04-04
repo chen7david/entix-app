@@ -30,8 +30,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const session = authClient.useSession();
     const activeMember = authClient.useActiveMember();
 
-    // isLoading derived from both session and membership plugin checks
-    const isLoading = session.isPending || activeMember.isPending;
+    // ONLY show loading if it's pending AND we don't already have data.
+    // This prevents background refetches (e.g., from window focus) from triggering
+    // a full-page loading state, which unmounts routes and wipes form states.
+    const isSessionLoading = session.isPending && session.data === undefined;
+    const isMemberLoading = activeMember.isPending && activeMember.data === undefined;
+
+    const isLoading = isSessionLoading || isMemberLoading;
 
     const unifiedUser = useMemo(() => {
         if (!session.data?.user) return null;
