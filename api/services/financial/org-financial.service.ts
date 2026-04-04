@@ -6,7 +6,12 @@ import {
     encodeTransactionCursor,
     type FinancialTransactionsRepository,
 } from "@api/repositories/financial/financial-transactions.repository";
-import { type FinancialAccount, generateAccountId, type TransactionFilters } from "@shared";
+import {
+    ACCOUNT_TYPES,
+    type FinancialAccount,
+    generateAccountId,
+    type TransactionFilters,
+} from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
 import { FinancialBaseService } from "./financial-base.service";
 
@@ -133,7 +138,7 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId: input.currencyId,
             name: input.name,
             organizationId: input.organizationId, // All accounts are org-scoped
-            accountType: "savings",
+            accountType: ACCOUNT_TYPES.SAVINGS,
             createdAt: now,
             updatedAt: now,
         });
@@ -161,7 +166,7 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId,
             organizationId: orgId,
             name: `General Fund — ${target.code}`,
-            accountType: "funding",
+            accountType: ACCOUNT_TYPES.FUNDING,
             createdAt: now,
             updatedAt: now,
         });

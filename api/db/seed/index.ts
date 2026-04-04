@@ -1,6 +1,7 @@
 import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
+import { ACCOUNT_TYPES, FINANCIAL_CURRENCIES } from "@shared";
 import * as schema from "@shared/db/schema";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
@@ -95,7 +96,6 @@ async function seedRootAdmin(db: any) {
         })
         .onConflictDoNothing();
 
-    // 4. Org Membership
     await db
         .insert(schema.authMembers)
         .values({
@@ -104,6 +104,25 @@ async function seedRootAdmin(db: any) {
             userId: rootId,
             role: "owner",
             createdAt: now,
+        })
+        .onConflictDoNothing();
+
+    // 5. Root Admin USD Wallet (Savings)
+    console.log("[SEED] Ensuring Root Admin USD Wallet...");
+    await db
+        .insert(schema.financialAccounts)
+        .values({
+            id: `facc_root_usd_savings`,
+            ownerId: rootId,
+            ownerType: "user",
+            currencyId: FINANCIAL_CURRENCIES.USD,
+            organizationId: orgId,
+            name: "Personal Wallet (USD)",
+            balanceCents: 5000_00, // $5,000.00
+            isActive: true,
+            accountType: ACCOUNT_TYPES.SAVINGS,
+            createdAt: now,
+            updatedAt: now,
         })
         .onConflictDoNothing();
 }
@@ -118,12 +137,12 @@ async function main() {
     try {
         console.log("[SEED] Initializing database seeds...");
 
+        // Ordering check: financials MUST run first to seed currencies/categories
+        // which the Root Admin's financial account references.
+        await seedFinancials(db as any);
+
         // Ensure root admin exists (idempotent)
         await seedRootAdmin(db);
-
-        // Ordering check: financials relies on currencies and categories
-        // financial.seed.ts handles both in its main export
-        await seedFinancials(db as any);
 
         console.log("✅ [SEED] Database seeding completed successfully.");
     } catch (error) {

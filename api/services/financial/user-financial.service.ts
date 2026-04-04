@@ -7,7 +7,7 @@ import {
     encodeTransactionCursor,
     type FinancialTransactionsRepository,
 } from "@api/repositories/financial/financial-transactions.repository";
-import { type FinancialAccount, generateAccountId } from "@shared";
+import { ACCOUNT_TYPES, type FinancialAccount, generateAccountId } from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
 import { FinancialBaseService } from "./financial-base.service";
 
@@ -94,7 +94,7 @@ export class UserFinancialService extends FinancialBaseService {
             organizationId: input.orgId,
             createdAt: now,
             updatedAt: now,
-            accountType: "savings",
+            accountType: ACCOUNT_TYPES.SAVINGS,
         });
 
         return this.accountsRepo.insert(accountInput);

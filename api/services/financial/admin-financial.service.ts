@@ -2,8 +2,11 @@ import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import type { EnsureFundingAccountRequest } from "@shared";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import {
+    ACCOUNT_TYPES,
+    type EnsureFundingAccountRequest,
+    FINANCIAL_CURRENCY_CONFIG,
+} from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -71,7 +74,7 @@ export class AdminFinancialService extends FinancialBaseService {
             "org",
             "platform"
         );
-        return allAccounts.filter((a) => a.accountType === "treasury");
+        return allAccounts.filter((a) => a.accountType === ACCOUNT_TYPES.TREASURY);
     }
 
     /**
@@ -99,7 +102,7 @@ export class AdminFinancialService extends FinancialBaseService {
             input.organizationId
         );
         const existing = accounts.find(
-            (a) => a.currencyId === input.currencyId && a.accountType === "funding"
+            (a) => a.currencyId === input.currencyId && a.accountType === ACCOUNT_TYPES.FUNDING
         );
 
         if (existing) {
@@ -119,7 +122,7 @@ export class AdminFinancialService extends FinancialBaseService {
             ownerType: "org",
             currencyId: input.currencyId,
             name: `General Fund — ${currency.code}`,
-            accountType: "funding",
+            accountType: ACCOUNT_TYPES.FUNDING,
             createdAt: new Date(),
             updatedAt: new Date(),
         });

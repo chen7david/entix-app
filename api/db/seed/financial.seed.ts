@@ -1,5 +1,6 @@
 import type { AppDb } from "@api/factories/db.factory";
 import {
+    ACCOUNT_TYPES,
     FINANCIAL_CATEGORIES,
     FINANCIAL_CURRENCIES,
     FINANCIAL_CURRENCY_CONFIG,
@@ -86,7 +87,7 @@ export const seedFinancials = async (db: AppDb) => {
                 name: `Platform Treasury — ${config.code}`,
                 balanceCents: 1_000_000_000_00, // $1,000,000,000 float
                 isActive: true,
-                accountType: "treasury",
+                accountType: ACCOUNT_TYPES.TREASURY,
             })
             .onConflictDoNothing();
 
@@ -102,7 +103,7 @@ export const seedFinancials = async (db: AppDb) => {
                 name: `System Adjustment — ${config.code}`,
                 balanceCents: 1_000_000_000_000_00, // Effectively infinite
                 isActive: true,
-                accountType: "system",
+                accountType: ACCOUNT_TYPES.SYSTEM,
             })
             .onConflictDoNothing();
     }

@@ -2,6 +2,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { ACCOUNT_TYPES } from "@shared";
 import { createTransactionRepoInputSchema } from "@shared/db/schema";
 import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
@@ -49,24 +50,26 @@ export abstract class FinancialBaseService extends BaseService {
             throw new BadRequestError("Currency mismatch between accounts and transaction");
         }
 
-        // Safety Guard: Treasury Protection (Bidirectional via accountType)
-        if (
-            source.accountType === "treasury" &&
-            destination.accountType !== "funding" &&
-            destination.accountType !== "system"
-        ) {
-            throw new ForbiddenError(
-                "Only funding accounts can withdraw from the platform treasury"
-            );
-        }
-        if (
-            destination.accountType === "treasury" &&
-            source.accountType !== "funding" &&
-            source.accountType !== "system"
-        ) {
-            throw new ForbiddenError(
-                "Only funding accounts can deposit into the platform treasury"
-            );
+        // Safety Guard: Treasury Protection (Bidirectional via allowlist)
+        const isTreasuryInvolved =
+            source.accountType === ACCOUNT_TYPES.TREASURY ||
+            destination.accountType === ACCOUNT_TYPES.TREASURY;
+
+        if (isTreasuryInvolved) {
+            const ALLOWED_TREASURY_PARTNERS = [
+                ACCOUNT_TYPES.FUNDING,
+                ACCOUNT_TYPES.SYSTEM,
+                ACCOUNT_TYPES.TREASURY,
+            ];
+
+            if (
+                !ALLOWED_TREASURY_PARTNERS.includes(source.accountType as any) ||
+                !ALLOWED_TREASURY_PARTNERS.includes(destination.accountType as any)
+            ) {
+                throw new ForbiddenError(
+                    "Treasury accounts can only interact with Funding, System, or other Treasury accounts"
+                );
+            }
         }
 
         // Balance Check (Atomic inside repo, but we fail fast here too)

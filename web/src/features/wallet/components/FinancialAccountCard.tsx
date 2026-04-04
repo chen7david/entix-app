@@ -1,5 +1,5 @@
 import { LockOutlined, WalletOutlined } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { ACCOUNT_TYPES, FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { Card, Flex, Space, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
 
@@ -31,10 +31,26 @@ const ACCOUNT_TYPE_CONFIG: Record<
     AccountType,
     { color: string; badgeLabel: string; displayLabel: string }
 > = {
-    treasury: { color: "#059669", badgeLabel: "TREASURY", displayLabel: "Treasury Vault" },
-    funding: { color: "#3b82f6", badgeLabel: "FUNDING", displayLabel: "General Fund" },
-    savings: { color: "#8b5cf6", badgeLabel: "SAVINGS", displayLabel: "Personal Wallet" },
-    system: { color: "#6b7280", badgeLabel: "SYSTEM", displayLabel: "System Offset" },
+    [ACCOUNT_TYPES.TREASURY]: {
+        color: "#059669",
+        badgeLabel: "TREASURY",
+        displayLabel: "Treasury Vault",
+    },
+    [ACCOUNT_TYPES.FUNDING]: {
+        color: "#3b82f6",
+        badgeLabel: "FUNDING",
+        displayLabel: "General Fund",
+    },
+    [ACCOUNT_TYPES.SAVINGS]: {
+        color: "#8b5cf6",
+        badgeLabel: "SAVINGS",
+        displayLabel: "Personal Wallet",
+    },
+    [ACCOUNT_TYPES.SYSTEM]: {
+        color: "#6b7280",
+        badgeLabel: "SYSTEM",
+        displayLabel: "System Offset",
+    },
 };
 
 export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({

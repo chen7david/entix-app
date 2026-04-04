@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { check, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { ACCOUNT_TYPES } from "../../constants/financial";
 import { financialCurrencies } from "./financial-currencies.schema";
 import { authOrganizations } from "./organization.schema";
 
@@ -28,7 +29,7 @@ export const financialAccounts = sqliteTable(
         accountType: text("account_type")
             .$type<"savings" | "funding" | "treasury" | "system">()
             .notNull()
-            .default("savings"),
+            .default(ACCOUNT_TYPES.SAVINGS),
     },
     (t) => [
         check("owner_type_check", sql`${t.ownerType} IN ('user', 'org')`),
