@@ -1,17 +1,23 @@
+import { AppRoutes } from "@shared";
 import { OrganizationSwitcher, useOrganization } from "@web/src/features/organization";
 import { Spin, Typography } from "antd";
-import React from "react";
+import type React from "react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router";
 
 const { Title, Text } = Typography;
 
 export const SelectOrganizationPage: React.FC = () => {
     const { loading, activeOrganization, checkOrganizationStatus } = useOrganization();
+    const navigate = useNavigate();
 
-    React.useEffect(() => {
-        if (activeOrganization) {
-            checkOrganizationStatus(); // Use checkOrganizationStatus to navigate
+    useEffect(() => {
+        if (activeOrganization?.slug) {
+            navigate(`/org/${activeOrganization.slug}${AppRoutes.org.dashboard.index}`, {
+                replace: true,
+            });
         }
-    }, [activeOrganization, checkOrganizationStatus]);
+    }, [activeOrganization, navigate]);
 
     if (loading) {
         return <Spin size="large" />;
@@ -36,7 +42,16 @@ export const SelectOrganizationPage: React.FC = () => {
             </div>
 
             <div className="flex justify-center">
-                <OrganizationSwitcher afterSelect={() => checkOrganizationStatus()} />
+                <OrganizationSwitcher
+                    afterSelect={async () => {
+                        const { activeOrg } = await checkOrganizationStatus();
+                        if (activeOrg?.slug) {
+                            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, {
+                                replace: true,
+                            });
+                        }
+                    }}
+                />
             </div>
         </div>
     );
