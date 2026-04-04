@@ -33,6 +33,7 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: false,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         vi.mocked(useOrganization).mockReturnValue({
@@ -69,6 +70,7 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         vi.mocked(useOrganization).mockReturnValue({
@@ -99,6 +101,7 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         vi.mocked(useOrganization).mockReturnValue({

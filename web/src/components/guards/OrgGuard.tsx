@@ -2,6 +2,7 @@ import { AppRoutes } from "@shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CenteredResult, CenteredSpin } from "@web/src/components/common/CenteredView";
 import { OrgProvider } from "@web/src/context/OrgContext";
+import { useAuth } from "@web/src/features/auth";
 import { authClient } from "@web/src/lib/auth-client";
 import { Button } from "antd";
 import type React from "react";
@@ -22,6 +23,7 @@ export const OrgGuard: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(false);
+    const auth = useAuth();
 
     // 1. Fetch User's Organizations (to check access)
     const { data: organizations = [], isLoading: loadingOrgs } = useQuery({
@@ -74,12 +76,13 @@ export const OrgGuard: React.FC = () => {
                     // Update the server active org cache to reflect the sync
                     queryClient.setQueryData(["serverActiveOrganization"], activeOrganization);
 
-                    // CRITICAL: Invalidate Better Auth membership queries so AuthContext
-                    // updates user.orgRole before child routes render.
-                    // We invalidate "better-auth" and "session" to cover all namespacing possibilities.
+                    // CRITICAL: Explicitly refetch the session and member data.
+                    // This is the officially supported workaround for Better Auth hooks
+                    // not automatically updating when organization context changes.
+                    await auth.refreshAuth();
+
+                    // Optional: Keep broad invalidation as a fallback for any custom queries
                     await Promise.all([
-                        queryClient.invalidateQueries({ queryKey: ["activeMember"] }),
-                        queryClient.invalidateQueries({ queryKey: ["activeOrganization"] }),
                         queryClient.invalidateQueries({ queryKey: ["better-auth"] }),
                         queryClient.invalidateQueries({ queryKey: ["session"] }),
                     ]);
@@ -91,7 +94,7 @@ export const OrgGuard: React.FC = () => {
                     setIsSyncing(false);
                 });
         }
-    }, [activeOrganization, isMismatch, queryClient, isSyncing]);
+    }, [activeOrganization, isMismatch, queryClient, isSyncing, auth.refreshAuth]);
 
     // Loading State: Block children while fetching list, determining mismatch, or syncing session
     if (loadingOrgs || isSyncing || isDeterminingMismatch || isMismatch) {

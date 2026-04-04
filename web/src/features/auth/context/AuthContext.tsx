@@ -1,6 +1,6 @@
 import { authClient } from "@web/src/lib/auth-client";
 import type React from "react";
-import { createContext, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
 
 export type UserRole = "admin" | "user";
 export type OrgRole = "owner" | "admin" | "member";
@@ -22,6 +22,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     isSuperAdmin: boolean;
+    refreshAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,6 +30,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const session = authClient.useSession();
     const activeMember = authClient.useActiveMember();
+
+    const refreshAuth = useCallback(async () => {
+        await Promise.all([session.refetch(), activeMember.refetch()]);
+    }, [session.refetch, activeMember.refetch]);
 
     // ONLY show loading if it's pending AND we don't already have data.
     // This prevents background refetches (e.g., from window focus) from triggering
@@ -59,8 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             isAuthenticated: !!unifiedUser,
             isLoading,
             isSuperAdmin: unifiedUser?.globalRole === "admin",
+            refreshAuth,
         }),
-        [unifiedUser, isLoading]
+        [unifiedUser, isLoading, refreshAuth]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -21,6 +21,7 @@ describe("ProtectedRoute", () => {
             isAuthenticated: false,
             isLoading: true,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         const { container } = render(
@@ -38,6 +39,7 @@ describe("ProtectedRoute", () => {
             isAuthenticated: false,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         render(
@@ -69,6 +71,7 @@ describe("ProtectedRoute", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         render(
@@ -99,6 +102,7 @@ describe("ProtectedRoute", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         render(
@@ -130,6 +134,7 @@ describe("ProtectedRoute", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         render(
