@@ -11,6 +11,12 @@ export class AdminFinanceHandler {
         return ctx.json({ data: accounts }, HttpStatusCodes.OK);
     };
 
+    static getAllManagedAccounts: AppHandler<typeof AdminFinanceRoutes.getAllManagedAccounts> =
+        async (ctx) => {
+            const accounts = await getAdminFinancialService(ctx).getAllManagedAccounts();
+            return ctx.json({ data: accounts }, HttpStatusCodes.OK);
+        };
+
     static getOrgAccounts: AppHandler<typeof AdminFinanceRoutes.getOrgAccounts> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const accounts = await getAdminFinancialService(ctx).getAnyOrgAccounts(organizationId);
@@ -55,4 +61,14 @@ export class AdminFinanceHandler {
         await getAdminFinancialService(ctx).archiveAccount(id);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
+
+    static ensureOrgFundingAccount: AppHandler<typeof AdminFinanceRoutes.ensureOrgFundingAccount> =
+        async (ctx) => {
+            const { organizationId, currencyId } = ctx.req.valid("param");
+            const account = await getAdminFinancialService(ctx).ensureOrgFundingAccount({
+                organizationId,
+                currencyId,
+            });
+            return ctx.json({ data: account }, HttpStatusCodes.OK);
+        };
 }

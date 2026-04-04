@@ -5,7 +5,7 @@ import {
     type FinancialAccount,
     financialAccounts,
 } from "@shared/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 
 /**
  * Repository for financial account database operations.
@@ -75,6 +75,24 @@ export class FinancialAccountsRepository {
                     eq(financialAccounts.organizationId, organizationId),
                     eq(financialAccounts.isActive, true),
                     isNull(financialAccounts.archivedAt)
+                )
+            );
+    }
+
+    /**
+     * Retrieves all active, non-archived accounts for any owner of a specific type.
+     * Excludes the 'platform' owner to return only organizations/user accounts.
+     */
+    async findActiveByOwnerType(ownerType: "user" | "org"): Promise<FinancialAccount[]> {
+        return this.db
+            .select()
+            .from(financialAccounts)
+            .where(
+                and(
+                    eq(financialAccounts.ownerType, ownerType),
+                    eq(financialAccounts.isActive, true),
+                    isNull(financialAccounts.archivedAt),
+                    ne(financialAccounts.ownerId, "platform")
                 )
             );
     }

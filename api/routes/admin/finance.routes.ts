@@ -35,6 +35,19 @@ export const AdminFinanceRoutes = {
         },
     }),
 
+    getAllManagedAccounts: createRoute({
+        tags,
+        method: HttpMethods.GET,
+        path: "/admin/finance/accounts/managed",
+        middleware: [requireAuth, requireSuperAdmin] as const,
+        summary: "Super admin: get all organization-owned accounts",
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                listFinancialAccountsResponseSchema,
+                "Managed accounts fetched successfully"
+            ),
+        },
+    }),
     getOrgAccounts: createRoute({
         tags,
         method: HttpMethods.GET,
@@ -84,6 +97,22 @@ export const AdminFinanceRoutes = {
             [HttpStatusCodes.CREATED]: jsonContent(
                 z.object({ data: transactionResultSchema }),
                 "Debit executed successfully"
+            ),
+        },
+    }),
+    ensureOrgFundingAccount: createRoute({
+        tags,
+        method: HttpMethods.POST,
+        path: "/admin/finance/orgs/{organizationId}/currencies/{currencyId}/ensure-funding",
+        middleware: [requireAuth, requireSuperAdmin] as const,
+        summary: "Super admin: ensure an org has a funding account for a currency",
+        request: {
+            params: z.object({ organizationId: z.string(), currencyId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                z.object({ data: walletAccountDTOSchema }),
+                "Funding account exists or was created successfully"
             ),
         },
     }),

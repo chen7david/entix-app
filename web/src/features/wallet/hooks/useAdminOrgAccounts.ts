@@ -4,14 +4,15 @@ import { parseApiError } from "@web/src/utils/api";
 
 export const useAdminOrgAccounts = (organizationId?: string) => {
     return useQuery({
-        queryKey: ["adminOrgAccounts", organizationId],
+        queryKey: ["adminOrgAccounts", organizationId || "all"],
         queryFn: async () => {
-            if (!organizationId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/admin/finance/orgs/${organizationId}/accounts`);
+            const url = organizationId
+                ? `${API_V1}/admin/finance/orgs/${organizationId}/accounts`
+                : `${API_V1}/admin/finance/accounts/managed`;
+            const res = await fetch(url);
             if (!res.ok) await parseApiError(res);
             return (await res.json()) as { data: WalletAccountDTO[] };
         },
         select: (res) => res?.data,
-        enabled: !!organizationId,
     });
 };

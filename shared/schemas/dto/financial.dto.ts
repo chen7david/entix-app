@@ -138,8 +138,14 @@ export const transactionFiltersSchema = paginationSchema.extend({
     categoryId: z.string().optional(),
 });
 
+export const ensureFundingAccountRequestSchema = z.object({
+    organizationId: z.string().min(1),
+    currencyId: z.string().min(1),
+});
+
 export type AdminCreditRequest = z.infer<typeof adminCreditRequestSchema>;
 export type AdminDebitRequest = z.infer<typeof adminDebitRequestSchema>;
+export type EnsureFundingAccountRequest = z.infer<typeof ensureFundingAccountRequestSchema>;
 export type ExecuteTransferRequest = z.infer<typeof executeTransferRequestSchema>;
 export type ReverseTransactionRequest = z.infer<typeof reverseTransactionRequestSchema>;
 export type ActivateCurrencyRequest = z.infer<typeof activateCurrencyRequestSchema>;

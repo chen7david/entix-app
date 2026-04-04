@@ -2,6 +2,8 @@ import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import type { EnsureFundingAccountRequest } from "@shared";
+import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -81,11 +83,62 @@ export class AdminFinancialService extends FinancialBaseService {
     }
 
     /**
+     * Returns all organization accounts in the system (excluding platform).
+     */
+    async getAllManagedAccounts() {
+        return this.accountsRepo.findActiveByOwnerType("org");
+    }
+
+    /**
+     * Returns active accounts for a specific organization.
      */
     async getAnyOrgAccounts(orgId: string) {
         const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
-        return accounts.filter((a) => a.isFundingAccount === true);
+        return accounts;
     }
+
+    /**
+     * Idempotent logic to ensure an organization has a funding account for a specific currency.
+     */
+    async ensureOrgFundingAccount(input: EnsureFundingAccountRequest) {
+        const accounts = await this.accountsRepo.findActiveByOwner(
+            input.organizationId,
+            "org",
+            input.organizationId
+        );
+        const existing = accounts.find(
+            (a) => a.currencyId === input.currencyId && a.isFundingAccount
+        );
+
+        if (existing) {
+            return existing;
+        }
+
+        const currency =
+            FINANCIAL_CURRENCY_CONFIG[input.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
+        if (!currency) {
+            throw new BadRequestError(`Invalid currency ID: ${input.currencyId}`);
+        }
+
+        const newAccount = await this.accountsRepo.insert({
+            id: `facc_${input.organizationId}_${input.currencyId}_funding`,
+            organizationId: input.organizationId,
+            ownerId: input.organizationId,
+            ownerType: "org",
+            currencyId: input.currencyId,
+            name: `General Fund — ${currency.code}`,
+            isFundingAccount: true,
+            accountType: "standard",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        console.log(
+            `Auto-created funding account for org ${input.organizationId} [${input.currencyId}]`
+        );
+        return newAccount;
+    }
+
     /**
      * Updates the name/label of any financial account.
      */
@@ -96,6 +149,7 @@ export class AdminFinancialService extends FinancialBaseService {
         const updated = await this.accountsRepo.updateName(id, name, now);
         return this.assertExists(updated, "Account not found");
     }
+
     /**
      * Archives a financial account.
      * Logic: Only allowed if the balance is zero to prevent hidden funds.
