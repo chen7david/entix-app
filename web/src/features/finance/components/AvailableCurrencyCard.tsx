@@ -1,4 +1,4 @@
-import { PlusOutlined } from "@ant-design/icons";
+import { CheckOutlined, PlusOutlined } from "@ant-design/icons";
 import { Button, Card, Grid, Typography, theme } from "antd";
 import type React from "react";
 import type { CurrencyWithStatus } from "../hooks/useOrgCurrencies";
@@ -8,23 +8,33 @@ const { Text } = Typography;
 type Props = {
     currency: CurrencyWithStatus;
     onActivate: (id: string) => void;
+    onClick?: () => void;
     loading?: boolean;
 };
 
-export const AvailableCurrencyCard: React.FC<Props> = ({ currency, onActivate, loading }) => {
+export const AvailableCurrencyCard: React.FC<Props> = ({
+    currency,
+    onActivate,
+    loading,
+    onClick,
+}) => {
     const { token } = theme.useToken();
     const screens = Grid.useBreakpoint();
+    const isActivated = currency.isActivated;
 
     return (
         <Card
             size="small"
             hoverable
+            onClick={isActivated ? onClick : undefined}
             style={{
                 height: "100%",
                 borderRadius: 12,
                 transition: "all 0.2s ease-in-out",
-                background: token.colorFillQuaternary,
-                border: `1px dashed ${token.colorBorder}`,
+                background: isActivated ? token.colorFillTertiary : token.colorFillQuaternary,
+                border: isActivated
+                    ? `1px solid ${token.colorBorder}`
+                    : `1px dashed ${token.colorBorder}`,
                 boxShadow: "none",
             }}
             styles={{
@@ -58,7 +68,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({ currency, onActivate, l
                         style={{
                             fontSize: 40,
                             marginBottom: 4,
-                            opacity: 0.1,
+                            opacity: isActivated ? 0.2 : 0.1,
                             fontWeight: 800,
                         }}
                     >
@@ -68,7 +78,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({ currency, onActivate, l
                         strong
                         style={{
                             fontSize: 18,
-                            color: token.colorTextSecondary,
+                            color: isActivated ? token.colorText : token.colorTextSecondary,
                             marginBottom: 2,
                         }}
                     >
@@ -78,22 +88,44 @@ export const AvailableCurrencyCard: React.FC<Props> = ({ currency, onActivate, l
                         {currency.name}
                     </Text>
                 </div>
-                <Button
-                    type="primary"
-                    size="middle"
-                    icon={<PlusOutlined />}
-                    loading={loading}
-                    onClick={() => onActivate(currency.id)}
-                    block
-                    style={{
-                        borderRadius: 8,
-                        fontWeight: 600,
-                        height: 44,
-                        boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
-                    }}
-                >
-                    Activate Wallet
-                </Button>
+                {isActivated ? (
+                    <Button
+                        disabled
+                        size="middle"
+                        icon={<CheckOutlined />}
+                        block
+                        style={{
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            height: 44,
+                            backgroundColor: token.colorFillSecondary,
+                            color: token.colorTextDisabled,
+                            border: "none",
+                        }}
+                    >
+                        Active
+                    </Button>
+                ) : (
+                    <Button
+                        type="primary"
+                        size="middle"
+                        icon={<PlusOutlined />}
+                        loading={loading}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onActivate(currency.id);
+                        }}
+                        block
+                        style={{
+                            borderRadius: 8,
+                            fontWeight: 600,
+                            height: 44,
+                            boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
+                        }}
+                    >
+                        Activate Wallet
+                    </Button>
+                )}
             </div>
         </Card>
     );

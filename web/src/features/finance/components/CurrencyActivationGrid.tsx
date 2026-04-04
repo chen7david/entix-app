@@ -1,7 +1,4 @@
-import {
-    FinancialAccountCard,
-    type FinancialAccountData,
-} from "@web/src/features/wallet/components/FinancialAccountCard";
+import type { FinancialAccountData } from "@web/src/features/wallet/components/FinancialAccountCard";
 import { Col, Empty, Row, Typography } from "antd";
 import type React from "react";
 import type { CurrencyWithStatus } from "../hooks/useOrgCurrencies";
@@ -45,25 +42,15 @@ export const CurrencyActivationGrid: React.FC<Props> = ({
     }
 
     return (
-        <Row gutter={[24, 24]}>
+        <Row gutter={[16, 16]}>
             {currencies.map((currency) => (
                 <Col xs={24} sm={12} lg={8} xl={6} key={currency.id}>
-                    <div style={{ height: "100%" }}>
-                        {currency.isActivated ? (
-                            <FinancialAccountCard
-                                account={toFinancialAccountData(currency)}
-                                onClick={onAccountClick}
-                                showLowBalanceWarning={false}
-                                accountState="active"
-                            />
-                        ) : (
-                            <AvailableCurrencyCard
-                                currency={currency}
-                                onActivate={onActivate}
-                                loading={activating}
-                            />
-                        )}
-                    </div>
+                    <AvailableCurrencyCard
+                        currency={currency}
+                        onActivate={onActivate}
+                        onClick={() => onAccountClick(toFinancialAccountData(currency))}
+                        loading={activating}
+                    />
                 </Col>
             ))}
         </Row>

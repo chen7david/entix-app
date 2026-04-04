@@ -33,8 +33,6 @@ export const FinanceAccountsPage: React.FC = () => {
     // RESTORED: Currency activation hooks and logic
     const { data: currenciesData } = useOrgCurrencies(orgId);
     const { mutate: activate, isPending: isActivating } = useActivateCurrency(orgId);
-    const activated = currenciesData?.filter((c) => c.isActivated) ?? [];
-    const available = currenciesData?.filter((c) => !c.isActivated) ?? [];
 
     // Fetch ALL active accounts for the org
     const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(orgId, "org");
@@ -133,7 +131,10 @@ export const FinanceAccountsPage: React.FC = () => {
                                         Currency Management
                                     </Text>
                                     <Text type="secondary" style={{ marginLeft: 8, fontSize: 13 }}>
-                                        {activated.length} active • {available.length} available
+                                        {currenciesData?.filter((c) => c.isActivated).length || 0}{" "}
+                                        active •{" "}
+                                        {currenciesData?.filter((c) => !c.isActivated).length || 0}{" "}
+                                        available
                                     </Text>
                                 </div>
                                 <Button
@@ -150,59 +151,25 @@ export const FinanceAccountsPage: React.FC = () => {
                             {/* Collapsible Content */}
                             {isCurrencyManagementOpen && (
                                 <div style={{ marginTop: 24 }}>
-                                    <Row gutter={[24, 24]}>
-                                        {activated.length > 0 && (
-                                            <Col span={24}>
-                                                <div style={{ marginBottom: 24 }}>
-                                                    <Text
-                                                        strong
-                                                        type="secondary"
-                                                        style={{
-                                                            fontSize: 11,
-                                                            textTransform: "uppercase",
-                                                            letterSpacing: "0.08em",
-                                                            display: "block",
-                                                            marginBottom: 12,
-                                                        }}
-                                                    >
-                                                        Activated Currencies
-                                                    </Text>
-                                                    <CurrencyActivationGrid
-                                                        currencies={activated}
-                                                        onAccountClick={handleAccountClick}
-                                                        onActivate={activate}
-                                                        activating={isActivating}
-                                                    />
-                                                </div>
-                                            </Col>
-                                        )}
-
-                                        {available.length > 0 && (
-                                            <Col span={24}>
-                                                <div>
-                                                    <Text
-                                                        strong
-                                                        type="secondary"
-                                                        style={{
-                                                            fontSize: 11,
-                                                            textTransform: "uppercase",
-                                                            letterSpacing: "0.08em",
-                                                            display: "block",
-                                                            marginBottom: 12,
-                                                        }}
-                                                    >
-                                                        Available for Activation
-                                                    </Text>
-                                                    <CurrencyActivationGrid
-                                                        currencies={available}
-                                                        onAccountClick={handleAccountClick}
-                                                        onActivate={activate}
-                                                        activating={isActivating}
-                                                    />
-                                                </div>
-                                            </Col>
-                                        )}
-                                    </Row>
+                                    <Text
+                                        strong
+                                        type="secondary"
+                                        style={{
+                                            fontSize: 11,
+                                            textTransform: "uppercase",
+                                            letterSpacing: "0.08em",
+                                            display: "block",
+                                            marginBottom: 16,
+                                        }}
+                                    >
+                                        Supported Currencies
+                                    </Text>
+                                    <CurrencyActivationGrid
+                                        currencies={currenciesData ?? []}
+                                        onAccountClick={handleAccountClick}
+                                        onActivate={activate}
+                                        activating={isActivating}
+                                    />
                                 </div>
                             )}
                         </Card>
