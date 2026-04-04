@@ -23,6 +23,7 @@ export default defineConfig({
             {
                 text: "How-To Guides",
                 items: [
+                    { text: "Developer Onboarding", link: "/how-to/00-onboarding" },
                     { text: "Create a Feature", link: "/how-to/01-create-new-feature" },
                     { text: "Defining Schemas", link: "/how-to/02-defining-schemas" },
                     { text: "OpenAPI & Routes", link: "/how-to/03-openapi-and-routes" },

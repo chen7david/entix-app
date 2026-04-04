@@ -1,5 +1,5 @@
 -- 0002_root_seed.sql
--- Root admin seed. Password: root123
+-- Root admin seed. Password: r00tme
 
 INSERT OR IGNORE INTO `auth_organizations` (`id`, `name`, `slug`, `created_at`)
 VALUES ('A6xj7krOIJ3n9uHiipspC', 'Test Org', 'testorg', (cast(unixepoch('subsecond') * 1000 as integer)));
@@ -7,7 +7,7 @@ VALUES ('A6xj7krOIJ3n9uHiipspC', 'Test Org', 'testorg', (cast(unixepoch('subseco
 INSERT OR IGNORE INTO `auth_users` (`id`, `xid`, `name`, `email`, `email_verified`, `role`, `created_at`, `updated_at`, `banned`)
 VALUES (
   'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
-  'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
+  'ROOTADMIN',
   'Root Admin',
   'root@admin.com',
   1,
@@ -23,7 +23,7 @@ VALUES (
   'root@admin.com',
   'credential',
   'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
-  '35e62983eaa0bd5008ec18eef12dc364:9f648ab2b80dd9b587441b4bfbca101f026d7d734fc7f72fab6f9be534913839ddc0421f3081891fed46fc448e73e106ca9c3f010e7aff25167abc196e9a824a',
+  'cc2d5071f13d1f9e88de1fbc0af47530:d88750de3b087b92430198e8dea1e746d406da96c6a429c22c82edcdfeaad3ce06b82beda503d97e3fd0bff2e618be14f743b2d9fdd68cb5b52c2b9a686d858a',
   (cast(unixepoch('subsecond') * 1000 as integer)),
   (cast(unixepoch('subsecond') * 1000 as integer))
 );

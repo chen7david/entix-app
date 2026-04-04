@@ -53,7 +53,7 @@
                 {
                     "binding": "DB",
                     "database_name": "entix-app-staging",
-                    "database_id": "3a12fe66-2219-4618-824a-d86eaab0a722",
+                    "database_id": "9b205937-8b51-4ad9-b5f1-7757315c02a7",
                     "migrations_dir": "api/db/migrations"
                 }
             ]

@@ -20,7 +20,6 @@ export const FINANCIAL_CURRENCIES = {
     EUR: "fcur_eur",
     SRD: "fcur_srd",
     AUD: "fcur_aud",
-    BTC: "fcur_btc",
 } as const;
 
 export const FINANCIAL_CURRENCY_CONFIG = {
@@ -72,13 +71,6 @@ export const FINANCIAL_CURRENCY_CONFIG = {
         symbol: "A$",
         color: "#00843D",
         defaultAccountName: "Savings (AUD)",
-    },
-    [FINANCIAL_CURRENCIES.BTC]: {
-        code: "BTC",
-        name: "Bitcoin",
-        symbol: "₿",
-        color: "#f57c00",
-        defaultAccountName: "Wallet (BTC)",
     },
 } as const;
 

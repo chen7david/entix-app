@@ -1,18 +1,12 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
-import { seedFinancials } from "@api/db/seed/financial.seed";
-import { drizzle } from "drizzle-orm/d1";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb } from "../lib/utils";
 
 describe("Auth Sign-In 500 Reproduction", () => {
     beforeEach(async () => {
-        // 1. Reset Database
+        // Reset Database
         await createTestDb();
-
-        // 2. Perform same seeding as manual app
-        const db = drizzle(env.DB);
-        await seedFinancials(db as any);
     });
 
     it("POST /api/v1/auth/sign-in/email should return 200, not 500", async () => {

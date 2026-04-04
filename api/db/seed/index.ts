@@ -1,11 +1,9 @@
 import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { ACCOUNT_TYPES, FINANCIAL_CURRENCIES } from "@shared";
 import * as schema from "@shared/db/schema";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
-import { seedFinancials } from "./financial.seed";
 
 /**
  * Resolves the absolute path to the local D1 SQLite database file.
@@ -88,9 +86,9 @@ async function seedRootAdmin(db: any) {
             accountId: "root@admin.com",
             providerId: "credential",
             userId: rootId,
-            // Hashed 'root123' — generated via Better Auth hashPassword(), verified with verifyPassword()
+            // Hashed 'r00tme'
             password:
-                "35e62983eaa0bd5008ec18eef12dc364:9f648ab2b80dd9b587441b4bfbca101f026d7d734fc7f72fab6f9be534913839ddc0421f3081891fed46fc448e73e106ca9c3f010e7aff25167abc196e9a824a",
+                "cc2d5071f13d1f9e88de1fbc0af47530:d88750de3b087b92430198e8dea1e746d406da96c6a429c22c82edcdfeaad3ce06b82beda503d97e3fd0bff2e618be14f743b2d9fdd68cb5b52c2b9a686d858a",
             createdAt: now,
             updatedAt: now,
         })
@@ -106,25 +104,6 @@ async function seedRootAdmin(db: any) {
             createdAt: now,
         })
         .onConflictDoNothing();
-
-    // 5. Root Admin USD Wallet (Savings)
-    console.log("[SEED] Ensuring Root Admin USD Wallet...");
-    await db
-        .insert(schema.financialAccounts)
-        .values({
-            id: `facc_root_usd_savings`,
-            ownerId: rootId,
-            ownerType: "user",
-            currencyId: FINANCIAL_CURRENCIES.USD,
-            organizationId: orgId,
-            name: "Personal Wallet (USD)",
-            balanceCents: 5000_00, // $5,000.00
-            isActive: true,
-            accountType: ACCOUNT_TYPES.SAVINGS,
-            createdAt: now,
-            updatedAt: now,
-        })
-        .onConflictDoNothing();
 }
 
 async function main() {
@@ -136,10 +115,6 @@ async function main() {
 
     try {
         console.log("[SEED] Initializing database seeds...");
-
-        // Ordering check: financials MUST run first to seed currencies/categories
-        // which the Root Admin's financial account references.
-        await seedFinancials(db as any);
 
         // Ensure root admin exists (idempotent)
         await seedRootAdmin(db);
