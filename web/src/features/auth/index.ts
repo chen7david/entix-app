@@ -1,3 +1,4 @@
+export type { AppTheme } from "@web/src/utils/theme";
 export * from "./components/ChangePasswordForm";
 export * from "./components/ForgotPasswordForm";
 export * from "./components/ResetPasswordForm";
