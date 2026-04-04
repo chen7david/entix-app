@@ -73,17 +73,36 @@ export const seedFinancials = async (db: AppDb) => {
     for (const currencyId of allCurrencies) {
         const config =
             FINANCIAL_CURRENCY_CONFIG[currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
+
+        // 1. Platform Treasury
         await db
             .insert(financialAccounts)
             .values({
                 id: getTreasuryAccountId(currencyId),
-                ownerId: "platform", // Consolidated platform org ID
+                ownerId: "platform",
                 ownerType: "org",
                 currencyId,
                 organizationId: "platform",
                 name: `Platform Treasury — ${config.code}`,
-                balanceCents: 1_000_000_000_00, // $1,000,000,000 float — adjust as needed
+                balanceCents: 1_000_000_000_00, // $1,000,000,000 float
                 isActive: true,
+                accountType: "treasury",
+            })
+            .onConflictDoNothing();
+
+        // 2. System Adjustment (Offset account for Mint/Burn/Seeding)
+        await db
+            .insert(financialAccounts)
+            .values({
+                id: `facc_system_adjustment_${currencyId}`,
+                ownerId: "platform",
+                ownerType: "org",
+                currencyId,
+                organizationId: "platform",
+                name: `System Adjustment — ${config.code}`,
+                balanceCents: 1_000_000_000_000_00, // Effectively infinite
+                isActive: true,
+                accountType: "system",
             })
             .onConflictDoNothing();
     }

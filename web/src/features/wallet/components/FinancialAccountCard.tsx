@@ -5,16 +5,17 @@ import type React from "react";
 
 const { Text } = Typography;
 
+import type { AccountType } from "@shared";
+
 export interface FinancialAccountData {
     id: string;
     name: string;
     balanceCents: number;
     currencyId: string;
-    isFundingAccount: boolean;
+    accountType: AccountType;
     orgId?: string | null;
 }
 
-export type AccountType = "treasury" | "funding" | "general";
 export type AccountState = "active" | "available" | "loading";
 
 interface FinancialAccountCardProps {
@@ -26,31 +27,14 @@ interface FinancialAccountCardProps {
     showLowBalanceWarning?: boolean;
 }
 
-const ACCOUNT_TYPE_CONFIG = {
-    treasury: { color: "#059669", badgeLabel: "TREASURY" },
-    funding: { color: "#3b82f6", badgeLabel: "FUNDING" },
-    general: { color: "#8b5cf6", badgeLabel: "GENERAL" },
-} as const;
-
-// FIXED: Matches your exact payloads
-const getAccountTypeAndLabel = (
-    account: FinancialAccountData
-): {
-    type: AccountType;
-    displayLabel: string;
-} => {
-    // Treasury: orgId === "platform" OR "Treasury" in name
-    if (account.orgId === "platform" || account.name.toLowerCase().includes("treasury")) {
-        return { type: "treasury" as const, displayLabel: "Treasury Account" };
-    }
-
-    // Funding: isFundingAccount=true AND "General Fund" in name
-    if (account.isFundingAccount && account.name.toLowerCase().includes("general fund")) {
-        return { type: "funding" as const, displayLabel: "General Fund" };
-    }
-
-    // Custom/General
-    return { type: "general" as const, displayLabel: "Custom Account" };
+const ACCOUNT_TYPE_CONFIG: Record<
+    AccountType,
+    { color: string; badgeLabel: string; displayLabel: string }
+> = {
+    treasury: { color: "#059669", badgeLabel: "TREASURY", displayLabel: "Treasury Vault" },
+    funding: { color: "#3b82f6", badgeLabel: "FUNDING", displayLabel: "General Fund" },
+    savings: { color: "#8b5cf6", badgeLabel: "SAVINGS", displayLabel: "Personal Wallet" },
+    system: { color: "#6b7280", badgeLabel: "SYSTEM", displayLabel: "System Offset" },
 };
 
 export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
@@ -65,9 +49,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
     const config =
         FINANCIAL_CURRENCY_CONFIG[account.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
 
-    // CORRECT CLASSIFICATION
-    const { type: accountType, displayLabel } = getAccountTypeAndLabel(account);
-    const typeConfig = ACCOUNT_TYPE_CONFIG[accountType];
+    const typeConfig = ACCOUNT_TYPE_CONFIG[account.accountType];
     const accentColor = isPrimaryBranding ? token.colorPrimary : typeConfig.color;
 
     const isLowBalance = account.balanceCents < lowBalanceThresholdCents;
@@ -100,7 +82,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
             {/* Header: icon + displayLabel + TYPE badge */}
             <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
                 <Space align="center" size={10}>
-                    {account.isFundingAccount ? (
+                    {account.accountType === "funding" ? (
                         <LockOutlined style={{ color: accentColor, fontSize: 13 }} />
                     ) : (
                         <WalletOutlined style={{ color: accentColor, fontSize: 13 }} />
@@ -114,7 +96,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                             color: `${accentColor}CC`,
                         }}
                     >
-                        {displayLabel}
+                        {typeConfig.displayLabel}
                     </Text>
                 </Space>
 

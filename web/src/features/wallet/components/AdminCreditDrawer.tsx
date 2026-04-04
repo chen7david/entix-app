@@ -67,7 +67,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
 
     // Derived State
     const orgFundingAccount = orgAccounts?.find(
-        (a) => a.currencyId === selectedCurrencyId && a.isFundingAccount
+        (a) => a.currencyId === selectedCurrencyId && a.accountType === "funding"
     );
     const selectedCurrencyConfig =
         FINANCIAL_CURRENCY_CONFIG[selectedCurrencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
@@ -194,7 +194,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
             onClose={onClose}
             extra={
                 <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    {activeTab === "treasury" ? "Confirm Adjustment" : "Transfer Funds"}
+                    {activeTab === "treasury" ? "Transfer Funds" : "Transfer Funds"}
                 </Button>
             }
         >
@@ -205,7 +205,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     items={[
                         {
                             key: "treasury",
-                            label: "Adjustment (Treasury)",
+                            label: "Treasury Funding",
                             children: (
                                 <div style={{ marginTop: 24 }}>
                                     <div

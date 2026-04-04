@@ -133,8 +133,7 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId: input.currencyId,
             name: input.name,
             organizationId: input.organizationId, // All accounts are org-scoped
-            isFundingAccount: false,
-            accountType: "standard",
+            accountType: "savings",
             createdAt: now,
             updatedAt: now,
         });
@@ -162,8 +161,7 @@ export class OrgFinancialService extends FinancialBaseService {
             currencyId,
             organizationId: orgId,
             name: `General Fund — ${target.code}`,
-            isFundingAccount: true,
-            accountType: "standard",
+            accountType: "funding",
             createdAt: now,
             updatedAt: now,
         });

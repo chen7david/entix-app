@@ -121,7 +121,7 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                 </Title>
                 <Space size={4} style={{ marginTop: 4 }}>
                     <Tag color="success">ACTIVE</Tag>
-                    {account.isFundingAccount && <Tag color="purple">FUNDING</Tag>}
+                    {account.accountType === "funding" && <Tag color="purple">FUNDING</Tag>}
                     <Text type="secondary" style={{ fontSize: 12 }}>
                         {currencyMeta?.code} • {account.id.split("_").pop()}
                     </Text>

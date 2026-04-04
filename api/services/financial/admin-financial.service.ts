@@ -20,10 +20,6 @@ export class AdminFinancialService extends FinancialBaseService {
         super(db, accountsRepo, transactionsRepo);
     }
 
-    /**
-     * Admin credit: moves money FROM the platform treasury account
-     * TO a user or org account. Used for deposits, rewards, adjustments.
-     */
     async adminCredit(input: {
         organizationId: string;
         categoryId: string;
@@ -45,10 +41,6 @@ export class AdminFinancialService extends FinancialBaseService {
         });
     }
 
-    /**
-     * Admin debit: moves money FROM a user or org account
-     * TO the platform treasury. Used for fees, chargebacks, penalties.
-     */
     async adminDebit(input: {
         organizationId: string;
         categoryId: string;
@@ -79,7 +71,7 @@ export class AdminFinancialService extends FinancialBaseService {
             "org",
             "platform"
         );
-        return allAccounts.filter((a) => a.id.startsWith("facc_treasury_"));
+        return allAccounts.filter((a) => a.accountType === "treasury");
     }
 
     /**
@@ -107,7 +99,7 @@ export class AdminFinancialService extends FinancialBaseService {
             input.organizationId
         );
         const existing = accounts.find(
-            (a) => a.currencyId === input.currencyId && a.isFundingAccount
+            (a) => a.currencyId === input.currencyId && a.accountType === "funding"
         );
 
         if (existing) {
@@ -127,8 +119,7 @@ export class AdminFinancialService extends FinancialBaseService {
             ownerType: "org",
             currencyId: input.currencyId,
             name: `General Fund — ${currency.code}`,
-            isFundingAccount: true,
-            accountType: "standard",
+            accountType: "funding",
             createdAt: new Date(),
             updatedAt: new Date(),
         });

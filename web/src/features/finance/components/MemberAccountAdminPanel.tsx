@@ -65,7 +65,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
 
     const orgAccounts = orgBalanceData?.accounts || [];
     const orgFundingAccount = orgAccounts.find(
-        (a) => a.currencyId === selectedAccount?.currencyId && a.isFundingAccount
+        (a) => a.currencyId === selectedAccount?.currencyId && a.accountType === "funding"
     );
 
     const isLoading = isLoadingMember || isLoadingOrg;
@@ -80,7 +80,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
     // Auto-select funding account by default
     useEffect(() => {
         if (!selectedAccountId && accounts.length > 0) {
-            const fundingAccount = accounts.find((a) => a.isFundingAccount);
+            const fundingAccount = accounts.find((a) => a.accountType === "funding");
             if (fundingAccount) {
                 setSelectedAccountId(fundingAccount.id);
             } else {

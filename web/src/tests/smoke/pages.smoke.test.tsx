@@ -79,7 +79,7 @@ describe("FinanceAccountsPage Smoke Tests", () => {
                         name: "Main Treasury",
                         balanceCents: 1000,
                         currencyId: "curr_usd",
-                        isFundingAccount: true,
+                        accountType: "funding",
                     },
                 ],
             },

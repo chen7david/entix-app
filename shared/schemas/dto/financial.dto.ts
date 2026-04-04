@@ -4,11 +4,12 @@ export const walletAccountDTOSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
     ownerType: z.enum(["user", "org"]),
+    organizationId: z.string().nullable(),
     currencyId: z.string(),
     name: z.string(),
     balanceCents: z.number(),
     isActive: z.boolean(),
-    isFundingAccount: z.boolean(), // Matches DB schema (required)
+    accountType: z.enum(["savings", "funding", "treasury", "system"]),
     archivedAt: z.union([z.string(), z.date()]).nullable(),
     createdAt: z.union([z.string(), z.date()]),
     updatedAt: z.union([z.string(), z.date()]),

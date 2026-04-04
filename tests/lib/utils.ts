@@ -83,9 +83,8 @@ export async function createTestDb() {
                 currencyId,
                 name: `Platform Treasury (${currencyId.split("_")[1].toUpperCase()})`,
                 balanceCents: 1000000000, // Seed with 10M units (cents)
-                isFundingAccount: true,
                 isActive: true,
-                accountType: "platform_treasury",
+                accountType: "treasury",
                 updatedAt: new Date(),
                 createdAt: new Date(),
             })
@@ -94,8 +93,7 @@ export async function createTestDb() {
                 set: {
                     balanceCents: 1000000000,
                     isActive: true,
-                    isFundingAccount: true,
-                    accountType: "platform_treasury",
+                    accountType: "treasury",
                 },
             });
     }

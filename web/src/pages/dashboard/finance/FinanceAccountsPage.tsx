@@ -105,7 +105,7 @@ export const FinanceAccountsPage: React.FC = () => {
                                     name: "Loading...",
                                     balanceCents: 0,
                                     currencyId: "USD",
-                                    isFundingAccount: false,
+                                    accountType: "savings",
                                 }}
                             />
                         </Col>

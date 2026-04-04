@@ -25,16 +25,17 @@ export const financialAccounts = sqliteTable(
         updatedAt: integer("updated_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
-        isFundingAccount: integer("is_funding_account", { mode: "boolean" })
-            .notNull()
-            .default(false),
         accountType: text("account_type")
-            .$type<"standard" | "platform_treasury">()
+            .$type<"savings" | "funding" | "treasury" | "system">()
             .notNull()
-            .default("standard"),
+            .default("savings"),
     },
     (t) => [
         check("owner_type_check", sql`${t.ownerType} IN ('user', 'org')`),
+        check(
+            "account_type_check",
+            sql`${t.accountType} IN ('savings', 'funding', 'treasury', 'system')`
+        ),
         check("balance_non_negative", sql`${t.balanceCents} >= 0`),
         check("org_scoped_user_accounts", sql`${t.organizationId} IS NOT NULL`),
         uniqueIndex("owner_org_name_currency_idx").on(
@@ -56,7 +57,7 @@ export type FinancialAccount = typeof financialAccounts.$inferSelect;
 export const createAccountRepoInputSchema = createInsertSchema(financialAccounts, {
     id: z.string().min(1),
     ownerType: z.enum(["user", "org"]),
-    accountType: z.enum(["standard", "platform_treasury"]),
+    accountType: z.enum(["savings", "funding", "treasury", "system"]),
     createdAt: z.date(),
     updatedAt: z.date(),
 }).superRefine((data, ctx) => {

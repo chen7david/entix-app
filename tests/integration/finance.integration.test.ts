@@ -63,7 +63,7 @@ describe("Finance Integration Tests", () => {
         // Seed Treasury with massive balance for testing via Drizzle (catches schema drift)
         await db
             .update(financialAccounts)
-            .set({ balanceCents: 100000000, isFundingAccount: true, isActive: true })
+            .set({ balanceCents: 100000000, accountType: "treasury", isActive: true })
             .where(eq(financialAccounts.id, treasuryId));
     });
 

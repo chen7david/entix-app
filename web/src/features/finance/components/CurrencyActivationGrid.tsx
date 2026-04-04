@@ -27,7 +27,7 @@ export const CurrencyActivationGrid: React.FC<Props> = ({
         name: currency.name,
         balanceCents: currency.balanceCents ?? 0,
         currencyId: currency.id,
-        isFundingAccount: true, // Activated currencies are always General Funds
+        accountType: "funding", // Activated currencies are always General Funds
     });
 
     if (currencies.length === 0) {

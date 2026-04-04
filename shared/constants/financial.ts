@@ -88,6 +88,7 @@ export const FINANCIAL_CATEGORIES = {
     SERVICE_FEE: "fcat_service_fee",
     REFUND: "fcat_refund",
     INTERNAL_TRANSFER: "fcat_internal_transfer",
+    SYSTEM_ADJUSTMENT: "fcat_system_adjustment",
 } as const;
 
 /**
@@ -100,6 +101,15 @@ export const FINANCIAL_ACCOUNTS = {
     // Deprecated: Use getTreasuryAccountId(currencyId) instead for multi-currency support.
     PLATFORM_TREASURY: "facc_platform_treasury",
 } as const;
+
+export const ACCOUNT_TYPES = {
+    SAVINGS: "savings",
+    FUNDING: "funding",
+    TREASURY: "treasury",
+    SYSTEM: "system",
+} as const;
+
+export type AccountType = (typeof ACCOUNT_TYPES)[keyof typeof ACCOUNT_TYPES];
 
 export type FinancialCurrencyId = (typeof FINANCIAL_CURRENCIES)[keyof typeof FINANCIAL_CURRENCIES];
 export type FinancialCategoryId = (typeof FINANCIAL_CATEGORIES)[keyof typeof FINANCIAL_CATEGORIES];

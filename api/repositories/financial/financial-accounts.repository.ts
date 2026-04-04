@@ -25,7 +25,7 @@ export class FinancialAccountsRepository {
                     ...input,
                     balanceCents: input.balanceCents ?? 0,
                     isActive: input.isActive ?? true,
-                    isFundingAccount: input.isFundingAccount ?? false,
+                    accountType: input.accountType ?? "savings",
                 })
                 .returning();
 

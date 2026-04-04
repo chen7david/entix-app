@@ -94,7 +94,7 @@ export class UserFinancialService extends FinancialBaseService {
             organizationId: input.orgId,
             createdAt: now,
             updatedAt: now,
-            accountType: "standard",
+            accountType: "savings",
         });
 
         return this.accountsRepo.insert(accountInput);

@@ -50,15 +50,20 @@ export abstract class FinancialBaseService extends BaseService {
         }
 
         // Safety Guard: Treasury Protection (Bidirectional via accountType)
-        const sourceIsTreasury = source.accountType === "platform_treasury";
-        const destIsTreasury = destination.accountType === "platform_treasury";
-
-        if (sourceIsTreasury && !destination.isFundingAccount) {
+        if (
+            source.accountType === "treasury" &&
+            destination.accountType !== "funding" &&
+            destination.accountType !== "system"
+        ) {
             throw new ForbiddenError(
                 "Only funding accounts can withdraw from the platform treasury"
             );
         }
-        if (destIsTreasury && !source.isFundingAccount) {
+        if (
+            destination.accountType === "treasury" &&
+            source.accountType !== "funding" &&
+            source.accountType !== "system"
+        ) {
             throw new ForbiddenError(
                 "Only funding accounts can deposit into the platform treasury"
             );

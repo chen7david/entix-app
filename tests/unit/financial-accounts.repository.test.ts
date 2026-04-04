@@ -25,7 +25,7 @@ describe("financialAccountsRepository", () => {
         currencyId: "fcur_usd",
         organizationId: "org_test_01",
         name: "Personal Wallet",
-        accountType: "standard",
+        accountType: "savings",
         createdAt: new Date(),
         updatedAt: new Date(),
         ...overrides,
