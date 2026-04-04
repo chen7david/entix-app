@@ -79,8 +79,9 @@ function HomeRedirect() {
                 return;
             }
 
-            const { orgs, activeOrg } = await checkOrganizationStatus();
-            if (!mounted) return;
+            const result = await checkOrganizationStatus();
+            if (!mounted || !result) return;
+            const { orgs, activeOrg } = result;
 
             // 1. If there's already an active org, go there
             if (activeOrg?.slug) {

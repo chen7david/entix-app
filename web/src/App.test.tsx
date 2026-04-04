@@ -44,7 +44,7 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn(),
+            checkOrganizationStatus: vi.fn().mockResolvedValue({ orgs: [], activeOrg: null }),
         });
 
         render(
@@ -81,7 +81,7 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn(),
+            checkOrganizationStatus: vi.fn().mockResolvedValue({ orgs: [], activeOrg: null }),
         });
 
         render(
@@ -112,7 +112,10 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: mockCheckStatus,
+            checkOrganizationStatus: mockCheckStatus.mockResolvedValue({
+                orgs: [],
+                activeOrg: null,
+            }),
         });
 
         render(
