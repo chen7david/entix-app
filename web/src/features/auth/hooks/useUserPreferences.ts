@@ -1,36 +1,23 @@
+import { useTheme } from "@web/src/hooks/useTheme";
 import { authClient, useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
+import type { AppTheme } from "@web/src/utils/theme";
 import { App } from "antd";
 import { useCallback, useEffect } from "react";
-
-export type AppTheme = "light" | "dark" | "system";
 
 export function useUserPreferences() {
     const { message } = App.useApp();
     const { data: session, refetch } = useSession();
+    const { theme, updateTheme: syncTheme } = useTheme();
 
-    // Fallback securely capturing native OS context if unconfigured statically tracking configurations.
     const timezone =
         (session?.user as any)?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const theme = ((session?.user as any)?.theme as AppTheme) || "system";
 
     useEffect(() => {
         if (timezone) {
             DateUtils.setTimezone(timezone);
         }
     }, [timezone]);
-
-    useEffect(() => {
-        const root = document.documentElement;
-        if (
-            theme === "dark" ||
-            (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches)
-        ) {
-            root.classList.add("dark");
-        } else {
-            root.classList.remove("dark");
-        }
-    }, [theme]);
 
     const updateTimezone = useCallback(
         async (newTimezone: string) => {
@@ -39,27 +26,24 @@ export function useUserPreferences() {
                     timezone: newTimezone,
                 } as any);
                 await refetch();
-                message.success("Timezone preferrence synced successfully");
+                message.success("Timezone preference synced successfully");
             } catch (_error) {
                 message.error("Failed to update timezone");
             }
         },
-        [refetch, message.error, message.success]
+        [refetch, message]
     );
 
     const updateTheme = useCallback(
         async (newTheme: AppTheme) => {
             try {
-                await authClient.updateUser({
-                    theme: newTheme,
-                } as any);
-                await refetch();
+                await syncTheme(newTheme);
                 message.success("Theme updated successfully");
             } catch (_error) {
                 message.error("Failed to update theme");
             }
         },
-        [refetch, message.error, message.success]
+        [syncTheme, message]
     );
 
     return {

@@ -3,7 +3,9 @@ import { Result, Spin } from "antd";
 import type React from "react";
 
 export const CenteredView: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="flex justify-center items-center h-screen w-full">{children}</div>
+    <div className="flex justify-center items-center h-screen w-full bg-[var(--bg-base)] text-[var(--text-base)] transition-colors duration-200">
+        {children}
+    </div>
 );
 
 export const CenteredResult: React.FC<ResultProps> = (props) => (

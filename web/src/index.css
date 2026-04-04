@@ -1,5 +1,25 @@
 @import "tailwindcss";
 
+:root {
+    --bg-base: #ffffff;
+    --text-base: #0f172a;
+    --border-base: #e2e8f0;
+}
+
+.dark {
+    --bg-base: #060a12; /* Slate 950-ish but deeper */
+    --text-base: #f8fafc;
+    --border-base: #1e293b;
+}
+
+body {
+    background-color: var(--bg-base);
+    color: var(--text-base);
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
 @theme {
     --color-primary: #2563eb;
     --color-primary-hover: #3b82f6;

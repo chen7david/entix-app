@@ -25,6 +25,7 @@ import {
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { ThemeToggle } from "../../common/ThemeToggle";
 import { SidebarMenu } from "./SidebarMenu";
 import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
 
@@ -208,9 +209,10 @@ export const SidebarContent: React.FC = () => {
             {/* Footer: Org Switcher & User Menu */}
             <div style={{ borderTop: `1px solid ${token.colorSplit}` }}>
                 <div className="flex items-center gap-1 p-2">
-                    <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 20 }}>
                         <SidebarOrgSwitcher />
                     </div>
+                    <ThemeToggle />
                     <Dropdown
                         menu={{ items: userMenuItems, onClick: handleMenuClick }}
                         trigger={["click"]}
