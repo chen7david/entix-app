@@ -88,9 +88,9 @@ async function seedRootAdmin(db: any) {
             accountId: "root@admin.com",
             providerId: "credential",
             userId: rootId,
-            // Hashed 'root123'
+            // Hashed 'root123' — generated via Better Auth hashPassword(), verified with verifyPassword()
             password:
-                "75d6de8e87453904bdb786b8ed47b057:5af447d3a01933ef579d8b64b7b65b100155be0a682304e7f1781394ee57d014c09ae644b0659de66d4022df1be32580c85df7f2256a22f51ea59d2373e22f29",
+                "35e62983eaa0bd5008ec18eef12dc364:9f648ab2b80dd9b587441b4bfbca101f026d7d734fc7f72fab6f9be534913839ddc0421f3081891fed46fc448e73e106ca9c3f010e7aff25167abc196e9a824a",
             createdAt: now,
             updatedAt: now,
         })

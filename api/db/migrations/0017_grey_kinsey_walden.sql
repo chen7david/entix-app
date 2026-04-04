@@ -1,1 +1,0 @@
-ALTER TABLE `financial_accounts` ADD `account_type` text DEFAULT 'standard' NOT NULL;
