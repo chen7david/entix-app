@@ -1,4 +1,5 @@
 import {
+    AppstoreOutlined,
     AudioOutlined,
     DeleteOutlined,
     EditOutlined,
@@ -27,6 +28,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { AppRoutes } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import type { MenuProps } from "antd";
@@ -255,6 +257,25 @@ export const PlaylistManager: React.FC<{
 
     return (
         <div className="flex flex-col h-full min-h-0">
+            <SummaryCardsRow
+                loading={isLoadingPlaylists}
+                items={[
+                    {
+                        key: "total",
+                        label: "Curated Playlists",
+                        value: playlists?.length || 0,
+                        icon: <OrderedListOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "media",
+                        label: "Media Available",
+                        value: media?.length || 0,
+                        icon: <AppstoreOutlined />,
+                        color: "#8b5cf6",
+                    },
+                ]}
+            />
             <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{

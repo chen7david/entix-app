@@ -1,5 +1,12 @@
-import { DownOutlined, UpOutlined } from "@ant-design/icons";
+import {
+    CheckCircleOutlined,
+    DownOutlined,
+    GlobalOutlined,
+    UpOutlined,
+    WalletOutlined,
+} from "@ant-design/icons";
 import type { WalletAccountDTO } from "@shared";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
 import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
@@ -64,6 +71,35 @@ export const FinanceAccountsPage: React.FC = () => {
                     Create Custom Account
                 </Button>
             </Flex>
+
+            <SummaryCardsRow
+                loading={isLoadingBalance || isLoadingCurrencies}
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Accounts",
+                        value: accounts.length,
+                        icon: <WalletOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "active",
+                        label: "Active Accounts",
+                        value:
+                            accounts.filter((a: any) => a.status === "active").length ||
+                            accounts.length,
+                        icon: <CheckCircleOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "currencies",
+                        label: "Currencies In Use",
+                        value: currenciesData?.filter((c) => c.isActivated).length || 0,
+                        icon: <GlobalOutlined />,
+                        color: "#8b5cf6",
+                    },
+                ]}
+            />
 
             <Row gutter={[24, 24]}>
                 <Col span={24}>

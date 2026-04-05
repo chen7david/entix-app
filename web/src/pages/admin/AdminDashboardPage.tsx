@@ -1,14 +1,15 @@
 import { SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { useAdminUsers } from "@web/src/features/admin";
 import { useAuth } from "@web/src/features/auth";
-import { Card, Col, Empty, Row, Statistic, Tag, Typography } from "antd";
+import { Card, Empty, Tag, Typography } from "antd";
 import type React from "react";
 
 const { Title, Text } = Typography;
 
 export const AdminDashboardPage: React.FC = () => {
     const { user } = useAuth();
-    const { data: userData } = useAdminUsers();
+    const { data: userData, isPending: isLoading } = useAdminUsers();
     const users = userData?.items || [];
 
     const totalUsers = users.length || 0;
@@ -29,32 +30,32 @@ export const AdminDashboardPage: React.FC = () => {
                 </Tag>
             </div>
 
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Total Users"
-                            value={totalUsers}
-                            prefix={<TeamOutlined />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic title="Admins" value={adminUsers} prefix={<SafetyOutlined />} />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Banned"
-                            value={bannedUsers}
-                            prefix={<StopOutlined />}
-                            valueStyle={bannedUsers > 0 ? { color: "#ff4d4f" } : undefined}
-                        />
-                    </Card>
-                </Col>
-            </Row>
+            <SummaryCardsRow
+                loading={isLoading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Users",
+                        value: totalUsers,
+                        icon: <TeamOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "admins",
+                        label: "Platform Admins",
+                        value: adminUsers,
+                        icon: <SafetyOutlined />,
+                        color: "#f59e0b",
+                    },
+                    {
+                        key: "banned",
+                        label: "Banned Users",
+                        value: bannedUsers,
+                        icon: <StopOutlined />,
+                        color: bannedUsers > 0 ? "#ef4444" : "#10b981",
+                    },
+                ]}
+            />
 
             <Card style={{ marginTop: 32 }}>
                 <Empty

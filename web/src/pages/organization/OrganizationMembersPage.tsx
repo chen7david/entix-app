@@ -14,6 +14,7 @@ import { getAvatarUrl, type MemberDTO } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
@@ -39,18 +40,14 @@ import {
     App,
     Avatar,
     Button,
-    Card,
-    Col,
     Drawer,
     Dropdown,
     Form,
     Input,
     Modal,
-    Row,
     Select,
     Skeleton,
     Space,
-    Statistic,
     Tabs,
     Tag,
     Tooltip,
@@ -336,38 +333,32 @@ export const OrganizationMembersPage: React.FC = () => {
             />
 
             {/* Stats Cards */}
-            <Row gutter={16} className="mb-6">
-                <Col xs={24} sm={8}>
-                    <Card loading={loadingMetrics}>
-                        <Statistic
-                            title="Total Members"
-                            value={totalMembers}
-                            prefix={<TeamOutlined />}
-                            valueStyle={{ fontSize: token.fontSizeXL }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card loading={loadingMetrics}>
-                        <Statistic
-                            title="Admins"
-                            value={adminCount}
-                            prefix={<SafetyOutlined />}
-                            valueStyle={{ fontSize: token.fontSizeXL }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card loading={loadingMetrics}>
-                        <Statistic
-                            title="Owners"
-                            value={ownerCount}
-                            prefix={<CrownOutlined />}
-                            valueStyle={{ fontSize: token.fontSizeXL }}
-                        />
-                    </Card>
-                </Col>
-            </Row>
+            <SummaryCardsRow
+                loading={loadingMetrics}
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Members",
+                        value: totalMembers,
+                        icon: <TeamOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "admins",
+                        label: "Admins",
+                        value: adminCount,
+                        icon: <SafetyOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "owners",
+                        label: "Owners",
+                        value: ownerCount,
+                        icon: <CrownOutlined />,
+                        color: "#f59e0b",
+                    },
+                ]}
+            />
             <div className="flex-1 min-h-0">
                 <DataTableWithFilters<MemberDTO>
                     config={{

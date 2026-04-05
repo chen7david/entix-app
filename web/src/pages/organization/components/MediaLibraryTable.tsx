@@ -1,6 +1,15 @@
-import { AudioOutlined, DeleteOutlined, MoreOutlined, PlaySquareOutlined } from "@ant-design/icons";
+import {
+    AppstoreOutlined,
+    AudioOutlined,
+    ClockCircleOutlined,
+    DeleteOutlined,
+    MoreOutlined,
+    PlaySquareOutlined,
+    VideoCameraOutlined,
+} from "@ant-design/icons";
 import type { Media } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media";
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Tooltip, Typography } from "antd";
@@ -112,8 +121,48 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         },
     ];
 
+    const totalAssets = media?.length || 0;
+    const videoCount = media?.filter((m) => m.mimeType.startsWith("video/")).length || 0;
+    const audioCount = media?.filter((m) => m.mimeType.startsWith("audio/")).length || 0;
+    const recentCount =
+        media?.filter((m) => Date.now() - new Date(m.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000)
+            .length || 0;
+
     return (
         <div className="flex flex-col h-full min-h-0 gap-4 mt-2">
+            <SummaryCardsRow
+                loading={loading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Loaded Media",
+                        value: totalAssets,
+                        icon: <AppstoreOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "video",
+                        label: "Video Files",
+                        value: videoCount,
+                        icon: <VideoCameraOutlined />,
+                        color: "#8b5cf6",
+                    },
+                    {
+                        key: "audio",
+                        label: "Audio Files",
+                        value: audioCount,
+                        icon: <AudioOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "recent",
+                        label: "Recently Added",
+                        value: recentCount,
+                        icon: <ClockCircleOutlined />,
+                        color: "#f59e0b",
+                    },
+                ]}
+            />
             <MediaDropzone type="all" />
 
             <div className="flex-1 min-h-0">

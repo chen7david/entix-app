@@ -6,29 +6,14 @@ import {
     PlusOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
-import {
-    Button,
-    Form,
-    Input,
-    Modal,
-    message,
-    Popconfirm,
-    Select,
-    Space,
-    Statistic,
-    Tag,
-    Typography,
-    theme,
-} from "antd";
+import { Button, Form, Input, Modal, message, Popconfirm, Select, Space, Tag } from "antd";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 
-const { Text } = Typography;
-
 export const OrganizationInvitationsPage = () => {
-    const { token } = theme.useToken();
     const { activeOrganization } = useOrganization();
 
     const {
@@ -132,56 +117,31 @@ export const OrganizationInvitationsPage = () => {
                 }
             />
 
-            {/* Stats Bar - Lean Design */}
-            <div className="flex items-center gap-10 px-1" style={{ marginBottom: 20 }}>
-                <Statistic
-                    title={
-                        <Text
-                            type="secondary"
-                            className="text-[10px] uppercase font-bold tracking-wider"
-                        >
-                            Total Invitations
-                        </Text>
-                    }
-                    value={totalInvitations}
-                    prefix={<MailOutlined className="text-sm opacity-40 mr-1" />}
-                    valueStyle={{ fontSize: 16, fontWeight: 700, color: token.colorText }}
-                />
-                <Statistic
-                    title={
-                        <Text
-                            type="secondary"
-                            className="text-[10px] uppercase font-bold tracking-wider"
-                        >
-                            Pending
-                        </Text>
-                    }
-                    value={pendingCount}
-                    prefix={<ClockCircleOutlined className="text-sm opacity-40 mr-1" />}
-                    valueStyle={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: pendingCount > 0 ? "#fa8c16" : token.colorText,
-                    }}
-                />
-                <Statistic
-                    title={
-                        <Text
-                            type="secondary"
-                            className="text-[10px] uppercase font-bold tracking-wider"
-                        >
-                            Accepted
-                        </Text>
-                    }
-                    value={acceptedCount}
-                    prefix={<CheckCircleOutlined className="text-sm opacity-40 mr-1" />}
-                    valueStyle={{
-                        fontSize: 16,
-                        fontWeight: 700,
-                        color: acceptedCount > 0 ? "#52c41a" : token.colorText,
-                    }}
-                />
-            </div>
+            <SummaryCardsRow
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Invitations",
+                        value: totalInvitations,
+                        icon: <MailOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "pending",
+                        label: "Pending",
+                        value: pendingCount,
+                        icon: <ClockCircleOutlined />,
+                        color: "#fa8c16",
+                    },
+                    {
+                        key: "accepted",
+                        label: "Accepted",
+                        value: acceptedCount,
+                        icon: <CheckCircleOutlined />,
+                        color: "#52c41a",
+                    },
+                ]}
+            />
 
             <div className="flex-1 min-h-0">
                 <DataTableWithFilters

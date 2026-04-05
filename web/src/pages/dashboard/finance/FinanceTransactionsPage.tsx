@@ -1,4 +1,11 @@
+import {
+    CheckCircleOutlined,
+    InteractionOutlined,
+    RollbackOutlined,
+    SyncOutlined,
+} from "@ant-design/icons";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
 import { useTransactions } from "@web/src/features/finance/hooks/useTransactions";
@@ -80,6 +87,40 @@ export const FinanceTransactionsPage: React.FC = () => {
                     and reversals.
                 </Text>
             </div>
+
+            <SummaryCardsRow
+                loading={isLoading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Ledger Records",
+                        value: data?.items?.length || 0,
+                        icon: <InteractionOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "completed",
+                        label: "Completed",
+                        value: data?.items?.filter((t) => t.status === "completed").length || 0,
+                        icon: <CheckCircleOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "pending",
+                        label: "Pending",
+                        value: data?.items?.filter((t) => t.status === "pending").length || 0,
+                        icon: <SyncOutlined />,
+                        color: "#f59e0b",
+                    },
+                    {
+                        key: "reversed",
+                        label: "Reversed",
+                        value: data?.items?.filter((t) => t.status === "reversed").length || 0,
+                        icon: <RollbackOutlined />,
+                        color: "#ef4444",
+                    },
+                ]}
+            />
 
             <TransactionLedgerTable
                 transactions={data?.items || []}

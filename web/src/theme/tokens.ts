@@ -23,7 +23,9 @@ const sharedComponents = {
         fontSize: 16, // iOS zoom fix
         controlHeight: 44,
         borderRadius: 6,
-        activeShadow: "0 0 0 2px rgba(37, 99, 235, 0.1)",
+        activeShadow: "none",
+        errorActiveShadow: "none",
+        warningActiveShadow: "none",
         hoverBorderColor: "#3b82f6", // blue-500
         activeBorderColor: "#2563eb", // blue-600
     },
@@ -37,6 +39,9 @@ const sharedComponents = {
         fontSize: 16,
         controlHeight: 44,
         borderRadius: 6,
+        activeShadow: "none",
+        errorActiveShadow: "none",
+        warningActiveShadow: "none",
     },
     Button: {
         borderRadius: 6,
@@ -51,6 +56,7 @@ const sharedComponents = {
     Card: {
         borderRadiusLG: 8, // Refined: 12 -> 8 (matches borderRadius token)
         paddingLG: 20, // Refined: 24 -> 20 for denser interiors
+        colorBorderSecondary: "transparent",
     },
     Menu: {
         activeBarBorderWidth: 0, // Remove the side bar line for a cleaner look
@@ -69,7 +75,7 @@ const sharedComponents = {
 
 const lightComponents = {
     Card: {
-        boxShadowTertiary: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)", // Subtle shadow
+        boxShadowTertiary: "none",
     },
     Layout: {
         bodyBg: "#f8fafc", // slate-50
@@ -84,7 +90,7 @@ const lightComponents = {
 
 const darkComponents = {
     Card: {
-        boxShadowTertiary: "0 1px 3px 0 rgba(0, 0, 0, 0.5)",
+        boxShadowTertiary: "none",
     },
     Layout: {
         bodyBg: "#0f172a", // slate-950

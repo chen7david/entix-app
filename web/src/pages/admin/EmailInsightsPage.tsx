@@ -1,9 +1,10 @@
 import { CheckCircleOutlined, SendOutlined, WarningOutlined } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/features/admin";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { Alert, Card, Col, Row, Statistic, type TableColumnsType, Tag, Typography } from "antd";
+import { Alert, type TableColumnsType, Tag, Typography } from "antd";
 import type React from "react";
 import { useCallback, useState } from "react";
 
@@ -19,9 +20,13 @@ const eventTagProps: Record<string, { color: string; label: string }> = {
     delivery_delayed: { color: "gold", label: "Delayed" },
 };
 
+/**
+ * Resend's list API does not always populate `last_event`.
+ * When null, we default to "sent" — any email in the list was at minimum dispatched.
+ */
 const EventTag: React.FC<{ event: EmailEvent }> = ({ event }) => {
-    if (!event) return <Tag>Unknown</Tag>;
-    const props = eventTagProps[event] ?? { color: "default", label: event };
+    const resolved = event ?? "sent";
+    const props = eventTagProps[resolved] ?? { color: "default", label: resolved };
     return <Tag color={props.color}>{props.label}</Tag>;
 };
 
@@ -116,36 +121,32 @@ export const EmailInsightsPage: React.FC = () => {
                 </div>
             </div>
 
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading}>
-                        <Statistic
-                            title="Page Emails"
-                            value={totalSent}
-                            prefix={<SendOutlined style={{ color: "#2563eb" }} />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading}>
-                        <Statistic
-                            title="Delivered / Active"
-                            value={delivered}
-                            prefix={<CheckCircleOutlined style={{ color: "#10b981" }} />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading}>
-                        <Statistic
-                            title="Bounced / Failed"
-                            value={failed}
-                            prefix={<WarningOutlined style={{ color: "#ef4444" }} />}
-                            valueStyle={failed > 0 ? { color: "#ef4444" } : undefined}
-                        />
-                    </Card>
-                </Col>
-            </Row>
+            <SummaryCardsRow
+                loading={isLoading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Page Emails",
+                        value: totalSent,
+                        icon: <SendOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "delivered",
+                        label: "Delivered / Active",
+                        value: delivered,
+                        icon: <CheckCircleOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "failed",
+                        label: "Bounced / Failed",
+                        value: failed,
+                        icon: <WarningOutlined />,
+                        color: failed > 0 ? "#ef4444" : "#10b981",
+                    },
+                ]}
+            />
 
             <div className="h-[calc(100vh-400px)] min-h-[500px]">
                 {searchText && (

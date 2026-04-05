@@ -1,13 +1,13 @@
 import { CloudUploadOutlined, DatabaseOutlined, FileOutlined } from "@ant-design/icons";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
-import { Button, Card, Col, Modal, Row, Skeleton, Statistic, theme } from "antd";
+import { Button, Modal, Skeleton } from "antd";
 import { useState } from "react";
 import { UploadsTable } from "../../features/uploads/components/UploadsTable";
 
 export const OrganizationUploadsPage = () => {
-    const { token } = theme.useToken();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const { activeOrganization } = useOrganization();
 
@@ -62,29 +62,24 @@ export const OrganizationUploadsPage = () => {
             />
 
             {/* Stats Cards */}
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-                <Col xs={24} sm={12}>
-                    <Card shadow-sm="true">
-                        <Statistic
-                            title="Total Files"
-                            value={totalFiles}
-                            prefix={<FileOutlined />}
-                            valueStyle={{ fontSize: token.fontSizeXL }}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12}>
-                    <Card shadow-sm="true">
-                        <Statistic
-                            title="Storage Used"
-                            value={totalStorage}
-                            prefix={<DatabaseOutlined />}
-                            valueStyle={{ fontSize: token.fontSizeXL }}
-                            formatter={(val) => formatBytes(Number(val))}
-                        />
-                    </Card>
-                </Col>
-            </Row>
+            <SummaryCardsRow
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Files",
+                        value: totalFiles,
+                        icon: <FileOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "storage",
+                        label: "Storage Used",
+                        value: formatBytes(totalStorage),
+                        icon: <DatabaseOutlined />,
+                        color: "#8b5cf6",
+                    },
+                ]}
+            />
 
             <div className="flex-1 min-h-0">
                 <UploadsTable

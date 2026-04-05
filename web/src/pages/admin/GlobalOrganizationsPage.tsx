@@ -7,12 +7,13 @@ import {
 } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { useAdminCreateUserWithOrg, useAdminOrganizations } from "@web/src/features/admin";
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
 import { CreateOrganizationForm } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
-import { App, Button, Card, Col, Dropdown, Modal, Row, Statistic, Tag, Typography } from "antd";
+import { App, Button, Dropdown, Modal, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import type React from "react";
 import { useState } from "react";
@@ -156,17 +157,18 @@ export const GlobalOrganizationsPage: React.FC = () => {
             </div>
 
             {/* Stats */}
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-                <Col xs={24} sm={8}>
-                    <Card loading={isLoading}>
-                        <Statistic
-                            title="Platform Organizations"
-                            value={orgData?.items?.length || 0}
-                            prefix={<ApartmentOutlined style={{ color: "#2563eb" }} />}
-                        />
-                    </Card>
-                </Col>
-            </Row>
+            <SummaryCardsRow
+                loading={isLoading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Platform Organizations",
+                        value: orgData?.items?.length || 0,
+                        icon: <ApartmentOutlined />,
+                        color: "#2563eb",
+                    },
+                ]}
+            />
 
             {/* Table */}
             <div className="h-[calc(100vh-420px)] min-h-[500px]">
