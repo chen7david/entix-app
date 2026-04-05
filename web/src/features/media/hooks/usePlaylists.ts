@@ -97,12 +97,15 @@ export const usePlaylists = () => {
     });
 
     // Generic helper for Sequence operations
-    const getSequence = async (playlistId: string): Promise<PlaylistMediaItemDTO[]> => {
-        if (!orgId) return [];
-        const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`);
-        if (!res.ok) await parseApiError(res);
-        return await res.json();
-    };
+    const getSequence = useCallback(
+        async (playlistId: string): Promise<PlaylistMediaItemDTO[]> => {
+            if (!orgId) return [];
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`);
+            if (!res.ok) await parseApiError(res);
+            return await res.json();
+        },
+        [orgId]
+    );
 
     const updateSequenceMutation = useMutation({
         mutationFn: async ({

@@ -61,9 +61,11 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagina
                     onClick={onPrev}
                     icon={<LeftOutlined style={{ fontSize: 16 }} />}
                     type="text"
-                    className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${hasPrev ? "hover:bg-black/5 dark:hover:bg-white/10" : "pointer-events-none opacity-30"}`}
+                    className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${hasPrev ? "hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer" : "cursor-not-allowed"}`}
                     style={{
                         color: hasPrev ? token.colorPrimary : token.colorTextDisabled,
+                        opacity: hasPrev ? 1 : 0.4,
+                        pointerEvents: hasPrev ? "auto" : "none",
                     }}
                 />
 
@@ -82,9 +84,11 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagina
                     onClick={onNext}
                     icon={<RightOutlined style={{ fontSize: 16 }} />}
                     type="text"
-                    className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${hasNext ? "hover:bg-black/5 dark:hover:bg-white/10" : "pointer-events-none opacity-30"}`}
+                    className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${hasNext ? "hover:bg-black/5 dark:hover:bg-white/10 cursor-pointer" : "cursor-not-allowed"}`}
                     style={{
                         color: hasNext ? token.colorPrimary : token.colorTextDisabled,
+                        opacity: hasNext ? 1 : 0.4,
+                        pointerEvents: hasNext ? "auto" : "none",
                     }}
                 />
             </Space>

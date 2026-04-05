@@ -306,7 +306,11 @@ export const PlaylistManager: React.FC<{
                             };
                             return (
                                 <Dropdown menu={menuProps} trigger={["click"]}>
-                                    <Button type="text" icon={<MoreOutlined />} />
+                                    <Button
+                                        type="text"
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
                                 </Dropdown>
                             );
                         },
