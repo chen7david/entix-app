@@ -89,7 +89,8 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" 
             ? [
                   {
                       key: AppRoutes.admin.index,
-                      label: "Admin Management",
+                      label: "Platform Dashboard",
+                      disabled: variant === "admin",
                       icon: <SafetyOutlined style={{ color: "#faad14" }} />,
                   },
                   {

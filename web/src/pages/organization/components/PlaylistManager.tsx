@@ -1,6 +1,7 @@
 import {
     AudioOutlined,
     DeleteOutlined,
+    EditOutlined,
     HolderOutlined,
     MoreOutlined,
     OrderedListOutlined,
@@ -226,8 +227,11 @@ export const PlaylistManager: React.FC<{
             title: "Playlist",
             key: "title",
             render: (_: any, record: any) => (
-                <div className="flex items-center gap-3">
-                    <OrderedListOutlined className="text-blue-500 flex-shrink-0" />
+                <div
+                    className="flex items-center gap-3 cursor-pointer group"
+                    onClick={() => openSequenceManager(record)}
+                >
+                    <OrderedListOutlined className="text-blue-500 flex-shrink-0 group-hover:text-blue-600 transition-colors" />
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={record.title} placement="topLeft" mouseEnterDelay={0.5}>
                             <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">
@@ -257,7 +261,6 @@ export const PlaylistManager: React.FC<{
                         columns,
                         data: playlists,
                         loading: isLoadingPlaylists,
-                        onRowClick: (record: any) => openEditDrawer(record),
                         filters: [
                             {
                                 type: "search",
@@ -283,6 +286,12 @@ export const PlaylistManager: React.FC<{
                                     label: "Manage Sequence",
                                     icon: <OrderedListOutlined />,
                                     onClick: () => openSequenceManager(record),
+                                },
+                                {
+                                    key: "edit",
+                                    label: "Edit Playlist",
+                                    icon: <EditOutlined />,
+                                    onClick: () => openEditDrawer(record),
                                 },
                                 {
                                     key: "delete",
