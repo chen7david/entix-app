@@ -32,6 +32,8 @@ export const OrganizationListPage = () => {
     const { members } = useMembers();
     const { invitations } = useInvitations();
     const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     // Sort: active org on top
     const sortedOrgs = [...(organizations || [])].sort((a, b) => {
@@ -185,9 +187,18 @@ export const OrganizationListPage = () => {
                                     placeholder: "Search organizations...",
                                 },
                             ],
-                            onFiltersChange: (f: Record<string, any>) => setSearch(f.search || ""),
+                            onFiltersChange: (f: Record<string, any>) => {
+                                setSearch(f.search || "");
+                                setPage(1); // Reset on filter
+                            },
                             pagination: {
-                                pageSize: 12,
+                                pageSize,
+                                current: page,
+                                total: filteredOrgs.length,
+                                onChange: (p, s) => {
+                                    setPage(p);
+                                    setPageSize(s);
+                                },
                             },
                         }}
                     />

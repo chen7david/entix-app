@@ -20,6 +20,8 @@ type Props = {
 
 export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting }) => {
     const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return "0 Bytes";
@@ -141,9 +143,16 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
                 ],
                 onFiltersChange: (filters: Record<string, any>) => {
                     setSearch(filters.search || "");
+                    setPage(1); // Reset on filter
                 },
                 pagination: {
-                    pageSize: 12,
+                    pageSize,
+                    current: page,
+                    total: filteredUploads.length,
+                    onChange: (p, s) => {
+                        setPage(p);
+                        setPageSize(s);
+                    },
                 },
             }}
         />

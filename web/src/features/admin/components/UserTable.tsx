@@ -38,13 +38,14 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 export const UserTable: React.FC = () => {
     const { message } = App.useApp();
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [limit, setLimit] = useState(10);
 
     const [debouncedSearch] = useDebouncedValue(searchText, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
@@ -52,7 +53,7 @@ export const UserTable: React.FC = () => {
 
     const { data: userData, isPending: isLoading } = useAdminUsers(debouncedSearch || undefined, {
         cursor: currentCursor,
-        limit: 10,
+        limit,
     });
 
     const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -61,12 +62,6 @@ export const UserTable: React.FC = () => {
     const { mutate: banUser } = useBanUser();
     const { mutate: unbanUser } = useUnbanUser();
     const { mutate: setRole } = useSetUserRole();
-
-    // Reset cursor when search changes
-    useEffect(() => {
-        setCurrentCursor(undefined);
-        setCursorStack([]);
-    }, []);
 
     const handleNext = useCallback(() => {
         if (userData?.nextCursor) {
@@ -204,13 +199,22 @@ export const UserTable: React.FC = () => {
                             placeholder: "Search users...",
                         },
                     ],
-                    onFiltersChange: (f: Record<string, any>) => setSearchText(f.search || ""),
+                    onFiltersChange: (f: Record<string, any>) => {
+                        setSearchText(f.search || "");
+                        setCurrentCursor(undefined);
+                        setCursorStack([]);
+                    },
                     pagination: {
-                        pageSize: 10,
+                        pageSize: limit,
                         hasNextPage: !!userData?.nextCursor,
                         hasPrevPage: cursorStack.length > 0,
                         onNext: handleNext,
                         onPrev: handlePrev,
+                        onPageSizeChange: (s) => {
+                            setLimit(s);
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
+                        },
                     },
                     actions: (record: any) => {
                         const items: MenuProps["items"] = [

@@ -37,6 +37,7 @@
             "preview_urls": true,
             "vars": {
                 "FRONTEND_URL": "https://staging.entix.org",
+                "CORS_ORIGINS": "https://staging.entix.org",
                 "PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
                 "SKIP_EMAIL_VERIFICATION": "false",
                 "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
@@ -62,6 +63,7 @@
             "name": "entix-app",
             "vars": {
                 "FRONTEND_URL": "https://entix.org",
+                "CORS_ORIGINS": "https://entix.org",
                 "PUBLIC_CDN_URL": "https://cdn.entix.org",
                 "SKIP_EMAIL_VERIFICATION": "false",
                 "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",

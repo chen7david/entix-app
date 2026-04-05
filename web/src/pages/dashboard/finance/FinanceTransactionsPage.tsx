@@ -17,12 +17,13 @@ export const FinanceTransactionsPage: React.FC = () => {
     // Cursor stack: navigate forward/back by pushing/popping cursors
     const [cursorStack, setCursorStack] = useState<string[]>([]);
     const [filters, setFilters] = useState<Record<string, any>>({});
+    const [pageSize, setPageSize] = useState(20);
 
     const currentCursor = cursorStack[cursorStack.length - 1];
 
     const { data, isLoading } = useTransactions(orgId, {
         cursor: currentCursor,
-        limit: 20,
+        limit: pageSize,
         startDate: filters.startDate,
         endDate: filters.endDate,
         status: filters.status,
@@ -89,11 +90,15 @@ export const FinanceTransactionsPage: React.FC = () => {
                     onReverse={(txId, reason) => reverse({ txId, reason })}
                     isReversing={isReversing ? variables?.txId : null}
                     pagination={{
-                        pageSize: 20,
+                        pageSize,
                         hasNextPage: !!data?.nextCursor,
                         hasPrevPage: cursorStack.length > 0,
                         onNext: handleNext,
                         onPrev: handlePrev,
+                        onPageSizeChange: (size) => {
+                            setPageSize(size);
+                            setCursorStack([]); // Reset on size change
+                        },
                     }}
                     filters={filterConfig}
                     onFiltersChange={handleFiltersChange}

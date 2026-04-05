@@ -1,10 +1,4 @@
-import {
-    ArrowLeftOutlined,
-    ArrowRightOutlined,
-    InboxOutlined,
-    RedoOutlined,
-    SearchOutlined,
-} from "@ant-design/icons";
+import { InboxOutlined, RedoOutlined, SearchOutlined } from "@ant-design/icons";
 import type { TableProps } from "antd";
 import {
     Button,
@@ -13,8 +7,8 @@ import {
     Empty,
     Input,
     Row,
+    Segmented,
     Select,
-    Space,
     Table,
     Tooltip,
     Typography,
@@ -23,11 +17,12 @@ import {
 import dayjs from "dayjs";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
+import { DataTablePagination } from "./DataTablePagination";
 
 const { Text } = Typography;
 
 export interface FilterConfig {
-    type: "search" | "dateRange" | "select";
+    type: "search" | "dateRange" | "select" | "segmented";
     key: string;
     label?: string;
     placeholder?: string;
@@ -41,6 +36,7 @@ export interface CursorPaginationConfig {
     pageSize: number;
     onNext: () => void;
     onPrev: () => void;
+    onPageSizeChange?: (size: number) => void;
 }
 
 export interface ClientPaginationConfig {
@@ -60,6 +56,7 @@ export interface DataTableConfig<T> {
     onFiltersChange: (filters: Record<string, any>) => void;
     onRowClick?: (record: T) => void;
     rowKey?: string | ((record: T) => string);
+    selectedRowKey?: string | number | null;
 }
 
 export function isCursorPagination(
@@ -193,6 +190,24 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                                     allowClear
                                 />
                             )}
+                            {filter.type === "segmented" && (
+                                <Segmented
+                                    block
+                                    size="large"
+                                    className="rounded-xl h-[44px] p-1"
+                                    options={filter.options || []}
+                                    value={
+                                        localFilters[filter.key] ||
+                                        (filter.options?.[0]?.value ?? "")
+                                    }
+                                    onChange={(value) =>
+                                        handleFiltersChange({
+                                            ...localFilters,
+                                            [filter.key]: value,
+                                        })
+                                    }
+                                />
+                            )}
                         </Col>
                     ))}
                     <Col>
@@ -214,9 +229,10 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                     </Col>
                 </Row>
             </div>
-
             {/* Lean Theme-Aware Table */}
-            <div className="flex-1 overflow-auto custom-scrollbar relative">
+            <div
+                className={`flex-1 custom-scrollbar relative ${(config.data?.length ?? 0) > 0 ? "overflow-auto" : "overflow-hidden flex flex-col justify-center"}`}
+            >
                 <Table<T>
                     columns={tableColumns}
                     dataSource={config.data}
@@ -227,83 +243,100 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                     }
                     loading={config.loading}
                     rowKey={config.rowKey || "id"}
-                    size="large"
+                    size="middle"
                     scroll={{ x: "max-content" }}
                     className="data-table-pro-content"
-                    onRow={(record) => ({
-                        onClick: () => config.onRowClick?.(record),
-                        className: config.onRowClick ? "cursor-pointer" : "",
-                    })}
+                    onRow={(record) => {
+                        const key =
+                            typeof config.rowKey === "function"
+                                ? config.rowKey(record)
+                                : (record as any)[config.rowKey || "id"];
+                        const isSelected =
+                            config.selectedRowKey !== undefined && config.selectedRowKey === key;
+
+                        return {
+                            onClick: () => config.onRowClick?.(record),
+                            className:
+                                `${config.onRowClick ? "cursor-pointer" : ""} ${isSelected ? "row-active" : ""}`.trim(),
+                        };
+                    }}
                     locale={{
                         emptyText: (
-                            <Empty
-                                image={
-                                    <InboxOutlined
-                                        className="text-4xl"
-                                        style={{ color: token.colorFillSecondary }}
-                                    />
-                                }
-                                description={
-                                    <div className="py-12">
-                                        <p
-                                            style={{ color: token.colorTextTertiary }}
-                                            className="text-lg font-medium mb-1"
-                                        >
-                                            No matches found
-                                        </p>
-                                        <Text type="secondary">
-                                            Try adjusting your filters or search terms
-                                        </Text>
-                                    </div>
-                                }
-                            />
+                            <div className="flex flex-col items-center justify-center py-20">
+                                <Empty
+                                    image={
+                                        <InboxOutlined
+                                            style={{
+                                                fontSize: 64,
+                                                color: token.colorFillSecondary,
+                                                marginBottom: 16,
+                                            }}
+                                        />
+                                    }
+                                    description={
+                                        <div className="max-w-[300px]">
+                                            <p
+                                                style={{ color: token.colorTextTertiary }}
+                                                className="text-lg font-medium mb-1"
+                                            >
+                                                No matches found
+                                            </p>
+                                            <Text type="secondary">
+                                                Try adjusting your filters or search terms
+                                            </Text>
+                                        </div>
+                                    }
+                                />
+                            </div>
                         ),
                     }}
                 />
             </div>
-
             {/* Premium Pagination - Glassmorphism Design */}
-            {isCursorPagination(config.pagination) && (
-                <div
-                    className="p-4 px-8 border-t sticky bottom-0 z-20 backdrop-blur-md"
-                    style={{
-                        background: `${token.colorFillAlter}d9`, // Translucent background for glass effect
-                        borderColor: token.colorBorderSecondary,
-                        boxShadow: "0 -4px 12px -4px rgba(0,0,0,0.05)",
-                    }}
-                >
-                    <Row justify="end" align="middle">
-                        <Col>
-                            <Space size="middle">
-                                <Button
-                                    disabled={!config.pagination.hasPrevPage}
-                                    onClick={config.pagination.onPrev}
-                                    icon={<ArrowLeftOutlined />}
-                                    className="flex items-center justify-center rounded-xl h-[40px] px-5 border-none shadow-sm transition-all hover:scale-105 active:scale-95"
-                                    style={{
-                                        background: token.colorBgElevated,
-                                        color: config.pagination.hasPrevPage
-                                            ? token.colorText
-                                            : token.colorTextDisabled,
-                                    }}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    type="primary"
-                                    disabled={!config.pagination.hasNextPage}
-                                    onClick={config.pagination.onNext}
-                                    icon={<ArrowRightOutlined />}
-                                    iconPosition="end"
-                                    className="flex items-center justify-center rounded-xl h-[40px] px-6 shadow-md transition-all hover:scale-105 active:scale-95 hover:shadow-lg"
-                                >
-                                    Next
-                                </Button>
-                            </Space>
-                        </Col>
-                    </Row>
-                </div>
-            )}
+            {(() => {
+                if (!config.pagination) return null;
+
+                // For client-side, hide if total <= pageSize (no navigation needed)
+                if (!isCursorPagination(config.pagination)) {
+                    if (
+                        config.pagination.total !== undefined &&
+                        config.pagination.total <= config.pagination.pageSize
+                    ) {
+                        return null;
+                    }
+                }
+
+                return (
+                    <div
+                        className="p-3 border-t sticky bottom-0 z-20 backdrop-blur-md"
+                        style={{
+                            background: `${token.colorFillAlter}d9`,
+                            borderColor: token.colorBorderSecondary,
+                            boxShadow: "0 -4px 12px -4px rgba(0,0,0,0.05)",
+                        }}
+                    >
+                        <DataTablePagination pagination={config.pagination} />
+                    </div>
+                );
+            })()}
+            <style>{`
+                .ant-table-row.row-active > td {
+                    background-color: ${token.colorPrimary}14 !important;
+                    position: relative;
+                }
+                .ant-table-row.row-active > td:first-child {
+                    border-left: 3px solid ${token.colorPrimary} !important;
+                }
+                /* Ensure hover state still feels interactive but keeps the theme */
+                .ant-table-row.row-active:hover > td {
+                    background-color: ${token.colorPrimary}1a !important;
+                }
+                /* Animation for the border accent */
+                .ant-table-row > td:first-child {
+                    border-left: 3px solid transparent;
+                    transition: border-color 0.2s ease, background-color 0.2s ease;
+                }
+            `}</style>
         </div>
     );
 }

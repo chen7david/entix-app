@@ -16,7 +16,7 @@ import type { MenuProps } from "antd";
 import { App, Button, Card, Col, Dropdown, Modal, Row, Statistic, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -25,6 +25,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [limit, setLimit] = useState(10);
 
     const [debouncedSearch] = useDebouncedValue(searchText, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
@@ -36,7 +37,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
         refetch,
     } = useAdminOrganizations(debouncedSearch || undefined, {
         cursor: currentCursor,
-        limit: 10,
+        limit,
     });
 
     const { mutate: createUserWithOrg, isPending: isCreatingUserWithOrg } =
@@ -44,12 +45,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
 
     const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
     const [isCreateUserWithOrgModalOpen, setIsCreateUserWithOrgModalOpen] = useState(false);
-
-    // Reset cursor when search changes
-    useEffect(() => {
-        setCurrentCursor(undefined);
-        setCursorStack([]);
-    }, []);
 
     const handleNext = () => {
         if (orgData?.nextCursor) {
@@ -195,14 +190,22 @@ export const GlobalOrganizationsPage: React.FC = () => {
                                     placeholder: "Search organizations...",
                                 },
                             ],
-                            onFiltersChange: (f: Record<string, any>) =>
-                                setSearchText(f.search || ""),
+                            onFiltersChange: (f: Record<string, any>) => {
+                                setSearchText(f.search || "");
+                                setCurrentCursor(undefined);
+                                setCursorStack([]);
+                            },
                             pagination: {
-                                pageSize: 10,
+                                pageSize: limit,
                                 hasNextPage: !!orgData?.nextCursor,
                                 hasPrevPage: cursorStack.length > 0,
                                 onNext: handleNext,
                                 onPrev: handlePrev,
+                                onPageSizeChange: (s) => {
+                                    setLimit(s);
+                                    setCurrentCursor(undefined);
+                                    setCursorStack([]);
+                                },
                             },
                             actions: () => {
                                 const items: MenuProps["items"] = [

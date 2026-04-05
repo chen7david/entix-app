@@ -6,7 +6,7 @@ import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/feature
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { Alert, Card, Col, Row, Statistic, type TableColumnsType, Tag, Typography } from "antd";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -30,6 +30,7 @@ export const EmailInsightsPage: React.FC = () => {
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [limit, setLimit] = useState(20);
 
     const [debouncedSearch] = useDebouncedValue(searchText, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
@@ -37,14 +38,8 @@ export const EmailInsightsPage: React.FC = () => {
 
     const { data: emailData, isLoading } = useAdminEmails({
         cursor: currentCursor,
-        limit: 20,
+        limit,
     });
-
-    // Reset cursor when search changes (even though search is client-side, it's good practice)
-    useEffect(() => {
-        setCurrentCursor(undefined);
-        setCursorStack([]);
-    }, []);
 
     const handleNext = useCallback(() => {
         if (emailData?.nextCursor) {
@@ -187,14 +182,22 @@ export const EmailInsightsPage: React.FC = () => {
                                     placeholder: "Search page items...",
                                 },
                             ],
-                            onFiltersChange: (f: Record<string, any>) =>
-                                setSearchText(f.search || ""),
+                            onFiltersChange: (f: Record<string, any>) => {
+                                setSearchText(f.search || "");
+                                setCurrentCursor(undefined);
+                                setCursorStack([]);
+                            },
                             pagination: {
-                                pageSize: 20,
+                                pageSize: limit,
                                 hasNextPage: !!emailData?.nextCursor,
                                 hasPrevPage: cursorStack.length > 0,
                                 onNext: handleNext,
                                 onPrev: handlePrev,
+                                onPageSizeChange: (s) => {
+                                    setLimit(s);
+                                    setCurrentCursor(undefined);
+                                    setCursorStack([]);
+                                },
                             },
                         }}
                     />

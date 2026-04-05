@@ -23,7 +23,6 @@ import { SignInPage } from "./pages/auth/SignInPage";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
 import { FinanceAccountsPage } from "./pages/dashboard/finance/FinanceAccountsPage";
-import { FinancePaymentsPage } from "./pages/dashboard/finance/FinancePaymentsPage";
 import { FinanceTransactionsPage } from "./pages/dashboard/finance/FinanceTransactionsPage";
 import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
 import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
@@ -256,10 +255,6 @@ export default function App() {
                                                 <Route
                                                     path="transactions"
                                                     element={<FinanceTransactionsPage />}
-                                                />
-                                                <Route
-                                                    path="payments"
-                                                    element={<FinancePaymentsPage />}
                                                 />
                                             </Route>
                                         </Route>

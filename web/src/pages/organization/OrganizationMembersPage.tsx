@@ -17,6 +17,7 @@ import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilt
 import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/features/auth";
+import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { AvatarDropzone } from "@web/src/features/media";
 import {
     useBulkMembers,
@@ -93,6 +94,7 @@ const OrganizationMembersPageBase: React.FC = () => {
     }, [debouncedSearch, setSearchParams, searchParams]);
     const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
     const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [limit, setLimit] = useState(10);
 
     const [createForm] = Form.useForm();
     const [selectedMember, setSelectedMember] = useState<MemberDTO | null>(null);
@@ -111,14 +113,8 @@ const OrganizationMembersPageBase: React.FC = () => {
         hasPrevPage,
     } = useMembers(debouncedSearch, {
         cursor: currentCursor,
-        limit: 10,
+        limit: limit,
     });
-
-    // Reset cursor when search changes
-    useEffect(() => {
-        setCurrentCursor(undefined);
-        setCursorStack([]);
-    }, []);
 
     const handleNext = useCallback(() => {
         if (nextCursor) {
@@ -233,25 +229,22 @@ const OrganizationMembersPageBase: React.FC = () => {
                 key: "user",
                 width: 250,
                 render: (_: any, record: MemberDTO) => (
-                    <div
-                        className="flex items-center gap-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded transition-colors min-h-[44px]"
-                        onClick={() => setSelectedMember(record)}
-                    >
+                    <div className="flex items-center gap-3 p-1">
                         <Avatar
                             src={
                                 record.avatarUrl ? getAvatarUrl(record.avatarUrl, "sm") : undefined
                             }
                             icon={<UserOutlined />}
                         />
-                        <div className="flex flex-col">
+                        <div className="flex flex-col overflow-hidden">
                             <Typography.Text
                                 strong
                                 style={{ color: token.colorPrimary }}
-                                className="transition-colors"
+                                className="truncate"
                             >
                                 {record.name}
                             </Typography.Text>
-                            <Typography.Text type="secondary" className="text-xs">
+                            <Typography.Text type="secondary" className="text-xs truncate">
                                 {record.email}
                             </Typography.Text>
                         </div>
@@ -389,6 +382,9 @@ const OrganizationMembersPageBase: React.FC = () => {
                             columns,
                             data: members,
                             loading: loading,
+                            rowKey: "userId",
+                            selectedRowKey: selectedMember?.userId,
+                            onRowClick: (record) => setSelectedMember(record),
                             filters: [
                                 {
                                     type: "search",
@@ -396,13 +392,22 @@ const OrganizationMembersPageBase: React.FC = () => {
                                     placeholder: "Search members by name or email...",
                                 },
                             ],
-                            onFiltersChange: (f: Record<string, any>) => setSearchText(f.q || ""),
+                            onFiltersChange: (f: Record<string, any>) => {
+                                setSearchText(f.q || "");
+                                setCurrentCursor(undefined);
+                                setCursorStack([]);
+                            },
                             pagination: {
                                 hasNextPage,
                                 hasPrevPage,
-                                pageSize: 10,
+                                pageSize: limit,
                                 onNext: handleNext,
                                 onPrev: handlePrev,
+                                onPageSizeChange: (s) => {
+                                    setLimit(s);
+                                    setCurrentCursor(undefined);
+                                    setCursorStack([]);
+                                },
                             },
                             actions: (record: MemberDTO) => {
                                 const items: MenuProps["items"] = [
@@ -578,20 +583,31 @@ const OrganizationMembersPageBase: React.FC = () => {
                                         items={[
                                             {
                                                 key: "1",
-                                                label: "Personal Info",
+                                                label: "Personal",
                                                 children: (
                                                     <UserProfileForm userId={activeMember.userId} />
                                                 ),
                                             },
                                             {
                                                 key: "2",
-                                                label: "Contact Details",
+                                                label: "Contact",
                                                 children: (
                                                     <UserContactList userId={activeMember.userId} />
                                                 ),
                                             },
                                             {
                                                 key: "3",
+                                                label: "Wallet",
+                                                children: activeOrganization ? (
+                                                    <MemberAccountAdminPanel
+                                                        memberId={activeMember.userId}
+                                                        orgId={activeOrganization.id}
+                                                        memberName={activeMember.name || "Member"}
+                                                    />
+                                                ) : null,
+                                            },
+                                            {
+                                                key: "4",
                                                 label: "Roles",
                                                 children: (
                                                     <MemberRolesForm

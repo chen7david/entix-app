@@ -99,11 +99,6 @@ export const SidebarMenu: React.FC = () => {
                               key: "/finance/transactions",
                               icon: <TransactionOutlined />,
                           },
-                          {
-                              label: "Payments",
-                              key: "/finance/payments",
-                              icon: <WalletOutlined />,
-                          },
                       ],
                   },
                   {

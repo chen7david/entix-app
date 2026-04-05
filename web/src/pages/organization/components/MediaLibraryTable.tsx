@@ -5,7 +5,7 @@ import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Tooltip, Typography } from "antd";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { MediaDropzone } from "./MediaDropzone";
 
 const { Title, Text } = Typography;
@@ -20,6 +20,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
 
     const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
     const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [pageSize, setPageSize] = useState(10);
 
     const {
         media,
@@ -33,14 +34,8 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         hasPrevPage,
     } = useMedia(filterType === "all" ? undefined : filterType, searchText, {
         cursor: currentCursor,
-        limit: 10,
+        limit: pageSize,
     });
-
-    // Reset cursor when filters change
-    useEffect(() => {
-        setCurrentCursor(undefined);
-        setCursorStack([]);
-    }, []);
 
     const handleNext = useCallback(() => {
         if (nextCursor) {
@@ -136,9 +131,8 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                                 placeholder: "Search media...",
                             },
                             {
-                                type: "select",
+                                type: "segmented",
                                 key: "type",
-                                label: "Type",
                                 options: [
                                     { label: "All Media", value: "all" },
                                     { label: "Video", value: "video" },
@@ -149,13 +143,20 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                         onFiltersChange: (f: Record<string, any>) => {
                             setSearchText(f.q || "");
                             setFilterType(f.type || "all");
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
                         },
                         pagination: {
                             hasNextPage,
                             hasPrevPage,
-                            pageSize: 10,
+                            pageSize: pageSize,
                             onNext: handleNext,
                             onPrev: handlePrev,
+                            onPageSizeChange: (s) => {
+                                setPageSize(s);
+                                setCurrentCursor(undefined);
+                                setCursorStack([]);
+                            },
                         },
                         actions: (record: Media) => {
                             const items: MenuProps["items"] = [
