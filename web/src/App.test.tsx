@@ -50,7 +50,7 @@ describe("HomeRedirect UX Logic", () => {
         render(
             <MemoryRouter initialEntries={["/"]}>
                 <Routes>
-                    <Route path="/" element={<App />} />
+                    <Route path="*" element={<App />} />
                     <Route
                         path={AppRoutes.auth.signIn}
                         element={<div data-testid="signin-page">Sign In</div>}
@@ -59,9 +59,9 @@ describe("HomeRedirect UX Logic", () => {
             </MemoryRouter>
         );
 
-        await waitFor(() => {
-            expect(screen.getByTestId("signin-page")).toBeInTheDocument();
-        });
+        // Await the redirect result
+        const signinPage = await screen.findByTestId("signin-page");
+        expect(signinPage).toBeInTheDocument();
     });
 
     it("should show a loading spinner while identifying organization status", async () => {
@@ -90,7 +90,8 @@ describe("HomeRedirect UX Logic", () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+        const spinner = await screen.findByTestId("loading-spinner");
+        expect(spinner).toBeInTheDocument();
     });
 
     it("should call checkOrganizationStatus for authenticated users", async () => {
