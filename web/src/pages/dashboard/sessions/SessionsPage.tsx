@@ -96,12 +96,17 @@ export const SessionsPage: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
+            <div
+                className="flex flex-col md:flex-row md:justify-between md:items-center gap-4"
+                style={{ marginBottom: 32 }}
+            >
                 <div>
                     <Title level={2} style={{ margin: 0 }}>
                         Active Sessions
                     </Title>
-                    <Text type="secondary">Manage your active sessions across all devices</Text>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                        Manage your active sessions across all devices
+                    </Text>
                 </div>
 
                 {otherSessionsCount > 0 && (
@@ -113,7 +118,12 @@ export const SessionsPage: React.FC = () => {
                         okButtonProps={{ danger: true }}
                         cancelText="Cancel"
                     >
-                        <Button danger loading={isRevokingAll} icon={<DeleteOutlined />}>
+                        <Button
+                            danger
+                            loading={isRevokingAll}
+                            icon={<DeleteOutlined />}
+                            size="large"
+                        >
                             Revoke All Other Sessions
                         </Button>
                     </Popconfirm>
@@ -126,10 +136,32 @@ export const SessionsPage: React.FC = () => {
                     <Skeleton active paragraph={{ rows: 3 }} />
                 </Space>
             ) : !sessions || sessions.length === 0 ? (
-                <Empty
-                    description="No active sessions found"
-                    image={Empty.PRESENTED_IMAGE_SIMPLE}
-                />
+                <div className="flex flex-col items-center justify-center py-20">
+                    <Empty
+                        image={
+                            <ClockCircleOutlined
+                                style={{
+                                    fontSize: 64,
+                                    color: token.colorFillSecondary,
+                                    marginBottom: 16,
+                                }}
+                            />
+                        }
+                        description={
+                            <div className="max-w-[300px]">
+                                <p
+                                    style={{ color: token.colorTextSecondary }}
+                                    className="text-lg font-medium mb-1"
+                                >
+                                    No active sessions found
+                                </p>
+                                <Text type="secondary">
+                                    You are currently only signed in on this device.
+                                </Text>
+                            </div>
+                        }
+                    />
+                </div>
             ) : (
                 <List
                     dataSource={sortedSessions}

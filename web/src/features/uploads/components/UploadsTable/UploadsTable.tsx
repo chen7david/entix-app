@@ -8,7 +8,6 @@ import { getAssetUrl, type UploadDto } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { Button, Tag, Tooltip, Typography } from "antd";
 import type React from "react";
-import { useState } from "react";
 
 const { Text } = Typography;
 
@@ -19,10 +18,6 @@ type Props = {
 };
 
 export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting }) => {
-    const [search, setSearch] = useState("");
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return "0 Bytes";
         const k = 1024;
@@ -37,10 +32,6 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
             return <PlaySquareOutlined className="text-purple-500" />;
         return <FileOutlined className="text-gray-500" />;
     };
-
-    const filteredUploads = uploads.filter(
-        (u) => !search || u.originalName.toLowerCase().includes(search.toLowerCase())
-    );
 
     const columns = [
         {
@@ -129,32 +120,37 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
     ];
 
     return (
-        <DataTableWithFilters
-            config={{
-                columns,
-                data: filteredUploads,
-                rowKey: "id",
-                filters: [
-                    {
-                        type: "search",
-                        key: "search",
-                        placeholder: "Search file name...",
-                    },
-                ],
-                onFiltersChange: (filters: Record<string, any>) => {
-                    setSearch(filters.search || "");
-                    setPage(1); // Reset on filter
-                },
-                pagination: {
-                    pageSize,
-                    current: page,
-                    total: filteredUploads.length,
-                    onChange: (p, s) => {
-                        setPage(p);
-                        setPageSize(s);
-                    },
-                },
-            }}
-        />
+        <div className="flex flex-col h-full min-h-0">
+            <div className="flex-1 min-h-0">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: uploads,
+                        rowKey: "id",
+                        filters: [
+                            {
+                                type: "search",
+                                key: "search",
+                                placeholder: "Search file name...",
+                            },
+                            {
+                                type: "segmented",
+                                key: "type",
+                                options: [
+                                    { label: "All", value: "all" },
+                                    { label: "Image", value: "image" },
+                                    { label: "Video", value: "video" },
+                                    { label: "Audio", value: "audio" },
+                                ],
+                            },
+                        ],
+                        onFiltersChange: (_filters: Record<string, any>) => {
+                            // TODO: Implement server-side search via useOrganizationUploads hook
+                        },
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
+                    }}
+                />
+            </div>
+        </div>
     );
 };

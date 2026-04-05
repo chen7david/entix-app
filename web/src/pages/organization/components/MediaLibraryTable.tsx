@@ -31,7 +31,6 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         isUpdating,
         nextCursor,
         hasNextPage,
-        hasPrevPage,
     } = useMedia(filterType === "all" ? undefined : filterType, searchText, {
         cursor: currentCursor,
         limit: pageSize,
@@ -114,10 +113,10 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
     ];
 
     return (
-        <div className="flex flex-col gap-4 mt-2">
+        <div className="flex flex-col h-full min-h-0 gap-4 mt-2">
             <MediaDropzone type="all" />
 
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters<Media>
                     config={{
                         columns,
@@ -148,7 +147,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                         },
                         pagination: {
                             hasNextPage,
-                            hasPrevPage,
+                            hasPrevPage: cursorStack.length > 0,
                             pageSize: pageSize,
                             onNext: handleNext,
                             onPrev: handlePrev,

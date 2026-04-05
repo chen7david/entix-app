@@ -14,6 +14,7 @@ import { getAvatarUrl, type MemberDTO } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { AvatarDropzone } from "@web/src/features/media";
@@ -107,7 +108,6 @@ export const OrganizationMembersPage: React.FC = () => {
         userRoles: currentUserRoles,
         nextCursor,
         hasNextPage,
-        hasPrevPage,
     } = useMembers(debouncedSearch, {
         cursor: currentCursor,
         limit: limit,
@@ -304,41 +304,36 @@ export const OrganizationMembersPage: React.FC = () => {
     }
 
     return (
-        <div>
-            <div
-                className="flex flex-col md:flex-row md:justify-between md:items-center gap-4"
-                style={{ marginBottom: 32 }}
-            >
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Members
-                    </Title>
-                    <Text type="secondary">Manage organization members and roles</Text>
-                </div>
-                <div className="flex flex-wrap items-center gap-4">
-                    {currentUserRoles && currentUserRoles.length > 0 ? (
-                        <Space>
-                            {currentUserRoles.map((r: string) => (
-                                <Tag key={r} color="purple" className="text-sm px-3 py-1">
-                                    You are: {r.toUpperCase()}
-                                </Tag>
-                            ))}
-                        </Space>
-                    ) : (
-                        <Tag color="red" className="text-sm px-3 py-1">
-                            Role: Unknown (ID: {currentUserId?.slice(0, 8)})
-                        </Tag>
-                    )}
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => setIsCreateModalOpen(true)}
-                        className="min-h-[40px]"
-                    >
-                        Create New Member
-                    </Button>
-                </div>
-            </div>
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Members"
+                subtitle="Manage organization members and roles."
+                actions={
+                    <div className="flex flex-wrap items-center gap-4">
+                        {currentUserRoles && currentUserRoles.length > 0 ? (
+                            <Space>
+                                {currentUserRoles.map((r: string) => (
+                                    <Tag key={r} color="purple" className="text-sm px-3 py-1">
+                                        You are: {r.toUpperCase()}
+                                    </Tag>
+                                ))}
+                            </Space>
+                        ) : (
+                            <Tag color="red" className="text-sm px-3 py-1">
+                                Role: Unknown (ID: {currentUserId?.slice(0, 8)})
+                            </Tag>
+                        )}
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsCreateModalOpen(true)}
+                            className="min-h-[40px]"
+                        >
+                            Create New Member
+                        </Button>
+                    </div>
+                }
+            />
 
             {/* Stats Cards */}
             <Row gutter={16} className="mb-6">
@@ -373,8 +368,7 @@ export const OrganizationMembersPage: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
-
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters<MemberDTO>
                     config={{
                         columns,
@@ -397,7 +391,7 @@ export const OrganizationMembersPage: React.FC = () => {
                         },
                         pagination: {
                             hasNextPage,
-                            hasPrevPage,
+                            hasPrevPage: cursorStack.length > 0,
                             pageSize: limit,
                             onNext: handleNext,
                             onPrev: handlePrev,

@@ -6,49 +6,27 @@ import {
     TeamOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { useInvitations, useMembers, useOrganization } from "@web/src/features/organization";
 import type { MenuProps } from "antd";
-import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    Row,
-    Skeleton,
-    Statistic,
-    Tag,
-    Tooltip,
-    Typography,
-} from "antd";
+import { Button, Card, Col, Dropdown, Row, Skeleton, Statistic, Tag, Tooltip } from "antd";
 import dayjs from "dayjs";
-import { useState } from "react";
-
-const { Title, Text } = Typography;
+import { useMemo } from "react";
 
 export const OrganizationListPage = () => {
     const { organizations, loading, activeOrganization } = useOrganization();
     const { members } = useMembers();
     const { invitations } = useInvitations();
-    const [search, setSearch] = useState("");
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
-
-    // Sort: active org on top
-    const sortedOrgs = [...(organizations || [])].sort((a, b) => {
-        if (a.id === activeOrganization?.id) return -1;
-        if (b.id === activeOrganization?.id) return 1;
-        return 0;
-    });
-
-    const filteredOrgs = sortedOrgs.filter((org) => {
-        if (!search) return true;
-        const lowerSearch = search.toLowerCase();
-        return (
-            org.name.toLowerCase().includes(lowerSearch) ||
-            org.slug.toLowerCase().includes(lowerSearch)
-        );
-    });
+    // Organization sorting: Active org on top.
+    const sortedOrgs = useMemo(() => {
+        if (!organizations) return [];
+        return [...organizations].sort((a, b) => {
+            if (a.id === activeOrganization?.id) return -1;
+            if (b.id === activeOrganization?.id) return 1;
+            return 0;
+        });
+    }, [organizations, activeOrganization?.id]);
 
     const columns = [
         {
@@ -126,15 +104,8 @@ export const OrganizationListPage = () => {
     }
 
     return (
-        <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Manage Organizations
-                    </Title>
-                    <Text type="secondary">View and manage your organizations</Text>
-                </div>
-            </div>
+        <div className="flex flex-col h-full">
+            <PageHeader title="Organizations" subtitle="View and manage your organizations." />
 
             {/* Stats Cards */}
             <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
@@ -168,11 +139,11 @@ export const OrganizationListPage = () => {
             </Row>
 
             {/* Organizations Table */}
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{
                         columns,
-                        data: filteredOrgs,
+                        data: sortedOrgs,
                         rowKey: "id",
                         filters: [
                             {
@@ -181,19 +152,10 @@ export const OrganizationListPage = () => {
                                 placeholder: "Search organizations...",
                             },
                         ],
-                        onFiltersChange: (f: Record<string, any>) => {
-                            setSearch(f.search || "");
-                            setPage(1); // Reset on filter
+                        onFiltersChange: (_f: Record<string, any>) => {
+                            // TODO: Implement server-side search via useOrganization hook
                         },
-                        pagination: {
-                            pageSize,
-                            current: page,
-                            total: filteredOrgs.length,
-                            onChange: (p, s) => {
-                                setPage(p);
-                                setPageSize(s);
-                            },
-                        },
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
                     }}
                 />
             </div>

@@ -6,29 +6,29 @@ import {
     PlusOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
 import {
     Button,
-    Card,
-    Col,
     Form,
     Input,
     Modal,
     message,
     Popconfirm,
-    Row,
     Select,
     Space,
     Statistic,
     Tag,
     Typography,
+    theme,
 } from "antd";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const OrganizationInvitationsPage = () => {
+    const { token } = theme.useToken();
     const { activeOrganization } = useOrganization();
 
     const {
@@ -69,6 +69,8 @@ export const OrganizationInvitationsPage = () => {
     const pendingCount = invitations?.filter((i: any) => i.status === "pending").length || 0;
     const acceptedCount = invitations?.filter((i: any) => i.status === "accepted").length || 0;
 
+    // Pagination logic removed for now as per architectural alignment.
+    // API cursor support to be added in a future context.
     const filteredInvitations = useMemo(() => {
         if (!invitations) return [];
         if (!searchText) return invitations;
@@ -115,53 +117,73 @@ export const OrganizationInvitationsPage = () => {
     if (!activeOrganization) return null;
 
     return (
-        <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Invitations
-                    </Title>
-                    <Text type="secondary">Manage pending and sent invitations</Text>
-                </div>
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
-                    Invite Member
-                </Button>
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Invitations"
+                subtitle="Manage pending and sent invitations to join your organization."
+                actions={
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsModalOpen(true)}
+                    >
+                        Invite Member
+                    </Button>
+                }
+            />
+
+            {/* Stats Bar - Lean Design */}
+            <div className="flex items-center gap-10 px-1" style={{ marginBottom: 20 }}>
+                <Statistic
+                    title={
+                        <Text
+                            type="secondary"
+                            className="text-[10px] uppercase font-bold tracking-wider"
+                        >
+                            Total Invitations
+                        </Text>
+                    }
+                    value={totalInvitations}
+                    prefix={<MailOutlined className="text-sm opacity-40 mr-1" />}
+                    valueStyle={{ fontSize: 16, fontWeight: 700, color: token.colorText }}
+                />
+                <Statistic
+                    title={
+                        <Text
+                            type="secondary"
+                            className="text-[10px] uppercase font-bold tracking-wider"
+                        >
+                            Pending
+                        </Text>
+                    }
+                    value={pendingCount}
+                    prefix={<ClockCircleOutlined className="text-sm opacity-40 mr-1" />}
+                    valueStyle={{
+                        fontSize: 16,
+                        fontWeight: 700,
+                        color: pendingCount > 0 ? "#fa8c16" : token.colorText,
+                    }}
+                />
+                <Statistic
+                    title={
+                        <Text
+                            type="secondary"
+                            className="text-[10px] uppercase font-bold tracking-wider"
+                        >
+                            Accepted
+                        </Text>
+                    }
+                    value={acceptedCount}
+                    prefix={<CheckCircleOutlined className="text-sm opacity-40 mr-1" />}
+                    valueStyle={{
+                        fontSize: 16,
+                        fontWeight: 700,
+                        color: acceptedCount > 0 ? "#52c41a" : token.colorText,
+                    }}
+                />
             </div>
 
-            {/* Stats Cards */}
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Total Invitations"
-                            value={totalInvitations}
-                            prefix={<MailOutlined />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Pending"
-                            value={pendingCount}
-                            prefix={<ClockCircleOutlined />}
-                            valueStyle={pendingCount > 0 ? { color: "#fa8c16" } : undefined}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Accepted"
-                            value={acceptedCount}
-                            prefix={<CheckCircleOutlined />}
-                            valueStyle={acceptedCount > 0 ? { color: "#52c41a" } : undefined}
-                        />
-                    </Card>
-                </Col>
-            </Row>
-
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{
                         columns,
@@ -175,7 +197,7 @@ export const OrganizationInvitationsPage = () => {
                             },
                         ],
                         onFiltersChange: (f: Record<string, any>) => setSearchText(f.email || ""),
-                        pagination: null,
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
                         actions: (record: any) => (
                             <Popconfirm
                                 title="Cancel Invitation"

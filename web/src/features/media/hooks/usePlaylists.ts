@@ -20,12 +20,11 @@ export const usePlaylists = () => {
     const { data: playlists = [], isLoading: isLoadingPlaylists } = useQuery({
         queryKey: ["playlists", orgId],
         queryFn: async () => {
-            if (!orgId) return { data: [] };
+            if (!orgId) return [];
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists`);
             if (!res.ok) await parseApiError(res);
-            return (await res.json()) as { data: PlaylistDTO[] };
+            return (await res.json()) as PlaylistDTO[];
         },
-        select: (res) => res?.data,
         enabled: !!orgId,
     });
 

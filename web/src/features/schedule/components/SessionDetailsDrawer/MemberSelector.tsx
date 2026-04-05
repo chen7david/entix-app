@@ -30,9 +30,9 @@ export const MemberSelector: React.FC<MemberSelectorProps> = ({
                 placeholder="Select teachers or participants"
                 loading={loading || isFetchingNextPage}
                 options={(members || []).map((m: any) => ({
-                    label: m.user?.name || m.user?.email,
-                    value: m.user?.id,
-                    image: m.user?.image,
+                    label: m.name || m.email,
+                    value: m.userId,
+                    image: m.avatarUrl,
                 }))}
                 showSearch
                 filterOption={false}

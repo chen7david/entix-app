@@ -1,21 +1,14 @@
-import {
-    CloudUploadOutlined,
-    DatabaseOutlined,
-    FileOutlined,
-    SearchOutlined,
-} from "@ant-design/icons";
+import { CloudUploadOutlined, DatabaseOutlined, FileOutlined } from "@ant-design/icons";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
-import { Button, Card, Col, Input, Modal, Row, Skeleton, Statistic, Typography, theme } from "antd";
+import { Button, Card, Col, Modal, Row, Skeleton, Statistic, theme } from "antd";
 import { useState } from "react";
 import { UploadsTable } from "../../features/uploads/components/UploadsTable";
-
-const { Title, Text } = Typography;
 
 export const OrganizationUploadsPage = () => {
     const { token } = theme.useToken();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState("");
     const { activeOrganization } = useOrganization();
 
     const { data: uploads, isLoading: loadingUploads } = useOrganizationUploads(
@@ -23,20 +16,14 @@ export const OrganizationUploadsPage = () => {
     );
     const deleteUploadMutation = useDeleteUpload(activeOrganization?.id);
 
-    const handleDelete = (uploadId: string) => {
+    const handleDelete = (id: string) => {
         Modal.confirm({
             title: "Delete File",
-            content:
-                "Are you sure you want to permanently delete this file? This action cannot be undone.",
-            okText: "Yes, Delete",
+            content: "Are you sure you want to delete this file? This action cannot be undone.",
+            okText: "Delete",
             okType: "danger",
-            cancelText: "Cancel",
-            onOk: async () => {
-                try {
-                    await deleteUploadMutation.mutateAsync(uploadId);
-                } catch {
-                    // error matched in hook
-                }
+            onOk: () => {
+                deleteUploadMutation.mutate(id);
             },
         });
     };
@@ -52,21 +39,18 @@ export const OrganizationUploadsPage = () => {
     if (loadingUploads) return <Skeleton active />;
     if (!activeOrganization) return <div>Organization not found</div>;
 
-    const totalStorage = uploads?.reduce((acc, curr) => acc + curr.fileSize, 0) || 0;
+    const totalStorage = (uploads || []).reduce(
+        (acc: number, curr) => acc + (curr.fileSize || 0),
+        0
+    );
     const totalFiles = uploads?.length || 0;
 
     return (
-        <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Files and Uploads
-                    </Title>
-                    <Text type="secondary">
-                        Manage your organization's storage securely via Direct-to-R2 architecture.
-                    </Text>
-                </div>
-                <div className="flex items-center gap-4">
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Files and Uploads"
+                subtitle="Manage your organization's storage securely via Direct-to-R2 architecture."
+                actions={
                     <Button
                         type="primary"
                         icon={<CloudUploadOutlined />}
@@ -74,8 +58,8 @@ export const OrganizationUploadsPage = () => {
                     >
                         Upload Files
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
             {/* Stats Cards */}
             <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
@@ -102,28 +86,15 @@ export const OrganizationUploadsPage = () => {
                 </Col>
             </Row>
 
-            {/* Search */}
-            <div className="mb-4">
-                <Input
-                    placeholder="Search files..."
-                    prefix={<SearchOutlined />}
-                    className="max-w-xs"
-                    onChange={(e) => setSearchText(e.target.value)}
-                    allowClear
+            <div className="flex-1 min-h-0">
+                <UploadsTable
+                    uploads={uploads || []}
+                    onDelete={handleDelete}
+                    isDeleting={(id) =>
+                        deleteUploadMutation.isPending && deleteUploadMutation.variables === id
+                    }
                 />
             </div>
-
-            <UploadsTable
-                uploads={
-                    uploads?.filter((u) =>
-                        u.originalName.toLowerCase().includes(searchText.toLowerCase())
-                    ) || []
-                }
-                onDelete={handleDelete}
-                isDeleting={(id) =>
-                    deleteUploadMutation.isPending && deleteUploadMutation.variables === id
-                }
-            />
 
             <Modal
                 title="Upload Files"

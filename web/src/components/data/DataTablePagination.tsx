@@ -21,9 +21,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagina
 
     // Derived states
     const hasPrev = isCursor ? pagination.hasPrevPage : (pagination.current || 1) > 1;
-    const hasNext = isCursor
-        ? pagination.hasNextPage
-        : (pagination.current || 1) * pagination.pageSize < (pagination.total || 0);
+    const hasNext = isCursor ? pagination.hasNextPage : false; // For now, non-cursor pagination is purely driven by parent if provided.
 
     const onNext = () => {
         if (isCursor) {
@@ -63,7 +61,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagina
                     onClick={onPrev}
                     icon={<LeftOutlined style={{ fontSize: 16 }} />}
                     type="text"
-                    className="flex items-center justify-center w-9 h-9 rounded-lg transition-all hover:bg-black/5 dark:hover:bg-white/10"
+                    className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${hasPrev ? "hover:bg-black/5 dark:hover:bg-white/10" : "pointer-events-none opacity-30"}`}
                     style={{
                         color: hasPrev ? token.colorPrimary : token.colorTextDisabled,
                     }}
@@ -84,7 +82,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagina
                     onClick={onNext}
                     icon={<RightOutlined style={{ fontSize: 16 }} />}
                     type="text"
-                    className="flex items-center justify-center w-9 h-9 rounded-lg transition-all hover:bg-black/5 dark:hover:bg-white/10"
+                    className={`flex items-center justify-center w-9 h-9 rounded-lg transition-all ${hasNext ? "hover:bg-black/5 dark:hover:bg-white/10" : "pointer-events-none opacity-30"}`}
                     style={{
                         color: hasNext ? token.colorPrimary : token.colorTextDisabled,
                     }}

@@ -43,7 +43,7 @@ import {
     Typography,
 } from "antd";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -131,7 +131,6 @@ export const PlaylistManager: React.FC<{
     const navigateOrg = useOrgNavigate();
     // Legacy definition removed since we merged the hook calls
 
-    const [searchText, setSearchText] = useState("");
     const [internalIsCreateModalOpen, setInternalIsCreateModalOpen] = useState(false);
     const isCreateModalOpen = externalIsCreateModalOpen ?? internalIsCreateModalOpen;
     const setIsCreateModalOpen = (val: boolean) => {
@@ -222,13 +221,6 @@ export const PlaylistManager: React.FC<{
         }
     };
 
-    const filteredPlaylists = useMemo(() => {
-        if (!playlists) return [];
-        if (!searchText) return playlists;
-        const lowerSearch = searchText.toLowerCase();
-        return playlists.filter((p: any) => p.title.toLowerCase().includes(lowerSearch));
-    }, [playlists, searchText]);
-
     const columns = [
         {
             title: "Playlist",
@@ -258,12 +250,12 @@ export const PlaylistManager: React.FC<{
     ];
 
     return (
-        <div className="flex flex-col gap-6 pt-4">
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+        <div className="flex flex-col h-full min-h-0">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{
                         columns,
-                        data: filteredPlaylists,
+                        data: playlists,
                         loading: isLoadingPlaylists,
                         onRowClick: (record: any) => openEditDrawer(record),
                         filters: [
@@ -273,8 +265,10 @@ export const PlaylistManager: React.FC<{
                                 placeholder: "Search playlists...",
                             },
                         ],
-                        onFiltersChange: (f: Record<string, any>) => setSearchText(f.q || ""),
-                        pagination: null,
+                        onFiltersChange: (_f: Record<string, any>) => {
+                            // TODO: Implement server-side search via usePlaylists hook
+                        },
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
                         actions: (record: any) => {
                             const items: MenuProps["items"] = [
                                 {

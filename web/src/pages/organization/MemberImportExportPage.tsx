@@ -5,6 +5,7 @@ import {
     InfoCircleOutlined,
     UploadOutlined,
 } from "@ant-design/icons";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import {
     Alert,
@@ -20,7 +21,7 @@ import {
 } from "antd";
 import type React from "react";
 
-const { Title, Text, Paragraph } = Typography;
+const { Paragraph, Text } = Typography;
 const { Dragger } = Upload;
 const { Panel } = Collapse;
 
@@ -107,13 +108,11 @@ export const MemberImportExportPage: React.FC = () => {
     ];
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Bulk Member Management
-                </Title>
-                <Text type="secondary">Import and export member data directly via JSON files.</Text>
-            </div>
+        <div>
+            <PageHeader
+                title="Bulk Member Management"
+                subtitle="Import and export member data directly via JSON files."
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <Card title="Export Data" className="shadow-sm">

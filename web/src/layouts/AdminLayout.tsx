@@ -18,14 +18,14 @@ export const AdminLayout: React.FC = () => {
             </Sider>
             <Layout hasSider>
                 <Content
-                    className="overflow-auto relative"
+                    className="flex flex-col relative"
                     style={{
                         backgroundColor: token.colorBgLayout,
                     }}
                 >
                     <Toolbar />
-                    <div className="p-8">
-                        <div className="max-w-7xl mx-auto">
+                    <div className="flex-1 flex flex-col min-h-0 p-8">
+                        <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full min-h-0">
                             <ImpersonationBanner />
                             <Outlet />
                         </div>
