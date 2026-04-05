@@ -1,3 +1,4 @@
+import { BadRequestError, InternalServerError, NotFoundError } from "@api/errors/app.error";
 import type { UserRepository } from "@api/repositories/user.repository";
 import type { Auth } from "better-auth";
 import { BaseService } from "./base.service";
@@ -39,7 +40,7 @@ export class UserService extends BaseService {
         });
 
         if (!result) {
-            throw new Error("User creation failed: No result returned from Auth API");
+            throw new InternalServerError("User creation failed: No result returned from Auth API");
         }
 
         return result as CreateUserResult;
@@ -104,5 +105,36 @@ export class UserService extends BaseService {
         data: Partial<{ email: string; name: string; image: string | null }>
     ) {
         return await this.userRepo.update(id, data);
+    }
+
+    /**
+     * Resend verification email for a user (Admin only).
+     * Bypasses the session-scoped check by stripping headers.
+     */
+    async resendVerificationEmailAdmin(email: string) {
+        const user = await this.userRepo.findByEmail(email);
+        if (!user) {
+            throw new NotFoundError(`User with email ${email} not found`);
+        }
+        if (user.emailVerified) {
+            throw new BadRequestError(`User with email ${email} is already verified`);
+        }
+
+        await this.auth.api.sendVerificationEmail({
+            body: { email },
+            headers: new Headers(), // Empty headers to bypass session-scoped checks
+        });
+    }
+
+    /**
+     * List all users globally with cursor pagination (Admin only).
+     */
+    async listUsersAdminPaginated(
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
+        return await this.userRepo.findAllAdminPaginated(limit, cursor, direction, search);
     }
 }

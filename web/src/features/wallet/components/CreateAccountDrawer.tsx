@@ -35,7 +35,7 @@ export const CreateAccountDrawer: React.FC<Props> = ({ open, onClose, orgId }) =
     return (
         <Drawer
             title="Create New Account"
-            width={400}
+            size="default"
             open={open}
             onClose={onClose}
             extra={

@@ -2,6 +2,15 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach, vi } from "vitest";
 
+// Mock ResizeObserver for Ant Design and other measurement-dependent components
+class ResizeObserverMock {
+    observe = vi.fn();
+    unobserve = vi.fn();
+    disconnect = vi.fn();
+}
+
+vi.stubGlobal("ResizeObserver", ResizeObserverMock);
+
 // Mock matchMedia if it's not available in jsdom (often needed for Ant Design)
 Object.defineProperty(window, "matchMedia", {
     writable: true,

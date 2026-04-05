@@ -33,6 +33,7 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: false,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         vi.mocked(useOrganization).mockReturnValue({
@@ -43,13 +44,13 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn(),
+            checkOrganizationStatus: vi.fn().mockResolvedValue({ orgs: [], activeOrg: null }),
         });
 
         render(
             <MemoryRouter initialEntries={["/"]}>
                 <Routes>
-                    <Route path="/" element={<App />} />
+                    <Route path="*" element={<App />} />
                     <Route
                         path={AppRoutes.auth.signIn}
                         element={<div data-testid="signin-page">Sign In</div>}
@@ -58,9 +59,9 @@ describe("HomeRedirect UX Logic", () => {
             </MemoryRouter>
         );
 
-        await waitFor(() => {
-            expect(screen.getByTestId("signin-page")).toBeInTheDocument();
-        });
+        // Await the redirect result
+        const signinPage = await screen.findByTestId("signin-page");
+        expect(signinPage).toBeInTheDocument();
     });
 
     it("should show a loading spinner while identifying organization status", async () => {
@@ -69,6 +70,7 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         vi.mocked(useOrganization).mockReturnValue({
@@ -79,7 +81,7 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn(),
+            checkOrganizationStatus: vi.fn().mockResolvedValue({ orgs: [], activeOrg: null }),
         });
 
         render(
@@ -88,7 +90,8 @@ describe("HomeRedirect UX Logic", () => {
             </MemoryRouter>
         );
 
-        expect(screen.getByTestId("loading-spinner")).toBeInTheDocument();
+        const spinner = await screen.findByTestId("loading-spinner");
+        expect(spinner).toBeInTheDocument();
     });
 
     it("should call checkOrganizationStatus for authenticated users", async () => {
@@ -99,6 +102,7 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
         });
 
         vi.mocked(useOrganization).mockReturnValue({
@@ -109,7 +113,10 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: mockCheckStatus,
+            checkOrganizationStatus: mockCheckStatus.mockResolvedValue({
+                orgs: [],
+                activeOrg: null,
+            }),
         });
 
         render(

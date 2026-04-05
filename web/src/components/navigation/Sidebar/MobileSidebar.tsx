@@ -3,7 +3,11 @@ import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Button, Drawer } from "antd";
 import { SidebarContent } from "./SidebarContent";
 
-export const MobileSidebar: React.FC = () => {
+interface MobileSidebarProps {
+    variant?: "org" | "admin";
+}
+
+export const MobileSidebar: React.FC<MobileSidebarProps> = ({ variant = "org" }) => {
     const { isOpen, close } = useSidebar();
 
     return (
@@ -20,7 +24,7 @@ export const MobileSidebar: React.FC = () => {
                 </div>
             }
         >
-            <SidebarContent />
+            <SidebarContent variant={variant} />
         </Drawer>
     );
 };

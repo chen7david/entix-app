@@ -4,78 +4,56 @@ import {
     ThunderboltOutlined,
     WarningOutlined,
 } from "@ant-design/icons";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import type { BulkMetrics } from "@web/src/features/organization";
-import { Card, Col, Row, Skeleton, Statistic } from "antd";
 
 interface DashboardMetricCardsProps {
     metrics?: BulkMetrics;
     loading: boolean;
 }
 
+const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
+};
+
 export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsProps) => {
-    const formatBytes = (bytes: number) => {
-        if (bytes === 0) return "0 B";
-        const k = 1024;
-        const sizes = ["B", "KB", "MB", "GB", "TB"];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
-    };
-
-    if (loading) {
-        return (
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                {[1, 2, 3, 4].map((i) => (
-                    <Col xs={24} sm={12} lg={6} key={i}>
-                        <Card bordered={false} className="shadow-sm">
-                            <Skeleton active paragraph={{ rows: 1 }} />
-                        </Card>
-                    </Col>
-                ))}
-            </Row>
-        );
-    }
-
     return (
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-blue-500">
-                    <Statistic
-                        title="Total Members"
-                        value={metrics?.totalMembers || 0}
-                        prefix={<TeamOutlined className="text-blue-500 mr-2" />}
-                    />
-                </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-green-500">
-                    <Statistic
-                        title="Active Sessions"
-                        value={metrics?.activeSessions || 0}
-                        prefix={<ThunderboltOutlined className="text-green-500 mr-2" />}
-                    />
-                </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-orange-500">
-                    <Statistic
-                        title="Engagement Risk"
-                        value={metrics?.engagementRisk || 0}
-                        valueStyle={{
-                            color: (metrics?.engagementRisk || 0) > 0 ? "#fa8c16" : undefined,
-                        }}
-                        prefix={<WarningOutlined className="text-orange-500 mr-2" />}
-                    />
-                </Card>
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-                <Card bordered={false} className="shadow-sm border-l-4 border-purple-500">
-                    <Statistic
-                        title="Storage Used"
-                        value={formatBytes(metrics?.totalStorage || 0)}
-                        prefix={<DatabaseOutlined className="text-purple-500 mr-2" />}
-                    />
-                </Card>
-            </Col>
-        </Row>
+        <SummaryCardsRow
+            loading={loading}
+            items={[
+                {
+                    key: "members",
+                    label: "Total Members",
+                    value: metrics?.totalMembers || 0,
+                    icon: <TeamOutlined />,
+                    color: "#2563eb",
+                },
+                {
+                    key: "sessions",
+                    label: "Active Sessions",
+                    value: metrics?.activeSessions || 0,
+                    icon: <ThunderboltOutlined />,
+                    color: "#10b981",
+                },
+                {
+                    key: "risk",
+                    label: "Engagement Risk",
+                    value: metrics?.engagementRisk || 0,
+                    icon: <WarningOutlined />,
+                    color: (metrics?.engagementRisk || 0) > 0 ? "#fa8c16" : "#10b981",
+                },
+                {
+                    key: "storage",
+                    label: "Storage Used",
+                    value: formatBytes(metrics?.totalStorage || 0),
+                    icon: <DatabaseOutlined />,
+                    color: "#8b5cf6",
+                },
+            ]}
+        />
     );
 };

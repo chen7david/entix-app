@@ -18,14 +18,22 @@ const resendListResponseSchema = z.object({
     has_more: z.boolean().optional(),
 });
 
-export const EmailInsightsHandler = {
-    list: async (ctx: any) => {
-        const { limit, after, before } = ctx.req.valid("query");
+import type { AppHandler } from "@api/helpers/types.helpers";
+import type { EmailInsightsRoutes } from "./email-insights.routes";
 
-        ctx.var.logger.info({ limit, after, before }, "Fetching email list via MailService");
+export const EmailInsightsHandler = {
+    list: (async (ctx) => {
+        const { limit, cursor, direction } = ctx.req.valid("query");
+
+        const after = direction === "next" ? cursor : undefined;
+        const before = direction === "prev" ? cursor : undefined;
+
+        ctx.var.logger.info(
+            { limit, cursor, direction, after, before },
+            "Fetching email list via MailService"
+        );
 
         const mailService = getMailService(ctx);
-
         const { data, error } = await mailService.listEmails({
             limit: limit ?? 20,
             after,
@@ -38,17 +46,36 @@ export const EmailInsightsHandler = {
         }
 
         const result = resendListResponseSchema.parse(data);
-        ctx.var.logger.info({ count: result.data?.length ?? 0 }, "Email list fetched from Resend");
+        const rawItems = result.data ?? [];
+        const hasMore = result.has_more ?? false;
+
+        // Map Resend's native items to our standardized emailSummarySchema
+        const items = rawItems.map((item) => ({
+            id: item.id,
+            to: item.to || null,
+            from: item.from || "unknown",
+            subject: item.subject || null,
+            created_at: item.created_at,
+            last_event: (item as any).last_event || null,
+            scheduled_at: (item as any).scheduled_at || null,
+            bcc: (item as any).bcc || null,
+            cc: (item as any).cc || null,
+            reply_to: (item as any).reply_to || null,
+        }));
+
+        const nextCursor =
+            direction === "next" && hasMore && items.length > 0 ? items[items.length - 1].id : null;
+        const prevCursor = direction === "prev" && hasMore && items.length > 0 ? items[0].id : null;
 
         return ctx.json(
             {
-                object: "list" as const,
-                data: result.data ?? [],
-                has_more: result.has_more ?? false,
+                items,
+                nextCursor,
+                prevCursor,
             },
             HttpStatusCodes.OK
         );
-    },
+    }) as AppHandler<typeof EmailInsightsRoutes.list>,
 
     get: async (ctx: any) => {
         const { emailId } = ctx.req.valid("param");

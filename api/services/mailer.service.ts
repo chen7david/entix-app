@@ -19,14 +19,24 @@ type SendPasswordResetParams = {
 };
 
 export class MailService {
-    private $client: Resend;
+    private $client: Resend | null = null;
+    private isFallback: boolean = false;
     private sender: string = "Entix <donotreply@entix.org>";
 
-    constructor(apiKey: string) {
-        this.$client = new Resend(apiKey);
+    constructor(apiKey?: string) {
+        if (!apiKey || apiKey === "LOCAL_DEV_REPLACE_ME") {
+            this.isFallback = true;
+            console.warn("[MAILER] No RESEND_API_KEY provided. Falling back to console logging.");
+        } else {
+            this.$client = new Resend(apiKey);
+        }
     }
 
     public async listEmails(options: { limit?: number; after?: string; before?: string }) {
+        if (!this.$client) {
+            throw new Error("MailService client is not initialized (fallback mode).");
+        }
+
         const paginationParam = options.after
             ? { after: options.after }
             : options.before
@@ -40,10 +50,23 @@ export class MailService {
     }
 
     public async getEmail(emailId: string) {
+        if (!this.$client) {
+            throw new Error("MailService client is not initialized (fallback mode).");
+        }
+
         return this.$client.emails.get(emailId);
     }
 
     public async sendHtml({ to, subject, html }: SendHtmlParams) {
+        if (this.isFallback || !this.$client) {
+            console.log("--- [MAILER FALLBACK: HTML EMAIL] ---");
+            console.log(`To: ${to}`);
+            console.log(`Subject: ${subject}`);
+            console.log(`Body: ${html}`);
+            console.log("-------------------------------------");
+            return;
+        }
+
         try {
             await this.$client.emails.send({
                 from: this.sender,
@@ -57,6 +80,15 @@ export class MailService {
     }
 
     public async sendTemplate({ to, templateId, variables }: SendTemplateParams) {
+        if (this.isFallback || !this.$client) {
+            console.log("--- [MAILER FALLBACK: TEMPLATE EMAIL] ---");
+            console.log(`To: ${to}`);
+            console.log(`Template: ${templateId}`);
+            console.log(`Variables: ${JSON.stringify(variables, null, 2)}`);
+            console.log("-----------------------------------------");
+            return;
+        }
+
         try {
             await this.$client.emails.send({
                 from: this.sender,

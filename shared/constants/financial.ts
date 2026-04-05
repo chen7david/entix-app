@@ -20,7 +20,6 @@ export const FINANCIAL_CURRENCIES = {
     EUR: "fcur_eur",
     SRD: "fcur_srd",
     AUD: "fcur_aud",
-    BTC: "fcur_btc",
 } as const;
 
 export const FINANCIAL_CURRENCY_CONFIG = {
@@ -28,49 +27,50 @@ export const FINANCIAL_CURRENCY_CONFIG = {
         code: "USD",
         name: "US Dollar",
         symbol: "$",
+        color: "#2e7d32",
         defaultAccountName: "Savings (USD)",
     },
     [FINANCIAL_CURRENCIES.CAD]: {
         code: "CAD",
         name: "Canadian Dollar",
         symbol: "CA$",
+        color: "#004792",
         defaultAccountName: "Savings (CAD)",
     },
     [FINANCIAL_CURRENCIES.CNY]: {
         code: "CNY",
         name: "Chinese Yuan",
         symbol: "¥",
+        color: "#d32f2f",
         defaultAccountName: "Savings (CNY)",
     },
     [FINANCIAL_CURRENCIES.EUR]: {
         code: "EUR",
         name: "Euro",
         symbol: "€",
+        color: "#1565c0",
         defaultAccountName: "Savings (EUR)",
     },
     [FINANCIAL_CURRENCIES.ETD]: {
         code: "ETD",
         name: "Entix Dollar",
         symbol: "E$",
+        color: "#0288d1",
         defaultAccountName: "Points (ETD)",
     },
     [FINANCIAL_CURRENCIES.SRD]: {
         code: "SRD",
         name: "Surinamese Dollar",
         symbol: "$",
+        color: "#c62828",
         defaultAccountName: "Savings (SRD)",
     },
     [FINANCIAL_CURRENCIES.AUD]: {
         code: "AUD",
         name: "Australian Dollar",
         symbol: "A$",
+        color: "#00843D",
         defaultAccountName: "Savings (AUD)",
-    },
-    [FINANCIAL_CURRENCIES.BTC]: {
-        code: "BTC",
-        name: "Bitcoin",
-        symbol: "₿",
-        defaultAccountName: "Wallet (BTC)",
     },
 } as const;
 
@@ -80,6 +80,7 @@ export const FINANCIAL_CATEGORIES = {
     SERVICE_FEE: "fcat_service_fee",
     REFUND: "fcat_refund",
     INTERNAL_TRANSFER: "fcat_internal_transfer",
+    SYSTEM_ADJUSTMENT: "fcat_system_adjustment",
 } as const;
 
 /**
@@ -92,6 +93,15 @@ export const FINANCIAL_ACCOUNTS = {
     // Deprecated: Use getTreasuryAccountId(currencyId) instead for multi-currency support.
     PLATFORM_TREASURY: "facc_platform_treasury",
 } as const;
+
+export const ACCOUNT_TYPES = {
+    SAVINGS: "savings",
+    FUNDING: "funding",
+    TREASURY: "treasury",
+    SYSTEM: "system",
+} as const;
+
+export type AccountType = (typeof ACCOUNT_TYPES)[keyof typeof ACCOUNT_TYPES];
 
 export type FinancialCurrencyId = (typeof FINANCIAL_CURRENCIES)[keyof typeof FINANCIAL_CURRENCIES];
 export type FinancialCategoryId = (typeof FINANCIAL_CATEGORIES)[keyof typeof FINANCIAL_CATEGORIES];

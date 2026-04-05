@@ -5,7 +5,7 @@ import {
     InfoCircleOutlined,
     UploadOutlined,
 } from "@ant-design/icons";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import {
     Alert,
@@ -21,7 +21,7 @@ import {
 } from "antd";
 import type React from "react";
 
-const { Title, Text, Paragraph } = Typography;
+const { Paragraph, Text } = Typography;
 const { Dragger } = Upload;
 const { Panel } = Collapse;
 
@@ -108,179 +108,173 @@ export const MemberImportExportPage: React.FC = () => {
     ];
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6 max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <Title level={2}>Bulk Member Management</Title>
-                    <Text type="secondary">
-                        Import and export member data directly via JSON files.
-                    </Text>
-                </div>
+        <div>
+            <PageHeader
+                title="Bulk Member Management"
+                subtitle="Import and export member data directly via JSON files."
+            />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <Card title="Export Data" className="shadow-sm">
-                        <Paragraph>
-                            Download all organization members, including identities and profiles, as
-                            a single JSON file.
-                        </Paragraph>
-                        <Button
-                            icon={<DownloadOutlined />}
-                            onClick={exportMembers}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                        >
-                            Export Members JSON
-                        </Button>
-                    </Card>
-
-                    <Card title="Import Data" className="shadow-sm">
-                        <Paragraph>
-                            Upload a JSON file to bulk-add or update members.{" "}
-                            <Text strong>No automated emails will be sent.</Text>
-                        </Paragraph>
-                        <Dragger
-                            accept=".json"
-                            beforeUpload={handleUpload}
-                            showUploadList={false}
-                            disabled={isImporting}
-                        >
-                            <Paragraph className="ant-upload-drag-icon">
-                                <UploadOutlined className="text-blue-500" />
-                            </Paragraph>
-                            <Paragraph className="ant-upload-text">
-                                Click or drag JSON file to this area to import
-                            </Paragraph>
-                        </Dragger>
-                    </Card>
-                </div>
-
-                <Card className="shadow-sm mb-8" title="Instructions & Schema">
-                    <Space direction="vertical" size="middle" className="w-full">
-                        <Alert
-                            message="Quiet Import Mode & Role Enforcement"
-                            description="All members are imported silently (no welcome emails). For security, all imported users are set to the 'member' role by default. You can manually upgrade them to 'admin' or 'owner' in the dashboard after the import."
-                            type="info"
-                            showIcon
-                            icon={<InfoCircleOutlined />}
-                        />
-
-                        <Collapse ghost>
-                            <Panel header="View JSON Structure Example" key="1">
-                                <Paragraph
-                                    copyable={{ text: JSON.stringify(importExample, null, 2) }}
-                                    style={{
-                                        background: "rgba(0, 0, 0, 0.02)",
-                                        padding: "16px",
-                                        borderRadius: "8px",
-                                        border: "1px solid rgba(0, 0, 0, 0.06)",
-                                        marginBottom: 0,
-                                    }}
-                                >
-                                    <pre className="bg-transparent p-0 m-0 text-xs overflow-auto font-mono">
-                                        {JSON.stringify(importExample, null, 2)}
-                                    </pre>
-                                </Paragraph>
-                            </Panel>
-                        </Collapse>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-2">
-                            <div>
-                                <Text strong>Required Fields:</Text>
-                                <ul className="list-disc pl-5 mt-2 text-gray-600 dark:text-gray-400">
-                                    <li>
-                                        <code className="text-red-500">email</code> (String)
-                                    </li>
-                                    <li>
-                                        <code className="text-red-500">name</code> (String)
-                                    </li>
-                                </ul>
-                            </div>
-                            <div>
-                                <Text strong>Optional Fields:</Text>
-                                <ul className="list-disc pl-5 mt-2 text-gray-600 dark:text-gray-400">
-                                    <li>
-                                        <code>id</code> (String, preserves system identifier)
-                                    </li>
-                                    <li>
-                                        <code>avatarUrl</code> (String)
-                                    </li>
-                                    <li>
-                                        <code>role</code> (Defaults to 'member' for security; can be
-                                        changed later)
-                                    </li>
-                                    <li>
-                                        <code>createdAt</code> / <code>updatedAt</code> (ISO
-                                        Timestamps)
-                                    </li>
-                                    <li>
-                                        <code>profile</code> (id, firstName, lastName, displayName,
-                                        sex, birthDate, timestamps)
-                                    </li>
-                                    <li>
-                                        <code>phones</code> (Array of{" "}
-                                        {`{ id, countryCode, number, extension, label, isPrimary, timestamps }`}
-                                        )
-                                    </li>
-                                    <li>
-                                        <code>addresses</code> (Array of{" "}
-                                        {`{ id, country, state, city, zip, address, label, isPrimary, timestamps }`}
-                                        )
-                                    </li>
-                                    <li>
-                                        <code>socials</code> (Array of{" "}
-                                        {`{ id, type, urlOrHandle, timestamps }`})
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </Space>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <Card title="Export Data" className="shadow-sm">
+                    <Paragraph>
+                        Download all organization members, including identities and profiles, as a
+                        single JSON file.
+                    </Paragraph>
+                    <Button
+                        icon={<DownloadOutlined />}
+                        onClick={exportMembers}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                        Export Members JSON
+                    </Button>
                 </Card>
 
-                {importResult && (
-                    <Card title="Latest Import Result" className="shadow-sm border-blue-200">
-                        <Space direction="vertical" className="w-full">
-                            <div className="flex gap-4">
-                                <Statistic
-                                    title="Processed"
-                                    value={importResult.total}
-                                    valueStyle={{ fontSize: token.fontSizeXL }}
-                                />
-                                <Statistic
-                                    title="Created"
-                                    value={importResult.created}
-                                    valueStyle={{ color: "#3f8600", fontSize: token.fontSizeXL }}
-                                    prefix={<CheckCircleOutlined />}
-                                />
-                                <Statistic
-                                    title="Linked"
-                                    value={importResult.linked}
-                                    valueStyle={{ color: "#108ee9", fontSize: token.fontSizeXL }}
-                                />
-                                <Statistic
-                                    title="Failed"
-                                    value={importResult.failed}
-                                    valueStyle={{ color: "#cf1322", fontSize: token.fontSizeXL }}
-                                    prefix={<ExclamationCircleOutlined />}
-                                />
-                            </div>
-
-                            {importResult.errors.length > 0 && (
-                                <>
-                                    <Divider />
-                                    <Text type="danger" strong>
-                                        Errors:
-                                    </Text>
-                                    <ul className="max-h-40 overflow-auto list-disc pl-5 mt-2 text-red-600">
-                                        {importResult.errors.map((err, i) => (
-                                            <li key={`${err}-${i}`}>{err}</li>
-                                        ))}
-                                    </ul>
-                                </>
-                            )}
-                        </Space>
-                    </Card>
-                )}
+                <Card title="Import Data" className="shadow-sm">
+                    <Paragraph>
+                        Upload a JSON file to bulk-add or update members.{" "}
+                        <Text strong>No automated emails will be sent.</Text>
+                    </Paragraph>
+                    <Dragger
+                        accept=".json"
+                        beforeUpload={handleUpload}
+                        showUploadList={false}
+                        disabled={isImporting}
+                    >
+                        <Paragraph className="ant-upload-drag-icon">
+                            <UploadOutlined className="text-blue-500" />
+                        </Paragraph>
+                        <Paragraph className="ant-upload-text">
+                            Click or drag JSON file to this area to import
+                        </Paragraph>
+                    </Dragger>
+                </Card>
             </div>
-        </>
+
+            <Card className="shadow-sm mb-8" title="Instructions & Schema">
+                <Space direction="vertical" size="middle" className="w-full">
+                    <Alert
+                        message="Quiet Import Mode & Role Enforcement"
+                        description="All members are imported silently (no welcome emails). For security, all imported users are set to the 'member' role by default. You can manually upgrade them to 'admin' or 'owner' in the dashboard after the import."
+                        type="info"
+                        showIcon
+                        icon={<InfoCircleOutlined />}
+                    />
+
+                    <Collapse ghost>
+                        <Panel header="View JSON Structure Example" key="1">
+                            <Paragraph
+                                copyable={{ text: JSON.stringify(importExample, null, 2) }}
+                                style={{
+                                    background: "rgba(0, 0, 0, 0.02)",
+                                    padding: "16px",
+                                    borderRadius: "8px",
+                                    border: "1px solid rgba(0, 0, 0, 0.06)",
+                                    marginBottom: 0,
+                                }}
+                            >
+                                <pre className="bg-transparent p-0 m-0 text-xs overflow-auto font-mono">
+                                    {JSON.stringify(importExample, null, 2)}
+                                </pre>
+                            </Paragraph>
+                        </Panel>
+                    </Collapse>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mt-2">
+                        <div>
+                            <Text strong>Required Fields:</Text>
+                            <ul className="list-disc pl-5 mt-2 text-gray-600 dark:text-gray-400">
+                                <li>
+                                    <code className="text-red-500">email</code> (String)
+                                </li>
+                                <li>
+                                    <code className="text-red-500">name</code> (String)
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <Text strong>Optional Fields:</Text>
+                            <ul className="list-disc pl-5 mt-2 text-gray-600 dark:text-gray-400">
+                                <li>
+                                    <code>id</code> (String, preserves system identifier)
+                                </li>
+                                <li>
+                                    <code>avatarUrl</code> (String)
+                                </li>
+                                <li>
+                                    <code>role</code> (Defaults to 'member' for security; can be
+                                    changed later)
+                                </li>
+                                <li>
+                                    <code>createdAt</code> / <code>updatedAt</code> (ISO Timestamps)
+                                </li>
+                                <li>
+                                    <code>profile</code> (id, firstName, lastName, displayName, sex,
+                                    birthDate, timestamps)
+                                </li>
+                                <li>
+                                    <code>phones</code> (Array of{" "}
+                                    {`{ id, countryCode, number, extension, label, isPrimary, timestamps }`}
+                                    )
+                                </li>
+                                <li>
+                                    <code>addresses</code> (Array of{" "}
+                                    {`{ id, country, state, city, zip, address, label, isPrimary, timestamps }`}
+                                    )
+                                </li>
+                                <li>
+                                    <code>socials</code> (Array of{" "}
+                                    {`{ id, type, urlOrHandle, timestamps }`})
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </Space>
+            </Card>
+
+            {importResult && (
+                <Card title="Latest Import Result" className="shadow-sm border-blue-200">
+                    <Space direction="vertical" className="w-full">
+                        <div className="flex gap-4">
+                            <Statistic
+                                title="Processed"
+                                value={importResult.total}
+                                valueStyle={{ fontSize: token.fontSizeXL }}
+                            />
+                            <Statistic
+                                title="Created"
+                                value={importResult.created}
+                                valueStyle={{ color: "#3f8600", fontSize: token.fontSizeXL }}
+                                prefix={<CheckCircleOutlined />}
+                            />
+                            <Statistic
+                                title="Linked"
+                                value={importResult.linked}
+                                valueStyle={{ color: "#108ee9", fontSize: token.fontSizeXL }}
+                            />
+                            <Statistic
+                                title="Failed"
+                                value={importResult.failed}
+                                valueStyle={{ color: "#cf1322", fontSize: token.fontSizeXL }}
+                                prefix={<ExclamationCircleOutlined />}
+                            />
+                        </div>
+
+                        {importResult.errors.length > 0 && (
+                            <>
+                                <Divider />
+                                <Text type="danger" strong>
+                                    Errors:
+                                </Text>
+                                <ul className="max-h-40 overflow-auto list-disc pl-5 mt-2 text-red-600">
+                                    {importResult.errors.map((err, i) => (
+                                        <li key={`${err}-${i}`}>{err}</li>
+                                    ))}
+                                </ul>
+                            </>
+                        )}
+                    </Space>
+                </Card>
+            )}
+        </div>
     );
 };

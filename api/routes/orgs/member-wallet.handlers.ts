@@ -11,9 +11,11 @@ import type { MemberWalletRoutes } from "./member-wallet.routes";
  */
 const authorizeWalletAccess = (c: any, userId: string, _organizationId: string): boolean => {
     const callerId = c.get("userId");
-    const callerRole = c.get("role"); // requireOrgMembership middleware sets this
+    const callerRole = c.get("membershipRole"); // requireOrgMembership middleware sets this
+    const isSuperAdmin = c.get("isSuperAdmin");
 
     if (callerId === userId) return true;
+    if (isSuperAdmin) return true;
     if (callerRole === "admin" || callerRole === "owner") return true;
 
     return false;
@@ -32,12 +34,12 @@ export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = asyn
     const service = getUserFinancialService(c);
     const result = await service.getUserSummary(userId, organizationId);
 
-    return c.json(result, HttpStatusCodes.OK);
+    return c.json({ data: result }, HttpStatusCodes.OK);
 };
 
 export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactions> = async (c) => {
     const { organizationId, userId } = c.req.valid("param");
-    const { page, pageSize } = c.req.valid("query");
+    const query = c.req.valid("query");
 
     if (!authorizeWalletAccess(c, userId, organizationId)) {
         return c.json(
@@ -47,7 +49,13 @@ export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactio
     }
 
     const service = getUserFinancialService(c);
-    const result = await service.getTransactionHistory(userId, organizationId, { page, pageSize });
+    const { cursor, limit, ...filters } = query;
+    const result = await service.getTransactionHistory(
+        userId,
+        organizationId,
+        { cursor, limit },
+        filters
+    );
 
     return c.json(result, HttpStatusCodes.OK);
 };

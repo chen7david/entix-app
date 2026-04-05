@@ -1,11 +1,6 @@
-import { financialCurrencySeed } from "@api/db/seed/financial.seed";
+import { BadRequestError } from "@api/errors/app.error";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
-import {
-    authOrganizations,
-    type CreateAccountRepoInput,
-    financialAccounts,
-    financialCurrencies,
-} from "@shared/db/schema";
+import { authOrganizations, type CreateAccountRepoInput } from "@shared/db/schema";
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, type TestDb } from "../lib/utils";
@@ -24,7 +19,7 @@ describe("financialAccountsRepository", () => {
         currencyId: "fcur_usd",
         organizationId: "org_test_01",
         name: "Personal Wallet",
-        accountType: "standard",
+        accountType: "savings",
         createdAt: new Date(),
         updatedAt: new Date(),
         ...overrides,
@@ -36,25 +31,16 @@ describe("financialAccountsRepository", () => {
         db = await createTestDb();
         repo = new FinancialAccountsRepository(db as any);
 
-        /**
-         * Delete in FK dependency order: children before parents.
-         * Although these tables are currently independent of other modules,
-         * we maintain strict order for modular consistency.
-         */
-        await db.delete(financialAccounts);
-        await db.delete(financialCurrencies);
-        await db.delete(authOrganizations);
-
-        // Seed required currencies
-        await db.insert(financialCurrencies).values(financialCurrencySeed);
-
-        // Seed a test organization
-        await db.insert(authOrganizations).values({
-            id: "org_test_01",
-            name: "Test Organization",
-            slug: "test-org",
-            createdAt: new Date(),
-        });
+        // Seed a test organization (currencies exist from migrations in createTestDb)
+        await db
+            .insert(authOrganizations)
+            .values({
+                id: "org_test_01",
+                name: "Test Organization",
+                slug: "test-org",
+                createdAt: new Date(),
+            })
+            .onConflictDoNothing();
     });
 
     // ─── insert ──────────────────────────────────────────────────────────────────
@@ -81,7 +67,7 @@ describe("financialAccountsRepository", () => {
                     ownerId: "org_test_01",
                     ownerType: "org",
                     currencyId: "fcur_cad",
-                    organizationId: null,
+                    organizationId: "org_test_01",
                     name: "Store Revenue",
                 })
             );
@@ -97,9 +83,10 @@ describe("financialAccountsRepository", () => {
             expect(results).toHaveLength(2);
         });
 
-        it("returns null on unknown currencyId (FK violation)", async () => {
-            const account = await repo.insert(makeAccountInput({ currencyId: "fcur_nonexistent" }));
-            expect(account).toBeNull();
+        it("throws BadRequestError on unknown currencyId (FK violation)", async () => {
+            await expect(
+                repo.insert(makeAccountInput({ currencyId: "fcur_nonexistent" }))
+            ).rejects.toThrow(BadRequestError);
         });
     });
 
@@ -157,7 +144,7 @@ describe("financialAccountsRepository", () => {
                 makeAccountInput({
                     ownerId: "org_test_01",
                     ownerType: "org",
-                    organizationId: null,
+                    organizationId: "org_test_01",
                     name: "Org Revenue",
                 })
             );

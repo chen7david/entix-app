@@ -4,31 +4,14 @@ import {
     DeleteOutlined,
     MailOutlined,
     PlusOutlined,
-    SearchOutlined,
 } from "@ant-design/icons";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
-import {
-    Button,
-    Card,
-    Col,
-    Form,
-    Input,
-    Modal,
-    message,
-    Popconfirm,
-    Row,
-    Select,
-    Space,
-    Statistic,
-    Table,
-    Tag,
-    Typography,
-} from "antd";
+import { Button, Form, Input, Modal, message, Popconfirm, Select, Space, Tag } from "antd";
 import dayjs from "dayjs";
-import { useState } from "react";
-
-const { Title, Text } = Typography;
+import { useMemo, useState } from "react";
 
 export const OrganizationInvitationsPage = () => {
     const { activeOrganization } = useOrganization();
@@ -71,14 +54,20 @@ export const OrganizationInvitationsPage = () => {
     const pendingCount = invitations?.filter((i: any) => i.status === "pending").length || 0;
     const acceptedCount = invitations?.filter((i: any) => i.status === "accepted").length || 0;
 
+    // Pagination logic removed for now as per architectural alignment.
+    // API cursor support to be added in a future context.
+    const filteredInvitations = useMemo(() => {
+        if (!invitations) return [];
+        if (!searchText) return invitations;
+        const lowerSearch = searchText.toLowerCase();
+        return invitations.filter((i: any) => i.email?.toLowerCase().includes(lowerSearch));
+    }, [invitations, searchText]);
+
     const columns = [
         {
             title: "Email",
             dataIndex: "email",
             key: "email",
-            filteredValue: searchText ? [searchText] : null,
-            onFilter: (value: any, record: any) =>
-                record.email?.toLowerCase().includes(value.toLowerCase()),
         },
         {
             title: "Role",
@@ -108,43 +97,16 @@ export const OrganizationInvitationsPage = () => {
             key: "expiresAt",
             render: (date: string) => dayjs(date).format("MMM D, YYYY"),
         },
-        {
-            title: "Actions",
-            key: "actions",
-            render: (_: any, record: any) => (
-                <Popconfirm
-                    title="Cancel Invitation"
-                    description="Are you sure you want to cancel this invitation?"
-                    onConfirm={() => handleCancel(record.id)}
-                    okText="Yes"
-                    cancelText="No"
-                >
-                    <Button
-                        danger
-                        icon={<DeleteOutlined />}
-                        size="small"
-                        loading={isCancelingInvitation}
-                    >
-                        Revoke
-                    </Button>
-                </Popconfirm>
-            ),
-        },
     ];
 
     if (!activeOrganization) return null;
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Invitations
-                        </Title>
-                        <Text type="secondary">Manage pending and sent invitations</Text>
-                    </div>
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Invitations"
+                subtitle="Manage pending and sent invitations to join your organization."
+                actions={
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -152,106 +114,118 @@ export const OrganizationInvitationsPage = () => {
                     >
                         Invite Member
                     </Button>
-                </div>
+                }
+            />
 
-                {/* Stats Cards */}
-                <Row gutter={16} className="mb-6">
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Total Invitations"
-                                value={totalInvitations}
-                                prefix={<MailOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Pending"
-                                value={pendingCount}
-                                prefix={<ClockCircleOutlined />}
-                                valueStyle={pendingCount > 0 ? { color: "#fa8c16" } : undefined}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Accepted"
-                                value={acceptedCount}
-                                prefix={<CheckCircleOutlined />}
-                                valueStyle={acceptedCount > 0 ? { color: "#52c41a" } : undefined}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
+            <SummaryCardsRow
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Invitations",
+                        value: totalInvitations,
+                        icon: <MailOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "pending",
+                        label: "Pending",
+                        value: pendingCount,
+                        icon: <ClockCircleOutlined />,
+                        color: "#fa8c16",
+                    },
+                    {
+                        key: "accepted",
+                        label: "Accepted",
+                        value: acceptedCount,
+                        icon: <CheckCircleOutlined />,
+                        color: "#52c41a",
+                    },
+                ]}
+            />
 
-                {/* Search */}
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search invitations..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-xs"
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
-                    />
-                </div>
-
-                <Table
-                    dataSource={invitations}
-                    columns={columns}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{ pageSize: 10 }}
-                />
-
-                <Modal
-                    title="Invite Member"
-                    open={isModalOpen}
-                    onCancel={() => setIsModalOpen(false)}
-                    footer={null}
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={handleInvite}
-                        initialValues={{ role: "member" }}
-                    >
-                        <Form.Item
-                            name="email"
-                            label="Email Address"
-                            rules={[
-                                { required: true, message: "Please input the email address!" },
-                                { type: "email", message: "Please enter a valid email!" },
-                            ]}
-                        >
-                            <Input placeholder="colleague@example.com" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="role"
-                            label="Role"
-                            rules={[{ required: true, message: "Please select a role!" }]}
-                        >
-                            <Select>
-                                <Select.Option value="member">Member</Select.Option>
-                                <Select.Option value="admin">Admin</Select.Option>
-                                <Select.Option value="owner">Owner</Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        <Form.Item className="mb-0 flex justify-end">
-                            <Space>
-                                <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                                <Button type="primary" htmlType="submit" loading={isInviting}>
-                                    Send Invitation
+            <div className="flex-1 min-h-0">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: filteredInvitations,
+                        loading,
+                        filters: [
+                            {
+                                type: "search",
+                                key: "email",
+                                placeholder: "Search invitations by email...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => setSearchText(f.email || ""),
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
+                        actions: (record: any) => (
+                            <Popconfirm
+                                title="Cancel Invitation"
+                                description="Are you sure you want to cancel this invitation?"
+                                onConfirm={() => handleCancel(record.id)}
+                                okText="Yes"
+                                cancelText="No"
+                            >
+                                <Button
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    type="text"
+                                    loading={isCancelingInvitation}
+                                >
+                                    Revoke
                                 </Button>
-                            </Space>
-                        </Form.Item>
-                    </Form>
-                </Modal>
+                            </Popconfirm>
+                        ),
+                    }}
+                />
             </div>
-        </>
+
+            <Modal
+                title="Invite Member"
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleInvite}
+                    initialValues={{ role: "member" }}
+                >
+                    <Form.Item
+                        name="email"
+                        label="Email Address"
+                        rules={[
+                            { required: true, message: "Please input the email address!" },
+                            { type: "email", message: "Please enter a valid email!" },
+                        ]}
+                    >
+                        <Input placeholder="colleague@example.com" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="role"
+                        label="Role"
+                        rules={[{ required: true, message: "Please select a role!" }]}
+                    >
+                        <Select>
+                            <Select.Option value="member">Member</Select.Option>
+                            <Select.Option value="admin">Admin</Select.Option>
+                            <Select.Option value="owner">Owner</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item className="mb-0 flex justify-end">
+                        <Space>
+                            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                            <Button type="primary" htmlType="submit" loading={isInviting}>
+                                Send Invitation
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </div>
     );
 };

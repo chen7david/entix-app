@@ -44,8 +44,12 @@ describe("FinanceAccountsPage Smoke Tests", () => {
         } as any);
 
         vi.mocked(useAuth).mockReturnValue({
+            user: { id: "1" } as any,
             isAuthenticated: true,
-        } as any);
+            isLoading: false,
+            isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
+        });
     });
 
     it("renders without crash during loading (undefined data)", () => {
@@ -79,7 +83,7 @@ describe("FinanceAccountsPage Smoke Tests", () => {
                         name: "Main Treasury",
                         balanceCents: 1000,
                         currencyId: "curr_usd",
-                        isFundingAccount: true,
+                        accountType: "funding",
                     },
                 ],
             },

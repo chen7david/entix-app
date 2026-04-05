@@ -1,15 +1,31 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
 
-export const useAdminUsers = () => {
+export const useAdminUsers = (
+    search?: string,
+    options?: { cursor?: string; limit?: number; direction?: "next" | "prev" }
+) => {
     return useQuery({
-        queryKey: ["admin", "users"],
+        queryKey: ["admin", "users", search, options?.cursor, options?.limit, options?.direction],
         queryFn: async () => {
-            const res = await authClient.admin.listUsers({
-                query: { limit: 100 },
-            });
-            if (res.error) throw res.error;
-            return res.data.users;
+            const url = new URL("/api/v1/admin/users", window.location.origin);
+            if (search) url.searchParams.set("search", search);
+            if (options?.cursor) url.searchParams.set("cursor", options.cursor);
+            if (options?.limit) url.searchParams.set("limit", options.limit.toString());
+            if (options?.direction) url.searchParams.set("direction", options.direction);
+
+            const response = await fetch(url.toString());
+            if (!response.ok) {
+                const error = await response
+                    .json()
+                    .catch(() => ({ message: "Failed to fetch global users" }));
+                throw new Error(error.message || "Failed to fetch global users");
+            }
+            return response.json() as Promise<{
+                items: any[];
+                nextCursor: string | null;
+                prevCursor: string | null;
+            }>;
         },
     });
 };
@@ -65,6 +81,19 @@ export const useSetUserRole = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+        },
+    });
+};
+
+export const useResendVerification = () => {
+    return useMutation({
+        mutationFn: async (email: string) => {
+            const res = await authClient.$fetch("/admin/resend-verification", {
+                method: "POST",
+                body: { email },
+            });
+            if (res.error) throw new Error(res.error.message);
+            return res.data;
         },
     });
 };

@@ -1,4 +1,4 @@
-import { ConflictError } from "@api/errors/app.error";
+import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type * as schema from "@shared/db/schema";
 import { BaseService } from "./base.service";
@@ -53,7 +53,7 @@ export class MemberService extends BaseService {
 
         const member = await this.memberRepo.insert(input.organizationId, input.userId, input.role);
         if (!member) {
-            throw new Error("Failed to insert member");
+            throw new InternalServerError("Failed to insert member");
         }
         return member;
     }

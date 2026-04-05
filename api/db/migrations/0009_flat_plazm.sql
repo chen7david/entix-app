@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX `owner_name_idx` ON `financial_accounts` (`owner_id`,`name`);

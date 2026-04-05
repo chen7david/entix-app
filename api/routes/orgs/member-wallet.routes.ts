@@ -1,8 +1,9 @@
 import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { createRoute } from "@hono/zod-openapi";
 import {
+    transactionFiltersSchema,
     transactionHistoryResponseSchema,
-    walletSummaryResponseSchema,
+    walletSummaryDTOSchema,
 } from "@shared/schemas/dto/financial.dto";
 import { z } from "zod";
 
@@ -24,7 +25,7 @@ export const MemberWalletRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                walletSummaryResponseSchema,
+                z.object({ data: walletSummaryDTOSchema }),
                 "Personal wallet summary fetched successfully"
             ),
             [HttpStatusCodes.FORBIDDEN]: jsonContent(
@@ -44,16 +45,7 @@ export const MemberWalletRoutes = {
                 organizationId: z.string().openapi({ description: "Organization ID" }),
                 userId: z.string().openapi({ description: "User ID" }),
             }),
-            query: z.object({
-                page: z
-                    .string()
-                    .optional()
-                    .transform((v) => (v ? parseInt(v, 10) : 1)),
-                pageSize: z
-                    .string()
-                    .optional()
-                    .transform((v) => (v ? parseInt(v, 10) : 20)),
-            }),
+            query: transactionFiltersSchema,
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(

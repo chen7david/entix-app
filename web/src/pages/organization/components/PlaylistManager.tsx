@@ -1,11 +1,13 @@
 import {
+    AppstoreOutlined,
     AudioOutlined,
     DeleteOutlined,
+    EditOutlined,
     HolderOutlined,
+    MoreOutlined,
     OrderedListOutlined,
     PlayCircleOutlined,
     PlaySquareOutlined,
-    SearchOutlined,
 } from "@ant-design/icons";
 import {
     closestCenter,
@@ -25,20 +27,21 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { AppRoutes } from "@shared";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
+import type { MenuProps } from "antd";
 import {
     App,
     Button,
     Drawer,
+    Dropdown,
     Empty,
     Form,
     Input,
     Modal,
-    Popconfirm,
     Select,
-    Space,
-    Table,
     Tooltip,
     Typography,
 } from "antd";
@@ -131,7 +134,6 @@ export const PlaylistManager: React.FC<{
     const navigateOrg = useOrgNavigate();
     // Legacy definition removed since we merged the hook calls
 
-    const [searchText, setSearchText] = useState("");
     const [internalIsCreateModalOpen, setInternalIsCreateModalOpen] = useState(false);
     const isCreateModalOpen = externalIsCreateModalOpen ?? internalIsCreateModalOpen;
     const setIsCreateModalOpen = (val: boolean) => {
@@ -227,8 +229,11 @@ export const PlaylistManager: React.FC<{
             title: "Playlist",
             key: "title",
             render: (_: any, record: any) => (
-                <div className="flex items-center gap-3">
-                    <OrderedListOutlined className="text-blue-500 flex-shrink-0" />
+                <div
+                    className="flex items-center gap-3 cursor-pointer group"
+                    onClick={() => openSequenceManager(record)}
+                >
+                    <OrderedListOutlined className="text-blue-500 flex-shrink-0 group-hover:text-blue-600 transition-colors" />
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={record.title} placement="topLeft" mouseEnterDelay={0.5}>
                             <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">
@@ -248,78 +253,100 @@ export const PlaylistManager: React.FC<{
                 </div>
             ),
         },
-        {
-            title: "Actions",
-            key: "actions",
-            align: "right" as const,
-            render: (_: any, record: any) => (
-                <Space size="middle">
-                    <Button
-                        type="default"
-                        icon={<PlayCircleOutlined />}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            navigateOrg(AppRoutes.org.manage.playlistDetail(record.id));
-                        }}
-                    />
-                    <Button
-                        type="default"
-                        icon={<OrderedListOutlined />}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            openSequenceManager(record);
-                        }}
-                    >
-                        Manage Sequence
-                    </Button>
-                    <Popconfirm
-                        title="Delete Playlist"
-                        description="Are you sure you want to delete this playlist?"
-                        onConfirm={(e) => {
-                            e?.stopPropagation();
-                            deletePlaylist(record.id);
-                        }}
-                        onCancel={(e) => e?.stopPropagation()}
-                        okText="Delete"
-                        okButtonProps={{ danger: true }}
-                    >
-                        <Button
-                            danger
-                            type="text"
-                            icon={<DeleteOutlined />}
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                    </Popconfirm>
-                </Space>
-            ),
-        },
     ];
 
     return (
-        <div className="flex flex-col gap-6 pt-4">
-            <div className="flex justify-between items-center mb-2">
-                <Input
-                    placeholder="Search playlists..."
-                    prefix={<SearchOutlined />}
-                    className="max-w-xs"
-                    onChange={(e) => setSearchText(e.target.value)}
-                    allowClear
+        <div className="flex flex-col h-full min-h-0">
+            <SummaryCardsRow
+                loading={isLoadingPlaylists}
+                items={[
+                    {
+                        key: "total",
+                        label: "Curated Playlists",
+                        value: playlists?.length || 0,
+                        icon: <OrderedListOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "media",
+                        label: "Media Available",
+                        value: media?.length || 0,
+                        icon: <AppstoreOutlined />,
+                        color: "#8b5cf6",
+                    },
+                ]}
+            />
+            <div className="flex-1 min-h-0">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: playlists,
+                        loading: isLoadingPlaylists,
+                        filters: [
+                            {
+                                type: "search",
+                                key: "q",
+                                placeholder: "Search playlists...",
+                            },
+                        ],
+                        onFiltersChange: (_f: Record<string, any>) => {
+                            // TODO: Implement server-side search via usePlaylists hook
+                        },
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
+                        actions: (record: any) => {
+                            const items: MenuProps["items"] = [
+                                {
+                                    key: "view",
+                                    label: "View Detail",
+                                    icon: <PlayCircleOutlined />,
+                                    onClick: () =>
+                                        navigateOrg(AppRoutes.org.manage.playlistDetail(record.id)),
+                                },
+                                {
+                                    key: "sequence",
+                                    label: "Manage Sequence",
+                                    icon: <OrderedListOutlined />,
+                                    onClick: () => openSequenceManager(record),
+                                },
+                                {
+                                    key: "edit",
+                                    label: "Edit Playlist",
+                                    icon: <EditOutlined />,
+                                    onClick: () => openEditDrawer(record),
+                                },
+                                {
+                                    key: "delete",
+                                    label: "Delete",
+                                    danger: true,
+                                    icon: <DeleteOutlined />,
+                                    onClick: () => {
+                                        Modal.confirm({
+                                            title: "Delete Playlist",
+                                            content:
+                                                "Are you sure you want to delete this playlist?",
+                                            okText: "Delete",
+                                            okType: "danger",
+                                            onOk: () => deletePlaylist(record.id),
+                                        });
+                                    },
+                                },
+                            ];
+                            const menuProps: MenuProps = {
+                                items,
+                            };
+                            return (
+                                <Dropdown menu={menuProps} trigger={["click"]}>
+                                    <Button
+                                        type="text"
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </Dropdown>
+                            );
+                        },
+                    }}
                 />
             </div>
-
-            <Table
-                dataSource={playlists?.filter((p: any) =>
-                    p.title.toLowerCase().includes(searchText.toLowerCase())
-                )}
-                columns={columns}
-                rowKey="id"
-                loading={isLoadingPlaylists}
-                pagination={{ pageSize: 10 }}
-                rowClassName="cursor-pointer"
-                onRow={(record) => ({
-                    onClick: () => openEditDrawer(record),
-                })}
-            />
 
             {/* Create Modal */}
             <Modal

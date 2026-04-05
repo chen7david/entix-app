@@ -2,6 +2,11 @@ import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import {
+    ACCOUNT_TYPES,
+    type EnsureFundingAccountRequest,
+    FINANCIAL_CURRENCY_CONFIG,
+} from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -18,10 +23,6 @@ export class AdminFinancialService extends FinancialBaseService {
         super(db, accountsRepo, transactionsRepo);
     }
 
-    /**
-     * Admin credit: moves money FROM the platform treasury account
-     * TO a user or org account. Used for deposits, rewards, adjustments.
-     */
     async adminCredit(input: {
         organizationId: string;
         categoryId: string;
@@ -43,10 +44,6 @@ export class AdminFinancialService extends FinancialBaseService {
         });
     }
 
-    /**
-     * Admin debit: moves money FROM a user or org account
-     * TO the platform treasury. Used for fees, chargebacks, penalties.
-     */
     async adminDebit(input: {
         organizationId: string;
         categoryId: string;
@@ -72,16 +69,70 @@ export class AdminFinancialService extends FinancialBaseService {
      * Returns the current balance of all platform treasury accounts.
      */
     async getTreasuryBalance() {
-        const allAccounts = await this.accountsRepo.findActiveByOwner("platform", "org");
-        return allAccounts.filter((a) => a.id.startsWith("facc_treasury_"));
+        const allAccounts = await this.accountsRepo.findActiveByOwner(
+            "platform",
+            "org",
+            "platform"
+        );
+        return allAccounts.filter((a) => a.accountType === ACCOUNT_TYPES.TREASURY);
     }
 
     /**
+     * Returns all organization accounts in the system (excluding platform).
+     */
+    async getAllManagedAccounts() {
+        return this.accountsRepo.findActiveByOwnerType("org");
+    }
+
+    /**
+     * Returns active accounts for a specific organization.
      */
     async getAnyOrgAccounts(orgId: string) {
-        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org");
-        return accounts.filter((a) => a.isFundingAccount === true);
+        const accounts = await this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
+        return accounts;
     }
+
+    /**
+     * Idempotent logic to ensure an organization has a funding account for a specific currency.
+     */
+    async ensureOrgFundingAccount(input: EnsureFundingAccountRequest) {
+        const accounts = await this.accountsRepo.findActiveByOwner(
+            input.organizationId,
+            "org",
+            input.organizationId
+        );
+        const existing = accounts.find(
+            (a) => a.currencyId === input.currencyId && a.accountType === ACCOUNT_TYPES.FUNDING
+        );
+
+        if (existing) {
+            return existing;
+        }
+
+        const currency =
+            FINANCIAL_CURRENCY_CONFIG[input.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
+        if (!currency) {
+            throw new BadRequestError(`Invalid currency ID: ${input.currencyId}`);
+        }
+
+        const newAccount = await this.accountsRepo.insert({
+            id: `facc_${input.organizationId}_${input.currencyId}_funding`,
+            organizationId: input.organizationId,
+            ownerId: input.organizationId,
+            ownerType: "org",
+            currencyId: input.currencyId,
+            name: `General Fund — ${currency.code}`,
+            accountType: ACCOUNT_TYPES.FUNDING,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        console.log(
+            `Auto-created funding account for org ${input.organizationId} [${input.currencyId}]`
+        );
+        return newAccount;
+    }
+
     /**
      * Updates the name/label of any financial account.
      */
@@ -92,6 +143,7 @@ export class AdminFinancialService extends FinancialBaseService {
         const updated = await this.accountsRepo.updateName(id, name, now);
         return this.assertExists(updated, "Account not found");
     }
+
     /**
      * Archives a financial account.
      * Logic: Only allowed if the balance is zero to prevent hidden funds.

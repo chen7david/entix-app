@@ -74,3 +74,11 @@ export const signUpWithOrgResponseSchema = z.object({
 });
 
 export type SignUpWithOrgResponseDTO = z.infer<typeof signUpWithOrgResponseSchema>;
+
+export const resendVerificationSchema = z.object({
+    email: z.string().email().openapi({
+        example: "user@example.com",
+    }),
+});
+
+export type ResendVerificationDTO = z.infer<typeof resendVerificationSchema>;

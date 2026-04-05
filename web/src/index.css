@@ -1,9 +1,35 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap");
 @import "tailwindcss";
+
+:root {
+    --bg-base: #ffffff;
+    --text-base: #0f172a;
+    --border-base: #e2e8f0;
+}
+
+.dark {
+    --bg-base: #060a12; /* Slate 950-ish but deeper */
+    --text-base: #f8fafc;
+    --border-base: #1e293b;
+}
+
+body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--bg-base);
+    color: var(--text-base);
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
 
 @theme {
     --color-primary: #2563eb;
     --color-primary-hover: #3b82f6;
     --color-primary-active: #1d4ed8;
+
+    --font-sans: "Inter", sans-serif;
 
     /* Slate Neutrals for consistency */
     --color-slate-50: #f8fafc;
@@ -41,4 +67,29 @@ media-player::part(provider) {
     padding: 0px;
     margin: 0px;
     background-color: black;
+}
+
+@layer components {
+    /* Data Table Pro Customizations */
+    .data-table-pro-container .ant-table-thead > tr > th {
+        background: var(--ant-color-fill-tertiary) !important;
+        border-bottom: 1px solid var(--ant-color-border-secondary) !important;
+        color: var(--ant-color-text-description);
+        @apply font-semibold px-4 py-3 text-[10px] uppercase tracking-widest;
+    }
+
+    .data-table-pro-container .ant-table-tbody > tr > td {
+        @apply px-4 py-3.5 border-b border-transparent text-sm transition-colors;
+        color: var(--ant-color-text-secondary);
+        border-color: var(--ant-color-border-quary);
+    }
+    .data-table-pro-container .ant-table-row:hover > td {
+        background: var(--ant-color-fill-alter);
+    }
+
+    .data-table-pro-container .ant-table-column-fixed-right {
+        background: var(--ant-color-bg-container);
+        border-left: 1px solid var(--ant-color-border-secondary);
+        box-shadow: -4px 0 12px -4px rgba(0, 0, 0, 0.08);
+    }
 }

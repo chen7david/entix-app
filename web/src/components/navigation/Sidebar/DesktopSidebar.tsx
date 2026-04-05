@@ -1,10 +1,14 @@
 import { DesktopDrawer } from "./DesktopDrawer";
 import { SidebarContent } from "./SidebarContent";
 
-export const DesktopSidebar: React.FC = () => {
+interface DesktopSidebarProps {
+    variant?: "org" | "admin";
+}
+
+export const DesktopSidebar: React.FC<DesktopSidebarProps> = ({ variant = "org" }) => {
     return (
         <DesktopDrawer size={240}>
-            <SidebarContent />
+            <SidebarContent variant={variant} />
         </DesktopDrawer>
     );
 };

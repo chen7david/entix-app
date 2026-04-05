@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@web/src/components/common/ThemeToggle";
 import { theme } from "antd";
 import { Outlet } from "react-router";
 
@@ -6,9 +7,12 @@ export const AuthLayout = () => {
 
     return (
         <div
-            className="min-h-[100dvh] w-full flex items-center justify-center overflow-y-auto p-4"
-            style={{ backgroundColor: token.colorBgLayout }}
+            className="min-h-[100dvh] w-full flex items-center justify-center overflow-y-auto p-4 transition-colors duration-200"
+            style={{ backgroundColor: token.colorBgLayout || "var(--bg-base)" }}
         >
+            <div className="fixed top-6 right-6 z-50">
+                <ThemeToggle />
+            </div>
             <Outlet />
         </div>
     );

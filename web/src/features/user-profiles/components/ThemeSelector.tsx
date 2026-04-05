@@ -1,4 +1,5 @@
-import { type AppTheme, useUserPreferences } from "@web/src/features/auth";
+import { useUserPreferences } from "@web/src/features/auth";
+import type { AppTheme } from "@web/src/utils/theme";
 import { Select } from "antd";
 
 export const ThemeSelector = () => {

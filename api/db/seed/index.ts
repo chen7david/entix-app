@@ -1,0 +1,132 @@
+import { execSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import * as schema from "@shared/db/schema";
+import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/better-sqlite3";
+
+/**
+ * Resolves the absolute path to the local D1 SQLite database file.
+ * Cloudflare Wrangler stores local D1 state in .wrangler/state/v3/d1/.../*.sqlite
+ */
+function getLocalD1Path(): string {
+    const d1Base = path.resolve(".wrangler/state");
+
+    if (!existsSync(d1Base)) {
+        throw new Error(
+            `Wrangler state directory not found at ${d1Base}. Have you run migrations locally?`
+        );
+    }
+
+    // Find the first .sqlite file recursively
+    try {
+        const findCmd = `find "${d1Base}" -name "*.sqlite" ! -name "*-shm" ! -name "*-wal" | head -n 1`;
+        const dbPath = execSync(findCmd, { encoding: "utf-8" }).trim();
+
+        if (!dbPath) {
+            throw new Error(
+                "No .sqlite database file found in .wrangler/state. Run migrations first."
+            );
+        }
+
+        return dbPath;
+    } catch (_error) {
+        throw new Error(
+            "Failed to resolve local D1 path via 'find' command. Please ensure 'find' is in your PATH."
+        );
+    }
+}
+
+/**
+ * Ensures the root admin user and their baseline state exists.
+ * Mirroring 0001_seed_root.sql with idempotency.
+ */
+async function seedRootAdmin(db: any) {
+    const rootId = "TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK";
+    const orgId = "A6xj7krOIJ3n9uHiipspC";
+    const accountId = "AgQUkeQr8EQVxrJy02ypz7qCMpBWhslp";
+    const now = new Date();
+
+    console.log("[SEED] Ensuring Root Admin and baseline organization...");
+
+    // 1. Root User
+    await db
+        .insert(schema.authUsers)
+        .values({
+            id: rootId,
+            xid: "ROOTADMIN",
+            name: "Root Admin",
+            email: "root@admin.com",
+            emailVerified: true,
+            role: "admin",
+            createdAt: now,
+            updatedAt: now,
+        })
+        .onConflictDoUpdate({
+            target: schema.authUsers.id,
+            set: { xid: "ROOTADMIN" },
+        });
+
+    // 2. Test Org
+    await db
+        .insert(schema.authOrganizations)
+        .values({
+            id: orgId,
+            name: "Test Org",
+            slug: "testorg",
+            createdAt: now,
+        })
+        .onConflictDoNothing();
+
+    // 3. Auth Account (Credential)
+    await db
+        .insert(schema.authAccounts)
+        .values({
+            id: accountId,
+            accountId: "root@admin.com",
+            providerId: "credential",
+            userId: rootId,
+            // Hashed 'r00tme'
+            password:
+                "cc2d5071f13d1f9e88de1fbc0af47530:d88750de3b087b92430198e8dea1e746d406da96c6a429c22c82edcdfeaad3ce06b82beda503d97e3fd0bff2e618be14f743b2d9fdd68cb5b52c2b9a686d858a",
+            createdAt: now,
+            updatedAt: now,
+        })
+        .onConflictDoNothing();
+
+    await db
+        .insert(schema.authMembers)
+        .values({
+            id: "E2QTyceWPwpj-n_1I5lyR",
+            organizationId: orgId,
+            userId: rootId,
+            role: "owner",
+            createdAt: now,
+        })
+        .onConflictDoNothing();
+}
+
+async function main() {
+    const dbPath = getLocalD1Path();
+    console.log(`[SEED] Connecting to local D1: ${dbPath}`);
+
+    const sqlite = new Database(dbPath);
+    const db = drizzle(sqlite, { schema });
+
+    try {
+        console.log("[SEED] Initializing database seeds...");
+
+        // Ensure root admin exists (idempotent)
+        await seedRootAdmin(db);
+
+        console.log("✅ [SEED] Database seeding completed successfully.");
+    } catch (error) {
+        console.error("❌ [SEED] Seeding failed:");
+        console.error(error);
+        process.exit(1);
+    } finally {
+        sqlite.close();
+    }
+}
+
+main();

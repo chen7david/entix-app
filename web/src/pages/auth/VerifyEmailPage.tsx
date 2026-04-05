@@ -3,7 +3,7 @@ import { useVerifyEmail } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin, Typography } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 const { Text } = Typography;
@@ -13,12 +13,29 @@ export const VerifyEmailPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get("token");
-    const { checkOrganizationStatus } = useOrganization();
+    const { checkOrganizationStatus, setActive } = useOrganization();
     const [status, setStatus] = useState<"verifying" | "success" | "error">(
         token ? "verifying" : "error"
     );
 
     const { mutate: verify } = useVerifyEmail();
+
+    const handleNavigateResult = useCallback(async () => {
+        const { orgs, activeOrg } = await checkOrganizationStatus();
+
+        if (activeOrg?.slug) {
+            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, { replace: true });
+            return;
+        }
+
+        if (orgs.length === 1 && orgs[0].slug) {
+            await setActive(orgs[0].id);
+            navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, { replace: true });
+            return;
+        }
+
+        navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
+    }, [checkOrganizationStatus, navigate, setActive]);
 
     useEffect(() => {
         if (!token) {
@@ -37,7 +54,7 @@ export const VerifyEmailPage: React.FC = () => {
                     if (data?.status) {
                         message.success("Email verified successfully!");
                         // Check org status to redirect appropriately
-                        checkOrganizationStatus();
+                        handleNavigateResult();
                     } else {
                         setStatus("success");
                         setTimeout(() => {
@@ -50,7 +67,7 @@ export const VerifyEmailPage: React.FC = () => {
                 },
             }
         );
-    }, [token, navigate, verify, checkOrganizationStatus, message.success]);
+    }, [token, verify, message.success, handleNavigateResult, navigate]);
 
     if (status === "verifying") {
         return (
@@ -73,12 +90,7 @@ export const VerifyEmailPage: React.FC = () => {
                     title="Email Verified Successfully!"
                     subTitle="Redirecting you..."
                     extra={[
-                        <Button
-                            type="primary"
-                            key="dashboard"
-                            onClick={() => checkOrganizationStatus()}
-                            block
-                        >
+                        <Button type="primary" key="dashboard" onClick={handleNavigateResult} block>
                             Continue
                         </Button>,
                     ]}

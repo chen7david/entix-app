@@ -1,6 +1,7 @@
 import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
+import { TableEmptyState } from "@web/src/components/data/TableEmptyState";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Empty, List, Tag, Typography, theme } from "antd";
+import { Button, List, Tag, Typography, theme } from "antd";
 import type React from "react";
 import type { SessionDTO } from "../../hooks/useSchedule";
 
@@ -24,12 +25,19 @@ export const ScheduleSessionList: React.FC<Props> = ({
     const { token } = theme.useToken();
 
     return (
-        <>
+        <div className="flex flex-col h-full min-h-0">
             <List
+                className="flex-1 min-h-0 overflow-auto"
                 itemLayout="horizontal"
                 dataSource={sessions}
                 locale={{
-                    emptyText: <Empty description="No upcoming sessions found matching criteria" />,
+                    emptyText: (
+                        <TableEmptyState
+                            icon={<CalendarOutlined style={{ fontSize: 64 }} />}
+                            title="No upcoming sessions found matching criteria"
+                            subtitle="Try adjusting your filters or checking a different date range."
+                        />
+                    ),
                 }}
                 renderItem={(session) => (
                     <List.Item
@@ -115,7 +123,7 @@ export const ScheduleSessionList: React.FC<Props> = ({
             />
 
             {hasNextPage && (
-                <div className="flex justify-center mt-6">
+                <div className="flex justify-center mt-6 py-4">
                     <Button
                         onClick={() => onFetchNextPage()}
                         loading={isFetchingNextPage}
@@ -126,6 +134,6 @@ export const ScheduleSessionList: React.FC<Props> = ({
                     </Button>
                 </div>
             )}
-        </>
+        </div>
     );
 };

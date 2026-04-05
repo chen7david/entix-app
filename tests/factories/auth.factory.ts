@@ -13,16 +13,28 @@ export const createMockAuth = () => ({
     },
 });
 
-export type MockAuth = ReturnType<typeof createMockAuth>;
+export type MockAuth = {
+    api: {
+        signUpEmail: any;
+        requestPasswordReset: any;
+    };
+};
 
 /**
  * Creates a mock payload for the signup-with-org endpoint.
  */
-export const createMockSignUpWithOrgPayload = (overrides: any = {}) => {
+export const createMockSignUpWithOrgPayload = (
+    overrides: Partial<{
+        email: string;
+        name: string;
+        password?: string;
+        organizationName?: string;
+    }> = {}
+) => {
     const id = Date.now();
     return {
         email: `test.${id}@example.com`,
-        name: "Test AuthUser",
+        name: "Test User",
         password: "Password123!",
         organizationName: `Test Org ${id}`,
         ...overrides,

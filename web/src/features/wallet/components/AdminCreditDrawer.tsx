@@ -1,232 +1,501 @@
+import {
+    ArrowDownOutlined,
+    ArrowUpOutlined,
+    InfoCircleOutlined,
+    WalletOutlined,
+} from "@ant-design/icons";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCY_CONFIG, getTreasuryAccountId } from "@shared";
-import { Button, Drawer, Form, Input, InputNumber, Select, Typography } from "antd";
-import React from "react";
+import {
+    Alert,
+    Button,
+    Col,
+    Drawer,
+    Flex,
+    Form,
+    Input,
+    InputNumber,
+    Popconfirm,
+    Radio,
+    Row,
+    Select,
+    Space,
+    Tabs,
+    Typography,
+    theme,
+} from "antd";
+import type React from "react";
+import { useEffect, useState } from "react";
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
-import { useAdminCredit } from "../hooks/useAdminCredit";
-import type { WalletAccount } from "../hooks/useWalletBalance";
+import type { WalletAccountDTO } from "@shared";
+import { useAdminOrganizations } from "@web/src/features/admin/hooks/useAdminOrganizations";
+import { useAdminOrgAccounts } from "../hooks/useAdminOrgAccounts";
+import { useAdminTransfer } from "../hooks/useAdminTransfer";
 
 type Props = {
     open: boolean;
     onClose: () => void;
     organizationId?: string;
-    accounts?: WalletAccount[];
-    preSelectedAccount?: WalletAccount;
+    onOrgChange?: (orgId: string) => void;
+    preSelectedAccount?: WalletAccountDTO;
 };
 
-// Common reasons for administrative credit
 const COMMON_REASONS = ["Funding", "System Correction", "Support Grant", "Reimbursement", "Other"];
 
 export const AdminCreditDrawer: React.FC<Props> = ({
     open,
     onClose,
     organizationId,
-    accounts,
+    onOrgChange,
     preSelectedAccount,
 }) => {
+    const { token } = theme.useToken();
     const [form] = Form.useForm();
-    const { mutate, isPending } = useAdminCredit();
+    const [activeTab, setActiveTab] = useState<"treasury" | "funding">("treasury");
+    const [direction, setDirection] = useState<"credit" | "debit">("credit");
+    const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("fcur_usd");
 
-    const [reasonType, setReasonType] = React.useState<string>(COMMON_REASONS[0]);
+    // Mutations
+    const { credit, debit, ensureFunding } = useAdminTransfer();
 
-    // Sync form with pre-selected account when drawer opens
-    React.useEffect(() => {
+    // Data Queries
+    const { data: orgs, isLoading: isLoadingOrgs } = useAdminOrganizations();
+    const { data: orgAccounts } = useAdminOrgAccounts(organizationId);
+
+    const isPending = credit.isPending || debit.isPending || ensureFunding.isPending;
+
+    // Derived State
+    const orgFundingAccount = orgAccounts?.find(
+        (a) => a.currencyId === selectedCurrencyId && a.accountType === "funding"
+    );
+    const selectedCurrencyConfig =
+        FINANCIAL_CURRENCY_CONFIG[selectedCurrencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
+
+    // Initialize/Sync Form
+    useEffect(() => {
         if (open) {
-            let targetAccount = preSelectedAccount;
-
-            // If no account is pre-selected, find the funding account (General Fund)
-            if (!targetAccount && accounts && accounts.length > 0) {
-                targetAccount = accounts.find((a) => a.isFundingAccount) || accounts[0];
-            }
-
-            if (targetAccount) {
+            if (preSelectedAccount) {
+                setSelectedCurrencyId(preSelectedAccount.currencyId);
+                setActiveTab("treasury");
                 form.setFieldsValue({
-                    destinationAccountId: targetAccount.id,
-                    currencyId: targetAccount.currencyId,
+                    currencyId: preSelectedAccount.currencyId,
                     reasonSelect: COMMON_REASONS[0],
                 });
-                setReasonType(COMMON_REASONS[0]);
             } else {
+                setSelectedCurrencyId("fcur_usd");
                 form.setFieldsValue({
+                    currencyId: "fcur_usd",
                     reasonSelect: COMMON_REASONS[0],
                 });
-                setReasonType(COMMON_REASONS[0]);
+                setActiveTab("funding"); // Default to funding if no account is clicked
             }
         }
-    }, [open, preSelectedAccount, accounts, form]);
+    }, [open, preSelectedAccount, form]);
 
-    const handleAccountChange = (accountId: string) => {
-        const account = accounts?.find((a) => a.id === accountId);
-        if (account) {
-            form.setFieldValue("currencyId", account.currencyId);
-        }
+    const handleOrgChange = (value: string) => {
+        onOrgChange?.(value);
     };
 
-    const handleReasonChange = (value: string) => {
-        setReasonType(value);
-        if (value !== "Other") {
-            form.setFieldValue("description", value);
-        } else {
-            form.setFieldValue("description", "");
-        }
-    };
-
-    const onFinish = (values: {
-        destinationAccountId: string;
-        currencyId: string;
-        amountDollars: number;
-        reasonSelect: string;
-        description?: string;
-    }) => {
+    const handleCreateFunding = async () => {
         if (!organizationId) return;
-
-        // Use the select value or the custom description
-        const finalDescription =
-            values.reasonSelect === "Other" ? values.description : values.reasonSelect;
-
-        mutate(
-            {
+        try {
+            await ensureFunding.mutateAsync({
                 organizationId,
-                categoryId: FINANCIAL_CATEGORIES.CASH_DEPOSIT,
-                platformTreasuryAccountId: getTreasuryAccountId(values.currencyId),
-                destinationAccountId: values.destinationAccountId,
-                currencyId: values.currencyId,
-                amountCents: Math.round(values.amountDollars * 100),
-                description: finalDescription,
-            },
-            {
-                onSuccess: () => {
-                    form.resetFields();
-                    onClose();
-                },
-            }
-        );
+                currencyId: selectedCurrencyId,
+            });
+        } catch (err) {
+            console.error(err);
+        }
     };
 
-    const currencyConfig = preSelectedAccount
-        ? FINANCIAL_CURRENCY_CONFIG[
-              preSelectedAccount.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
-          ]
-        : null;
+    const onFinish = async (values: any) => {
+        const amountCents = Math.round(values.amountDollars * 100);
+        const description =
+            values.reasonSelect === "Other" ? values.description : values.reasonSelect;
+        const platformTreasuryAccountId = getTreasuryAccountId(selectedCurrencyId);
+        const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT; // Default for admin adjustments
+
+        try {
+            if (activeTab === "treasury") {
+                if (!preSelectedAccount) return;
+
+                // For treasury cards, the target ID is the ownerId (e.g. 'platform')
+                const targetOrgId = preSelectedAccount.ownerId || "platform";
+
+                if (direction === "credit") {
+                    await credit.mutateAsync({
+                        organizationId: targetOrgId,
+                        categoryId,
+                        platformTreasuryAccountId,
+                        destinationAccountId: preSelectedAccount.id,
+                        currencyId: selectedCurrencyId,
+                        amountCents,
+                        description,
+                    });
+                } else {
+                    await debit.mutateAsync({
+                        organizationId: targetOrgId,
+                        categoryId,
+                        sourceAccountId: preSelectedAccount.id,
+                        platformTreasuryAccountId,
+                        currencyId: selectedCurrencyId,
+                        amountCents,
+                        description,
+                    });
+                }
+            } else {
+                // Tab 2: Org Funding (Treasury <-> Org General Fund)
+                if (!organizationId || !orgFundingAccount) return;
+
+                if (direction === "credit") {
+                    await credit.mutateAsync({
+                        organizationId,
+                        categoryId,
+                        platformTreasuryAccountId,
+                        destinationAccountId: orgFundingAccount.id,
+                        currencyId: selectedCurrencyId,
+                        amountCents,
+                        description: description || "Organization Funding",
+                    });
+                } else {
+                    await debit.mutateAsync({
+                        organizationId,
+                        categoryId,
+                        sourceAccountId: orgFundingAccount.id,
+                        platformTreasuryAccountId,
+                        currencyId: selectedCurrencyId,
+                        amountCents,
+                        description: description || "Organization Funding Return",
+                    });
+                }
+            }
+            form.resetFields();
+            onClose();
+        } catch (err) {
+            console.error(err);
+        }
+    };
 
     return (
         <Drawer
             title={
-                preSelectedAccount
-                    ? `Credit Account: ${preSelectedAccount.name}`
-                    : "Credit Org Account"
+                <Space direction="vertical" size={0}>
+                    <Title level={5} style={{ margin: 0 }}>
+                        Admin Ledger Adjustment
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                        Platform stewardship and org funding
+                    </Text>
+                </Space>
             }
-            width={440}
+            width={480}
             open={open}
             onClose={onClose}
             extra={
                 <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    Confirm Credit
+                    {activeTab === "treasury" ? "Transfer Funds" : "Transfer Funds"}
                 </Button>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>
-                {/* Always need currencyId for the API mutate call */}
-                <Form.Item name="currencyId" hidden>
-                    <Input />
-                </Form.Item>
+                <Tabs
+                    activeKey={activeTab}
+                    onChange={(key) => setActiveTab(key as any)}
+                    items={[
+                        {
+                            key: "treasury",
+                            label: "Treasury Funding",
+                            children: (
+                                <div style={{ marginTop: 24 }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 12,
+                                            marginBottom: 24,
+                                        }}
+                                    >
+                                        <InfoCircleOutlined
+                                            style={{ color: token.colorPrimary, fontSize: 18 }}
+                                        />
+                                        <div>
+                                            <Title level={5} style={{ margin: 0 }}>
+                                                Adjust {selectedCurrencyConfig?.code} Wallet
+                                            </Title>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Direct platform-to-account manual adjustment
+                                            </Text>
+                                        </div>
+                                    </div>
+                                    {preSelectedAccount ? (
+                                        <Alert
+                                            message={
+                                                <Space>
+                                                    <Text strong>Target:</Text>
+                                                    <Text>{preSelectedAccount.name}</Text>
+                                                </Space>
+                                            }
+                                            description={
+                                                <Text type="secondary">
+                                                    Current Balance:{" "}
+                                                    {selectedCurrencyConfig?.symbol}
+                                                    {(
+                                                        preSelectedAccount.balanceCents / 100
+                                                    ).toFixed(2)}{" "}
+                                                    {selectedCurrencyConfig?.code}
+                                                </Text>
+                                            }
+                                            type="info"
+                                            showIcon
+                                            style={{ marginBottom: 24 }}
+                                        />
+                                    ) : (
+                                        <Alert
+                                            message="No account selected"
+                                            description="Click a card on the main grid to pre-fill the adjustment target."
+                                            type="warning"
+                                            showIcon
+                                            style={{ marginBottom: 24 }}
+                                        />
+                                    )}
+                                </div>
+                            ),
+                        },
+                        {
+                            key: "funding",
+                            label: "Org-Funding",
+                            children: (
+                                <div style={{ marginTop: 24 }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 12,
+                                            marginBottom: 24,
+                                        }}
+                                    >
+                                        <WalletOutlined
+                                            style={{ color: token.colorPrimary, fontSize: 18 }}
+                                        />
+                                        <div>
+                                            <Title level={5} style={{ margin: 0 }}>
+                                                General Fund {selectedCurrencyConfig?.code}
+                                            </Title>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Platform-to-organization liquidity transfer
+                                            </Text>
+                                        </div>
+                                    </div>
 
-                {!preSelectedAccount ? (
-                    <Form.Item
-                        name="destinationAccountId"
-                        label="Destination Account"
-                        rules={[{ required: true }]}
-                    >
+                                    <div style={{ marginBottom: 24 }}>
+                                        <Text
+                                            type="secondary"
+                                            style={{ display: "block", marginBottom: 8 }}
+                                        >
+                                            ORGANIZATION CONTEXT
+                                        </Text>
+                                        <Select
+                                            size="large"
+                                            placeholder="Select organization"
+                                            style={{ width: "100%" }}
+                                            value={organizationId}
+                                            onChange={handleOrgChange}
+                                            showSearch
+                                            loading={isLoadingOrgs}
+                                            options={orgs?.items?.map((o) => ({
+                                                label: o.name,
+                                                value: o.id,
+                                            }))}
+                                            optionFilterProp="label"
+                                        />
+                                    </div>
+
+                                    {organizationId ? (
+                                        !orgFundingAccount ? (
+                                            <Alert
+                                                type="warning"
+                                                showIcon
+                                                style={{ marginBottom: 24 }}
+                                                message={`No ${selectedCurrencyConfig?.code} funding account`}
+                                                description={
+                                                    <Flex vertical gap={8} style={{ marginTop: 8 }}>
+                                                        <Text>
+                                                            Super admin must provision this first.
+                                                        </Text>
+                                                        <Popconfirm
+                                                            title="Create funding account?"
+                                                            description={`Create "General Fund — ${selectedCurrencyConfig?.code}"?`}
+                                                            onConfirm={handleCreateFunding}
+                                                            okText="Create"
+                                                        >
+                                                            <Button size="small" type="primary">
+                                                                Create Funding Account
+                                                            </Button>
+                                                        </Popconfirm>
+                                                    </Flex>
+                                                }
+                                            />
+                                        ) : (
+                                            <Alert
+                                                message={
+                                                    <Space>
+                                                        <Text strong>Org Funding:</Text>
+                                                        <Text>{orgFundingAccount.name}</Text>
+                                                    </Space>
+                                                }
+                                                description={
+                                                    <Text type="secondary">
+                                                        Current Balance:{" "}
+                                                        {selectedCurrencyConfig?.symbol}
+                                                        {(
+                                                            orgFundingAccount.balanceCents / 100
+                                                        ).toFixed(2)}{" "}
+                                                        {selectedCurrencyConfig?.code}
+                                                    </Text>
+                                                }
+                                                type="success"
+                                                showIcon
+                                                style={{ marginBottom: 24 }}
+                                            />
+                                        )
+                                    ) : (
+                                        <Alert
+                                            message="Select an organization above"
+                                            type="info"
+                                            showIcon
+                                            style={{ marginBottom: 24 }}
+                                        />
+                                    )}
+                                </div>
+                            ),
+                        },
+                    ]}
+                />
+
+                <div style={{ marginTop: 0 }}>
+                    <Form.Item name="direction" label="Adjustment Type" initialValue="credit">
+                        <Radio.Group
+                            value={direction}
+                            onChange={(e) => setDirection(e.target.value)}
+                            style={{ width: "100%", display: "flex" }}
+                        >
+                            <Radio.Button
+                                value="credit"
+                                style={{
+                                    flex: 1,
+                                    textAlign: "center",
+                                    height: 48,
+                                    lineHeight: "46px",
+                                }}
+                            >
+                                <Space>
+                                    <ArrowUpOutlined
+                                        style={{ color: "var(--ant-color-success)" }}
+                                    />{" "}
+                                    CREDIT
+                                </Space>
+                            </Radio.Button>
+                            <Radio.Button
+                                value="debit"
+                                style={{
+                                    flex: 1,
+                                    textAlign: "center",
+                                    height: 48,
+                                    lineHeight: "46px",
+                                }}
+                            >
+                                <Space>
+                                    <ArrowDownOutlined
+                                        style={{ color: "var(--ant-color-error)" }}
+                                    />{" "}
+                                    DEBIT
+                                </Space>
+                            </Radio.Button>
+                        </Radio.Group>
+                    </Form.Item>
+
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item
+                                name="currencyId"
+                                label="Currency"
+                                rules={[{ required: true }]}
+                            >
+                                <Select
+                                    size="large"
+                                    disabled={!!preSelectedAccount}
+                                    onChange={setSelectedCurrencyId}
+                                    style={{ height: 48 }}
+                                >
+                                    {Object.entries(FINANCIAL_CURRENCY_CONFIG).map(
+                                        ([id, config]) => (
+                                            <Select.Option key={id} value={id}>
+                                                {config.code}
+                                            </Select.Option>
+                                        )
+                                    )}
+                                </Select>
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item
+                                name="amountDollars"
+                                label="Amount"
+                                rules={[{ required: true }, { type: "number", min: 0.01 }]}
+                            >
+                                <InputNumber
+                                    size="large"
+                                    style={{ height: 48, lineHeight: "48px", width: "100%" }}
+                                    min={0.01}
+                                    precision={2}
+                                    prefix={
+                                        <span style={{ opacity: 0.4 }}>
+                                            {selectedCurrencyConfig?.symbol || "$"}
+                                        </span>
+                                    }
+                                    placeholder="0.00"
+                                />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Form.Item name="reasonSelect" label="Reason" rules={[{ required: true }]}>
                         <Select
                             size="large"
-                            placeholder="Select account to credit"
-                            onChange={handleAccountChange}
+                            onChange={(val) =>
+                                form.setFieldsValue({
+                                    description: val === "Other" ? "" : val,
+                                })
+                            }
                         >
-                            {accounts?.map((acc) => (
-                                <Select.Option key={acc.id} value={acc.id}>
-                                    <div className="flex justify-between items-center">
-                                        <span>{acc.name}</span>
-                                        <Text type="secondary" style={{ fontSize: 10 }}>
-                                            {FINANCIAL_CURRENCY_CONFIG[
-                                                acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
-                                            ]?.code || acc.currencyId}
-                                        </Text>
-                                    </div>
+                            {COMMON_REASONS.map((r) => (
+                                <Select.Option key={r} value={r}>
+                                    {r}
                                 </Select.Option>
                             ))}
                         </Select>
                     </Form.Item>
-                ) : (
-                    <div
-                        style={{
-                            marginBottom: 24,
-                            padding: "16px",
-                            background: "var(--ant-color-fill-quaternary)",
-                            borderRadius: "8px",
-                            border: "1px solid var(--ant-color-border-secondary)",
-                        }}
-                    >
-                        <Text type="secondary" style={{ fontSize: 12 }}>
-                            TARGET ACCOUNT
-                        </Text>
-                        <div style={{ fontSize: 16, fontWeight: 600, marginTop: 4 }}>
-                            {preSelectedAccount.name}
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                            <Text type="secondary">Current Balance: </Text>
-                            <Text strong>
-                                {currencyConfig?.symbol || ""}
-                                {(preSelectedAccount.balanceCents / 100).toFixed(2)}{" "}
-                                {currencyConfig?.code}
-                            </Text>
-                        </div>
-                        {/* Hidden field to ensure form.submit() still works */}
-                        <Form.Item name="destinationAccountId" hidden>
-                            <Input />
-                        </Form.Item>
-                    </div>
-                )}
 
-                <Form.Item
-                    name="amountDollars"
-                    label="Amount to Credit"
-                    rules={[{ required: true }, { type: "number", min: 0.01 }]}
-                >
-                    <InputNumber
-                        size="large"
-                        min={0.01}
-                        step={1}
-                        precision={2}
-                        prefix={currencyConfig?.symbol || "$"}
-                        style={{ width: "100%" }}
-                        placeholder="0.00"
-                    />
-                </Form.Item>
-
-                <Form.Item name="reasonSelect" label="Reason" rules={[{ required: true }]}>
-                    <Select size="large" onChange={handleReasonChange}>
-                        {COMMON_REASONS.map((r) => (
-                            <Select.Option key={r} value={r}>
-                                {r}
-                            </Select.Option>
-                        ))}
-                    </Select>
-                </Form.Item>
-
-                {reasonType === "Other" && (
                     <Form.Item
-                        name="description"
-                        label="Specifiy Reason"
-                        rules={[{ required: true, message: "Please specify the reason" }]}
+                        shouldUpdate={(prev, curr) => prev.reasonSelect !== curr.reasonSelect}
                     >
-                        <Input.TextArea
-                            size="large"
-                            rows={2}
-                            placeholder="Provide details for this manual adjustment..."
-                        />
+                        {({ getFieldValue }) =>
+                            getFieldValue("reasonSelect") === "Other" && (
+                                <Form.Item
+                                    name="description"
+                                    label="Custom Reason"
+                                    rules={[{ required: true }]}
+                                >
+                                    <Input.TextArea
+                                        rows={3}
+                                        placeholder="Describe the adjustment..."
+                                    />
+                                </Form.Item>
+                            )
+                        }
                     </Form.Item>
-                )}
+                </div>
             </Form>
         </Drawer>
     );

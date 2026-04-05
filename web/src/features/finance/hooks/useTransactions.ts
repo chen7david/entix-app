@@ -1,4 +1,4 @@
-import { API_V1 } from "@shared";
+import { API_V1, type PaginatedResponse, type TransactionFilters } from "@shared";
 import { useQuery } from "@tanstack/react-query";
 import { parseApiError } from "@web/src/utils/api";
 
@@ -11,7 +11,7 @@ export type TransactionRecord = {
     currencyId: string;
     amountCents: number;
     status: "pending" | "completed" | "reversed";
-    description?: string;
+    description: string | null;
     transactionDate: string;
     createdAt: string;
     sourceAccount: { name: string };
@@ -22,31 +22,18 @@ export type TransactionRecord = {
 
 export type TransactionsResponse = {
     data: TransactionRecord[];
-    page: number;
-    pageSize: number;
+    nextCursor: string | null;
 };
 
-export type TransactionFilters = {
-    page?: number;
-    pageSize?: number;
-    startDate?: string;
-    endDate?: string;
-    minAmount?: number;
-    maxAmount?: number;
-    txId?: string;
-    accountId?: string;
-    status?: string;
-};
-
-export const useTransactions = (orgId?: string, filters: TransactionFilters = {}) => {
+export const useTransactions = (orgId?: string, filters: Partial<TransactionFilters> = {}) => {
     return useQuery({
         queryKey: ["transactions", orgId, filters],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
 
             const params = new URLSearchParams();
-            if (filters.page) params.append("page", filters.page.toString());
-            if (filters.pageSize) params.append("pageSize", filters.pageSize.toString());
+            if (filters.cursor) params.append("cursor", filters.cursor);
+            if (filters.limit) params.append("limit", filters.limit.toString());
             if (filters.startDate) params.append("startDate", filters.startDate);
             if (filters.endDate) params.append("endDate", filters.endDate);
             if (filters.minAmount) params.append("minAmount", filters.minAmount.toString());
@@ -61,10 +48,10 @@ export const useTransactions = (orgId?: string, filters: TransactionFilters = {}
             if (!res.ok) await parseApiError(res);
             return (await res.json()) as TransactionsResponse;
         },
-        select: (res) => ({
+        select: (res): PaginatedResponse<TransactionRecord> => ({
             items: res.data,
-            page: res.page,
-            pageSize: res.pageSize,
+            nextCursor: res.nextCursor,
+            prevCursor: null,
         }),
         enabled: !!orgId,
     });

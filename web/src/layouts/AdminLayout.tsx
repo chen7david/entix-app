@@ -1,7 +1,9 @@
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
+import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
+import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
-import { AdminDesktopSidebar } from "./AdminDesktopSidebar";
 
 const { Sider, Content } = Layout;
 
@@ -9,20 +11,31 @@ export const AdminLayout: React.FC = () => {
     const { token } = theme.useToken();
 
     return (
-        <Layout className="min-h-screen">
-            {/* <AdminMobileSidebar /> */}
-            <Sider className="hidden md:block" width={240} theme="light">
-                <AdminDesktopSidebar />
+        <Layout style={{ height: "100dvh", overflow: "hidden" }}>
+            <MobileSidebar variant="admin" />
+            <Sider
+                className="hidden md:block"
+                width={240}
+                style={{ height: "100%", overflow: "hidden" }}
+            >
+                <DesktopSidebar variant="admin" />
             </Sider>
-            <Layout hasSider>
+            <Layout hasSider style={{ flex: 1, overflow: "hidden" }}>
                 <Content
-                    className="overflow-auto relative"
+                    className="flex flex-col relative"
                     style={{
+                        height: "100%",
+                        overflowY: "auto",
                         backgroundColor: token.colorBgLayout,
                     }}
                 >
-                    <ImpersonationBanner />
-                    <Outlet />
+                    <Toolbar />
+                    <div className="flex-1 flex flex-col min-h-0 p-8">
+                        <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full min-h-0">
+                            <ImpersonationBanner />
+                            <Outlet />
+                        </div>
+                    </div>
                 </Content>
             </Layout>
         </Layout>

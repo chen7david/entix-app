@@ -58,7 +58,7 @@ describe("Hardened Member Import Integration", () => {
 
         const listRes = await client.orgs.users.list(orgId);
         const users = (await listRes.json()) as any;
-        const idA = users.items[0].id;
+        const idA = users.items[0].userId;
 
         // 2. Try to import email B but using ID A
         const emailB = "userB@example.com";

@@ -10,6 +10,15 @@ export class OrganizationService extends BaseService {
         return await this.orgRepo.findAll();
     }
 
+    async listOrganizationsPaginated(
+        limit: number,
+        cursor?: string,
+        direction: "next" | "prev" = "next",
+        search?: string
+    ) {
+        return await this.orgRepo.findOrganizationsPaginated(limit, cursor, direction, search);
+    }
+
     async findOrganizationById(id: string) {
         return await this.orgRepo.findById(id);
     }

@@ -1,11 +1,14 @@
+import { ConflictError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
-import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import {
+    encodeTransactionCursor,
+    type FinancialTransactionsRepository,
+} from "@api/repositories/financial/financial-transactions.repository";
+import { ACCOUNT_TYPES, type FinancialAccount, generateAccountId } from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
-import { generateAccountId } from "@shared/lib";
-import type { PaginationInput } from "@shared/schemas/dto/financial.dto";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -41,6 +44,7 @@ export class UserFinancialService extends FinancialBaseService {
     /**
      * Creates a personal account for a user.
      * Default for users: allowMultiple = false unless explicitly requested.
+     * Throws ConflictError if duplicate exists.
      */
     async createUserAccount(
         input: {
@@ -50,7 +54,7 @@ export class UserFinancialService extends FinancialBaseService {
             orgId: string;
         },
         options: { allowMultiple?: boolean } = { allowMultiple: false }
-    ) {
+    ): Promise<FinancialAccount> {
         // Enforce Date+Currency uniqueness for the user within the organization
         const nameExists = await this.accountsRepo.existsByNameAndCurrency(
             input.userId,
@@ -59,11 +63,9 @@ export class UserFinancialService extends FinancialBaseService {
             input.orgId
         );
         if (nameExists) {
-            return {
-                success: false,
-                alreadyExists: true,
-                message: `An account named "${input.name}" in this currency already exists in this organization.`,
-            };
+            throw new ConflictError(
+                `An account named "${input.name}" in this currency already exists in this organization.`
+            );
         }
 
         // Enforce same-currency uniqueness for personal wallets within the organization
@@ -75,11 +77,9 @@ export class UserFinancialService extends FinancialBaseService {
                 input.orgId
             );
             if (currencyExists) {
-                return {
-                    success: false,
-                    alreadyExists: true,
-                    message: "An active wallet for this currency already exists for this user.",
-                };
+                throw new ConflictError(
+                    "An active wallet for this currency already exists for this user."
+                );
             }
         }
 
@@ -94,12 +94,10 @@ export class UserFinancialService extends FinancialBaseService {
             organizationId: input.orgId,
             createdAt: now,
             updatedAt: now,
-            accountType: "standard",
+            accountType: ACCOUNT_TYPES.SAVINGS,
         });
 
-        const account = await this.accountsRepo.insert(accountInput);
-
-        return { success: true, account };
+        return this.accountsRepo.insert(accountInput);
     }
 
     /**
@@ -129,31 +127,55 @@ export class UserFinancialService extends FinancialBaseService {
     }
 
     /**
-     * Returns personal transaction history for a user within a specific organization.
+     * Returns personal transaction history for a user within a specific organization with cursor support.
      */
-    async getTransactionHistory(userId: string, orgId: string, pagination: PaginationInput) {
-        const lines = await this.transactionsRepo.findByOwnerId(userId, "user", pagination, orgId);
+    async getTransactionHistory(
+        userId: string,
+        orgId: string,
+        pagination: { cursor?: string; limit: number },
+        filters: any = {}
+    ) {
+        const lines = await this.transactionsRepo.findByOwnerId(
+            userId,
+            "user",
+            { ...pagination, ...filters },
+            orgId
+        );
 
         // Normalize TransactionLines into the flat Transaction DTO expected by the frontend
         const data = lines.map((line) => {
             const tx = line.transaction;
             return {
                 id: tx.id,
+                organizationId: tx.organizationId,
+                categoryId: tx.categoryId,
+                sourceAccountId: tx.sourceAccountId,
+                destinationAccountId: tx.destinationAccountId,
+                currencyId: tx.currencyId,
                 amountCents: tx.amountCents,
                 status: tx.status,
                 description: tx.description,
                 transactionDate: tx.transactionDate,
-                sourceAccount: tx.sourceAccount,
-                destinationAccount: tx.destinationAccount,
-                category: tx.category,
-                currency: tx.currency,
+                createdAt: tx.createdAt,
+                category: (tx as any).category,
+                currency: (tx as any).currency,
+                sourceAccount: (tx as any).sourceAccount,
+                destinationAccount: (tx as any).destinationAccount,
             };
         });
 
+        // Find last element for next cursor encoding
+        const lastLine = lines.length >= pagination.limit ? lines[lines.length - 1] : null;
+        const nextCursor = lastLine
+            ? encodeTransactionCursor({
+                  transactionDate: lastLine.transaction.transactionDate,
+                  id: lastLine.id,
+              })
+            : null;
+
         return {
             data,
-            page: pagination.page,
-            pageSize: pagination.pageSize,
+            nextCursor,
         };
     }
 }

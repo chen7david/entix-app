@@ -1,7 +1,7 @@
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { useOrganization } from "@web/src/features/organization";
 import { useScheduleMetrics } from "@web/src/features/schedule";
-import { Card, Col, Row, Statistic } from "antd";
 
 export const AnalyticsMetricCards = ({
     queryStart,
@@ -14,34 +14,30 @@ export const AnalyticsMetricCards = ({
     const { metrics } = useScheduleMetrics(activeOrganization?.id, queryStart, queryEnd);
 
     return (
-        <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col span={8}>
-                <Card bordered={false} className="shadow-sm">
-                    <Statistic
-                        title="Total Sessions"
-                        value={metrics?.total || 0}
-                        prefix={<ClockCircleOutlined style={{ color: "#1890ff" }} />}
-                    />
-                </Card>
-            </Col>
-            <Col span={8}>
-                <Card bordered={false} className="shadow-sm">
-                    <Statistic
-                        title="Completed"
-                        value={metrics?.completed || 0}
-                        prefix={<CheckCircleOutlined style={{ color: "#52c41a" }} />}
-                    />
-                </Card>
-            </Col>
-            <Col span={8}>
-                <Card bordered={false} className="shadow-sm">
-                    <Statistic
-                        title="Cancelled"
-                        value={metrics?.cancelled || 0}
-                        prefix={<CloseCircleOutlined style={{ color: "#ff4d4f" }} />}
-                    />
-                </Card>
-            </Col>
-        </Row>
+        <SummaryCardsRow
+            items={[
+                {
+                    key: "total",
+                    label: "Total Sessions",
+                    value: metrics?.total || 0,
+                    icon: <ClockCircleOutlined />,
+                    color: "#1890ff",
+                },
+                {
+                    key: "completed",
+                    label: "Completed",
+                    value: metrics?.completed || 0,
+                    icon: <CheckCircleOutlined />,
+                    color: "#52c41a",
+                },
+                {
+                    key: "cancelled",
+                    label: "Cancelled",
+                    value: metrics?.cancelled || 0,
+                    icon: <CloseCircleOutlined />,
+                    color: "#ff4d4f",
+                },
+            ]}
+        />
     );
 };

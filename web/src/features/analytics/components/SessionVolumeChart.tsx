@@ -22,7 +22,7 @@ export const SessionVolumeChart = ({
 }) => {
     return (
         <Card
-            bordered={false}
+            variant="borderless"
             className="shadow-sm h-full"
             styles={{ body: { height: 400, display: "flex", flexDirection: "column" } }}
         >
@@ -34,7 +34,7 @@ export const SessionVolumeChart = ({
                     <Spin />
                 </div>
             ) : (
-                <div style={{ flex: 1, minHeight: 0 }}>
+                <div style={{ width: "100%", height: 350 }}>
                     <ResponsiveContainer width="100%" height="100%">
                         <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                             <defs>

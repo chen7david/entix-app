@@ -1,27 +1,20 @@
 import {
+    AppstoreOutlined,
     AudioOutlined,
+    ClockCircleOutlined,
     DeleteOutlined,
+    MoreOutlined,
     PlaySquareOutlined,
-    SearchOutlined,
+    VideoCameraOutlined,
 } from "@ant-design/icons";
 import type { Media } from "@shared";
-import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media";
-import { UI_CONSTANTS } from "@web/src/utils/constants";
-import {
-    Button,
-    Drawer,
-    Form,
-    Input,
-    Popconfirm,
-    Radio,
-    Space,
-    Table,
-    Tooltip,
-    Typography,
-} from "antd";
+import type { MenuProps } from "antd";
+import { Button, Drawer, Dropdown, Form, Input, Tooltip, Typography } from "antd";
 import type React from "react";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { MediaDropzone } from "./MediaDropzone";
 
 const { Title, Text } = Typography;
@@ -34,29 +27,45 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
     const [filterType, setFilterType] = useState<"all" | "video" | "audio">(defaultType);
     const [searchText, setSearchText] = useState("");
 
-    const [debouncedSearch, control] = useDebouncedValue(
-        searchText,
-        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
-        (state) => ({ isPending: state.isPending })
-    );
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [pageSize, setPageSize] = useState(10);
 
     const {
         media,
-        isLoadingMedia,
+        isLoadingMedia: loading,
         deleteMedia,
         recordPlay,
         updateMedia,
         isUpdating,
-        fetchNextPage,
+        nextCursor,
         hasNextPage,
-        isFetchingNextPage,
-    } = useMedia(filterType === "all" ? undefined : filterType, debouncedSearch);
+    } = useMedia(filterType === "all" ? undefined : filterType, searchText, {
+        cursor: currentCursor,
+        limit: pageSize,
+    });
+
+    const handleNext = useCallback(() => {
+        if (nextCursor) {
+            setCursorStack((prev) => [...prev, currentCursor || ""]);
+            setCurrentCursor(nextCursor);
+        }
+    }, [nextCursor, currentCursor]);
+
+    const handlePrev = useCallback(() => {
+        if (cursorStack.length > 0) {
+            const newStack = [...cursorStack];
+            const prev = newStack.pop();
+            setCursorStack(newStack);
+            setCurrentCursor(prev || undefined);
+        }
+    }, [cursorStack]);
 
     const [activeMedia, setActiveMedia] = useState<Media | null>(null);
     const hasRecordedPlay = useRef<boolean>(false);
 
     const handlePlayMedia = (record: Media) => {
-        hasRecordedPlay.current = false; // Reset lock for new playback session
+        hasRecordedPlay.current = false;
         setActiveMedia(record);
     };
 
@@ -110,89 +119,117 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
             width: 100,
             render: (count: number) => <Text className="font-mono">{count.toLocaleString()}</Text>,
         },
-        {
-            title: "Actions",
-            key: "actions",
-            width: 80,
-            fixed: "right" as const,
-            render: (_: any, record: Media) => (
-                <div onClick={(e) => e.stopPropagation()}>
-                    <Space size="middle">
-                        <Popconfirm
-                            title="Delete Media"
-                            description="This will permanently delete the file."
-                            onConfirm={(e) => {
-                                e?.stopPropagation();
-                                deleteMedia(record.id);
-                            }}
-                            onCancel={(e) => e?.stopPropagation()}
-                            okText="Delete"
-                            okButtonProps={{ danger: true }}
-                        >
-                            <Button
-                                icon={<DeleteOutlined />}
-                                danger
-                                type="text"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </Popconfirm>
-                    </Space>
-                </div>
-            ),
-        },
     ];
 
+    const totalAssets = media?.length || 0;
+    const videoCount = media?.filter((m) => m.mimeType.startsWith("video/")).length || 0;
+    const audioCount = media?.filter((m) => m.mimeType.startsWith("audio/")).length || 0;
+    const recentCount =
+        media?.filter((m) => Date.now() - new Date(m.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000)
+            .length || 0;
+
     return (
-        <div className="flex flex-col gap-4 mt-2">
+        <div className="flex flex-col h-full min-h-0 gap-4 mt-2">
+            <SummaryCardsRow
+                loading={loading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Loaded Media",
+                        value: totalAssets,
+                        icon: <AppstoreOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "video",
+                        label: "Video Files",
+                        value: videoCount,
+                        icon: <VideoCameraOutlined />,
+                        color: "#8b5cf6",
+                    },
+                    {
+                        key: "audio",
+                        label: "Audio Files",
+                        value: audioCount,
+                        icon: <AudioOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "recent",
+                        label: "Recently Added",
+                        value: recentCount,
+                        icon: <ClockCircleOutlined />,
+                        color: "#f59e0b",
+                    },
+                ]}
+            />
             <MediaDropzone type="all" />
 
-            <div className="mb-2 flex items-center justify-between">
-                <Input
-                    placeholder={`Search media...`}
-                    prefix={<SearchOutlined />}
-                    className="max-w-xs block"
-                    value={searchText}
-                    onChange={(e) => setSearchText(e.target.value)}
-                    allowClear
-                    suffix={
-                        control.state.isPending ? (
-                            <span className="text-xs text-gray-400 italic">typing...</span>
-                        ) : null
-                    }
+            <div className="flex-1 min-h-0">
+                <DataTableWithFilters<Media>
+                    config={{
+                        columns,
+                        data: media,
+                        loading,
+                        onRowClick: handlePlayMedia,
+                        filters: [
+                            {
+                                type: "search",
+                                key: "q",
+                                placeholder: "Search media...",
+                            },
+                            {
+                                type: "segmented",
+                                key: "type",
+                                options: [
+                                    { label: "All Media", value: "all" },
+                                    { label: "Video", value: "video" },
+                                    { label: "Audio", value: "audio" },
+                                ],
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => {
+                            setSearchText(f.q || "");
+                            setFilterType(f.type || "all");
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
+                        },
+                        pagination: {
+                            hasNextPage,
+                            hasPrevPage: cursorStack.length > 0,
+                            pageSize: pageSize,
+                            onNext: handleNext,
+                            onPrev: handlePrev,
+                            onPageSizeChange: (s) => {
+                                setPageSize(s);
+                                setCurrentCursor(undefined);
+                                setCursorStack([]);
+                            },
+                        },
+                        actions: (record: Media) => {
+                            const items: MenuProps["items"] = [
+                                {
+                                    key: "play",
+                                    label: "Play / Edit",
+                                    onClick: () => handlePlayMedia(record),
+                                },
+                                {
+                                    key: "delete",
+                                    label: "Delete",
+                                    danger: true,
+                                    icon: <DeleteOutlined />,
+                                    onClick: () => deleteMedia(record.id),
+                                },
+                            ];
+                            return (
+                                <Dropdown menu={{ items }} trigger={["click"]}>
+                                    <Button type="text" icon={<MoreOutlined />} />
+                                </Dropdown>
+                            );
+                        },
+                    }}
                 />
-
-                <Radio.Group
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    optionType="button"
-                    buttonStyle="solid"
-                >
-                    <Radio.Button value="all">All Media</Radio.Button>
-                    <Radio.Button value="video">Video</Radio.Button>
-                    <Radio.Button value="audio">Audio</Radio.Button>
-                </Radio.Group>
             </div>
-
-            <Table
-                dataSource={media}
-                columns={columns}
-                rowKey="id"
-                loading={isLoadingMedia}
-                pagination={false}
-                scroll={{ x: "max-content" }}
-                onRow={(record) => ({
-                    onClick: () => handlePlayMedia(record),
-                    className: "cursor-pointer",
-                })}
-            />
-
-            {hasNextPage && (
-                <div className="flex justify-center mt-4 mb-8">
-                    <Button onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
-                        Load More
-                    </Button>
-                </div>
-            )}
 
             <Drawer
                 title="Media Details"

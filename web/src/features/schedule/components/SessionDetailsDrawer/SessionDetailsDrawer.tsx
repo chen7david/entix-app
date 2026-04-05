@@ -42,10 +42,10 @@ export const SessionDetailsDrawer = ({
             setMemberCache((prev) => {
                 const next = { ...prev };
                 members.forEach((m: any) => {
-                    if (m.user?.id) {
-                        next[m.user.id] = {
-                            name: m.user.name || m.user.email,
-                            image: m.user.image,
+                    if (m.userId) {
+                        next[m.userId] = {
+                            name: m.name || m.email,
+                            image: m.avatarUrl,
                         };
                     }
                 });
@@ -62,8 +62,8 @@ export const SessionDetailsDrawer = ({
                 session.attendances.forEach((p: any) => {
                     if (p.userId) {
                         next[p.userId] = {
-                            name: p.user?.name || p.user?.email || p.userId,
-                            image: p.user?.image,
+                            name: p.name || p.email || p.userId,
+                            image: p.avatarUrl,
                         };
                     }
                 });

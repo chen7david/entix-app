@@ -1,17 +1,27 @@
 import { z } from "@hono/zod-openapi";
 
-export const financialAccountSchema = z.object({
+export const walletAccountDTOSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
     ownerType: z.enum(["user", "org"]),
+    organizationId: z.string().nullable(),
     currencyId: z.string(),
     name: z.string(),
     balanceCents: z.number(),
     isActive: z.boolean(),
+    accountType: z.enum(["savings", "funding", "treasury", "system"]),
     archivedAt: z.union([z.string(), z.date()]).nullable(),
     createdAt: z.union([z.string(), z.date()]),
     updatedAt: z.union([z.string(), z.date()]),
 });
+
+export type WalletAccountDTO = z.infer<typeof walletAccountDTOSchema>;
+
+export const walletSummaryDTOSchema = z.object({
+    accounts: z.array(walletAccountDTOSchema),
+});
+
+export type WalletSummaryDTO = z.infer<typeof walletSummaryDTOSchema>;
 
 export const financialTransactionSchema = z.object({
     id: z.string(),
@@ -27,14 +37,16 @@ export const financialTransactionSchema = z.object({
     createdAt: z.string().or(z.date()),
 });
 
-export const walletSummaryResponseSchema = z.object({
-    accounts: z.array(financialAccountSchema),
+export const transactionCursorSchema = z.object({
+    date: z.string().or(z.date()),
+    id: z.string(),
 });
 
+export type TransactionCursor = z.infer<typeof transactionCursorSchema>;
+
 export const transactionHistoryResponseSchema = z.object({
-    data: z.array(z.any()), // Can be more specific later if relations are complex
-    page: z.number(),
-    pageSize: z.number(),
+    data: z.array(financialTransactionSchema),
+    nextCursor: z.string().nullable(),
 });
 
 export const executeTransferResponseSchema = z.object({
@@ -48,10 +60,10 @@ export const createFinancialAccountSchema = z.object({
     ownerId: z.string().min(1),
 });
 
-export const createFinancialAccountResponseSchema = financialAccountSchema;
+export const createFinancialAccountResponseSchema = walletAccountDTOSchema;
 
 export const listFinancialAccountsResponseSchema = z.object({
-    data: z.array(financialAccountSchema),
+    data: z.array(walletAccountDTOSchema),
 });
 
 export const currencyWithStatusSchema = z.object({
@@ -97,10 +109,6 @@ export const executeTransferRequestSchema = z.object({
     description: z.string().optional(),
 });
 
-export const successResponseSchema = z.object({
-    success: z.boolean(),
-});
-
 export const reverseTransactionRequestSchema = z.object({
     reason: z.string().min(3).max(255),
 });
@@ -116,23 +124,29 @@ export const transactionResultSchema = z.object({
 });
 
 export const paginationSchema = z.object({
-    page: z.number().int().min(1).default(1),
-    pageSize: z.number().int().min(1).max(100).default(20),
+    cursor: z.string().optional(),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export const transactionFiltersSchema = paginationSchema.extend({
     startDate: z.string().optional(),
     endDate: z.string().optional(),
-    minAmount: z.number().optional(),
-    maxAmount: z.number().optional(),
+    minAmount: z.coerce.number().optional(),
+    maxAmount: z.coerce.number().optional(),
     txId: z.string().optional(),
     accountId: z.string().optional(),
     status: z.enum(["pending", "completed", "reversed"]).optional(),
     categoryId: z.string().optional(),
 });
 
+export const ensureFundingAccountRequestSchema = z.object({
+    organizationId: z.string().min(1),
+    currencyId: z.string().min(1),
+});
+
 export type AdminCreditRequest = z.infer<typeof adminCreditRequestSchema>;
 export type AdminDebitRequest = z.infer<typeof adminDebitRequestSchema>;
+export type EnsureFundingAccountRequest = z.infer<typeof ensureFundingAccountRequestSchema>;
 export type ExecuteTransferRequest = z.infer<typeof executeTransferRequestSchema>;
 export type ReverseTransactionRequest = z.infer<typeof reverseTransactionRequestSchema>;
 export type ActivateCurrencyRequest = z.infer<typeof activateCurrencyRequestSchema>;

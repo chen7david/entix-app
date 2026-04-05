@@ -1,177 +1,146 @@
-import { ClearOutlined, SearchOutlined } from "@ant-design/icons";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import {
+    CheckCircleOutlined,
+    InteractionOutlined,
+    RollbackOutlined,
+    SyncOutlined,
+} from "@ant-design/icons";
+import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
 import { useTransactions } from "@web/src/features/finance/hooks/useTransactions";
 import { useOrganization } from "@web/src/features/organization";
-import {
-    Button,
-    Card,
-    Col,
-    DatePicker,
-    Input,
-    InputNumber,
-    Row,
-    Select,
-    Space,
-    Typography,
-} from "antd";
+import { Typography } from "antd";
 import type React from "react";
 import { useState } from "react";
 
 const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
 
 export const FinanceTransactionsPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
-    // Filter State
-    const [page, setPage] = useState(1);
+    // Cursor stack: navigate forward/back by pushing/popping cursors
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [filters, setFilters] = useState<Record<string, any>>({});
     const [pageSize, setPageSize] = useState(20);
-    const [dateRange, setDateRange] = useState<[any, any] | null>(null);
-    const [minAmount, setMinAmount] = useState<number | null>(null);
-    const [maxAmount, setMaxAmount] = useState<number | null>(null);
-    const [status, setStatus] = useState<string | undefined>(undefined);
-    const [searchId, setSearchId] = useState("");
+
+    const currentCursor = cursorStack[cursorStack.length - 1];
 
     const { data, isLoading } = useTransactions(orgId, {
-        page,
-        pageSize,
-        startDate: dateRange?.[0]?.toISOString(),
-        endDate: dateRange?.[1]?.toISOString(),
-        minAmount: minAmount ? minAmount * 100 : undefined,
-        maxAmount: maxAmount ? maxAmount * 100 : undefined,
-        status,
-        txId: searchId || undefined,
+        cursor: currentCursor,
+        limit: pageSize,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        status: filters.status,
+        txId: filters.txId || undefined,
     });
 
     const { mutate: reverse, isPending: isReversing, variables } = useReverseTransaction(orgId);
 
-    const resetFilters = () => {
-        setDateRange(null);
-        setMinAmount(null);
-        setMaxAmount(null);
-        setStatus(undefined);
-        setSearchId("");
-        setPage(1);
+    const filterConfig: FilterConfig[] = [
+        {
+            type: "search",
+            key: "txId",
+            placeholder: "Transaction ID",
+        },
+        {
+            type: "dateRange",
+            key: "dateRange",
+            keys: ["startDate", "endDate"],
+        },
+        {
+            type: "select",
+            key: "status",
+            placeholder: "All Statuses",
+            options: [
+                { label: "Completed", value: "completed" },
+                { label: "Reversed", value: "reversed" },
+                { label: "Pending", value: "pending" },
+            ],
+        },
+    ];
+
+    const handleFiltersChange = (newFilters: Record<string, any>) => {
+        setFilters(newFilters);
+        setCursorStack([]); // Reset to first page on filter change
+    };
+
+    const handleNext = () => {
+        if (data?.nextCursor) {
+            setCursorStack((prev) => [...prev, data.nextCursor as string]);
+        }
+    };
+
+    const handlePrev = () => {
+        setCursorStack((prev) => prev.slice(0, -1));
     };
 
     return (
-        <>
-            <Toolbar />
-            <div style={{ padding: 24 }}>
-                <div style={{ marginBottom: 24 }}>
-                    <Title level={2} style={{ marginBottom: 4 }}>
-                        Financial Ledger
-                    </Title>
-                    <Text type="secondary">
-                        A comprehensive, immutable record of all organizational financial
-                        transactions and reversals.
-                    </Text>
-                </div>
-
-                {/* Filter Bar */}
-                <Card style={{ marginBottom: 24 }} bodyStyle={{ padding: 16 }}>
-                    <Row gutter={[16, 16]} align="middle">
-                        <Col xs={24} lg={8}>
-                            <Input
-                                prefix={
-                                    <SearchOutlined
-                                        style={{ color: "var(--ant-color-text-description)" }}
-                                    />
-                                }
-                                placeholder="Search by Transaction ID..."
-                                value={searchId}
-                                onChange={(e) => setSearchId(e.target.value)}
-                                size="large"
-                            />
-                        </Col>
-
-                        <Col xs={24} md={12} lg={6}>
-                            <RangePicker
-                                style={{ width: "100%" }}
-                                value={dateRange}
-                                onChange={(val) => setDateRange(val as any)}
-                                size="large"
-                            />
-                        </Col>
-
-                        <Col xs={12} md={6} lg={4}>
-                            <Select
-                                placeholder="Status"
-                                style={{ width: "100%" }}
-                                allowClear
-                                value={status}
-                                onChange={setStatus}
-                                size="large"
-                                options={[
-                                    { label: "Completed", value: "completed" },
-                                    { label: "Reversed", value: "reversed" },
-                                    { label: "Pending", value: "pending" },
-                                ]}
-                            />
-                        </Col>
-
-                        <Col xs={12} md={6} lg={4}>
-                            <Button
-                                icon={<ClearOutlined />}
-                                onClick={resetFilters}
-                                size="large"
-                                block
-                            >
-                                Reset
-                            </Button>
-                        </Col>
-
-                        <Col xs={24}>
-                            <Space align="center">
-                                <Text strong type="secondary" style={{ fontSize: 12 }}>
-                                    AMOUNT RANGE
-                                </Text>
-                                <InputNumber
-                                    placeholder="Min"
-                                    value={minAmount}
-                                    onChange={setMinAmount}
-                                    precision={2}
-                                    size="large"
-                                    prefix="$"
-                                />
-                                <Text type="secondary">—</Text>
-                                <InputNumber
-                                    placeholder="Max"
-                                    value={maxAmount}
-                                    onChange={setMaxAmount}
-                                    precision={2}
-                                    size="large"
-                                    prefix="$"
-                                />
-                            </Space>
-                        </Col>
-                    </Row>
-                </Card>
-
-                {/* Table */}
-                <TransactionLedgerTable
-                    transactions={data?.items || []}
-                    loading={isLoading}
-                    onReverse={(txId, reason) => reverse({ txId, reason })}
-                    isReversing={isReversing ? variables?.txId : null}
-                    pagination={{
-                        current: page,
-                        pageSize: pageSize,
-                        total: data?.items?.length
-                            ? data.items.length < pageSize
-                                ? (page - 1) * pageSize + data.items.length
-                                : 1000
-                            : 0,
-                        onChange: (p, ps) => {
-                            setPage(p);
-                            setPageSize(ps);
-                        },
-                    }}
-                />
+        <div>
+            <div style={{ marginBottom: 32 }}>
+                <Title level={2} style={{ margin: 0 }}>
+                    Financial Ledger
+                </Title>
+                <Text type="secondary" className="text-base">
+                    A comprehensive, immutable record of all organizational financial transactions
+                    and reversals.
+                </Text>
             </div>
-        </>
+
+            <SummaryCardsRow
+                loading={isLoading}
+                items={[
+                    {
+                        key: "total",
+                        label: "Ledger Records",
+                        value: data?.items?.length || 0,
+                        icon: <InteractionOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "completed",
+                        label: "Completed",
+                        value: data?.items?.filter((t) => t.status === "completed").length || 0,
+                        icon: <CheckCircleOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "pending",
+                        label: "Pending",
+                        value: data?.items?.filter((t) => t.status === "pending").length || 0,
+                        icon: <SyncOutlined />,
+                        color: "#f59e0b",
+                    },
+                    {
+                        key: "reversed",
+                        label: "Reversed",
+                        value: data?.items?.filter((t) => t.status === "reversed").length || 0,
+                        icon: <RollbackOutlined />,
+                        color: "#ef4444",
+                    },
+                ]}
+            />
+
+            <TransactionLedgerTable
+                transactions={data?.items || []}
+                loading={isLoading}
+                onReverse={(txId, reason) => reverse({ txId, reason })}
+                isReversing={isReversing ? variables?.txId : null}
+                pagination={{
+                    pageSize,
+                    hasNextPage: !!data?.nextCursor,
+                    hasPrevPage: cursorStack.length > 0,
+                    onNext: handleNext,
+                    onPrev: handlePrev,
+                    onPageSizeChange: (size) => {
+                        setPageSize(size);
+                        setCursorStack([]); // Reset on size change
+                    },
+                }}
+                filters={filterConfig}
+                onFiltersChange={handleFiltersChange}
+            />
+        </div>
     );
 };

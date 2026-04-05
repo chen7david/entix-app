@@ -1,10 +1,11 @@
+import { BadRequestError, InternalServerError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
     type CreateAccountRepoInput,
     type FinancialAccount,
     financialAccounts,
 } from "@shared/db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 
 /**
  * Repository for financial account database operations.
@@ -14,8 +15,9 @@ export class FinancialAccountsRepository {
 
     /**
      * Creates a new financial account.
+     * Throws on database failure.
      */
-    async insert(input: CreateAccountRepoInput): Promise<FinancialAccount | null> {
+    async insert(input: CreateAccountRepoInput): Promise<FinancialAccount> {
         try {
             const [account] = await this.db
                 .insert(financialAccounts)
@@ -23,13 +25,28 @@ export class FinancialAccountsRepository {
                     ...input,
                     balanceCents: input.balanceCents ?? 0,
                     isActive: input.isActive ?? true,
-                    isFundingAccount: input.isFundingAccount ?? false,
+                    accountType: input.accountType ?? "savings",
                 })
                 .returning();
 
-            return account ?? null;
-        } catch (_err) {
-            return null;
+            if (!account) {
+                throw new InternalServerError("Failed to insert financial account");
+            }
+
+            return account;
+        } catch (err: any) {
+            const msg = err.message || String(err);
+            const causeMsg = err.cause?.message || "";
+            const isConstraint =
+                msg.includes("constraint failed") ||
+                msg.includes("NOT NULL") ||
+                causeMsg.includes("constraint failed") ||
+                causeMsg.includes("NOT NULL");
+
+            if (isConstraint) {
+                throw new BadRequestError(`Account creation failed: ${msg} ${causeMsg}`);
+            }
+            throw err;
         }
     }
 
@@ -46,7 +63,7 @@ export class FinancialAccountsRepository {
     async findActiveByOwner(
         ownerId: string,
         ownerType: "user" | "org",
-        organizationId?: string
+        organizationId: string
     ): Promise<FinancialAccount[]> {
         return this.db
             .select()
@@ -55,11 +72,27 @@ export class FinancialAccountsRepository {
                 and(
                     eq(financialAccounts.ownerId, ownerId),
                     eq(financialAccounts.ownerType, ownerType),
-                    organizationId
-                        ? eq(financialAccounts.organizationId, organizationId)
-                        : sql`${financialAccounts.organizationId} IS NULL`,
+                    eq(financialAccounts.organizationId, organizationId),
                     eq(financialAccounts.isActive, true),
-                    sql`${financialAccounts.archivedAt} IS NULL`
+                    isNull(financialAccounts.archivedAt)
+                )
+            );
+    }
+
+    /**
+     * Retrieves all active, non-archived accounts for any owner of a specific type.
+     * Excludes the 'platform' owner to return only organizations/user accounts.
+     */
+    async findActiveByOwnerType(ownerType: "user" | "org"): Promise<FinancialAccount[]> {
+        return this.db
+            .select()
+            .from(financialAccounts)
+            .where(
+                and(
+                    eq(financialAccounts.ownerType, ownerType),
+                    eq(financialAccounts.isActive, true),
+                    isNull(financialAccounts.archivedAt),
+                    ne(financialAccounts.ownerId, "platform")
                 )
             );
     }
@@ -123,7 +156,7 @@ export class FinancialAccountsRepository {
                 eq(financialAccounts.ownerId, orgId),
                 eq(financialAccounts.ownerType, "org"),
                 eq(financialAccounts.isActive, true),
-                sql`${financialAccounts.archivedAt} IS NULL`
+                isNull(financialAccounts.archivedAt)
             ),
         });
     }
@@ -135,7 +168,7 @@ export class FinancialAccountsRepository {
         ownerId: string,
         name: string,
         currencyId: string,
-        organizationId?: string
+        organizationId: string
     ): Promise<boolean> {
         const [existing] = await this.db
             .select({ id: financialAccounts.id })
@@ -145,9 +178,7 @@ export class FinancialAccountsRepository {
                     eq(financialAccounts.ownerId, ownerId),
                     eq(financialAccounts.name, name),
                     eq(financialAccounts.currencyId, currencyId),
-                    organizationId
-                        ? eq(financialAccounts.organizationId, organizationId)
-                        : sql`${financialAccounts.organizationId} IS NULL`
+                    eq(financialAccounts.organizationId, organizationId)
                 )
             )
             .limit(1);
@@ -162,7 +193,7 @@ export class FinancialAccountsRepository {
         ownerId: string,
         ownerType: "user" | "org",
         currencyId: string,
-        organizationId?: string
+        organizationId: string
     ): Promise<boolean> {
         const [existing] = await this.db
             .select({ id: financialAccounts.id })
@@ -172,9 +203,7 @@ export class FinancialAccountsRepository {
                     eq(financialAccounts.ownerId, ownerId),
                     eq(financialAccounts.ownerType, ownerType),
                     eq(financialAccounts.currencyId, currencyId),
-                    organizationId
-                        ? eq(financialAccounts.organizationId, organizationId)
-                        : sql`${financialAccounts.organizationId} IS NULL`,
+                    eq(financialAccounts.organizationId, organizationId),
                     eq(financialAccounts.isActive, true)
                 )
             )

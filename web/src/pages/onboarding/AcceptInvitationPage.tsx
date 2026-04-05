@@ -1,15 +1,17 @@
+import { AppRoutes } from "@shared";
 import { useAuth } from "@web/src/features/auth";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 export const AcceptInvitationPage: React.FC = () => {
     const { message } = App.useApp();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const invitationId = searchParams.get("id");
-    const { checkOrganizationStatus } = useOrganization();
+    const { checkOrganizationStatus, setActive } = useOrganization();
     const { acceptInvitation, isAcceptingInvitation } = useInvitations();
     const { isLoading: isAuthLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
@@ -50,9 +52,21 @@ export const AcceptInvitationPage: React.FC = () => {
         message.success,
     ]);
 
-    const handleGoToDashboard = () => {
-        // Check status to determine best redirection (likely the new org)
-        checkOrganizationStatus();
+    const handleNavigateResult = async () => {
+        const { orgs, activeOrg } = await checkOrganizationStatus();
+
+        if (activeOrg?.slug) {
+            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, { replace: true });
+            return;
+        }
+
+        if (orgs.length === 1 && orgs[0].slug) {
+            await setActive(orgs[0].id);
+            navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, { replace: true });
+            return;
+        }
+
+        navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
     };
 
     if (isAuthLoading || (isAcceptingInvitation && !success && !error)) {
@@ -67,11 +81,7 @@ export const AcceptInvitationPage: React.FC = () => {
                     title="Invitation Failed"
                     subTitle={error}
                     extra={[
-                        <Button
-                            type="primary"
-                            key="dashboard"
-                            onClick={() => checkOrganizationStatus()}
-                        >
+                        <Button type="primary" key="dashboard" onClick={handleNavigateResult}>
                             Go to Dashboard
                         </Button>,
                     ]}
@@ -82,7 +92,7 @@ export const AcceptInvitationPage: React.FC = () => {
                     title="Invitation Accepted!"
                     subTitle="You have successfully joined the organization."
                     extra={[
-                        <Button type="primary" key="dashboard" onClick={handleGoToDashboard}>
+                        <Button type="primary" key="dashboard" onClick={handleNavigateResult}>
                             Go to Dashboard
                         </Button>,
                     ]}

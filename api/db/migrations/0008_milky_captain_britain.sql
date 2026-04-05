@@ -1,1 +1,0 @@
-ALTER TABLE `financial_currencies` ADD `default_account_name` text DEFAULT 'Savings' NOT NULL;

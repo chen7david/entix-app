@@ -1,5 +1,4 @@
 import { AppRoutes } from "@shared";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import {
     ChangePasswordForm,
     type ChangePasswordValues,
@@ -44,18 +43,17 @@ export const ChangePasswordPage: React.FC = () => {
     };
 
     return (
-        <>
-            <Toolbar />
-            <div style={{ padding: "24px", maxWidth: "600px", margin: "0 auto" }}>
-                <Card>
-                    <Title level={3}>Change Password</Title>
-                    <Text type="secondary" style={{ display: "block", marginBottom: 24 }}>
-                        Update your password to keep your account secure
-                    </Text>
-
-                    <ChangePasswordForm onSubmit={handleChangePassword} isLoading={isPending} />
-                </Card>
+        <div className="max-w-xl">
+            <div style={{ marginBottom: 32 }}>
+                <Title level={2} style={{ margin: 0 }}>
+                    Change Password
+                </Title>
+                <Text type="secondary">Update your password to keep your account secure</Text>
             </div>
-        </>
+
+            <Card className="shadow-sm">
+                <ChangePasswordForm onSubmit={handleChangePassword} isLoading={isPending} />
+            </Card>
+        </div>
     );
 };

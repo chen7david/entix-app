@@ -39,6 +39,7 @@ export const AppRoutes = {
         users: "/admin/users",
         emails: "/admin/emails",
         organizations: "/admin/organizations",
+        financial: "/admin/financial",
     },
     onboarding: {
         index: "/onboarding",

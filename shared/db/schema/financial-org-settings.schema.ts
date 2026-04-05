@@ -10,10 +10,10 @@ export const financialOrgSettings = sqliteTable("financial_org_settings", {
         .unique()
         .references(() => authOrganizations.id),
 
-    // JSON-stringified array of currency IDs, e.g., '["fcur_etd", "fcur_usd"]'
+    // JSON-stringified array of currency IDs, e.g., '["fcur_etd", "fcur_cny"]'
     autoProvisionCurrencies: text("auto_provision_currencies")
         .notNull()
-        .default(`["${FINANCIAL_CURRENCIES.ETD}", "${FINANCIAL_CURRENCIES.USD}"]`),
+        .default(`["${FINANCIAL_CURRENCIES.ETD}", "${FINANCIAL_CURRENCIES.CNY}"]`),
 
     createdAt: integer("created_at", { mode: "timestamp_ms" })
         .notNull()

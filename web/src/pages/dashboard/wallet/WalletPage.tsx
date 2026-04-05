@@ -1,12 +1,9 @@
 import { InfoCircleOutlined, PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
-import {
-    TransactionTable,
-    TransferDrawer,
-    useTransactionHistory,
-    useWalletBalance,
-} from "@web/src/features/wallet";
+import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
 import { useSession } from "@web/src/lib/auth-client";
 import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
 import { useState } from "react";
@@ -19,9 +16,12 @@ export const WalletPage = () => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(20);
+    // Cursor stack for pagination
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [filters, setFilters] = useState<Record<string, any>>({});
     const [isTransferOpen, setIsTransferOpen] = useState(false);
+
+    const currentCursor = cursorStack[cursorStack.length - 1];
 
     const {
         data: summary,
@@ -33,18 +33,61 @@ export const WalletPage = () => {
         data: history,
         isFetching: isFetchingHistory,
         refetch: refetchHistory,
-    } = useTransactionHistory(userId, "user", page, pageSize, orgId);
+    } = useTransactionHistory(userId, "user", currentCursor, 20, orgId, {
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        status: filters.status,
+        txId: filters.txId,
+    });
+
+    const filterConfig: FilterConfig[] = [
+        {
+            type: "search",
+            key: "txId",
+            placeholder: "Search ID...",
+        },
+        {
+            type: "dateRange",
+            key: "dateRange",
+            keys: ["startDate", "endDate"],
+        },
+        {
+            type: "select",
+            key: "status",
+            placeholder: "Status",
+            options: [
+                { label: "Completed", value: "completed" },
+                { label: "Reversed", value: "reversed" },
+                { label: "Pending", value: "pending" },
+            ],
+        },
+    ];
 
     const handleRefresh = () => {
         refetchBalance();
         refetchHistory();
     };
 
+    const handleFiltersChange = (newFilters: Record<string, any>) => {
+        setFilters(newFilters);
+        setCursorStack([]); // Reset to first page on filter change
+    };
+
+    const handleNext = () => {
+        if (history?.nextCursor) {
+            setCursorStack((prev) => [...prev, history.nextCursor as string]);
+        }
+    };
+
+    const handlePrev = () => {
+        setCursorStack((prev) => prev.slice(0, -1));
+    };
+
     return (
-        <div style={{ padding: 24 }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+        <div>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
                 <Col>
-                    <Title level={2} style={{ marginBottom: 4 }}>
+                    <Title level={2} style={{ margin: 0 }}>
                         Personal Wallet
                     </Title>
                     <Typography.Text type="secondary">
@@ -76,7 +119,7 @@ export const WalletPage = () => {
                     <Title level={4} style={{ marginBottom: 16 }}>
                         Your Accounts
                     </Title>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[24, 24]}>
                         {isLoadingBalance ? (
                             [1, 2].map((i) => (
                                 <Col xs={24} sm={12} md={8} lg={6} key={i}>
@@ -141,18 +184,19 @@ export const WalletPage = () => {
                 </Col>
 
                 <Col span={24}>
-                    <Card title="Recent Transactions">
-                        <TransactionTable
-                            transactions={history?.data}
-                            loading={isFetchingHistory}
-                            page={page}
-                            pageSize={pageSize}
-                            onPageChange={(p, ps) => {
-                                setPage(p);
-                                setPageSize(ps);
-                            }}
-                        />
-                    </Card>
+                    <TransactionLedgerTable
+                        transactions={history?.data || []}
+                        loading={isFetchingHistory}
+                        pagination={{
+                            pageSize: 20,
+                            hasNextPage: !!history?.nextCursor,
+                            hasPrevPage: cursorStack.length > 0,
+                            onNext: handleNext,
+                            onPrev: handlePrev,
+                        }}
+                        filters={filterConfig}
+                        onFiltersChange={handleFiltersChange}
+                    />
                 </Col>
             </Row>
 

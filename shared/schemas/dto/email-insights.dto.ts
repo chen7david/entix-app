@@ -34,20 +34,10 @@ export const emailDetailSchema = emailSummarySchema.extend({
         .openapi({ example: [{ name: "category", value: "welcome" }] }),
 });
 
-export const emailListResponseSchema = z.object({
-    object: z.literal("list"),
-    data: z.array(emailSummarySchema),
-    has_more: z.boolean(),
-});
+import { createPaginatedResponseSchema } from "../pagination.schema";
 
-export const emailListQuerySchema = z.object({
-    limit: z.coerce.number().min(1).max(100).default(20).optional().openapi({ example: 20 }),
-    after: z.string().optional().openapi({ example: "some_id" }),
-    before: z.string().optional().openapi({ example: "some_id" }),
-});
+export const paginatedEmailResponseSchema = createPaginatedResponseSchema(emailSummarySchema);
 
 export type EmailEvent = z.infer<typeof emailEventSchema>;
 export type EmailSummaryDTO = z.infer<typeof emailSummarySchema>;
 export type EmailDetailDTO = z.infer<typeof emailDetailSchema>;
-export type EmailListResponseDTO = z.infer<typeof emailListResponseSchema>;
-export type EmailListQueryDTO = z.infer<typeof emailListQuerySchema>;

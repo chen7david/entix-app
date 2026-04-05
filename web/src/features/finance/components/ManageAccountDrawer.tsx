@@ -4,9 +4,8 @@ import {
     InfoCircleOutlined,
     SaveOutlined,
 } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { useTransactionHistory } from "@web/src/features/wallet/hooks/useTransactionHistory";
-import type { WalletAccount } from "@web/src/features/wallet/hooks/useWalletBalance";
 import {
     Button,
     Card,
@@ -31,7 +30,7 @@ const { Title, Text } = Typography;
 type Props = {
     open: boolean;
     onClose: () => void;
-    account: WalletAccount | null;
+    account: WalletAccountDTO | null;
     orgId?: string;
     size?: "default" | "large";
 };
@@ -51,10 +50,10 @@ export const ManageAccountDrawer: React.FC<Props> = ({
     const { data: history, isLoading: isLoadingHistory } = useTransactionHistory(
         orgId, // orgId is the primary ID for org-level history
         "org",
-        1,
-        3,
+        undefined, // cursor (first page)
+        3, // limit
         undefined,
-        account?.id // Filter by this specific account
+        { accountId: account?.id } // Filter by this specific account
     );
 
     useEffect(() => {
@@ -122,7 +121,7 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                 </Title>
                 <Space size={4} style={{ marginTop: 4 }}>
                     <Tag color="success">ACTIVE</Tag>
-                    {account.isFundingAccount && <Tag color="purple">FUNDING</Tag>}
+                    {account.accountType === "funding" && <Tag color="purple">FUNDING</Tag>}
                     <Text type="secondary" style={{ fontSize: 12 }}>
                         {currencyMeta?.code} • {account.id.split("_").pop()}
                     </Text>

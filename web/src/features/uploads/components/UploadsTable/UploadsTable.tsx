@@ -5,9 +5,11 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { getAssetUrl, type UploadDto } from "@shared";
-import { Button, Table, Tag, Tooltip } from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { Button, Tag, Tooltip, Typography } from "antd";
 import type React from "react";
+
+const { Text } = Typography;
 
 type Props = {
     uploads: UploadDto[];
@@ -31,7 +33,7 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
         return <FileOutlined className="text-gray-500" />;
     };
 
-    const columns: ColumnsType<UploadDto> = [
+    const columns = [
         {
             title: "File Name",
             dataIndex: "originalName",
@@ -59,8 +61,10 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
             dataIndex: "fileSize",
             key: "fileSize",
             width: 120,
-            align: "right",
-            render: (size: number) => formatBytes(size),
+            align: "right" as const,
+            render: (size: number) => (
+                <Text className="font-mono text-xs">{formatBytes(size)}</Text>
+            ),
         },
         {
             title: "Type",
@@ -99,8 +103,8 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
             title: "Actions",
             key: "actions",
             width: 70,
-            fixed: "right",
-            align: "center",
+            fixed: "right" as const,
+            align: "center" as const,
             render: (_: unknown, record: UploadDto) => (
                 <Tooltip title="Delete File">
                     <Button
@@ -116,14 +120,37 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
     ];
 
     return (
-        <Table
-            dataSource={uploads}
-            columns={columns}
-            rowKey="id"
-            pagination={{ pageSize: 12 }}
-            scroll={{ x: "max-content" }}
-            tableLayout="fixed"
-            size="middle"
-        />
+        <div className="flex flex-col h-full min-h-0">
+            <div className="flex-1 min-h-0">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: uploads,
+                        rowKey: "id",
+                        filters: [
+                            {
+                                type: "search",
+                                key: "search",
+                                placeholder: "Search file name...",
+                            },
+                            {
+                                type: "segmented",
+                                key: "type",
+                                options: [
+                                    { label: "All", value: "all" },
+                                    { label: "Image", value: "image" },
+                                    { label: "Video", value: "video" },
+                                    { label: "Audio", value: "audio" },
+                                ],
+                            },
+                        ],
+                        onFiltersChange: (_filters: Record<string, any>) => {
+                            // TODO: Implement server-side search via useOrganizationUploads hook
+                        },
+                        pagination: null, // TODO: Implement cursor pagination once API supports it.
+                    }}
+                />
+            </div>
+        </div>
     );
 };

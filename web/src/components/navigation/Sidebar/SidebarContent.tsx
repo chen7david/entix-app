@@ -25,12 +25,18 @@ import {
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { ThemeToggle } from "../../common/ThemeToggle";
+import { AdminSidebarMenu } from "./AdminSidebarMenu";
 import { SidebarMenu } from "./SidebarMenu";
 import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
 
 const { Text } = Typography;
 
-export const SidebarContent: React.FC = () => {
+interface SidebarContentProps {
+    variant?: "org" | "admin";
+}
+
+export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" }) => {
     const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
     const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
@@ -83,7 +89,8 @@ export const SidebarContent: React.FC = () => {
             ? [
                   {
                       key: AppRoutes.admin.index,
-                      label: "Admin Management",
+                      label: "Platform Dashboard",
+                      disabled: variant === "admin",
                       icon: <SafetyOutlined style={{ color: "#faad14" }} />,
                   },
                   {
@@ -202,15 +209,19 @@ export const SidebarContent: React.FC = () => {
 
             {/* Menu */}
             <div className="flex-1 overflow-y-auto py-2">
-                <SidebarMenu />
+                {variant === "admin" ? <AdminSidebarMenu /> : <SidebarMenu />}
             </div>
 
             {/* Footer: Org Switcher & User Menu */}
             <div style={{ borderTop: `1px solid ${token.colorSplit}` }}>
                 <div className="flex items-center gap-1 p-2">
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                        <SidebarOrgSwitcher />
-                    </div>
+                    {variant === "org" && (
+                        <div style={{ flex: 1, minWidth: 20 }}>
+                            <SidebarOrgSwitcher />
+                        </div>
+                    )}
+                    {variant === "admin" && <div style={{ flex: 1 }} />}
+                    <ThemeToggle />
                     <Dropdown
                         menu={{ items: userMenuItems, onClick: handleMenuClick }}
                         trigger={["click"]}

@@ -1,28 +1,19 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
-import { Button, Typography } from "antd";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { Button } from "antd";
 import type React from "react";
 import { useState } from "react";
 import { PlaylistManager } from "./components/PlaylistManager";
-
-const { Title, Text } = Typography;
 
 export const OrganizationPlaylistsPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} className="!mb-1">
-                            Curated Playlists
-                        </Title>
-                        <Text type="secondary">
-                            Organize your media assets into sequential delivery tracks.
-                        </Text>
-                    </div>
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Curated Playlists"
+                subtitle="Organize your media assets into sequential delivery tracks."
+                actions={
                     <Button
                         type="primary"
                         icon={<PlusOutlined />}
@@ -30,12 +21,14 @@ export const OrganizationPlaylistsPage: React.FC = () => {
                     >
                         New Playlist
                     </Button>
-                </div>
+                }
+            />
+            <div className="flex-1 min-h-0">
                 <PlaylistManager
                     externalIsCreateModalOpen={isCreateModalOpen}
                     onCloseCreateModal={() => setIsCreateModalOpen(false)}
                 />
             </div>
-        </>
+        </div>
     );
 };
