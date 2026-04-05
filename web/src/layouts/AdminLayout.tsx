@@ -11,15 +11,21 @@ export const AdminLayout: React.FC = () => {
     const { token } = theme.useToken();
 
     return (
-        <Layout className="min-h-screen">
+        <Layout style={{ height: "100dvh", overflow: "hidden" }}>
             <MobileSidebar variant="admin" />
-            <Sider className="hidden md:block" width={240}>
+            <Sider
+                className="hidden md:block"
+                width={240}
+                style={{ height: "100%", overflow: "hidden" }}
+            >
                 <DesktopSidebar variant="admin" />
             </Sider>
-            <Layout hasSider>
+            <Layout hasSider style={{ flex: 1, overflow: "hidden" }}>
                 <Content
                     className="flex flex-col relative"
                     style={{
+                        height: "100%",
+                        overflowY: "auto",
                         backgroundColor: token.colorBgLayout,
                     }}
                 >
