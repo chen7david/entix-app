@@ -3,10 +3,8 @@ import {
     FinancialAccountCard,
     type FinancialAccountData,
 } from "@web/src/features/wallet/components/FinancialAccountCard";
-import { Col, Row, Typography } from "antd";
+import { Col, Row } from "antd";
 import type React from "react";
-
-const { Text } = Typography;
 
 type Props = {
     accounts: WalletAccountDTO[];
@@ -17,9 +15,13 @@ type Props = {
 export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccountClick }) => {
     if (loading && (!accounts || accounts.length === 0)) {
         return (
-            <div className="py-20 text-center border border-dashed rounded-xl bg-slate-100/30">
-                <Text type="secondary">Loading treasury accounts...</Text>
-            </div>
+            <Row gutter={[16, 16]}>
+                {[...Array(6)].map((_, i) => (
+                    <Col xs={24} sm={12} lg={8} xl={6} key={`skeleton-${i}`}>
+                        <FinancialAccountCard accountState="loading" account={{} as any} />
+                    </Col>
+                ))}
+            </Row>
         );
     }
 

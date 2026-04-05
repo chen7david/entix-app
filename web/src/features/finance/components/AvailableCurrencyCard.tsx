@@ -1,5 +1,5 @@
 import { CheckOutlined, PlusOutlined } from "@ant-design/icons";
-import { Button, Card, Grid, Typography, theme } from "antd";
+import { Button, Card, Flex, Grid, Skeleton, Typography, theme } from "antd";
 import type React from "react";
 import type { CurrencyWithStatus } from "../hooks/useOrgCurrencies";
 
@@ -21,6 +21,38 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
     const { token } = theme.useToken();
     const screens = Grid.useBreakpoint();
     const isActivated = currency.isActivated;
+
+    if (loading && !currency.id) {
+        return (
+            <Card
+                size="small"
+                style={{
+                    height: "100%",
+                    borderRadius: 12,
+                    background: token.colorFillQuaternary,
+                    border: `1px dashed ${token.colorBorder}`,
+                }}
+                styles={{ body: { padding: "16px", height: "100%" } }}
+            >
+                <Flex
+                    vertical
+                    align="center"
+                    justify="center"
+                    style={{ height: "100%", paddingTop: 12 }}
+                >
+                    <Skeleton.Avatar
+                        active
+                        size="large"
+                        shape="circle"
+                        style={{ marginBottom: 12, width: 48, height: 48 }}
+                    />
+                    <Skeleton.Input active size="small" style={{ width: 60, marginBottom: 8 }} />
+                    <Skeleton.Input active size="small" style={{ width: 100, marginBottom: 24 }} />
+                    <Skeleton.Button active block style={{ height: 44, borderRadius: 8 }} />
+                </Flex>
+            </Card>
+        );
+    }
 
     return (
         <Card

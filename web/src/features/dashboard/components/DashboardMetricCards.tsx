@@ -23,7 +23,7 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
 
     if (loading) {
         return (
-            <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
                 {[1, 2, 3, 4].map((i) => (
                     <Col xs={24} sm={12} lg={6} key={i}>
                         <Card variant="borderless" className="shadow-sm">

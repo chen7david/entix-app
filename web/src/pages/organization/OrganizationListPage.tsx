@@ -6,7 +6,6 @@ import {
     TeamOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { useInvitations, useMembers, useOrganization } from "@web/src/features/organization";
 import type { MenuProps } from "antd";
@@ -68,7 +67,7 @@ export const OrganizationListPage = () => {
                             </Tooltip>
                             {record.id === activeOrganization?.id && (
                                 <Tag
-                                    color="purple"
+                                    color="blue"
                                     style={{ fontSize: 11 }}
                                     className="flex-shrink-0"
                                 >
@@ -120,90 +119,84 @@ export const OrganizationListPage = () => {
 
     if (loading) {
         return (
-            <>
-                <Toolbar />
-                <div className="p-6">
-                    <Skeleton active />
-                </div>
-            </>
+            <div>
+                <Skeleton active />
+            </div>
         );
     }
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-8">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Manage Organizations
-                        </Title>
-                        <Text type="secondary">View and manage your organizations</Text>
-                    </div>
-                </div>
-
-                {/* Stats Cards */}
-                <Row gutter={16} className="mb-8">
-                    <Col xs={24} sm={8}>
-                        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
-                            <Statistic
-                                title="Current Organization"
-                                value={activeOrganization?.name || "None"}
-                                prefix={<AppstoreOutlined className="text-blue-500" />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
-                            <Statistic
-                                title="Members"
-                                value={members?.length || 0}
-                                prefix={<TeamOutlined className="text-purple-500" />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card className="border-none shadow-sm bg-white/50 backdrop-blur-sm">
-                            <Statistic
-                                title="Pending Invitations"
-                                value={invitations?.length || 0}
-                                prefix={<MailOutlined className="text-orange-500" />}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-
-                {/* Organizations Table */}
-                <div className="h-[calc(100vh-420px)] min-h-[500px]">
-                    <DataTableWithFilters
-                        config={{
-                            columns,
-                            data: filteredOrgs,
-                            rowKey: "id",
-                            filters: [
-                                {
-                                    type: "search",
-                                    key: "search",
-                                    placeholder: "Search organizations...",
-                                },
-                            ],
-                            onFiltersChange: (f: Record<string, any>) => {
-                                setSearch(f.search || "");
-                                setPage(1); // Reset on filter
-                            },
-                            pagination: {
-                                pageSize,
-                                current: page,
-                                total: filteredOrgs.length,
-                                onChange: (p, s) => {
-                                    setPage(p);
-                                    setPageSize(s);
-                                },
-                            },
-                        }}
-                    />
+        <div>
+            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Manage Organizations
+                    </Title>
+                    <Text type="secondary">View and manage your organizations</Text>
                 </div>
             </div>
-        </>
+
+            {/* Stats Cards */}
+            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title="Current Organization"
+                            value={activeOrganization?.name || "None"}
+                            prefix={<AppstoreOutlined style={{ color: "#2563eb" }} />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title="Members"
+                            value={members?.length || 0}
+                            prefix={<TeamOutlined style={{ color: "#2563eb" }} />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title="Pending Invitations"
+                            value={invitations?.length || 0}
+                            prefix={<MailOutlined style={{ color: "#f59e0b" }} />}
+                        />
+                    </Card>
+                </Col>
+            </Row>
+
+            {/* Organizations Table */}
+            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: filteredOrgs,
+                        rowKey: "id",
+                        filters: [
+                            {
+                                type: "search",
+                                key: "search",
+                                placeholder: "Search organizations...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => {
+                            setSearch(f.search || "");
+                            setPage(1); // Reset on filter
+                        },
+                        pagination: {
+                            pageSize,
+                            current: page,
+                            total: filteredOrgs.length,
+                            onChange: (p, s) => {
+                                setPage(p);
+                                setPageSize(s);
+                            },
+                        },
+                    }}
+                />
+            </div>
+        </div>
     );
 };

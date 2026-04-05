@@ -11,12 +11,12 @@ export const Toolbar = ({ children, className, ...rest }: React.HTMLAttributes<H
 
     return (
         <div
-            className={cn("z-10 flex items-center sticky top-0 h-16 md:hidden px-4", className)}
+            className={cn("z-10 flex items-center sticky top-0 h-16 md:hidden px-8", className)}
             style={{
                 backgroundColor: `${token.colorBgContainer}CC`, // 80% opacity for glass effect
                 borderBottom: `1px solid ${token.colorBorderSecondary}`,
-                backdropFilter: "blur(8px)",
-                WebkitBackdropFilter: "blur(8px)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
             }}
             {...rest}
         >

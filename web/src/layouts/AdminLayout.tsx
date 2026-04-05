@@ -1,7 +1,9 @@
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
+import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
+import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
-import { AdminDesktopSidebar } from "./AdminDesktopSidebar";
 
 const { Sider, Content } = Layout;
 
@@ -10,9 +12,9 @@ export const AdminLayout: React.FC = () => {
 
     return (
         <Layout className="min-h-screen">
-            {/* <AdminMobileSidebar /> */}
-            <Sider className="hidden md:block" width={240} theme="light">
-                <AdminDesktopSidebar />
+            <MobileSidebar variant="admin" />
+            <Sider className="hidden md:block" width={240}>
+                <DesktopSidebar variant="admin" />
             </Sider>
             <Layout hasSider>
                 <Content
@@ -21,8 +23,13 @@ export const AdminLayout: React.FC = () => {
                         backgroundColor: token.colorBgLayout,
                     }}
                 >
-                    <ImpersonationBanner />
-                    <Outlet />
+                    <Toolbar />
+                    <div className="p-8">
+                        <div className="max-w-7xl mx-auto">
+                            <ImpersonationBanner />
+                            <Outlet />
+                        </div>
+                    </div>
                 </Content>
             </Layout>
         </Layout>

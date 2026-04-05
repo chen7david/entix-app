@@ -1,7 +1,6 @@
 import { CheckCircleOutlined, SendOutlined, WarningOutlined } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/features/admin";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { Alert, Card, Col, Row, Statistic, type TableColumnsType, Tag, Typography } from "antd";
@@ -105,104 +104,92 @@ export const EmailInsightsPage: React.FC = () => {
     ];
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-8">
-                <div className="flex justify-between items-center mb-8">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Email Insights
-                        </Title>
-                        <Text type="secondary">
-                            Monitor email delivery status and activity via Resend
-                        </Text>
-                    </div>
+        <div>
+            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Email Insights
+                    </Title>
+                    <Text type="secondary">
+                        Monitor email delivery status and activity via Resend
+                    </Text>
                 </div>
+            </div>
 
-                <Row gutter={16} className="mb-8">
-                    <Col xs={24} sm={8}>
-                        <Card
-                            loading={isLoading}
-                            className="border-gray-200 shadow-sm border-none bg-white/50 backdrop-blur-sm"
-                        >
-                            <Statistic
-                                title="Page Emails"
-                                value={totalSent}
-                                prefix={<SendOutlined className="text-blue-500" />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card
-                            loading={isLoading}
-                            className="border-gray-200 shadow-sm border-none bg-white/50 backdrop-blur-sm"
-                        >
-                            <Statistic
-                                title="Delivered / Active"
-                                value={delivered}
-                                prefix={<CheckCircleOutlined className="text-green-500" />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card
-                            loading={isLoading}
-                            className="border-gray-200 shadow-sm border-none bg-white/50 backdrop-blur-sm"
-                        >
-                            <Statistic
-                                title="Bounced / Failed"
-                                value={failed}
-                                prefix={<WarningOutlined className="text-red-500" />}
-                                valueStyle={failed > 0 ? { color: "#ff4d4f" } : undefined}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-
-                <div className="h-[calc(100vh-400px)] min-h-[500px]">
-                    {searchText && (
-                        <Alert
-                            message="Local Filter Active"
-                            description="This filter only searches the currently visible page of recent emails."
-                            type="info"
-                            showIcon
-                            className="mb-4"
+            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+                <Col xs={24} sm={8}>
+                    <Card loading={isLoading}>
+                        <Statistic
+                            title="Page Emails"
+                            value={totalSent}
+                            prefix={<SendOutlined style={{ color: "#2563eb" }} />}
                         />
-                    )}
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card loading={isLoading}>
+                        <Statistic
+                            title="Delivered / Active"
+                            value={delivered}
+                            prefix={<CheckCircleOutlined style={{ color: "#10b981" }} />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card loading={isLoading}>
+                        <Statistic
+                            title="Bounced / Failed"
+                            value={failed}
+                            prefix={<WarningOutlined style={{ color: "#ef4444" }} />}
+                            valueStyle={failed > 0 ? { color: "#ef4444" } : undefined}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
-                    <DataTableWithFilters
-                        config={{
-                            columns,
-                            data: filteredEmails,
-                            loading: isLoading,
-                            filters: [
-                                {
-                                    type: "search",
-                                    key: "search",
-                                    placeholder: "Search page items...",
-                                },
-                            ],
-                            onFiltersChange: (f: Record<string, any>) => {
-                                setSearchText(f.search || "");
+            <div className="h-[calc(100vh-400px)] min-h-[500px]">
+                {searchText && (
+                    <Alert
+                        message="Local Filter Active"
+                        description="This filter only searches the currently visible page of recent emails."
+                        type="info"
+                        showIcon
+                        className="mb-4"
+                    />
+                )}
+
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: filteredEmails,
+                        loading: isLoading,
+                        filters: [
+                            {
+                                type: "search",
+                                key: "search",
+                                placeholder: "Search page items...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => {
+                            setSearchText(f.search || "");
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
+                        },
+                        pagination: {
+                            pageSize: limit,
+                            hasNextPage: !!emailData?.nextCursor,
+                            hasPrevPage: cursorStack.length > 0,
+                            onNext: handleNext,
+                            onPrev: handlePrev,
+                            onPageSizeChange: (s) => {
+                                setLimit(s);
                                 setCurrentCursor(undefined);
                                 setCursorStack([]);
                             },
-                            pagination: {
-                                pageSize: limit,
-                                hasNextPage: !!emailData?.nextCursor,
-                                hasPrevPage: cursorStack.length > 0,
-                                onNext: handleNext,
-                                onPrev: handlePrev,
-                                onPageSizeChange: (s) => {
-                                    setLimit(s);
-                                    setCurrentCursor(undefined);
-                                    setCursorStack([]);
-                                },
-                            },
-                        }}
-                    />
-                </div>
+                        },
+                    }}
+                />
             </div>
-        </>
+        </div>
     );
 };

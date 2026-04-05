@@ -1,6 +1,6 @@
 import { LockOutlined, WalletOutlined } from "@ant-design/icons";
 import { ACCOUNT_TYPES, FINANCIAL_CURRENCY_CONFIG } from "@shared";
-import { Card, Flex, Space, Statistic, Tag, Typography, theme } from "antd";
+import { Card, Flex, Skeleton, Space, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
 
 const { Text } = Typography;
@@ -62,6 +62,48 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
     showLowBalanceWarning = true,
 }) => {
     const { token } = theme.useToken();
+    // Loading Guard: Must come before accessing account properties to prevent crashes
+    if (accountState === "loading") {
+        return (
+            <Card
+                style={{ borderRadius: 12, height: "100%" }}
+                styles={{ body: { padding: "16px" } }}
+            >
+                {/* Header: icon + text + badge skeletons */}
+                <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+                    <Space align="center" size={10}>
+                        <Skeleton.Avatar active size="small" shape="circle" />
+                        <Skeleton.Input active size="small" style={{ width: 80, height: 16 }} />
+                    </Space>
+                    <Skeleton.Button active size="small" style={{ width: 60, height: 16 }} />
+                </Flex>
+
+                {/* Body: title + balance skeletons */}
+                <div style={{ marginBottom: 20 }}>
+                    <Skeleton.Input
+                        active
+                        size="small"
+                        style={{ width: "40%", height: 12, marginBottom: 8, display: "block" }}
+                    />
+                    <Skeleton.Input active size="large" style={{ width: "70%", height: 32 }} />
+                </div>
+
+                {/* Footer skeletons */}
+                <Flex
+                    justify="space-between"
+                    align="center"
+                    style={{
+                        marginTop: 16,
+                        paddingTop: 12,
+                        borderTop: `1px solid ${token.colorBorderSecondary}`,
+                    }}
+                >
+                    <Skeleton.Input active size="small" style={{ width: 100, height: 14 }} />
+                </Flex>
+            </Card>
+        );
+    }
+
     const config =
         FINANCIAL_CURRENCY_CONFIG[account.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
 
@@ -69,11 +111,6 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
     const accentColor = isPrimaryBranding ? token.colorPrimary : typeConfig.color;
 
     const isLowBalance = account.balanceCents < lowBalanceThresholdCents;
-
-    // Loading
-    if (accountState === "loading") {
-        return <Card loading style={{ borderRadius: 12, height: "100%" }} />;
-    }
 
     // Active or Available (Deactivated)
     const isAvailable = accountState === "available";

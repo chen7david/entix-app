@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -13,6 +14,9 @@
 }
 
 body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     background-color: var(--bg-base);
     color: var(--text-base);
     transition:
@@ -24,6 +28,8 @@ body {
     --color-primary: #2563eb;
     --color-primary-hover: #3b82f6;
     --color-primary-active: #1d4ed8;
+
+    --font-sans: "Inter", sans-serif;
 
     /* Slate Neutrals for consistency */
     --color-slate-50: #f8fafc;

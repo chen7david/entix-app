@@ -28,15 +28,8 @@ export const FinancialManagementPage: React.FC = () => {
     };
 
     return (
-        <div style={{ padding: 24 }}>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 32,
-                }}
-            >
+        <div>
+            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
                 <Title level={2} style={{ margin: 0 }}>
                     Financial Oversight
                 </Title>
@@ -47,6 +40,7 @@ export const FinancialManagementPage: React.FC = () => {
                         setSelectedAccount(undefined);
                         setCreditDrawerOpen(true);
                     }}
+                    style={{ height: 44, fontWeight: 600, backgroundColor: "#1e40af" }}
                 >
                     + Org Funding
                 </Button>
@@ -58,13 +52,22 @@ export const FinancialManagementPage: React.FC = () => {
                     <Title level={4} style={{ margin: 0 }}>
                         Platform Treasury
                     </Title>
-                    <Tag color="geekblue" bordered={false} style={{ margin: 0 }}>
+                    <Tag
+                        color="blue"
+                        style={{
+                            margin: 0,
+                            borderRadius: 6,
+                            fontWeight: 600,
+                            borderColor: "#1e40af",
+                            color: "#1e40af",
+                        }}
+                    >
                         LIQUIDITY
                     </Tag>
                 </div>
 
                 {isLoadingTreasury ? (
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[24, 24]}>
                         {[1, 2, 3, 4].map((i) => (
                             <Col xs={24} sm={12} lg={6} key={i}>
                                 <Card loading />
@@ -72,7 +75,7 @@ export const FinancialManagementPage: React.FC = () => {
                         ))}
                     </Row>
                 ) : (
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[24, 24]}>
                         {treasury?.map((acc: WalletAccountDTO) => (
                             <Col xs={24} sm={12} lg={6} key={acc.id}>
                                 <FinancialAccountCard

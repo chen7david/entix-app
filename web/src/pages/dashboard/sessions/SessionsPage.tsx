@@ -7,7 +7,6 @@ import {
     MobileOutlined,
     SafetyOutlined,
 } from "@ant-design/icons";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import {
     useBetterAuth,
     useListSessions,
@@ -96,191 +95,180 @@ export const SessionsPage: React.FC = () => {
     const otherSessionsCount = sortedSessions.filter((s) => !isCurrentSession(s.token)).length || 0;
 
     return (
-        <>
-            <Toolbar />
-
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} className="!mb-2">
-                            Active Sessions
-                        </Title>
-                        <Text type="secondary">Manage your active sessions across all devices</Text>
-                    </div>
-
-                    {otherSessionsCount > 0 && (
-                        <Popconfirm
-                            title="Revoke all other sessions?"
-                            description="This will sign you out from all other devices except this one."
-                            onConfirm={handleRevokeAllOtherSessions}
-                            okText="Revoke All"
-                            okButtonProps={{ danger: true }}
-                            cancelText="Cancel"
-                        >
-                            <Button danger loading={isRevokingAll} icon={<DeleteOutlined />}>
-                                Revoke All Other Sessions
-                            </Button>
-                        </Popconfirm>
-                    )}
+        <div>
+            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Active Sessions
+                    </Title>
+                    <Text type="secondary">Manage your active sessions across all devices</Text>
                 </div>
 
-                {isLoading ? (
-                    <Space direction="vertical" style={{ width: "100%" }} size="large">
-                        <Skeleton active paragraph={{ rows: 3 }} />
-                        <Skeleton active paragraph={{ rows: 3 }} />
-                    </Space>
-                ) : !sessions || sessions.length === 0 ? (
-                    <Empty
-                        description="No active sessions found"
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    />
-                ) : (
-                    <List
-                        dataSource={sortedSessions}
-                        renderItem={(session) => {
-                            const isCurrent = isCurrentSession(session.token);
+                {otherSessionsCount > 0 && (
+                    <Popconfirm
+                        title="Revoke all other sessions?"
+                        description="This will sign you out from all other devices except this one."
+                        onConfirm={handleRevokeAllOtherSessions}
+                        okText="Revoke All"
+                        okButtonProps={{ danger: true }}
+                        cancelText="Cancel"
+                    >
+                        <Button danger loading={isRevokingAll} icon={<DeleteOutlined />}>
+                            Revoke All Other Sessions
+                        </Button>
+                    </Popconfirm>
+                )}
+            </div>
 
-                            return (
-                                <List.Item style={{ padding: 0, border: "none", marginBottom: 16 }}>
-                                    <Card
-                                        style={{
-                                            width: "100%",
-                                            borderColor: isCurrent
-                                                ? token.colorPrimary
-                                                : token.colorBorder,
-                                        }}
-                                        styles={{ body: { padding: 20 } }}
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <Space
-                                                direction="vertical"
-                                                size="small"
-                                                style={{ flex: 1, minWidth: 0 }}
-                                            >
-                                                <Space>
-                                                    <span style={{ fontSize: 24 }}>
-                                                        {getDeviceIcon(session.userAgent)}
-                                                    </span>
+            {isLoading ? (
+                <Space direction="vertical" style={{ width: "100%" }} size="large">
+                    <Skeleton active paragraph={{ rows: 3 }} />
+                    <Skeleton active paragraph={{ rows: 3 }} />
+                </Space>
+            ) : !sessions || sessions.length === 0 ? (
+                <Empty
+                    description="No active sessions found"
+                    image={Empty.PRESENTED_IMAGE_SIMPLE}
+                />
+            ) : (
+                <List
+                    dataSource={sortedSessions}
+                    renderItem={(session) => {
+                        const isCurrent = isCurrentSession(session.token);
 
-                                                    <div>
-                                                        <Space>
-                                                            <Text strong style={{ fontSize: 16 }}>
-                                                                {getDeviceInfo(session.userAgent)}
-                                                            </Text>
+                        return (
+                            <List.Item style={{ padding: 0, border: "none", marginBottom: 16 }}>
+                                <Card
+                                    style={{
+                                        width: "100%",
+                                        borderColor: isCurrent
+                                            ? token.colorPrimary
+                                            : token.colorBorder,
+                                    }}
+                                    styles={{ body: { padding: 20 } }}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <Space
+                                            direction="vertical"
+                                            size="small"
+                                            style={{ flex: 1, minWidth: 0 }}
+                                        >
+                                            <Space>
+                                                <span style={{ fontSize: 24 }}>
+                                                    {getDeviceIcon(session.userAgent)}
+                                                </span>
 
-                                                            {isCurrent && (
-                                                                <Tag
-                                                                    color="success"
-                                                                    icon={<SafetyOutlined />}
-                                                                >
-                                                                    Current Session
-                                                                </Tag>
-                                                            )}
-                                                        </Space>
+                                                <div>
+                                                    <Space>
+                                                        <Text strong style={{ fontSize: 16 }}>
+                                                            {getDeviceInfo(session.userAgent)}
+                                                        </Text>
 
-                                                        <div style={{ marginTop: 4 }}>
-                                                            <Space
-                                                                split={<span>•</span>}
-                                                                size="small"
+                                                        {isCurrent && (
+                                                            <Tag
+                                                                color="success"
+                                                                icon={<SafetyOutlined />}
                                                             >
-                                                                {session.ipAddress && (
-                                                                    <Text
-                                                                        type="secondary"
-                                                                        style={{ fontSize: 12 }}
-                                                                    >
-                                                                        <GlobalOutlined />{" "}
-                                                                        {session.ipAddress}
-                                                                    </Text>
-                                                                )}
+                                                                Current Session
+                                                            </Tag>
+                                                        )}
+                                                    </Space>
+
+                                                    <div style={{ marginTop: 4 }}>
+                                                        <Space split={<span>•</span>} size="small">
+                                                            {session.ipAddress && (
                                                                 <Text
                                                                     type="secondary"
                                                                     style={{ fontSize: 12 }}
                                                                 >
-                                                                    <ClockCircleOutlined /> Active{" "}
-                                                                    {dayjs(
-                                                                        session.createdAt
-                                                                    ).fromNow()}
+                                                                    <GlobalOutlined />{" "}
+                                                                    {session.ipAddress}
                                                                 </Text>
-                                                            </Space>
-                                                        </div>
-                                                    </div>
-                                                </Space>
-
-                                                {session.userAgent && (
-                                                    <div className="flex items-center gap-2 mt-2 w-full overflow-hidden">
-                                                        <Tooltip title="Copy User Agent">
-                                                            <Button
-                                                                type="text"
-                                                                size="small"
-                                                                icon={
-                                                                    <CopyOutlined
-                                                                        style={{ fontSize: 12 }}
-                                                                    />
-                                                                }
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    if (!session.userAgent) return;
-                                                                    navigator.clipboard.writeText(
-                                                                        session.userAgent
-                                                                    );
-                                                                    message.success(
-                                                                        "User Agent copied"
-                                                                    );
-                                                                }}
-                                                                style={{ flexShrink: 0 }}
-                                                            />
-                                                        </Tooltip>
-
-                                                        <Tooltip title={session.userAgent}>
-                                                            <span
-                                                                className="cursor-help"
-                                                                style={{
-                                                                    flex: 1,
-                                                                    minWidth: 0,
-                                                                    display: "block",
-                                                                    fontSize: 11,
-                                                                    color: token.colorTextSecondary,
-                                                                    overflow: "hidden",
-                                                                    textOverflow: "ellipsis",
-                                                                    whiteSpace: "nowrap",
-                                                                }}
+                                                            )}
+                                                            <Text
+                                                                type="secondary"
+                                                                style={{ fontSize: 12 }}
                                                             >
-                                                                {session.userAgent}
-                                                            </span>
-                                                        </Tooltip>
+                                                                <ClockCircleOutlined /> Active{" "}
+                                                                {dayjs(session.createdAt).fromNow()}
+                                                            </Text>
+                                                        </Space>
                                                     </div>
-                                                )}
+                                                </div>
                                             </Space>
 
-                                            {!isCurrent && (
-                                                <Popconfirm
-                                                    title="Revoke this session?"
-                                                    description="You will be signed out from this device."
-                                                    onConfirm={() =>
-                                                        handleRevokeSession(session.token)
-                                                    }
-                                                    okText="Revoke"
-                                                    okButtonProps={{ danger: true }}
-                                                    cancelText="Cancel"
-                                                >
-                                                    <Button
-                                                        danger
-                                                        type="text"
-                                                        icon={<DeleteOutlined />}
-                                                        loading={isRevoking}
-                                                    >
-                                                        Revoke
-                                                    </Button>
-                                                </Popconfirm>
+                                            {session.userAgent && (
+                                                <div className="flex items-center gap-2 mt-2 w-full overflow-hidden">
+                                                    <Tooltip title="Copy User Agent">
+                                                        <Button
+                                                            type="text"
+                                                            size="small"
+                                                            icon={
+                                                                <CopyOutlined
+                                                                    style={{ fontSize: 12 }}
+                                                                />
+                                                            }
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (!session.userAgent) return;
+                                                                navigator.clipboard.writeText(
+                                                                    session.userAgent
+                                                                );
+                                                                message.success(
+                                                                    "User Agent copied"
+                                                                );
+                                                            }}
+                                                            style={{ flexShrink: 0 }}
+                                                        />
+                                                    </Tooltip>
+
+                                                    <Tooltip title={session.userAgent}>
+                                                        <span
+                                                            className="cursor-help"
+                                                            style={{
+                                                                flex: 1,
+                                                                minWidth: 0,
+                                                                display: "block",
+                                                                fontSize: 11,
+                                                                color: token.colorTextSecondary,
+                                                                overflow: "hidden",
+                                                                textOverflow: "ellipsis",
+                                                                whiteSpace: "nowrap",
+                                                            }}
+                                                        >
+                                                            {session.userAgent}
+                                                        </span>
+                                                    </Tooltip>
+                                                </div>
                                             )}
-                                        </div>
-                                    </Card>
-                                </List.Item>
-                            );
-                        }}
-                    />
-                )}
-            </div>
-        </>
+                                        </Space>
+
+                                        {!isCurrent && (
+                                            <Popconfirm
+                                                title="Revoke this session?"
+                                                description="You will be signed out from this device."
+                                                onConfirm={() => handleRevokeSession(session.token)}
+                                                okText="Revoke"
+                                                okButtonProps={{ danger: true }}
+                                                cancelText="Cancel"
+                                            >
+                                                <Button
+                                                    danger
+                                                    type="text"
+                                                    icon={<DeleteOutlined />}
+                                                    loading={isRevoking}
+                                                >
+                                                    Revoke
+                                                </Button>
+                                            </Popconfirm>
+                                        )}
+                                    </div>
+                                </Card>
+                            </List.Item>
+                        );
+                    }}
+                />
+            )}
+        </div>
     );
 };

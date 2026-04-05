@@ -1,6 +1,5 @@
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { AppRoutes, getAvatarUrl } from "@shared";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useSignOut } from "@web/src/features/auth";
 import { AvatarDropzone } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
@@ -38,14 +37,7 @@ export const ProfilePage: React.FC = () => {
 
     if (isPending) {
         return (
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100vh",
-                }}
-            >
+            <div className="flex justify-center items-center py-24">
                 <Spin size="large" />
             </div>
         );
@@ -53,15 +45,8 @@ export const ProfilePage: React.FC = () => {
 
     if (!session) {
         return (
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    height: "100vh",
-                }}
-            >
-                <Card style={{ textAlign: "center" }}>
+            <div className="flex justify-center items-center py-24">
+                <Card className="text-center">
                     <Title level={4}>You are not logged in</Title>
                     <Button type="primary" onClick={() => navigate(AppRoutes.auth.signIn)}>
                         Go to Sign In
@@ -72,94 +57,83 @@ export const ProfilePage: React.FC = () => {
     }
 
     return (
-        <>
-            <Toolbar />
-            <div style={{ padding: "24px", maxWidth: "1000px", margin: "0 auto" }}>
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            My Profile
-                        </Title>
-                        <Text type="secondary">
-                            Manage your personal information and security settings
-                        </Text>
-                    </div>
-                </div>
-                <Row gutter={[24, 24]}>
-                    <Col xs={24} md={8}>
-                        <Card
-                            className="shadow-sm"
-                            actions={[
-                                <Button
-                                    key="logout"
-                                    type="text"
-                                    danger
-                                    icon={<LogoutOutlined />}
-                                    onClick={handleLogout}
-                                >
-                                    Logout
-                                </Button>,
-                            ]}
-                        >
-                            <div className="flex flex-col items-center mb-6 text-center">
-                                {activeOrganization ? (
-                                    <AvatarDropzone
-                                        organizationId={activeOrganization.id}
-                                        userId={session.user.id}
-                                        currentImageUrl={getAvatarUrl(session.user.image, "lg")}
-                                        size={96}
-                                    />
-                                ) : (
-                                    <Avatar
-                                        size={96}
-                                        icon={<UserOutlined />}
-                                        src={getAvatarUrl(session.user.image, "lg")}
-                                    />
-                                )}
-                                <Title level={4} style={{ marginTop: "16px", marginBottom: "4px" }}>
-                                    {session.user.name}
-                                </Title>
-                                <Text type="secondary">{session.user.email}</Text>
-                            </div>
-
-                            <Divider />
-
-                            <div className="flex justify-between items-center py-2">
-                                <Text type="secondary">Status</Text>
-                                <Text>
-                                    {session.user.emailVerified ? "Verified" : "Unverified"}
-                                </Text>
-                            </div>
-
-                            <div className="flex justify-between items-center py-2">
-                                <Text type="secondary">Joined</Text>
-                                <Tooltip
-                                    title={DateUtils.format(
-                                        new Date(session.user.createdAt).getTime(),
-                                        "LLL"
-                                    )}
-                                >
-                                    <Text>
-                                        {DateUtils.fromNow(
-                                            new Date(session.user.createdAt).getTime()
-                                        )}
-                                    </Text>
-                                </Tooltip>
-                            </div>
-                        </Card>
-                    </Col>
-
-                    <Col xs={24} md={16}>
-                        <div className="flex flex-col gap-6">
-                            <Card title="Personal Information" className="shadow-sm">
-                                <UserProfileForm userId={session.user.id} />
-                            </Card>
-                            <UserContactList userId={session.user.id} hideSocial hideCopy />
-                            <PasswordUpdateForm />
-                        </div>
-                    </Col>
-                </Row>
+        <div>
+            <div style={{ marginBottom: 32 }}>
+                <Title level={2} style={{ margin: 0 }}>
+                    My Profile
+                </Title>
+                <Text type="secondary">Manage your personal information and security settings</Text>
             </div>
-        </>
+            <Row gutter={[24, 24]}>
+                <Col xs={24} md={8}>
+                    <Card
+                        className="shadow-sm"
+                        actions={[
+                            <Button
+                                key="logout"
+                                type="text"
+                                danger
+                                icon={<LogoutOutlined />}
+                                onClick={handleLogout}
+                            >
+                                Logout
+                            </Button>,
+                        ]}
+                    >
+                        <div className="flex flex-col items-center mb-6 text-center">
+                            {activeOrganization ? (
+                                <AvatarDropzone
+                                    organizationId={activeOrganization.id}
+                                    userId={session.user.id}
+                                    currentImageUrl={getAvatarUrl(session.user.image, "lg")}
+                                    size={96}
+                                />
+                            ) : (
+                                <Avatar
+                                    size={96}
+                                    icon={<UserOutlined />}
+                                    src={getAvatarUrl(session.user.image, "lg")}
+                                />
+                            )}
+                            <Title level={4} style={{ marginTop: "16px", marginBottom: "4px" }}>
+                                {session.user.name}
+                            </Title>
+                            <Text type="secondary">{session.user.email}</Text>
+                        </div>
+
+                        <Divider />
+
+                        <div className="flex justify-between items-center py-2">
+                            <Text type="secondary">Status</Text>
+                            <Text>{session.user.emailVerified ? "Verified" : "Unverified"}</Text>
+                        </div>
+
+                        <div className="flex justify-between items-center py-2">
+                            <Text type="secondary">Joined</Text>
+                            <Tooltip
+                                title={DateUtils.format(
+                                    new Date(session.user.createdAt).getTime(),
+                                    "LLL"
+                                )}
+                            >
+                                <Text>
+                                    {DateUtils.fromNow(new Date(session.user.createdAt).getTime())}
+                                </Text>
+                            </Tooltip>
+                        </div>
+                    </Card>
+                </Col>
+
+                <Col xs={24} md={16}>
+                    <div className="flex flex-col gap-6">
+                        <Card title="Personal Information" className="shadow-sm">
+                            <UserProfileForm userId={session.user.id} />
+                        </Card>
+                        <UserContactList userId={session.user.id} hideSocial hideCopy />
+                        <PasswordUpdateForm />
+                    </div>
+                </Col>
+            </Row>
+        </div>
     );
 };

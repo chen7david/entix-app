@@ -7,7 +7,6 @@ import {
 } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAdminCreateUserWithOrg, useAdminOrganizations } from "@web/src/features/admin";
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
 import { CreateOrganizationForm } from "@web/src/features/organization";
@@ -130,96 +129,88 @@ export const GlobalOrganizationsPage: React.FC = () => {
     ];
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-8">
-                {/* Header */}
-                <div className="flex justify-between items-start mb-8 flex-wrap gap-4">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Global Organizations
-                        </Title>
-                        <Text type="secondary">
-                            Manage all platform organizations and their owners
-                        </Text>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            icon={<PlusOutlined />}
-                            onClick={() => setIsCreateOrgModalOpen(true)}
-                        >
-                            Create Organization
-                        </Button>
-                        <Button
-                            type="primary"
-                            icon={<UserAddOutlined />}
-                            onClick={() => setIsCreateUserWithOrgModalOpen(true)}
-                        >
-                            Create User + Org
-                        </Button>
-                    </div>
+        <div>
+            {/* Header */}
+            <div
+                className="flex justify-between items-start flex-wrap gap-4"
+                style={{ marginBottom: 32 }}
+            >
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Global Organizations
+                    </Title>
+                    <Text type="secondary">Manage all platform organizations and their owners</Text>
                 </div>
+                <div className="flex gap-2">
+                    <Button icon={<PlusOutlined />} onClick={() => setIsCreateOrgModalOpen(true)}>
+                        Create Organization
+                    </Button>
+                    <Button
+                        type="primary"
+                        icon={<UserAddOutlined />}
+                        onClick={() => setIsCreateUserWithOrgModalOpen(true)}
+                    >
+                        Create User + Org
+                    </Button>
+                </div>
+            </div>
 
-                {/* Stats */}
-                <Row gutter={16} className="mb-8">
-                    <Col xs={24} sm={8}>
-                        <Card
-                            loading={isLoading}
-                            className="border-gray-200 shadow-sm border-none bg-white/50 backdrop-blur-sm"
-                        >
-                            <Statistic
-                                title="Platform Organizations"
-                                value={orgData?.items?.length || 0}
-                                prefix={<ApartmentOutlined className="text-blue-500" />}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
+            {/* Stats */}
+            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+                <Col xs={24} sm={8}>
+                    <Card loading={isLoading}>
+                        <Statistic
+                            title="Platform Organizations"
+                            value={orgData?.items?.length || 0}
+                            prefix={<ApartmentOutlined style={{ color: "#2563eb" }} />}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
-                {/* Table */}
-                <div className="h-[calc(100vh-420px)] min-h-[500px]">
-                    <DataTableWithFilters
-                        config={{
-                            columns,
-                            data: orgData?.items || [],
-                            loading: isLoading,
-                            filters: [
-                                {
-                                    type: "search",
-                                    key: "search",
-                                    placeholder: "Search organizations...",
-                                },
-                            ],
-                            onFiltersChange: (f: Record<string, any>) => {
-                                setSearchText(f.search || "");
+            {/* Table */}
+            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: orgData?.items || [],
+                        loading: isLoading,
+                        filters: [
+                            {
+                                type: "search",
+                                key: "search",
+                                placeholder: "Search organizations...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => {
+                            setSearchText(f.search || "");
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
+                        },
+                        pagination: {
+                            pageSize: limit,
+                            hasNextPage: !!orgData?.nextCursor,
+                            hasPrevPage: cursorStack.length > 0,
+                            onNext: handleNext,
+                            onPrev: handlePrev,
+                            onPageSizeChange: (s) => {
+                                setLimit(s);
                                 setCurrentCursor(undefined);
                                 setCursorStack([]);
                             },
-                            pagination: {
-                                pageSize: limit,
-                                hasNextPage: !!orgData?.nextCursor,
-                                hasPrevPage: cursorStack.length > 0,
-                                onNext: handleNext,
-                                onPrev: handlePrev,
-                                onPageSizeChange: (s) => {
-                                    setLimit(s);
-                                    setCurrentCursor(undefined);
-                                    setCursorStack([]);
-                                },
-                            },
-                            actions: () => {
-                                const items: MenuProps["items"] = [
-                                    { key: "view", label: "View Details" },
-                                ];
-                                return (
-                                    <Dropdown menu={{ items }} trigger={["click"]}>
-                                        <Button type="text" icon={<MoreOutlined />} />
-                                    </Dropdown>
-                                );
-                            },
-                        }}
-                    />
-                </div>
+                        },
+                        actions: () => {
+                            const items: MenuProps["items"] = [
+                                { key: "view", label: "View Details" },
+                            ];
+                            return (
+                                <Dropdown menu={{ items }} trigger={["click"]}>
+                                    <Button type="text" icon={<MoreOutlined />} />
+                                </Dropdown>
+                            );
+                        },
+                    }}
+                />
             </div>
 
             {/* Create Organization Modal */}
@@ -257,6 +248,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
                     isLoading={isCreatingUserWithOrg}
                 />
             </Modal>
-        </>
+        </div>
     );
 };

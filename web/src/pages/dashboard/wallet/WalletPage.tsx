@@ -84,10 +84,10 @@ export const WalletPage = () => {
     };
 
     return (
-        <div style={{ padding: 24 }}>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
+        <div>
+            <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
                 <Col>
-                    <Title level={2} style={{ marginBottom: 4 }}>
+                    <Title level={2} style={{ margin: 0 }}>
                         Personal Wallet
                     </Title>
                     <Typography.Text type="secondary">
@@ -119,7 +119,7 @@ export const WalletPage = () => {
                     <Title level={4} style={{ marginBottom: 16 }}>
                         Your Accounts
                     </Title>
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[24, 24]}>
                         {isLoadingBalance ? (
                             [1, 2].map((i) => (
                                 <Col xs={24} sm={12} md={8} lg={6} key={i}>

@@ -98,15 +98,7 @@ export const OrgGuard: React.FC = () => {
 
     // Loading State: Block children while fetching list, determining mismatch, or syncing session
     if (loadingOrgs || isSyncing || isDeterminingMismatch || isMismatch) {
-        return (
-            <CenteredSpin
-                tip={
-                    isSyncing || isMismatch
-                        ? "Synchronizing organization..."
-                        : "Loading organization..."
-                }
-            />
-        );
+        return <CenteredSpin />;
     }
 
     // Validation Guard

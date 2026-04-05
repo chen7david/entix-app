@@ -1,4 +1,4 @@
-import { useOrgContext } from "@web/src/context/OrgContext";
+import { useOptionalOrgContext } from "@web/src/context/OrgContext";
 import { useCallback } from "react";
 import { type NavigateOptions, type To, useNavigate } from "react-router";
 
@@ -11,7 +11,8 @@ import { type NavigateOptions, type To, useNavigate } from "react-router";
  */
 export const useOrgNavigate = () => {
     const navigate = useNavigate();
-    const { activeOrganization } = useOrgContext();
+    const orgContext = useOptionalOrgContext();
+    const activeOrganization = orgContext?.activeOrganization || null;
 
     return useCallback(
         (to: To | number, options?: NavigateOptions) => {

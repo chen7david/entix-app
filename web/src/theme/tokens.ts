@@ -9,7 +9,7 @@ const sharedTokens = {
     colorSuccess: "#10b981", // Emerald 500
     colorWarning: "#f59e0b", // Amber 500
     colorError: "#ef4444", // Red 500
-    borderRadius: 8,
+    borderRadius: 6, // Refined: 8 -> 6 for professional sharpness
     controlHeight: 44, // Rule 11 Global Standard
     controlHeightLG: 48,
     controlHeightSM: 32,
@@ -31,7 +31,7 @@ const sharedComponents = {
         fontSize: 16, // iOS zoom fix
         controlHeight: 44,
         borderRadius: 6,
-        colorPrimaryHover: "#747bff",
+        colorPrimaryHover: "#3b82f6", // Unified cobalt hover
     },
     DatePicker: {
         fontSize: 16,
@@ -49,8 +49,8 @@ const sharedComponents = {
         colorPrimaryActive: "#1d4ed8",
     },
     Card: {
-        borderRadiusLG: 12,
-        paddingLG: 24,
+        borderRadiusLG: 8, // Refined: 12 -> 8 (matches borderRadius token)
+        paddingLG: 20, // Refined: 24 -> 20 for denser interiors
     },
     Menu: {
         activeBarBorderWidth: 0, // Remove the side bar line for a cleaner look
@@ -77,7 +77,7 @@ const lightComponents = {
         siderBg: "#ffffff",
     },
     Menu: {
-        itemSelectedBg: "#eff6ff", // blue-50 (slight tint)
+        itemSelectedBg: "#eff6ff", // blue-50 (slight cobalt tint)
         itemSelectedColor: "#2563eb",
     },
 };
@@ -92,7 +92,7 @@ const darkComponents = {
         siderBg: "#0f172a", // slate-950
     },
     Menu: {
-        itemSelectedBg: "rgba(37, 99, 235, 0.15)", // Subtle blue halo in dark mode
+        itemSelectedBg: "rgba(37, 99, 235, 0.15)", // Clean cobalt halo
         itemSelectedColor: "#60a5fa", // blue-400
     },
 };

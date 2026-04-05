@@ -6,7 +6,6 @@ import {
     PlusOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
 import {
     Button,
@@ -116,143 +115,135 @@ export const OrganizationInvitationsPage = () => {
     if (!activeOrganization) return null;
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Invitations
-                        </Title>
-                        <Text type="secondary">Manage pending and sent invitations</Text>
-                    </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => setIsModalOpen(true)}
-                    >
-                        Invite Member
-                    </Button>
+        <div>
+            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Invitations
+                    </Title>
+                    <Text type="secondary">Manage pending and sent invitations</Text>
                 </div>
-
-                {/* Stats Cards */}
-                <Row gutter={16} className="mb-6">
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Total Invitations"
-                                value={totalInvitations}
-                                prefix={<MailOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Pending"
-                                value={pendingCount}
-                                prefix={<ClockCircleOutlined />}
-                                valueStyle={pendingCount > 0 ? { color: "#fa8c16" } : undefined}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card>
-                            <Statistic
-                                title="Accepted"
-                                value={acceptedCount}
-                                prefix={<CheckCircleOutlined />}
-                                valueStyle={acceptedCount > 0 ? { color: "#52c41a" } : undefined}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-
-                <div className="h-[calc(100vh-420px)] min-h-[500px]">
-                    <DataTableWithFilters
-                        config={{
-                            columns,
-                            data: filteredInvitations,
-                            loading,
-                            filters: [
-                                {
-                                    type: "search",
-                                    key: "email",
-                                    placeholder: "Search invitations by email...",
-                                },
-                            ],
-                            onFiltersChange: (f: Record<string, any>) =>
-                                setSearchText(f.email || ""),
-                            pagination: null,
-                            actions: (record: any) => (
-                                <Popconfirm
-                                    title="Cancel Invitation"
-                                    description="Are you sure you want to cancel this invitation?"
-                                    onConfirm={() => handleCancel(record.id)}
-                                    okText="Yes"
-                                    cancelText="No"
-                                >
-                                    <Button
-                                        danger
-                                        icon={<DeleteOutlined />}
-                                        size="small"
-                                        type="text"
-                                        loading={isCancelingInvitation}
-                                    >
-                                        Revoke
-                                    </Button>
-                                </Popconfirm>
-                            ),
-                        }}
-                    />
-                </div>
-
-                <Modal
-                    title="Invite Member"
-                    open={isModalOpen}
-                    onCancel={() => setIsModalOpen(false)}
-                    footer={null}
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        onFinish={handleInvite}
-                        initialValues={{ role: "member" }}
-                    >
-                        <Form.Item
-                            name="email"
-                            label="Email Address"
-                            rules={[
-                                { required: true, message: "Please input the email address!" },
-                                { type: "email", message: "Please enter a valid email!" },
-                            ]}
-                        >
-                            <Input placeholder="colleague@example.com" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="role"
-                            label="Role"
-                            rules={[{ required: true, message: "Please select a role!" }]}
-                        >
-                            <Select>
-                                <Select.Option value="member">Member</Select.Option>
-                                <Select.Option value="admin">Admin</Select.Option>
-                                <Select.Option value="owner">Owner</Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        <Form.Item className="mb-0 flex justify-end">
-                            <Space>
-                                <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                                <Button type="primary" htmlType="submit" loading={isInviting}>
-                                    Send Invitation
-                                </Button>
-                            </Space>
-                        </Form.Item>
-                    </Form>
-                </Modal>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsModalOpen(true)}>
+                    Invite Member
+                </Button>
             </div>
-        </>
+
+            {/* Stats Cards */}
+            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title="Total Invitations"
+                            value={totalInvitations}
+                            prefix={<MailOutlined />}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title="Pending"
+                            value={pendingCount}
+                            prefix={<ClockCircleOutlined />}
+                            valueStyle={pendingCount > 0 ? { color: "#fa8c16" } : undefined}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card>
+                        <Statistic
+                            title="Accepted"
+                            value={acceptedCount}
+                            prefix={<CheckCircleOutlined />}
+                            valueStyle={acceptedCount > 0 ? { color: "#52c41a" } : undefined}
+                        />
+                    </Card>
+                </Col>
+            </Row>
+
+            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: filteredInvitations,
+                        loading,
+                        filters: [
+                            {
+                                type: "search",
+                                key: "email",
+                                placeholder: "Search invitations by email...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => setSearchText(f.email || ""),
+                        pagination: null,
+                        actions: (record: any) => (
+                            <Popconfirm
+                                title="Cancel Invitation"
+                                description="Are you sure you want to cancel this invitation?"
+                                onConfirm={() => handleCancel(record.id)}
+                                okText="Yes"
+                                cancelText="No"
+                            >
+                                <Button
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    size="small"
+                                    type="text"
+                                    loading={isCancelingInvitation}
+                                >
+                                    Revoke
+                                </Button>
+                            </Popconfirm>
+                        ),
+                    }}
+                />
+            </div>
+
+            <Modal
+                title="Invite Member"
+                open={isModalOpen}
+                onCancel={() => setIsModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleInvite}
+                    initialValues={{ role: "member" }}
+                >
+                    <Form.Item
+                        name="email"
+                        label="Email Address"
+                        rules={[
+                            { required: true, message: "Please input the email address!" },
+                            { type: "email", message: "Please enter a valid email!" },
+                        ]}
+                    >
+                        <Input placeholder="colleague@example.com" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="role"
+                        label="Role"
+                        rules={[{ required: true, message: "Please select a role!" }]}
+                    >
+                        <Select>
+                            <Select.Option value="member">Member</Select.Option>
+                            <Select.Option value="admin">Admin</Select.Option>
+                            <Select.Option value="owner">Owner</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item className="mb-0 flex justify-end">
+                        <Space>
+                            <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                            <Button type="primary" htmlType="submit" loading={isInviting}>
+                                Send Invitation
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
+        </div>
     );
 };

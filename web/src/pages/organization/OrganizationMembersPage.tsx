@@ -14,8 +14,6 @@ import { getAvatarUrl, type MemberDTO } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
-import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { AvatarDropzone } from "@web/src/features/media";
@@ -61,12 +59,11 @@ import {
 import type { ColumnsType } from "antd/es/table";
 import { createSchemaFieldRule } from "antd-zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ErrorBoundary } from "react-error-boundary";
 import { useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
-const OrganizationMembersPageBase: React.FC = () => {
+export const OrganizationMembersPage: React.FC = () => {
     const { token } = theme.useToken();
     const { message } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -307,335 +304,316 @@ const OrganizationMembersPageBase: React.FC = () => {
     }
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Members
-                        </Title>
-                        <Text type="secondary">Manage organization members and roles</Text>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-4">
-                        {currentUserRoles && currentUserRoles.length > 0 ? (
-                            <Space>
-                                {currentUserRoles.map((r: string) => (
-                                    <Tag key={r} color="purple" className="text-sm px-3 py-1">
-                                        You are: {r.toUpperCase()}
-                                    </Tag>
-                                ))}
-                            </Space>
-                        ) : (
-                            <Tag color="red" className="text-sm px-3 py-1">
-                                Role: Unknown (ID: {currentUserId?.slice(0, 8)})
-                            </Tag>
-                        )}
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="min-h-[40px]"
-                        >
-                            Create New Member
-                        </Button>
-                    </div>
+        <div>
+            <div
+                className="flex flex-col md:flex-row md:justify-between md:items-center gap-4"
+                style={{ marginBottom: 32 }}
+            >
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Members
+                    </Title>
+                    <Text type="secondary">Manage organization members and roles</Text>
                 </div>
+                <div className="flex flex-wrap items-center gap-4">
+                    {currentUserRoles && currentUserRoles.length > 0 ? (
+                        <Space>
+                            {currentUserRoles.map((r: string) => (
+                                <Tag key={r} color="purple" className="text-sm px-3 py-1">
+                                    You are: {r.toUpperCase()}
+                                </Tag>
+                            ))}
+                        </Space>
+                    ) : (
+                        <Tag color="red" className="text-sm px-3 py-1">
+                            Role: Unknown (ID: {currentUserId?.slice(0, 8)})
+                        </Tag>
+                    )}
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="min-h-[40px]"
+                    >
+                        Create New Member
+                    </Button>
+                </div>
+            </div>
 
-                {/* Stats Cards */}
-                <Row gutter={16} className="mb-6">
-                    <Col xs={24} sm={8}>
-                        <Card loading={loadingMetrics}>
-                            <Statistic
-                                title="Total Members"
-                                value={totalMembers}
-                                prefix={<TeamOutlined />}
-                                valueStyle={{ fontSize: token.fontSizeXL }}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card loading={loadingMetrics}>
-                            <Statistic
-                                title="Admins"
-                                value={adminCount}
-                                prefix={<SafetyOutlined />}
-                                valueStyle={{ fontSize: token.fontSizeXL }}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card loading={loadingMetrics}>
-                            <Statistic
-                                title="Owners"
-                                value={ownerCount}
-                                prefix={<CrownOutlined />}
-                                valueStyle={{ fontSize: token.fontSizeXL }}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
+            {/* Stats Cards */}
+            <Row gutter={16} className="mb-6">
+                <Col xs={24} sm={8}>
+                    <Card loading={loadingMetrics}>
+                        <Statistic
+                            title="Total Members"
+                            value={totalMembers}
+                            prefix={<TeamOutlined />}
+                            valueStyle={{ fontSize: token.fontSizeXL }}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card loading={loadingMetrics}>
+                        <Statistic
+                            title="Admins"
+                            value={adminCount}
+                            prefix={<SafetyOutlined />}
+                            valueStyle={{ fontSize: token.fontSizeXL }}
+                        />
+                    </Card>
+                </Col>
+                <Col xs={24} sm={8}>
+                    <Card loading={loadingMetrics}>
+                        <Statistic
+                            title="Owners"
+                            value={ownerCount}
+                            prefix={<CrownOutlined />}
+                            valueStyle={{ fontSize: token.fontSizeXL }}
+                        />
+                    </Card>
+                </Col>
+            </Row>
 
-                <div className="h-[calc(100vh-420px)] min-h-[500px]">
-                    <DataTableWithFilters<MemberDTO>
-                        config={{
-                            columns,
-                            data: members,
-                            loading: loading,
-                            rowKey: "userId",
-                            selectedRowKey: selectedMember?.userId,
-                            onRowClick: (record) => setSelectedMember(record),
-                            filters: [
-                                {
-                                    type: "search",
-                                    key: "q",
-                                    placeholder: "Search members by name or email...",
-                                },
-                            ],
-                            onFiltersChange: (f: Record<string, any>) => {
-                                setSearchText(f.q || "");
+            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+                <DataTableWithFilters<MemberDTO>
+                    config={{
+                        columns,
+                        data: members,
+                        loading: loading,
+                        rowKey: "userId",
+                        selectedRowKey: selectedMember?.userId,
+                        onRowClick: (record) => setSelectedMember(record),
+                        filters: [
+                            {
+                                type: "search",
+                                key: "q",
+                                placeholder: "Search members by name or email...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => {
+                            setSearchText(f.q || "");
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
+                        },
+                        pagination: {
+                            hasNextPage,
+                            hasPrevPage,
+                            pageSize: limit,
+                            onNext: handleNext,
+                            onPrev: handlePrev,
+                            onPageSizeChange: (s) => {
+                                setLimit(s);
                                 setCurrentCursor(undefined);
                                 setCursorStack([]);
                             },
-                            pagination: {
-                                hasNextPage,
-                                hasPrevPage,
-                                pageSize: limit,
-                                onNext: handleNext,
-                                onPrev: handlePrev,
-                                onPageSizeChange: (s) => {
-                                    setLimit(s);
-                                    setCurrentCursor(undefined);
-                                    setCursorStack([]);
+                        },
+                        actions: (record: MemberDTO) => {
+                            const items: MenuProps["items"] = [
+                                {
+                                    key: "resend-verification",
+                                    label: "Resend Verification Email",
+                                    icon: <MailOutlined />,
+                                    onClick: () => {
+                                        if (record.email) handleResendVerification(record.email);
+                                    },
                                 },
-                            },
-                            actions: (record: MemberDTO) => {
-                                const items: MenuProps["items"] = [
-                                    {
-                                        key: "resend-verification",
-                                        label: "Resend Verification Email",
-                                        icon: <MailOutlined />,
-                                        onClick: () => {
-                                            if (record.email)
-                                                handleResendVerification(record.email);
-                                        },
+                                {
+                                    key: "initialize-wallet",
+                                    label: "Initialize Wallet",
+                                    icon: <WalletOutlined />,
+                                    disabled: isInitializing,
+                                    onClick: () => {
+                                        initializeWallet(record.userId);
                                     },
-                                    {
-                                        key: "initialize-wallet",
-                                        label: "Initialize Wallet",
-                                        icon: <WalletOutlined />,
-                                        disabled: isInitializing,
-                                        onClick: () => {
-                                            initializeWallet(record.userId);
-                                        },
+                                },
+                                {
+                                    key: "resend-password",
+                                    label: "Resend Password Reset",
+                                    icon: <LockOutlined />,
+                                    onClick: () => {
+                                        if (record.email) handleResendPassword(record.email);
                                     },
-                                    {
-                                        key: "resend-password",
-                                        label: "Resend Password Reset",
-                                        icon: <LockOutlined />,
-                                        onClick: () => {
-                                            if (record.email) handleResendPassword(record.email);
-                                        },
+                                },
+                                {
+                                    key: "remove-picture",
+                                    label: "Remove Picture",
+                                    icon: <DeleteOutlined />,
+                                    danger: true,
+                                    disabled: !record.avatarUrl,
+                                    onClick: () => {
+                                        handleRemoveAvatar(record.userId);
                                     },
-                                    {
-                                        key: "remove-picture",
-                                        label: "Remove Picture",
-                                        icon: <DeleteOutlined />,
-                                        danger: true,
-                                        disabled: !record.avatarUrl,
-                                        onClick: () => {
-                                            handleRemoveAvatar(record.userId);
-                                        },
-                                    },
-                                ];
-                                return (
-                                    <Dropdown menu={{ items }} trigger={["click"]}>
-                                        <Button type="text" icon={<MoreOutlined />} />
-                                    </Dropdown>
-                                );
-                            },
-                        }}
-                    />
-                </div>
-
-                {/* Create New Member Modal */}
-                <Modal
-                    title="Create New Member"
-                    open={isCreateModalOpen}
-                    onCancel={() => setIsCreateModalOpen(false)}
-                    footer={null}
-                >
-                    <Form
-                        form={createForm}
-                        layout="vertical"
-                        onFinish={handleCreateMember}
-                        initialValues={{ role: "member" }}
-                    >
-                        <Form.Item
-                            name="name"
-                            label="Full Name"
-                            rules={[createSchemaFieldRule(createMemberSchema.pick({ name: true }))]}
-                        >
-                            <Input placeholder="John Doe" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="email"
-                            label="Email Address"
-                            rules={[
-                                createSchemaFieldRule(createMemberSchema.pick({ email: true })),
-                            ]}
-                        >
-                            <Input placeholder="colleague@example.com" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="role"
-                            label="Role"
-                            rules={[createSchemaFieldRule(createMemberSchema.pick({ role: true }))]}
-                        >
-                            <Select>
-                                <Select.Option value="member">Member</Select.Option>
-                                <Select.Option value="admin">Admin</Select.Option>
-                                <Select.Option value="owner">Owner</Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        <Form.Item className="mb-0 flex justify-end">
-                            <Space>
-                                <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-                                <Button
-                                    type="primary"
-                                    htmlType="submit"
-                                    loading={createMemberMutation.isPending}
-                                >
-                                    Create Member
-                                </Button>
-                            </Space>
-                        </Form.Item>
-                    </Form>
-                </Modal>
-
-                {/* Member Details Drawer */}
-                <Drawer
-                    title="Member Details"
-                    placement="right"
-                    onClose={() => setSelectedMember(null)}
-                    open={!!selectedMember}
-                    width={400}
-                    push={false}
-                >
-                    {selectedMember &&
-                        (() => {
-                            const activeMember =
-                                members?.find((m: any) => m.id === selectedMember.id) ||
-                                selectedMember;
+                                },
+                            ];
                             return (
-                                <div className="flex flex-col gap-6 pt-2 pb-6">
-                                    <div className="text-center mb-6">
-                                        {activeOrganization ? (
-                                            <AvatarDropzone
-                                                organizationId={activeOrganization.id}
-                                                userId={activeMember.userId}
-                                                currentImageUrl={getAvatarUrl(
-                                                    activeMember.avatarUrl || null,
-                                                    "xl"
-                                                )}
-                                                size={96}
-                                                className="mx-auto"
-                                            />
-                                        ) : (
-                                            <Avatar
-                                                size={96}
-                                                icon={<UserOutlined />}
-                                                src={getAvatarUrl(
-                                                    activeMember.avatarUrl || null,
-                                                    "xl"
-                                                )}
-                                                className="mx-auto"
-                                            />
-                                        )}
-                                        <Title
-                                            level={4}
-                                            style={{ marginTop: "16px", marginBottom: "4px" }}
-                                        >
-                                            {activeMember.name}
-                                        </Title>
-                                        <Text type="secondary">{activeMember.email}</Text>
-                                        <div className="mt-2">
-                                            <Tag
-                                                color={
-                                                    activeMember.emailVerified
-                                                        ? "success"
-                                                        : "warning"
-                                                }
-                                            >
-                                                {activeMember.emailVerified
-                                                    ? "Verified"
-                                                    : "Unverified"}
-                                            </Tag>
-                                        </div>
-                                    </div>
-
-                                    <Tabs
-                                        defaultActiveKey="1"
-                                        className="flex-1"
-                                        items={[
-                                            {
-                                                key: "1",
-                                                label: "Personal",
-                                                children: (
-                                                    <UserProfileForm userId={activeMember.userId} />
-                                                ),
-                                            },
-                                            {
-                                                key: "2",
-                                                label: "Contact",
-                                                children: (
-                                                    <UserContactList userId={activeMember.userId} />
-                                                ),
-                                            },
-                                            {
-                                                key: "3",
-                                                label: "Wallet",
-                                                children: activeOrganization ? (
-                                                    <MemberAccountAdminPanel
-                                                        memberId={activeMember.userId}
-                                                        orgId={activeOrganization.id}
-                                                        memberName={activeMember.name || "Member"}
-                                                    />
-                                                ) : null,
-                                            },
-                                            {
-                                                key: "4",
-                                                label: "Roles",
-                                                children: (
-                                                    <MemberRolesForm
-                                                        member={activeMember}
-                                                        currentUserId={currentUserId as string}
-                                                        canUpdateMember={canUpdateMember}
-                                                        canDeleteMember={canDeleteMember}
-                                                        handleRoleChange={handleRoleChange}
-                                                        handleRemoveMember={handleRemoveMember}
-                                                        onRemoveSuccess={() =>
-                                                            setSelectedMember(null)
-                                                        }
-                                                    />
-                                                ),
-                                            },
-                                        ]}
-                                    />
-                                </div>
+                                <Dropdown menu={{ items }} trigger={["click"]}>
+                                    <Button type="text" icon={<MoreOutlined />} />
+                                </Dropdown>
                             );
-                        })()}
-                </Drawer>
+                        },
+                    }}
+                />
             </div>
-        </>
+
+            {/* Create New Member Modal */}
+            <Modal
+                title="Create New Member"
+                open={isCreateModalOpen}
+                onCancel={() => setIsCreateModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={createForm}
+                    layout="vertical"
+                    onFinish={handleCreateMember}
+                    initialValues={{ role: "member" }}
+                >
+                    <Form.Item
+                        name="name"
+                        label="Full Name"
+                        rules={[createSchemaFieldRule(createMemberSchema.pick({ name: true }))]}
+                    >
+                        <Input placeholder="John Doe" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="email"
+                        label="Email Address"
+                        rules={[createSchemaFieldRule(createMemberSchema.pick({ email: true }))]}
+                    >
+                        <Input placeholder="colleague@example.com" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="role"
+                        label="Role"
+                        rules={[createSchemaFieldRule(createMemberSchema.pick({ role: true }))]}
+                    >
+                        <Select>
+                            <Select.Option value="member">Member</Select.Option>
+                            <Select.Option value="admin">Admin</Select.Option>
+                            <Select.Option value="owner">Owner</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item className="mb-0 flex justify-end">
+                        <Space>
+                            <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={createMemberMutation.isPending}
+                            >
+                                Create Member
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Member Details Drawer */}
+            <Drawer
+                title="Member Details"
+                placement="right"
+                onClose={() => setSelectedMember(null)}
+                open={!!selectedMember}
+                width={400}
+                push={false}
+            >
+                {selectedMember &&
+                    (() => {
+                        const activeMember =
+                            members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
+                        return (
+                            <div className="flex flex-col gap-6 pt-2 pb-6">
+                                <div className="text-center mb-6">
+                                    {activeOrganization ? (
+                                        <AvatarDropzone
+                                            organizationId={activeOrganization.id}
+                                            userId={activeMember.userId}
+                                            currentImageUrl={getAvatarUrl(
+                                                activeMember.avatarUrl || null,
+                                                "xl"
+                                            )}
+                                            size={96}
+                                            className="mx-auto"
+                                        />
+                                    ) : (
+                                        <Avatar
+                                            size={96}
+                                            icon={<UserOutlined />}
+                                            src={getAvatarUrl(activeMember.avatarUrl || null, "xl")}
+                                            className="mx-auto"
+                                        />
+                                    )}
+                                    <Title
+                                        level={4}
+                                        style={{ marginTop: "16px", marginBottom: "4px" }}
+                                    >
+                                        {activeMember.name}
+                                    </Title>
+                                    <Text type="secondary">{activeMember.email}</Text>
+                                    <div className="mt-2">
+                                        <Tag
+                                            color={
+                                                activeMember.emailVerified ? "success" : "warning"
+                                            }
+                                        >
+                                            {activeMember.emailVerified ? "Verified" : "Unverified"}
+                                        </Tag>
+                                    </div>
+                                </div>
+
+                                <Tabs
+                                    defaultActiveKey="1"
+                                    className="flex-1"
+                                    items={[
+                                        {
+                                            key: "1",
+                                            label: "Personal",
+                                            children: (
+                                                <UserProfileForm userId={activeMember.userId} />
+                                            ),
+                                        },
+                                        {
+                                            key: "2",
+                                            label: "Contact",
+                                            children: (
+                                                <UserContactList userId={activeMember.userId} />
+                                            ),
+                                        },
+                                        {
+                                            key: "3",
+                                            label: "Wallet",
+                                            children: activeOrganization ? (
+                                                <MemberAccountAdminPanel
+                                                    memberId={activeMember.userId}
+                                                    orgId={activeOrganization.id}
+                                                    memberName={activeMember.name || "Member"}
+                                                />
+                                            ) : null,
+                                        },
+                                        {
+                                            key: "4",
+                                            label: "Roles",
+                                            children: (
+                                                <MemberRolesForm
+                                                    member={activeMember}
+                                                    currentUserId={currentUserId as string}
+                                                    canUpdateMember={canUpdateMember}
+                                                    canDeleteMember={canDeleteMember}
+                                                    handleRoleChange={handleRoleChange}
+                                                    handleRemoveMember={handleRemoveMember}
+                                                    onRemoveSuccess={() => setSelectedMember(null)}
+                                                />
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            </div>
+                        );
+                    })()}
+            </Drawer>
+        </div>
     );
 };
-
-export const OrganizationMembersPage = () => (
-    <ErrorBoundary FallbackComponent={ErrorFallback}>
-        <OrganizationMembersPageBase />
-    </ErrorBoundary>
-);

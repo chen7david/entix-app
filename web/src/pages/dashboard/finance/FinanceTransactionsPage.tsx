@@ -1,5 +1,4 @@
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
 import { useTransactions } from "@web/src/features/finance/hooks/useTransactions";
@@ -71,39 +70,36 @@ export const FinanceTransactionsPage: React.FC = () => {
     };
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-8">
-                <div className="mb-8">
-                    <Title level={2} style={{ marginBottom: 4 }}>
-                        Financial Ledger
-                    </Title>
-                    <Text type="secondary" className="text-base">
-                        A comprehensive, immutable record of all organizational financial
-                        transactions and reversals.
-                    </Text>
-                </div>
-
-                <TransactionLedgerTable
-                    transactions={data?.items || []}
-                    loading={isLoading}
-                    onReverse={(txId, reason) => reverse({ txId, reason })}
-                    isReversing={isReversing ? variables?.txId : null}
-                    pagination={{
-                        pageSize,
-                        hasNextPage: !!data?.nextCursor,
-                        hasPrevPage: cursorStack.length > 0,
-                        onNext: handleNext,
-                        onPrev: handlePrev,
-                        onPageSizeChange: (size) => {
-                            setPageSize(size);
-                            setCursorStack([]); // Reset on size change
-                        },
-                    }}
-                    filters={filterConfig}
-                    onFiltersChange={handleFiltersChange}
-                />
+        <div>
+            <div style={{ marginBottom: 32 }}>
+                <Title level={2} style={{ margin: 0 }}>
+                    Financial Ledger
+                </Title>
+                <Text type="secondary" className="text-base">
+                    A comprehensive, immutable record of all organizational financial transactions
+                    and reversals.
+                </Text>
             </div>
-        </>
+
+            <TransactionLedgerTable
+                transactions={data?.items || []}
+                loading={isLoading}
+                onReverse={(txId, reason) => reverse({ txId, reason })}
+                isReversing={isReversing ? variables?.txId : null}
+                pagination={{
+                    pageSize,
+                    hasNextPage: !!data?.nextCursor,
+                    hasPrevPage: cursorStack.length > 0,
+                    onNext: handleNext,
+                    onPrev: handlePrev,
+                    onPageSizeChange: (size) => {
+                        setPageSize(size);
+                        setCursorStack([]); // Reset on size change
+                    },
+                }}
+                filters={filterConfig}
+                onFiltersChange={handleFiltersChange}
+            />
+        </div>
     );
 };

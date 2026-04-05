@@ -10,8 +10,12 @@ export const OrgContext = createContext<OrgContextType | undefined>(undefined);
 
 export const OrgProvider = OrgContext.Provider;
 
+export const useOptionalOrgContext = () => {
+    return useContext(OrgContext);
+};
+
 export const useOrgContext = () => {
-    const context = useContext(OrgContext);
+    const context = useOptionalOrgContext();
     if (context === undefined) {
         throw new Error("useOrgContext must be used within an OrgProvider");
     }

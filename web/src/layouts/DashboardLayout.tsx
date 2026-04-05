@@ -1,6 +1,7 @@
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
 import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
+import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { GlobalUploadManager } from "@web/src/features/media";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
@@ -23,8 +24,13 @@ export const DashboardLayout: React.FC = () => {
                         backgroundColor: token.colorBgLayout,
                     }}
                 >
-                    <ImpersonationBanner />
-                    <Outlet />
+                    <Toolbar />
+                    <div className="p-8">
+                        <div className="max-w-7xl mx-auto">
+                            <ImpersonationBanner />
+                            <Outlet />
+                        </div>
+                    </div>
                 </Content>
             </Layout>
             <GlobalUploadManager />

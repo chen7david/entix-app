@@ -27,6 +27,22 @@ export const CurrencyActivationGrid: React.FC<Props> = ({
         accountType: "funding", // Activated currencies are always General Funds
     });
 
+    if (activating && currencies.length === 0) {
+        return (
+            <Row gutter={[16, 16]}>
+                {[...Array(4)].map((_, i) => (
+                    <Col xs={24} sm={12} lg={8} xl={6} key={`skeleton-${i}`}>
+                        <AvailableCurrencyCard
+                            currency={{} as any}
+                            onActivate={() => {}}
+                            loading={true}
+                        />
+                    </Col>
+                ))}
+            </Row>
+        );
+    }
+
     if (currencies.length === 0) {
         return (
             <div className="py-12 border border-dashed rounded-xl flex items-center justify-center bg-slate-100/50 dark:bg-slate-900/50">

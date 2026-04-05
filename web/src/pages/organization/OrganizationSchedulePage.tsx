@@ -1,6 +1,4 @@
 import { PlusOutlined } from "@ant-design/icons";
-import { ErrorFallback } from "@web/src/components/error/ErrorFallback";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { useOrganization } from "@web/src/features/organization";
 import {
     ScheduleFilterBar,
@@ -11,7 +9,6 @@ import {
 } from "@web/src/features/schedule";
 import { Button, Flex, Grid, Result, Spin, Typography } from "antd";
 import type React from "react";
-import { ErrorBoundary } from "react-error-boundary";
 
 const { Title, Text } = Typography;
 
@@ -62,61 +59,53 @@ export const OrganizationSchedulePage: React.FC = () => {
     }
 
     return (
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-            <Toolbar />
-            <div className="p-6">
-                <Flex
-                    vertical={!screens.md}
-                    justify="space-between"
-                    align={screens.md ? "center" : "start"}
-                    gap={16}
-                    style={{ marginBottom: 32 }}
-                >
-                    <div style={{ flex: 1 }}>
-                        <Title level={2} style={{ marginBottom: 4, margin: 0 }}>
-                            Schedule
-                        </Title>
-                        <Text type="secondary" style={{ fontSize: 13 }}>
-                            Manage and track organization sessions.
-                        </Text>
-                    </div>
-                    <Button
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={handleCreate}
-                        size="large"
-                    >
-                        Schedule Session
-                    </Button>
-                </Flex>
+        <div>
+            <Flex
+                vertical={!screens.md}
+                justify="space-between"
+                align={screens.md ? "center" : "start"}
+                gap={16}
+                style={{ marginBottom: 32 }}
+            >
+                <div style={{ flex: 1 }}>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Schedule
+                    </Title>
+                    <Text type="secondary" style={{ fontSize: 13 }}>
+                        Manage and track organization sessions.
+                    </Text>
+                </div>
+                <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate} size="large">
+                    Schedule Session
+                </Button>
+            </Flex>
 
-                <ScheduleMetricsGrid metrics={metrics} loading={isLoading} />
+            <ScheduleMetricsGrid metrics={metrics} loading={isLoading} />
 
-                <ScheduleFilterBar
-                    search={localSearch}
-                    onSearchChange={setLocalSearch}
-                    isSearching={searchControl.state.isPending}
-                    startDate={queryStart}
-                    endDate={queryEnd}
-                    onRangeChange={handleRangeChange}
-                    timeline={timeline}
-                    onTimelineChange={setTimeline}
+            <ScheduleFilterBar
+                search={localSearch}
+                onSearchChange={setLocalSearch}
+                isSearching={searchControl.state.isPending}
+                startDate={queryStart}
+                endDate={queryEnd}
+                onRangeChange={handleRangeChange}
+                timeline={timeline}
+                onTimelineChange={setTimeline}
+            />
+
+            {isLoading && displaySessions.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 50 }}>
+                    <Spin size="large" />
+                </div>
+            ) : (
+                <ScheduleSessionList
+                    sessions={displaySessions}
+                    hasNextPage={hasNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    onFetchNextPage={fetchNextPage}
+                    onEdit={handleEdit}
                 />
-
-                {isLoading && displaySessions.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: 50 }}>
-                        <Spin size="large" />
-                    </div>
-                ) : (
-                    <ScheduleSessionList
-                        sessions={displaySessions}
-                        hasNextPage={hasNextPage}
-                        isFetchingNextPage={isFetchingNextPage}
-                        onFetchNextPage={fetchNextPage}
-                        onEdit={handleEdit}
-                    />
-                )}
-            </div>
+            )}
 
             <SessionDetailsDrawer
                 open={drawerOpen}
@@ -127,6 +116,6 @@ export const OrganizationSchedulePage: React.FC = () => {
                 onSaveAttendance={handleSaveAttendance}
                 onDelete={handleDelete}
             />
-        </ErrorBoundary>
+        </div>
     );
 };
