@@ -1,8 +1,13 @@
 import type { AppContext } from "@api/helpers/types.helpers";
+import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
 import { DashboardService } from "@api/services/dashboard.service";
+import { AdminFinancialService } from "@api/services/financial/admin-financial.service";
+import { OrgFinancialService } from "@api/services/financial/org-financial.service";
+import { UserFinancialService } from "@api/services/financial/user-financial.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
+import { MemberService } from "@api/services/member.service";
 import { MemberExportService } from "@api/services/member-export.service";
 import { MemberImportService } from "@api/services/member-import.service";
 import { OrganizationService } from "@api/services/organization.service";
@@ -12,8 +17,13 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
+import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
+    getFinancialAccountsRepository,
+    getFinancialCurrenciesRepository,
+    getFinancialOrgSettingsRepository,
+    getFinancialTransactionsRepository,
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
@@ -26,7 +36,7 @@ import {
 import { getUploadService } from "./upload.factory";
 
 export const getUserService = (ctx: AppContext) => {
-    return new UserService(getUserRepository(ctx));
+    return new UserService(getUserRepository(ctx), auth(ctx));
 };
 
 export const getUserProfileService = (ctx: AppContext) => {
@@ -45,7 +55,11 @@ export const getRegistrationService = (ctx: AppContext) => {
     return new RegistrationService(
         getUserRepository(ctx),
         getOrganizationRepository(ctx),
-        getMemberRepository(ctx)
+        getMemberRepository(ctx),
+        getUserFinancialService(ctx),
+        getUserService(ctx),
+        ctx.var.frontendUrl,
+        ctx.var.logger
     );
 };
 
@@ -69,6 +83,10 @@ export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(getSessionScheduleRepository(ctx));
 };
 
+export const getMemberService = (ctx: AppContext) => {
+    return new MemberService(getMemberRepository(ctx));
+};
+
 export const getDashboardService = (ctx: AppContext) => {
     return new DashboardService(getDashboardRepository(ctx));
 };
@@ -83,5 +101,32 @@ export const getMemberImportService = (ctx: AppContext) => {
         getMemberRepository(ctx),
         getUserProfileRepository(ctx),
         getSocialMediaRepository(ctx)
+    );
+};
+
+export const getOrgFinancialService = (ctx: AppContext) => {
+    return new OrgFinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx),
+        getFinancialCurrenciesRepository(ctx)
+    );
+};
+
+export const getUserFinancialService = (ctx: AppContext) => {
+    return new UserFinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx),
+        getFinancialCurrenciesRepository(ctx),
+        getFinancialOrgSettingsRepository(ctx)
+    );
+};
+
+export const getAdminFinancialService = (ctx: AppContext) => {
+    return new AdminFinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx)
     );
 };

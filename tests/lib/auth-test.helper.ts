@@ -134,7 +134,7 @@ export async function createAuthenticatedOrg(params: {
 
     return {
         cookie: extractCookies(signInRes),
-        orgId: orgData.organization.id,
+        orgId: orgData.data.organization.id,
         orgData,
     };
 }

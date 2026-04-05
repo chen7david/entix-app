@@ -1,5 +1,4 @@
-import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import { getRegistrationService } from "@api/factories/service.factory";
+import { getRegistrationService, getUserService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { AuthRoutes } from "./auth.routes";
@@ -12,28 +11,29 @@ export class AuthHandler {
 
         const registrationService = getRegistrationService(ctx);
 
-        try {
-            const result = await registrationService.signupWithOrg({
-                email,
-                name,
-                password,
-                organizationName,
-            });
+        const result = await registrationService.signupWithOrg({
+            email,
+            name,
+            password,
+            organizationName,
+        });
 
-            ctx.var.logger.info(
-                { userId: result.user.id, orgId: result.organization.id },
-                "Signup with organization completed"
-            );
+        ctx.var.logger.info(
+            { userId: result.user.id, orgId: result.organization.id },
+            "Signup with organization completed"
+        );
 
-            return ctx.json(result, HttpStatusCodes.CREATED);
-        } catch (error: any) {
-            ctx.var.logger.error({ error }, "Error during organization setup, rolling back");
+        return ctx.json({ data: result }, HttpStatusCodes.CREATED);
+    };
 
-            if (error instanceof ConflictError) {
-                throw error;
-            }
+    static resendVerificationAdmin: AppHandler<typeof AuthRoutes.resendVerificationAdmin> = async (
+        ctx
+    ) => {
+        const { email } = ctx.req.valid("json");
 
-            throw new InternalServerError("Failed to setup organization, please try again");
-        }
+        const userService = getUserService(ctx);
+        await userService.resendVerificationEmailAdmin(email);
+
+        return ctx.body(null, HttpStatusCodes.OK);
     };
 }

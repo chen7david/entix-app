@@ -8,47 +8,43 @@ export default defineConfig({
     themeConfig: {
         nav: [
             { text: "Home", link: "/" },
-            { text: "How to Write Docs", link: "/how-to-write-docs" },
+            { text: "AI Reference", link: "/AI" },
         ],
 
         sidebar: [
             {
-                text: "Onboarding",
+                text: "Architecture",
                 items: [
-                    { text: "Quick Start", link: "/" },
-                    { text: "Environment Setup", link: "/onboarding/setup" },
-                    { text: "Project Workflow", link: "/onboarding/workflow" },
+                    { text: "Overview", link: "/architecture/01-overview" },
+                    { text: "Request Lifecycle", link: "/architecture/02-request-lifecycle" },
+                    { text: "Repo & Service Pattern", link: "/architecture/03-repository-service" },
                 ],
             },
             {
-                text: "Development",
+                text: "How-To Guides",
                 items: [
-                    { text: "Create a Feature", link: "/features/create-new" },
-                    { text: "Naming Rules", link: "/naming/conventions" },
-                    { text: "Middleware & Guards", link: "/middleware/flow" },
+                    { text: "Developer Onboarding", link: "/how-to/00-onboarding" },
+                    { text: "Create a Feature", link: "/how-to/01-create-new-feature" },
+                    { text: "Defining Schemas", link: "/how-to/02-defining-schemas" },
+                    { text: "OpenAPI & Routes", link: "/how-to/03-openapi-and-routes" },
+                    { text: "Factories & DI", link: "/how-to/04-factory-and-di" },
+                    { text: "Testing Guide", link: "/how-to/05-testing" },
+                    { text: "Git Workflow", link: "/how-to/06-git-workflow" },
                 ],
             },
             {
-                text: "Operations",
-                items: [
-                    { text: "Testing Guide", link: "/testing/guide" },
-                    { text: "Cloudflare Deployment", link: "/deployment/cloudflare" },
-                ],
+                text: "Frontend",
+                items: [{ text: "Navigation", link: "/frontend/01-navigation" }],
             },
             {
-                text: "Architecture & Design",
-                items: [{ text: "Design Language", link: "/design-language" }],
+                text: "Conventions",
+                items: [{ text: "Naming Rules", link: "/conventions/01-naming" }],
             },
             {
                 text: "Principles (Why?)",
                 items: [
-                    { text: "Why .dev.vars?", link: "/why/dev-vars" },
-                    { text: "Why Protection?", link: "/why/branch-protection" },
                     { text: "Why Service-Repo?", link: "/why/service-repository" },
-                    { text: "Why Strict Naming?", link: "/why/naming" },
-                    { text: "Why Guards?", link: "/why/guards" },
-                    { text: "Why Cloudflare Testing?", link: "/why/cloudflare-testing" },
-                    { text: "Why Cloudflare Pages?", link: "/why/cloudflare-pages" },
+                    { text: "Why No External Leakage?", link: "/why/external-dependencies" },
                 ],
             },
         ],

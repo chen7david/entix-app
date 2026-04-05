@@ -46,7 +46,7 @@ export const socialSchema = baseSchema.merge(socialInputSchema);
 
 export const aggregateProfileResponse = z.object({
     profile: profileSchema.nullish(),
-    phoneNumbers: z.array(phoneSchema),
+    phones: z.array(phoneSchema),
     addresses: z.array(addressSchema),
     socialMedias: z
         .array(

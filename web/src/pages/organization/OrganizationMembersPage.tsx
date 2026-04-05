@@ -6,14 +6,18 @@ import {
     MoreOutlined,
     PlusOutlined,
     SafetyOutlined,
-    SearchOutlined,
     TeamOutlined,
     UserOutlined,
+    WalletOutlined,
 } from "@ant-design/icons";
-import { getAvatarUrl } from "@shared";
+import { getAvatarUrl, type MemberDTO } from "@shared";
+import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useAuth } from "@web/src/features/auth";
+import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { AvatarDropzone } from "@web/src/features/media";
 import {
     useBulkMembers,
@@ -27,39 +31,39 @@ import {
     UserProfileForm,
     useRemoveAvatar,
 } from "@web/src/features/user-profiles";
+import { useInitializeWallet } from "@web/src/features/wallet/hooks/useInitializeWallet";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
 import type { MenuProps } from "antd";
 import {
+    App,
     Avatar,
     Button,
-    Card,
-    Col,
     Drawer,
     Dropdown,
     Form,
     Input,
     Modal,
-    message,
-    Row,
     Select,
     Skeleton,
     Space,
-    Statistic,
-    Table,
     Tabs,
     Tag,
     Tooltip,
     Typography,
+    theme,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useEffect, useState } from "react";
+import { createSchemaFieldRule } from "antd-zod";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
-export const OrganizationMembersPage = () => {
+export const OrganizationMembersPage: React.FC = () => {
+    const { token } = theme.useToken();
+    const { message } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Bind search state generically to url string matching native architecture persistence
@@ -67,7 +71,7 @@ export const OrganizationMembersPage = () => {
     const [searchText, setSearchText] = useState(searchParams.get("q") || "");
 
     // Defer pushing expensive re-renders and network bounds rapidly on keystroke loops
-    const [debouncedSearch, control] = useDebouncedValue(
+    const [debouncedSearch] = useDebouncedValue(
         searchText,
         { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
         (state) => ({ isPending: state.isPending })
@@ -83,8 +87,12 @@ export const OrganizationMembersPage = () => {
         }
         setSearchParams(newParams, { replace: true });
     }, [debouncedSearch, setSearchParams, searchParams]);
+    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
+    const [cursorStack, setCursorStack] = useState<string[]>([]);
+    const [limit, setLimit] = useState(10);
+
     const [createForm] = Form.useForm();
-    const [selectedMember, setSelectedMember] = useState<Record<string, unknown> | null>(null);
+    const [selectedMember, setSelectedMember] = useState<MemberDTO | null>(null);
     const { activeOrganization } = useOrganization();
     const { metrics, isLoadingMetrics: loadingMetrics } = useBulkMembers(activeOrganization?.id);
 
@@ -95,16 +103,37 @@ export const OrganizationMembersPage = () => {
         removeMember,
         checkPermission,
         userRoles: currentUserRoles,
-        fetchNextPage,
+        nextCursor,
         hasNextPage,
-        isFetchingNextPage,
-    } = useMembers(debouncedSearch);
+    } = useMembers(debouncedSearch, {
+        cursor: currentCursor,
+        limit: limit,
+    });
+
+    const handleNext = useCallback(() => {
+        if (nextCursor) {
+            setCursorStack((prev) => [...prev, currentCursor || ""]);
+            setCurrentCursor(nextCursor);
+        }
+    }, [nextCursor, currentCursor]);
+
+    const handlePrev = useCallback(() => {
+        if (cursorStack.length > 0) {
+            const newStack = [...cursorStack];
+            const prev = newStack.pop();
+            setCursorStack(newStack);
+            setCurrentCursor(prev || undefined);
+        }
+    }, [cursorStack]);
 
     const { user } = useAuth();
     const currentUserId = user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
+    const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(
+        activeOrganization?.id || ""
+    );
 
     const handleCreateMember = async (values: any) => {
         try {
@@ -116,14 +145,17 @@ export const OrganizationMembersPage = () => {
         }
     };
 
-    const handleRemoveAvatar = async (memberUserId: string) => {
-        try {
-            await removeAvatarMutation.mutateAsync(memberUserId);
-            message.success("Profile picture removed successfully");
-        } catch {
-            message.error("Failed to remove profile picture");
-        }
-    };
+    const handleRemoveAvatar = useCallback(
+        async (memberUserId: string) => {
+            try {
+                await removeAvatarMutation.mutateAsync(memberUserId);
+                message.success("Profile picture removed successfully");
+            } catch {
+                message.error("Failed to remove profile picture");
+            }
+        },
+        [removeAvatarMutation, message]
+    );
 
     // Permissions check using better-auth client helper
     const canUpdateMember = checkPermission({ permissions: { member: ["update"] } });
@@ -147,151 +179,120 @@ export const OrganizationMembersPage = () => {
         }
     };
 
-    const handleResendPassword = async (email: string) => {
-        if (!email) return;
-        const { error } = await requestPasswordReset({
-            email,
-            redirectTo: `${window.location.origin}/auth/reset-password`,
-        });
-        if (error) {
-            message.error(`Failed to send password reset: ${error.message}`);
-        } else {
-            message.success("Password reset email sent");
-        }
-    };
+    const handleResendPassword = useCallback(
+        async (email: string) => {
+            if (!email) return;
+            const { error } = await requestPasswordReset({
+                email,
+                redirectTo: `${window.location.origin}/auth/reset-password`,
+            });
+            if (error) {
+                message.error(`Failed to send password reset: ${error.message}`);
+            } else {
+                message.success("Password reset email sent");
+            }
+        },
+        [message]
+    );
 
-    const handleResendVerification = async (email: string) => {
-        if (!email) return;
-        const { error } = await sendVerificationEmail({
-            email,
-            callbackURL: window.location.origin,
-        });
-        if (error) {
-            message.error(`Failed to send verification email: ${error.message}`);
-        } else {
-            message.success("Verification email sent");
-        }
-    };
+    const handleResendVerification = useCallback(
+        async (email: string) => {
+            if (!email) return;
+            const { error } = await sendVerificationEmail({
+                email,
+                callbackURL: window.location.origin,
+            });
+            if (error) {
+                message.error(`Failed to send verification email: ${error.message}`);
+            } else {
+                message.success("Verification email sent");
+            }
+        },
+        [message]
+    );
 
-    // Compute role counts from organization-wide metrics if available, fallback to list (list is paginated so list-based stats are inaccurate)
-    const totalMembers = metrics?.totalMembers ?? members?.length ?? 0;
+    // Compute role counts from organization-wide metrics if available
+    const totalMembers = metrics?.totalMembers ?? metrics?.totalMembers ?? 0;
     const adminCount = metrics?.adminCount ?? 0;
     const ownerCount = metrics?.ownerCount ?? 0;
 
-    const columns: ColumnsType<Record<string, unknown>> = [
-        {
-            title: "User",
-            dataIndex: "user",
-            key: "user",
-            render: (user: Record<string, unknown>, record: any) => (
-                <div
-                    className="flex items-center gap-2 cursor-pointer hover:bg-black/5 dark:hover:bg-white/5 p-2 rounded transition-colors"
-                    onClick={() => setSelectedMember(record)}
-                >
-                    <Avatar
-                        src={user?.image ? getAvatarUrl(user.image as string, "sm") : undefined}
-                        icon={<UserOutlined />}
-                    />
-                    <div className="flex flex-col">
-                        <Typography.Text
-                            strong
-                            className="text-[#646cff] hover:text-[#747bff] transition-colors"
-                        >
-                            {user.name as string}
-                        </Typography.Text>
-                        <Typography.Text type="secondary" className="text-xs">
-                            {user.email as string}
-                        </Typography.Text>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            title: "Role",
-            dataIndex: "role",
-            key: "role",
-            render: (role: unknown) => {
-                const memberRoles = String(role || "")
-                    .split(",")
-                    .map((r) => r.trim())
-                    .filter(Boolean);
-                return (
-                    <Space wrap>
-                        {memberRoles.map((r) => (
-                            <Tag
-                                key={r}
-                                color={
-                                    r === "owner" ? "purple" : r === "admin" ? "#646cff" : "default"
-                                }
+    const columns: ColumnsType<MemberDTO> = useMemo(
+        () => [
+            {
+                title: "User",
+                key: "user",
+                width: 250,
+                render: (_: any, record: MemberDTO) => (
+                    <div className="flex items-center gap-3 p-1">
+                        <Avatar
+                            src={
+                                record.avatarUrl ? getAvatarUrl(record.avatarUrl, "sm") : undefined
+                            }
+                            icon={<UserOutlined />}
+                        />
+                        <div className="flex flex-col overflow-hidden">
+                            <Typography.Text
+                                strong
+                                style={{ color: token.colorPrimary }}
+                                className="truncate"
                             >
-                                {r.toUpperCase()}
-                            </Tag>
-                        ))}
-                    </Space>
-                );
-            },
-        },
-        {
-            title: "Joined At",
-            dataIndex: "createdAt",
-            key: "createdAt",
-            render: (date: string) => {
-                return (
-                    <Tooltip title={DateUtils.toDate(date).toLocaleString()}>
-                        {DateUtils.fromNow(date)}
-                    </Tooltip>
-                );
-            },
-        },
-        {
-            title: "",
-            key: "actions",
-            align: "right",
-            width: 50,
-            render: (_: any, record: any) => {
-                const items: MenuProps["items"] = [
-                    {
-                        key: "resend-verification",
-                        label: "Resend Verification Email",
-                        icon: <MailOutlined />,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleResendVerification(record.user?.email);
-                        },
-                    },
-                    {
-                        key: "resend-password",
-                        label: "Resend Password Reset",
-                        icon: <LockOutlined />,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleResendPassword(record.user?.email);
-                        },
-                    },
-                    {
-                        key: "remove-picture",
-                        label: "Remove Picture",
-                        icon: <DeleteOutlined />,
-                        danger: true,
-                        disabled: !record.user?.image,
-                        onClick: (e) => {
-                            e.domEvent.stopPropagation();
-                            handleRemoveAvatar(record.user?.id as string);
-                        },
-                    },
-                ];
-                return (
-                    <div onClick={(e) => e.stopPropagation()}>
-                        <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
-                            <Button type="text" icon={<MoreOutlined />} />
-                        </Dropdown>
+                                {record.name}
+                            </Typography.Text>
+                            <Typography.Text type="secondary" className="text-xs truncate">
+                                {record.email}
+                            </Typography.Text>
+                        </div>
                     </div>
-                );
+                ),
             },
-        },
-    ];
+            {
+                title: "Role",
+                dataIndex: "role",
+                key: "role",
+                width: 200,
+                render: (role: unknown) => {
+                    const memberRoles = String(role || "")
+                        .split(",")
+                        .map((r) => r.trim())
+                        .filter(Boolean);
+                    return (
+                        <Space wrap>
+                            {memberRoles.map((r) => (
+                                <Tag
+                                    key={r}
+                                    color={
+                                        r === "owner"
+                                            ? "purple"
+                                            : r === "admin"
+                                              ? token.colorPrimary
+                                              : "default"
+                                    }
+                                >
+                                    {r.toUpperCase()}
+                                </Tag>
+                            ))}
+                        </Space>
+                    );
+                },
+            },
+            {
+                title: "Joined At",
+                dataIndex: "createdAt",
+                key: "createdAt",
+                width: 150,
+                render: (date: string) => {
+                    return (
+                        <Tooltip title={DateUtils.toDate(date).toLocaleString()}>
+                            {DateUtils.fromNow(date)}
+                        </Tooltip>
+                    );
+                },
+            },
+        ],
+        [token.colorPrimary]
+    );
 
-    if (loading && members.length === 0) {
+    if (loading && members.length === 0 && !currentCursor) {
         return <Skeleton active />;
     }
 
@@ -300,17 +301,12 @@ export const OrganizationMembersPage = () => {
     }
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Members
-                        </Title>
-                        <Text type="secondary">Manage organization members and roles</Text>
-                    </div>
-                    <div className="flex items-center gap-4">
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Members"
+                subtitle="Manage organization members and roles."
+                actions={
+                    <div className="flex flex-wrap items-center gap-4">
                         {currentUserRoles && currentUserRoles.length > 0 ? (
                             <Space>
                                 {currentUserRoles.map((r: string) => (
@@ -328,237 +324,281 @@ export const OrganizationMembersPage = () => {
                             type="primary"
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateModalOpen(true)}
+                            className="min-h-[40px]"
                         >
                             Create New Member
                         </Button>
                     </div>
-                </div>
+                }
+            />
 
-                {/* Stats Cards */}
-                <Row gutter={16} className="mb-6">
-                    <Col xs={24} sm={8}>
-                        <Card loading={loadingMetrics}>
-                            <Statistic
-                                title="Total Members"
-                                value={totalMembers}
-                                prefix={<TeamOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card loading={loadingMetrics}>
-                            <Statistic
-                                title="Admins"
-                                value={adminCount}
-                                prefix={<SafetyOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={8}>
-                        <Card loading={loadingMetrics}>
-                            <Statistic
-                                title="Owners"
-                                value={ownerCount}
-                                prefix={<CrownOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
-
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search members..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-xs"
-                        value={searchText}
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
-                        suffix={
-                            control.state.isPending ? (
-                                <span className="text-xs text-gray-400 italic">typing...</span>
-                            ) : null
-                        }
-                    />
-                </div>
-
-                <Table
-                    dataSource={members}
-                    columns={columns}
-                    rowKey={(record: any) => record.id || record.userId}
-                    pagination={false}
-                    loading={loading && !isFetchingNextPage}
-                />
-
-                {hasNextPage && (
-                    <div className="flex justify-center mt-6">
-                        <Button
-                            onClick={() => fetchNextPage()}
-                            loading={isFetchingNextPage}
-                            type="dashed"
-                        >
-                            Load More Members
-                        </Button>
-                    </div>
-                )}
-
-                {/* Create New Member Modal */}
-                <Modal
-                    title="Create New Member"
-                    open={isCreateModalOpen}
-                    onCancel={() => setIsCreateModalOpen(false)}
-                    footer={null}
-                >
-                    <Form
-                        form={createForm}
-                        layout="vertical"
-                        onFinish={handleCreateMember}
-                        initialValues={{ role: "member" }}
-                    >
-                        <Form.Item
-                            name="name"
-                            label="Full Name"
-                            rules={[{ required: true, message: "Please input the full name!" }]}
-                        >
-                            <Input placeholder="John Doe" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="email"
-                            label="Email Address"
-                            rules={[
-                                { required: true, message: "Please input the email address!" },
-                                { type: "email", message: "Please enter a valid email!" },
-                            ]}
-                        >
-                            <Input placeholder="colleague@example.com" />
-                        </Form.Item>
-
-                        <Form.Item
-                            name="role"
-                            label="Role"
-                            rules={[{ required: true, message: "Please select a role!" }]}
-                        >
-                            <Select>
-                                <Select.Option value="member">Member</Select.Option>
-                                <Select.Option value="admin">Admin</Select.Option>
-                                <Select.Option value="owner">Owner</Select.Option>
-                            </Select>
-                        </Form.Item>
-
-                        <Form.Item className="mb-0 flex justify-end">
-                            <Space>
-                                <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
-                                <Button
-                                    type="primary"
-                                    htmlType="submit"
-                                    loading={createMemberMutation.isPending}
-                                >
-                                    Create Member
-                                </Button>
-                            </Space>
-                        </Form.Item>
-                    </Form>
-                </Modal>
-
-                {/* Member Details Drawer */}
-                <Drawer
-                    title="Member Details"
-                    placement="right"
-                    onClose={() => setSelectedMember(null)}
-                    open={!!selectedMember}
-                    width={400}
-                    push={false}
-                >
-                    {selectedMember &&
-                        (() => {
-                            const activeMember =
-                                members?.find((m: any) => m.id === selectedMember.id) ||
-                                selectedMember;
-                            const user = activeMember.user as Record<string, unknown> | undefined;
+            {/* Stats Cards */}
+            <SummaryCardsRow
+                loading={loadingMetrics}
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Members",
+                        value: totalMembers,
+                        icon: <TeamOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "admins",
+                        label: "Admins",
+                        value: adminCount,
+                        icon: <SafetyOutlined />,
+                        color: "#10b981",
+                    },
+                    {
+                        key: "owners",
+                        label: "Owners",
+                        value: ownerCount,
+                        icon: <CrownOutlined />,
+                        color: "#f59e0b",
+                    },
+                ]}
+            />
+            <div className="flex-1 min-h-0">
+                <DataTableWithFilters<MemberDTO>
+                    config={{
+                        columns,
+                        data: members,
+                        loading: loading,
+                        rowKey: "userId",
+                        selectedRowKey: selectedMember?.userId,
+                        onRowClick: (record) => setSelectedMember(record),
+                        filters: [
+                            {
+                                type: "search",
+                                key: "q",
+                                placeholder: "Search members by name or email...",
+                            },
+                        ],
+                        onFiltersChange: (f: Record<string, any>) => {
+                            setSearchText(f.q || "");
+                            setCurrentCursor(undefined);
+                            setCursorStack([]);
+                        },
+                        pagination: {
+                            hasNextPage,
+                            hasPrevPage: cursorStack.length > 0,
+                            pageSize: limit,
+                            onNext: handleNext,
+                            onPrev: handlePrev,
+                            onPageSizeChange: (s) => {
+                                setLimit(s);
+                                setCurrentCursor(undefined);
+                                setCursorStack([]);
+                            },
+                        },
+                        actions: (record: MemberDTO) => {
+                            const items: MenuProps["items"] = [
+                                {
+                                    key: "resend-verification",
+                                    label: "Resend Verification Email",
+                                    icon: <MailOutlined />,
+                                    onClick: () => {
+                                        if (record.email) handleResendVerification(record.email);
+                                    },
+                                },
+                                {
+                                    key: "initialize-wallet",
+                                    label: "Initialize Wallet",
+                                    icon: <WalletOutlined />,
+                                    disabled: isInitializing,
+                                    onClick: () => {
+                                        initializeWallet(record.userId);
+                                    },
+                                },
+                                {
+                                    key: "resend-password",
+                                    label: "Resend Password Reset",
+                                    icon: <LockOutlined />,
+                                    onClick: () => {
+                                        if (record.email) handleResendPassword(record.email);
+                                    },
+                                },
+                                {
+                                    key: "remove-picture",
+                                    label: "Remove Picture",
+                                    icon: <DeleteOutlined />,
+                                    danger: true,
+                                    disabled: !record.avatarUrl,
+                                    onClick: () => {
+                                        handleRemoveAvatar(record.userId);
+                                    },
+                                },
+                            ];
                             return (
-                                <div className="flex flex-col gap-6 pt-2 pb-6">
-                                    <div className="text-center mb-6">
-                                        {activeOrganization ? (
-                                            <AvatarDropzone
-                                                organizationId={activeOrganization.id}
-                                                userId={activeMember.userId as string}
-                                                currentImageUrl={getAvatarUrl(
-                                                    user?.image as string,
-                                                    "xl"
-                                                )}
-                                                size={96}
-                                                className="mx-auto"
-                                            />
-                                        ) : (
-                                            <Avatar
-                                                size={96}
-                                                icon={<UserOutlined />}
-                                                src={getAvatarUrl(user?.image as string, "xl")}
-                                                className="mx-auto"
-                                            />
-                                        )}
-                                        <Title
-                                            level={4}
-                                            style={{ marginTop: "16px", marginBottom: "4px" }}
-                                        >
-                                            {user?.name as string}
-                                        </Title>
-                                        <Text type="secondary">{user?.email as string}</Text>
-                                        <div className="mt-2">
-                                            <Tag
-                                                color={user?.emailVerified ? "success" : "warning"}
-                                            >
-                                                {user?.emailVerified ? "Verified" : "Unverified"}
-                                            </Tag>
-                                        </div>
-                                    </div>
-
-                                    <Tabs
-                                        defaultActiveKey="1"
-                                        className="flex-1"
-                                        items={[
-                                            {
-                                                key: "1",
-                                                label: "Personal Info",
-                                                children: (
-                                                    <UserProfileForm
-                                                        userId={activeMember.userId as string}
-                                                    />
-                                                ),
-                                            },
-                                            {
-                                                key: "2",
-                                                label: "Contact Details",
-                                                children: (
-                                                    <UserContactList
-                                                        userId={activeMember.userId as string}
-                                                    />
-                                                ),
-                                            },
-                                            {
-                                                key: "3",
-                                                label: "Roles",
-                                                children: (
-                                                    <MemberRolesForm
-                                                        member={activeMember}
-                                                        currentUserId={currentUserId as string}
-                                                        canUpdateMember={canUpdateMember}
-                                                        canDeleteMember={canDeleteMember}
-                                                        handleRoleChange={handleRoleChange}
-                                                        handleRemoveMember={handleRemoveMember}
-                                                        onRemoveSuccess={() =>
-                                                            setSelectedMember(null)
-                                                        }
-                                                    />
-                                                ),
-                                            },
-                                        ]}
-                                    />
-                                </div>
+                                <Dropdown menu={{ items }} trigger={["click"]}>
+                                    <Button type="text" icon={<MoreOutlined />} />
+                                </Dropdown>
                             );
-                        })()}
-                </Drawer>
+                        },
+                    }}
+                />
             </div>
-        </>
+
+            {/* Create New Member Modal */}
+            <Modal
+                title="Create New Member"
+                open={isCreateModalOpen}
+                onCancel={() => setIsCreateModalOpen(false)}
+                footer={null}
+            >
+                <Form
+                    form={createForm}
+                    layout="vertical"
+                    onFinish={handleCreateMember}
+                    initialValues={{ role: "member" }}
+                >
+                    <Form.Item
+                        name="name"
+                        label="Full Name"
+                        rules={[createSchemaFieldRule(createMemberSchema.pick({ name: true }))]}
+                    >
+                        <Input placeholder="John Doe" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="email"
+                        label="Email Address"
+                        rules={[createSchemaFieldRule(createMemberSchema.pick({ email: true }))]}
+                    >
+                        <Input placeholder="colleague@example.com" />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="role"
+                        label="Role"
+                        rules={[createSchemaFieldRule(createMemberSchema.pick({ role: true }))]}
+                    >
+                        <Select>
+                            <Select.Option value="member">Member</Select.Option>
+                            <Select.Option value="admin">Admin</Select.Option>
+                            <Select.Option value="owner">Owner</Select.Option>
+                        </Select>
+                    </Form.Item>
+
+                    <Form.Item className="mb-0 flex justify-end">
+                        <Space>
+                            <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                            <Button
+                                type="primary"
+                                htmlType="submit"
+                                loading={createMemberMutation.isPending}
+                            >
+                                Create Member
+                            </Button>
+                        </Space>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Member Details Drawer */}
+            <Drawer
+                title="Member Details"
+                placement="right"
+                onClose={() => setSelectedMember(null)}
+                open={!!selectedMember}
+                width={400}
+                push={false}
+            >
+                {selectedMember &&
+                    (() => {
+                        const activeMember =
+                            members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
+                        return (
+                            <div className="flex flex-col gap-6 pt-2 pb-6">
+                                <div className="text-center mb-6">
+                                    {activeOrganization ? (
+                                        <AvatarDropzone
+                                            organizationId={activeOrganization.id}
+                                            userId={activeMember.userId}
+                                            currentImageUrl={getAvatarUrl(
+                                                activeMember.avatarUrl || null,
+                                                "xl"
+                                            )}
+                                            size={96}
+                                            className="mx-auto"
+                                        />
+                                    ) : (
+                                        <Avatar
+                                            size={96}
+                                            icon={<UserOutlined />}
+                                            src={getAvatarUrl(activeMember.avatarUrl || null, "xl")}
+                                            className="mx-auto"
+                                        />
+                                    )}
+                                    <Title
+                                        level={4}
+                                        style={{ marginTop: "16px", marginBottom: "4px" }}
+                                    >
+                                        {activeMember.name}
+                                    </Title>
+                                    <Text type="secondary">{activeMember.email}</Text>
+                                    <div className="mt-2">
+                                        <Tag
+                                            color={
+                                                activeMember.emailVerified ? "success" : "warning"
+                                            }
+                                        >
+                                            {activeMember.emailVerified ? "Verified" : "Unverified"}
+                                        </Tag>
+                                    </div>
+                                </div>
+
+                                <Tabs
+                                    defaultActiveKey="1"
+                                    className="flex-1"
+                                    items={[
+                                        {
+                                            key: "1",
+                                            label: "Personal",
+                                            children: (
+                                                <UserProfileForm userId={activeMember.userId} />
+                                            ),
+                                        },
+                                        {
+                                            key: "2",
+                                            label: "Contact",
+                                            children: (
+                                                <UserContactList userId={activeMember.userId} />
+                                            ),
+                                        },
+                                        {
+                                            key: "3",
+                                            label: "Wallet",
+                                            children: activeOrganization ? (
+                                                <MemberAccountAdminPanel
+                                                    memberId={activeMember.userId}
+                                                    orgId={activeOrganization.id}
+                                                    memberName={activeMember.name || "Member"}
+                                                />
+                                            ) : null,
+                                        },
+                                        {
+                                            key: "4",
+                                            label: "Roles",
+                                            children: (
+                                                <MemberRolesForm
+                                                    member={activeMember}
+                                                    currentUserId={currentUserId as string}
+                                                    canUpdateMember={canUpdateMember}
+                                                    canDeleteMember={canDeleteMember}
+                                                    handleRoleChange={handleRoleChange}
+                                                    handleRemoveMember={handleRemoveMember}
+                                                    onRemoveSuccess={() => setSelectedMember(null)}
+                                                />
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            </div>
+                        );
+                    })()}
+            </Drawer>
+        </div>
     );
 };

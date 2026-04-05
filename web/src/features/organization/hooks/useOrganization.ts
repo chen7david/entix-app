@@ -1,12 +1,9 @@
-import { AppRoutes } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { OrgContext } from "@web/src/context/OrgContext";
 import { authClient } from "@web/src/lib/auth-client";
 import { useCallback, useContext } from "react";
-import { useNavigate } from "react-router";
 
 export const useOrganization = () => {
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
 
     // Try to consume context - might be undefined if outside OrgGuard
@@ -73,26 +70,8 @@ export const useOrganization = () => {
             },
         });
 
-        if (activeOrg?.slug) {
-            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`);
-            return;
-        }
-
-        if (!orgs || orgs.length === 0) {
-            navigate(AppRoutes.onboarding.noOrganization);
-            return;
-        }
-
-        if (orgs.length === 1 && orgs[0].slug) {
-            // 3. Set active organization
-            await setActive(orgs[0].id);
-            navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`);
-            return;
-        }
-
-        // More than 1 organization and no active one
-        navigate(AppRoutes.onboarding.selectOrganization);
-    }, [queryClient, navigate, setActive]);
+        return { orgs, activeOrg };
+    }, [queryClient]);
 
     return {
         organizations,

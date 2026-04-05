@@ -18,34 +18,9 @@ export class MemberRepository {
     constructor(private db: AppDb) {}
 
     /**
-     * Add a user as a member to an organization
-     * Uses direct DB insertion since server-side auth doesn't expose organization methods
-     */
-    async addMember(input: AddMemberInput): Promise<schema.AuthMember> {
-        const memberId = nanoid();
-        const now = new Date();
-
-        await this.db.insert(schema.authMembers).values({
-            id: memberId,
-            organizationId: input.organizationId,
-            userId: input.userId,
-            role: input.role,
-            createdAt: now,
-        });
-
-        return {
-            id: memberId,
-            userId: input.userId,
-            organizationId: input.organizationId,
-            role: input.role,
-            createdAt: now,
-        };
-    }
-
-    /**
      * Check if a user is already a member of an organization
      */
-    async isMember(userId: string, organizationId: string): Promise<boolean> {
+    async exists(userId: string, organizationId: string): Promise<boolean> {
         const member = await this.db.query.authMembers.findFirst({
             where: and(
                 eq(schema.authMembers.userId, userId),
@@ -59,10 +34,7 @@ export class MemberRepository {
      * Find membership details for a user in an organization
      * Returns null if user is not a member
      */
-    async findMembership(
-        userId: string,
-        organizationId: string
-    ): Promise<schema.AuthMember | null> {
+    async find(userId: string, organizationId: string): Promise<schema.AuthMember | null> {
         const member = await this.db.query.authMembers.findFirst({
             where: and(
                 eq(schema.authMembers.userId, userId),
@@ -70,40 +42,41 @@ export class MemberRepository {
             ),
         });
 
-        if (!member) {
-            return null;
-        }
-
-        return {
-            id: member.id,
-            userId: member.userId,
-            organizationId: member.organizationId,
-            role: member.role,
-            createdAt: member.createdAt,
-        };
+        return member ?? null;
     }
 
     /**
-     * Prepare a query to add a member for batching with conflict handling
+     * Internal query builder for adding a member.
+     * Used for batching operations (e.g. in RegistrationService).
      */
-    prepareAdd(id: string, organizationId: string, userId: string, role: string) {
-        const now = new Date();
-        return this.db
-            .insert(schema.authMembers)
-            .values({
-                id,
-                organizationId,
-                userId,
-                role,
-                createdAt: now,
-            })
-            .onConflictDoNothing();
+    prepareInsertQuery(id: string, organizationId: string, userId: string, role: string) {
+        return this.db.insert(schema.authMembers).values({
+            id,
+            organizationId,
+            userId,
+            role,
+            createdAt: new Date(),
+        });
+    }
+
+    /**
+     * Add a member to an organization and return the actual DB record.
+     */
+    async insert(
+        organizationId: string,
+        userId: string,
+        role: string
+    ): Promise<schema.AuthMember | null> {
+        const id = nanoid();
+        const results = await this.prepareInsertQuery(id, organizationId, userId, role).returning();
+
+        return results[0] ?? null;
     }
 
     /**
      * Find all memberships for a list of user IDs in an organization
      */
-    async findMembershipsByUserIds(organizationId: string, userIds: string[]) {
+    async findByUserIds(organizationId: string, userIds: string[]) {
         if (userIds.length === 0) return [];
         return await this.db.query.authMembers.findMany({
             where: and(

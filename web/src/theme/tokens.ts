@@ -4,12 +4,15 @@ import { theme } from "antd";
 const sharedTokens = {
     // Global tokens
     fontSize: 14,
-    colorPrimary: "#646cff", // Vite Purple
-    colorInfo: "#646cff",
+    colorPrimary: "#2563eb", // Authority Cobalt
+    colorInfo: "#2563eb",
     colorSuccess: "#10b981", // Emerald 500
     colorWarning: "#f59e0b", // Amber 500
     colorError: "#ef4444", // Red 500
-    borderRadius: 8,
+    borderRadius: 6, // Refined: 8 -> 6 for professional sharpness
+    controlHeight: 44, // Rule 11 Global Standard
+    controlHeightLG: 48,
+    controlHeightSM: 32,
     fontFamily:
         "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
     wireframe: false,
@@ -18,36 +21,42 @@ const sharedTokens = {
 const sharedComponents = {
     Input: {
         fontSize: 16, // iOS zoom fix
-        controlHeight: 40,
+        controlHeight: 44,
         borderRadius: 6,
-        activeShadow: "0 0 0 2px rgba(100, 108, 255, 0.1)",
-        hoverBorderColor: "#747bff",
-        activeBorderColor: "#646cff",
+        activeShadow: "none",
+        errorActiveShadow: "none",
+        warningActiveShadow: "none",
+        hoverBorderColor: "#3b82f6", // blue-500
+        activeBorderColor: "#2563eb", // blue-600
     },
     Select: {
         fontSize: 16, // iOS zoom fix
-        controlHeight: 40,
+        controlHeight: 44,
         borderRadius: 6,
-        colorPrimaryHover: "#747bff",
+        colorPrimaryHover: "#3b82f6", // Unified cobalt hover
     },
     DatePicker: {
         fontSize: 16,
-        controlHeight: 40,
+        controlHeight: 44,
         borderRadius: 6,
+        activeShadow: "none",
+        errorActiveShadow: "none",
+        warningActiveShadow: "none",
     },
     Button: {
         borderRadius: 6,
-        controlHeight: 40,
+        controlHeight: 44,
         fontWeight: 500,
         defaultShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
         primaryShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-        colorPrimary: "#646cff",
-        colorPrimaryHover: "#747bff",
-        colorPrimaryActive: "#535bf2",
+        colorPrimary: "#2563eb",
+        colorPrimaryHover: "#3b82f6",
+        colorPrimaryActive: "#1d4ed8",
     },
     Card: {
-        borderRadiusLG: 12,
-        paddingLG: 24,
+        borderRadiusLG: 8, // Refined: 12 -> 8 (matches borderRadius token)
+        paddingLG: 20, // Refined: 24 -> 20 for denser interiors
+        colorBorderSecondary: "transparent",
     },
     Menu: {
         activeBarBorderWidth: 0, // Remove the side bar line for a cleaner look
@@ -66,31 +75,31 @@ const sharedComponents = {
 
 const lightComponents = {
     Card: {
-        boxShadowTertiary: "0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)", // Subtle shadow
+        boxShadowTertiary: "none",
     },
     Layout: {
-        bodyBg: "#f9fafb",
+        bodyBg: "#f8fafc", // slate-50
         headerBg: "#ffffff",
         siderBg: "#ffffff",
     },
     Menu: {
-        itemSelectedBg: "#eff0ff", // Very light purple
-        itemSelectedColor: "#646cff",
+        itemSelectedBg: "#eff6ff", // blue-50 (slight cobalt tint)
+        itemSelectedColor: "#2563eb",
     },
 };
 
 const darkComponents = {
     Card: {
-        boxShadowTertiary: "0 1px 3px 0 rgba(0, 0, 0, 0.5)",
+        boxShadowTertiary: "none",
     },
     Layout: {
-        bodyBg: "#141414",
-        headerBg: "#1f1f1f",
-        siderBg: "#141414",
+        bodyBg: "#0f172a", // slate-950
+        headerBg: "#1e293b", // slate-800
+        siderBg: "#0f172a", // slate-950
     },
     Menu: {
-        itemSelectedBg: "rgba(100, 108, 255, 0.15)", // Subtle purple halo in dark mode
-        itemSelectedColor: "#8a94ff", // Lighter purple text in dark mode
+        itemSelectedBg: "rgba(37, 99, 235, 0.15)", // Clean cobalt halo
+        itemSelectedColor: "#60a5fa", // blue-400
     },
 };
 

@@ -1,17 +1,17 @@
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Typography } from "antd";
 import type React from "react";
 
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 export const MoviesPage: React.FC = () => {
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <Title level={2}>Movies</Title>
-                <p>Welcome to the Movies dashboard module.</p>
+        <div>
+            <div style={{ marginBottom: 32 }}>
+                <Title level={2} style={{ margin: 0 }}>
+                    Movies
+                </Title>
+                <Paragraph type="secondary">Browse and manage your movie collection.</Paragraph>
             </div>
-        </>
+        </div>
     );
 };

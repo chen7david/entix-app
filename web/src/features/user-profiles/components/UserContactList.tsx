@@ -184,7 +184,7 @@ export const UserContactList = ({
             </div>
         );
 
-    const phones = aggregate?.phoneNumbers || [];
+    const phones = aggregate?.phones || [];
     const addresses = aggregate?.addresses || [];
 
     return (

@@ -1,4 +1,3 @@
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import {
     AnalyticsMetricCards,
     AttendanceTrendChart,
@@ -60,117 +59,105 @@ export const OrganizationAnalyticsPage = () => {
     };
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-end mb-6 w-full gap-4 flex-wrap">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Analytics
-                        </Title>
-                        <Text type="secondary">Historical performance and engagement trends</Text>
-                    </div>
-                    <div className="flex items-center gap-4 flex-wrap">
-                        <Select
-                            value={
-                                queryStart === DateUtils.startOf("month") &&
-                                queryEnd === DateUtils.endOf("month")
-                                    ? "This Month"
-                                    : queryStart ===
-                                            DateUtils.offsetStartOf(-1, "month", "month") &&
-                                        queryEnd === DateUtils.offsetEndOf(-1, "month", "month")
-                                      ? "Last Month"
-                                      : queryStart === DateUtils.startOf("year") &&
-                                          queryEnd === DateUtils.endOf("year")
-                                        ? "This Year"
-                                        : queryStart ===
-                                                DateUtils.offsetStartOf(-1, "year", "year") &&
-                                            queryEnd === DateUtils.offsetEndOf(-1, "year", "year")
-                                          ? "Last Year"
-                                          : queryStart ===
-                                                  DateUtils.offsetStartOf(1, "year", "year") &&
-                                              queryEnd === DateUtils.offsetEndOf(1, "year", "year")
-                                            ? "Next Year"
-                                            : null
-                            }
-                            placeholder="Custom Range"
-                            onChange={(val) => {
-                                if (val === "This Month")
-                                    handleRangeChange([
-                                        DateUtils.toLibDate(DateUtils.startOf("month")),
-                                        DateUtils.toLibDate(DateUtils.endOf("month")),
-                                    ]);
-                                else if (val === "Last Month")
-                                    handleRangeChange([
-                                        DateUtils.toLibDate(
-                                            DateUtils.offsetStartOf(-1, "month", "month")
-                                        ),
-                                        DateUtils.toLibDate(
-                                            DateUtils.offsetEndOf(-1, "month", "month")
-                                        ),
-                                    ]);
-                                else if (val === "This Year")
-                                    handleRangeChange([
-                                        DateUtils.toLibDate(DateUtils.startOf("year")),
-                                        DateUtils.toLibDate(DateUtils.endOf("year")),
-                                    ]);
-                                else if (val === "Last Year")
-                                    handleRangeChange([
-                                        DateUtils.toLibDate(
-                                            DateUtils.offsetStartOf(-1, "year", "year")
-                                        ),
-                                        DateUtils.toLibDate(
-                                            DateUtils.offsetEndOf(-1, "year", "year")
-                                        ),
-                                    ]);
-                                else if (val === "Next Year")
-                                    handleRangeChange([
-                                        DateUtils.toLibDate(
-                                            DateUtils.offsetStartOf(1, "year", "year")
-                                        ),
-                                        DateUtils.toLibDate(
-                                            DateUtils.offsetEndOf(1, "year", "year")
-                                        ),
-                                    ]);
-                            }}
-                            style={{ minWidth: 130 }}
-                            options={[
-                                { label: "This Month", value: "This Month" },
-                                { label: "Last Month", value: "Last Month" },
-                                { label: "This Year", value: "This Year" },
-                                { label: "Last Year", value: "Last Year" },
-                                { label: "Next Year", value: "Next Year" },
-                            ]}
-                        />
-                        <RangePicker
-                            onChange={handleRangeChange}
-                            value={
-                                [
-                                    queryStart ? DateUtils.toLibDate(queryStart) : null,
-                                    queryEnd ? DateUtils.toLibDate(queryEnd) : null,
-                                ] as any
-                            }
-                            allowClear={false}
-                        />
-                    </div>
+        <div>
+            <div
+                className="flex justify-between items-end flex-wrap gap-4"
+                style={{ marginBottom: 32 }}
+            >
+                <div>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Analytics
+                    </Title>
+                    <Text type="secondary">Historical performance and engagement trends</Text>
                 </div>
-
-                <div className="mb-6">
-                    <AnalyticsMetricCards queryStart={queryStart} queryEnd={queryEnd} />
+                <div className="flex items-center gap-4 flex-wrap">
+                    <Select
+                        value={
+                            queryStart === DateUtils.startOf("month") &&
+                            queryEnd === DateUtils.endOf("month")
+                                ? "This Month"
+                                : queryStart === DateUtils.offsetStartOf(-1, "month", "month") &&
+                                    queryEnd === DateUtils.offsetEndOf(-1, "month", "month")
+                                  ? "Last Month"
+                                  : queryStart === DateUtils.startOf("year") &&
+                                      queryEnd === DateUtils.endOf("year")
+                                    ? "This Year"
+                                    : queryStart === DateUtils.offsetStartOf(-1, "year", "year") &&
+                                        queryEnd === DateUtils.offsetEndOf(-1, "year", "year")
+                                      ? "Last Year"
+                                      : queryStart === DateUtils.offsetStartOf(1, "year", "year") &&
+                                          queryEnd === DateUtils.offsetEndOf(1, "year", "year")
+                                        ? "Next Year"
+                                        : null
+                        }
+                        placeholder="Custom Range"
+                        onChange={(val) => {
+                            if (val === "This Month")
+                                handleRangeChange([
+                                    DateUtils.toLibDate(DateUtils.startOf("month")),
+                                    DateUtils.toLibDate(DateUtils.endOf("month")),
+                                ]);
+                            else if (val === "Last Month")
+                                handleRangeChange([
+                                    DateUtils.toLibDate(
+                                        DateUtils.offsetStartOf(-1, "month", "month")
+                                    ),
+                                    DateUtils.toLibDate(
+                                        DateUtils.offsetEndOf(-1, "month", "month")
+                                    ),
+                                ]);
+                            else if (val === "This Year")
+                                handleRangeChange([
+                                    DateUtils.toLibDate(DateUtils.startOf("year")),
+                                    DateUtils.toLibDate(DateUtils.endOf("year")),
+                                ]);
+                            else if (val === "Last Year")
+                                handleRangeChange([
+                                    DateUtils.toLibDate(
+                                        DateUtils.offsetStartOf(-1, "year", "year")
+                                    ),
+                                    DateUtils.toLibDate(DateUtils.offsetEndOf(-1, "year", "year")),
+                                ]);
+                            else if (val === "Next Year")
+                                handleRangeChange([
+                                    DateUtils.toLibDate(DateUtils.offsetStartOf(1, "year", "year")),
+                                    DateUtils.toLibDate(DateUtils.offsetEndOf(1, "year", "year")),
+                                ]);
+                        }}
+                        style={{ minWidth: 130 }}
+                        options={[
+                            { label: "This Month", value: "This Month" },
+                            { label: "Last Month", value: "Last Month" },
+                            { label: "This Year", value: "This Year" },
+                            { label: "Last Year", value: "Last Year" },
+                            { label: "Next Year", value: "Next Year" },
+                        ]}
+                    />
+                    <RangePicker
+                        onChange={handleRangeChange}
+                        value={
+                            [
+                                queryStart ? DateUtils.toLibDate(queryStart) : null,
+                                queryEnd ? DateUtils.toLibDate(queryEnd) : null,
+                            ] as any
+                        }
+                        allowClear={false}
+                    />
                 </div>
-
-                <Row gutter={[16, 16]}>
-                    <Col span={24} lg={12}>
-                        <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
-                    </Col>
-                    <Col span={24} lg={12}>
-                        <AttendanceTrendChart
-                            data={attendanceTrends}
-                            isLoading={isLoadingAttendance}
-                        />
-                    </Col>
-                </Row>
             </div>
-        </>
+
+            <div className="mb-6">
+                <AnalyticsMetricCards queryStart={queryStart} queryEnd={queryEnd} />
+            </div>
+
+            <Row gutter={[24, 24]}>
+                <Col span={24} lg={12}>
+                    <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
+                </Col>
+                <Col span={24} lg={12}>
+                    <AttendanceTrendChart data={attendanceTrends} isLoading={isLoadingAttendance} />
+                </Col>
+            </Row>
+        </div>
     );
 };

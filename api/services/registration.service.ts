@@ -1,9 +1,13 @@
-import { ConflictError } from "@api/errors/app.error";
+import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrganizationRepository } from "@api/repositories/organization.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
 import { hashPassword } from "better-auth/crypto";
+import type { PinoLogger } from "hono-pino";
 import { nanoid } from "nanoid";
+import { BaseService } from "./base.service";
+import type { UserFinancialService } from "./financial/user-financial.service";
+import type { UserService } from "./user.service";
 
 type SignupData = {
     email: string;
@@ -12,19 +16,25 @@ type SignupData = {
     organizationName?: string;
 };
 
-export class RegistrationService {
+export class RegistrationService extends BaseService {
     constructor(
-        private userRepo: UserRepository,
-        private orgRepo: OrganizationRepository,
-        private memberRepo: MemberRepository
-    ) {}
+        private readonly userRepo: UserRepository,
+        private readonly orgRepo: OrganizationRepository,
+        private readonly memberRepo: MemberRepository,
+        private readonly userFinancialService: UserFinancialService,
+        private readonly userService: UserService,
+        private readonly frontendUrl: string,
+        private readonly logger: PinoLogger
+    ) {
+        super();
+    }
 
     async signupWithOrg(input: SignupData) {
         if (!input.organizationName) {
             throw new ConflictError("Organization name is required for registration");
         }
 
-        const existingUser = await this.userRepo.findUserByEmail(input.email);
+        const existingUser = await this.userRepo.findByEmail(input.email);
         if (existingUser) {
             throw new ConflictError("User already exists");
         }
@@ -36,50 +46,64 @@ export class RegistrationService {
             throw new ConflictError("Organization name already taken");
         }
 
-        const uId = nanoid();
-        const oId = nanoid();
-        const acctId = nanoid();
-        const memberId = nanoid();
-        const emailVerified = false; // By default BetterAuth sets this false
+        try {
+            const uId = nanoid();
+            const oId = nanoid();
+            const acctId = nanoid();
+            const memberId = nanoid();
+            const emailVerified = false; // By default BetterAuth sets this false/unverified
 
-        const hashedPassword = input.password
-            ? await hashPassword(input.password)
-            : await hashPassword(nanoid(32));
+            const hashedPassword = input.password
+                ? await hashPassword(input.password)
+                : await hashPassword(nanoid(32));
 
-        const userQuery = this.userRepo.prepareCreateUser(
-            uId,
-            input.email,
-            input.name,
-            emailVerified
-        );
-        const accountQuery = this.userRepo.prepareCreateAccount(
-            acctId,
-            uId,
-            "credential",
-            hashedPassword
-        );
-        const orgQuery = this.orgRepo.prepareCreate(oId, organizationName, slug);
-        const memberQuery = this.memberRepo.prepareAdd(memberId, oId, uId, "owner");
+            const userQuery = this.userRepo.prepareInsert(
+                uId,
+                input.email,
+                input.name,
+                emailVerified
+            );
+            const accountQuery = this.userRepo.prepareAccountInsert(
+                acctId,
+                uId,
+                "credential",
+                hashedPassword
+            );
+            const orgQuery = this.orgRepo.prepareInsert(oId, organizationName, slug);
+            const memberQuery = this.memberRepo.prepareInsertQuery(memberId, oId, uId, "owner");
 
-        await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
+            // TODO: Wallet creation is currently outside the D1 batch, making it non-atomic.
+            // If createUserAccount fails after the org/member batch succeeds, the org exists
+            // without a wallet. Tracked in [issue/task reference]. For now, the try/catch
+            // ensures the error surfaces clearly rather than silently.
+            await this.userRepo.executeBatch([userQuery, accountQuery, orgQuery, memberQuery]);
 
-        return {
-            user: {
-                id: uId,
-                email: input.email,
-                name: input.name,
-                role: "owner",
-            },
-            organization: {
-                id: oId,
-                name: organizationName,
-                slug,
-            },
-        };
+            // Auto-provision personal accounts for the user (Ticket 5 refactor)
+            await this.userFinancialService.provisionUserAccounts(uId, oId);
+
+            return {
+                user: {
+                    id: uId,
+                    email: input.email,
+                    name: input.name,
+                    role: "owner",
+                },
+                organization: {
+                    id: oId,
+                    name: organizationName,
+                    slug,
+                },
+            };
+        } catch (err: unknown) {
+            if (err instanceof ConflictError) throw err;
+
+            this.logger.error({ err, input }, "Failed to setup organization during signup");
+            throw new InternalServerError("Failed to setup organization, please try again");
+        }
     }
 
     async createUserAndMember(email: string, name: string, organizationId: string, role: string) {
-        const existingUser = await this.userRepo.findUserByEmail(email);
+        const existingUser = await this.userRepo.findByEmail(email);
         if (existingUser) {
             throw new ConflictError("User with this email already exists");
         }
@@ -92,16 +116,28 @@ export class RegistrationService {
         const dummyPassword = nanoid(32);
         const hashedPassword = await hashPassword(dummyPassword);
 
-        const userQuery = this.userRepo.prepareCreateUser(uId, email, name, emailVerified);
-        const accountQuery = this.userRepo.prepareCreateAccount(
+        const userQuery = this.userRepo.prepareInsert(uId, email, name, emailVerified);
+        const accountQuery = this.userRepo.prepareAccountInsert(
             acctId,
             uId,
             "credential",
             hashedPassword
         );
-        const memberQuery = this.memberRepo.prepareAdd(memberId, organizationId, uId, role);
+        const memberQuery = this.memberRepo.prepareInsertQuery(memberId, organizationId, uId, role);
 
         await this.userRepo.executeBatch([userQuery, accountQuery, memberQuery]);
+
+        // Auto-provision personal accounts for the user (Ticket 5 refactor)
+        await this.userFinancialService.provisionUserAccounts(uId, organizationId);
+
+        // 🚀 Orchestrate Email (Fire-and-forget per Rule 14)
+        const resetUrl = `${this.frontendUrl}/auth/reset-password`;
+        this.userService.sendPasswordResetEmail(email, resetUrl).catch((err: unknown) => {
+            this.logger.error(
+                { err, email, memberId },
+                "Password reset email failed after member creation"
+            );
+        });
 
         return {
             member: {

@@ -26,8 +26,8 @@ describe("Super Admin Bypass Tests", () => {
             const res = await superAdminClient.orgs.members.create(ownerOrgId, payload);
 
             expect(res.status).toBe(201);
-            const body = await parseJson<CreateMemberResponseDTO>(res);
-            expect(body.user.email).toBe(payload.email);
+            const body = (await res.json()) as CreateMemberResponseDTO;
+            expect(body.data.user.email).toBe(payload.email);
         });
     });
 

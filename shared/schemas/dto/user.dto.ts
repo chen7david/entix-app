@@ -14,8 +14,12 @@ export const userSchema = baseSchema.extend({
 
 export type UserDTO = z.infer<typeof userSchema>;
 
+import { createPaginatedResponseSchema } from "../pagination.schema";
+
+export const paginatedUserResponseSchema = createPaginatedResponseSchema(userSchema);
+
 export const createUserSchema = z.object({
-    email: z.email().openapi({ example: "user@example.com" }),
+    email: z.string().email().openapi({ example: "user@example.com" }),
     name: z.string().min(1).openapi({ example: "John Doe" }),
 });
 

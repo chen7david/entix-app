@@ -1,39 +1,14 @@
-import {
-    CloudUploadOutlined,
-    DatabaseOutlined,
-    DeleteOutlined,
-    FileOutlined,
-    PictureOutlined,
-    PlaySquareOutlined,
-    SearchOutlined,
-} from "@ant-design/icons";
-import type { UploadDto } from "@shared";
-import { getAssetUrl } from "@shared";
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
+import { CloudUploadOutlined, DatabaseOutlined, FileOutlined } from "@ant-design/icons";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
-import {
-    Button,
-    Card,
-    Col,
-    Input,
-    Modal,
-    Row,
-    Skeleton,
-    Statistic,
-    Table,
-    Tag,
-    Tooltip,
-    Typography,
-} from "antd";
-import type { ColumnsType } from "antd/es/table";
+import { Button, Modal, Skeleton } from "antd";
 import { useState } from "react";
-
-const { Title, Text } = Typography;
+import { UploadsTable } from "../../features/uploads/components/UploadsTable";
 
 export const OrganizationUploadsPage = () => {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-    const [searchText, setSearchText] = useState("");
     const { activeOrganization } = useOrganization();
 
     const { data: uploads, isLoading: loadingUploads } = useOrganizationUploads(
@@ -41,20 +16,14 @@ export const OrganizationUploadsPage = () => {
     );
     const deleteUploadMutation = useDeleteUpload(activeOrganization?.id);
 
-    const handleDelete = (uploadId: string) => {
+    const handleDelete = (id: string) => {
         Modal.confirm({
             title: "Delete File",
-            content:
-                "Are you sure you want to permanently delete this file? This action cannot be undone.",
-            okText: "Yes, Delete",
+            content: "Are you sure you want to delete this file? This action cannot be undone.",
+            okText: "Delete",
             okType: "danger",
-            cancelText: "Cancel",
-            onOk: async () => {
-                try {
-                    await deleteUploadMutation.mutateAsync(uploadId);
-                } catch {
-                    // error matched in hook
-                }
+            onOk: () => {
+                deleteUploadMutation.mutate(id);
             },
         });
     };
@@ -67,182 +36,79 @@ export const OrganizationUploadsPage = () => {
         return `${parseFloat((bytes / k ** i).toFixed(2))} ${sizes[i]}`;
     };
 
-    const getFileIcon = (contentType: string) => {
-        if (contentType.startsWith("image/")) return <PictureOutlined className="text-blue-500" />;
-        if (contentType.startsWith("video/"))
-            return <PlaySquareOutlined className="text-purple-500" />;
-        return <FileOutlined className="text-gray-500" />;
-    };
+    if (loadingUploads) return <Skeleton active />;
+    if (!activeOrganization) return <div>Organization not found</div>;
 
-    const columns: ColumnsType<UploadDto> = [
-        {
-            title: "File Name",
-            dataIndex: "originalName",
-            key: "originalName",
-            render: (name: string, record: UploadDto) => (
-                <div className="flex items-center gap-3 min-w-0 max-w-[400px]">
-                    {getFileIcon(record.contentType)}
-                    <Tooltip title={name} placement="topLeft" mouseEnterDelay={0.5}>
-                        <a
-                            href={getAssetUrl(record.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 font-medium truncate block"
-                        >
-                            {name}
-                        </a>
-                    </Tooltip>
-                </div>
-            ),
-        },
-        {
-            title: "Size",
-            dataIndex: "fileSize",
-            key: "fileSize",
-            render: (size: number) => formatBytes(size),
-        },
-        {
-            title: "Type",
-            dataIndex: "contentType",
-            key: "contentType",
-            render: (type: string) => <Tag>{type.split("/")[1] || type}</Tag>,
-        },
-        {
-            title: "Status",
-            dataIndex: "status",
-            key: "status",
-            render: (status: string) => (
-                <Tag
-                    color={
-                        status === "completed"
-                            ? "success"
-                            : status === "failed"
-                              ? "error"
-                              : "processing"
-                    }
-                >
-                    {status.toUpperCase()}
-                </Tag>
-            ),
-        },
-        {
-            title: "Uploaded At",
-            dataIndex: "createdAt",
-            key: "createdAt",
-            render: (date: number) => new Date(date).toLocaleString(),
-        },
-        {
-            title: "Actions",
-            key: "actions",
-            render: (_: unknown, record: UploadDto) => (
-                <Tooltip title="Delete File">
-                    <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDelete(record.id)}
-                        loading={
-                            deleteUploadMutation.isPending &&
-                            deleteUploadMutation.variables === record.id
-                        }
-                    />
-                </Tooltip>
-            ),
-        },
-    ];
-
-    if (loadingUploads) return <Skeleton active className="p-8" />;
-    if (!activeOrganization) return <div className="p-8">Organization not found</div>;
-
-    const totalStorage = uploads?.reduce((acc, curr) => acc + curr.fileSize, 0) || 0;
+    const totalStorage = (uploads || []).reduce(
+        (acc: number, curr) => acc + (curr.fileSize || 0),
+        0
+    );
     const totalFiles = uploads?.length || 0;
 
     return (
-        <>
-            <Toolbar />
-            <div className="p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <div>
-                        <Title level={2} style={{ marginBottom: 4 }}>
-                            Files and Uploads
-                        </Title>
-                        <Text type="secondary">
-                            Manage your organization's storage securely via Direct-to-R2
-                            architecture.
-                        </Text>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <Button
-                            type="primary"
-                            icon={<CloudUploadOutlined />}
-                            onClick={() => setIsUploadModalOpen(true)}
-                        >
-                            Upload Files
-                        </Button>
-                    </div>
-                </div>
+        <div className="flex flex-col h-full">
+            <PageHeader
+                title="Files and Uploads"
+                subtitle="Manage your organization's storage securely via Direct-to-R2 architecture."
+                actions={
+                    <Button
+                        type="primary"
+                        icon={<CloudUploadOutlined />}
+                        onClick={() => setIsUploadModalOpen(true)}
+                    >
+                        Upload Files
+                    </Button>
+                }
+            />
 
-                {/* Stats Cards */}
-                <Row gutter={16} className="mb-6">
-                    <Col xs={24} sm={12}>
-                        <Card>
-                            <Statistic
-                                title="Total Files"
-                                value={totalFiles}
-                                prefix={<FileOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                    <Col xs={24} sm={12}>
-                        <Card>
-                            <Statistic
-                                title="Storage Used"
-                                value={formatBytes(totalStorage)}
-                                prefix={<DatabaseOutlined />}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
+            {/* Stats Cards */}
+            <SummaryCardsRow
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Files",
+                        value: totalFiles,
+                        icon: <FileOutlined />,
+                        color: "#2563eb",
+                    },
+                    {
+                        key: "storage",
+                        label: "Storage Used",
+                        value: formatBytes(totalStorage),
+                        icon: <DatabaseOutlined />,
+                        color: "#8b5cf6",
+                    },
+                ]}
+            />
 
-                {/* Search */}
-                <div className="mb-4">
-                    <Input
-                        placeholder="Search files..."
-                        prefix={<SearchOutlined />}
-                        className="max-w-xs"
-                        onChange={(e) => setSearchText(e.target.value)}
-                        allowClear
+            <div className="flex-1 min-h-0">
+                <UploadsTable
+                    uploads={uploads || []}
+                    onDelete={handleDelete}
+                    isDeleting={(id) =>
+                        deleteUploadMutation.isPending && deleteUploadMutation.variables === id
+                    }
+                />
+            </div>
+
+            <Modal
+                title="Upload Files"
+                open={isUploadModalOpen}
+                onCancel={() => setIsUploadModalOpen(false)}
+                footer={null}
+                width={800}
+                destroyOnClose
+            >
+                <div className="mt-4">
+                    <Uploader
+                        organizationId={activeOrganization.id}
+                        onUploadSuccess={() => {
+                            // We can optionally close the modal or let the user upload more
+                            // setIsUploadModalOpen(false);
+                        }}
                     />
                 </div>
-
-                <Table
-                    dataSource={uploads?.filter((u) =>
-                        u.originalName.toLowerCase().includes(searchText.toLowerCase())
-                    )}
-                    columns={columns}
-                    rowKey="id"
-                    pagination={{ pageSize: 10 }}
-                />
-
-                <Modal
-                    title="Upload Files"
-                    open={isUploadModalOpen}
-                    onCancel={() => setIsUploadModalOpen(false)}
-                    footer={null}
-                    width={800}
-                    destroyOnHidden
-                >
-                    <div className="mt-4">
-                        <Uploader
-                            organizationId={activeOrganization.id}
-                            onUploadSuccess={() => {
-                                // We can optionally close the modal or let the user upload more
-                                // setIsUploadModalOpen(false);
-                            }}
-                        />
-                    </div>
-                </Modal>
-            </div>
-        </>
+            </Modal>
+        </div>
     );
 };

@@ -2,6 +2,7 @@ import {
     ApartmentOutlined,
     ArrowLeftOutlined,
     DashboardOutlined,
+    DollarOutlined,
     LogoutOutlined,
     MailOutlined,
     MoreOutlined,
@@ -28,13 +29,19 @@ export const AdminSidebarContent: React.FC = () => {
     const { token } = useToken();
 
     // 1. User Profile Dropdown
-    const handleMenuClick: MenuProps["onClick"] = (e) => {
+    const handleMenuClick: MenuProps["onClick"] = async (e) => {
         if (e.key === "logout") {
             signOut(undefined, {
                 onSuccess: () => navigate(AppRoutes.auth.signIn),
             });
         } else if (e.key === "exit") {
-            checkOrganizationStatus();
+            const { activeOrg } = await checkOrganizationStatus();
+
+            if (activeOrg?.slug) {
+                navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`);
+            } else {
+                navigate(AppRoutes.onboarding.selectOrganization);
+            }
         }
     };
 
@@ -76,6 +83,11 @@ export const AdminSidebarContent: React.FC = () => {
             label: "Email Insights",
             key: AppRoutes.admin.emails,
             icon: <MailOutlined />,
+        },
+        {
+            label: "Financial",
+            key: "/admin/financial",
+            icon: <DollarOutlined />,
         },
     ];
 

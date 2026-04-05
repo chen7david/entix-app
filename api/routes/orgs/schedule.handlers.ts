@@ -1,4 +1,3 @@
-import { getSessionScheduleRepository } from "@api/factories/repository.factory";
 import { getSessionScheduleService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
@@ -7,10 +6,12 @@ import type { ScheduleRoutes } from "./schedule.routes";
 export class ScheduleHandlers {
     static listSessions: AppHandler<typeof ScheduleRoutes.listSessions> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
-        const { startDate, endDate, limit, cursor, direction, search } = ctx.req.valid("query");
+        const queryParams = ctx.req.valid("query");
+        const { limit, direction, search, cursor, ...filters } = queryParams;
+        const { startDate, endDate } = filters as any;
 
-        const repo = getSessionScheduleRepository(ctx);
-        const paginatedResult = await repo.getSessionsForOrg(
+        const service = getSessionScheduleService(ctx);
+        const paginatedResult = await service.findSessionsByOrganization(
             organizationId,
             startDate,
             endDate,

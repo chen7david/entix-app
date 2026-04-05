@@ -26,11 +26,24 @@ export interface EmailListResponse {
     has_more: boolean;
 }
 
-export const useAdminEmails = () => {
-    return useQuery<EmailListResponse>({
-        queryKey: ["admin", "emails"],
+export const useAdminEmails = (options?: {
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
+}) => {
+    return useQuery<{
+        items: EmailRow[];
+        nextCursor: string | null;
+        prevCursor: string | null;
+    }>({
+        queryKey: ["admin", "emails", options?.cursor, options?.limit, options?.direction],
         queryFn: async () => {
-            const res = await fetch("/api/v1/admin/emails?limit=100", { credentials: "include" });
+            const url = new URL("/api/v1/admin/emails", window.location.origin);
+            if (options?.cursor) url.searchParams.set("cursor", options.cursor);
+            if (options?.limit) url.searchParams.set("limit", options.limit.toString());
+            if (options?.direction) url.searchParams.set("direction", options.direction);
+
+            const res = await fetch(url.toString(), { credentials: "include" });
             if (!res.ok) throw new Error(`Failed to fetch emails: ${res.status}`);
             return res.json();
         },

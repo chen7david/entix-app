@@ -2,10 +2,11 @@ import { AppRoutes } from "@shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CenteredResult, CenteredSpin } from "@web/src/components/common/CenteredView";
 import { OrgProvider } from "@web/src/context/OrgContext";
+import { useAuth } from "@web/src/features/auth";
 import { authClient } from "@web/src/lib/auth-client";
 import { Button } from "antd";
 import type React from "react";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
 
 /**
@@ -21,7 +22,8 @@ export const OrgGuard: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const syncingRef = useRef(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const auth = useAuth();
 
     // 1. Fetch User's Organizations (to check access)
     const { data: organizations = [], isLoading: loadingOrgs } = useQuery({
@@ -47,32 +49,56 @@ export const OrgGuard: React.FC = () => {
         enabled: !!activeOrganization,
     });
 
-    // 4. Sync server session when URL slug differs from server's active org
-    useEffect(() => {
-        if (!activeOrganization || syncingRef.current) return;
+    // 4. Sync server session when URL slug differs from server's active org.
+    // This prevents "Authentication race conditions" where nested ProtectedRoutes
+    // evaluate against a stale session (no orgRole) before the server has been
+    // notified of the tenant change from the URL.
 
-        // If server has no active org, or a different one, sync it
-        const serverSlug = serverActiveOrg?.slug;
-        if (serverSlug !== activeOrganization.slug) {
-            syncingRef.current = true;
+    // Determine mismatch synchronously to block Outlet on the first render
+    const serverActiveOrgExists = serverActiveOrg !== undefined;
+    const isMismatch =
+        activeOrganization &&
+        serverActiveOrgExists &&
+        (serverActiveOrg === null || serverActiveOrg.slug !== activeOrganization.slug);
+    const isDeterminingMismatch = !!activeOrganization && !serverActiveOrgExists;
+
+    useEffect(() => {
+        if (!activeOrganization || isSyncing) return;
+
+        // If server has no active org (null), or a different one, sync it
+        if (isMismatch) {
+            setIsSyncing(true);
             authClient.organization
                 .setActive({
                     organizationId: activeOrganization.id,
                 })
-                .then(() => {
+                .then(async () => {
                     // Update the server active org cache to reflect the sync
                     queryClient.setQueryData(["serverActiveOrganization"], activeOrganization);
-                    queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+
+                    // CRITICAL: Explicitly refetch the session and member data.
+                    // This is the officially supported workaround for Better Auth hooks
+                    // not automatically updating when organization context changes.
+                    await auth.refreshAuth();
+
+                    // Optional: Keep broad invalidation as a fallback for any custom queries
+                    await Promise.all([
+                        queryClient.invalidateQueries({ queryKey: ["better-auth"] }),
+                        queryClient.invalidateQueries({ queryKey: ["session"] }),
+                    ]);
+                })
+                .catch((err) => {
+                    console.error("Critical: Failed to sync organization session:", err);
                 })
                 .finally(() => {
-                    syncingRef.current = false;
+                    setIsSyncing(false);
                 });
         }
-    }, [activeOrganization, serverActiveOrg, queryClient]);
+    }, [activeOrganization, isMismatch, queryClient, isSyncing, auth.refreshAuth]);
 
-    // Loading State
-    if (loadingOrgs) {
-        return <CenteredSpin tip="Loading organization..." />;
+    // Loading State: Block children while fetching list, determining mismatch, or syncing session
+    if (loadingOrgs || isSyncing || isDeterminingMismatch || isMismatch) {
+        return <CenteredSpin />;
     }
 
     // Validation Guard

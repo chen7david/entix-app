@@ -7,6 +7,7 @@ import { ErrorFallback } from "./components/error/ErrorFallback";
 import { GuestRoute } from "./components/guards/GuestRoute";
 import { OrgGuard } from "./components/guards/OrgGuard";
 import { ProtectedRoute } from "./components/guards/ProtectedRoute";
+import { FinancialManagementPage } from "./features/admin/FinancialManagementPage";
 import { AuthProvider, useAuth } from "./features/auth/context/AuthContext";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
@@ -21,6 +22,8 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { SignInPage } from "./pages/auth/SignInPage";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
+import { FinanceAccountsPage } from "./pages/dashboard/finance/FinanceAccountsPage";
+import { FinanceTransactionsPage } from "./pages/dashboard/finance/FinanceTransactionsPage";
 import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
 import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
 import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
@@ -54,25 +57,66 @@ function logError(error: unknown, info: { componentStack?: string | null }) {
 }
 
 import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import { useOrganization } from "./features/organization/hooks/useOrganization";
 
 function HomeRedirect() {
     const { isAuthenticated, isLoading: loadingAuth } = useAuth();
-    const { checkOrganizationStatus, loading: loadingOrg } = useOrganization();
+    const { checkOrganizationStatus, setActive } = useOrganization();
+    const navigate = useNavigate();
 
     useEffect(() => {
-        if (!loadingAuth && isAuthenticated) {
-            checkOrganizationStatus();
-        }
-    }, [isAuthenticated, loadingAuth, checkOrganizationStatus]);
+        let mounted = true;
 
-    if (loadingAuth || loadingOrg) {
-        return <CenteredSpin />;
-    }
+        const handleRedirect = async () => {
+            if (loadingAuth) return;
 
-    if (!isAuthenticated) {
-        return <Navigate to={AppRoutes.auth.signIn} replace />;
-    }
+            if (!isAuthenticated) {
+                if (mounted) {
+                    navigate(AppRoutes.auth.signIn, { replace: true });
+                }
+                return;
+            }
+
+            const result = await checkOrganizationStatus();
+            if (!mounted || !result) return;
+            const { orgs, activeOrg } = result;
+
+            // 1. If there's already an active org, go there
+            if (activeOrg?.slug) {
+                navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, {
+                    replace: true,
+                });
+                return;
+            }
+
+            // 2. If no orgs, go to onboarding
+            if (!orgs || orgs.length === 0) {
+                navigate(AppRoutes.onboarding.noOrganization, { replace: true });
+                return;
+            }
+
+            // 3. If exactly one org, auto-select it and go to its dashboard
+            if (orgs.length === 1 && orgs[0].slug) {
+                await setActive(orgs[0].id);
+                if (mounted) {
+                    navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, {
+                        replace: true,
+                    });
+                }
+                return;
+            }
+
+            // 4. Otherwise, let the user select
+            navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
+        };
+
+        handleRedirect();
+
+        return () => {
+            mounted = false;
+        };
+    }, [isAuthenticated, loadingAuth, checkOrganizationStatus, navigate, setActive]);
 
     // Keep showing spinner while checkOrganizationStatus handles navigation
     return <CenteredSpin />;
@@ -199,6 +243,20 @@ export default function App() {
                                                 path="uploads"
                                                 element={<OrganizationUploadsPage />}
                                             />
+                                            <Route path="finance">
+                                                <Route
+                                                    index
+                                                    element={<Navigate to="accounts" replace />}
+                                                />
+                                                <Route
+                                                    path="accounts"
+                                                    element={<FinanceAccountsPage />}
+                                                />
+                                                <Route
+                                                    path="transactions"
+                                                    element={<FinanceTransactionsPage />}
+                                                />
+                                            </Route>
                                         </Route>
                                     </Route>
                                 </Route>
@@ -214,6 +272,10 @@ export default function App() {
                                         <Route
                                             path="admin/emails"
                                             element={<EmailInsightsPage />}
+                                        />
+                                        <Route
+                                            path="admin/financial"
+                                            element={<FinancialManagementPage />}
                                         />
                                     </Route>
                                 </Route>

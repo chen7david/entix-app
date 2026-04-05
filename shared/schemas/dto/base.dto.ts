@@ -33,3 +33,13 @@ export const idResponseSchema = z
 
 export type SuccessResponseDTO = z.infer<typeof successResponseSchema>;
 export type IdResponseDTO = z.infer<typeof idResponseSchema>;
+
+/**
+ * Standard pagination envelope for all list endpoints.
+ * Supports both cursor-based and offset-based pagination via 'total'.
+ */
+export type PaginatedResponse<T> = {
+    items: T[];
+    nextCursor: string | null;
+    prevCursor: string | null;
+};

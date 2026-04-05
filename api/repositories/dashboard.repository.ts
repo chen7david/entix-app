@@ -5,7 +5,7 @@ import { and, eq, like, lt, sql } from "drizzle-orm";
 export class DashboardRepository {
     constructor(private db: AppDb) {}
 
-    async getDashboardMetrics(organizationId: string) {
+    async findDashboardMetrics(organizationId: string) {
         const now = new Date();
         const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
@@ -75,7 +75,7 @@ export class DashboardRepository {
             );
         const ownerCount = Number(ownerCountResult[0]?.count || 0);
 
-        const allProfiles = await this.db
+        const rawBirthdays = await this.db
             .select({
                 userId: schema.userProfiles.userId,
                 name: schema.authUsers.name,
@@ -91,25 +91,6 @@ export class DashboardRepository {
                 )
             );
 
-        const upcomingBirthdays = allProfiles
-            .map((p) => {
-                if (!p.birthDate) return null;
-                const bday = new Date(p.birthDate);
-                const nextBday = new Date(now.getFullYear(), bday.getMonth(), bday.getDate());
-                if (nextBday < now) nextBday.setFullYear(now.getFullYear() + 1);
-                const daysUntil = Math.ceil(
-                    (nextBday.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-                );
-                return {
-                    userId: p.userId,
-                    name: p.name ?? "Unknown User",
-                    birthDate: p.birthDate.toISOString(),
-                    daysUntil,
-                };
-            })
-            .filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 7)
-            .sort((a, b) => a.daysUntil - b.daysUntil);
-
         return {
             totalStorage,
             activeSessions,
@@ -117,7 +98,7 @@ export class DashboardRepository {
             totalMembers,
             adminCount,
             ownerCount,
-            upcomingBirthdays,
+            rawBirthdays,
         };
     }
 }

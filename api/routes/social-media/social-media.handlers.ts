@@ -6,7 +6,7 @@ import type { SocialMediaRoutes } from "./social-media.routes";
 export class SocialMediaHandler {
     static findAll: AppHandler<typeof SocialMediaRoutes.findAll> = async (ctx) => {
         const service = getSocialMediaService(ctx);
-        const types = await service.getGlobalSocialMediaTypes();
+        const types = await service.findSocialMediaTypes();
         return ctx.json(types, HttpStatusCodes.OK);
     };
 }

@@ -7,11 +7,12 @@ import {
 } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
 import type { UploadProps } from "antd";
-import { App, Upload } from "antd";
+import { App, Typography, Upload } from "antd";
 import { useSetAtom } from "jotai";
 import type React from "react";
 
 const { Dragger } = Upload;
+const { Paragraph } = Typography;
 
 export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ type }) => {
     const { message } = App.useApp();
@@ -180,17 +181,19 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
     return (
         <div className="w-full mb-8">
             <Dragger {...props}>
-                <p className="ant-upload-drag-icon">
+                <Paragraph className="ant-upload-drag-icon">
                     <InboxOutlined />
-                </p>
-                <p className="ant-upload-text">Click or drag file to this area to upload</p>
-                <p className="ant-upload-hint">
+                </Paragraph>
+                <Paragraph className="ant-upload-text">
+                    Click or drag file to this area to upload
+                </Paragraph>
+                <Paragraph className="ant-upload-hint">
                     {type === "all"
                         ? "Allowed types: .mp4, .mp3, .m4a. Your media assets will be processed securely."
                         : type === "video"
                           ? "Allowed type: video/mp4. Your cinematic assets will be processed for web streaming."
                           : "Allowed types: .mp3, .m4a. Your sonic assets will be processed for web streaming."}
-                </p>
+                </Paragraph>
             </Dragger>
         </div>
     );

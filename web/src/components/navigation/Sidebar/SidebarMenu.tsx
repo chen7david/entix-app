@@ -5,10 +5,12 @@ import {
     CalendarOutlined,
     CloudUploadOutlined,
     DashboardOutlined,
+    DollarOutlined,
     OrderedListOutlined,
     PlaySquareOutlined,
     ShoppingOutlined,
     TeamOutlined,
+    TransactionOutlined,
     TruckOutlined,
     UserAddOutlined,
     WalletOutlined,
@@ -83,10 +85,21 @@ export const SidebarMenu: React.FC = () => {
         ...(activeOrganization && isAdminOrOwner
             ? [
                   {
-                      label: "Organizations",
-                      key: AppRoutes.org.manage.index,
-                      icon: <BankOutlined />,
-                      disabled: !slug,
+                      label: "Finance",
+                      key: "finance_group",
+                      icon: <DollarOutlined />,
+                      children: [
+                          {
+                              label: "Accounts",
+                              key: "/finance/accounts",
+                              icon: <BankOutlined />,
+                          },
+                          {
+                              label: "Transactions",
+                              key: "/finance/transactions",
+                              icon: <TransactionOutlined />,
+                          },
+                      ],
                   },
                   {
                       label: "Media",
@@ -126,6 +139,12 @@ export const SidebarMenu: React.FC = () => {
                       icon: <UserAddOutlined />,
                   },
                   {
+                      label: "Organizations",
+                      key: AppRoutes.org.manage.index,
+                      icon: <BankOutlined />,
+                      disabled: !slug,
+                  },
+                  {
                       label: "Files & Uploads",
                       key: "/uploads",
                       icon: <CloudUploadOutlined />,
@@ -136,7 +155,7 @@ export const SidebarMenu: React.FC = () => {
 
     const handleMenuClick = (e: { key: string }) => {
         // Disregard non-routable group keys
-        if (e.key === "media_collection") return;
+        if (e.key === "media_collection" || e.key === "finance_group") return;
 
         navigateOrg(e.key);
         close();

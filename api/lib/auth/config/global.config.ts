@@ -11,7 +11,7 @@ export const betterAuthGlobalOptions = (
     basePath: "/api/v1/auth",
     plugins: getBetterAuthPluginsConfig(ctx, mailer),
     logger: {
-        disabled: true, // we use pino for logging and disable the messy internal logger
+        disabled: false, // temporarily enabled to debug 500 error
     },
     advanced: {
         useSecureCookies: ctx ? ctx.var.frontendUrl.startsWith("https://") : true,
@@ -47,6 +47,10 @@ export const betterAuthGlobalOptions = (
     },
     session: {
         modelName: "authSessions",
+        cookieCache: {
+            enabled: true,
+            maxAge: 60 * 5, // Cache valid for 5 min
+        },
     },
     account: {
         modelName: "authAccounts",

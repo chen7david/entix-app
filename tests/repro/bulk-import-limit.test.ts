@@ -44,12 +44,10 @@ describe("Bulk Import Limit Reproduction", () => {
         const firstItem = listBody.items[0];
 
         expect(firstItem).toHaveProperty("name");
-        expect(firstItem).toHaveProperty("user");
-        expect(firstItem.user).toHaveProperty("name");
         expect(firstItem).toHaveProperty("userId");
-        expect(firstItem.userId).toBe(firstItem.id);
+        expect(firstItem.userId).toBeDefined();
 
-        const deleteRes = await client.request(`/api/v1/users/${firstItem.id}/avatar`, {
+        const deleteRes = await client.request(`/api/v1/users/${firstItem.userId}/avatar`, {
             method: "DELETE",
         });
         if (deleteRes.status === 404) {

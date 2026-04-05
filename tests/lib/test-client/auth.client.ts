@@ -17,6 +17,13 @@ export function createAuthClient(request: Requester) {
                 method: "POST",
                 body: { email, password },
             }),
+
+        /** POST /api/v1/auth/admin/resend-verification */
+        resendVerification: (email: string) =>
+            request("/api/v1/auth/admin/resend-verification", {
+                method: "POST",
+                body: { email },
+            }),
     };
 }
 

@@ -7,7 +7,6 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 // useOrganization import removed
-import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { MediaPlayer, useMedia, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
@@ -166,116 +165,112 @@ export const PlaylistPlayerPage: React.FC = () => {
     );
 
     return (
-        <>
-            <Toolbar />
+        <div>
+            <div className="flex flex-col" style={{ marginBottom: 32 }}>
+                <Button
+                    type="text"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}
+                    className="self-start !px-0 !mb-2 text-gray-500"
+                >
+                    Back to Playlists
+                </Button>
+                <Title level={2} style={{ margin: 0 }}>
+                    {activePlaylist?.title || "Playlist Player"}
+                </Title>
+                <Text type="secondary">
+                    {activePlaylist?.description || "Seamless edge delivery playback sequence."}
+                </Text>
+            </div>
 
-            <div className="p-6">
-                <div className="flex flex-col mb-6">
-                    <Button
-                        type="text"
-                        icon={<ArrowLeftOutlined />}
-                        onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}
-                        className="self-start !px-0 !mb-2 text-gray-500"
-                    >
-                        Back to Playlists
-                    </Button>
-                    <Title level={2} className="!mb-1">
-                        {activePlaylist?.title || "Playlist Player"}
-                    </Title>
-                    <Text type="secondary">
-                        {activePlaylist?.description || "Seamless edge delivery playback sequence."}
-                    </Text>
+            <div className="flex flex-col lg:flex-row gap-8">
+                <div className="w-full lg:w-[70%] flex flex-col">
+                    <div className="aspect-video w-full bg-black flex items-center justify-center overflow-hidden z-10">
+                        {isLoading ? (
+                            <Skeleton.Image className="w-full h-full opacity-20" active />
+                        ) : activeMedia ? (
+                            <MediaPlayer
+                                key={activeMedia.id}
+                                title={activeMedia.title}
+                                description={activeMedia.description || undefined}
+                                mediaUrl={activeMedia.mediaUrl}
+                                coverArtUrl={activeMedia.coverArtUrl || undefined}
+                                mimeType={activeMedia.mimeType}
+                                onEnd={handleMediaEnd}
+                                autoPlay={isAutoPlay}
+                                onNext={hasNext ? handleNext : undefined}
+                                onPrevious={hasPrev ? handlePrev : undefined}
+                            />
+                        ) : (
+                            <Text className="text-white opacity-50">
+                                No media found in sequence
+                            </Text>
+                        )}
+                    </div>
+                    <div className="mt-5 px-1">
+                        <Title level={4} className="!mb-1">
+                            {activeMedia?.title || "Unknown Asset"}
+                        </Title>
+                        <Text type="secondary">
+                            {activeMedia?.description || "No description provided."}
+                        </Text>
+                    </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row gap-8">
-                    <div className="w-full lg:w-[70%] flex flex-col">
-                        <div className="aspect-video w-full bg-black flex items-center justify-center overflow-hidden z-10">
-                            {isLoading ? (
-                                <Skeleton.Image className="w-full h-full opacity-20" active />
-                            ) : activeMedia ? (
-                                <MediaPlayer
-                                    key={activeMedia.id}
-                                    title={activeMedia.title}
-                                    description={activeMedia.description || undefined}
-                                    mediaUrl={activeMedia.mediaUrl}
-                                    coverArtUrl={activeMedia.coverArtUrl || undefined}
-                                    mimeType={activeMedia.mimeType}
-                                    onEnd={handleMediaEnd}
-                                    autoPlay={isAutoPlay}
-                                    onNext={hasNext ? handleNext : undefined}
-                                    onPrevious={hasPrev ? handlePrev : undefined}
-                                />
-                            ) : (
-                                <Text className="text-white opacity-50">
-                                    No media found in sequence
-                                </Text>
-                            )}
-                        </div>
-                        <div className="mt-5 px-1">
-                            <Title level={4} className="!mb-1">
-                                {activeMedia?.title || "Unknown Asset"}
+                <div
+                    className="w-full lg:w-[30%] flex flex-col shadow-sm h-[calc(100vh-240px)]"
+                    style={{
+                        backgroundColor: token.colorBgContainer,
+                        border: `1px solid ${token.colorSplit}`,
+                    }}
+                >
+                    <div
+                        className="px-5 py-4 flex flex-col"
+                        style={{ borderBottom: `1px solid ${token.colorSplit}` }}
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <Title level={5} className="!mb-0 flex items-center gap-2">
+                                <MenuUnfoldOutlined className="text-gray-500" />
+                                Up Next
                             </Title>
-                            <Text type="secondary">
-                                {activeMedia?.description || "No description provided."}
-                            </Text>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Text
+                                    type="secondary"
+                                    className="text-xs font-semibold uppercase tracking-wider"
+                                >
+                                    Auto-Play
+                                </Text>
+                                <Switch
+                                    size="small"
+                                    checked={isAutoPlay}
+                                    onChange={setIsAutoPlay}
+                                />
+                            </div>
+                            <Button
+                                type={isShuffle ? "primary" : "default"}
+                                size="small"
+                                icon={<InteractionOutlined />}
+                                onClick={() => setIsShuffle(!isShuffle)}
+                                className={`rounded-none ${isShuffle ? "" : "text-gray-500"}`}
+                            >
+                                Shuffle
+                            </Button>
                         </div>
                     </div>
 
-                    <div
-                        className="w-full lg:w-[30%] flex flex-col shadow-sm h-[calc(100vh-240px)]"
-                        style={{
-                            backgroundColor: token.colorBgContainer,
-                            border: `1px solid ${token.colorSplit}`,
-                        }}
-                    >
-                        <div
-                            className="px-5 py-4 flex flex-col"
-                            style={{ borderBottom: `1px solid ${token.colorSplit}` }}
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <Title level={5} className="!mb-0 flex items-center gap-2">
-                                    <MenuUnfoldOutlined className="text-gray-500" />
-                                    Up Next
-                                </Title>
+                    <div className="flex-1 overflow-y-auto bg-transparent">
+                        {isLoading ? (
+                            <div className="p-4">
+                                <Skeleton active paragraph={{ rows: 6 }} />
                             </div>
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Text
-                                        type="secondary"
-                                        className="text-xs font-semibold uppercase tracking-wider"
-                                    >
-                                        Auto-Play
-                                    </Text>
-                                    <Switch
-                                        size="small"
-                                        checked={isAutoPlay}
-                                        onChange={setIsAutoPlay}
-                                    />
-                                </div>
-                                <Button
-                                    type={isShuffle ? "primary" : "default"}
-                                    size="small"
-                                    icon={<InteractionOutlined />}
-                                    onClick={() => setIsShuffle(!isShuffle)}
-                                    className={`rounded-none ${isShuffle ? "" : "text-gray-500"}`}
-                                >
-                                    Shuffle
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto bg-transparent">
-                            {isLoading ? (
-                                <div className="p-4">
-                                    <Skeleton active paragraph={{ rows: 6 }} />
-                                </div>
-                            ) : (
-                                queueList
-                            )}
-                        </div>
+                        ) : (
+                            queueList
+                        )}
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
