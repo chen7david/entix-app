@@ -5,7 +5,7 @@ import type React from "react";
 const { Title, Text } = Typography;
 
 export const SignInPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
 
     const { mutate: signIn, isPending } = useSignIn();
 
@@ -17,10 +17,16 @@ export const SignInPage: React.FC = () => {
             },
             {
                 onSuccess: async () => {
-                    message.success("Signed in successfully!");
+                    notification.success({
+                        message: "Sign In Successful",
+                        description: "You have been signed in successfully.",
+                    });
                 },
                 onError: (error: any) => {
-                    message.error(error.message || "Failed to sign in");
+                    notification.error({
+                        message: "Sign In Failed",
+                        description: error.message || "Failed to sign in",
+                    });
                 },
             }
         );

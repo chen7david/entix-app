@@ -6,7 +6,9 @@ import {
 } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { useTransactionHistory } from "@web/src/features/wallet/hooks/useTransactionHistory";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
+    App,
     Button,
     Card,
     Divider,
@@ -14,7 +16,6 @@ import {
     Form,
     Input,
     List,
-    message,
     Popconfirm,
     Space,
     Tag,
@@ -42,6 +43,7 @@ export const ManageAccountDrawer: React.FC<Props> = ({
     orgId,
     size = "default",
 }) => {
+    const { notification } = App.useApp();
     const { token } = theme.useToken();
     const [form] = Form.useForm();
     const { mutate: update, isPending: isUpdating } = useUpdateAccount();
@@ -68,7 +70,10 @@ export const ManageAccountDrawer: React.FC<Props> = ({
             { id: account.id, name: values.name },
             {
                 onSuccess: () => {
-                    message.success("Account label updated");
+                    notification.success({
+                        message: "Label Updated",
+                        description: "Account label updated successfully.",
+                    });
                     onClose();
                 },
             }
@@ -79,11 +84,17 @@ export const ManageAccountDrawer: React.FC<Props> = ({
         if (!account) return;
         archive(account.id, {
             onSuccess: () => {
-                message.success("Account archived successfully");
+                notification.success({
+                    message: "Account Archived",
+                    description: "Treasury account archived successfully.",
+                });
                 onClose();
             },
             onError: (err) => {
-                message.error(err.message);
+                notification.error({
+                    message: "Archive Failed",
+                    description: err.message || "Failed to archive treasury account.",
+                });
             },
         });
     };
@@ -102,7 +113,9 @@ export const ManageAccountDrawer: React.FC<Props> = ({
             open={open}
             styles={{
                 body: { paddingBottom: 80 },
-                wrapper: { width: size === "default" ? 440 : undefined },
+                wrapper: {
+                    width: size === "default" ? UI_CONSTANTS.RIGHT_DRAWER_WIDTH : undefined,
+                },
             }}
             extra={
                 <Button

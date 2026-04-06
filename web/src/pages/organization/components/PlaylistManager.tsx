@@ -26,11 +26,12 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AppRoutes } from "@shared";
+import { AppRoutes, type CreatePlaylistDTO, type PlaylistDTO } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import {
     App,
@@ -115,24 +116,47 @@ const SortableItem = ({
     );
 };
 
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
+
 export const PlaylistManager: React.FC<{
     externalIsCreateModalOpen?: boolean;
     onCloseCreateModal?: () => void;
 }> = ({ externalIsCreateModalOpen, onCloseCreateModal }) => {
     const {
-        playlists,
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>();
+
+    // Reset pagination when effective filters change
+    // Removed triggering useEffect in favor of explicit handler resets for better React Query alignment.
+
+    const {
+        playlistsResponse,
         isLoadingPlaylists,
         createPlaylist,
         updatePlaylist,
         deletePlaylist,
         getSequence,
         updateSequence,
-    } = usePlaylists();
+    } = usePlaylists({
+        search: debouncedSearch,
+        cursor: currentCursor,
+        limit: pageSize,
+        direction: "next",
+    });
 
-    const { message } = App.useApp();
+    const totalPlaylists = playlistsResponse?.items.length ?? 0;
+    const playlists = playlistsResponse?.items || [];
+
+    const { notification } = App.useApp();
     const { media } = useMedia();
     const navigateOrg = useOrgNavigate();
-    // Legacy definition removed since we merged the hook calls
 
     const [internalIsCreateModalOpen, setInternalIsCreateModalOpen] = useState(false);
     const isCreateModalOpen = externalIsCreateModalOpen ?? internalIsCreateModalOpen;
@@ -140,7 +164,7 @@ export const PlaylistManager: React.FC<{
         setInternalIsCreateModalOpen(val);
         if (!val && onCloseCreateModal) onCloseCreateModal();
     };
-    const [activePlaylist, setActivePlaylist] = useState<any>(null);
+    const [activePlaylist, setActivePlaylist] = useState<PlaylistDTO | null>(null);
     const [isSequenceDrawerOpen, setIsSequenceDrawerOpen] = useState(false);
     const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
     const [sequenceItems, setSequenceItems] = useState<string[]>([]);
@@ -154,19 +178,19 @@ export const PlaylistManager: React.FC<{
         })
     );
 
-    const handleCreateFinish = async (values: any) => {
+    const handleCreateFinish = async (values: CreatePlaylistDTO) => {
         await createPlaylist(values);
         setIsCreateModalOpen(false);
     };
 
-    const openSequenceManager = async (playlist: any) => {
+    const openSequenceManager = async (playlist: PlaylistDTO) => {
         setActivePlaylist(playlist);
         const seq = await getSequence(playlist.id);
         setSequenceItems(seq.map((item) => item.mediaId));
         setIsSequenceDrawerOpen(true);
     };
 
-    const openEditDrawer = (playlist: any) => {
+    const openEditDrawer = (playlist: PlaylistDTO) => {
         setActivePlaylist(playlist);
         editForm.setFieldsValue({
             title: playlist.title,
@@ -193,7 +217,10 @@ export const PlaylistManager: React.FC<{
 
                 if (activePlaylist) {
                     updateSequence(activePlaylist.id, newArray).catch((_err) =>
-                        message.error("Failed to update sequence order")
+                        notification.error({
+                            message: "Order Update Failed",
+                            description: "Failed to update sequence order.",
+                        })
                     );
                 }
 
@@ -207,7 +234,10 @@ export const PlaylistManager: React.FC<{
         setSequenceItems(newItems);
         if (activePlaylist) {
             updateSequence(activePlaylist.id, newItems).catch((_err) =>
-                message.error("Failed to remove item from sequence")
+                notification.error({
+                    message: "Removal Failed",
+                    description: "Failed to remove item from sequence.",
+                })
             );
         }
     };
@@ -218,7 +248,10 @@ export const PlaylistManager: React.FC<{
             setSequenceItems(newItems);
             if (activePlaylist) {
                 updateSequence(activePlaylist.id, newItems).catch((_err) =>
-                    message.error("Failed to add item to sequence")
+                    notification.error({
+                        message: "Add Failed",
+                        description: "Failed to add item to sequence.",
+                    })
                 );
             }
         }
@@ -262,8 +295,8 @@ export const PlaylistManager: React.FC<{
                 items={[
                     {
                         key: "total",
-                        label: "Curated Playlists",
-                        value: playlists?.length || 0,
+                        label: "Playlists on This Page",
+                        value: totalPlaylists,
                         icon: <OrderedListOutlined />,
                         color: "#2563eb",
                     },
@@ -285,15 +318,20 @@ export const PlaylistManager: React.FC<{
                         filters: [
                             {
                                 type: "search",
-                                key: "q",
+                                key: "search",
                                 placeholder: "Search playlists...",
                             },
                         ],
-                        onFiltersChange: (_f: Record<string, any>) => {
-                            // TODO: Implement server-side search via usePlaylists hook
+                        onFiltersChange,
+                        pagination: {
+                            pageSize,
+                            hasNextPage: !!playlistsResponse?.nextCursor,
+                            hasPrevPage: cursorStack.length > 0,
+                            onNext: () => onNext(playlistsResponse?.nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         },
-                        pagination: null, // TODO: Implement cursor pagination once API supports it.
-                        actions: (record: any) => {
+                        actions: (record: PlaylistDTO) => {
                             const items: MenuProps["items"] = [
                                 {
                                     key: "view",
@@ -383,7 +421,7 @@ export const PlaylistManager: React.FC<{
                 placement="right"
                 onClose={() => setIsSequenceDrawerOpen(false)}
                 open={isSequenceDrawerOpen}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
             >
                 <div className="flex flex-col gap-8 h-full">
@@ -398,6 +436,7 @@ export const PlaylistManager: React.FC<{
                             style={{ width: "100%" }}
                             allowClear
                             size="large"
+                            variant="outlined"
                             onChange={(value) => handleAddMedia(value as string)}
                             filterOption={(input, option) =>
                                 (option?.label ?? "")
@@ -472,7 +511,7 @@ export const PlaylistManager: React.FC<{
                 placement="right"
                 onClose={() => setIsEditDrawerOpen(false)}
                 open={isEditDrawerOpen}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
                 extra={
                     <Button type="primary" onClick={() => editForm.submit()}>

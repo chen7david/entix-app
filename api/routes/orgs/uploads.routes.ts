@@ -1,8 +1,11 @@
 import { HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
-
 import { PresignedUrlResponseSchema, UploadResponseSchema } from "@shared/schemas/dto/upload.dto";
+import {
+    createPaginatedResponseSchema,
+    PaginationQuerySchema,
+} from "@shared/schemas/pagination.schema";
 export const OrgUploadsRoutes = {
     requestPresignedUrl: createRoute({
         method: "post",
@@ -58,10 +61,16 @@ export const OrgUploadsRoutes = {
             params: z.object({
                 organizationId: z.string(),
             }),
+            query: z
+                .object({
+                    search: z.string().optional(),
+                    type: z.string().optional(),
+                })
+                .merge(PaginationQuerySchema),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                z.array(UploadResponseSchema),
+                createPaginatedResponseSchema(UploadResponseSchema),
                 "Uploads retrieved successfully"
             ),
         },

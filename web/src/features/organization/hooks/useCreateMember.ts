@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 
 export const useCreateMember = (organizationId: string) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -25,10 +25,16 @@ export const useCreateMember = (organizationId: string) => {
             // Invalidate members query to refetch the list
             // Must match the key in useOrganization.ts line 34
             queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
-            message.success("Member created successfully! Password reset email sent.");
+            notification.success({
+                message: "Member Created",
+                description: "Member created successfully! Password reset email has been sent.",
+            });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to create member");
+            notification.error({
+                message: "Creation Failed",
+                description: error.message || "Failed to create member",
+            });
         },
     });
 };

@@ -1,8 +1,9 @@
+import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import {
-    type CursorPaginationConfig,
     DataTableWithFilters,
     type FilterConfig,
 } from "@web/src/components/data/DataTableWithFilters";
+import { App } from "antd";
 import {
     getTransactionColumns,
     type TransactionRecord,
@@ -23,10 +24,11 @@ export const TransactionTable = ({
     onFiltersChange,
     filters,
 }: TransactionTableProps) => {
+    const { notification } = App.useApp();
     return (
         <DataTableWithFilters<TransactionRecord>
             config={{
-                columns: getTransactionColumns(),
+                columns: getTransactionColumns(notification),
                 data: transactions || [],
                 pagination,
                 loading,

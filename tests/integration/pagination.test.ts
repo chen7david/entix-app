@@ -52,7 +52,7 @@ describe("Cursor Pagination Helpers", () => {
             expect(result.items).toHaveLength(2);
             expect(result.items[0].id).toBe("C");
             expect(result.nextCursor).not.toBeNull();
-            expect(result.prevCursor).not.toBeNull();
+            expect(result.prevCursor).toBeNull(); // First page load, so null
         });
 
         it("reverses reversed time sequences perfectly when scrolling backward (Prev)", () => {
@@ -62,17 +62,24 @@ describe("Cursor Pagination Helpers", () => {
                 { id: "C", score: 90 },
             ];
 
-            const result = processPaginatedResult(reverseFake, 2, "prev", (item) => ({
-                primary: item.score,
-                secondary: item.id,
-            }));
+            // In 'prev' direction, we simulate coming from a specific point
+            const result = processPaginatedResult(
+                reverseFake,
+                2,
+                "prev",
+                (item) => ({
+                    primary: item.score,
+                    secondary: item.id,
+                }),
+                "some-page-2-cursor"
+            );
 
             expect(result.items).toHaveLength(2);
             expect(result.items[0].id).toBe("B");
             expect(result.items[1].id).toBe("A");
 
-            expect(result.prevCursor).not.toBeNull();
-            expect(result.nextCursor).not.toBeNull();
+            expect(result.prevCursor).not.toBeNull(); // More items (C) in 'prev' direction
+            expect(result.nextCursor).not.toBeNull(); // nextCursor should always be available to return
         });
     });
 });

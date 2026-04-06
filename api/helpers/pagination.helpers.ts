@@ -66,7 +66,8 @@ export function processPaginatedResult<T>(
     items: T[],
     limit: number,
     direction: "next" | "prev",
-    extractCursor: (item: T) => CursorPayload
+    extractCursor: (item: T) => CursorPayload,
+    requestCursor?: string
 ) {
     const hasMore = items.length > limit;
     const records = hasMore ? items.slice(0, limit) : items;
@@ -80,10 +81,14 @@ export function processPaginatedResult<T>(
 
     if (records.length > 0) {
         if (direction === "next") {
+            // Forward navigation: nextCursor exists if there are more items ahead
             if (hasMore) nextCursor = encodeCursor(extractCursor(records[records.length - 1]));
-            prevCursor = encodeCursor(extractCursor(records[0]));
+            // prevCursor exists if we are NOT on the very first page
+            if (requestCursor) prevCursor = encodeCursor(extractCursor(records[0]));
         } else {
+            // Backward navigation: prevCursor exists if there are more items behind
             if (hasMore) prevCursor = encodeCursor(extractCursor(records[0]));
+            // nextCursor exists because we just came from the next page
             nextCursor = encodeCursor(extractCursor(records[records.length - 1]));
         }
     }

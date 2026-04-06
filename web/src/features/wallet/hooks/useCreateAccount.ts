@@ -10,7 +10,7 @@ export type CreateAccountInput = {
 };
 
 export const useCreateAccount = (orgId?: string) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -26,12 +26,18 @@ export const useCreateAccount = (orgId?: string) => {
             return data;
         },
         onSuccess: () => {
-            message.success("Account created successfully");
+            notification.success({
+                message: "Account Created",
+                description: "Your new financial account has been created successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["walletBalance", orgId] });
             queryClient.invalidateQueries({ queryKey: ["orgCurrencies", orgId] });
         },
         onError: (err: any) => {
-            message.error(err.message || "Failed to create account. Please try again.");
+            notification.error({
+                message: "Creation Failed",
+                description: err.message || "Failed to create account. Please try again.",
+            });
         },
     });
 };

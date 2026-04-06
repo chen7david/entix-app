@@ -1,6 +1,8 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { mapCategoryToMimePattern, wrapWildcard } from "@api/helpers/db.helpers";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import * as schema from "@shared/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, like, type SQL } from "drizzle-orm";
 
 export type CreateUploadInput = {
     id: string;
@@ -74,6 +76,62 @@ export class UploadRepository {
             .from(schema.uploads)
             .where(eq(schema.uploads.organizationId, organizationId))
             .orderBy(desc(schema.uploads.createdAt));
+    }
+
+    async findUploadsPaginated(
+        organizationId: string,
+        filters: {
+            search?: string;
+            type?: string;
+            cursor?: string;
+            limit?: number;
+            direction?: "next" | "prev";
+        }
+    ) {
+        const { search, type, cursor, limit = 20, direction = "next" } = filters;
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            schema.uploads.createdAt,
+            schema.uploads.id,
+            cursor,
+            direction
+        );
+
+        const conditions: (SQL | undefined)[] = [eq(schema.uploads.organizationId, organizationId)];
+
+        if (search) {
+            conditions.push(like(schema.uploads.originalName, wrapWildcard(search)));
+        }
+
+        const mimePattern = mapCategoryToMimePattern(type);
+        if (mimePattern) {
+            conditions.push(like(schema.uploads.contentType, mimePattern));
+        }
+
+        if (cursorWhere) {
+            conditions.push(cursorWhere);
+        }
+
+        const finalFilters = conditions.filter((c): c is SQL => c !== undefined);
+
+        const items = await this.db
+            .select()
+            .from(schema.uploads)
+            .where(and(...finalFilters))
+            .orderBy(...orderBy)
+            .limit(limit + 1);
+
+        const result = processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.createdAt.getTime(),
+                secondary: row.id,
+            }),
+            cursor
+        );
+
+        return result;
     }
 
     async delete(id: string, organizationId: string): Promise<boolean> {

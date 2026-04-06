@@ -88,11 +88,11 @@ describe("Uploads Integration", () => {
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);
             expect(listRes.status).toBe(200);
-            const listBody = await parseJson<any[]>(listRes);
-            expect(listBody.length).toBe(1);
-            expect(listBody[0].id).toBe(uploadId);
-            expect(listBody[0].status).toBe("completed");
-            expect(listBody[0].originalName).toBe("test-video.mp4");
+            const listBody = await parseJson<any>(listRes);
+            expect(listBody.items.length).toBe(1);
+            expect(listBody.items[0].id).toBe(uploadId);
+            expect(listBody.items[0].status).toBe("completed");
+            expect(listBody.items[0].originalName).toBe("test-video.mp4");
 
             const deleteRes = await client.request(
                 `/api/v1/orgs/${organizationId}/uploads/${uploadId}`,
@@ -137,8 +137,8 @@ describe("Uploads Integration", () => {
             expect(deleteRes.status).toBe(204);
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);
-            const listBody = await parseJson<any[]>(listRes);
-            expect(listBody.length).toBe(0);
+            const listBody = await parseJson<any>(listRes);
+            expect(listBody.items.length).toBe(0);
         });
 
         it("cleans up DB even if file is missing from R2 (Ghost Object / 404)", async () => {
@@ -172,8 +172,8 @@ describe("Uploads Integration", () => {
             expect(deleteRes.status).toBe(204);
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);
-            const listBody = await parseJson<any[]>(listRes);
-            expect(listBody.length).toBe(0);
+            const listBody = await parseJson<any>(listRes);
+            expect(listBody.items.length).toBe(0);
         });
 
         it("aborts DB deletion and throws if R2 returns a critical error (Failure / 500)", async () => {
@@ -211,9 +211,50 @@ describe("Uploads Integration", () => {
             expect(deleteRes.status).toBe(500);
 
             const listRes = await client.request(`/api/v1/orgs/${organizationId}/uploads`);
-            const listBody = await parseJson<any[]>(listRes);
-            expect(listBody.length).toBe(1);
-            expect(listBody[0].id).toBe(uploadId);
+            const listBody = await parseJson<any>(listRes);
+            expect(listBody.items.length).toBe(1);
+            expect(listBody.items[0].id).toBe(uploadId);
+        });
+        it("correctly paginates uploads with limit=1 and nextCursor", async () => {
+            const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
+            const organizationId = orgId;
+            const client = createTestClient(app, env, cookie);
+
+            const { BucketService } = await import("@api/services/bucket.service");
+            vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
+                "https://fake.presigned"
+            );
+
+            // Create 2 uploads
+            for (let i = 0; i < 2; i++) {
+                await client.request(`/api/v1/orgs/${organizationId}/uploads`, {
+                    method: "POST",
+                    body: {
+                        originalName: `test-${i}.png`,
+                        contentType: "image/png",
+                        fileSize: 1024,
+                    },
+                });
+            }
+
+            // Get first page
+            const res1 = await client.request(`/api/v1/orgs/${organizationId}/uploads?limit=1`);
+            const body1 = await parseJson<any>(res1);
+
+            expect(body1.items).toHaveLength(1);
+            expect(body1.nextCursor).not.toBeNull();
+            expect(body1.prevCursor).toBeNull();
+
+            // Get second page
+            const res2 = await client.request(
+                `/api/v1/orgs/${organizationId}/uploads?limit=1&cursor=${body1.nextCursor}`
+            );
+            const body2 = await parseJson<any>(res2);
+
+            expect(body2.items).toHaveLength(1);
+            expect(body2.items[0].id).not.toBe(body1.items[0].id);
+            expect(body2.nextCursor).toBeNull();
+            expect(body2.prevCursor).not.toBeNull();
         });
     });
 });

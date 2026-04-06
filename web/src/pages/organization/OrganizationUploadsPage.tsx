@@ -3,17 +3,45 @@ import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { Button, Modal, Skeleton } from "antd";
 import { useState } from "react";
 import { UploadsTable } from "../../features/uploads/components/UploadsTable";
+
+export type UploadFilters = {
+    search?: string;
+    type?: "video" | "audio";
+};
 
 export const OrganizationUploadsPage = () => {
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const { activeOrganization } = useOrganization();
 
-    const { data: uploads, isLoading: loadingUploads } = useOrganizationUploads(
-        activeOrganization?.id
+    const {
+        filters,
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<UploadFilters>();
+
+    const { data: uploadsResponse, isLoading: loadingUploads } = useOrganizationUploads(
+        activeOrganization?.id,
+        {
+            search: debouncedSearch,
+            type: filters.type,
+            cursor: currentCursor,
+            limit: pageSize,
+            direction: "next",
+        }
     );
+    const uploads = uploadsResponse?.items || [];
+    const totalFiles = uploadsResponse?.items.length ?? 0;
+
     const deleteUploadMutation = useDeleteUpload(activeOrganization?.id);
 
     const handleDelete = (id: string) => {
@@ -43,7 +71,6 @@ export const OrganizationUploadsPage = () => {
         (acc: number, curr) => acc + (curr.fileSize || 0),
         0
     );
-    const totalFiles = uploads?.length || 0;
 
     return (
         <div className="flex flex-col h-full">
@@ -66,7 +93,7 @@ export const OrganizationUploadsPage = () => {
                 items={[
                     {
                         key: "total",
-                        label: "Total Files",
+                        label: "Uploads on This Page",
                         value: totalFiles,
                         icon: <FileOutlined />,
                         color: "#2563eb",
@@ -83,11 +110,21 @@ export const OrganizationUploadsPage = () => {
 
             <div className="flex-1 min-h-0">
                 <UploadsTable
-                    uploads={uploads || []}
+                    uploads={uploads}
+                    loading={loadingUploads}
                     onDelete={handleDelete}
                     isDeleting={(id) =>
                         deleteUploadMutation.isPending && deleteUploadMutation.variables === id
                     }
+                    onFiltersChange={onFiltersChange}
+                    pagination={{
+                        pageSize,
+                        hasNextPage: !!uploadsResponse?.nextCursor,
+                        hasPrevPage: cursorStack.length > 0,
+                        onNext: () => onNext(uploadsResponse?.nextCursor),
+                        onPrev: onPrev,
+                        onPageSizeChange: onPageSizeChange,
+                    }}
                 />
             </div>
 

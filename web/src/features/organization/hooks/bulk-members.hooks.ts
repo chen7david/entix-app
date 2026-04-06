@@ -26,7 +26,7 @@ export type ImportResult = {
 };
 
 export const useBulkMembers = (orgId?: string) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     const { data: metrics, isLoading: isLoadingMetrics } = useQuery<BulkMetrics>({
@@ -58,9 +58,15 @@ export const useBulkMembers = (orgId?: string) => {
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
 
-            message.success("Members exported successfully");
-        } catch (err) {
-            message.error("Failed to export members");
+            notification.success({
+                message: "Export Successful",
+                description: "Members list has been exported successfully.",
+            });
+        } catch (err: any) {
+            notification.error({
+                message: "Export Failed",
+                description: err.message || "Failed to export members list.",
+            });
             console.error(err);
         }
     };

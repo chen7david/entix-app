@@ -1,4 +1,4 @@
-import { getRegistrationService, getUserService } from "@api/factories/service.factory";
+import { getNotificationService, getRegistrationService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { AuthRoutes } from "./auth.routes";
@@ -31,8 +31,8 @@ export class AuthHandler {
     ) => {
         const { email } = ctx.req.valid("json");
 
-        const userService = getUserService(ctx);
-        await userService.resendVerificationEmailAdmin(email);
+        const notificationService = getNotificationService(ctx);
+        await notificationService.sendVerificationReminder(email);
 
         return ctx.body(null, HttpStatusCodes.OK);
     };

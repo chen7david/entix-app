@@ -12,7 +12,7 @@ import type React from "react";
 const { Title, Text } = Typography;
 
 export const ChangePasswordPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const navigateOrg = useOrgNavigate();
     const { activeOrganization } = useOrganization();
     const { mutate: changePassword, isPending } = useChangePassword();
@@ -26,7 +26,10 @@ export const ChangePasswordPage: React.FC = () => {
             },
             {
                 onSuccess: () => {
-                    message.success("Password changed successfully!");
+                    notification.success({
+                        message: "Password Changed",
+                        description: "Your password has been changed successfully.",
+                    });
                     setTimeout(() => {
                         if (activeOrganization?.slug) {
                             navigateOrg(AppRoutes.org.dashboard.settings);
@@ -36,7 +39,10 @@ export const ChangePasswordPage: React.FC = () => {
                     }, 1500);
                 },
                 onError: (error) => {
-                    message.error(error.message || "Failed to change password");
+                    notification.error({
+                        message: "Update Failed",
+                        description: error.message || "Failed to change password",
+                    });
                 },
             }
         );

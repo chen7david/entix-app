@@ -1,5 +1,6 @@
 import { InfoCircleOutlined, PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
@@ -33,7 +34,7 @@ export const WalletPage = () => {
         data: history,
         isFetching: isFetchingHistory,
         refetch: refetchHistory,
-    } = useTransactionHistory(userId, "user", currentCursor, 20, orgId, {
+    } = useTransactionHistory(userId, "user", currentCursor, DEFAULT_PAGE_SIZE, orgId, {
         startDate: filters.startDate,
         endDate: filters.endDate,
         status: filters.status,
@@ -188,7 +189,7 @@ export const WalletPage = () => {
                         transactions={history?.data || []}
                         loading={isFetchingHistory}
                         pagination={{
-                            pageSize: 20,
+                            pageSize: DEFAULT_PAGE_SIZE,
                             hasNextPage: !!history?.nextCursor,
                             hasPrevPage: cursorStack.length > 0,
                             onNext: handleNext,

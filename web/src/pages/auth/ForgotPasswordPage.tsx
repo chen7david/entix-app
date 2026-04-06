@@ -12,7 +12,7 @@ import { useNavigate } from "react-router";
 const { Title, Text } = Typography;
 
 export const ForgotPasswordPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const navigate = useNavigate();
     const { mutate: forgotPassword, isPending } = useForgotPassword();
     const [emailSent, setEmailSent] = useState(false);
@@ -30,7 +30,10 @@ export const ForgotPasswordPage: React.FC = () => {
                     setSentEmail(values.email);
                 },
                 onError: (error) => {
-                    message.error(error.message || "Failed to send password reset email");
+                    notification.error({
+                        message: "Reset Failed",
+                        description: error.message || "Failed to send password reset email",
+                    });
                 },
             }
         );

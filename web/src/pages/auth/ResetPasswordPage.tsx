@@ -12,7 +12,7 @@ import { useNavigate, useSearchParams } from "react-router";
 const { Title, Text } = Typography;
 
 export const ResetPasswordPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get("token");
@@ -28,7 +28,10 @@ export const ResetPasswordPage: React.FC = () => {
 
     const handleResetPassword = (values: ResetPasswordValues) => {
         if (!token) {
-            message.error("Invalid reset token");
+            notification.error({
+                message: "Invalid Token",
+                description: "The password reset token is missing or invalid.",
+            });
             return;
         }
 
@@ -40,13 +43,19 @@ export const ResetPasswordPage: React.FC = () => {
             {
                 onSuccess: () => {
                     setStatus("success");
-                    message.success("Password reset successfully!");
+                    notification.success({
+                        message: "Password Reset",
+                        description: "Your password has been reset successfully. Redirecting...",
+                    });
                     setTimeout(() => {
                         navigate(AppRoutes.auth.signIn);
                     }, 3000);
                 },
                 onError: (error) => {
-                    message.error(error.message || "Failed to reset password");
+                    notification.error({
+                        message: "Reset Failed",
+                        description: error.message || "Failed to reset password",
+                    });
                 },
             }
         );

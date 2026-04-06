@@ -9,11 +9,12 @@ import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilt
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
-import { Button, Form, Input, Modal, message, Popconfirm, Select, Space, Tag } from "antd";
+import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Tag } from "antd";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 
 export const OrganizationInvitationsPage = () => {
+    const { notification } = App.useApp();
     const { activeOrganization } = useOrganization();
 
     const {
@@ -32,20 +33,32 @@ export const OrganizationInvitationsPage = () => {
     const handleInvite = async (values: any) => {
         try {
             await inviteMember(values.email, values.role);
-            message.success("Invitation sent successfully");
+            notification.success({
+                message: "Invitation Sent",
+                description: "The invitation has been sent successfully.",
+            });
             setIsModalOpen(false);
             form.resetFields();
         } catch (error: any) {
-            message.error(error.message || "Failed to send invitation");
+            notification.error({
+                message: "Invitation Failed",
+                description: error.message || "Failed to send invitation.",
+            });
         }
     };
 
     const handleCancel = async (invitationId: string) => {
         try {
             await cancelInvitation(invitationId);
-            message.success("Invitation canceled successfully");
+            notification.success({
+                message: "Invitation Canceled",
+                description: "The invitation has been canceled successfully.",
+            });
         } catch (error: any) {
-            message.error(error.message || "Failed to cancel invitation");
+            notification.error({
+                message: "Cancel Failed",
+                description: error.message || "Failed to cancel invitation.",
+            });
         }
     };
 

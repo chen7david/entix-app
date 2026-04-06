@@ -1,5 +1,5 @@
 import { ArrowRightOutlined, CopyOutlined } from "@ant-design/icons";
-import { Badge, message, Space, Tag, Tooltip, Typography } from "antd";
+import { Badge, Space, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { format } from "date-fns";
 
@@ -19,7 +19,7 @@ export type TransactionRecord = {
     currency: { symbol: string; code: string };
 };
 
-export const getTransactionColumns = (): ColumnsType<TransactionRecord> => [
+export const getTransactionColumns = (notification: any): ColumnsType<TransactionRecord> => [
     {
         title: "ID",
         dataIndex: "id",
@@ -31,7 +31,10 @@ export const getTransactionColumns = (): ColumnsType<TransactionRecord> => [
                     className="font-mono text-[10px] opacity-60 hover:opacity-100 cursor-pointer transition-opacity"
                     onClick={() => {
                         navigator.clipboard.writeText(id);
-                        message.success("ID copied to clipboard");
+                        notification.success({
+                            message: "Copied",
+                            description: "Transaction ID copied to clipboard",
+                        });
                     }}
                 >
                     {id.slice(0, 8)}...

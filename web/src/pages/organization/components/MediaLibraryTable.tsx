@@ -11,10 +11,11 @@ import type { Media } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Tooltip, Typography } from "antd";
 import type React from "react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { MediaDropzone } from "./MediaDropzone";
 
 const { Title, Text } = Typography;
@@ -24,6 +25,7 @@ interface MediaLibraryTableProps {
 }
 
 export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultType = "all" }) => {
+    const [form] = Form.useForm();
     const [filterType, setFilterType] = useState<"all" | "video" | "audio">(defaultType);
     const [searchText, setSearchText] = useState("");
 
@@ -62,6 +64,16 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
     }, [cursorStack]);
 
     const [activeMedia, setActiveMedia] = useState<Media | null>(null);
+
+    useEffect(() => {
+        if (activeMedia) {
+            form.setFieldsValue({
+                title: activeMedia.title,
+                description: activeMedia.description || "",
+            });
+        }
+    }, [activeMedia, form]);
+
     const hasRecordedPlay = useRef<boolean>(false);
 
     const handlePlayMedia = (record: Media) => {
@@ -179,8 +191,9 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                                 placeholder: "Search media...",
                             },
                             {
-                                type: "segmented",
+                                type: "select",
                                 key: "type",
+                                placeholder: "All Media Types",
                                 options: [
                                     { label: "All Media", value: "all" },
                                     { label: "Video", value: "video" },
@@ -236,8 +249,13 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                 placement="right"
                 onClose={handleCloseModal}
                 open={!!activeMedia}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
+                extra={
+                    <Button type="primary" onClick={() => form.submit()} loading={isUpdating}>
+                        Save Changes
+                    </Button>
+                }
             >
                 {activeMedia && (
                     <div className="flex flex-col pb-6">
@@ -280,6 +298,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                             </div>
 
                             <Form
+                                form={form}
                                 layout="vertical"
                                 initialValues={{
                                     title: activeMedia.title,
@@ -304,12 +323,6 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                                         placeholder="Add a description for your viewers..."
                                         rows={4}
                                     />
-                                </Form.Item>
-
-                                <Form.Item className="mb-0 flex justify-end">
-                                    <Button type="primary" htmlType="submit" loading={isUpdating}>
-                                        Save Changes
-                                    </Button>
                                 </Form.Item>
                             </Form>
                         </div>

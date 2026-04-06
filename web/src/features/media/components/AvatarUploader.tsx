@@ -27,7 +27,7 @@ interface AvatarUploaderProps {
  * 4. Avatar PATCH endpoint links the upload to the user's profile
  */
 export const AvatarUploader = ({ organizationId, userId, open, onClose }: AvatarUploaderProps) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
@@ -42,7 +42,10 @@ export const AvatarUploader = ({ organizationId, userId, open, onClose }: Avatar
         if (fileObj.size > maxSize) {
             const errorMsg = "Profile picture must be smaller than 5MB";
             onError?.(new Error(errorMsg));
-            message.error(errorMsg);
+            notification.error({
+                message: "File Too Large",
+                description: errorMsg,
+            });
             return;
         }
 
@@ -108,7 +111,10 @@ export const AvatarUploader = ({ organizationId, userId, open, onClose }: Avatar
         } catch (err: any) {
             console.error("Avatar upload error:", err);
             onError?.(err);
-            message.error(err.message || "Failed to upload profile picture");
+            notification.error({
+                message: "Upload Failed",
+                description: err.message || "Failed to upload profile picture",
+            });
         } finally {
             setUploading(false);
         }

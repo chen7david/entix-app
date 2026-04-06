@@ -10,7 +10,7 @@ import { App } from "antd";
  * links the upload to the user's profile image.
  */
 export const useUpdateAvatar = (organizationId: string | undefined) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -34,10 +34,16 @@ export const useUpdateAvatar = (organizationId: string | undefined) => {
             // Globally refresh the active session to sync Sidebar and Top Nav
             await authClient.getSession();
 
-            message.success("Profile picture updated successfully");
+            notification.success({
+                message: "Avatar Updated",
+                description: "Your profile picture has been updated successfully.",
+            });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to update profile picture");
+            notification.error({
+                message: "Update Failed",
+                description: error.message || "Failed to update profile picture",
+            });
         },
     });
 };
@@ -47,7 +53,7 @@ export const useUpdateAvatar = (organizationId: string | undefined) => {
  * Deletes the avatar from R2 and clears the user.image field.
  */
 export const useRemoveAvatar = (organizationId: string | undefined) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -69,10 +75,16 @@ export const useRemoveAvatar = (organizationId: string | undefined) => {
             // Globally refresh the active session to sync Sidebar and Top Nav
             await authClient.getSession();
 
-            message.success("Profile picture removed");
+            notification.success({
+                message: "Avatar Removed",
+                description: "Your profile picture has been removed.",
+            });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to remove profile picture");
+            notification.error({
+                message: "Remove Failed",
+                description: error.message || "Failed to remove profile picture",
+            });
         },
     });
 };

@@ -6,7 +6,7 @@ import { App } from "antd";
 import { useCallback, useEffect } from "react";
 
 export function useUserPreferences() {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { data: session, refetch } = useSession();
     const { theme, updateTheme: syncTheme } = useTheme();
 
@@ -26,24 +26,36 @@ export function useUserPreferences() {
                     timezone: newTimezone,
                 } as any);
                 await refetch();
-                message.success("Timezone preference synced successfully");
-            } catch (_error) {
-                message.error("Failed to update timezone");
+                notification.success({
+                    message: "Timezone Updated",
+                    description: "Your timezone preference has been synced successfully.",
+                });
+            } catch (error: any) {
+                notification.error({
+                    message: "Sync Failed",
+                    description: error.message || "Failed to update timezone.",
+                });
             }
         },
-        [refetch, message]
+        [refetch, notification]
     );
 
     const updateTheme = useCallback(
         async (newTheme: AppTheme) => {
             try {
                 await syncTheme(newTheme);
-                message.success("Theme updated successfully");
-            } catch (_error) {
-                message.error("Failed to update theme");
+                notification.success({
+                    message: "Theme Updated",
+                    description: "Your theme preference has been updated successfully.",
+                });
+            } catch (error: any) {
+                notification.error({
+                    message: "Update Failed",
+                    description: error.message || "Failed to update theme",
+                });
             }
         },
-        [syncTheme, message]
+        [syncTheme, notification]
     );
 
     return {

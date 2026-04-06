@@ -13,7 +13,7 @@ export type AdminCreditInput = {
 };
 
 export const useAdminCredit = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -32,12 +32,18 @@ export const useAdminCredit = () => {
             return res.json();
         },
         onSuccess: (_, vars) => {
-            message.success("Account credited successfully");
+            notification.success({
+                message: "Credit Successful",
+                description: "The account has been credited successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["adminOrgAccounts", vars.organizationId] });
             queryClient.invalidateQueries({ queryKey: ["treasuryBalance"] });
         },
         onError: (error) => {
-            message.error(error.message);
+            notification.error({
+                message: "Credit Failed",
+                description: error.message,
+            });
         },
     });
 };

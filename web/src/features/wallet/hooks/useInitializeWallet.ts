@@ -1,8 +1,9 @@
 import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { message } from "antd";
+import { App } from "antd";
 
 export const useInitializeWallet = (organizationId: string) => {
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -25,14 +26,20 @@ export const useInitializeWallet = (organizationId: string) => {
             return res.json();
         },
         onSuccess: (data: any) => {
-            message.success(data.message || "Wallet initialization completed.");
+            notification.success({
+                message: "Wallet Initialized",
+                description: data.message || "Wallet initialization completed.",
+            });
 
             // Invalidate relevant queries
             queryClient.invalidateQueries({ queryKey: ["members"] });
             queryClient.invalidateQueries({ queryKey: ["wallet-summary"] });
         },
         onError: (error: any) => {
-            message.error(`Failed to initialize wallet: ${error.message || "Unknown error"}`);
+            notification.error({
+                message: "Initialization Failed",
+                description: error.message || "Failed to initialize wallet.",
+            });
         },
     });
 };

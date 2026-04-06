@@ -5,7 +5,10 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { getAssetUrl, type UploadDto } from "@shared";
-import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import {
+    type CursorPaginationConfig,
+    DataTableWithFilters,
+} from "@web/src/components/data/DataTableWithFilters";
 import { Button, Tag, Tooltip, Typography } from "antd";
 import type React from "react";
 
@@ -13,11 +16,21 @@ const { Text } = Typography;
 
 type Props = {
     uploads: UploadDto[];
+    loading?: boolean;
     onDelete: (id: string) => void;
     isDeleting: (id: string) => boolean;
+    pagination: CursorPaginationConfig;
+    onFiltersChange: (filters: Record<string, any>) => void;
 };
 
-export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting }) => {
+export const UploadsTable: React.FC<Props> = ({
+    uploads,
+    loading,
+    onDelete,
+    isDeleting,
+    pagination,
+    onFiltersChange,
+}) => {
     const formatBytes = (bytes: number) => {
         if (bytes === 0) return "0 Bytes";
         const k = 1024;
@@ -126,6 +139,7 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
                     config={{
                         columns,
                         data: uploads,
+                        loading,
                         rowKey: "id",
                         filters: [
                             {
@@ -134,20 +148,19 @@ export const UploadsTable: React.FC<Props> = ({ uploads, onDelete, isDeleting })
                                 placeholder: "Search file name...",
                             },
                             {
-                                type: "segmented",
+                                type: "select",
                                 key: "type",
+                                placeholder: "All File Types",
                                 options: [
-                                    { label: "All", value: "all" },
+                                    { label: "All Types", value: "all" },
                                     { label: "Image", value: "image" },
                                     { label: "Video", value: "video" },
                                     { label: "Audio", value: "audio" },
                                 ],
                             },
                         ],
-                        onFiltersChange: (_filters: Record<string, any>) => {
-                            // TODO: Implement server-side search via useOrganizationUploads hook
-                        },
-                        pagination: null, // TODO: Implement cursor pagination once API supports it.
+                        onFiltersChange,
+                        pagination,
                     }}
                 />
             </div>

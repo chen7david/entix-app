@@ -71,20 +71,30 @@ export class OrgUploadsHandler {
 
     static listUploads: AppHandler<typeof OrgUploadsRoutes.listUploads> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
+        const { search, type, cursor, limit, direction } = ctx.req.valid("query");
 
         try {
             const uploadService = getUploadService(ctx);
-            const uploads = await uploadService.listUploads(organizationId);
+            const result = await uploadService.listUploads(organizationId, {
+                search,
+                type,
+                cursor,
+                limit,
+                direction,
+            });
 
-            ctx.var.logger.info({ organizationId, count: uploads.length }, "Uploads retrieved");
+            ctx.var.logger.info(
+                { organizationId, count: result.items.length },
+                "Uploads retrieved"
+            );
 
-            const result = uploads.map((u) => ({
+            const items = result.items.map((u) => ({
                 ...u,
                 createdAt: stableTimestamp(u.createdAt),
                 updatedAt: stableTimestamp(u.updatedAt),
             }));
 
-            return ctx.json(result, HttpStatusCodes.OK);
+            return ctx.json({ ...result, items }, HttpStatusCodes.OK);
         } catch (error: unknown) {
             ctx.var.logger.error({ error, organizationId }, "Failed to list uploads");
             throw error;

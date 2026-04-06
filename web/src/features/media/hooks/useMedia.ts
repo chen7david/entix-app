@@ -40,7 +40,7 @@ export interface UseMediaOptions {
 }
 
 export const useMedia = (type?: "video" | "audio", search?: string, options?: UseMediaOptions) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
@@ -128,12 +128,19 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
             return await res.json();
         },
         onSuccess: () => {
-            message.success("Media successfully created");
+            notification.success({
+                message: "Media Created",
+                description: "Media has been successfully created.",
+            });
             queryClient.invalidateQueries({ queryKey: ["media"] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Could not create media. Ensure the upload completed.");
+            notification.error({
+                message: "Creation Failed",
+                description:
+                    error.message || "Could not create media. Ensure the upload completed.",
+            });
         },
     });
 
@@ -156,11 +163,17 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
             return await res.json();
         },
         onSuccess: () => {
-            message.success("Media successfully updated");
+            notification.success({
+                message: "Media Updated",
+                description: "Media has been successfully updated.",
+            });
             queryClient.invalidateQueries({ queryKey: ["media"] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to update media details.");
+            notification.error({
+                message: "Update Failed",
+                description: error.message || "Failed to update media details.",
+            });
         },
     });
 
@@ -174,11 +187,17 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
             if (!res.ok) await parseApiError(res);
         },
         onSuccess: () => {
-            message.success("Media strictly deleted");
+            notification.success({
+                message: "Media Deleted",
+                description: "Media asset has been strictly deleted.",
+            });
             queryClient.invalidateQueries({ queryKey: ["media"] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to sweep media asset.");
+            notification.error({
+                message: "Deletion Failed",
+                description: error.message || "Failed to sweep media asset.",
+            });
         },
     });
 

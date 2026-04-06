@@ -83,10 +83,16 @@ export class UserRepository {
             .orderBy(...orderBy)
             .limit(limit + 1);
 
-        const result = processPaginatedResult(membersJoined, limit, direction, (row) => ({
-            primary: row.member.createdAt.getTime(),
-            secondary: row.member.id,
-        }));
+        const result = processPaginatedResult(
+            membersJoined,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.member.createdAt.getTime(),
+                secondary: row.member.id,
+            }),
+            cursor
+        );
 
         return {
             ...result,
@@ -213,10 +219,16 @@ export class UserRepository {
             .orderBy(...orderBy)
             .limit(limit + 1);
 
-        return processPaginatedResult(items, limit, direction, (row) => ({
-            primary: row.createdAt.getTime(),
-            secondary: row.id,
-        }));
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.createdAt.getTime(),
+                secondary: row.id,
+            }),
+            cursor
+        );
     }
 
     async findByIds(ids: string[]): Promise<schema.AuthUser[]> {
