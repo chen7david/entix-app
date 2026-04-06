@@ -33,7 +33,7 @@ export const AvatarDropzone = ({
     const { token } = useToken();
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
-    const updateAvatarMutation = useUpdateAvatar(organizationId);
+    const updateAvatarMutation = useUpdateAvatar();
     const { session, refetch } = useBetterAuth();
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {

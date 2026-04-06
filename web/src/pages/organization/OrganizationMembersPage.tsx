@@ -130,7 +130,7 @@ export const OrganizationMembersPage: React.FC = () => {
     const currentUserId = user?.id;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
-    const removeAvatarMutation = useRemoveAvatar(activeOrganization?.id);
+    const removeAvatarMutation = useRemoveAvatar();
     const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(
         activeOrganization?.id || ""
     );
@@ -462,7 +462,11 @@ export const OrganizationMembersPage: React.FC = () => {
                             ];
                             return (
                                 <Dropdown menu={{ items }} trigger={["click"]}>
-                                    <Button type="text" icon={<MoreOutlined />} />
+                                    <Button
+                                        type="text"
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
                                 </Dropdown>
                             );
                         },

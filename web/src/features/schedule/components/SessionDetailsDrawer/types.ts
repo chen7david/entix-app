@@ -5,7 +5,7 @@ export type SessionSubmitPayload = {
     durationMinutes: number;
     userIds: string[];
     updateForward?: boolean;
-    recurrence?: { frequency: "weekly"; count: number };
+    recurrence?: { frequency: "daily" | "weekly" | "biweekly" | "monthly"; count: number };
     status?: "scheduled" | "completed" | "cancelled";
 };
 
