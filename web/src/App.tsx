@@ -50,7 +50,15 @@ import { OrganizationSchedulePage } from "./pages/organization/OrganizationSched
 import { OrganizationUploadsPage } from "./pages/organization/OrganizationUploadsPage";
 import { PlaylistPlayerPage } from "./pages/organization/PlaylistPlayerPage";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            staleTime: 1000 * 60 * 5, // 5 min — treat fresh data as fresh
+            refetchOnWindowFocus: false, // don't restart spinners on tab switch
+            retry: 1,
+        },
+    },
+});
 
 function logError(error: unknown, info: { componentStack?: string | null }) {
     console.error("Error Boundary caught an error:", error, info);

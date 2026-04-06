@@ -39,7 +39,7 @@ export const OrgGuard: React.FC = () => {
         !loadingOrgs && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
     // 3. Fetch server's current active org to detect mismatches
-    const { data: serverActiveOrg } = useQuery({
+    const { data: serverActiveOrg, isLoading: serverOrgInitialLoading } = useQuery({
         queryKey: ["serverActiveOrganization"],
         queryFn: async () => {
             const { data } = await authClient.organization.getFullOrganization();
@@ -47,6 +47,8 @@ export const OrgGuard: React.FC = () => {
         },
         // Only fetch once we know which org the URL wants
         enabled: !!activeOrganization,
+        staleTime: 1000 * 60 * 5,
+        refetchOnWindowFocus: false,
     });
 
     // 4. Sync server session when URL slug differs from server's active org.
@@ -54,13 +56,12 @@ export const OrgGuard: React.FC = () => {
     // evaluate against a stale session (no orgRole) before the server has been
     // notified of the tenant change from the URL.
 
-    // Determine mismatch synchronously to block Outlet on the first render
-    const serverActiveOrgExists = serverActiveOrg !== undefined;
+    // isLoading in RQ v5 = isPending && isFetching (only true when NO cache exists yet).
+    // Background refetches keep data defined — no spinner triggered.
     const isMismatch =
         activeOrganization &&
-        serverActiveOrgExists &&
+        serverActiveOrg !== undefined &&
         (serverActiveOrg === null || serverActiveOrg.slug !== activeOrganization.slug);
-    const isDeterminingMismatch = !!activeOrganization && !serverActiveOrgExists;
 
     useEffect(() => {
         if (!activeOrganization || isSyncing) return;
@@ -96,8 +97,8 @@ export const OrgGuard: React.FC = () => {
         }
     }, [activeOrganization, isMismatch, queryClient, isSyncing, auth.refreshAuth]);
 
-    // Loading State: Block children while fetching list, determining mismatch, or syncing session
-    if (loadingOrgs || isSyncing || isDeterminingMismatch || isMismatch) {
+    // Loading State: Block children while fetching list, awaiting first org fetch, or syncing session
+    if (loadingOrgs || isSyncing || serverOrgInitialLoading || isMismatch) {
         return <CenteredSpin />;
     }
 
