@@ -108,13 +108,12 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                         </Tooltip>
                     </div>
                 }
-                rules={[createSchemaFieldRule(createSessionSchema.pick({ title: true }))]}
+                rules={[
+                    { required: true, message: "Required" },
+                    createSchemaFieldRule(createSessionSchema.pick({ title: true })),
+                ]}
             >
                 <Input placeholder="Session Title" />
-            </Form.Item>
-
-            <Form.Item name="description" label="Description">
-                <Input.TextArea rows={3} placeholder="Session Context" />
             </Form.Item>
 
             <Row gutter={{ xs: 8, sm: 16, md: 24 }}>
@@ -141,6 +140,7 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                         name="durationMinutes"
                         label="Duration"
                         rules={[
+                            { required: true, message: "Required" },
                             createSchemaFieldRule(
                                 createSessionSchema.pick({ durationMinutes: true })
                             ),
@@ -160,6 +160,10 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                     </Form.Item>
                 </Col>
             </Row>
+
+            <Form.Item name="description" label="Description">
+                <Input.TextArea rows={3} placeholder="Session Context" />
+            </Form.Item>
 
             {!session && (
                 <>
