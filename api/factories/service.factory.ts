@@ -10,6 +10,7 @@ import { MediaService } from "@api/services/media.service";
 import { MemberService } from "@api/services/member.service";
 import { MemberExportService } from "@api/services/member-export.service";
 import { MemberImportService } from "@api/services/member-import.service";
+import { NotificationService } from "@api/services/notification.service";
 import { OrganizationService } from "@api/services/organization.service";
 import { PlaylistService } from "@api/services/playlist.service";
 import { RegistrationService } from "@api/services/registration.service";
@@ -37,6 +38,10 @@ import { getUploadService } from "./upload.factory";
 
 export const getUserService = (ctx: AppContext) => {
     return new UserService(getUserRepository(ctx), auth(ctx));
+};
+
+export const getNotificationService = (ctx: AppContext) => {
+    return new NotificationService(getUserRepository(ctx), auth(ctx));
 };
 
 export const getUserProfileService = (ctx: AppContext) => {

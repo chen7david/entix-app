@@ -1,6 +1,8 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { wrapWildcard } from "@api/helpers/db.helpers";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import * as schema from "@shared/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, like, type SQL } from "drizzle-orm";
 
 export type CreatePlaylistInput = {
     id: string;
@@ -35,6 +37,58 @@ export class PlaylistRepository {
             .from(schema.playlists)
             .where(eq(schema.playlists.organizationId, organizationId))
             .orderBy(desc(schema.playlists.createdAt));
+    }
+
+    async findPlaylistsPaginated(
+        organizationId: string,
+        filters: {
+            limit?: number;
+            cursor?: string;
+            direction?: "next" | "prev";
+            search?: string;
+        }
+    ) {
+        const { limit = 20, cursor, direction = "next", search } = filters;
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            schema.playlists.createdAt,
+            schema.playlists.id,
+            cursor,
+            direction
+        );
+
+        const conditions: (SQL | undefined)[] = [
+            eq(schema.playlists.organizationId, organizationId),
+        ];
+
+        if (search) {
+            conditions.push(like(schema.playlists.title, wrapWildcard(search)));
+        }
+
+        if (cursorWhere) {
+            conditions.push(cursorWhere);
+        }
+
+        const finalFilters = conditions.filter((c): c is SQL => c !== undefined);
+
+        const items = await this.db
+            .select()
+            .from(schema.playlists)
+            .where(and(...finalFilters))
+            .orderBy(...orderBy)
+            .limit(limit + 1);
+
+        const result = processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.createdAt.getTime(),
+                secondary: row.id,
+            }),
+            cursor
+        );
+
+        return result;
     }
 
     async update(

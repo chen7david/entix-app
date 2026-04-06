@@ -133,7 +133,7 @@ export const FinanceTransactionsPage: React.FC = () => {
                     hasPrevPage: cursorStack.length > 0,
                     onNext: handleNext,
                     onPrev: handlePrev,
-                    onPageSizeChange: (size) => {
+                    onPageSizeChange: (size: number) => {
                         setPageSize(size);
                         setCursorStack([]); // Reset on size change
                     },

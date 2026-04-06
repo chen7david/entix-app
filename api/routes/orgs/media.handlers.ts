@@ -8,16 +8,15 @@ export class MediaHandlers {
         const { organizationId } = ctx.req.valid("param");
         const queryParams = ctx.req.valid("query");
         const { limit, direction, search, cursor, ...filters } = queryParams;
-        const type = (filters as any).type as "video" | "audio";
+        const type = (filters as any).type as "video" | "audio" | undefined;
         const mediaService = getMediaService(ctx);
-        const paginatedResult = await mediaService.listMedia(
-            organizationId,
+        const paginatedResult = await mediaService.listMedia(organizationId, {
             limit,
             cursor,
             direction,
             search,
-            type
-        );
+            type,
+        });
         return ctx.json({ data: paginatedResult }, HttpStatusCodes.OK);
     };
 

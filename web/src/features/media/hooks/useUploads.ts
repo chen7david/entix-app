@@ -1,22 +1,43 @@
-import type { UploadDto } from "@shared";
+import type { PaginatedResponse, UploadDto } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 
-export const useOrganizationUploads = (organizationId: string | undefined) => {
+export type UploadFilters = {
+    search?: string;
+    type?: string;
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
+};
+
+export const useOrganizationUploads = (
+    organizationId: string | undefined,
+    filters?: UploadFilters
+) => {
     return useQuery({
-        queryKey: ["organizationUploads", organizationId],
+        queryKey: ["organizationUploads", organizationId, filters],
         queryFn: async () => {
             if (!organizationId) throw new Error("Organization ID is required");
-            const response = await fetch(`/api/v1/orgs/${organizationId}/uploads`);
+
+            const params = new URLSearchParams();
+            if (filters?.search) params.append("search", filters.search);
+            if (filters?.type && filters.type !== "all") params.append("type", filters.type);
+            if (filters?.cursor) params.append("cursor", filters.cursor);
+            if (filters?.limit) params.append("limit", filters.limit.toString());
+            if (filters?.direction) params.append("direction", filters.direction);
+
+            const queryString = params.toString() ? `?${params.toString()}` : "";
+            const response = await fetch(`/api/v1/orgs/${organizationId}/uploads${queryString}`);
 
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}));
                 throw new Error(error.message || "Failed to fetch uploads");
             }
 
-            return response.json() as Promise<UploadDto[]>;
+            return response.json() as Promise<PaginatedResponse<UploadDto>>;
         },
         enabled: !!organizationId,
+        placeholderData: (previousData) => previousData,
     });
 };
 

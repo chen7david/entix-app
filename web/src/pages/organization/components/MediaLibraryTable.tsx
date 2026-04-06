@@ -179,8 +179,9 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                                 placeholder: "Search media...",
                             },
                             {
-                                type: "segmented",
+                                type: "select",
                                 key: "type",
+                                placeholder: "All Media Types",
                                 options: [
                                     { label: "All Media", value: "all" },
                                     { label: "Video", value: "video" },

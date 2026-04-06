@@ -61,10 +61,18 @@ export class PlaylistService extends BaseService {
     }
 
     /**
-     * List all playlists for an organization.
+     * List playlists for an organization with cursor pagination and optional search.
      */
-    async listPlaylists(organizationId: string) {
-        return await this.playlistRepo.findPlaylistsByOrganization(organizationId);
+    async listPlaylists(
+        organizationId: string,
+        filters: {
+            search?: string;
+            cursor?: string;
+            limit?: number;
+            direction?: "next" | "prev";
+        } = {}
+    ) {
+        return await this.playlistRepo.findPlaylistsPaginated(organizationId, filters);
     }
 
     /**

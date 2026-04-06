@@ -1,5 +1,6 @@
 import type {
     CreatePlaylistDTO,
+    PaginatedResponse,
     PlaylistDTO,
     PlaylistMediaItemDTO,
     UpdatePlaylistDTO,
@@ -10,22 +11,53 @@ import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
 
-export const usePlaylists = () => {
+export type PlaylistFilters = {
+    search?: string;
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
+};
+
+export const usePlaylist = (playlistId?: string) => {
+    const { activeOrganization } = useOrganization();
+    const orgId = activeOrganization?.id;
+
+    return useQuery({
+        queryKey: ["playlist", orgId, playlistId],
+        queryFn: async () => {
+            if (!orgId || !playlistId) throw new Error("Missing org or playlist id");
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`);
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as PlaylistDTO;
+        },
+        enabled: !!orgId && !!playlistId,
+    });
+};
+
+export const usePlaylists = (filters?: PlaylistFilters) => {
     const { message } = App.useApp();
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
-    // List Playlists
-    const { data: playlists = [], isLoading: isLoadingPlaylists } = useQuery({
-        queryKey: ["playlists", orgId],
+    // List Playlists (Paginated)
+    const { data: playlistsResponse, isLoading: isLoadingPlaylists } = useQuery({
+        queryKey: ["playlists", orgId, filters],
         queryFn: async () => {
-            if (!orgId) return [];
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists`);
+            if (!orgId) throw new Error("Organization missing");
+            const params = new URLSearchParams();
+            if (filters?.search) params.append("search", filters.search);
+            if (filters?.cursor) params.append("cursor", filters.cursor);
+            if (filters?.limit) params.append("limit", filters.limit.toString());
+            if (filters?.direction) params.append("direction", filters.direction);
+
+            const queryString = params.toString() ? `?${params.toString()}` : "";
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists${queryString}`);
             if (!res.ok) await parseApiError(res);
-            return (await res.json()) as PlaylistDTO[];
+            return (await res.json()) as PaginatedResponse<PlaylistDTO>;
         },
         enabled: !!orgId,
+        placeholderData: (previousData) => previousData,
     });
 
     // Create Playlist
@@ -132,7 +164,7 @@ export const usePlaylists = () => {
     });
 
     return {
-        playlists,
+        playlistsResponse,
         isLoadingPlaylists,
         createPlaylist: useCallback(
             (input: CreatePlaylistDTO) => createPlaylistMutation.mutateAsync(input),

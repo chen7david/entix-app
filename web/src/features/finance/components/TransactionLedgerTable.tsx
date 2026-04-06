@@ -1,6 +1,6 @@
 import { HistoryOutlined, RollbackOutlined } from "@ant-design/icons";
+import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import {
-    type CursorPaginationConfig,
     DataTableWithFilters,
     type FilterConfig,
 } from "@web/src/components/data/DataTableWithFilters";

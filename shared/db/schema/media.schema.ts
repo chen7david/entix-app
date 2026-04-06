@@ -24,11 +24,11 @@ export const uploads = sqliteTable(
         uploadedBy: text("uploaded_by")
             .notNull()
             .references(() => authUsers.id, { onDelete: "cascade" }),
-        createdAt: integer("created_at", { mode: "timestamp" }) // Changed mode to "timestamp"
-            .notNull() // Reordered notNull and default
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
-        updatedAt: integer("updated_at", { mode: "timestamp" }) // Changed mode to "timestamp"
-            .notNull() // Reordered notNull and default
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
         // Removed $onUpdate(() => /* @__PURE__ */ new Date())
     },

@@ -62,20 +62,15 @@ export class MediaService extends BaseService {
 
     async listMedia(
         organizationId: string,
-        limit: number,
-        cursor?: string,
-        direction: "next" | "prev" = "next",
-        search?: string,
-        type?: "video" | "audio"
+        filters: {
+            limit: number;
+            cursor?: string;
+            direction?: "next" | "prev";
+            search?: string;
+            type?: "video" | "audio";
+        }
     ) {
-        return await this.mediaRepo.findAllByOrganization(
-            organizationId,
-            limit,
-            cursor,
-            direction,
-            search,
-            type
-        );
+        return await this.mediaRepo.findAllByOrganization(organizationId, filters);
     }
 
     async updateMedia(

@@ -8,6 +8,10 @@ import {
     updatePlaylistSchema,
     updateSequenceSchema,
 } from "@shared/schemas/dto/playlist.dto";
+import {
+    createPaginatedResponseSchema,
+    PaginationQuerySchema,
+} from "@shared/schemas/pagination.schema";
 
 export const PlaylistRoutes = {
     listPlaylists: createRoute({
@@ -19,9 +23,13 @@ export const PlaylistRoutes = {
             params: z.object({
                 organizationId: z.string(),
             }),
+            query: PaginationQuerySchema,
         },
         responses: {
-            [HttpStatusCodes.OK]: jsonContent(z.array(playlistSchema), "List of playlists"),
+            [HttpStatusCodes.OK]: jsonContent(
+                createPaginatedResponseSchema(playlistSchema),
+                "List of playlists"
+            ),
         },
     }),
 
@@ -38,6 +46,22 @@ export const PlaylistRoutes = {
         },
         responses: {
             [HttpStatusCodes.CREATED]: jsonContent(playlistSchema, "Playlist created successfully"),
+        },
+    }),
+
+    getPlaylist: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/playlists/{playlistId}",
+        tags: ["Playlist"],
+        middleware: [requirePermission("playlist", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                playlistId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(playlistSchema, "Playlist retrieval"),
         },
     }),
 

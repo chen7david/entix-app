@@ -7,12 +7,13 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 // useOrganization import removed
-import { MediaPlayer, useMedia, usePlaylists } from "@web/src/features/media";
+import { MediaPlayer, useMedia, usePlaylist, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
+import { CenteredResult, CenteredSpin } from "../../components/common/CenteredView";
 
 const { Title, Text } = Typography;
 
@@ -20,22 +21,23 @@ export const PlaylistPlayerPage: React.FC = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigateOrg = useOrgNavigate();
 
-    const { getSequence, playlists } = usePlaylists();
+    const { getSequence } = usePlaylists();
+    const { data: activePlaylist, isLoading: loadingPlaylist } = usePlaylist(playlistId);
     const { media } = useMedia();
     const { token } = theme.useToken();
 
     const [sequence, setSequence] = useState<string[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingSequence, setIsLoadingSequence] = useState(true);
 
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [isAutoPlay, setIsAutoPlay] = useState(true);
     const [isShuffle, setIsShuffle] = useState(false);
 
-    const activePlaylist = playlists.find((p) => p.id === playlistId);
+    const isLoading = loadingPlaylist || isLoadingSequence;
 
     useEffect(() => {
         if (playlistId) {
-            setIsLoading(true);
+            setIsLoadingSequence(true);
             getSequence(playlistId)
                 .then((items) => {
                     // sort by position
@@ -46,10 +48,32 @@ export const PlaylistPlayerPage: React.FC = () => {
                     setCurrentIndex(0);
                 })
                 .finally(() => {
-                    setIsLoading(false);
+                    setIsLoadingSequence(false);
                 });
         }
     }, [playlistId, getSequence]);
+
+    if (loadingPlaylist) {
+        return <CenteredSpin tip="Loading playlist..." />;
+    }
+
+    if (!activePlaylist) {
+        return (
+            <CenteredResult
+                status="404"
+                title="Playlist Not Found"
+                subTitle="The playlist you are looking for does not exist or has been removed."
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}
+                    >
+                        Back to Playlists
+                    </Button>
+                }
+            />
+        );
+    }
 
     const handleNext = () => {
         if (isShuffle) {

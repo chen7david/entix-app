@@ -46,7 +46,7 @@ describe("Media Routes Integration Tests", () => {
             const body1 = (await res1.json()) as any;
             expect(body1.data.items).toHaveLength(10);
             expect(body1.data.nextCursor).not.toBeNull();
-            expect(body1.data.prevCursor).not.toBeNull();
+            expect(body1.data.prevCursor).toBeNull(); // First page load
 
             expect(body1.data.items[0].id).toBe("media-0");
             expect(body1.data.items[9].id).toBe("media-9");
@@ -60,7 +60,8 @@ describe("Media Routes Integration Tests", () => {
 
             const body2 = (await res2.json()) as any;
             expect(body2.data.items).toHaveLength(5);
-            expect(body2.data.nextCursor).toBeNull(); // No more items successfully intercepted implicitly
+            expect(body2.data.nextCursor).toBeNull();
+            expect(body2.data.prevCursor).not.toBeNull(); // Should have cursor back to page 1
             expect(body2.data.items[0].id).toBe("media-10");
             expect(body2.data.items[4].id).toBe("media-14");
         });
