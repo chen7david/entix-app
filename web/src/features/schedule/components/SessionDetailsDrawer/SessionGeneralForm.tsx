@@ -168,10 +168,7 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                         valuePropName="checked"
                         style={{ marginTop: 8, marginBottom: 8 }}
                     >
-                        <Switch
-                            checkedChildren="Recurring"
-                            unCheckedChildren="One-time"
-                        />
+                        <Switch checkedChildren="Recurring" unCheckedChildren="One-time" />
                     </Form.Item>
 
                     <Form.Item

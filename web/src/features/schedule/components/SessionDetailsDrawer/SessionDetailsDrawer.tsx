@@ -190,10 +190,13 @@ export const SessionDetailsDrawer = ({
 
         let generatedTitle = "";
         if (names.length === 1) generatedTitle = names[0];
-        else if (names.length === 2) generatedTitle = `${names[0]} & ${names[1]}`;
         else {
-            const last = names.pop();
-            generatedTitle = `${names.join(", ")} & ${last}`;
+            const firstNames = names.map((n: string) => n.split(" ")[0]);
+            if (firstNames.length === 2) generatedTitle = `${firstNames[0]} & ${firstNames[1]}`;
+            else {
+                const last = firstNames.pop();
+                generatedTitle = `${firstNames.join(", ")} & ${last}`;
+            }
         }
 
         form.setFieldsValue({ title: generatedTitle });
@@ -206,13 +209,6 @@ export const SessionDetailsDrawer = ({
             label: "Details",
             children: (
                 <div className="flex flex-col gap-6 pt-4">
-                    <SessionGeneralForm
-                        form={form}
-                        session={session}
-                        onUpdateStatus={onUpdateStatus}
-                        isGeneratingTitle={isGeneratingTitle}
-                        onGenerateTitle={handleGenerateTitle}
-                    />
                     <MemberSelector
                         loading={loadingMembers}
                         members={members}
@@ -222,6 +218,13 @@ export const SessionDetailsDrawer = ({
                         isFetchingNextPage={isFetchingNextPage}
                         fetchNextPage={fetchNextPage}
                         memberCache={memberCache}
+                    />
+                    <SessionGeneralForm
+                        form={form}
+                        session={session}
+                        onUpdateStatus={onUpdateStatus}
+                        isGeneratingTitle={isGeneratingTitle}
+                        onGenerateTitle={handleGenerateTitle}
                     />
                 </div>
             ),
