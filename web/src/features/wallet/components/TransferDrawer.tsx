@@ -1,6 +1,7 @@
 import type { WalletAccountDTO } from "@shared";
 import { useActivatedCurrencies } from "@web/src/features/finance";
-import { App, Button, Drawer, Form, Input, InputNumber, Select, Space } from "antd";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
+import { App, Button, Drawer, Form, Input, InputNumber, Select } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
 type TransferDrawerProps = {
@@ -32,18 +33,13 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
     return (
         <Drawer
             title="Execute New Transfer"
-            width={420}
+            width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
             onClose={onClose}
             open={open}
             extra={
-                <Space>
-                    <Button onClick={onClose} disabled={isPending}>
-                        Cancel
-                    </Button>
-                    <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                        Confirm Transfer
-                    </Button>
-                </Space>
+                <Button type="primary" onClick={() => form.submit()} loading={isPending}>
+                    Confirm Transfer
+                </Button>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>

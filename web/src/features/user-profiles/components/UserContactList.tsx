@@ -7,6 +7,7 @@ import {
     PlusOutlined,
 } from "@ant-design/icons";
 import { useSocialMediaTypes, useUserProfile } from "@web/src/features/user-profiles";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     AutoComplete,
     Button,
@@ -18,7 +19,6 @@ import {
     message,
     Popconfirm,
     Select,
-    Space,
     Spin,
     Switch,
     Tag,
@@ -262,11 +262,20 @@ export const UserContactList = ({
             <Drawer
                 title={phoneModalState.editId ? "Edit Phone" : "Add Phone"}
                 placement="right"
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 open={phoneModalState.isOpen}
                 onClose={() => setPhoneModalState({ isOpen: false })}
                 destroyOnClose
                 push={false}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => phoneForm.submit()}
+                        loading={addPhone.isPending || updatePhone.isPending}
+                    >
+                        Save
+                    </Button>
+                }
             >
                 <Form form={phoneForm} layout="vertical" onFinish={handlePhoneSubmit}>
                     <Form.Item
@@ -326,20 +335,6 @@ export const UserContactList = ({
                         initialValue={false}
                     >
                         <Switch />
-                    </Form.Item>
-                    <Form.Item className="mb-0 flex justify-end">
-                        <Space>
-                            <Button onClick={() => setPhoneModalState({ isOpen: false })}>
-                                Cancel
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={addPhone.isPending || updatePhone.isPending}
-                            >
-                                Save
-                            </Button>
-                        </Space>
                     </Form.Item>
                 </Form>
             </Drawer>
@@ -431,11 +426,20 @@ export const UserContactList = ({
             <Drawer
                 title={addressModalState.editId ? "Edit Address" : "Add Address"}
                 placement="right"
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 open={addressModalState.isOpen}
                 onClose={() => setAddressModalState({ isOpen: false })}
                 destroyOnClose
                 push={false}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => addressForm.submit()}
+                        loading={addAddress.isPending || updateAddress.isPending}
+                    >
+                        Save
+                    </Button>
+                }
             >
                 <Form form={addressForm} layout="vertical" onFinish={handleAddressSubmit}>
                     <Form.Item
@@ -500,20 +504,6 @@ export const UserContactList = ({
                         initialValue={false}
                     >
                         <Switch />
-                    </Form.Item>
-                    <Form.Item className="mb-0 flex justify-end">
-                        <Space>
-                            <Button onClick={() => setAddressModalState({ isOpen: false })}>
-                                Cancel
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={addAddress.isPending || updateAddress.isPending}
-                            >
-                                Save
-                            </Button>
-                        </Space>
                     </Form.Item>
                 </Form>
             </Drawer>
@@ -586,11 +576,20 @@ export const UserContactList = ({
             <Drawer
                 title={socialModalState.editId ? "Update Identity" : "Bind Social Account"}
                 placement="right"
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 open={socialModalState.isOpen}
                 onClose={() => setSocialModalState({ isOpen: false })}
                 destroyOnClose
                 push={false}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => socialForm.submit()}
+                        loading={addSocial.isPending || updateSocial.isPending}
+                    >
+                        Save
+                    </Button>
+                }
             >
                 <Form form={socialForm} layout="vertical" onFinish={handleSocialSubmit}>
                     <Form.Item
@@ -612,20 +611,6 @@ export const UserContactList = ({
                         rules={[{ required: true }]}
                     >
                         <Input />
-                    </Form.Item>
-                    <Form.Item className="mb-0 flex justify-end">
-                        <Space>
-                            <Button onClick={() => setSocialModalState({ isOpen: false })}>
-                                Cancel
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={addSocial.isPending || updateSocial.isPending}
-                            >
-                                Save
-                            </Button>
-                        </Space>
                     </Form.Item>
                 </Form>
             </Drawer>

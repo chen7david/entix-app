@@ -30,6 +30,7 @@ const { Text, Title } = Typography;
 
 import type { WalletAccountDTO } from "@shared";
 import { useAdminOrganizations } from "@web/src/features/admin/hooks/useAdminOrganizations";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { useAdminOrgAccounts } from "../hooks/useAdminOrgAccounts";
 import { useAdminTransfer } from "../hooks/useAdminTransfer";
 
@@ -189,7 +190,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     </Text>
                 </Space>
             }
-            width={480}
+            width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
             open={open}
             onClose={onClose}
             extra={

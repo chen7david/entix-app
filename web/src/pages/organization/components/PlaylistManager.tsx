@@ -31,6 +31,7 @@ import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilt
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import {
     App,
@@ -411,7 +412,7 @@ export const PlaylistManager: React.FC<{
                 placement="right"
                 onClose={() => setIsSequenceDrawerOpen(false)}
                 open={isSequenceDrawerOpen}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
             >
                 <div className="flex flex-col gap-8 h-full">
@@ -501,7 +502,7 @@ export const PlaylistManager: React.FC<{
                 placement="right"
                 onClose={() => setIsEditDrawerOpen(false)}
                 open={isEditDrawerOpen}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
                 extra={
                     <Button type="primary" onClick={() => editForm.submit()}>

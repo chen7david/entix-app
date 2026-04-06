@@ -261,7 +261,7 @@ export const SessionDetailsDrawer = ({
     return (
         <Drawer
             title={session ? "Edit Session" : "Schedule New Session"}
-            width={520}
+            width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
             open={open}
             onClose={onClose}
             destroyOnClose
@@ -273,7 +273,7 @@ export const SessionDetailsDrawer = ({
             }
         >
             <Form form={form} layout="vertical" onFinish={handleFinish} id="session-form">
-                <Tabs items={items} />
+                {session ? <Tabs items={items} /> : items[0].children}
             </Form>
         </Drawer>
     );

@@ -22,4 +22,5 @@ export const UI_CONSTANTS = {
          */
         AUTOCOMPLETE: 250,
     },
+    RIGHT_DRAWER_WIDTH: 400,
 } as const;

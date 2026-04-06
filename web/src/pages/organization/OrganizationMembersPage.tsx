@@ -502,7 +502,7 @@ export const OrganizationMembersPage: React.FC = () => {
                 placement="right"
                 onClose={() => setSelectedMember(null)}
                 open={!!selectedMember}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 push={false}
             >
                 {selectedMember &&

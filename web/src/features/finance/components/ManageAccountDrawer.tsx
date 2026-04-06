@@ -6,6 +6,7 @@ import {
 } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { useTransactionHistory } from "@web/src/features/wallet/hooks/useTransactionHistory";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     Button,
     Card,
@@ -102,7 +103,9 @@ export const ManageAccountDrawer: React.FC<Props> = ({
             open={open}
             styles={{
                 body: { paddingBottom: 80 },
-                wrapper: { width: size === "default" ? 440 : undefined },
+                wrapper: {
+                    width: size === "default" ? UI_CONSTANTS.RIGHT_DRAWER_WIDTH : undefined,
+                },
             }}
             extra={
                 <Button

@@ -279,7 +279,7 @@ export const UserTable: React.FC = () => {
                 placement="right"
                 onClose={() => setSelectedUser(null)}
                 open={!!selectedUser}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
             >
                 {selectedUser && (
