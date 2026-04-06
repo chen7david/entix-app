@@ -10,7 +10,7 @@ export type CreateSessionDTO = {
     durationMinutes: number;
     userIds: string[];
     recurrence?: {
-        frequency: "daily" | "weekly" | "monthly";
+        frequency: "daily" | "weekly" | "biweekly" | "monthly";
         count: number;
     };
 };
@@ -37,6 +37,8 @@ export class SessionScheduleService extends BaseService {
                 return addDays(date, offset).getTime();
             case "weekly":
                 return addWeeks(date, offset).getTime();
+            case "biweekly":
+                return addWeeks(date, offset * 2).getTime();
             case "monthly":
                 return addMonths(date, offset).getTime();
             default:
@@ -190,6 +192,7 @@ export class SessionScheduleService extends BaseService {
                 const recurrenceRule = currentSession.recurrenceRule || "";
                 let frequency = "weekly";
                 if (recurrenceRule.includes("DAILY")) frequency = "daily";
+                if (recurrenceRule.includes("BIWEEKLY")) frequency = "biweekly";
                 if (recurrenceRule.includes("MONTHLY")) frequency = "monthly";
 
                 const sessionsToInsert = [];

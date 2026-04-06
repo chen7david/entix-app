@@ -89,7 +89,7 @@ export const useSchedule = (
             startTime: number;
             durationMinutes: number;
             userIds: string[];
-            recurrence?: { frequency: "weekly"; count: number };
+            recurrence?: { frequency: "daily" | "weekly" | "biweekly" | "monthly"; count: number };
         }) => {
             const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule`, {
                 method: "POST",
@@ -168,7 +168,12 @@ export const useSchedule = (
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
-            // Let the UI handle the actual toast message so we avoid double rendering.
+            // Prefix-match invalidation covers all date-range variants of scheduleMetrics
+            queryClient.invalidateQueries({ queryKey: ["scheduleMetrics", organizationId] });
+            notification.success({
+                message: "Status Updated",
+                description: "Session status has been updated.",
+            });
         },
         onError: (err: any) =>
             notification.error({
