@@ -25,15 +25,17 @@ export const useInitializeWallet = (organizationId: string) => {
 
             return res.json();
         },
-        onSuccess: (data: any) => {
+        onSuccess: (_data: any, userId: string) => {
             notification.success({
                 message: "Wallet Initialized",
-                description: data.message || "Wallet initialization completed.",
+                description: _data.message || "Wallet initialization completed.",
             });
 
-            // Invalidate relevant queries
-            queryClient.invalidateQueries({ queryKey: ["members"] });
-            queryClient.invalidateQueries({ queryKey: ["wallet-summary"] });
+            // Invalidate the members table (correct key: "organizationMembers")
+            // and the per-member wallet balance shown in the drawer's Wallet tab.
+            void queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
+            void queryClient.invalidateQueries({ queryKey: ["walletBalance", userId] });
+            void queryClient.invalidateQueries({ queryKey: ["wallet-summary"] });
         },
         onError: (error: any) => {
             notification.error({
