@@ -1,3 +1,5 @@
+export const DEFAULT_PAGE_SIZE = 5;
+
 export interface CursorPaginationConfig {
     hasNextPage: boolean;
     hasPrevPage: boolean;

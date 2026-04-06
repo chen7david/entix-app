@@ -426,6 +426,7 @@ export const PlaylistManager: React.FC<{
                             style={{ width: "100%" }}
                             allowClear
                             size="large"
+                            variant="outlined"
                             onChange={(value) => handleAddMedia(value as string)}
                             filterOption={(input, option) =>
                                 (option?.label ?? "")

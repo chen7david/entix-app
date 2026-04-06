@@ -1,4 +1,5 @@
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { useCallback, useState } from "react";
 
 export type CursorTableStateOptions<T extends { search?: string }> = {
@@ -14,7 +15,11 @@ export type CursorTableStateOptions<T extends { search?: string }> = {
 export function useCursorTableState<T extends { search?: string }>(
     options: CursorTableStateOptions<T> = {}
 ) {
-    const { initialPageSize = 10, initialFilters = {} as T, debounceMs = 350 } = options;
+    const {
+        initialPageSize = DEFAULT_PAGE_SIZE,
+        initialFilters = {} as T,
+        debounceMs = 350,
+    } = options;
 
     const [filters, setFilters] = useState<T>(initialFilters);
     const [searchInput, setSearchInput] = useState(filters.search || "");

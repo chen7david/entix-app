@@ -33,6 +33,8 @@ export const ScheduleFilterBar: React.FC<Props> = ({
                 placeholder="Search sessions..."
                 prefix={<SearchOutlined />}
                 style={{ maxWidth: 200 }}
+                className="h-[40px] rounded-lg border-gray-300 transition-colors"
+                variant="outlined"
                 value={search}
                 onChange={(e) => onSearchChange(e.target.value)}
                 allowClear
@@ -44,6 +46,7 @@ export const ScheduleFilterBar: React.FC<Props> = ({
             />
             <Select
                 value={
+                    // ... the ternary logic ...
                     startDate === DateUtils.startOf("day") && endDate === DateUtils.endOf("day")
                         ? "Today"
                         : startDate === DateUtils.offsetStartOf(1, "day", "day") &&
@@ -61,7 +64,10 @@ export const ScheduleFilterBar: React.FC<Props> = ({
                                 : null
                 }
                 placeholder="Custom Range"
+                className="h-[40px] rounded-lg"
+                variant="outlined"
                 onChange={(val) => {
+                    // ... onChange logic ...
                     if (val === "Today")
                         onRangeChange([
                             DateUtils.toLibDate(DateUtils.startOf("day")),
@@ -99,6 +105,8 @@ export const ScheduleFilterBar: React.FC<Props> = ({
             />
             <Select
                 value={timeline}
+                className="h-[40px] rounded-lg"
+                variant="outlined"
                 onChange={onTimelineChange}
                 style={{ minWidth: 120 }}
                 options={[
@@ -110,6 +118,8 @@ export const ScheduleFilterBar: React.FC<Props> = ({
                 ]}
             />
             <RangePicker
+                className="h-[40px] rounded-lg"
+                variant="outlined"
                 onChange={onRangeChange}
                 value={
                     [

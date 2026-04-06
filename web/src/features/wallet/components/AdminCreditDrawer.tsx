@@ -264,7 +264,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         },
                         {
                             key: "funding",
-                            label: "Org-Funding",
+                            label: "Organization Funding",
                             children: (
                                 <div style={{ marginTop: 24 }}>
                                     <div
@@ -293,7 +293,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                                             type="secondary"
                                             style={{ display: "block", marginBottom: 8 }}
                                         >
-                                            ORGANIZATION CONTEXT
+                                            Organization Context
                                         </Text>
                                         <Select
                                             size="large"

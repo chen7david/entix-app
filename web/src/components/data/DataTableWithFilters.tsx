@@ -120,13 +120,15 @@ function DataTableWithFiltersInternal<T extends object>({
                                     }
                                     value={localFilters[filter.key] || ""}
                                     onChange={(e) => updateFilter(filter.key, e.target.value)}
-                                    className="rounded-lg h-[40px] transition-all hover:border-primary focus:border-primary shadow-sm"
+                                    variant="outlined"
+                                    className="rounded-lg h-[40px] transition-colors"
                                     allowClear
                                 />
                             )}
                             {filter.type === "dateRange" && (
                                 <DatePicker.RangePicker
-                                    className="w-full rounded-lg h-[40px] shadow-sm"
+                                    variant="outlined"
+                                    className="w-full rounded-lg h-[40px]"
                                     value={
                                         localFilters[filter.keys[0]] && localFilters[filter.keys[1]]
                                             ? [
@@ -148,6 +150,7 @@ function DataTableWithFiltersInternal<T extends object>({
                             )}
                             {filter.type === "select" && (
                                 <Select
+                                    variant="outlined"
                                     placeholder={filter.placeholder || "All Statuses"}
                                     className="w-full h-[40px]"
                                     options={filter.options}
@@ -165,7 +168,7 @@ function DataTableWithFiltersInternal<T extends object>({
                                         (filter.options?.[0]?.value ?? "")
                                     }
                                     onChange={(value) => updateFilter(filter.key, value)}
-                                    className="rounded-lg p-0.5 bg-gray-100 dark:bg-gray-800"
+                                    className="rounded-lg p-0.5"
                                 />
                             )}
                         </div>
