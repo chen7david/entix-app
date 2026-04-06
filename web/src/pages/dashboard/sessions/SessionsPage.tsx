@@ -14,11 +14,11 @@ import {
     useRevokeSession,
 } from "@web/src/features/auth";
 import {
+    App,
     Button,
     Card,
     Empty,
     List,
-    message,
     Popconfirm,
     Skeleton,
     Space,
@@ -37,6 +37,7 @@ const { Title, Text } = Typography;
 
 export const SessionsPage: React.FC = () => {
     const { token } = theme.useToken();
+    const { notification } = App.useApp();
     const { data: sessions, isLoading } = useListSessions();
     const { session: currentSession } = useBetterAuth();
     const { mutate: revokeSession, isPending: isRevoking } = useRevokeSession();
@@ -44,15 +45,31 @@ export const SessionsPage: React.FC = () => {
 
     const handleRevokeSession = (token: string) => {
         revokeSession(token, {
-            onSuccess: () => message.success("Session revoked successfully"),
-            onError: () => message.error("Failed to revoke session"),
+            onSuccess: () =>
+                notification.success({
+                    message: "Session Revoked",
+                    description: "The session has been revoked successfully.",
+                }),
+            onError: () =>
+                notification.error({
+                    message: "Revoke Failed",
+                    description: "Failed to revoke session.",
+                }),
         });
     };
 
     const handleRevokeAllOtherSessions = () => {
         revokeOtherSessions(undefined, {
-            onSuccess: () => message.success("All other sessions revoked successfully"),
-            onError: () => message.error("Failed to revoke sessions"),
+            onSuccess: () =>
+                notification.success({
+                    message: "Sessions Revoked",
+                    description: "All other sessions have been revoked successfully.",
+                }),
+            onError: () =>
+                notification.error({
+                    message: "Revoke Failed",
+                    description: "Failed to revoke other sessions.",
+                }),
         });
     };
 
@@ -246,9 +263,11 @@ export const SessionsPage: React.FC = () => {
                                                                 navigator.clipboard.writeText(
                                                                     session.userAgent
                                                                 );
-                                                                message.success(
-                                                                    "User Agent copied"
-                                                                );
+                                                                notification.success({
+                                                                    message: "Copied",
+                                                                    description:
+                                                                        "User Agent copied to clipboard",
+                                                                });
                                                             }}
                                                             style={{ flexShrink: 0 }}
                                                         />

@@ -9,7 +9,7 @@ import { useNavigate, useSearchParams } from "react-router";
 const { Text } = Typography;
 
 export const VerifyEmailPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get("token");
@@ -52,7 +52,10 @@ export const VerifyEmailPage: React.FC = () => {
                 onSuccess: (response: any) => {
                     const data = response.data as { status?: boolean } | null;
                     if (data?.status) {
-                        message.success("Email verified successfully!");
+                        notification.success({
+                            message: "Email Verified",
+                            description: "Your email has been verified successfully!",
+                        });
                         // Check org status to redirect appropriately
                         handleNavigateResult();
                     } else {
@@ -67,7 +70,7 @@ export const VerifyEmailPage: React.FC = () => {
                 },
             }
         );
-    }, [token, verify, message.success, handleNavigateResult, navigate]);
+    }, [token, verify, notification, handleNavigateResult, navigate]);
 
     if (status === "verifying") {
         return (

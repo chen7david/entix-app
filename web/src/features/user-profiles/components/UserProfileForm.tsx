@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { useEffect } from "react";
 
 export const UserProfileForm = ({ userId }: { userId: string }) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { aggregate, isLoading, upsertProfile } = useUserProfile(userId);
     const [form] = Form.useForm();
 
@@ -23,9 +23,15 @@ export const UserProfileForm = ({ userId }: { userId: string }) => {
                 ...values,
                 birthDate: values.birthDate ? values.birthDate.toDate() : null,
             });
-            message.success("Profile saved successfully");
-        } catch {
-            message.error("Failed to save profile");
+            notification.success({
+                message: "Profile Saved",
+                description: "Your personal information has been updated successfully.",
+            });
+        } catch (error: any) {
+            notification.error({
+                message: "Save Failed",
+                description: error.message || "Failed to save profile information.",
+            });
         }
     };
 

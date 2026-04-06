@@ -63,7 +63,7 @@ const { Title, Text } = Typography;
 
 export const OrganizationMembersPage: React.FC = () => {
     const { token } = theme.useToken();
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Bind search state generically to url string matching native architecture persistence
@@ -149,12 +149,18 @@ export const OrganizationMembersPage: React.FC = () => {
         async (memberUserId: string) => {
             try {
                 await removeAvatarMutation.mutateAsync(memberUserId);
-                message.success("Profile picture removed successfully");
+                notification.success({
+                    message: "Avatar Removed",
+                    description: "Profile picture removed successfully",
+                });
             } catch {
-                message.error("Failed to remove profile picture");
+                notification.error({
+                    message: "Removal Failed",
+                    description: "Failed to remove profile picture",
+                });
             }
         },
-        [removeAvatarMutation, message]
+        [removeAvatarMutation, notification]
     );
 
     // Permissions check using better-auth client helper
@@ -164,18 +170,30 @@ export const OrganizationMembersPage: React.FC = () => {
     const handleRoleChange = async (memberId: string, newRoles: string[]) => {
         try {
             await updateMemberRoles(memberId, newRoles);
-            message.success("Roles updated successfully");
+            notification.success({
+                message: "Roles Updated",
+                description: "Roles updated successfully",
+            });
         } catch {
-            message.error("Failed to update roles");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to update roles",
+            });
         }
     };
 
     const handleRemoveMember = async (memberId: string) => {
         try {
             await removeMember(memberId);
-            message.success("Member removed successfully");
+            notification.success({
+                message: "Member Removed",
+                description: "Member removed successfully",
+            });
         } catch {
-            message.error("Failed to remove member");
+            notification.error({
+                message: "Removal Failed",
+                description: "Failed to remove member",
+            });
         }
     };
 
@@ -187,12 +205,18 @@ export const OrganizationMembersPage: React.FC = () => {
                 redirectTo: `${window.location.origin}/auth/reset-password`,
             });
             if (error) {
-                message.error(`Failed to send password reset: ${error.message}`);
+                notification.error({
+                    message: "Reset Failed",
+                    description: error.message,
+                });
             } else {
-                message.success("Password reset email sent");
+                notification.success({
+                    message: "Email Sent",
+                    description: "Password reset email sent",
+                });
             }
         },
-        [message]
+        [notification]
     );
 
     const handleResendVerification = useCallback(
@@ -203,12 +227,18 @@ export const OrganizationMembersPage: React.FC = () => {
                 callbackURL: window.location.origin,
             });
             if (error) {
-                message.error(`Failed to send verification email: ${error.message}`);
+                notification.error({
+                    message: "Email Failed",
+                    description: error.message,
+                });
             } else {
-                message.success("Verification email sent");
+                notification.success({
+                    message: "Email Sent",
+                    description: "Verification email sent",
+                });
             }
         },
-        [message]
+        [notification]
     );
 
     // Compute role counts from organization-wide metrics if available

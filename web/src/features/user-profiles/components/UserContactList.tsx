@@ -9,6 +9,7 @@ import {
 import { useSocialMediaTypes, useUserProfile } from "@web/src/features/user-profiles";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
+    App,
     AutoComplete,
     Button,
     Card,
@@ -16,7 +17,6 @@ import {
     Form,
     Input,
     List,
-    message,
     Popconfirm,
     Select,
     Spin,
@@ -50,6 +50,7 @@ export const UserContactList = ({
         updateSocial,
         deleteSocial,
     } = useUserProfile(userId);
+    const { notification } = App.useApp();
 
     const { socialMediaTypes } = useSocialMediaTypes();
 
@@ -78,15 +79,24 @@ export const UserContactList = ({
 
             if (phoneModalState.editId) {
                 await updatePhone.mutateAsync({ id: phoneModalState.editId, payload });
-                message.success("Phone updated successfully");
+                notification.success({
+                    message: "Phone Updated",
+                    description: "Phone number updated successfully.",
+                });
             } else {
                 await addPhone.mutateAsync(payload);
-                message.success("Phone added successfully");
+                notification.success({
+                    message: "Phone Added",
+                    description: "New phone number added successfully.",
+                });
             }
             setPhoneModalState({ isOpen: false });
             phoneForm.resetFields();
         } catch {
-            message.error("Failed to process phone entry");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to process phone entry.",
+            });
         }
     };
 
@@ -94,15 +104,24 @@ export const UserContactList = ({
         try {
             if (addressModalState.editId) {
                 await updateAddress.mutateAsync({ id: addressModalState.editId, payload: values });
-                message.success("Address updated successfully");
+                notification.success({
+                    message: "Address Updated",
+                    description: "Address updated successfully.",
+                });
             } else {
                 await addAddress.mutateAsync(values);
-                message.success("Address added successfully");
+                notification.success({
+                    message: "Address Added",
+                    description: "New address added successfully.",
+                });
             }
             setAddressModalState({ isOpen: false });
             addressForm.resetFields();
         } catch {
-            message.error("Failed to process address");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to process address.",
+            });
         }
     };
 
@@ -110,15 +129,24 @@ export const UserContactList = ({
         try {
             if (socialModalState.editId) {
                 await updateSocial.mutateAsync({ id: socialModalState.editId, payload: values });
-                message.success("Social Medias updated successfully");
+                notification.success({
+                    message: "Social Updated",
+                    description: "Social media link updated successfully.",
+                });
             } else {
                 await addSocial.mutateAsync(values);
-                message.success("Social Medias appended successfully");
+                notification.success({
+                    message: "Social Linked",
+                    description: "Social media link appended successfully.",
+                });
             }
             setSocialModalState({ isOpen: false });
             socialForm.resetFields();
         } catch {
-            message.error("Failed to manage social media mappings");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to manage social media mappings.",
+            });
         }
     };
 

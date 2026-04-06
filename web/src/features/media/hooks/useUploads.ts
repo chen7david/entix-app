@@ -42,7 +42,7 @@ export const useOrganizationUploads = (
 };
 
 export const useDeleteUpload = (organizationId: string | undefined) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -64,10 +64,16 @@ export const useDeleteUpload = (organizationId: string | undefined) => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", organizationId] });
-            message.success("File deleted successfully");
+            notification.success({
+                message: "File Deleted",
+                description: "The file has been deleted successfully.",
+            });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to delete file");
+            notification.error({
+                message: "Deletion Failed",
+                description: error.message || "Failed to delete file",
+            });
         },
     });
 };

@@ -1,8 +1,9 @@
 import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { message } from "antd";
+import { App } from "antd";
 
 export const useReverseTransaction = (orgId?: string) => {
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -24,12 +25,18 @@ export const useReverseTransaction = (orgId?: string) => {
             return res.json();
         },
         onSuccess: () => {
-            message.success("Transaction reversed successfully");
+            notification.success({
+                message: "Transaction Reversed",
+                description: "The transaction has been reversed successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["transactions", orgId] });
             queryClient.invalidateQueries({ queryKey: ["walletBalance", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message);
+            notification.error({
+                message: "Reversal Failed",
+                description: error.message || "Failed to reverse transaction.",
+            });
         },
     });
 };

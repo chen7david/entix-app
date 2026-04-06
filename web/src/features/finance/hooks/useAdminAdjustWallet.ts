@@ -1,6 +1,6 @@
 import { API_V1, FINANCIAL_CATEGORIES, getTreasuryAccountId } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { message } from "antd";
+import { App } from "antd";
 
 type AdminAdjustment = {
     organizationId: string;
@@ -13,6 +13,7 @@ type AdminAdjustment = {
 };
 
 export const useAdminAdjustWallet = (orgId?: string) => {
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -59,12 +60,18 @@ export const useAdminAdjustWallet = (orgId?: string) => {
             return res.json();
         },
         onSuccess: (_, variables) => {
-            message.success(`Member wallet ${variables.type}ed successfully`);
+            notification.success({
+                message: "Adjustment Successful",
+                description: `Member wallet ${variables.type}ed successfully.`,
+            });
             queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
             queryClient.invalidateQueries({ queryKey: ["transactions", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message);
+            notification.error({
+                message: "Adjustment Failed",
+                description: error.message || "Failed to execute admin adjustment.",
+            });
         },
     });
 };

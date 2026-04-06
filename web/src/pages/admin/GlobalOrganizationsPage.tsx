@@ -21,7 +21,7 @@ import { useState } from "react";
 const { Title, Text } = Typography;
 
 export const GlobalOrganizationsPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
@@ -63,14 +63,18 @@ export const GlobalOrganizationsPage: React.FC = () => {
     const handleCreateUserWithOrg = (values: SignUpWithOrgValues) => {
         createUserWithOrg(values, {
             onSuccess: () => {
-                message.success(
-                    `Organization "${values.organizationName}" and user created successfully`
-                );
+                notification.success({
+                    message: "Creation Successful",
+                    description: `Organization "${values.organizationName}" and user created successfully`,
+                });
                 setIsCreateUserWithOrgModalOpen(false);
                 refetch();
             },
             onError: (error: Error) => {
-                message.error(error.message || "Failed to create user and organization");
+                notification.error({
+                    message: "Creation Failed",
+                    description: error.message || "Failed to create user and organization",
+                });
             },
         });
     };

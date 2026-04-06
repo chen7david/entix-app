@@ -154,7 +154,7 @@ export const PlaylistManager: React.FC<{
     const totalPlaylists = playlistsResponse?.items.length ?? 0;
     const playlists = playlistsResponse?.items || [];
 
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { media } = useMedia();
     const navigateOrg = useOrgNavigate();
 
@@ -217,7 +217,10 @@ export const PlaylistManager: React.FC<{
 
                 if (activePlaylist) {
                     updateSequence(activePlaylist.id, newArray).catch((_err) =>
-                        message.error("Failed to update sequence order")
+                        notification.error({
+                            message: "Order Update Failed",
+                            description: "Failed to update sequence order.",
+                        })
                     );
                 }
 
@@ -231,7 +234,10 @@ export const PlaylistManager: React.FC<{
         setSequenceItems(newItems);
         if (activePlaylist) {
             updateSequence(activePlaylist.id, newItems).catch((_err) =>
-                message.error("Failed to remove item from sequence")
+                notification.error({
+                    message: "Removal Failed",
+                    description: "Failed to remove item from sequence.",
+                })
             );
         }
     };
@@ -242,7 +248,10 @@ export const PlaylistManager: React.FC<{
             setSequenceItems(newItems);
             if (activePlaylist) {
                 updateSequence(activePlaylist.id, newItems).catch((_err) =>
-                    message.error("Failed to add item to sequence")
+                    notification.error({
+                        message: "Add Failed",
+                        description: "Failed to add item to sequence.",
+                    })
                 );
             }
         }

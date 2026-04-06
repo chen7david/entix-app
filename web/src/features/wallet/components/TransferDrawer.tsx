@@ -13,19 +13,25 @@ type TransferDrawerProps = {
 
 export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawerProps) => {
     const [form] = Form.useForm();
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { mutate, isPending } = useWalletTransfer(orgId);
     const { currencies } = useActivatedCurrencies(orgId);
 
     const onFinish = (values: TransferInput) => {
         mutate(values, {
             onSuccess: () => {
-                message.success("Transfer submitted successfully");
+                notification.success({
+                    message: "Transfer Submitted",
+                    description: "Your transfer has been processed successfully.",
+                });
                 onClose();
                 form.resetFields();
             },
             onError: (err) => {
-                message.error(err.message || "Transfer failed. Please check funds.");
+                notification.error({
+                    message: "Transfer Failed",
+                    description: err.message || "Transfer failed. Please check funds.",
+                });
             },
         });
     };

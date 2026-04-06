@@ -20,7 +20,7 @@ export const Uploader = ({
     maxNumberOfFiles = 10,
     maxFileSize = 1024 * 1024 * 500, // 500MB limit
 }: UploaderProps) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     const props: UploadProps = {
@@ -35,7 +35,10 @@ export const Uploader = ({
             if (fileObj.size > maxFileSize) {
                 const errorMsg = `File must be smaller than ${Math.round(maxFileSize / (1024 * 1024))}MB`;
                 onError?.(new Error(errorMsg));
-                message.error(errorMsg);
+                notification.error({
+                    message: "File Too Large",
+                    description: errorMsg,
+                });
                 return;
             }
 
@@ -89,11 +92,17 @@ export const Uploader = ({
                 });
                 onUploadSuccess?.();
                 onSuccess?.("ok");
-                message.success(`${fileObj.name} file uploaded successfully.`);
+                notification.success({
+                    message: "Upload Successful",
+                    description: `${fileObj.name} uploaded successfully.`,
+                });
             } catch (err: any) {
                 console.error("Upload error", err);
                 onError?.(err);
-                message.error(`${fileObj.name} file upload failed.`);
+                notification.error({
+                    message: "Upload Failed",
+                    description: `${fileObj.name} file upload failed.`,
+                });
             }
         },
         onDrop(e) {

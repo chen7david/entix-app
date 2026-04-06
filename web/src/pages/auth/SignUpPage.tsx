@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 const { Title, Text } = Typography;
 
 export const SignUpPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const navigate = useNavigate();
     const { mutate: signUp, isPending } = useSignUpWithOrg();
 
@@ -25,7 +25,10 @@ export const SignUpPage: React.FC = () => {
             },
             {
                 onSuccess: () => {
-                    message.success("Account and Organization created!");
+                    notification.success({
+                        message: "Account Created!",
+                        description: "Your account and organization were created successfully.",
+                    });
                     // Navigate to dashboard or email verification depending on flow
                     // For now, let's assume dashboard or email verification
                     navigate(AppRoutes.auth.emailVerificationPending, {
@@ -33,7 +36,10 @@ export const SignUpPage: React.FC = () => {
                     });
                 },
                 onError: (error) => {
-                    message.error(error.message || "Failed to create account");
+                    notification.error({
+                        message: "Sign Up Failed",
+                        description: error.message || "Failed to create account",
+                    });
                 },
             }
         );

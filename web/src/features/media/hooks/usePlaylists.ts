@@ -35,7 +35,7 @@ export const usePlaylist = (playlistId?: string) => {
 };
 
 export const usePlaylists = (filters?: PlaylistFilters) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
@@ -73,12 +73,18 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             return (await res.json()) as PlaylistDTO;
         },
         onSuccess: () => {
-            message.success("Playlist created");
+            notification.success({
+                message: "Playlist Created",
+                description: "Playlist has been created successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to create playlist");
+            notification.error({
+                message: "Creation Failed",
+                description: error.message || "Failed to create playlist.",
+            });
         },
     });
 
@@ -101,12 +107,18 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             return (await res.json()) as PlaylistDTO;
         },
         onSuccess: () => {
-            message.success("Playlist properties saved");
+            notification.success({
+                message: "Playlist Updated",
+                description: "Playlist properties have been saved successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to update playlist");
+            notification.error({
+                message: "Update Failed",
+                description: error.message || "Failed to update playlist.",
+            });
         },
     });
 
@@ -120,11 +132,17 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             if (!res.ok) await parseApiError(res);
         },
         onSuccess: () => {
-            message.success("Playlist deleted");
+            notification.success({
+                message: "Playlist Deleted",
+                description: "Playlist has been deleted successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to delete playlist");
+            notification.error({
+                message: "Deletion Failed",
+                description: error.message || "Failed to delete playlist.",
+            });
         },
     });
 
@@ -159,7 +177,10 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             queryClient.invalidateQueries({ queryKey: ["playlistSequence", variables.playlistId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to persist the media order");
+            notification.error({
+                message: "Order Persist Failed",
+                description: error.message || "Failed to persist the media order.",
+            });
         },
     });
 

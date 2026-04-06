@@ -8,7 +8,7 @@ import { useLocation, useNavigate } from "react-router";
 const { Title, Text } = Typography;
 
 export const EmailVerificationPendingPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const location = useLocation();
     const navigate = useNavigate();
     const email = location.state?.email; // Expect email to be passed in state
@@ -16,7 +16,10 @@ export const EmailVerificationPendingPage: React.FC = () => {
 
     const handleResend = () => {
         if (!email) {
-            message.error("Email address not found. Please sign in again.");
+            notification.error({
+                message: "Email Missing",
+                description: "Email address not found. Please sign in again.",
+            });
             return;
         }
 
@@ -26,10 +29,16 @@ export const EmailVerificationPendingPage: React.FC = () => {
             },
             {
                 onSuccess: () => {
-                    message.success("Verification email sent!");
+                    notification.success({
+                        message: "Email Sent",
+                        description: "Verification email sent! Please check your inbox.",
+                    });
                 },
                 onError: (error) => {
-                    message.error(error.message || "Failed to resend verification email.");
+                    notification.error({
+                        message: "Resend Failed",
+                        description: error.message || "Failed to resend verification email.",
+                    });
                 },
             }
         );

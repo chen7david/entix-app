@@ -36,30 +36,36 @@ export function useCursorTableState<T extends { search?: string }>(
 
     const handleFiltersChange = useCallback(
         (newFilters: Partial<T>) => {
-            // Handle search separately for local UI state
-            if (newFilters.search !== undefined) {
-                setSearchInput(newFilters.search);
-            }
+            setFilters((prev) => {
+                const isFullReset = Object.keys(newFilters).length === 0;
+                const next = isFullReset ? initialFilters : { ...prev, ...newFilters };
 
-            // Check if any filter besides search has changed
-            // Cursor resets are triggered on raw filter input changes to ensure immediate pagination reset.
-            let otherFiltersChanged = false;
-            for (const key in newFilters) {
-                if (key !== "search") {
-                    if (newFilters[key] !== filters[key]) {
-                        otherFiltersChanged = true;
+                // Determine if any filter actually changed compared to the previous state.
+                // We check all potential keys (union of current and next) to catch removals and updates.
+                const allKeys = new Set([...Object.keys(prev), ...Object.keys(next)]);
+                let filtersChanged = false;
+
+                for (const key of allKeys) {
+                    if ((prev as any)[key] !== (next as any)[key]) {
+                        filtersChanged = true;
                         break;
                     }
                 }
-            }
 
-            if (otherFiltersChanged) {
-                resetCursor();
-            }
+                if (filtersChanged) {
+                    // Side-effect: Reset pagination state
+                    resetCursor();
 
-            setFilters((prev) => ({ ...prev, ...newFilters }));
+                    // Side-effect: Synchronize local search input if it changed
+                    if (next.search !== prev.search) {
+                        setSearchInput(next.search || "");
+                    }
+                }
+
+                return next;
+            });
         },
-        [filters, resetCursor]
+        [initialFilters, resetCursor]
     );
 
     const handlePageSizeChange = useCallback(

@@ -131,7 +131,6 @@ export const SessionDetailsDrawer = ({
             };
 
             await onSave(payload);
-            notification.success({ message: "Session saved successfully" });
             onClose();
         } catch (e: any) {
             notification.error({

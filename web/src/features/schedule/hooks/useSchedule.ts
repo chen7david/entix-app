@@ -43,7 +43,7 @@ export const useSchedule = (
     endDate?: number,
     searchQuery?: string
 ) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuth();
 
@@ -102,10 +102,14 @@ export const useSchedule = (
             return res.json();
         },
         onSuccess: () => {
-            message.success("Session(s) created successfully");
+            notification.success({ message: "Session(s) created successfully" });
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
         },
-        onError: () => message.error("Failed to create session"),
+        onError: (err: any) =>
+            notification.error({
+                message: "Create Failed",
+                description: err.message || "Failed to create session",
+            }),
     });
 
     const updateSession = useMutation({
@@ -133,10 +137,14 @@ export const useSchedule = (
             return res.json();
         },
         onSuccess: () => {
-            message.success("Session updated successfully");
+            notification.success({ message: "Session updated successfully" });
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
         },
-        onError: () => message.error("Failed to update session"),
+        onError: (err: any) =>
+            notification.error({
+                message: "Update Failed",
+                description: err.message || "Failed to update session",
+            }),
     });
 
     const updateSessionStatus = useMutation({
@@ -162,7 +170,11 @@ export const useSchedule = (
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
             // Let the UI handle the actual toast message so we avoid double rendering.
         },
-        onError: () => message.error("Failed to update status"),
+        onError: (err: any) =>
+            notification.error({
+                message: "Status Update Failed",
+                description: err.message || "Failed to update status",
+            }),
     });
 
     const deleteSession = useMutation({
@@ -183,10 +195,13 @@ export const useSchedule = (
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
-            message.success("Session deleted securely");
+            notification.success({ message: "Session deleted securely" });
         },
         onError: (err: any) => {
-            message.error(err.message || "Failed to delete session");
+            notification.error({
+                message: "Delete Failed",
+                description: err.message || "Failed to delete session",
+            });
         },
     });
 
@@ -217,10 +232,13 @@ export const useSchedule = (
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
-            message.success("Attendance maps saved properly");
+            notification.success({ message: "Attendance maps saved properly" });
         },
         onError: (err: any) => {
-            message.error(err.message || "Attendance save failed");
+            notification.error({
+                message: "Attendance Save Failed",
+                description: err.message || "Attendance save failed",
+            });
         },
     });
 

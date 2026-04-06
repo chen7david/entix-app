@@ -5,7 +5,7 @@ import { Alert, App, Button } from "antd";
 import type React from "react";
 
 export const ImpersonationBanner: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { data, isPending: isSessionPending } = useSession();
     const { mutate: stopImpersonating, isPending: isStopping } = useStopImpersonating();
 
@@ -19,7 +19,10 @@ export const ImpersonationBanner: React.FC = () => {
     const handleStopImpersonation = () => {
         stopImpersonating(undefined, {
             onError: (error) => {
-                message.error(error.message);
+                notification.error({
+                    message: "Stop Failed",
+                    description: error.message || "Failed to stop impersonation",
+                });
                 console.error("Failed to stop impersonation", error);
             },
         });

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 
 export const AcceptInvitationPage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const invitationId = searchParams.get("id");
@@ -35,7 +35,10 @@ export const AcceptInvitationPage: React.FC = () => {
                         setError(result.error.message || "Failed to accept invitation");
                     } else {
                         setSuccess(true);
-                        message.success("Invitation accepted successfully!");
+                        notification.success({
+                            message: "Invitation Accepted",
+                            description: "You have successfully joined the organization.",
+                        });
                     }
                 })
                 .catch((err: unknown) => {
@@ -49,7 +52,7 @@ export const AcceptInvitationPage: React.FC = () => {
         success,
         error,
         isAcceptingInvitation,
-        message.success,
+        notification,
     ]);
 
     const handleNavigateResult = async () => {
