@@ -1,6 +1,6 @@
 import { authClient } from "@web/src/lib/auth-client";
 import type React from "react";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef } from "react";
 
 export type UserRole = "admin" | "user";
 export type OrgRole = "owner" | "admin" | "member";
@@ -35,11 +35,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await Promise.all([session.refetch(), activeMember.refetch()]);
     }, [session.refetch, activeMember.refetch]);
 
-    // ONLY show loading if it's pending AND we don't already have data.
-    // This prevents background refetches (e.g., from window focus) from triggering
-    // a full-page loading state, which unmounts routes and wipes form states.
+    // Hold the last known member data through better-auth's nanostore blink
+    // (data → undefined during refetch, confirmed by better-auth #3837 and #6879).
+    // Only mark as truly loading if we have NEVER had data.
+    const lastMemberData = useRef(activeMember.data);
+    if (activeMember.data !== undefined) {
+        lastMemberData.current = activeMember.data;
+    }
+
     const isSessionLoading = session.isPending && session.data === undefined;
-    const isMemberLoading = activeMember.isPending && activeMember.data === undefined;
+    const isMemberLoading = activeMember.isPending && lastMemberData.current === undefined;
 
     const isLoading = isSessionLoading || isMemberLoading;
 
