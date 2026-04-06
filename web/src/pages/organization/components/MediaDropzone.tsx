@@ -15,7 +15,7 @@ const { Dragger } = Upload;
 const { Paragraph } = Typography;
 
 export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ type }) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { activeOrganization } = useOrganization();
     const { createMedia } = useMedia();
     const setQueue = useSetAtom(uploadQueueAtom);
@@ -55,14 +55,20 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
             }
 
             if (!isValid) {
-                message.error(`${file.name} is not a supported format.`);
+                notification.error({
+                    message: "Unsupported Format",
+                    description: `${file.name} is not a supported format.`,
+                });
                 return Upload.LIST_IGNORE;
             }
             return true;
         },
         customRequest: async (options) => {
             if (!organizationId) {
-                message.error("Organization context lost");
+                notification.error({
+                    message: "Context Error",
+                    description: "Organization context lost. Please refresh and try again.",
+                });
                 return;
             }
 
@@ -173,7 +179,10 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
                     errorMessage: err.message || "Upload failed",
                 });
                 onError?.(err);
-                message.error(`${fileObj.name} file upload failed.`);
+                notification.error({
+                    message: "Upload Failed",
+                    description: `${fileObj.name} file upload failed.`,
+                });
             }
         },
     };

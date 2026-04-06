@@ -8,7 +8,7 @@ import { GuestRoute } from "./components/guards/GuestRoute";
 import { OrgGuard } from "./components/guards/OrgGuard";
 import { ProtectedRoute } from "./components/guards/ProtectedRoute";
 import { FinancialManagementPage } from "./features/admin/FinancialManagementPage";
-import { AuthProvider, useAuth } from "./features/auth/context/AuthContext";
+import { AuthProvider } from "./features/auth/context/AuthContext";
 import { AdminLayout } from "./layouts/AdminLayout";
 import { AuthLayout } from "./layouts/AuthLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
@@ -56,69 +56,10 @@ function logError(error: unknown, info: { componentStack?: string | null }) {
     console.error("Error Boundary caught an error:", error, info);
 }
 
-import { useEffect } from "react";
-import { useNavigate } from "react-router";
-import { useOrganization } from "./features/organization/hooks/useOrganization";
+import { useHomeRedirect } from "./features/auth/hooks/useHomeRedirect";
 
 function HomeRedirect() {
-    const { isAuthenticated, isLoading: loadingAuth } = useAuth();
-    const { checkOrganizationStatus, setActive } = useOrganization();
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        let mounted = true;
-
-        const handleRedirect = async () => {
-            if (loadingAuth) return;
-
-            if (!isAuthenticated) {
-                if (mounted) {
-                    navigate(AppRoutes.auth.signIn, { replace: true });
-                }
-                return;
-            }
-
-            const result = await checkOrganizationStatus();
-            if (!mounted || !result) return;
-            const { orgs, activeOrg } = result;
-
-            // 1. If there's already an active org, go there
-            if (activeOrg?.slug) {
-                navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, {
-                    replace: true,
-                });
-                return;
-            }
-
-            // 2. If no orgs, go to onboarding
-            if (!orgs || orgs.length === 0) {
-                navigate(AppRoutes.onboarding.noOrganization, { replace: true });
-                return;
-            }
-
-            // 3. If exactly one org, auto-select it and go to its dashboard
-            if (orgs.length === 1 && orgs[0].slug) {
-                await setActive(orgs[0].id);
-                if (mounted) {
-                    navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, {
-                        replace: true,
-                    });
-                }
-                return;
-            }
-
-            // 4. Otherwise, let the user select
-            navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
-        };
-
-        handleRedirect();
-
-        return () => {
-            mounted = false;
-        };
-    }, [isAuthenticated, loadingAuth, checkOrganizationStatus, navigate, setActive]);
-
-    // Keep showing spinner while checkOrganizationStatus handles navigation
+    useHomeRedirect();
     return <CenteredSpin />;
 }
 

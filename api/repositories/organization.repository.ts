@@ -71,10 +71,16 @@ export class OrganizationRepository {
             .orderBy(...orderBy)
             .limit(limit + 1);
 
-        return processPaginatedResult(items, limit, direction, (row) => ({
-            primary: row.createdAt.getTime(),
-            secondary: row.id,
-        }));
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.createdAt.getTime(),
+                secondary: row.id,
+            }),
+            cursor
+        );
     }
 
     /**

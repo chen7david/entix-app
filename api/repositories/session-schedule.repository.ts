@@ -92,10 +92,16 @@ export class SessionScheduleRepository {
             },
         });
 
-        const result = processPaginatedResult(sessions, limit, direction, (row) => ({
-            primary: row.startTime.getTime(),
-            secondary: row.id,
-        }));
+        const result = processPaginatedResult(
+            sessions,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.startTime.getTime(),
+                secondary: row.id,
+            }),
+            cursor
+        );
 
         return result;
     }

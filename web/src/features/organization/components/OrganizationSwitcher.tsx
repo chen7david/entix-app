@@ -7,14 +7,20 @@ export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();
     const navigate = useNavigate();
 
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
 
     const handleChange = async (value: string) => {
         const { error } = await setActive(value);
         if (error) {
-            message.error("Failed to switch organization");
+            notification.error({
+                message: "Switch Failed",
+                description: "Failed to switch organization. Please try again.",
+            });
         } else {
-            message.success("Switched organization successfully");
+            notification.success({
+                message: "Organization Switched",
+                description: "You have successfully switched organizations.",
+            });
             if (afterSelect) {
                 afterSelect();
             } else {

@@ -6,6 +6,7 @@ import { createRequester } from "./base-requester";
 import { createFinanceClient } from "./finance.client";
 import { createMediaClient } from "./media.client";
 import { createMembersClient } from "./members.client";
+import { createPlaylistsClient } from "./playlists.client";
 import { createScheduleClient } from "./schedule.client";
 import { createUsersClient } from "./users.client";
 
@@ -39,6 +40,7 @@ export function createTestClient(app: Hono<AppEnv>, env: any, cookie?: string) {
             media: createMediaClient(request),
             schedule: createScheduleClient(request),
             finance: createFinanceClient(request),
+            playlists: createPlaylistsClient(request),
         },
         /**
          * Low-level escape hatch for one-off requests
@@ -59,4 +61,5 @@ export type { AuthClient } from "./auth.client";
 export type { Requester } from "./base-requester";
 export type { MediaClient } from "./media.client";
 export type { MembersClient } from "./members.client";
+export type { PlaylistsClient } from "./playlists.client";
 export type { UsersClient } from "./users.client";

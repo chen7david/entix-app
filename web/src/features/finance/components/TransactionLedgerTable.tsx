@@ -1,10 +1,10 @@
 import { HistoryOutlined, RollbackOutlined } from "@ant-design/icons";
+import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import {
-    type CursorPaginationConfig,
     DataTableWithFilters,
     type FilterConfig,
 } from "@web/src/components/data/DataTableWithFilters";
-import { Button, Input, Modal, Space, Typography } from "antd";
+import { App, Button, Input, Modal, Space, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";
 import { getTransactionColumns, type TransactionRecord } from "./TransactionColumns";
@@ -30,6 +30,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
     pagination,
     filters,
 }) => {
+    const { notification } = App.useApp();
     const [reversalModal, setReversalModal] = useState<{ id: string } | null>(null);
     const [reason, setReason] = useState("");
 
@@ -37,7 +38,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
         <>
             <DataTableWithFilters<TransactionRecord>
                 config={{
-                    columns: getTransactionColumns(),
+                    columns: getTransactionColumns(notification),
                     data: transactions,
                     pagination,
                     loading,

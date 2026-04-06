@@ -17,7 +17,7 @@ import { useNavigate } from "react-router";
 const { Title, Text } = Typography;
 
 export const ProfilePage: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { data: session, isPending } = useSession();
     const navigate = useNavigate();
     const { activeOrganization } = useOrganization();
@@ -26,11 +26,17 @@ export const ProfilePage: React.FC = () => {
     const handleLogout = () => {
         signOut(undefined, {
             onSuccess: () => {
-                message.success("Logged out successfully");
+                notification.success({
+                    message: "Logout Successful",
+                    description: "You have been logged out successfully.",
+                });
                 navigate(AppRoutes.auth.signIn);
             },
             onError: (err) => {
-                message.error(err.message || "Failed to log out");
+                notification.error({
+                    message: "Logout Failed",
+                    description: err.message || "Failed to log out",
+                });
             },
         });
     };

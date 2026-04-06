@@ -19,9 +19,9 @@ describe("Admin Verification Resend Integration", () => {
         const db = await createTestDb();
 
         // Mock the service method to avoid Better Auth "email not enabled" errors in test env
-        const { UserService } = await import("@api/services/user.service");
+        const { NotificationService } = await import("@api/services/notification.service");
         const spy = vi
-            .spyOn(UserService.prototype, "resendVerificationEmailAdmin")
+            .spyOn(NotificationService.prototype, "sendVerificationReminder")
             .mockResolvedValue(undefined);
 
         await db.insert(schema.authUsers).values({

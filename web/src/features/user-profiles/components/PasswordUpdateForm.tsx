@@ -4,7 +4,7 @@ import { Alert, App, Button, Card, Form, Input } from "antd";
 import { useState } from "react";
 
 export const PasswordUpdateForm = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -22,8 +22,15 @@ export const PasswordUpdateForm = () => {
 
             if (result.error) {
                 setErrorMsg(result.error.message || "Failed to update password");
+                notification.error({
+                    message: "Update Failed",
+                    description: result.error.message || "Failed to update password",
+                });
             } else {
-                message.success("Password updated successfully!");
+                notification.success({
+                    message: "Password Updated",
+                    description: "Your password has been updated successfully.",
+                });
                 form.resetFields();
             }
         } catch (err: any) {

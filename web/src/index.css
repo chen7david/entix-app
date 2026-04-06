@@ -71,9 +71,14 @@ media-player::part(provider) {
 
 @layer components {
     /* Data Table Pro Customizations */
-    .data-table-pro-container .ant-table-thead > tr > th {
-        background: var(--ant-color-fill-tertiary) !important;
-        border-bottom: 1px solid var(--ant-color-border-secondary) !important;
+    .data-table-pro-container .ant-table-wrapper
+        .ant-table-container
+        table
+        > .ant-table-thead
+        > tr
+        > th {
+        background: var(--ant-color-fill-tertiary);
+        border-bottom: 1px solid var(--ant-color-border-secondary);
         color: var(--ant-color-text-description);
         @apply font-semibold px-4 py-3 text-[10px] uppercase tracking-widest;
     }

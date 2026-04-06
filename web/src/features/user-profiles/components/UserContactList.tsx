@@ -7,7 +7,9 @@ import {
     PlusOutlined,
 } from "@ant-design/icons";
 import { useSocialMediaTypes, useUserProfile } from "@web/src/features/user-profiles";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
+    App,
     AutoComplete,
     Button,
     Card,
@@ -15,10 +17,8 @@ import {
     Form,
     Input,
     List,
-    message,
     Popconfirm,
     Select,
-    Space,
     Spin,
     Switch,
     Tag,
@@ -50,6 +50,7 @@ export const UserContactList = ({
         updateSocial,
         deleteSocial,
     } = useUserProfile(userId);
+    const { notification } = App.useApp();
 
     const { socialMediaTypes } = useSocialMediaTypes();
 
@@ -78,15 +79,24 @@ export const UserContactList = ({
 
             if (phoneModalState.editId) {
                 await updatePhone.mutateAsync({ id: phoneModalState.editId, payload });
-                message.success("Phone updated successfully");
+                notification.success({
+                    message: "Phone Updated",
+                    description: "Phone number updated successfully.",
+                });
             } else {
                 await addPhone.mutateAsync(payload);
-                message.success("Phone added successfully");
+                notification.success({
+                    message: "Phone Added",
+                    description: "New phone number added successfully.",
+                });
             }
             setPhoneModalState({ isOpen: false });
             phoneForm.resetFields();
         } catch {
-            message.error("Failed to process phone entry");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to process phone entry.",
+            });
         }
     };
 
@@ -94,15 +104,24 @@ export const UserContactList = ({
         try {
             if (addressModalState.editId) {
                 await updateAddress.mutateAsync({ id: addressModalState.editId, payload: values });
-                message.success("Address updated successfully");
+                notification.success({
+                    message: "Address Updated",
+                    description: "Address updated successfully.",
+                });
             } else {
                 await addAddress.mutateAsync(values);
-                message.success("Address added successfully");
+                notification.success({
+                    message: "Address Added",
+                    description: "New address added successfully.",
+                });
             }
             setAddressModalState({ isOpen: false });
             addressForm.resetFields();
         } catch {
-            message.error("Failed to process address");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to process address.",
+            });
         }
     };
 
@@ -110,15 +129,24 @@ export const UserContactList = ({
         try {
             if (socialModalState.editId) {
                 await updateSocial.mutateAsync({ id: socialModalState.editId, payload: values });
-                message.success("Social Medias updated successfully");
+                notification.success({
+                    message: "Social Updated",
+                    description: "Social media link updated successfully.",
+                });
             } else {
                 await addSocial.mutateAsync(values);
-                message.success("Social Medias appended successfully");
+                notification.success({
+                    message: "Social Linked",
+                    description: "Social media link appended successfully.",
+                });
             }
             setSocialModalState({ isOpen: false });
             socialForm.resetFields();
         } catch {
-            message.error("Failed to manage social media mappings");
+            notification.error({
+                message: "Update Failed",
+                description: "Failed to manage social media mappings.",
+            });
         }
     };
 
@@ -262,11 +290,20 @@ export const UserContactList = ({
             <Drawer
                 title={phoneModalState.editId ? "Edit Phone" : "Add Phone"}
                 placement="right"
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 open={phoneModalState.isOpen}
                 onClose={() => setPhoneModalState({ isOpen: false })}
                 destroyOnClose
                 push={false}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => phoneForm.submit()}
+                        loading={addPhone.isPending || updatePhone.isPending}
+                    >
+                        Save
+                    </Button>
+                }
             >
                 <Form form={phoneForm} layout="vertical" onFinish={handlePhoneSubmit}>
                     <Form.Item
@@ -326,20 +363,6 @@ export const UserContactList = ({
                         initialValue={false}
                     >
                         <Switch />
-                    </Form.Item>
-                    <Form.Item className="mb-0 flex justify-end">
-                        <Space>
-                            <Button onClick={() => setPhoneModalState({ isOpen: false })}>
-                                Cancel
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={addPhone.isPending || updatePhone.isPending}
-                            >
-                                Save
-                            </Button>
-                        </Space>
                     </Form.Item>
                 </Form>
             </Drawer>
@@ -431,11 +454,20 @@ export const UserContactList = ({
             <Drawer
                 title={addressModalState.editId ? "Edit Address" : "Add Address"}
                 placement="right"
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 open={addressModalState.isOpen}
                 onClose={() => setAddressModalState({ isOpen: false })}
                 destroyOnClose
                 push={false}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => addressForm.submit()}
+                        loading={addAddress.isPending || updateAddress.isPending}
+                    >
+                        Save
+                    </Button>
+                }
             >
                 <Form form={addressForm} layout="vertical" onFinish={handleAddressSubmit}>
                     <Form.Item
@@ -500,20 +532,6 @@ export const UserContactList = ({
                         initialValue={false}
                     >
                         <Switch />
-                    </Form.Item>
-                    <Form.Item className="mb-0 flex justify-end">
-                        <Space>
-                            <Button onClick={() => setAddressModalState({ isOpen: false })}>
-                                Cancel
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={addAddress.isPending || updateAddress.isPending}
-                            >
-                                Save
-                            </Button>
-                        </Space>
                     </Form.Item>
                 </Form>
             </Drawer>
@@ -586,11 +604,20 @@ export const UserContactList = ({
             <Drawer
                 title={socialModalState.editId ? "Update Identity" : "Bind Social Account"}
                 placement="right"
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 open={socialModalState.isOpen}
                 onClose={() => setSocialModalState({ isOpen: false })}
                 destroyOnClose
                 push={false}
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => socialForm.submit()}
+                        loading={addSocial.isPending || updateSocial.isPending}
+                    >
+                        Save
+                    </Button>
+                }
             >
                 <Form form={socialForm} layout="vertical" onFinish={handleSocialSubmit}>
                     <Form.Item
@@ -612,20 +639,6 @@ export const UserContactList = ({
                         rules={[{ required: true }]}
                     >
                         <Input />
-                    </Form.Item>
-                    <Form.Item className="mb-0 flex justify-end">
-                        <Space>
-                            <Button onClick={() => setSocialModalState({ isOpen: false })}>
-                                Cancel
-                            </Button>
-                            <Button
-                                type="primary"
-                                htmlType="submit"
-                                loading={addSocial.isPending || updateSocial.isPending}
-                            >
-                                Save
-                            </Button>
-                        </Space>
                     </Form.Item>
                 </Form>
             </Drawer>

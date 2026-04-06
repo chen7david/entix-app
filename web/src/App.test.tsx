@@ -22,6 +22,8 @@ vi.mock("./components/common/CenteredView", () => ({
     CenteredView: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+const emptyOrgStatus = { orgs: [], activeOrg: null };
+
 describe("HomeRedirect UX Logic", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -44,7 +46,7 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn().mockResolvedValue({ orgs: [], activeOrg: null }),
+            checkOrganizationStatus: vi.fn().mockResolvedValue(emptyOrgStatus),
         });
 
         render(
@@ -81,7 +83,7 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn().mockResolvedValue({ orgs: [], activeOrg: null }),
+            checkOrganizationStatus: vi.fn().mockResolvedValue(emptyOrgStatus),
         });
 
         render(
@@ -113,10 +115,7 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: mockCheckStatus.mockResolvedValue({
-                orgs: [],
-                activeOrg: null,
-            }),
+            checkOrganizationStatus: mockCheckStatus.mockResolvedValue(emptyOrgStatus),
         });
 
         render(

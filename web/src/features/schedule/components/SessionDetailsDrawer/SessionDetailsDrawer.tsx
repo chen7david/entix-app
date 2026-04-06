@@ -1,7 +1,7 @@
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Drawer, Form, Modal, Tabs } from "antd";
+import { App, Button, Drawer, Form, Modal, Tabs } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
@@ -131,7 +131,6 @@ export const SessionDetailsDrawer = ({
             };
 
             await onSave(payload);
-            notification.success({ message: "Session saved successfully" });
             onClose();
         } catch (e: any) {
             notification.error({
@@ -261,14 +260,19 @@ export const SessionDetailsDrawer = ({
     return (
         <Drawer
             title={session ? "Edit Session" : "Schedule New Session"}
-            width={520}
+            width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
             open={open}
             onClose={onClose}
             destroyOnClose
             styles={{ body: { paddingBottom: 80 } }}
+            extra={
+                <Button type="primary" onClick={() => form.submit()} loading={isSubmitting}>
+                    {session ? "Save Changes" : "Create Session"}
+                </Button>
+            }
         >
             <Form form={form} layout="vertical" onFinish={handleFinish} id="session-form">
-                <Tabs items={items} />
+                {session ? <Tabs items={items} /> : items[0].children}
             </Form>
         </Drawer>
     );

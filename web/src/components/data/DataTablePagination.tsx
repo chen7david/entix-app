@@ -1,11 +1,12 @@
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { Button, Dropdown, Space, theme } from "antd";
 import type React from "react";
+import { DEFAULT_PAGE_SIZE_OPTIONS } from "./DataTable.constants";
 import {
     type ClientPaginationConfig,
     type CursorPaginationConfig,
     isCursorPagination,
-} from "./DataTableWithFilters";
+} from "./DataTable.types";
 
 interface DataTablePaginationProps {
     pagination: CursorPaginationConfig | ClientPaginationConfig;
@@ -14,14 +15,11 @@ interface DataTablePaginationProps {
 export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagination }) => {
     const { token } = theme.useToken();
 
-    // Standardized page size options
-    const pageSizeOptions = [5, 10, 20, 50, 100];
-
     const isCursor = isCursorPagination(pagination);
 
     // Derived states
     const hasPrev = isCursor ? pagination.hasPrevPage : (pagination.current || 1) > 1;
-    const hasNext = isCursor ? pagination.hasNextPage : false; // For now, non-cursor pagination is purely driven by parent if provided.
+    const hasNext = isCursor ? pagination.hasNextPage : false;
 
     const onNext = () => {
         if (isCursor) {
@@ -43,14 +41,14 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({ pagina
         if (isCursor) {
             pagination.onPageSizeChange?.(size);
         } else {
-            pagination.onChange?.(1, size); // Reset to page 1 on size change
+            pagination.onChange?.(1, size);
         }
     };
 
-    const pageSizeItems = pageSizeOptions.map((size) => ({
+    const pageSizeItems = DEFAULT_PAGE_SIZE_OPTIONS.map((size) => ({
         key: size.toString(),
         label: size.toString(),
-        onClick: () => onPageSizeChange(size),
+        onClick: () => onPageSizeChange(size as number),
     }));
 
     return (

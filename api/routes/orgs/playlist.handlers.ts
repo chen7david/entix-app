@@ -6,9 +6,15 @@ import type { PlaylistRoutes } from "./playlist.routes";
 export class PlaylistHandlers {
     static listPlaylists: AppHandler<typeof PlaylistRoutes.listPlaylists> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
+        const { cursor, limit, direction, search } = ctx.req.valid("query");
         const playlistService = getPlaylistService(ctx);
-        const playlists = await playlistService.listPlaylists(organizationId);
-        return ctx.json(playlists, HttpStatusCodes.OK);
+        const result = await playlistService.listPlaylists(organizationId, {
+            cursor,
+            limit,
+            direction,
+            search,
+        });
+        return ctx.json(result, HttpStatusCodes.OK);
     };
 
     static createPlaylist: AppHandler<typeof PlaylistRoutes.createPlaylist> = async (ctx) => {
@@ -21,6 +27,14 @@ export class PlaylistHandlers {
         ctx.var.logger.info({ organizationId, playlistId: playlist.id }, "Playlist created");
 
         return ctx.json(playlist, HttpStatusCodes.CREATED);
+    };
+
+    static getPlaylist: AppHandler<typeof PlaylistRoutes.getPlaylist> = async (ctx) => {
+        const { organizationId, playlistId } = ctx.req.valid("param");
+        const playlistService = getPlaylistService(ctx);
+
+        const playlist = await playlistService.getPlaylist(playlistId, organizationId);
+        return ctx.json(playlist, HttpStatusCodes.OK);
     };
 
     static updatePlaylist: AppHandler<typeof PlaylistRoutes.updatePlaylist> = async (ctx) => {

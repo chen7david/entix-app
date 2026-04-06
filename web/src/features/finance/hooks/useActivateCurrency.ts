@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { App } from "antd";
 
 export const useActivateCurrency = (orgId?: string) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
     return useMutation({
@@ -18,13 +18,19 @@ export const useActivateCurrency = (orgId?: string) => {
             return res.json();
         },
         onSuccess: () => {
-            message.success("Currency activated successfully");
+            notification.success({
+                message: "Currency Activated",
+                description: "The currency has been activated for your organization.",
+            });
             // Invalidate currency cache so UI updates immediately
             queryClient.invalidateQueries({ queryKey: ["orgCurrencies", orgId] });
             queryClient.invalidateQueries({ queryKey: ["walletBalance", orgId] });
         },
         onError: () => {
-            message.error("Failed to activate currency. It may already be active.");
+            notification.error({
+                message: "Activation Failed",
+                description: "Failed to activate currency. It may already be active.",
+            });
         },
     });
 };

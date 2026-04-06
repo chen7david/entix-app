@@ -1,6 +1,7 @@
 import type { WalletAccountDTO } from "@shared";
 import { useActivatedCurrencies } from "@web/src/features/finance";
-import { App, Button, Drawer, Form, Input, InputNumber, Select, Space } from "antd";
+import { UI_CONSTANTS } from "@web/src/utils/constants";
+import { App, Button, Drawer, Form, Input, InputNumber, Select } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
 type TransferDrawerProps = {
@@ -12,19 +13,25 @@ type TransferDrawerProps = {
 
 export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawerProps) => {
     const [form] = Form.useForm();
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { mutate, isPending } = useWalletTransfer(orgId);
     const { currencies } = useActivatedCurrencies(orgId);
 
     const onFinish = (values: TransferInput) => {
         mutate(values, {
             onSuccess: () => {
-                message.success("Transfer submitted successfully");
+                notification.success({
+                    message: "Transfer Submitted",
+                    description: "Your transfer has been processed successfully.",
+                });
                 onClose();
                 form.resetFields();
             },
             onError: (err) => {
-                message.error(err.message || "Transfer failed. Please check funds.");
+                notification.error({
+                    message: "Transfer Failed",
+                    description: err.message || "Transfer failed. Please check funds.",
+                });
             },
         });
     };
@@ -32,18 +39,13 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
     return (
         <Drawer
             title="Execute New Transfer"
-            width={420}
+            width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
             onClose={onClose}
             open={open}
             extra={
-                <Space>
-                    <Button onClick={onClose} disabled={isPending}>
-                        Cancel
-                    </Button>
-                    <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                        Confirm Transfer
-                    </Button>
-                </Space>
+                <Button type="primary" onClick={() => form.submit()} loading={isPending}>
+                    Confirm Transfer
+                </Button>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>

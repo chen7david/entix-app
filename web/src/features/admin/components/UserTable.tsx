@@ -41,7 +41,7 @@ import type React from "react";
 import { useCallback, useState } from "react";
 
 export const UserTable: React.FC = () => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
@@ -79,8 +79,16 @@ export const UserTable: React.FC = () => {
 
     const handleImpersonate = (userId: string) => {
         impersonate(userId, {
-            onSuccess: () => message.success("Impersonation started"),
-            onError: (error) => message.error(error.message),
+            onSuccess: () =>
+                notification.success({
+                    message: "Impersonation Started",
+                    description: "You are now impersonating the user.",
+                }),
+            onError: (error) =>
+                notification.error({
+                    message: "Impersonation Failed",
+                    description: error.message,
+                }),
         });
     };
 
@@ -92,8 +100,16 @@ export const UserTable: React.FC = () => {
                 banUser(
                     { userId, banReason: "Admin action" },
                     {
-                        onSuccess: () => message.success("User banned"),
-                        onError: (error) => message.error(error.message),
+                        onSuccess: () =>
+                            notification.success({
+                                message: "User Banned",
+                                description: "The user has been banned successfully.",
+                            }),
+                        onError: (error) =>
+                            notification.error({
+                                message: "Ban Failed",
+                                description: error.message,
+                            }),
                     }
                 );
             },
@@ -102,8 +118,16 @@ export const UserTable: React.FC = () => {
 
     const handleUnbanUser = (userId: string) => {
         unbanUser(userId, {
-            onSuccess: () => message.success("User unbanned"),
-            onError: (error) => message.error(error.message),
+            onSuccess: () =>
+                notification.success({
+                    message: "User Unbanned",
+                    description: "The user has been unbanned successfully.",
+                }),
+            onError: (error) =>
+                notification.error({
+                    message: "Unban Failed",
+                    description: error.message,
+                }),
         });
     };
 
@@ -111,8 +135,16 @@ export const UserTable: React.FC = () => {
         setRole(
             { userId, role: role as "user" | "admin" },
             {
-                onSuccess: () => message.success("Role updated"),
-                onError: (error) => message.error(error.message),
+                onSuccess: () =>
+                    notification.success({
+                        message: "Role Updated",
+                        description: "The user's role has been updated.",
+                    }),
+                onError: (error) =>
+                    notification.error({
+                        message: "Update Failed",
+                        description: error.message,
+                    }),
             }
         );
     };
@@ -124,9 +156,15 @@ export const UserTable: React.FC = () => {
             redirectTo: `${window.location.origin}/auth/reset-password`,
         });
         if (error) {
-            message.error(`Failed to send password reset: ${error.message}`);
+            notification.error({
+                message: "Reset Failed",
+                description: error.message,
+            });
         } else {
-            message.success("Password reset email sent");
+            notification.success({
+                message: "Email Sent",
+                description: "Password reset email sent",
+            });
         }
     };
 
@@ -135,8 +173,16 @@ export const UserTable: React.FC = () => {
     const handleResendVerification = (email: string) => {
         if (!email) return;
         resendVerification(email, {
-            onSuccess: () => message.success("Verification email sent"),
-            onError: (error: Error) => message.error(error.message),
+            onSuccess: () =>
+                notification.success({
+                    message: "Email Sent",
+                    description: "Verification email sent",
+                }),
+            onError: (error: Error) =>
+                notification.error({
+                    message: "Email Failed",
+                    description: error.message,
+                }),
         });
     };
 
@@ -279,7 +325,7 @@ export const UserTable: React.FC = () => {
                 placement="right"
                 onClose={() => setSelectedUser(null)}
                 open={!!selectedUser}
-                width={400}
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
             >
                 {selectedUser && (

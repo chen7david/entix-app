@@ -1,5 +1,6 @@
 import type {
     CreatePlaylistDTO,
+    PaginatedResponse,
     PlaylistDTO,
     PlaylistMediaItemDTO,
     UpdatePlaylistDTO,
@@ -10,22 +11,53 @@ import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
 
-export const usePlaylists = () => {
-    const { message } = App.useApp();
+export type PlaylistFilters = {
+    search?: string;
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
+};
+
+export const usePlaylist = (playlistId?: string) => {
+    const { activeOrganization } = useOrganization();
+    const orgId = activeOrganization?.id;
+
+    return useQuery({
+        queryKey: ["playlist", orgId, playlistId],
+        queryFn: async () => {
+            if (!orgId || !playlistId) throw new Error("Missing org or playlist id");
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`);
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as PlaylistDTO;
+        },
+        enabled: !!orgId && !!playlistId,
+    });
+};
+
+export const usePlaylists = (filters?: PlaylistFilters) => {
+    const { notification } = App.useApp();
     const queryClient = useQueryClient();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
-    // List Playlists
-    const { data: playlists = [], isLoading: isLoadingPlaylists } = useQuery({
-        queryKey: ["playlists", orgId],
+    // List Playlists (Paginated)
+    const { data: playlistsResponse, isLoading: isLoadingPlaylists } = useQuery({
+        queryKey: ["playlists", orgId, filters],
         queryFn: async () => {
-            if (!orgId) return [];
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists`);
+            if (!orgId) throw new Error("Organization missing");
+            const params = new URLSearchParams();
+            if (filters?.search) params.append("search", filters.search);
+            if (filters?.cursor) params.append("cursor", filters.cursor);
+            if (filters?.limit) params.append("limit", filters.limit.toString());
+            if (filters?.direction) params.append("direction", filters.direction);
+
+            const queryString = params.toString() ? `?${params.toString()}` : "";
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists${queryString}`);
             if (!res.ok) await parseApiError(res);
-            return (await res.json()) as PlaylistDTO[];
+            return (await res.json()) as PaginatedResponse<PlaylistDTO>;
         },
         enabled: !!orgId,
+        placeholderData: (previousData) => previousData,
     });
 
     // Create Playlist
@@ -41,12 +73,18 @@ export const usePlaylists = () => {
             return (await res.json()) as PlaylistDTO;
         },
         onSuccess: () => {
-            message.success("Playlist created");
+            notification.success({
+                message: "Playlist Created",
+                description: "Playlist has been created successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to create playlist");
+            notification.error({
+                message: "Creation Failed",
+                description: error.message || "Failed to create playlist.",
+            });
         },
     });
 
@@ -69,12 +107,18 @@ export const usePlaylists = () => {
             return (await res.json()) as PlaylistDTO;
         },
         onSuccess: () => {
-            message.success("Playlist properties saved");
+            notification.success({
+                message: "Playlist Updated",
+                description: "Playlist properties have been saved successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to update playlist");
+            notification.error({
+                message: "Update Failed",
+                description: error.message || "Failed to update playlist.",
+            });
         },
     });
 
@@ -88,11 +132,17 @@ export const usePlaylists = () => {
             if (!res.ok) await parseApiError(res);
         },
         onSuccess: () => {
-            message.success("Playlist deleted");
+            notification.success({
+                message: "Playlist Deleted",
+                description: "Playlist has been deleted successfully.",
+            });
             queryClient.invalidateQueries({ queryKey: ["playlists", orgId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to delete playlist");
+            notification.error({
+                message: "Deletion Failed",
+                description: error.message || "Failed to delete playlist.",
+            });
         },
     });
 
@@ -127,12 +177,15 @@ export const usePlaylists = () => {
             queryClient.invalidateQueries({ queryKey: ["playlistSequence", variables.playlistId] });
         },
         onError: (error: Error) => {
-            message.error(error.message || "Failed to persist the media order");
+            notification.error({
+                message: "Order Persist Failed",
+                description: error.message || "Failed to persist the media order.",
+            });
         },
     });
 
     return {
-        playlists,
+        playlistsResponse,
         isLoadingPlaylists,
         createPlaylist: useCallback(
             (input: CreatePlaylistDTO) => createPlaylistMutation.mutateAsync(input),

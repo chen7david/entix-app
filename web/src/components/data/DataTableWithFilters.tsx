@@ -2,34 +2,31 @@ import { InboxOutlined, RedoOutlined, SearchOutlined } from "@ant-design/icons";
 import type { TableProps } from "antd";
 import { Button, DatePicker, Input, Segmented, Select, Table, theme } from "antd";
 import dayjs from "dayjs";
-import type React from "react";
-import { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
+import type { ClientPaginationConfig, CursorPaginationConfig } from "./DataTable.types";
+import { isCursorPagination } from "./DataTable.types";
 import { DataTablePagination } from "./DataTablePagination";
 import { TableEmptyState } from "./TableEmptyState";
 
-export interface FilterConfig {
-    type: "search" | "dateRange" | "select" | "segmented";
-    key: string;
-    label?: string;
-    placeholder?: string;
-    options?: { label: string; value: string | number }[];
-    keys?: string[]; // ['startDate', 'endDate']
-}
+// Re-export pagination types and helpers so callers may import from either location
+export type { ClientPaginationConfig, CursorPaginationConfig };
+export { isCursorPagination };
 
-export interface CursorPaginationConfig {
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    pageSize: number;
-    onNext: () => void;
-    onPrev: () => void;
-    onPageSizeChange?: (size: number) => void;
-}
-
-export interface ClientPaginationConfig {
-    pageSize: number;
-    current?: number;
-    onChange?: (page: number, pageSize: number) => void;
-}
+export type FilterConfig =
+    | {
+          type: "search" | "select" | "segmented";
+          key: string;
+          label?: string;
+          placeholder?: string;
+          options?: { label: string; value: string | number }[];
+      }
+    | {
+          type: "dateRange";
+          key: string;
+          keys: [string, string];
+          label?: string;
+          placeholder?: string;
+      };
 
 export interface DataTableConfig<T> {
     columns: TableProps<T>["columns"];
@@ -44,24 +41,35 @@ export interface DataTableConfig<T> {
     selectedRowKey?: string | number | null;
 }
 
-export function isCursorPagination(
-    pagination: CursorPaginationConfig | ClientPaginationConfig | null
-): pagination is CursorPaginationConfig {
-    return !!pagination && "onNext" in pagination;
-}
-
-export function DataTableWithFilters<T extends object>({ config }: { config: DataTableConfig<T> }) {
+function DataTableWithFiltersInternal<T extends object>({
+    config,
+}: {
+    config: DataTableConfig<T>;
+}) {
     const { token } = theme.useToken();
     const [localFilters, setLocalFilters] = useState<Record<string, any>>({});
 
-    const handleFiltersChange = (newFilters: Record<string, any>) => {
-        setLocalFilters(newFilters);
-        config.onFiltersChange(newFilters);
-    };
+    const handleFiltersChange = useCallback(
+        (newFilters: Record<string, any>) => {
+            setLocalFilters(newFilters);
+            config.onFiltersChange(newFilters);
+        },
+        [config.onFiltersChange]
+    );
 
-    const handleReset = () => {
+    const updateFilter = useCallback(
+        (key: string, value: any) => {
+            handleFiltersChange({
+                ...localFilters,
+                [key]: value,
+            });
+        },
+        [localFilters, handleFiltersChange]
+    );
+
+    const handleReset = useCallback(() => {
         handleFiltersChange({});
-    };
+    }, [handleFiltersChange]);
 
     const tableColumns = useMemo(() => {
         const cols = [...(config.columns || [])];
@@ -88,9 +96,10 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
         );
     }, [localFilters]);
 
+    const pagination = config.pagination;
+
     return (
         <div className="data-table-wrapper flex flex-col flex-1 min-h-0 overflow-hidden">
-            {/* Lean Filter Bar - Matches Schedule Page Pattern */}
             {config.filters.length > 0 && (
                 <div className="flex items-center gap-3 flex-wrap mb-4 px-0.5">
                     {config.filters.map((filter) => (
@@ -110,35 +119,27 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                                         />
                                     }
                                     value={localFilters[filter.key] || ""}
-                                    onChange={(e) =>
-                                        handleFiltersChange({
-                                            ...localFilters,
-                                            [filter.key]: e.target.value,
-                                        })
-                                    }
-                                    className="rounded-lg h-[40px] transition-all hover:border-primary focus:border-primary shadow-sm"
+                                    onChange={(e) => updateFilter(filter.key, e.target.value)}
+                                    variant="outlined"
+                                    className="rounded-lg h-[40px] transition-colors"
                                     allowClear
                                 />
                             )}
                             {filter.type === "dateRange" && (
                                 <DatePicker.RangePicker
-                                    className="w-full rounded-lg h-[40px] shadow-sm"
+                                    variant="outlined"
+                                    className="w-full rounded-lg h-[40px]"
                                     value={
-                                        localFilters[filter.keys?.[0] || "startDate"] &&
-                                        localFilters[filter.keys?.[1] || "endDate"]
+                                        localFilters[filter.keys[0]] && localFilters[filter.keys[1]]
                                             ? [
-                                                  dayjs(
-                                                      localFilters[filter.keys?.[0] || "startDate"]
-                                                  ),
-                                                  dayjs(
-                                                      localFilters[filter.keys?.[1] || "endDate"]
-                                                  ),
+                                                  dayjs(localFilters[filter.keys[0]]),
+                                                  dayjs(localFilters[filter.keys[1]]),
                                               ]
                                             : null
                                     }
                                     onChange={(dates) => {
-                                        const startKey = filter.keys?.[0] || "startDate";
-                                        const endKey = filter.keys?.[1] || "endDate";
+                                        const startKey = filter.keys[0];
+                                        const endKey = filter.keys[1];
                                         handleFiltersChange({
                                             ...localFilters,
                                             [startKey]: dates?.[0]?.toISOString() || null,
@@ -149,16 +150,12 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                             )}
                             {filter.type === "select" && (
                                 <Select
+                                    variant="outlined"
                                     placeholder={filter.placeholder || "All Statuses"}
                                     className="w-full h-[40px]"
                                     options={filter.options}
                                     value={localFilters[filter.key] || undefined}
-                                    onChange={(value) =>
-                                        handleFiltersChange({
-                                            ...localFilters,
-                                            [filter.key]: value,
-                                        })
-                                    }
+                                    onChange={(value) => updateFilter(filter.key, value)}
                                     allowClear
                                 />
                             )}
@@ -170,13 +167,8 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                                         localFilters[filter.key] ||
                                         (filter.options?.[0]?.value ?? "")
                                     }
-                                    onChange={(value) =>
-                                        handleFiltersChange({
-                                            ...localFilters,
-                                            [filter.key]: value,
-                                        })
-                                    }
-                                    className="rounded-lg p-0.5 bg-gray-100 dark:bg-gray-800"
+                                    onChange={(value) => updateFilter(filter.key, value)}
+                                    className="rounded-lg p-0.5"
                                 />
                             )}
                         </div>
@@ -198,7 +190,6 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                 </div>
             )}
 
-            {/* Lean Table Container */}
             <div
                 className="data-table-pro-container flex-1 overflow-hidden"
                 style={{
@@ -252,8 +243,7 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                     />
                 </div>
 
-                {/* Premium Pagination - Glassmorphism Design */}
-                {config.pagination && (
+                {pagination && (
                     <div
                         className="px-4 py-3 border-t backdrop-blur-md sticky bottom-0 z-20 mt-auto"
                         style={{
@@ -263,23 +253,21 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
                             borderBottomRightRadius: token.borderRadiusLG,
                         }}
                     >
-                        <DataTablePagination pagination={config.pagination!} />
+                        <DataTablePagination pagination={pagination} />
                     </div>
                 )}
                 <style>{`
-                .ant-table-row.row-active > td {
-                    background-color: ${token.colorPrimary}14 !important;
+                .data-table-pro-container .ant-table-row.row-active > td {
+                    background-color: ${token.colorPrimary}14;
                     position: relative;
                 }
-                .ant-table-row.row-active > td:first-child {
-                    border-left: 3px solid ${token.colorPrimary} !important;
+                .data-table-pro-container .ant-table-row.row-active > td:first-child {
+                    border-left: 3px solid ${token.colorPrimary};
                 }
-                /* Ensure hover state still feels interactive but keeps the theme */
-                .ant-table-row.row-active:hover > td {
-                    background-color: ${token.colorPrimary}1a !important;
+                .data-table-pro-container .ant-table-row.row-active:hover > td {
+                    background-color: ${token.colorPrimary}1a;
                 }
-                /* Animation for the border accent */
-                .ant-table-row > td:first-child {
+                .data-table-pro-container .ant-table-row > td:first-child {
                     border-left: 3px solid transparent;
                     transition: border-color 0.2s ease, background-color 0.2s ease;
                 }
@@ -288,3 +276,9 @@ export function DataTableWithFilters<T extends object>({ config }: { config: Dat
         </div>
     );
 }
+
+export const DataTableWithFilters = React.memo(DataTableWithFiltersInternal) as <
+    T extends object,
+>(props: {
+    config: DataTableConfig<T>;
+}) => React.ReactElement;

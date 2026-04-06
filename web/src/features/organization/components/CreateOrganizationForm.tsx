@@ -3,7 +3,7 @@ import { Alert, App, Button, Form, Input } from "antd";
 import { useState } from "react";
 
 export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const { mutateAsync: createOrganization, isPending: isCreating } = useAdminCreateOrganization();
     const [error, setError] = useState<string | null>(null);
 
@@ -11,10 +11,17 @@ export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }
         setError(null);
         try {
             await createOrganization({ name: values.name, slug: values.slug });
-            message.success("Organization created successfully");
+            notification.success({
+                message: "Organization Created",
+                description: `Organization "${values.name}" created successfully.`,
+            });
             onSuccess?.();
         } catch (err: any) {
             setError(err.message || "Failed to create organization");
+            notification.error({
+                message: "Creation Failed",
+                description: err.message || "Failed to create organization.",
+            });
         }
     };
 

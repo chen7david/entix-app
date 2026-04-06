@@ -19,7 +19,7 @@ export const CoverArtUploader = ({
     aspectRatio = 16 / 9,
     onUploadSuccess,
 }: CoverArtUploaderProps) => {
-    const { message } = App.useApp();
+    const { notification } = App.useApp();
     const [uploading, setUploading] = useState(false);
     const { token } = theme.useToken();
 
@@ -31,7 +31,10 @@ export const CoverArtUploader = ({
         if (fileObj.size > maxSize) {
             const errorMsg = "Cover art must be smaller than 5MB";
             onError?.(new Error(errorMsg));
-            message.error(errorMsg);
+            notification.error({
+                message: "File Too Large",
+                description: errorMsg,
+            });
             return;
         }
 
@@ -79,7 +82,10 @@ export const CoverArtUploader = ({
         } catch (err: any) {
             console.error("Cover upload error:", err);
             onError?.(err);
-            message.error(err.message || "Failed to upload cover art");
+            notification.error({
+                message: "Upload Failed",
+                description: err.message || "Failed to upload cover art",
+            });
         } finally {
             setUploading(false);
         }

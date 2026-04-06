@@ -1,4 +1,5 @@
 import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { Badge, Typography } from "antd";
 import { useState } from "react";
@@ -120,7 +121,7 @@ export const OrgAccountsTable = ({ accounts, loading }: OrgAccountsTableProps) =
                 ],
                 onFiltersChange: setFilters,
                 pagination: {
-                    pageSize: 12,
+                    pageSize: DEFAULT_PAGE_SIZE,
                 },
             }}
         />

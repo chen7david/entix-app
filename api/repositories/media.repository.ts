@@ -1,7 +1,7 @@
 import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import * as schema from "@shared/db/schema";
-import { and, eq, like, or } from "drizzle-orm";
+import { and, eq, like, or, type SQL } from "drizzle-orm";
 
 export type CreateMediaInput = {
     id: string;
@@ -13,6 +13,8 @@ export type CreateMediaInput = {
     coverArtUrl?: string;
     uploadedBy: string;
 };
+
+import { mapCategoryToMimePattern, wrapWildcard } from "@api/helpers/db.helpers";
 
 export class MediaRepository {
     constructor(private db: AppDb) {}
@@ -31,12 +33,15 @@ export class MediaRepository {
 
     async findAllByOrganization(
         organizationId: string,
-        limit: number,
-        cursor?: string,
-        direction: "next" | "prev" = "next",
-        search?: string,
-        type?: "video" | "audio"
+        filters: {
+            limit: number;
+            cursor?: string;
+            direction?: "next" | "prev";
+            search?: string;
+            type?: string;
+        }
     ) {
+        const { limit, cursor, direction = "next", search, type } = filters;
         const { where: cursorWhere, orderBy } = buildCursorPagination(
             schema.media.createdAt,
             schema.media.id,
@@ -44,36 +49,45 @@ export class MediaRepository {
             direction
         );
 
-        const filters = [eq(schema.media.organizationId, organizationId)];
-        if (cursorWhere) filters.push(cursorWhere);
+        const conditions: (SQL | undefined)[] = [eq(schema.media.organizationId, organizationId)];
 
-        if (type === "video") {
-            filters.push(like(schema.media.mimeType, "video/%"));
-        } else if (type === "audio") {
-            filters.push(like(schema.media.mimeType, "audio/%"));
+        const mimePattern = mapCategoryToMimePattern(type);
+        if (mimePattern) {
+            conditions.push(like(schema.media.mimeType, mimePattern));
         }
 
         if (search) {
-            const searchFilter = or(
-                like(schema.media.title, `%${search}%`),
-                like(schema.media.description, `%${search}%`)
+            const pattern = wrapWildcard(search);
+            conditions.push(
+                or(like(schema.media.title, pattern), like(schema.media.description, pattern))
             );
-            if (searchFilter) {
-                filters.push(searchFilter);
-            }
         }
+
+        if (cursorWhere) {
+            conditions.push(cursorWhere);
+        }
+
+        const finalFilters = conditions.filter((c): c is SQL => c !== undefined);
 
         const items = await this.db
             .select()
             .from(schema.media)
-            .where(and(...filters))
+            .where(and(...finalFilters))
             .orderBy(...orderBy)
             .limit(limit + 1);
 
-        return processPaginatedResult(items, limit, direction, (row) => ({
-            primary: row.createdAt.getTime(),
-            secondary: row.id,
-        }));
+        const result = processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (row) => ({
+                primary: row.createdAt.getTime(),
+                secondary: row.id,
+            }),
+            cursor
+        );
+
+        return result;
     }
 
     async update(

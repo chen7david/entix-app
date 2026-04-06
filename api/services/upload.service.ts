@@ -86,14 +86,26 @@ export class UploadService extends BaseService {
     }
 
     /**
-     * List all organization-scoped uploads.
+     * List organization-scoped uploads with cursor pagination, search, and type filter.
      */
-    async listUploads(organizationId: string) {
-        const uploads = await this.uploadRepo.findUploadsByOrganization(organizationId);
-        return uploads.map((u) => ({
-            ...u,
-            url: `${this.publicUrlPrefix}/${u.bucketKey}`,
-        }));
+    async listUploads(
+        organizationId: string,
+        filters: {
+            search?: string;
+            type?: string;
+            cursor?: string;
+            limit?: number;
+            direction?: "next" | "prev";
+        } = {}
+    ) {
+        const result = await this.uploadRepo.findUploadsPaginated(organizationId, filters);
+        return {
+            ...result,
+            items: result.items.map((u) => ({
+                ...u,
+                url: `${this.publicUrlPrefix}/${u.bucketKey}`,
+            })),
+        };
     }
 
     /**
