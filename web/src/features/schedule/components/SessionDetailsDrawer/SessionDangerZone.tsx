@@ -1,17 +1,36 @@
-import { Alert, Button, Popconfirm, Typography, theme } from "antd";
+import { Alert, Button, Modal, Popconfirm, Typography, theme } from "antd";
 import type React from "react";
 
 const { Title, Text } = Typography;
 
 type SessionDangerZoneProps = {
     session: any | null;
-    onDelete: () => void;
+    onDelete: (deleteForward: boolean) => void;
 };
 
 export const SessionDangerZone: React.FC<SessionDangerZoneProps> = ({ session, onDelete }) => {
     const { token } = theme.useToken();
 
     if (!session) return null;
+
+    const handleDelete = () => {
+        if (session.seriesId) {
+            Modal.confirm({
+                title: "Delete Recurring Session",
+                content:
+                    "Do you want to delete just this occurrence, or this and all following sessions in the series?",
+                closable: true,
+                okText: "Delete following",
+                cancelText: "Just this",
+                okType: "danger",
+                cancelButtonProps: { danger: true },
+                onOk: () => onDelete(true),
+                onCancel: () => onDelete(false),
+            });
+        } else {
+            onDelete(false);
+        }
+    };
 
     return (
         <div style={{ marginTop: 16 }}>
@@ -37,22 +56,24 @@ export const SessionDangerZone: React.FC<SessionDangerZoneProps> = ({ session, o
                     style={{ marginBottom: 16 }}
                 />
 
-                <Popconfirm
-                    title="Delete Session"
-                    description={
-                        session.seriesId
-                            ? "This is a recurring session. You will be asked if you want to delete just this occurrence or the whole series."
-                            : "Are you sure you want to delete this session? This action cannot be undone."
-                    }
-                    onConfirm={onDelete}
-                    okText="Delete"
-                    cancelText="Cancel"
-                    okType="danger"
-                >
-                    <Button danger type="primary">
+                {!session.seriesId ? (
+                    <Popconfirm
+                        title="Delete Session"
+                        description="Are you sure you want to delete this session? This action cannot be undone."
+                        onConfirm={handleDelete}
+                        okText="Delete"
+                        cancelText="Cancel"
+                        okType="danger"
+                    >
+                        <Button danger type="primary">
+                            Delete Session
+                        </Button>
+                    </Popconfirm>
+                ) : (
+                    <Button danger type="primary" onClick={handleDelete}>
                         Delete Session
                     </Button>
-                </Popconfirm>
+                )}
             </div>
         </div>
     );

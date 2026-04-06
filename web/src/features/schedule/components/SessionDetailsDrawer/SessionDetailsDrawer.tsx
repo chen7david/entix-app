@@ -62,8 +62,8 @@ export const SessionDetailsDrawer = ({
                 session.attendances.forEach((p: any) => {
                     if (p.userId) {
                         next[p.userId] = {
-                            name: p.name || p.email || p.userId,
-                            image: p.avatarUrl,
+                            name: p.user?.name || p.user?.email || p.userId,
+                            image: p.user?.image,
                         };
                     }
                 });
@@ -83,6 +83,7 @@ export const SessionDetailsDrawer = ({
                 durationMinutes: session.durationMinutes,
                 status: session.status || "scheduled",
                 userIds: session.attendances?.map((p: any) => p.userId) || [],
+                isRecurring: false,
             });
 
             const att: Record<string, AttendanceLog> = {};
@@ -107,7 +108,12 @@ export const SessionDetailsDrawer = ({
         } else if (open) {
             form.resetFields();
             setAttendanceDict({});
-            form.setFieldsValue({ durationMinutes: 60, status: "scheduled" });
+            form.setFieldsValue({
+                durationMinutes: 60,
+                status: "scheduled",
+                isRecurring: false,
+                recurrenceCount: 5,
+            });
         }
     }, [open, session, form]);
 
@@ -128,6 +134,13 @@ export const SessionDetailsDrawer = ({
                 durationMinutes: values.durationMinutes,
                 userIds: values.userIds || [],
                 updateForward,
+                recurrence:
+                    !session && values.isRecurring
+                        ? {
+                              frequency: values.recurrenceFrequency || "weekly",
+                              count: values.recurrenceCount || 5,
+                          }
+                        : undefined,
             };
 
             await onSave(payload);
@@ -192,7 +205,7 @@ export const SessionDetailsDrawer = ({
             key: "details",
             label: "Details",
             children: (
-                <div style={{ marginTop: 16 }}>
+                <div className="flex flex-col gap-6 pt-4">
                     <SessionGeneralForm
                         form={form}
                         session={session}
@@ -249,7 +262,9 @@ export const SessionDetailsDrawer = ({
                       children: (
                           <SessionDangerZone
                               session={session}
-                              onDelete={() => onDelete(session.id, false)}
+                              onDelete={(deleteForward: boolean) =>
+                                  onDelete(session.id, deleteForward)
+                              }
                           />
                       ),
                   },
@@ -272,7 +287,11 @@ export const SessionDetailsDrawer = ({
             }
         >
             <Form form={form} layout="vertical" onFinish={handleFinish} id="session-form">
-                {session ? <Tabs items={items} /> : items[0].children}
+                {session ? (
+                    <Tabs items={items} defaultActiveKey={items[0].key} />
+                ) : (
+                    items[0].children
+                )}
             </Form>
         </Drawer>
     );

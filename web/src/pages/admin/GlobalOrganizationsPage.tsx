@@ -211,7 +211,11 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             ];
                             return (
                                 <Dropdown menu={{ items }} trigger={["click"]}>
-                                    <Button type="text" icon={<MoreOutlined />} />
+                                    <Button
+                                        type="text"
+                                        icon={<MoreOutlined />}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
                                 </Dropdown>
                             );
                         },

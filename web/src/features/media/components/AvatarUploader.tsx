@@ -31,7 +31,7 @@ export const AvatarUploader = ({ organizationId, userId, open, onClose }: Avatar
     const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
-    const updateAvatarMutation = useUpdateAvatar(organizationId);
+    const updateAvatarMutation = useUpdateAvatar();
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {
         const { file, onSuccess, onError, onProgress } = options;

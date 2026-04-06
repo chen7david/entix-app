@@ -9,6 +9,7 @@ import {
     Input,
     Row,
     Select,
+    Switch,
     TimePicker,
     Tooltip,
     Typography,
@@ -159,6 +160,73 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                     </Form.Item>
                 </Col>
             </Row>
+
+            {!session && (
+                <>
+                    <Form.Item
+                        name="isRecurring"
+                        valuePropName="checked"
+                        style={{ marginTop: 8, marginBottom: 8 }}
+                    >
+                        <Switch
+                            checkedChildren="Recurring"
+                            unCheckedChildren="One-time"
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        noStyle
+                        shouldUpdate={(prev, curr) => prev.isRecurring !== curr.isRecurring}
+                    >
+                        {({ getFieldValue }) =>
+                            getFieldValue("isRecurring") ? (
+                                <Row gutter={{ xs: 8, sm: 16, md: 24 }}>
+                                    <Col xs={12}>
+                                        <Form.Item
+                                            name="recurrenceFrequency"
+                                            label="Frequency"
+                                            initialValue="weekly"
+                                            rules={[{ required: true, message: "Required" }]}
+                                        >
+                                            <Select
+                                                options={[
+                                                    { label: "Daily", value: "daily" },
+                                                    { label: "Weekly", value: "weekly" },
+                                                    { label: "Every 2 Weeks", value: "biweekly" },
+                                                    { label: "Monthly", value: "monthly" },
+                                                ]}
+                                            />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={12}>
+                                        <Form.Item
+                                            name="recurrenceCount"
+                                            label="Total Sessions"
+                                            initialValue={5}
+                                            rules={[{ required: true, message: "Required" }]}
+                                        >
+                                            <Select
+                                                options={[
+                                                    { label: "5 sessions", value: 5 },
+                                                    { label: "10 sessions", value: 10 },
+                                                    { label: "15 sessions", value: 15 },
+                                                    { label: "20 sessions", value: 20 },
+                                                    { label: "25 sessions", value: 25 },
+                                                    { label: "30 sessions", value: 30 },
+                                                    { label: "35 sessions", value: 35 },
+                                                    { label: "40 sessions", value: 40 },
+                                                    { label: "45 sessions", value: 45 },
+                                                    { label: "50 sessions", value: 50 },
+                                                ]}
+                                            />
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+                            ) : null
+                        }
+                    </Form.Item>
+                </>
+            )}
         </>
     );
 };

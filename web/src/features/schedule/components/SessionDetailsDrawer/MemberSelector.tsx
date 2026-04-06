@@ -24,7 +24,7 @@ export const MemberSelector: React.FC<MemberSelectorProps> = ({
     memberCache,
 }) => {
     return (
-        <Form.Item name="userIds" label="Assign Members">
+        <Form.Item name="userIds" label="Assign Members" rules={[{ required: true, message: 'Required' }]}>
             <Select
                 mode="multiple"
                 placeholder="Select teachers or participants"
