@@ -4,71 +4,66 @@ import { useNavigate } from "react-router";
 import { useOrganization } from "../../organization/hooks/useOrganization";
 import { useAuth } from "../context/AuthContext";
 
+const LAST_ORG_SLUG_KEY = "entix:last-org-slug";
+
 /**
- * useHomeRedirect - Decoupled hook for managing global navigation logic after auth states change.
+ * useHomeRedirect
  *
- * @note
- * Extracted from App.tsx to separate business/routing logic from component orchestration.
- * Handles:
- * 1. Guest redirect (unauthenticated users to sign-in)
- * 2. Active organization redirect
- * 3. Onboarding flows (no orgs, single org auto-select, multi-org select)
+ * Determines where an authenticated user landing on "/" should go.
+ *
+ * Priority order:
+ *  1. sessionStorage breadcrumb — return to the last org the user visited in this tab.
+ *  2. Single-org fast-path — skip the selector if there is only one org.
+ *  3. Multi-org — send to the org selector.
+ *  4. No orgs — send to onboarding.
+ *
+ * We deliberately do NOT call setActive() or checkOrganizationStatus() here.
+ * OrgGuard owns the setActive + refreshAuth contract; this hook is only a router.
+ *
+ * @note organizations is already cached by useOrganization (staleTime 5 min),
+ *       so this hook causes zero additional network requests after the first mount.
  */
 export function useHomeRedirect() {
     const { isAuthenticated, isLoading: loadingAuth } = useAuth();
-    const { checkOrganizationStatus, setActive } = useOrganization();
+    const { organizations, loading: loadingOrgs } = useOrganization();
     const navigate = useNavigate();
 
     useEffect(() => {
-        let mounted = true;
+        // Wait for both auth and org list to settle
+        if (loadingAuth || loadingOrgs) return;
 
-        const handleRedirect = async () => {
-            if (loadingAuth) return;
+        if (!isAuthenticated) {
+            navigate(AppRoutes.auth.signIn, { replace: true });
+            return;
+        }
 
-            if (!isAuthenticated) {
-                if (mounted) {
-                    navigate(AppRoutes.auth.signIn, { replace: true });
-                }
-                return;
-            }
-
-            const result = await checkOrganizationStatus();
-            if (!mounted || !result) return;
-            const { orgs, activeOrg } = result;
-
-            // 1. If there's already an active org, go there
-            if (activeOrg?.slug) {
-                navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, {
+        // 1. Breadcrumb — return to the last org this tab was on
+        const savedSlug = sessionStorage.getItem(LAST_ORG_SLUG_KEY);
+        if (savedSlug) {
+            const matched = organizations.find((org) => org.slug === savedSlug);
+            if (matched) {
+                navigate(`/org/${matched.slug}${AppRoutes.org.dashboard.index}`, {
                     replace: true,
                 });
                 return;
             }
+        }
 
-            // 2. If no orgs, go to onboarding
-            if (!orgs || orgs.length === 0) {
-                navigate(AppRoutes.onboarding.noOrganization, { replace: true });
-                return;
-            }
+        // 2. No orgs → onboarding
+        if (organizations.length === 0) {
+            navigate(AppRoutes.onboarding.noOrganization, { replace: true });
+            return;
+        }
 
-            // 3. If exactly one org, auto-select it and go to its dashboard
-            if (orgs.length === 1 && orgs[0].slug) {
-                await setActive(orgs[0].id);
-                if (mounted) {
-                    navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, {
-                        replace: true,
-                    });
-                }
-                return;
-            }
+        // 3. Single org → go straight in (OrgGuard handles the setActive)
+        if (organizations.length === 1) {
+            navigate(`/org/${organizations[0].slug}${AppRoutes.org.dashboard.index}`, {
+                replace: true,
+            });
+            return;
+        }
 
-            // 4. Otherwise, let the user select
-            navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
-        };
-
-        handleRedirect();
-
-        return () => {
-            mounted = false;
-        };
-    }, [isAuthenticated, loadingAuth, checkOrganizationStatus, navigate, setActive]);
+        // 4. Multiple orgs → let the user choose
+        navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
+    }, [isAuthenticated, loadingAuth, loadingOrgs, organizations, navigate]);
 }

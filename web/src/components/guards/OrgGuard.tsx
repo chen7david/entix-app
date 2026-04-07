@@ -6,104 +6,111 @@ import { useAuth } from "@web/src/features/auth";
 import { authClient } from "@web/src/lib/auth-client";
 import { Button } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
+
+const LAST_ORG_SLUG_KEY = "entix:last-org-slug";
 
 /**
  * OrgGuard - Organization context guard and provider.
  *
- * Reads the `:slug` param from the URL, validates that the user has access
- * to the organization, syncs the server session if needed, and provides the
- * active organization via OrgContext to all child routes.
+ * The URL slug is the SINGLE source of truth for which organization is active.
+ * We do NOT call getFullOrganization() to decide identity — we only call it
+ * to detect a server-side mismatch and then fix it via setActive().
  *
- * The URL is the single source of truth for which organization is active.
+ * Flow:
+ *  1. Resolve org from URL slug against the cached org list.
+ *  2. If org resolves and we haven't already synced this org id, call setActive()
+ *     and refreshAuth() so that nested ProtectedRoutes see the correct orgRole.
+ *  3. Persist the slug as a sessionStorage breadcrumb for useHomeRedirect.
+ *  4. Render children only after sync completes (isSyncing barrier).
  */
 export const OrgGuard: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [isSyncing, setIsSyncing] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(true); // pessimistic default — block until first sync
+    const lastSyncedOrgIdRef = useRef<string | null>(null);
     const auth = useAuth();
 
-    // 1. Fetch User's Organizations (to check access)
+    // 1. Fetch the user's org list (cached; stale for 5 min so tab switches don't re-spin)
     const { data: organizations = [], isLoading: loadingOrgs } = useQuery({
         queryKey: ["organizations"],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
             return data || [];
         },
-    });
-
-    // 2. Resolve org from URL slug (client-side lookup from cached list)
-    const activeOrganization =
-        !loadingOrgs && slug ? organizations.find((o) => o.slug === slug) || null : null;
-
-    // 3. Fetch server's current active org to detect mismatches
-    const { data: serverActiveOrg, isLoading: serverOrgInitialLoading } = useQuery({
-        queryKey: ["serverActiveOrganization"],
-        queryFn: async () => {
-            const { data } = await authClient.organization.getFullOrganization();
-            return data || null;
-        },
-        // Only fetch once we know which org the URL wants
-        enabled: !!activeOrganization,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
 
-    // 4. Sync server session when URL slug differs from server's active org.
-    // This prevents "Authentication race conditions" where nested ProtectedRoutes
-    // evaluate against a stale session (no orgRole) before the server has been
-    // notified of the tenant change from the URL.
+    // 2. Resolve org from URL slug (pure client-side; no extra network call)
+    const activeOrganization =
+        !loadingOrgs && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
-    // isLoading in RQ v5 = isPending && isFetching (only true when NO cache exists yet).
-    // Background refetches keep data defined — no spinner triggered.
-    const isMismatch =
-        activeOrganization &&
-        serverActiveOrg !== undefined &&
-        (serverActiveOrg === null || serverActiveOrg.slug !== activeOrganization.slug);
-
+    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load
     useEffect(() => {
-        if (!activeOrganization || isSyncing) return;
+        if (!activeOrganization?.slug) return;
+        sessionStorage.setItem(LAST_ORG_SLUG_KEY, activeOrganization.slug);
+    }, [activeOrganization?.slug]);
 
-        // If server has no active org (null), or a different one, sync it
-        if (isMismatch) {
-            setIsSyncing(true);
-            authClient.organization
-                .setActive({
-                    organizationId: activeOrganization.id,
-                })
-                .then(async () => {
-                    // Update the server active org cache to reflect the sync
-                    queryClient.setQueryData(["serverActiveOrganization"], activeOrganization);
-
-                    // CRITICAL: Explicitly refetch the session and member data.
-                    // This is the officially supported workaround for Better Auth hooks
-                    // not automatically updating when organization context changes.
-                    await auth.refreshAuth();
-
-                    // Optional: Keep broad invalidation as a fallback for any custom queries
-                    await Promise.all([
-                        queryClient.invalidateQueries({ queryKey: ["better-auth"] }),
-                        queryClient.invalidateQueries({ queryKey: ["session"] }),
-                    ]);
-                })
-                .catch((err) => {
-                    console.error("Critical: Failed to sync organization session:", err);
-                })
-                .finally(() => {
-                    setIsSyncing(false);
-                });
+    // 4. Sync server session to the URL-picked org.
+    //    Guard with lastSyncedOrgIdRef so we don't re-sync on every render or background refetch.
+    //    isSyncing starts as true so children never render before the first sync completes.
+    useEffect(() => {
+        if (loadingOrgs) return; // wait for org list before deciding anything
+        if (!activeOrganization) {
+            // Org not found in the list — stop blocking so the 403 result can render
+            setIsSyncing(false);
+            return;
         }
-    }, [activeOrganization, isMismatch, queryClient, isSyncing, auth.refreshAuth]);
+        if (lastSyncedOrgIdRef.current === activeOrganization.id) {
+            // Already synced this org; nothing to do
+            setIsSyncing(false);
+            return;
+        }
 
-    // Loading State: Block children while fetching list, awaiting first org fetch, or syncing session
-    if (loadingOrgs || isSyncing || serverOrgInitialLoading || isMismatch) {
+        let cancelled = false;
+        setIsSyncing(true);
+
+        authClient.organization
+            .setActive({ organizationId: activeOrganization.id })
+            .then(async () => {
+                if (cancelled) return;
+
+                lastSyncedOrgIdRef.current = activeOrganization.id;
+
+                // CRITICAL: refresh the session so nested ProtectedRoutes see the
+                // correct orgRole before they evaluate allowedOrgRoles.
+                await auth.refreshAuth();
+
+                // Invalidate any query that reads from the session org context
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ["better-auth"] }),
+                    queryClient.invalidateQueries({ queryKey: ["session"] }),
+                ]);
+            })
+            .catch((err) => {
+                console.error("OrgGuard: failed to sync organization session:", err);
+                // Reset the ref so a retry is possible on next render
+                lastSyncedOrgIdRef.current = null;
+            })
+            .finally(() => {
+                if (!cancelled) setIsSyncing(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [activeOrganization, loadingOrgs, auth.refreshAuth, queryClient]);
+
+    // Block children while resolving the org list or syncing the server session
+    if (loadingOrgs || isSyncing) {
         return <CenteredSpin />;
     }
 
-    // Validation Guard
-    if (!activeOrganization && !loadingOrgs) {
+    // 403 guard — org not found in the user's accessible list
+    if (!activeOrganization) {
         return (
             <CenteredResult
                 status="403"

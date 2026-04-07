@@ -20,6 +20,8 @@ export const useOrganization = () => {
             const { data } = await authClient.organization.list();
             return data || [];
         },
+        staleTime: 1000 * 60 * 5, // consistent with OrgGuard — no re-fetch on tab focus
+        refetchOnWindowFocus: false,
     });
 
     // 2. Active Organization - derived strictly from Context if available
