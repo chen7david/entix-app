@@ -92,7 +92,9 @@ export const OrganizationMembersPage: React.FC = () => {
     const [limit, setLimit] = useState(10);
 
     const [createForm] = Form.useForm();
-    const [selectedMember, setSelectedMember] = useState<MemberDTO | null>(null);
+    // Store only the ID — the drawer derives live data from the members cache
+    // so it re-renders automatically after any query invalidation.
+    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
     const { activeOrganization } = useOrganization();
     const { metrics, isLoadingMetrics: loadingMetrics } = useBulkMembers(activeOrganization?.id);
 
@@ -396,8 +398,8 @@ export const OrganizationMembersPage: React.FC = () => {
                         data: members,
                         loading: loading,
                         rowKey: "userId",
-                        selectedRowKey: selectedMember?.userId,
-                        onRowClick: (record) => setSelectedMember(record),
+                        selectedRowKey: selectedMemberId ?? undefined,
+                        onRowClick: (record) => setSelectedMemberId(record.userId),
                         filters: [
                             {
                                 type: "search",
@@ -534,15 +536,18 @@ export const OrganizationMembersPage: React.FC = () => {
             <Drawer
                 title="Member Details"
                 placement="right"
-                onClose={() => setSelectedMember(null)}
-                open={!!selectedMember}
+                onClose={() => setSelectedMemberId(null)}
+                open={!!selectedMemberId}
                 width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 push={false}
             >
-                {selectedMember &&
+                {selectedMemberId &&
                     (() => {
-                        const activeMember =
-                            members?.find((m: any) => m.id === selectedMember.id) || selectedMember;
+                        // Derive from live cache — re-renders automatically after mutations.
+                        const activeMember = members?.find(
+                            (m: MemberDTO) => m.userId === selectedMemberId
+                        );
+                        if (!activeMember) return null;
                         return (
                             <div className="flex flex-col gap-6 pt-2 pb-6">
                                 <div className="text-center mb-6">
@@ -623,7 +628,9 @@ export const OrganizationMembersPage: React.FC = () => {
                                                     canDeleteMember={canDeleteMember}
                                                     handleRoleChange={handleRoleChange}
                                                     handleRemoveMember={handleRemoveMember}
-                                                    onRemoveSuccess={() => setSelectedMember(null)}
+                                                    onRemoveSuccess={() =>
+                                                        setSelectedMemberId(null)
+                                                    }
                                                 />
                                             ),
                                         },

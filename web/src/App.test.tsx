@@ -1,5 +1,5 @@
 import { AppRoutes } from "@shared";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -22,7 +22,7 @@ vi.mock("./components/common/CenteredView", () => ({
     CenteredView: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-const emptyOrgStatus = { orgs: [], activeOrg: null };
+// No longer using checkOrganizationStatus
 
 describe("HomeRedirect UX Logic", () => {
     beforeEach(() => {
@@ -46,7 +46,6 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn().mockResolvedValue(emptyOrgStatus),
         });
 
         render(
@@ -83,7 +82,6 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: vi.fn().mockResolvedValue(emptyOrgStatus),
         });
 
         render(
@@ -96,9 +94,7 @@ describe("HomeRedirect UX Logic", () => {
         expect(spinner).toBeInTheDocument();
     });
 
-    it("should call checkOrganizationStatus for authenticated users", async () => {
-        const mockCheckStatus = vi.fn();
-
+    it("should redirect to onboarding if user has no organizations", async () => {
         vi.mocked(useAuth).mockReturnValue({
             user: { id: "1" } as any,
             isAuthenticated: true,
@@ -115,17 +111,21 @@ describe("HomeRedirect UX Logic", () => {
             isSwitching: false,
             listOrganizations: vi.fn(),
             setActive: vi.fn(),
-            checkOrganizationStatus: mockCheckStatus.mockResolvedValue(emptyOrgStatus),
         });
 
         render(
             <MemoryRouter initialEntries={["/"]}>
-                <App />
+                <Routes>
+                    <Route path="*" element={<App />} />
+                    <Route
+                        path={AppRoutes.onboarding.noOrganization}
+                        element={<div data-testid="no-org-page">Onboarding</div>}
+                    />
+                </Routes>
             </MemoryRouter>
         );
 
-        await waitFor(() => {
-            expect(mockCheckStatus).toHaveBeenCalled();
-        });
+        const onboardingPage = await screen.findByTestId("no-org-page");
+        expect(onboardingPage).toBeInTheDocument();
     });
 });

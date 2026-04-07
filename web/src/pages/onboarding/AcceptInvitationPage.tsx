@@ -1,6 +1,5 @@
-import { AppRoutes } from "@shared";
 import { useAuth } from "@web/src/features/auth";
-import { useInvitations, useOrganization } from "@web/src/features/organization";
+import { useInvitations } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -11,7 +10,6 @@ export const AcceptInvitationPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const invitationId = searchParams.get("id");
-    const { checkOrganizationStatus, setActive } = useOrganization();
     const { acceptInvitation, isAcceptingInvitation } = useInvitations();
     const { isLoading: isAuthLoading } = useAuth();
     const [error, setError] = useState<string | null>(null);
@@ -55,21 +53,8 @@ export const AcceptInvitationPage: React.FC = () => {
         notification,
     ]);
 
-    const handleNavigateResult = async () => {
-        const { orgs, activeOrg } = await checkOrganizationStatus();
-
-        if (activeOrg?.slug) {
-            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, { replace: true });
-            return;
-        }
-
-        if (orgs.length === 1 && orgs[0].slug) {
-            await setActive(orgs[0].id);
-            navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, { replace: true });
-            return;
-        }
-
-        navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
+    const handleNavigateResult = () => {
+        navigate("/", { replace: true });
     };
 
     if (isAuthLoading || (isAcceptingInvitation && !success && !error)) {
