@@ -20,6 +20,8 @@ export const useOrganization = () => {
             const { data } = await authClient.organization.list();
             return data || [];
         },
+        staleTime: 1000 * 60 * 5, // consistent with OrgGuard — no re-fetch on tab focus
+        refetchOnWindowFocus: false,
     });
 
     // 2. Active Organization - derived strictly from Context if available
@@ -51,28 +53,6 @@ export const useOrganization = () => {
         [setActiveMutation]
     );
 
-    const checkOrganizationStatus = useCallback(async () => {
-        // 1. Fetch and cache organizations
-        const orgs = await queryClient.fetchQuery({
-            queryKey: ["organizations"],
-            queryFn: async () => {
-                const { data } = await authClient.organization.list();
-                return data || [];
-            },
-        });
-
-        // 2. Fetch and cache active organization
-        const activeOrg = await queryClient.fetchQuery({
-            queryKey: ["activeOrganization"],
-            queryFn: async () => {
-                const { data } = await authClient.organization.getFullOrganization();
-                return data || null;
-            },
-        });
-
-        return { orgs, activeOrg };
-    }, [queryClient]);
-
     return {
         organizations,
         activeOrganization,
@@ -81,6 +61,5 @@ export const useOrganization = () => {
         isSwitching,
         listOrganizations,
         setActive,
-        checkOrganizationStatus,
     };
 };

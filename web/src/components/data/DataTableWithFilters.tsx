@@ -80,7 +80,17 @@ function DataTableWithFiltersInternal<T extends object>({
                 fixed: "right" as const,
                 width: 80,
                 align: "center",
-                render: (_: any, record: T) => config.actions?.(record),
+                // Wrap in a data-row-action sentinel so the onRow guard below
+                // can swallow clicks that originate here before they fire onRowClick.
+                render: (_: any, record: T) => (
+                    <div
+                        data-row-action="true"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        {config.actions?.(record)}
+                    </div>
+                ),
             });
         }
         return cols;
@@ -221,7 +231,13 @@ function DataTableWithFiltersInternal<T extends object>({
                                 config.selectedRowKey === key;
 
                             return {
-                                onClick: () => config.onRowClick?.(record),
+                                onClick: (e) => {
+                                    // Double-fence: ignore clicks that originate from the
+                                    // actions column sentinel, regardless of stopPropagation.
+                                    const target = e.target as HTMLElement;
+                                    if (target.closest("[data-row-action]")) return;
+                                    config.onRowClick?.(record);
+                                },
                                 className:
                                     `${config.onRowClick ? "cursor-pointer" : ""} ${isSelected ? "row-active" : ""}`.trim(),
                             };

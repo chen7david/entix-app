@@ -1,6 +1,5 @@
 import { AppRoutes } from "@shared";
 import { useVerifyEmail } from "@web/src/features/auth";
-import { useOrganization } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin, Typography } from "antd";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
@@ -13,29 +12,15 @@ export const VerifyEmailPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get("token");
-    const { checkOrganizationStatus, setActive } = useOrganization();
     const [status, setStatus] = useState<"verifying" | "success" | "error">(
         token ? "verifying" : "error"
     );
 
     const { mutate: verify } = useVerifyEmail();
 
-    const handleNavigateResult = useCallback(async () => {
-        const { orgs, activeOrg } = await checkOrganizationStatus();
-
-        if (activeOrg?.slug) {
-            navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`, { replace: true });
-            return;
-        }
-
-        if (orgs.length === 1 && orgs[0].slug) {
-            await setActive(orgs[0].id);
-            navigate(`/org/${orgs[0].slug}${AppRoutes.org.dashboard.index}`, { replace: true });
-            return;
-        }
-
-        navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
-    }, [checkOrganizationStatus, navigate, setActive]);
+    const handleNavigateResult = useCallback(() => {
+        navigate("/", { replace: true });
+    }, [navigate]);
 
     useEffect(() => {
         if (!token) {
