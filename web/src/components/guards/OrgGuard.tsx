@@ -4,12 +4,11 @@ import { CenteredResult, CenteredSpin } from "@web/src/components/common/Centere
 import { OrgProvider } from "@web/src/context/OrgContext";
 import { useAuth } from "@web/src/features/auth";
 import { authClient } from "@web/src/lib/auth-client";
+import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 import { Button } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
-
-const LAST_ORG_SLUG_KEY = "entix:last-org-slug";
 
 /**
  * OrgGuard - Organization context guard and provider.
@@ -48,15 +47,16 @@ export const OrgGuard: React.FC = () => {
     const activeOrganization =
         !loadingOrgs && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
-    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load
+    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (in this tab)
     useEffect(() => {
         if (!activeOrganization?.slug) return;
-        sessionStorage.setItem(LAST_ORG_SLUG_KEY, activeOrganization.slug);
+        sessionStorage.setItem(STORAGE_KEYS.lastOrgSlug, activeOrganization.slug);
     }, [activeOrganization?.slug]);
 
     // 4. Sync server session to the URL-picked org.
     //    Guard with lastSyncedOrgIdRef so we don't re-sync on every render or background refetch.
     //    isSyncing starts as true so children never render before the first sync completes.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: URL-driven sync is stable by activeOrganization?.id
     useEffect(() => {
         if (loadingOrgs) return; // wait for org list before deciding anything
         if (!activeOrganization) {
@@ -102,7 +102,7 @@ export const OrgGuard: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [activeOrganization, loadingOrgs, auth.refreshAuth, queryClient]);
+    }, [activeOrganization?.id, loadingOrgs, auth.refreshAuth, queryClient]);
 
     // Block children while resolving the org list or syncing the server session
     if (loadingOrgs || isSyncing) {

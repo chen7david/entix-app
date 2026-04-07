@@ -12,7 +12,6 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
-import { useOrganization } from "@web/src/features/organization";
 import { Avatar, Button, Dropdown, Menu, type MenuProps, Typography, theme } from "antd";
 import type React from "react";
 import { useLocation, useNavigate } from "react-router";
@@ -23,7 +22,6 @@ const { useToken } = theme;
 export const AdminSidebarContent: React.FC = () => {
     const { user } = useAuth();
     const { mutate: signOut } = useSignOut();
-    const { checkOrganizationStatus } = useOrganization();
     const navigate = useNavigate();
     const location = useLocation();
     const { token } = useToken();
@@ -35,13 +33,7 @@ export const AdminSidebarContent: React.FC = () => {
                 onSuccess: () => navigate(AppRoutes.auth.signIn),
             });
         } else if (e.key === "exit") {
-            const { activeOrg } = await checkOrganizationStatus();
-
-            if (activeOrg?.slug) {
-                navigate(`/org/${activeOrg.slug}${AppRoutes.org.dashboard.index}`);
-            } else {
-                navigate(AppRoutes.onboarding.selectOrganization);
-            }
+            navigate("/", { replace: true });
         }
     };
 

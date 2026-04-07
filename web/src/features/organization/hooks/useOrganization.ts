@@ -53,28 +53,6 @@ export const useOrganization = () => {
         [setActiveMutation]
     );
 
-    const checkOrganizationStatus = useCallback(async () => {
-        // 1. Fetch and cache organizations
-        const orgs = await queryClient.fetchQuery({
-            queryKey: ["organizations"],
-            queryFn: async () => {
-                const { data } = await authClient.organization.list();
-                return data || [];
-            },
-        });
-
-        // 2. Fetch and cache active organization
-        const activeOrg = await queryClient.fetchQuery({
-            queryKey: ["activeOrganization"],
-            queryFn: async () => {
-                const { data } = await authClient.organization.getFullOrganization();
-                return data || null;
-            },
-        });
-
-        return { orgs, activeOrg };
-    }, [queryClient]);
-
     return {
         organizations,
         activeOrganization,
@@ -83,6 +61,5 @@ export const useOrganization = () => {
         isSwitching,
         listOrganizations,
         setActive,
-        checkOrganizationStatus,
     };
 };

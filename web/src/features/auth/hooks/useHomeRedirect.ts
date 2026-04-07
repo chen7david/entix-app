@@ -1,10 +1,9 @@
 import { AppRoutes } from "@shared";
-import { useEffect } from "react";
+import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import { useOrganization } from "../../organization/hooks/useOrganization";
 import { useAuth } from "../context/AuthContext";
-
-const LAST_ORG_SLUG_KEY = "entix:last-org-slug";
 
 /**
  * useHomeRedirect
@@ -27,10 +26,15 @@ export function useHomeRedirect() {
     const { isAuthenticated, isLoading: loadingAuth } = useAuth();
     const { organizations, loading: loadingOrgs } = useOrganization();
     const navigate = useNavigate();
+    const hasNavigatedRef = useRef(false);
 
     useEffect(() => {
+        if (hasNavigatedRef.current) return;
+
         // Wait for both auth and org list to settle
         if (loadingAuth || loadingOrgs) return;
+
+        hasNavigatedRef.current = true;
 
         if (!isAuthenticated) {
             navigate(AppRoutes.auth.signIn, { replace: true });
@@ -38,7 +42,7 @@ export function useHomeRedirect() {
         }
 
         // 1. Breadcrumb — return to the last org this tab was on
-        const savedSlug = sessionStorage.getItem(LAST_ORG_SLUG_KEY);
+        const savedSlug = sessionStorage.getItem(STORAGE_KEYS.lastOrgSlug);
         if (savedSlug) {
             const matched = organizations.find((org) => org.slug === savedSlug);
             if (matched) {
