@@ -1,4 +1,5 @@
 import { AppRoutes } from "@shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useVerifyEmail } from "@web/src/features/auth";
 import { App, Button, Card, Result, Spin, Typography } from "antd";
 import type React from "react";
@@ -9,6 +10,7 @@ const { Text } = Typography;
 
 export const VerifyEmailPage: React.FC = () => {
     const { notification } = App.useApp();
+    const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get("token");
@@ -34,14 +36,15 @@ export const VerifyEmailPage: React.FC = () => {
                 },
             },
             {
-                onSuccess: (response: any) => {
+                onSuccess: async (response: any) => {
                     const data = response.data as { status?: boolean } | null;
                     if (data?.status) {
                         notification.success({
                             message: "Email Verified",
                             description: "Your email has been verified successfully!",
                         });
-                        // Check org status to redirect appropriately
+                        // Invalidate org cache so useHomeRedirect sees the newly created org
+                        await queryClient.invalidateQueries({ queryKey: ["organizations"] });
                         handleNavigateResult();
                     } else {
                         setStatus("success");
@@ -55,7 +58,7 @@ export const VerifyEmailPage: React.FC = () => {
                 },
             }
         );
-    }, [token, verify, notification, handleNavigateResult, navigate]);
+    }, [token, verify, notification, handleNavigateResult, navigate, queryClient]); // ← added queryClient
 
     if (status === "verifying") {
         return (
