@@ -1,12 +1,7 @@
-import {
-    CheckCircleOutlined,
-    DownOutlined,
-    GlobalOutlined,
-    UpOutlined,
-    WalletOutlined,
-} from "@ant-design/icons";
+import { CheckCircleOutlined, GlobalOutlined, WalletOutlined } from "@ant-design/icons";
 import type { WalletAccountDTO } from "@shared";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { BillingPlanManagement } from "@web/src/features/finance/components/BillingPlanManagement";
 import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
 import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
@@ -16,7 +11,7 @@ import { useOrganization } from "@web/src/features/organization";
 import { CreateAccountDrawer } from "@web/src/features/wallet/components/CreateAccountDrawer";
 import type { FinancialAccountData } from "@web/src/features/wallet/components/FinancialAccountCard";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
-import { Button, Card, Col, Flex, Grid, Row, Tag, Typography } from "antd";
+import { Button, Card, Col, Flex, Grid, Row, Tabs, Tag, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";
 
@@ -28,14 +23,10 @@ export const FinanceAccountsPage: React.FC = () => {
     const orgId = activeOrganization?.id;
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
     const [isManageDrawerOpen, setIsManageDrawerOpen] = useState(false);
-    const [isCurrencyManagementOpen, setIsCurrencyManagementOpen] = useState(false);
     const [selectedAccount, setSelectedAccount] = useState<WalletAccountDTO | null>(null);
 
-    // RESTORED: Currency activation hooks and logic
     const { data: currenciesData, isLoading: isLoadingCurrencies } = useOrgCurrencies(orgId);
     const { mutate: activate, isPending: isActivating } = useActivateCurrency(orgId);
-
-    // Fetch ALL active accounts for the org
     const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(orgId, "org");
     const accounts = balanceData?.accounts ?? [];
 
@@ -44,34 +35,8 @@ export const FinanceAccountsPage: React.FC = () => {
         setIsManageDrawerOpen(true);
     };
 
-    return (
-        <div>
-            <Flex
-                vertical={!screens.md}
-                justify="space-between"
-                align={screens.md ? "center" : "start"}
-                gap={16}
-                style={{ marginBottom: 32 }}
-            >
-                <div style={{ flex: 1 }}>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Finance — Accounts
-                    </Title>
-                    <Text type="secondary" style={{ fontSize: 13 }}>
-                        Centralized treasury management. Manage organizational accounts, track
-                        balances, and activate global currencies.
-                    </Text>
-                </div>
-                <Button
-                    type="primary"
-                    size="large"
-                    onClick={() => setIsCreateDrawerOpen(true)}
-                    style={{ height: 44, fontWeight: 600 }}
-                >
-                    Create Custom Account
-                </Button>
-            </Flex>
-
+    const overviewContent = (
+        <div className="flex flex-col gap-8">
             <SummaryCardsRow
                 loading={isLoadingBalance || isLoadingCurrencies}
                 items={[
@@ -122,70 +87,78 @@ export const FinanceAccountsPage: React.FC = () => {
                     />
                 </Col>
 
-                {/* Skeletons are now handled within OrgAccountCardGrid and CurrencyActivationGrid */}
-
                 <Col span={24}>
                     <Card
-                        style={{
-                            marginTop: 8,
-                            borderRadius: 12,
-                            border: `1px solid var(--ant-color-border-secondary)`,
-                        }}
-                        styles={{ body: { padding: isCurrencyManagementOpen ? 24 : 16 } }}
+                        title="Currency Management"
+                        styles={{ body: { padding: 24 } }}
+                        className="rounded-xl"
                     >
-                        <Flex
-                            justify="space-between"
-                            align="center"
-                            style={{ cursor: "pointer" }}
-                            onClick={() => setIsCurrencyManagementOpen(!isCurrencyManagementOpen)}
+                        <Text
+                            strong
+                            type="secondary"
+                            className="text-[11px] uppercase tracking-widest block mb-4"
                         >
-                            <div>
-                                <Text strong style={{ fontSize: 16 }}>
-                                    Currency Management
-                                </Text>
-                                <Text type="secondary" style={{ marginLeft: 8, fontSize: 13 }}>
-                                    {currenciesData?.filter((c) => c.isActivated).length || 0}{" "}
-                                    active •{" "}
-                                    {currenciesData?.filter((c) => !c.isActivated).length || 0}{" "}
-                                    available
-                                </Text>
-                            </div>
-                            <Button
-                                type="text"
-                                size="small"
-                                icon={isCurrencyManagementOpen ? <UpOutlined /> : <DownOutlined />}
-                            >
-                                {isCurrencyManagementOpen ? "Hide" : "Show"}
-                            </Button>
-                        </Flex>
-
-                        {/* Collapsible Content */}
-                        {isCurrencyManagementOpen && (
-                            <div style={{ marginTop: 24 }}>
-                                <Text
-                                    strong
-                                    type="secondary"
-                                    style={{
-                                        fontSize: 11,
-                                        textTransform: "uppercase",
-                                        letterSpacing: "0.08em",
-                                        display: "block",
-                                        marginBottom: 16,
-                                    }}
-                                >
-                                    Supported Currencies
-                                </Text>
-                                <CurrencyActivationGrid
-                                    currencies={currenciesData ?? []}
-                                    onAccountClick={handleAccountClick}
-                                    onActivate={activate}
-                                    activating={isActivating || isLoadingCurrencies}
-                                />
-                            </div>
-                        )}
+                            Supported Currencies
+                        </Text>
+                        <CurrencyActivationGrid
+                            currencies={currenciesData ?? []}
+                            onAccountClick={handleAccountClick}
+                            onActivate={activate}
+                            activating={isActivating || isLoadingCurrencies}
+                        />
                     </Card>
                 </Col>
             </Row>
+        </div>
+    );
+
+    const items = [
+        {
+            key: "overview",
+            label: "Treasury & Currencies",
+            children: overviewContent,
+        },
+        {
+            key: "billing",
+            label: "Billing Plans",
+            children: orgId ? <BillingPlanManagement orgId={orgId} /> : null,
+        },
+    ];
+
+    return (
+        <div className="flex flex-col h-full overflow-hidden">
+            <Flex
+                vertical={!screens.md}
+                justify="space-between"
+                align={screens.md ? "center" : "start"}
+                gap={16}
+                className="mb-8"
+            >
+                <div>
+                    <Title level={2} className="m-0">
+                        Finances
+                    </Title>
+                    <Text type="secondary" className="text-[13px]">
+                        Centralized treasury management, currency activation, and tiered billing
+                        plans.
+                    </Text>
+                </div>
+                <Button
+                    type="primary"
+                    size="large"
+                    onClick={() => setIsCreateDrawerOpen(true)}
+                    className="h-11 font-semibold"
+                >
+                    Create Custom Account
+                </Button>
+            </Flex>
+
+            <Tabs
+                defaultActiveKey="overview"
+                items={items}
+                destroyInactiveTabPane={false}
+                className="flex-1 min-h-0 custom-finance-tabs"
+            />
 
             <ManageAccountDrawer
                 open={isManageDrawerOpen}

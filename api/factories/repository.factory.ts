@@ -1,5 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import { DashboardRepository } from "@api/repositories/dashboard.repository";
+import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
@@ -18,6 +19,10 @@ import { getDbClient } from "./db.factory";
 
 export const getFinancialAccountsRepository = (ctx: AppContext) => {
     return new FinancialAccountsRepository(getDbClient(ctx));
+};
+
+export const getFinanceBillingPlansRepository = (ctx: AppContext) => {
+    return new FinanceBillingPlansRepository(getDbClient(ctx));
 };
 
 export const getFinancialCurrenciesRepository = (ctx: AppContext) => {

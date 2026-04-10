@@ -22,7 +22,9 @@ describe("SessionScheduleService Architecture Bounds", () => {
             deleteAllSessionAttendances: vi.fn(),
             deleteFollowingSessions: vi.fn(),
         };
-        service = new SessionScheduleService(mockRepo);
+        const mockBilling = {} as any;
+        const mockWallet = {} as any;
+        service = new SessionScheduleService(mockRepo, mockBilling, mockWallet);
     });
 
     it("creates a single session effortlessly scaling Drizzle mapping", async () => {

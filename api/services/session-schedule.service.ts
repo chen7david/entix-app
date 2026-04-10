@@ -1,7 +1,10 @@
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
+import { FINANCIAL_CURRENCIES } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
 import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
+import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
+import type { FinanceWalletService } from "./financial/finance-wallet.service";
 
 export type CreateSessionDTO = {
     title: string;
@@ -26,7 +29,11 @@ export type UpdateSessionDTO = {
 };
 
 export class SessionScheduleService extends BaseService {
-    constructor(private sessionRepo: SessionScheduleRepository) {
+    constructor(
+        private readonly sessionRepo: SessionScheduleRepository,
+        private readonly billingPlansService: FinanceBillingPlansService,
+        private readonly walletService: FinanceWalletService
+    ) {
         super();
     }
 
@@ -157,7 +164,52 @@ export class SessionScheduleService extends BaseService {
         sessionId: string,
         status: "scheduled" | "completed" | "cancelled"
     ) {
-        return this.sessionRepo.updateSessionStatus(organizationId, sessionId, status);
+        const result = await this.sessionRepo.updateSessionStatus(
+            organizationId,
+            sessionId,
+            status
+        );
+
+        if (status === "completed") {
+            const session = await this.sessionRepo.findSessionById(organizationId, sessionId);
+            if (!session) return result;
+
+            // Fetch attendances to know who to bill
+            const attendances = await this.sessionRepo.findAttendancesBySessionId(sessionId);
+            const activeParticipantCount = attendances.filter((a) => !a.absent).length;
+            const currencyId = FINANCIAL_CURRENCIES.CNY; // Default to CNY for now
+
+            for (const attendance of attendances) {
+                if (attendance.absent) continue; // Don't bill if absent (policy dependent)
+
+                const rate = await this.billingPlansService.resolveBillingPlanRate(
+                    attendance.userId,
+                    organizationId,
+                    currencyId,
+                    activeParticipantCount
+                );
+
+                if (rate > 0) {
+                    const amountCents = session.durationMinutes * rate;
+                    await this.walletService.executeSessionDeduction({
+                        userId: attendance.userId,
+                        orgId: organizationId,
+                        currencyId,
+                        amountCents,
+                        description: `Session Fee: ${session.title} (${rate} cents/min x ${session.durationMinutes} min for ${activeParticipantCount} students)`,
+                        metadata: {
+                            rateCentsPerMinute: rate,
+                            durationMinutes: session.durationMinutes,
+                            participantCount: activeParticipantCount,
+                            sessionTitle: session.title,
+                        },
+                        sessionDate: session.startTime,
+                    });
+                }
+            }
+        }
+
+        return result;
     }
 
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
@@ -179,7 +231,7 @@ export class SessionScheduleService extends BaseService {
             }
 
             if (data.status) {
-                await this.sessionRepo.updateSessionStatus(organizationId, sessionId, data.status);
+                await this.updateSessionStatus(organizationId, sessionId, data.status);
             }
         } else {
             const deletedFutureSessions = await this.sessionRepo.deleteFollowingSessions(
@@ -235,7 +287,7 @@ export class SessionScheduleService extends BaseService {
             }
 
             if (data.status) {
-                await this.sessionRepo.updateSessionStatus(organizationId, sessionId, data.status);
+                await this.updateSessionStatus(organizationId, sessionId, data.status);
             }
         }
 

@@ -1,39 +1,42 @@
-import { CloudUploadOutlined, UserOutlined } from "@ant-design/icons";
+import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBetterAuth } from "@web/src/features/auth";
 import { useUpdateAvatar } from "@web/src/features/user-profiles";
 import type { UploadProps } from "antd";
 import { App, Avatar, Spin, theme, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
+import type React from "react";
 import { useState } from "react";
 
-interface AvatarDropzoneProps {
+interface AvatarUploadProps {
     /** The organization this upload belongs to */
     organizationId: string;
     /** The user whose avatar is being updated */
     userId: string;
-    /** Current avatar URL to display (with Cloudflare resizing applied, e.g. lg/xl) */
+    /** Current avatar URL to display */
     currentImageUrl?: string;
-    /** Size of the dropzone (in pixels) */
+    /** Size of the avatar (in pixels) */
     size?: number;
     /** Additional CSS class */
     className?: string;
 }
 
-const { useToken } = theme;
-
-export const AvatarDropzone = ({
+/**
+ * Standardized Ant Design Avatar Upload component.
+ * Uses picture-circle list type for the native AntD look.
+ */
+export const AvatarUpload: React.FC<AvatarUploadProps> = ({
     organizationId,
     userId,
     currentImageUrl,
-    size = 120,
+    size = 100,
     className = "",
-}: AvatarDropzoneProps) => {
+}) => {
     const { notification } = App.useApp();
-    const { token } = useToken();
     const [uploading, setUploading] = useState(false);
     const queryClient = useQueryClient();
     const updateAvatarMutation = useUpdateAvatar();
+    const { token } = theme.useToken();
     const { session, refetch } = useBetterAuth();
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {
@@ -53,11 +56,10 @@ export const AvatarDropzone = ({
         }
 
         setUploading(true);
-        // Set an artificial "0%" progress state
         onProgress?.({ percent: 0 });
 
         try {
-            // 1. Request presigned URL via the dedicated user avatar endpoint
+            // 1. Request presigned URL
             const presignResponse = await fetch(`/api/v1/users/${userId}/avatar/presigned-url`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -87,7 +89,7 @@ export const AvatarDropzone = ({
 
             onProgress?.({ percent: 60 });
 
-            // 3. Mark upload as complete via user assets endpoint
+            // 3. Mark upload as complete
             const completeResponse = await fetch(
                 `/api/v1/users/${userId}/assets/${uploadId}/complete`,
                 { method: "POST" }
@@ -109,15 +111,11 @@ export const AvatarDropzone = ({
             onProgress?.({ percent: 100 });
             onSuccess?.("ok");
 
-            // Refresh relevant query caches
+            // Refresh caches
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", organizationId] });
             queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
             queryClient.invalidateQueries({ queryKey: ["organizations"] });
-
-            // Session is refetched above (line 106) for the current user.
-            // cookieCache is disabled globally, so refetch() always returns fresh DB data.
         } catch (err: any) {
-            console.error("Avatar upload error:", err);
             onError?.(err);
             notification.error({
                 message: "Upload Failed",
@@ -128,15 +126,15 @@ export const AvatarDropzone = ({
         }
     };
 
-    const uploadProps: UploadProps = {
-        name: "avatar",
-        accept: "image/*",
-        showUploadList: false,
-        customRequest: handleUpload,
-    };
+    const uploadButton = (
+        <div className="flex flex-col items-center justify-center">
+            {uploading ? <Spin /> : <PlusOutlined style={{ fontSize: 24 }} />}
+            <div style={{ marginTop: 8 }}>Upload</div>
+        </div>
+    );
 
     return (
-        <div className={`relative inline-block ${className}`} style={{ width: size, height: size }}>
+        <div className={`flex justify-center items-center ${className}`} style={{ width: "100%" }}>
             <ImgCrop
                 rotationSlider
                 aspect={1}
@@ -145,62 +143,52 @@ export const AvatarDropzone = ({
                 modalOk="Crop & Upload"
             >
                 <Upload
-                    {...uploadProps}
-                    aria-label="Upload profile picture"
-                    className="w-full h-full block [&_.ant-upload]:w-full [&_.ant-upload]:h-full [&_.ant-upload]:block relative group cursor-pointer"
+                    name="avatar"
+                    listType="picture-circle"
+                    className="avatar-uploader"
+                    showUploadList={false}
+                    customRequest={handleUpload}
+                    accept="image/*"
+                    style={{
+                        width: size,
+                        height: size,
+                    }}
                 >
                     <div
-                        className="w-full h-full relative rounded-full flex items-center justify-center border-2 border-dashed group-hover:border-[var(--ant-color-primary)] transition-colors"
+                        className="flex items-center justify-center overflow-hidden rounded-full relative group"
                         style={{
-                            width: size,
-                            height: size,
-                            padding: "4px",
-                            borderColor: token.colorBorderSecondary,
+                            width: size - 8,
+                            height: size - 8,
                         }}
                     >
-                        <div
-                            className="w-full h-full relative rounded-full overflow-hidden flex items-center justify-center"
-                            style={{ backgroundColor: token.colorBgContainer }}
-                        >
-                            {/* Display existing avatar or placeholder */}
-                            <Avatar
-                                size={size - 12}
-                                src={currentImageUrl}
-                                icon={<UserOutlined />}
-                                className="transition-opacity duration-300 group-hover:opacity-60 flex-shrink-0"
-                                style={{ margin: 0, padding: 0 }}
-                            />
-
-                            {/* Hover Overlay */}
-                            <div
-                                className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 text-white pointer-events-none"
-                                style={{
-                                    backgroundColor: `${token.colorPrimary}CC`, // 80% opacity
-                                }}
-                            >
-                                {uploading ? (
-                                    <Spin className="text-white" />
-                                ) : (
-                                    <>
-                                        <CloudUploadOutlined className="text-2xl mb-1" />
-                                        <span className="text-xs font-medium px-2 text-center text-white/90">
-                                            Update
-                                        </span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Floating Upload Indicator Badge */}
-                        <div
-                            className="absolute bottom-0 right-0 bg-white border border-gray-200 rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-[var(--ant-color-primary)] group-hover:border-[var(--ant-color-primary)] transition-colors pointer-events-none z-10"
-                            aria-hidden="true"
-                        >
-                            <CloudUploadOutlined className="text-base" />
-                        </div>
+                        {currentImageUrl ? (
+                            <>
+                                <Avatar
+                                    src={currentImageUrl}
+                                    size={size - 8}
+                                    icon={<UserOutlined />}
+                                    className="transition-opacity duration-300 group-hover:opacity-40"
+                                    style={{ border: "none" }}
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <PlusOutlined
+                                        style={{ fontSize: 24, color: token.colorPrimary }}
+                                    />
+                                </div>
+                            </>
+                        ) : (
+                            uploadButton
+                        )}
                     </div>
                 </Upload>
             </ImgCrop>
+            <style>{`
+                .avatar-uploader .ant-upload.ant-upload-select {
+                    width: ${size}px !important;
+                    height: ${size}px !important;
+                    margin: 0 !important;
+                }
+            `}</style>
         </div>
     );
 };

@@ -18,7 +18,8 @@ import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
-import { AvatarDropzone } from "@web/src/features/media";
+import { MemberBillingSection } from "@web/src/features/finance/components/MemberBillingSection";
+import { AvatarUpload } from "@web/src/features/media";
 import {
     useBulkMembers,
     useCreateMember,
@@ -548,14 +549,14 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                             <div className="flex flex-col gap-6 pt-2 pb-6">
                                 <div className="text-center mb-6">
                                     {activeOrganization ? (
-                                        <AvatarDropzone
+                                        <AvatarUpload
                                             organizationId={activeOrganization.id}
                                             userId={activeMember.userId}
                                             currentImageUrl={getAvatarUrl(
                                                 activeMember.avatarUrl || null,
                                                 "xl"
                                             )}
-                                            size={96}
+                                            size={100}
                                             className="mx-auto"
                                         />
                                     ) : (
@@ -629,6 +630,16 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                                                     }
                                                 />
                                             ),
+                                        },
+                                        {
+                                            key: "5",
+                                            label: "Billing",
+                                            children: activeOrganization ? (
+                                                <MemberBillingSection
+                                                    orgId={activeOrganization.id}
+                                                    userId={activeMember.userId}
+                                                />
+                                            ) : null,
                                         },
                                     ]}
                                 />

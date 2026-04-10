@@ -25,6 +25,20 @@ export function createScheduleClient(request: Requester) {
                 method: "POST",
                 body: payload,
             }),
+
+        /** PATCH /api/v1/orgs/:orgId/schedule/:sessionId */
+        update: (orgId: string, sessionId: string, payload: any) =>
+            request(`/api/v1/orgs/${orgId}/schedule/${sessionId}`, {
+                method: "PATCH",
+                body: payload,
+            }),
+
+        /** PATCH /api/v1/orgs/:orgId/schedule/:sessionId/status */
+        updateStatus: (orgId: string, sessionId: string, payload: { status: string }) =>
+            request(`/api/v1/orgs/${orgId}/schedule/${sessionId}/status`, {
+                method: "PATCH",
+                body: payload,
+            }),
     };
 }
 

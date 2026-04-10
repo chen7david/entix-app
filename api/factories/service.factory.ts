@@ -3,6 +3,8 @@ import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
 import { DashboardService } from "@api/services/dashboard.service";
 import { AdminFinancialService } from "@api/services/financial/admin-financial.service";
+import { FinanceBillingPlansService } from "@api/services/financial/finance-billing-plans.service";
+import { FinanceWalletService } from "@api/services/financial/finance-wallet.service";
 import { OrgFinancialService } from "@api/services/financial/org-financial.service";
 import { UserFinancialService } from "@api/services/financial/user-financial.service";
 import { MailService } from "@api/services/mailer.service";
@@ -21,6 +23,7 @@ import { UserProfileService } from "@api/services/user-profile.service";
 import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
+    getFinanceBillingPlansRepository,
     getFinancialAccountsRepository,
     getFinancialCurrenciesRepository,
     getFinancialOrgSettingsRepository,
@@ -85,7 +88,11 @@ export const getPlaylistService = (ctx: AppContext) => {
 };
 
 export const getSessionScheduleService = (ctx: AppContext) => {
-    return new SessionScheduleService(getSessionScheduleRepository(ctx));
+    return new SessionScheduleService(
+        getSessionScheduleRepository(ctx),
+        getFinanceBillingPlansService(ctx),
+        getFinanceWalletService(ctx)
+    );
 };
 
 export const getMemberService = (ctx: AppContext) => {
@@ -130,6 +137,18 @@ export const getUserFinancialService = (ctx: AppContext) => {
 
 export const getAdminFinancialService = (ctx: AppContext) => {
     return new AdminFinancialService(
+        getDbClient(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionsRepository(ctx)
+    );
+};
+
+export const getFinanceBillingPlansService = (ctx: AppContext) => {
+    return new FinanceBillingPlansService(getFinanceBillingPlansRepository(ctx));
+};
+
+export const getFinanceWalletService = (ctx: AppContext) => {
+    return new FinanceWalletService(
         getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx)

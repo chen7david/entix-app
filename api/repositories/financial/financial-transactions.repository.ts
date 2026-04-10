@@ -115,6 +115,7 @@ export class FinancialTransactionsRepository {
             currencyId: input.currencyId,
             amountCents: input.amountCents,
             description: input.description,
+            metadata: input.metadata,
             transactionDate: input.transactionDate,
             createdAt: input.createdAt,
             status: "completed",

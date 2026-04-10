@@ -1,7 +1,7 @@
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { AppRoutes, getAvatarUrl } from "@shared";
 import { useSignOut } from "@web/src/features/auth";
-import { AvatarDropzone } from "@web/src/features/media";
+import { AvatarUpload } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
 import {
     PasswordUpdateForm,
@@ -88,11 +88,11 @@ export const ProfilePage: React.FC = () => {
                     >
                         <div className="flex flex-col items-center mb-6 text-center">
                             {activeOrganization ? (
-                                <AvatarDropzone
+                                <AvatarUpload
                                     organizationId={activeOrganization.id}
                                     userId={session.user.id}
                                     currentImageUrl={getAvatarUrl(session.user.image, "lg")}
-                                    size={96}
+                                    size={100}
                                 />
                             ) : (
                                 <Avatar
