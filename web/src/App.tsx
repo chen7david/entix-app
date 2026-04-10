@@ -9,9 +9,9 @@ import { OrgGuard } from "./components/guards/OrgGuard";
 import { ProtectedRoute } from "./components/guards/ProtectedRoute";
 import { FinancialManagementPage } from "./features/admin/FinancialManagementPage";
 import { AuthProvider } from "./features/auth/context/AuthContext";
-import { AdminLayout } from "./layouts/AdminLayout";
-import { AuthLayout } from "./layouts/AuthLayout";
-import { DashboardLayout } from "./layouts/DashboardLayout";
+import { AuthLayout } from "./layouts/auth/AuthLayout";
+import { OrgAdminLayout } from "./layouts/org-admin/OrgAdminLayout";
+import { PlatformAdminLayout } from "./layouts/platform-admin/PlatformAdminLayout";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { EmailInsightsPage } from "./pages/admin/EmailInsightsPage";
 import { GlobalOrganizationsPage } from "./pages/admin/GlobalOrganizationsPage";
@@ -123,7 +123,7 @@ export default function App() {
                                 </Route>
 
                                 <Route path="org/:slug" element={<OrgGuard />}>
-                                    <Route element={<DashboardLayout />}>
+                                    <Route element={<OrgAdminLayout />}>
                                         <Route
                                             index
                                             element={<Navigate to="dashboard" replace />}
@@ -211,7 +211,7 @@ export default function App() {
                                 </Route>
 
                                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-                                    <Route element={<AdminLayout />}>
+                                    <Route element={<PlatformAdminLayout />}>
                                         <Route path="admin" element={<AdminDashboardPage />} />
                                         <Route path="admin/users" element={<GlobalUsersPage />} />
                                         <Route

@@ -25,18 +25,13 @@ import {
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ThemeToggle } from "../../common/ThemeToggle";
-import { AdminSidebarMenu } from "./AdminSidebarMenu";
-import { SidebarMenu } from "./SidebarMenu";
-import { SidebarOrgSwitcher } from "./SidebarOrgSwitcher";
+import { ThemeToggle } from "../../components/common/ThemeToggle";
+import { SidebarMenu } from "../../components/navigation/Sidebar/SidebarMenu";
+import { SidebarOrgSwitcher } from "../../components/navigation/Sidebar/SidebarOrgSwitcher";
 
 const { Text } = Typography;
 
-interface SidebarContentProps {
-    variant?: "org" | "admin";
-}
-
-export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" }) => {
+export const OrgAdminSidebarContent: React.FC = () => {
     const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
     const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
@@ -45,7 +40,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" 
     const slug = activeOrganization?.slug || "";
     const { token } = theme.useToken();
 
-    // Local Storage Visibility Toggle
     const [isBalanceVisible, setIsBalanceVisible] = useState(() => {
         if (typeof window === "undefined") return false;
         return localStorage.getItem("wallet_balance_visible") === "true";
@@ -90,7 +84,6 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" 
                   {
                       key: AppRoutes.admin.index,
                       label: "Platform Dashboard",
-                      disabled: variant === "admin",
                       icon: <SafetyOutlined style={{ color: "#faad14" }} />,
                   },
                   {
@@ -101,23 +94,17 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" 
         ...(slug
             ? [
                   {
-                      key: slug
-                          ? `/org/${slug}${AppRoutes.org.dashboard.profile}`
-                          : "profile-disabled",
+                      key: `/org/${slug}${AppRoutes.org.dashboard.profile}`,
                       label: "Profile",
                       icon: <UserOutlined />,
                   },
                   {
-                      key: slug
-                          ? `/org/${slug}${AppRoutes.org.dashboard.sessions}`
-                          : "sessions-disabled",
+                      key: `/org/${slug}${AppRoutes.org.dashboard.sessions}`,
                       label: "Sessions",
                       icon: <SafetyOutlined />,
                   },
                   {
-                      key: slug
-                          ? `/org/${slug}${AppRoutes.org.dashboard.settings}`
-                          : "settings-disabled",
+                      key: `/org/${slug}${AppRoutes.org.dashboard.settings}`,
                       label: "Settings",
                       icon: <SettingOutlined />,
                   },
@@ -209,18 +196,15 @@ export const SidebarContent: React.FC<SidebarContentProps> = ({ variant = "org" 
 
             {/* Menu */}
             <div className="flex-1 overflow-y-auto py-2">
-                {variant === "admin" ? <AdminSidebarMenu /> : <SidebarMenu />}
+                <SidebarMenu />
             </div>
 
             {/* Footer: Org Switcher & User Menu */}
             <div style={{ borderTop: `1px solid ${token.colorSplit}` }}>
                 <div className="flex items-center gap-1 p-2">
-                    {variant === "org" && (
-                        <div style={{ flex: 1, minWidth: 20 }}>
-                            <SidebarOrgSwitcher />
-                        </div>
-                    )}
-                    {variant === "admin" && <div style={{ flex: 1 }} />}
+                    <div style={{ flex: 1, minWidth: 20 }}>
+                        <SidebarOrgSwitcher />
+                    </div>
                     <ThemeToggle />
                     <Dropdown
                         menu={{ items: userMenuItems, onClick: handleMenuClick }}
