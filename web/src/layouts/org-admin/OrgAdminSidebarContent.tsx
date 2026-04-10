@@ -32,7 +32,7 @@ import { SidebarOrgSwitcher } from "../../components/navigation/Sidebar/SidebarO
 const { Text } = Typography;
 
 export const OrgAdminSidebarContent: React.FC = () => {
-    const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
+    const { user, isLoading: isAuthLoading, isSuperAdmin, isAdminOrOwner } = useAuth();
     const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
@@ -60,10 +60,6 @@ export const OrgAdminSidebarContent: React.FC = () => {
 
     const etdAccount = summary?.accounts.find((a) => a.currencyId === FINANCIAL_CURRENCIES.ETD);
     const hasWallet = !!etdAccount;
-    const isAdmin =
-        activeOrganization?.members?.find((m: any) => m.userId === userId)?.role === "admin" ||
-        activeOrganization?.members?.find((m: any) => m.userId === userId)?.role === "owner";
-
     const balanceValue = etdAccount ? (etdAccount.balanceCents / 100).toFixed(2) : "0.00";
 
     const handleMenuClick: MenuProps["onClick"] = (e) => {
@@ -172,7 +168,7 @@ export const OrgAdminSidebarContent: React.FC = () => {
                                     ) : (
                                         <Tooltip
                                             title={
-                                                isAdmin
+                                                isAdminOrOwner
                                                     ? "Go to Members to initialize wallet"
                                                     : undefined
                                             }
@@ -181,7 +177,7 @@ export const OrgAdminSidebarContent: React.FC = () => {
                                                 type="secondary"
                                                 className="text-[10px] opacity-60 italic"
                                             >
-                                                {isAdmin
+                                                {isAdminOrOwner
                                                     ? "Wallet not set up — initialize in Members"
                                                     : "Wallet not set up"}
                                             </Text>

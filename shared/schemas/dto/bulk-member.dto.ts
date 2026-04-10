@@ -10,7 +10,10 @@ export const bulkMemberItemSchema = z.object({
     id: z.string().optional().openapi({ example: "user_123" }),
     email: z.string().trim().openapi({ example: "member@example.com" }),
     name: z.string().trim().min(1).openapi({ example: "John Doe" }),
-    role: z.enum(["admin", "member", "owner"]).optional().openapi({ example: "member" }),
+    role: z
+        .enum(["admin", "student", "teacher", "owner"])
+        .optional()
+        .openapi({ example: "student" }),
     avatarUrl: z
         .string()
         .url()

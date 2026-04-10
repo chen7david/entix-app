@@ -14,17 +14,43 @@ export const statement = {
     "user-profile": ["read", "update"],
     schedule: ["read", "create", "update", "delete"],
     playlist: ["read", "create", "update", "delete"],
+    // Education Resources
+    course: ["read", "create", "update", "delete", "enroll", "unenroll"],
+    assignment: ["read", "create", "update", "delete", "submit", "grade"],
+    submission: ["read", "create", "update", "delete", "grade"],
+    grade: ["read", "create", "update", "delete"],
+    announcement: ["read", "create", "update", "delete"],
+    attendance: ["read", "create", "update", "delete"],
 } as const;
 
 export const ac = createAccessControl(statement);
 
 export const roles = {
-    member: ac.newRole({
+    student: ac.newRole({
         member: ["read"],
         media: ["read"],
         "user-profile": ["read", "update"],
         schedule: ["read"],
         playlist: ["read"],
+        course: ["read", "enroll", "unenroll"],
+        assignment: ["read", "submit"],
+        submission: ["read", "create", "update", "delete"],
+        grade: ["read"],
+        announcement: ["read"],
+        attendance: ["read"],
+    }),
+    teacher: ac.newRole({
+        member: ["read"],
+        media: ["read", "create", "update", "delete"],
+        "user-profile": ["read", "update"],
+        schedule: ["read", "create", "update", "delete"],
+        playlist: ["read", "create", "update", "delete"],
+        course: ["read", "create", "update", "delete", "enroll", "unenroll"],
+        assignment: ["read", "create", "update", "delete", "submit", "grade"],
+        submission: ["read", "create", "update", "delete", "grade"],
+        grade: ["read", "create", "update", "delete"],
+        announcement: ["read", "create", "update", "delete"],
+        attendance: ["read", "create", "update", "delete"],
     }),
     admin: ac.newRole({
         organization: ["update"],
@@ -38,6 +64,12 @@ export const roles = {
         "user-profile": ["read", "update"],
         schedule: ["read", "create", "update", "delete"],
         playlist: ["read", "create", "update", "delete"],
+        course: ["read", "create", "update", "delete", "enroll", "unenroll"],
+        assignment: ["read", "create", "update", "delete", "submit", "grade"],
+        submission: ["read", "create", "update", "delete", "grade"],
+        grade: ["read", "create", "update", "delete"],
+        announcement: ["read", "create", "update", "delete"],
+        attendance: ["read", "create", "update", "delete"],
     }),
     owner: ac.newRole({
         organization: ["update", "delete"],
@@ -51,10 +83,16 @@ export const roles = {
         "user-profile": ["read", "update"],
         schedule: ["read", "create", "update", "delete"],
         playlist: ["read", "create", "update", "delete"],
+        course: ["read", "create", "update", "delete", "enroll", "unenroll"],
+        assignment: ["read", "create", "update", "delete", "submit", "grade"],
+        submission: ["read", "create", "update", "delete", "grade"],
+        grade: ["read", "create", "update", "delete"],
+        announcement: ["read", "create", "update", "delete"],
+        attendance: ["read", "create", "update", "delete"],
     }),
 };
 
-export const { member, admin, owner } = roles;
+export const { student, teacher, admin, owner } = roles;
 
 /** Organization-level role. Derived from the `roles` object above. */
 export type OrgRole = keyof typeof roles;
