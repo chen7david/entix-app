@@ -15,7 +15,7 @@ import dayjs from "dayjs";
 import { useMemo } from "react";
 
 export const OrganizationListPage = () => {
-    const { organizations, loading, activeOrganization } = useOrganization();
+    const { organizations, orgsLoaded, activeOrganization } = useOrganization();
     const { members } = useMembers();
     const { invitations } = useInvitations();
     // Organization sorting: Active org on top.
@@ -95,7 +95,7 @@ export const OrganizationListPage = () => {
         },
     ];
 
-    if (loading) {
+    if (!orgsLoaded) {
         return (
             <div>
                 <Skeleton active />

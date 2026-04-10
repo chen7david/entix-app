@@ -1,7 +1,10 @@
 import { AppRoutes } from "@shared";
+import { CenteredSpin } from "@web/src/components/common/CenteredView";
 import { useSignOut } from "@web/src/features/auth";
+import { useOrganization } from "@web/src/features/organization/hooks/useOrganization";
 import { Button, Card, Typography } from "antd";
 import type React from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 
 const { Title, Paragraph } = Typography;
@@ -9,12 +12,26 @@ const { Title, Paragraph } = Typography;
 export const NoOrganizationPage: React.FC = () => {
     const { mutate: signOut } = useSignOut();
     const navigate = useNavigate();
+    const { organizations, orgsLoaded } = useOrganization();
+
+    useEffect(() => {
+        if (!orgsLoaded) return; // only act on confirmed server data
+
+        if (organizations.length === 1) {
+            navigate(`/org/${organizations[0].slug}${AppRoutes.org.dashboard.index}`, {
+                replace: true,
+            });
+        } else if (organizations.length > 1) {
+            navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
+        }
+    }, [organizations, orgsLoaded, navigate]);
+
+    // Spinner while waiting for confirmed org data
+    if (!orgsLoaded) return <CenteredSpin />;
 
     const handleSignOut = () => {
         signOut(undefined, {
-            onSuccess: () => {
-                navigate(AppRoutes.auth.signIn);
-            },
+            onSuccess: () => navigate(AppRoutes.auth.signIn),
         });
     };
 

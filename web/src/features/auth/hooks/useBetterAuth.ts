@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     authClient,
     changePassword,
@@ -11,6 +11,7 @@ import {
     useSession,
     verifyEmail,
 } from "@web/src/lib/auth-client";
+import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 
 export const useBetterAuth = () => {
     const session = useSession();
@@ -24,6 +25,7 @@ export const useBetterAuth = () => {
 };
 
 export const useSignIn = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (values: { email: string; password: string }) => {
             const response = await signIn.email({
@@ -36,6 +38,11 @@ export const useSignIn = () => {
             }
 
             return response;
+        },
+        onSuccess: () => {
+            // Org query is gated on isAuthenticated so it won't fire until
+            // AuthContext settles — this just ensures freshness after re-login.
+            queryClient.invalidateQueries({ queryKey: ["organizations"] });
         },
     });
 };
@@ -85,6 +92,7 @@ export const useSignUp = () => {
 };
 
 export const useSignOut = () => {
+    const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async () => {
             const response = await signOut();
@@ -102,6 +110,10 @@ export const useSignOut = () => {
             }
 
             return response;
+        },
+        onSuccess: () => {
+            sessionStorage.removeItem(STORAGE_KEYS.lastOrgSlug);
+            queryClient.clear();
         },
     });
 };
