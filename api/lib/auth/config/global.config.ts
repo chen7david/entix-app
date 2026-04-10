@@ -48,8 +48,7 @@ export const betterAuthGlobalOptions = (
     session: {
         modelName: "authSessions",
         cookieCache: {
-            enabled: true,
-            maxAge: 60 * 5, // Cache valid for 5 min
+            enabled: false,
         },
     },
     account: {
