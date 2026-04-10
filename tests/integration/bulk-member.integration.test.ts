@@ -42,7 +42,7 @@ describe("Bulk Member Integration Tests", () => {
             {
                 email: "full-contact@example.com",
                 name: "Full Contact User",
-                role: "owner", // Should be enforced to 'member'
+                role: "owner", // Should be enforced to 'student'
                 avatarUrl: "https://example.com/avatar.jpg",
                 profile: {
                     firstName: "Full",
@@ -139,6 +139,25 @@ describe("Bulk Member Integration Tests", () => {
         expect(body.failed).toBe(1);
         expect(body.errors.length).toBe(1);
         expect(body.errors[0]).toContain("Invalid email format");
+    });
+
+    it("should cap 'owner' role to 'student' during bulk import", async () => {
+        const payload: BulkMemberItemDTO[] = [
+            {
+                email: "escalation-attempt@example.com",
+                name: "Attacker User",
+                role: "owner",
+            },
+        ];
+
+        const res = await client.orgs.members.import(orgId, payload);
+        expect(res.status).toBe(200);
+
+        const imported = await db.query.authMembers.findFirst({
+            where: (m, { eq }) => eq(m.organizationId, orgId),
+            orderBy: (m, { desc }) => [desc(m.createdAt)],
+        });
+        expect(imported?.role).toBe("student");
     });
 
     it("should fail when user lacks permission", async () => {
