@@ -1,6 +1,6 @@
 import { AppRoutes } from "@shared";
 import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { useOrganization } from "../../organization/hooks/useOrganization";
 import { useAuth } from "../context/AuthContext";
@@ -24,42 +24,39 @@ import { useAuth } from "../context/AuthContext";
  */
 export function useHomeRedirect() {
     const { isAuthenticated, isLoading: loadingAuth } = useAuth();
-    const { organizations, loading: loadingOrgs } = useOrganization();
+    const { organizations, orgsLoaded } = useOrganization();
     const navigate = useNavigate();
-    const hasNavigatedRef = useRef(false);
 
     useEffect(() => {
-        if (hasNavigatedRef.current) return;
+        // Step 1: wait for auth to settle
+        if (loadingAuth) return;
 
-        // Wait for both auth and org list to settle
-        if (loadingAuth || loadingOrgs) return;
-
-        hasNavigatedRef.current = true;
-
+        // Step 2: unauthenticated users go straight to sign-in — no org data needed
         if (!isAuthenticated) {
             navigate(AppRoutes.auth.signIn, { replace: true });
             return;
         }
 
-        // 1. Breadcrumb — return to the last org this tab was on
+        // Step 3: authenticated — wait for a confirmed successful org fetch
+        // isSuccess is only true after a real network response, immune to the
+        // TanStack Query v5 "idle gap" where isPending=true but isFetching=false
+        if (!orgsLoaded) return;
+
+        // Step 4: route based on confirmed org data
         const savedSlug = sessionStorage.getItem(STORAGE_KEYS.lastOrgSlug);
         if (savedSlug) {
             const matched = organizations.find((org) => org.slug === savedSlug);
             if (matched) {
-                navigate(`/org/${matched.slug}${AppRoutes.org.dashboard.index}`, {
-                    replace: true,
-                });
+                navigate(`/org/${matched.slug}${AppRoutes.org.dashboard.index}`, { replace: true });
                 return;
             }
         }
 
-        // 2. No orgs → onboarding
         if (organizations.length === 0) {
             navigate(AppRoutes.onboarding.noOrganization, { replace: true });
             return;
         }
 
-        // 3. Single org → go straight in (OrgGuard handles the setActive)
         if (organizations.length === 1) {
             navigate(`/org/${organizations[0].slug}${AppRoutes.org.dashboard.index}`, {
                 replace: true,
@@ -67,7 +64,6 @@ export function useHomeRedirect() {
             return;
         }
 
-        // 4. Multiple orgs → let the user choose
         navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
-    }, [isAuthenticated, loadingAuth, loadingOrgs, organizations, navigate]);
+    }, [isAuthenticated, loadingAuth, orgsLoaded, organizations, navigate]);
 }

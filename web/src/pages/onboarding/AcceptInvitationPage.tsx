@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import { useInvitations } from "@web/src/features/organization";
 import { App, Button, Card, Result, Spin } from "antd";
@@ -7,6 +8,7 @@ import { useNavigate, useSearchParams } from "react-router";
 
 export const AcceptInvitationPage: React.FC = () => {
     const { notification } = App.useApp();
+    const queryClient = useQueryClient();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const invitationId = searchParams.get("id");
@@ -28,10 +30,12 @@ export const AcceptInvitationPage: React.FC = () => {
         if (!success && !error && !isAcceptingInvitation && !hasAcceptedRef.current) {
             hasAcceptedRef.current = true; // Mark as accepted immediately to prevent double-invocation
             acceptInvitation(invitationId)
-                .then((result) => {
+                .then(async (result) => {
                     if (result.error) {
                         setError(result.error.message || "Failed to accept invitation");
                     } else {
+                        // Force refresh of org list
+                        await queryClient.invalidateQueries({ queryKey: ["organizations"] });
                         setSuccess(true);
                         notification.success({
                             message: "Invitation Accepted",
@@ -51,6 +55,7 @@ export const AcceptInvitationPage: React.FC = () => {
         error,
         isAcceptingInvitation,
         notification,
+        queryClient,
     ]);
 
     const handleNavigateResult = () => {

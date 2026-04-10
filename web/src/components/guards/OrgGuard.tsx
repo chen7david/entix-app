@@ -1,8 +1,9 @@
 import { AppRoutes } from "@shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { CenteredResult, CenteredSpin } from "@web/src/components/common/CenteredView";
 import { OrgProvider } from "@web/src/context/OrgContext";
 import { useAuth } from "@web/src/features/auth";
+import { useOrganization } from "@web/src/features/organization/hooks/useOrganization";
 import { authClient } from "@web/src/lib/auth-client";
 import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 import { Button } from "antd";
@@ -32,20 +33,12 @@ export const OrgGuard: React.FC = () => {
     const lastSyncedOrgIdRef = useRef<string | null>(null);
     const auth = useAuth();
 
-    // 1. Fetch the user's org list (cached; stale for 5 min so tab switches don't re-spin)
-    const { data: organizations = [], isLoading: loadingOrgs } = useQuery({
-        queryKey: ["organizations"],
-        queryFn: async () => {
-            const { data } = await authClient.organization.list();
-            return data || [];
-        },
-        staleTime: 1000 * 60 * 5,
-        refetchOnWindowFocus: false,
-    });
+    // 1. Fetch the user's org list (cached; shared centrally via useOrganization)
+    const { organizations, orgsLoaded } = useOrganization();
 
     // 2. Resolve org from URL slug (pure client-side; no extra network call)
     const activeOrganization =
-        !loadingOrgs && slug ? organizations.find((o) => o.slug === slug) || null : null;
+        orgsLoaded && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
     // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (in this tab)
     useEffect(() => {
@@ -58,7 +51,7 @@ export const OrgGuard: React.FC = () => {
     //    isSyncing starts as true so children never render before the first sync completes.
     // biome-ignore lint/correctness/useExhaustiveDependencies: URL-driven sync is stable by activeOrganization?.id
     useEffect(() => {
-        if (loadingOrgs) return; // wait for org list before deciding anything
+        if (!orgsLoaded) return; // wait for org list before deciding anything
         if (!activeOrganization) {
             // Org not found in the list — stop blocking so the 403 result can render
             setIsSyncing(false);
@@ -102,10 +95,10 @@ export const OrgGuard: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [activeOrganization?.id, loadingOrgs, auth.refreshAuth, queryClient]);
+    }, [activeOrganization?.id, orgsLoaded, auth.refreshAuth, queryClient]);
 
     // Block children while resolving the org list or syncing the server session
-    if (loadingOrgs || isSyncing) {
+    if (!orgsLoaded || isSyncing) {
         return <CenteredSpin />;
     }
 
