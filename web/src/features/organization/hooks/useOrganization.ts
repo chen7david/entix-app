@@ -12,12 +12,7 @@ export const useOrganization = () => {
     const contextVal = useContext(OrgContext);
 
     // 1. Fetch user's organizations
-    const {
-        data: organizations = [],
-        isLoading: loadingOrganizations,
-        isFetching: fetchingOrganizations,
-        isSuccess: orgsLoaded,
-    } = useQuery({
+    const { data: organizations = [], isSuccess: orgsLoaded } = useQuery({
         queryKey: ["organizations"],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
@@ -28,9 +23,7 @@ export const useOrganization = () => {
         refetchOnWindowFocus: false,
     });
 
-    // 2. Active Organization - derived strictly from Context if available
     const activeOrganization = contextVal?.activeOrganization || null;
-    const loadingActiveOrg = contextVal?.loading || false;
 
     const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
         mutationFn: async (organizationId: string) => {
@@ -44,12 +37,6 @@ export const useOrganization = () => {
         },
     });
 
-    const listOrganizations = useCallback(async () => {
-        return queryClient.refetchQueries({ queryKey: ["organizations"] });
-    }, [queryClient]);
-
-    // getOrgLink removed as per AppRoutes enforcing abstract context natively
-
     const setActive = useCallback(
         async (organizationId: string) => {
             return setActiveMutation(organizationId);
@@ -60,11 +47,8 @@ export const useOrganization = () => {
     return {
         organizations,
         activeOrganization,
-        loading: loadingOrganizations || loadingActiveOrg,
-        isFetching: fetchingOrganizations,
         orgsLoaded,
         isSwitching,
-        listOrganizations,
         setActive,
     };
 };

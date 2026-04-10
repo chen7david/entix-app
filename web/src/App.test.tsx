@@ -41,11 +41,8 @@ describe("HomeRedirect UX Logic", () => {
         vi.mocked(useOrganization).mockReturnValue({
             organizations: [],
             activeOrganization: null,
-            loading: false,
-            isFetching: false,
             orgsLoaded: true,
             isSwitching: false,
-            listOrganizations: vi.fn(),
             setActive: vi.fn(),
         });
 
@@ -78,11 +75,8 @@ describe("HomeRedirect UX Logic", () => {
         vi.mocked(useOrganization).mockReturnValue({
             organizations: [],
             activeOrganization: null,
-            loading: true,
-            isFetching: true,
             orgsLoaded: false,
             isSwitching: false,
-            listOrganizations: vi.fn(),
             setActive: vi.fn(),
         });
 
@@ -108,11 +102,8 @@ describe("HomeRedirect UX Logic", () => {
         vi.mocked(useOrganization).mockReturnValue({
             organizations: [],
             activeOrganization: null,
-            loading: false,
-            isFetching: false,
             orgsLoaded: true,
             isSwitching: false,
-            listOrganizations: vi.fn(),
             setActive: vi.fn(),
         });
 
