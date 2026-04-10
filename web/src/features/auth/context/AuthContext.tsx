@@ -3,7 +3,7 @@ import type React from "react";
 import { createContext, useCallback, useContext, useMemo, useRef } from "react";
 
 export type UserRole = "admin" | "user";
-export type OrgRole = "owner" | "admin" | "member";
+export type OrgRole = "owner" | "admin" | "teacher" | "student";
 
 export interface UnifiedUser {
     id: string;
@@ -82,5 +82,26 @@ export const useAuth = () => {
     if (context === undefined) {
         throw new Error("useAuth must be used within an AuthProvider");
     }
-    return context;
+
+    const derivedFlags = useMemo(() => {
+        const orgRole = context.user?.orgRole;
+        const isOwner = orgRole === "owner";
+        const isAdmin = orgRole === "admin";
+        const isTeacher = orgRole === "teacher";
+        const isStudent = orgRole === "student";
+
+        return {
+            isOwner,
+            isAdmin,
+            isTeacher,
+            isStudent,
+            isAdminOrOwner: isAdmin || isOwner,
+            isStaff: isAdmin || isOwner || isTeacher,
+        };
+    }, [context.user?.orgRole]);
+
+    return {
+        ...context,
+        ...derivedFlags,
+    };
 };

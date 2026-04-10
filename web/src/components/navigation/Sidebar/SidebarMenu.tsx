@@ -8,6 +8,7 @@ import {
     DollarOutlined,
     OrderedListOutlined,
     PlaySquareOutlined,
+    SettingOutlined,
     ShoppingOutlined,
     TeamOutlined,
     TransactionOutlined,
@@ -28,9 +29,7 @@ export const SidebarMenu: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
     const { close } = useSidebar();
-    const { user } = useAuth();
-    const orgRole = user?.orgRole;
-    const isAdminOrOwner = orgRole === "admin" || orgRole === "owner";
+    const { isAdminOrOwner, isStaff } = useAuth();
 
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
@@ -82,80 +81,106 @@ export const SidebarMenu: React.FC = () => {
         {
             type: "divider",
         },
-        ...(activeOrganization && isAdminOrOwner
+        ...(activeOrganization && isStaff
             ? [
+                  ...(isAdminOrOwner
+                      ? [
+                            {
+                                label: "Finance",
+                                key: "finance_group",
+                                icon: <DollarOutlined />,
+                                children: [
+                                    {
+                                        label: "Accounts",
+                                        key: AppRoutes.org.admin.finance.accounts,
+                                        icon: <BankOutlined />,
+                                    },
+                                    {
+                                        label: "Transactions",
+                                        key: AppRoutes.org.admin.finance.transactions,
+                                        icon: <TransactionOutlined />,
+                                    },
+                                ],
+                            },
+                        ]
+                      : []),
                   {
-                      label: "Finance",
-                      key: "finance_group",
-                      icon: <DollarOutlined />,
+                      label: "Teaching",
+                      key: "teaching_group",
+                      icon: <BookOutlined />,
                       children: [
                           {
-                              label: "Accounts",
-                              key: "/finance/accounts",
-                              icon: <BankOutlined />,
+                              label: "Schedule",
+                              key: AppRoutes.org.teaching.schedule,
+                              icon: <CalendarOutlined />,
                           },
-                          {
-                              label: "Transactions",
-                              key: "/finance/transactions",
-                              icon: <TransactionOutlined />,
-                          },
-                      ],
-                  },
-                  {
-                      label: "Media",
-                      key: "media_collection", // using group wrapper
-                      icon: <PlaySquareOutlined />,
-                      children: [
                           {
                               label: "Media Library",
-                              key: AppRoutes.org.manage.media,
+                              key: AppRoutes.org.teaching.media,
                               icon: <PlaySquareOutlined />,
                           },
                           {
                               label: "Playlists",
-                              key: AppRoutes.org.manage.playlists,
+                              key: AppRoutes.org.teaching.playlists,
                               icon: <OrderedListOutlined />,
+                          },
+                          {
+                              label: "Class Roster",
+                              key: AppRoutes.org.teaching.students,
+                              icon: <TeamOutlined />,
                           },
                       ],
                   },
-                  {
-                      label: "Schedule",
-                      key: "/schedule",
-                      icon: <CalendarOutlined />,
-                  },
-                  {
-                      label: "Analytics",
-                      key: "/analytics",
-                      icon: <AreaChartOutlined />,
-                  },
-                  {
-                      label: "Members",
-                      key: AppRoutes.org.manage.members,
-                      icon: <TeamOutlined />,
-                  },
-                  {
-                      label: "Invitations",
-                      key: AppRoutes.org.manage.invitations,
-                      icon: <UserAddOutlined />,
-                  },
-                  {
-                      label: "Organizations",
-                      key: AppRoutes.org.manage.index,
-                      icon: <BankOutlined />,
-                      disabled: !slug,
-                  },
-                  {
-                      label: "Files & Uploads",
-                      key: "/uploads",
-                      icon: <CloudUploadOutlined />,
-                  },
+                  ...(isAdminOrOwner
+                      ? [
+                            {
+                                label: "Admin",
+                                key: "admin_group",
+                                icon: <SettingOutlined />,
+                                children: [
+                                    {
+                                        label: "Analytics",
+                                        key: AppRoutes.org.admin.analytics,
+                                        icon: <AreaChartOutlined />,
+                                    },
+                                    {
+                                        label: "Members",
+                                        key: AppRoutes.org.admin.members,
+                                        icon: <TeamOutlined />,
+                                    },
+                                    {
+                                        label: "Invitations",
+                                        key: AppRoutes.org.admin.invitations,
+                                        icon: <UserAddOutlined />,
+                                    },
+                                    {
+                                        label: "Bulk Import",
+                                        key: AppRoutes.org.admin.bulk,
+                                        icon: <CloudUploadOutlined />,
+                                    },
+                                    {
+                                        label: "Organizations",
+                                        key: AppRoutes.org.admin.index,
+                                        icon: <BankOutlined />,
+                                        disabled: !slug,
+                                    },
+                                    {
+                                        label: "Files & Uploads",
+                                        key: AppRoutes.org.admin.uploads,
+                                        icon: <CloudUploadOutlined />,
+                                    },
+                                ],
+                            },
+                        ]
+                      : []),
               ]
             : []),
     ];
 
     const handleMenuClick = (e: { key: string }) => {
         // Disregard non-routable group keys
-        if (e.key === "media_collection" || e.key === "finance_group") return;
+        if (e.key === "teaching_group" || e.key === "admin_group" || e.key === "finance_group")
+            return;
 
         navigateOrg(e.key);
         close();

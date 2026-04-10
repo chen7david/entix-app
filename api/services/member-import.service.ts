@@ -82,7 +82,8 @@ export class MemberImportService {
                 socialTypes.map((t: schema.SocialMediaType) => [t.name.toLowerCase(), t.id])
             );
 
-            const enforcedRole: OrgRole = "member";
+            const enforcedRole: OrgRole = "student";
+            const IMPORTABLE_ROLES = ["student", "teacher", "admin"] as const;
 
             // Process users one by one to ensure identity consistency
             for (const input of validMembers) {
@@ -136,13 +137,20 @@ export class MemberImportService {
                     );
                 }
 
+                // Security: Default to student, only allow upgrades to teacher/admin via import.
+                // Owner role must be granted manually via UI/DB for maximum security.
+                const roleFromInput = input.role as any;
+                const roleToUse = IMPORTABLE_ROLES.includes(roleFromInput)
+                    ? (roleFromInput as OrgRole)
+                    : enforcedRole;
+
                 if (isNewUser || !memberSet.has(targetUserId)) {
                     userBatch.push(
                         this.memberRepo.prepareInsertQuery(
                             nanoid(),
                             organizationId,
                             targetUserId,
-                            enforcedRole
+                            roleToUse
                         )
                     );
                     results.linked++;

@@ -35,6 +35,12 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: false,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 
@@ -69,6 +75,12 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 
@@ -96,6 +108,12 @@ describe("HomeRedirect UX Logic", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 

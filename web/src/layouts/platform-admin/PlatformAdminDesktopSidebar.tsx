@@ -1,11 +1,11 @@
 import { DesktopDrawer } from "@web/src/components/navigation/Sidebar/DesktopDrawer";
 import type React from "react";
-import { AdminSidebarContent } from "./AdminSidebarContent";
+import { PlatformAdminSidebarContent } from "./PlatformAdminSidebarContent";
 
-export const AdminDesktopSidebar: React.FC = () => {
+export const PlatformAdminDesktopSidebar: React.FC = () => {
     return (
         <DesktopDrawer size={240}>
-            <AdminSidebarContent />
+            <PlatformAdminSidebarContent />
         </DesktopDrawer>
     );
 };

@@ -9,9 +9,9 @@ import { OrgGuard } from "./components/guards/OrgGuard";
 import { ProtectedRoute } from "./components/guards/ProtectedRoute";
 import { FinancialManagementPage } from "./features/admin/FinancialManagementPage";
 import { AuthProvider } from "./features/auth/context/AuthContext";
-import { AdminLayout } from "./layouts/AdminLayout";
-import { AuthLayout } from "./layouts/AuthLayout";
-import { DashboardLayout } from "./layouts/DashboardLayout";
+import { AuthLayout } from "./layouts/auth/AuthLayout";
+import { OrgAdminLayout } from "./layouts/org-admin/OrgAdminLayout";
+import { PlatformAdminLayout } from "./layouts/platform-admin/PlatformAdminLayout";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
 import { EmailInsightsPage } from "./pages/admin/EmailInsightsPage";
 import { GlobalOrganizationsPage } from "./pages/admin/GlobalOrganizationsPage";
@@ -123,7 +123,7 @@ export default function App() {
                                 </Route>
 
                                 <Route path="org/:slug" element={<OrgGuard />}>
-                                    <Route element={<DashboardLayout />}>
+                                    <Route element={<OrgAdminLayout />}>
                                         <Route
                                             index
                                             element={<Navigate to="dashboard" replace />}
@@ -145,6 +145,7 @@ export default function App() {
                                             <Route path="orders" element={<OrdersPage />} />
                                         </Route>
 
+                                        {/* ── ADMIN: restricted to true organization managers ── */}
                                         <Route
                                             element={
                                                 <ProtectedRoute
@@ -152,58 +153,100 @@ export default function App() {
                                                 />
                                             }
                                         >
-                                            <Route
-                                                path="media"
-                                                element={<OrganizationMediaPage />}
-                                            />
-                                            <Route
-                                                path="playlists"
-                                                element={<OrganizationPlaylistsPage />}
-                                            />
-                                            <Route
-                                                path="playlists/:playlistId"
-                                                element={<PlaylistPlayerPage />}
-                                            />
-                                            <Route
-                                                path="schedule"
-                                                element={<OrganizationSchedulePage />}
-                                            />
-                                            <Route
-                                                path="analytics"
-                                                element={<OrganizationAnalyticsPage />}
-                                            />
-                                            <Route
-                                                path="members"
-                                                element={<OrganizationMembersPage />}
-                                            />
-                                            <Route
-                                                path="invitations"
-                                                element={<OrganizationInvitationsPage />}
-                                            />
-                                            <Route
-                                                path="manage/bulk"
-                                                element={<MemberImportExportPage />}
-                                            />
-                                            <Route
-                                                path="organizations"
-                                                element={<OrganizationListPage />}
-                                            />
-                                            <Route
-                                                path="uploads"
-                                                element={<OrganizationUploadsPage />}
-                                            />
-                                            <Route path="finance">
+                                            <Route path="admin">
                                                 <Route
                                                     index
-                                                    element={<Navigate to="accounts" replace />}
+                                                    element={<OrganizationAnalyticsPage />}
                                                 />
                                                 <Route
-                                                    path="accounts"
-                                                    element={<FinanceAccountsPage />}
+                                                    path="media"
+                                                    element={<OrganizationMediaPage />}
                                                 />
                                                 <Route
-                                                    path="transactions"
-                                                    element={<FinanceTransactionsPage />}
+                                                    path="playlists"
+                                                    element={<OrganizationPlaylistsPage />}
+                                                />
+                                                <Route
+                                                    path="playlists/:playlistId"
+                                                    element={<PlaylistPlayerPage />}
+                                                />
+                                                <Route
+                                                    path="schedule"
+                                                    element={<OrganizationSchedulePage />}
+                                                />
+                                                <Route
+                                                    path="analytics"
+                                                    element={<OrganizationAnalyticsPage />}
+                                                />
+                                                <Route
+                                                    path="members"
+                                                    element={<OrganizationMembersPage />}
+                                                />
+                                                <Route
+                                                    path="invitations"
+                                                    element={<OrganizationInvitationsPage />}
+                                                />
+                                                <Route
+                                                    path="bulk"
+                                                    element={<MemberImportExportPage />}
+                                                />
+                                                <Route
+                                                    path="organizations"
+                                                    element={<OrganizationListPage />}
+                                                />
+                                                <Route
+                                                    path="uploads"
+                                                    element={<OrganizationUploadsPage />}
+                                                />
+                                                <Route path="finance">
+                                                    <Route
+                                                        index
+                                                        element={<Navigate to="accounts" replace />}
+                                                    />
+                                                    <Route
+                                                        path="accounts"
+                                                        element={<FinanceAccountsPage />}
+                                                    />
+                                                    <Route
+                                                        path="transactions"
+                                                        element={<FinanceTransactionsPage />}
+                                                    />
+                                                </Route>
+                                            </Route>
+                                        </Route>
+
+                                        {/* ── TEACHING: staff tools for teachers and admins ── */}
+                                        <Route
+                                            element={
+                                                <ProtectedRoute
+                                                    allowedOrgRoles={["admin", "owner", "teacher"]}
+                                                />
+                                            }
+                                        >
+                                            <Route path="teaching">
+                                                <Route
+                                                    index
+                                                    element={<Navigate to="schedule" replace />}
+                                                />
+                                                <Route
+                                                    path="schedule"
+                                                    element={<OrganizationSchedulePage />}
+                                                />
+                                                <Route
+                                                    path="media"
+                                                    element={<OrganizationMediaPage />}
+                                                />
+                                                <Route
+                                                    path="playlists"
+                                                    element={<OrganizationPlaylistsPage />}
+                                                />
+                                                <Route
+                                                    path="playlists/:playlistId"
+                                                    element={<PlaylistPlayerPage />}
+                                                />
+                                                <Route
+                                                    path="students"
+                                                    element={<OrganizationMembersPage />}
                                                 />
                                             </Route>
                                         </Route>
@@ -211,7 +254,7 @@ export default function App() {
                                 </Route>
 
                                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-                                    <Route element={<AdminLayout />}>
+                                    <Route element={<PlatformAdminLayout />}>
                                         <Route path="admin" element={<AdminDashboardPage />} />
                                         <Route path="admin/users" element={<GlobalUsersPage />} />
                                         <Route

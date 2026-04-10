@@ -19,7 +19,7 @@ import { useLocation, useNavigate } from "react-router";
 const { Text } = Typography;
 const { useToken } = theme;
 
-export const AdminSidebarContent: React.FC = () => {
+export const PlatformAdminSidebarContent: React.FC = () => {
     const { user } = useAuth();
     const { mutate: signOut } = useSignOut();
     const navigate = useNavigate();
@@ -62,6 +62,11 @@ export const AdminSidebarContent: React.FC = () => {
             icon: <DashboardOutlined />,
         },
         {
+            label: "Financial",
+            key: "/admin/financial",
+            icon: <DollarOutlined />,
+        },
+        {
             label: "Global Users",
             key: AppRoutes.admin.users,
             icon: <TeamOutlined />,
@@ -75,11 +80,6 @@ export const AdminSidebarContent: React.FC = () => {
             label: "Email Insights",
             key: AppRoutes.admin.emails,
             icon: <MailOutlined />,
-        },
-        {
-            label: "Financial",
-            key: "/admin/financial",
-            icon: <DollarOutlined />,
         },
     ];
 

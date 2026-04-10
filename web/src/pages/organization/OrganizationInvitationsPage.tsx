@@ -5,6 +5,7 @@ import {
     MailOutlined,
     PlusOutlined,
 } from "@ant-design/icons";
+import { getRoleColor, ORG_ROLE_OPTIONS } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
@@ -86,9 +87,9 @@ export const OrganizationInvitationsPage = () => {
             title: "Role",
             dataIndex: "role",
             key: "role",
-            render: (role: string) => (
-                <Tag color={role === "admin" ? "blue" : "default"}>{role.toUpperCase()}</Tag>
-            ),
+            render: (role: string) => {
+                return <Tag color={getRoleColor(role)}>{role.toUpperCase()}</Tag>;
+            },
         },
         {
             title: "Status",
@@ -204,7 +205,7 @@ export const OrganizationInvitationsPage = () => {
                     form={form}
                     layout="vertical"
                     onFinish={handleInvite}
-                    initialValues={{ role: "member" }}
+                    initialValues={{ role: "student" }}
                 >
                     <Form.Item
                         name="email"
@@ -222,11 +223,7 @@ export const OrganizationInvitationsPage = () => {
                         label="Role"
                         rules={[{ required: true, message: "Please select a role!" }]}
                     >
-                        <Select>
-                            <Select.Option value="member">Member</Select.Option>
-                            <Select.Option value="admin">Admin</Select.Option>
-                            <Select.Option value="owner">Owner</Select.Option>
-                        </Select>
+                        <Select options={ORG_ROLE_OPTIONS} />
                     </Form.Item>
 
                     <Form.Item className="mb-0 flex justify-end">
