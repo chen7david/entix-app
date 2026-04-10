@@ -34,6 +34,7 @@ export abstract class FinancialBaseService extends BaseService {
         currencyId: string;
         amountCents: number;
         description?: string | null;
+        metadata?: any;
         transactionDate?: Date; // Optional, defaults to now
     }): Promise<string> {
         const [source, destination] = await Promise.all([
@@ -62,9 +63,14 @@ export abstract class FinancialBaseService extends BaseService {
                 ACCOUNT_TYPES.TREASURY,
             ];
 
+            const isServiceFeeToTreasury =
+                input.categoryId === "fcat_service_fee" &&
+                destination.accountType === ACCOUNT_TYPES.TREASURY;
+
             if (
-                !ALLOWED_TREASURY_PARTNERS.includes(source.accountType as any) ||
-                !ALLOWED_TREASURY_PARTNERS.includes(destination.accountType as any)
+                !isServiceFeeToTreasury &&
+                (!ALLOWED_TREASURY_PARTNERS.includes(source.accountType as any) ||
+                    !ALLOWED_TREASURY_PARTNERS.includes(destination.accountType as any))
             ) {
                 throw new ForbiddenError(
                     "Treasury accounts can only interact with Funding, System, or other Treasury accounts"

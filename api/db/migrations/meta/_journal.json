@@ -5,22 +5,43 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1700000000000,
+      "when": 1712770000000,
       "tag": "0000_auth_schema",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1700000000001,
+      "when": 1712770000001,
       "tag": "0001_platform_schema",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "6",
-      "when": 1700000000002,
+      "when": 1712770000002,
       "tag": "0002_root_seed",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1712770000003,
+      "tag": "0003_financial_seed",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1775844702114,
+      "tag": "0004_simple_sprite",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1775845977531,
+      "tag": "0005_early_black_bolt",
       "breakpoints": true
     }
   ]

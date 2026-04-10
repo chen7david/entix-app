@@ -32,6 +32,13 @@ export const financialTransactions = sqliteTable(
             .default("completed")
             .$type<"pending" | "completed" | "reversed">(),
         description: text("description"),
+        metadata: text("metadata", { mode: "json" }).$type<{
+            rateCentsPerMinute?: number;
+            durationMinutes?: number;
+            participantCount?: number;
+            sessionTitle?: string;
+            [key: string]: any;
+        }>(),
         transactionDate: integer("transaction_date", { mode: "timestamp_ms" }).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()

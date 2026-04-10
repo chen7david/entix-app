@@ -1,5 +1,10 @@
 import { relations } from "drizzle-orm";
 import { authAccounts, authSessions, authUsers } from "./auth.schema";
+import {
+    financeBillingPlanRates,
+    financeBillingPlans,
+    financeMemberBillingPlans,
+} from "./finance-billing-plans.schema";
 import { financialAccounts } from "./financial-accounts.schema";
 import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
@@ -239,5 +244,51 @@ export const financialTransactionCategoriesRelations = relations(
     financialTransactionCategories,
     ({ many }) => ({
         transactions: many(financialTransactions),
+    })
+);
+
+export const financeBillingPlansRelations = relations(financeBillingPlans, ({ one, many }) => ({
+    organization: one(authOrganizations, {
+        fields: [financeBillingPlans.organizationId],
+        references: [authOrganizations.id],
+    }),
+    currency: one(financialCurrencies, {
+        fields: [financeBillingPlans.currencyId],
+        references: [financialCurrencies.id],
+    }),
+    members: many(financeMemberBillingPlans),
+    rates: many(financeBillingPlanRates),
+}));
+
+export const financeBillingPlanRatesRelations = relations(financeBillingPlanRates, ({ one }) => ({
+    plan: one(financeBillingPlans, {
+        fields: [financeBillingPlanRates.billingPlanId],
+        references: [financeBillingPlans.id],
+    }),
+}));
+
+export const financeMemberBillingPlansRelations = relations(
+    financeMemberBillingPlans,
+    ({ one }) => ({
+        user: one(authUsers, {
+            fields: [financeMemberBillingPlans.userId],
+            references: [authUsers.id],
+        }),
+        organization: one(authOrganizations, {
+            fields: [financeMemberBillingPlans.organizationId],
+            references: [authOrganizations.id],
+        }),
+        plan: one(financeBillingPlans, {
+            fields: [financeMemberBillingPlans.billingPlanId],
+            references: [financeBillingPlans.id],
+        }),
+        currency: one(financialCurrencies, {
+            fields: [financeMemberBillingPlans.currencyId],
+            references: [financialCurrencies.id],
+        }),
+        assignedBy: one(authUsers, {
+            fields: [financeMemberBillingPlans.assignedBy],
+            references: [authUsers.id],
+        }),
     })
 );

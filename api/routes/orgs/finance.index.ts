@@ -1,6 +1,7 @@
 import { createRouter } from "@api/lib/app.lib";
 import { FinanceHandler } from "./finance.handlers";
-import { FinanceRoutes } from "./finance.routes";
+import { FinanceBillingRoutes, FinanceRoutes } from "./finance.routes";
+import { FinanceBillingHandler } from "./finance-billing.handlers";
 
 export const financeRoutes = createRouter()
     .openapi(FinanceRoutes.getBalance, FinanceHandler.getWalletBalance)
@@ -12,4 +13,11 @@ export const financeRoutes = createRouter()
     .openapi(FinanceRoutes.getOrgCurrencyStatus, FinanceHandler.getOrgCurrencyStatus)
     .openapi(FinanceRoutes.activateCurrency, FinanceHandler.activateCurrency)
     .openapi(FinanceRoutes.reverseTransaction, FinanceHandler.reverseTransaction)
-    .openapi(FinanceRoutes.initializeUserWallet, FinanceHandler.initializeUserWallet);
+    .openapi(FinanceRoutes.initializeUserWallet, FinanceHandler.initializeUserWallet)
+    // Billing Plan Routes
+    .openapi(FinanceBillingRoutes.createPlan, FinanceBillingHandler.createPlan)
+    .openapi(FinanceBillingRoutes.listOrgPlans, FinanceBillingHandler.listOrgPlans)
+    .openapi(FinanceBillingRoutes.assignMemberPlan, FinanceBillingHandler.assignMemberPlan)
+    .openapi(FinanceBillingRoutes.replaceMemberPlan, FinanceBillingHandler.replaceMemberPlan)
+    .openapi(FinanceBillingRoutes.listMemberPlans, FinanceBillingHandler.listMemberPlans)
+    .openapi(FinanceBillingRoutes.unassignMemberPlan, FinanceBillingHandler.unassignMemberPlan);

@@ -24,3 +24,6 @@ export const generateCurrencyId = () => generateId("fcur");
 export const generateCategoryId = () => generateId("fcat");
 export const generateTransactionId = () => generateId("ftxn");
 export const generateTransactionLineId = () => generateId("flne");
+export const generateBillingPlanId = () => generateId("fbp");
+export const generateMemberBillingPlanId = () => generateId("fmbp");
+export const generateBillingPlanRateId = () => generateId("fbpr");
