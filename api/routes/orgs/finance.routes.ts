@@ -242,7 +242,7 @@ export const FinanceBillingRoutes = {
         tags: billingTags,
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/billing-plans",
-        summary: "List organization billing plans with pagination",
+        summary: "List organization billing plans with pagination and search",
         request: {
             params: z.object({ organizationId: z.string() }),
             query: billingPlanPaginationSchema,
@@ -251,6 +251,54 @@ export const FinanceBillingRoutes = {
             [HttpStatusCodes.OK]: jsonContent(
                 listBillingPlansResponseSchema,
                 "Billing plans fetched successfully"
+            ),
+        },
+    }),
+
+    updatePlan: createRoute({
+        tags: billingTags,
+        method: HttpMethods.PATCH,
+        path: "/orgs/{organizationId}/finance/billing-plans/{planId}",
+        summary: "Update an organization-level billing plan and its tiers",
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                planId: z.string(),
+            }),
+            body: jsonContentRequired(z.any(), "Plan update details"), // Typings handled in handler/service
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                z.object({ data: z.any() }),
+                "Billing plan updated successfully"
+            ),
+            [HttpStatusCodes.NOT_FOUND]: jsonContent(
+                z.object({ message: z.string() }),
+                "Billing plan not found"
+            ),
+        },
+    }),
+
+    deletePlan: createRoute({
+        tags: billingTags,
+        method: HttpMethods.DELETE,
+        path: "/orgs/{organizationId}/finance/billing-plans/{planId}",
+        summary: "Delete an organization-level billing plan",
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                planId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(successResponseSchema, "Billing plan deleted"),
+            [HttpStatusCodes.NOT_FOUND]: jsonContent(
+                z.object({ message: z.string() }),
+                "Billing plan not found"
+            ),
+            [HttpStatusCodes.CONFLICT]: jsonContent(
+                z.object({ message: z.string() }),
+                "Cannot delete plan with active assignments"
             ),
         },
     }),

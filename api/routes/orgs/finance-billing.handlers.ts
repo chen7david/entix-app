@@ -17,9 +17,13 @@ export class FinanceBillingHandler {
 
     static listOrgPlans: AppHandler<typeof FinanceBillingRoutes.listOrgPlans> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
-        const query = ctx.req.valid("query");
+        const { cursor, limit, search } = ctx.req.valid("query");
 
-        const result = await getFinanceBillingPlansService(ctx).listOrgPlans(organizationId, query);
+        const result = await getFinanceBillingPlansService(ctx).listOrgPlans(organizationId, {
+            cursor,
+            limit,
+            search,
+        });
         return ctx.json({ data: result.items, nextCursor: result.nextCursor }, HttpStatusCodes.OK);
     };
 
@@ -76,6 +80,23 @@ export class FinanceBillingHandler {
     ) => {
         const { organizationId, userId, assignmentId } = ctx.req.valid("param");
         await getFinanceBillingPlansService(ctx).unassignPlan(organizationId, userId, assignmentId);
+        return ctx.json({ success: true }, HttpStatusCodes.OK);
+    };
+
+    static updatePlan: AppHandler<typeof FinanceBillingRoutes.updatePlan> = async (ctx) => {
+        const { organizationId, planId } = ctx.req.valid("param");
+        const updates = ctx.req.valid("json");
+        const data = await getFinanceBillingPlansService(ctx).updatePlan(
+            organizationId,
+            planId,
+            updates
+        );
+        return ctx.json({ data }, HttpStatusCodes.OK);
+    };
+
+    static deletePlan: AppHandler<typeof FinanceBillingRoutes.deletePlan> = async (ctx) => {
+        const { organizationId, planId } = ctx.req.valid("param");
+        await getFinanceBillingPlansService(ctx).deletePlan(organizationId, planId);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 }

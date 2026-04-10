@@ -1,17 +1,16 @@
-import { InternalServerError } from "@api/errors/app.error";
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
+import { generateBillingPlanRateId } from "@shared";
 import {
     type BillingPlan,
-    type BillingPlanRate,
     financeBillingPlanRates,
     financeBillingPlans,
     financeMemberBillingPlans,
     type MemberBillingPlan,
     type NewBillingPlan,
-    type NewBillingPlanRate,
-    type NewMemberBillingPlan,
 } from "@shared/db/schema";
-import { and, desc, eq, lt } from "drizzle-orm";
+import type { UpdateBillingPlanInput } from "@shared/schemas/dto/billing-plan.dto";
+import { and, desc, eq, lt, sql } from "drizzle-orm";
 
 /**
  * Composite type for a member's plan assignment including tiered rates.
@@ -19,44 +18,31 @@ import { and, desc, eq, lt } from "drizzle-orm";
 export type MemberPlanWithRates = MemberBillingPlan & {
     plan:
         | (BillingPlan & {
-              rates: BillingPlanRate[];
+              rates: (typeof financeBillingPlanRates.$inferSelect)[];
           })
         | null;
 };
 
 /**
- * Repository for Billing Plans and Student Assignments.
+ * Repository for organization billing plans and student assignments.
  */
 export class FinanceBillingPlansRepository {
     constructor(private readonly db: AppDb) {}
 
-    async findById(id: string) {
-        const plan = await this.db.query.financeBillingPlans.findFirst({
-            where: eq(financeBillingPlans.id, id),
-            with: { rates: true },
-        });
-        return plan ?? null;
-    }
-
-    async findMemberPlanById(id: string): Promise<MemberBillingPlan | null> {
-        const assignment = await this.db.query.financeMemberBillingPlans.findFirst({
-            where: eq(financeMemberBillingPlans.id, id),
-        });
-        return assignment ?? null;
-    }
-
     /**
-     * Creates a new organization-level billing plan with its rates.
+     * Creates a new organization-level billing plan.
+     * Uses db.batch() for Cloudflare D1 compatibility.
      */
-    async createPlan(input: NewBillingPlan, rates: NewBillingPlanRate[]) {
-        const [plan] = await this.db.batch([
-            this.db.insert(financeBillingPlans).values(input).returning(),
-            this.db.insert(financeBillingPlanRates).values(rates),
-        ]);
+    async createPlan(plan: NewBillingPlan, rates: (typeof financeBillingPlanRates.$inferInsert)[]) {
+        const statements: any[] = [this.db.insert(financeBillingPlans).values(plan).returning()];
 
-        const createdPlan = plan[0];
-        if (!createdPlan) throw new InternalServerError("Failed to create billing plan");
-        return createdPlan;
+        if (rates.length > 0) {
+            statements.push(this.db.insert(financeBillingPlanRates).values(rates));
+        }
+
+        const results = await this.db.batch(statements as any);
+        const [newPlan] = results[0] as any;
+        return newPlan as BillingPlan;
     }
 
     /**
@@ -64,7 +50,9 @@ export class FinanceBillingPlansRepository {
      * Note: On conflict (update path), the existing record's `id` and `assignedAt` are preserved.
      * The `id` passed in the `assignment` object is only used for new insertions.
      */
-    async upsertMemberPlan(input: NewMemberBillingPlan): Promise<MemberBillingPlan> {
+    async upsertMemberPlan(
+        input: typeof financeMemberBillingPlans.$inferInsert
+    ): Promise<MemberBillingPlan> {
         const [assignment] = await this.db
             .insert(financeMemberBillingPlans)
             .values(input)
@@ -76,20 +64,31 @@ export class FinanceBillingPlansRepository {
                 ],
                 set: {
                     billingPlanId: input.billingPlanId,
-                    assignedBy: input.assignedBy,
-                    // Note: 'assignedAt' is NOT updated to preserve original assignment date
+                    // We DO NOT update assignedAt or id here to preserve original audit trail
                 },
             })
             .returning();
 
-        if (!assignment) throw new InternalServerError("Failed to upsert billing plan assignment");
         return assignment;
     }
 
     /**
-     * Retrieves the active billing plan for a student in a specific currency.
-     * Joins with finance_billing_plans and loads rates.
-     * Relationship Sort: Rates are returned DESC by participantCount to facilitate "Closest Lower Tier" logic in the service.
+     * Finds a plan by its ID.
+     */
+    async findById(id: string) {
+        return this.db.query.financeBillingPlans.findFirst({
+            where: eq(financeBillingPlans.id, id),
+            with: {
+                rates: {
+                    orderBy: [desc(financeBillingPlanRates.participantCount)],
+                },
+            },
+        });
+    }
+
+    /**
+     * Finds a student's active plan for a specific currency.
+     * Returns the assignment and the associated plan with its rate tiers.
      */
     async getMemberPlanByCurrency(
         userId: string,
@@ -117,14 +116,21 @@ export class FinanceBillingPlansRepository {
     }
 
     /**
-     * Lists all billing plans for an organization with cursor pagination.
+     * Lists all billing plans for an organization with cursor pagination and search.
+     * Fix: Ensured cursor (lt) and order (desc) are consistent on the same column (id).
      */
-    async listOrgPlans(orgId: string, cursor?: string, limit: number = 20) {
+    async listOrgPlans(orgId: string, cursor?: string, limit: number = 20, search?: string) {
         const conditions = [eq(financeBillingPlans.organizationId, orgId)];
 
-        // Cursor paginates descending by ID — lt() must match the desc() orderBy below
+        // Correct pairing for DESC ordering: lt(id, cursor)
         if (cursor) {
             conditions.push(lt(financeBillingPlans.id, cursor));
+        }
+
+        if (search) {
+            conditions.push(
+                sql`lower(${financeBillingPlans.name}) LIKE ${"%" + search.toLowerCase() + "%"}`
+            );
         }
 
         const data = await this.db.query.financeBillingPlans.findMany({
@@ -142,7 +148,7 @@ export class FinanceBillingPlansRepository {
     }
 
     /**
-     * Lists all billing plans assigned to a member.
+     * Lists a member's billing plan assignments.
      */
     async listMemberPlans(userId: string, orgId: string, cursor?: string, limit: number = 20) {
         const conditions = [
@@ -150,7 +156,6 @@ export class FinanceBillingPlansRepository {
             eq(financeMemberBillingPlans.organizationId, orgId),
         ];
 
-        // Cursor paginates descending by ID — lt() must match the desc() orderBy below
         if (cursor) {
             conditions.push(lt(financeMemberBillingPlans.id, cursor));
         }
@@ -159,9 +164,7 @@ export class FinanceBillingPlansRepository {
             where: and(...conditions),
             orderBy: [desc(financeMemberBillingPlans.id)],
             limit: limit + 1,
-            with: {
-                plan: true,
-            },
+            with: { plan: true },
         });
 
         const hasNext = data.length > limit;
@@ -169,6 +172,85 @@ export class FinanceBillingPlansRepository {
         const nextCursor = hasNext ? items[items.length - 1].id : null;
 
         return { items, nextCursor };
+    }
+
+    /**
+     * Finds a member plan assignment by ID.
+     */
+    async findMemberPlanById(id: string) {
+        return this.db.query.financeMemberBillingPlans.findFirst({
+            where: eq(financeMemberBillingPlans.id, id),
+        });
+    }
+
+    /**
+     * Updates an organization-level billing plan.
+     * Uses db.batch() instead of .transaction() for D1 compatibility.
+     */
+    async updatePlan(planId: string, updates: UpdateBillingPlanInput): Promise<BillingPlan> {
+        const statements: any[] = [
+            this.db
+                .update(financeBillingPlans)
+                .set({
+                    name: updates.name,
+                    description: updates.description,
+                    isActive: updates.isActive,
+                    updatedAt: new Date(),
+                })
+                .where(eq(financeBillingPlans.id, planId))
+                .returning(),
+        ];
+
+        if (updates.rates !== undefined) {
+            // Delete existing rates
+            statements.push(
+                this.db
+                    .delete(financeBillingPlanRates)
+                    .where(eq(financeBillingPlanRates.billingPlanId, planId))
+            );
+
+            // Insert new rates if provided
+            if (updates.rates.length > 0) {
+                const newRates = updates.rates.map((r) => ({
+                    id: generateBillingPlanRateId(),
+                    billingPlanId: planId,
+                    participantCount: r.participantCount,
+                    rateCentsPerMinute: r.rateCentsPerMinute,
+                }));
+                statements.push(this.db.insert(financeBillingPlanRates).values(newRates));
+            }
+        }
+
+        const results = await this.db.batch(statements as any);
+        const [plan] = results[0] as any;
+
+        if (!plan) throw new NotFoundError("Billing plan not found");
+        return plan as BillingPlan;
+    }
+
+    /**
+     * Deletes a billing plan.
+     * RESTRICT Constraint: Throws ConflictError if any members are currently assigned to this plan.
+     */
+    async deletePlan(planId: string) {
+        try {
+            const [deleted] = await this.db
+                .delete(financeBillingPlans)
+                .where(eq(financeBillingPlans.id, planId))
+                .returning();
+
+            if (!deleted) throw new NotFoundError("Billing plan not found");
+            return deleted;
+        } catch (e: any) {
+            // Catch D1/SQLite RESTRICT constraint failure specifically
+            if (e?.message?.includes("FOREIGN KEY constraint failed")) {
+                throw new ConflictError(
+                    "This billing plan is assigned to one or more members and cannot be deleted. " +
+                        "Deactivate it using the Active toggle instead."
+                );
+            }
+            throw e;
+        }
     }
 
     /**

@@ -75,12 +75,29 @@ export const assignBillingPlanSchema = z.object({
     planId: z.string().min(1),
 });
 
+export const updateBillingPlanSchema = createBillingPlanSchema
+    .partial()
+    .extend({
+        isActive: z.boolean().optional(),
+    })
+    .refine(
+        (data) => {
+            if (!data.rates) return true;
+            const counts = data.rates.map((r) => r.participantCount);
+            return new Set(counts).size === counts.length;
+        },
+        { message: "Rate tiers must have unique participant counts", path: ["rates"] }
+    );
+
+export type UpdateBillingPlanInput = z.infer<typeof updateBillingPlanSchema>;
+
 /**
  * Pagination & Query Schemas
  */
 export const billingPlanPaginationSchema = z.object({
     cursor: z.string().optional(),
     limit: z.coerce.number().int().min(1).max(100).default(20),
+    search: z.string().trim().min(1).optional(),
 });
 
 export const listBillingPlansResponseSchema = z.object({

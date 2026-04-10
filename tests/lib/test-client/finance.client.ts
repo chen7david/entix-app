@@ -76,6 +76,19 @@ export function createFinanceClient(request: Requester) {
             });
         },
 
+        /** PATCH /api/v1/orgs/:orgId/finance/billing-plans/:planId */
+        updateBillingPlan: (orgId: string, planId: string, payload: unknown) =>
+            request(`/api/v1/orgs/${orgId}/finance/billing-plans/${planId}`, {
+                method: "PATCH",
+                body: payload,
+            }),
+
+        /** DELETE /api/v1/orgs/:orgId/finance/billing-plans/:planId */
+        deleteBillingPlan: (orgId: string, planId: string) =>
+            request(`/api/v1/orgs/${orgId}/finance/billing-plans/${planId}`, {
+                method: "DELETE",
+            }),
+
         /** POST /api/v1/orgs/:orgId/members/:userId/billing-plans */
         assignBillingPlan: (
             orgId: string,
@@ -84,6 +97,17 @@ export function createFinanceClient(request: Requester) {
         ) =>
             request(`/api/v1/orgs/${orgId}/members/${userId}/billing-plans`, {
                 method: "POST",
+                body: { ...payload, userId },
+            }),
+
+        /** PUT /api/v1/orgs/:orgId/members/:userId/billing-plans */
+        replaceBillingPlan: (
+            orgId: string,
+            userId: string,
+            payload: Pick<AssignBillingPlanInput, "planId">
+        ) =>
+            request(`/api/v1/orgs/${orgId}/members/${userId}/billing-plans`, {
+                method: "PUT",
                 body: { ...payload, userId },
             }),
 

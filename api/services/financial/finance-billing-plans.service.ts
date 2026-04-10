@@ -9,6 +9,7 @@ import type {
     AssignBillingPlanInput,
     BillingPlanPaginationInput,
     CreateBillingPlanInput,
+    UpdateBillingPlanInput,
 } from "@shared/schemas/dto/billing-plan.dto";
 
 /**
@@ -66,10 +67,15 @@ export class FinanceBillingPlansService {
     }
 
     /**
-     * Lists organization-level billing plans with pagination.
+     * Lists organization-level billing plans with pagination and search.
      */
     async listOrgPlans(orgId: string, pagination: BillingPlanPaginationInput) {
-        return this.repo.listOrgPlans(orgId, pagination.cursor, pagination.limit);
+        return this.repo.listOrgPlans(
+            orgId,
+            pagination.cursor,
+            pagination.limit,
+            pagination.search
+        );
     }
 
     /**
@@ -130,5 +136,27 @@ export class FinanceBillingPlansService {
         }
 
         return rateEntry.rateCentsPerMinute;
+    }
+
+    /**
+     * Updates an existing billing plan with organization scope check.
+     */
+    async updatePlan(orgId: string, planId: string, updates: UpdateBillingPlanInput) {
+        const plan = await this.repo.findById(planId);
+        if (!plan || plan.organizationId !== orgId) {
+            throw new NotFoundError("Billing plan not found");
+        }
+        return this.repo.updatePlan(planId, updates);
+    }
+
+    /**
+     * Deletes a billing plan with organization scope check.
+     */
+    async deletePlan(orgId: string, planId: string) {
+        const plan = await this.repo.findById(planId);
+        if (!plan || plan.organizationId !== orgId) {
+            throw new NotFoundError("Billing plan not found");
+        }
+        return this.repo.deletePlan(planId);
     }
 }

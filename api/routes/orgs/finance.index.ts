@@ -17,6 +17,8 @@ export const financeRoutes = createRouter()
     // Billing Plan Routes
     .openapi(FinanceBillingRoutes.createPlan, FinanceBillingHandler.createPlan)
     .openapi(FinanceBillingRoutes.listOrgPlans, FinanceBillingHandler.listOrgPlans)
+    .openapi(FinanceBillingRoutes.updatePlan, FinanceBillingHandler.updatePlan)
+    .openapi(FinanceBillingRoutes.deletePlan, FinanceBillingHandler.deletePlan)
     .openapi(FinanceBillingRoutes.assignMemberPlan, FinanceBillingHandler.assignMemberPlan)
     .openapi(FinanceBillingRoutes.replaceMemberPlan, FinanceBillingHandler.replaceMemberPlan)
     .openapi(FinanceBillingRoutes.listMemberPlans, FinanceBillingHandler.listMemberPlans)
