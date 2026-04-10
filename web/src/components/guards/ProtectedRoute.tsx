@@ -1,12 +1,12 @@
 import { AppRoutes } from "@shared";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
-import { useAuth } from "@web/src/features/auth";
+import { type OrgRole, type UserRole, useAuth } from "@web/src/features/auth";
 import type React from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 
 interface ProtectedRouteProps {
-    allowedRoles?: ("admin" | "user")[];
-    allowedOrgRoles?: ("owner" | "admin" | "member")[];
+    allowedRoles?: UserRole[];
+    allowedOrgRoles?: OrgRole[];
     redirectPath?: string;
 }
 

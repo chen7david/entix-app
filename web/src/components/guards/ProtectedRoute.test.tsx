@@ -21,6 +21,12 @@ describe("ProtectedRoute", () => {
             isAuthenticated: false,
             isLoading: true,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 
@@ -39,6 +45,12 @@ describe("ProtectedRoute", () => {
             isAuthenticated: false,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 
@@ -71,6 +83,12 @@ describe("ProtectedRoute", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 
@@ -102,6 +120,12 @@ describe("ProtectedRoute", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 
@@ -127,13 +151,19 @@ describe("ProtectedRoute", () => {
                 name: "Test User",
                 globalRole: "user",
                 emailVerified: true,
-                orgRole: "member",
+                orgRole: "student",
                 activeMemberId: "m1",
                 activeOrganizationId: "o1",
             },
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: true,
+            isAdminOrOwner: false,
+            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
 

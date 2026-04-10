@@ -1,13 +1,12 @@
 import { CloseOutlined } from "@ant-design/icons";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Button, Drawer } from "antd";
-import { SidebarContent } from "./SidebarContent";
 
 interface MobileSidebarProps {
-    variant?: "org" | "admin";
+    children?: React.ReactNode;
 }
 
-export const MobileSidebar: React.FC<MobileSidebarProps> = ({ variant = "org" }) => {
+export const MobileSidebar: React.FC<MobileSidebarProps> = ({ children }) => {
     const { isOpen, close } = useSidebar();
 
     return (
@@ -24,7 +23,7 @@ export const MobileSidebar: React.FC<MobileSidebarProps> = ({ variant = "org" })
                 </div>
             }
         >
-            <SidebarContent variant={variant} />
+            {children}
         </Drawer>
     );
 };

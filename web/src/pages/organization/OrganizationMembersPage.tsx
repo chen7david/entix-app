@@ -10,7 +10,7 @@ import {
     UserOutlined,
     WalletOutlined,
 } from "@ant-design/icons";
-import { getAvatarUrl, type MemberDTO } from "@shared";
+import { getAvatarUrl, getRoleColor, type MemberDTO, ORG_ROLE_OPTIONS } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
@@ -61,7 +61,9 @@ import { useSearchParams } from "react-router";
 
 const { Title, Text } = Typography;
 
-export const OrganizationMembersPage: React.FC = () => {
+export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
+    canManage: propCanManage,
+}) => {
     const { token } = theme.useToken();
     const { notification } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -128,8 +130,9 @@ export const OrganizationMembersPage: React.FC = () => {
         }
     }, [cursorStack]);
 
-    const { user } = useAuth();
+    const { user, isAdminOrOwner } = useAuth();
     const currentUserId = user?.id;
+    const canManage = propCanManage ?? isAdminOrOwner;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
     const removeAvatarMutation = useRemoveAvatar();
@@ -289,20 +292,13 @@ export const OrganizationMembersPage: React.FC = () => {
                         .filter(Boolean);
                     return (
                         <Space wrap>
-                            {memberRoles.map((r) => (
-                                <Tag
-                                    key={r}
-                                    color={
-                                        r === "owner"
-                                            ? "purple"
-                                            : r === "admin"
-                                              ? token.colorPrimary
-                                              : "default"
-                                    }
-                                >
-                                    {r.toUpperCase()}
-                                </Tag>
-                            ))}
+                            {memberRoles.map((r) => {
+                                return (
+                                    <Tag key={r} color={getRoleColor(r)}>
+                                        {r.toUpperCase()}
+                                    </Tag>
+                                );
+                            })}
                         </Space>
                     );
                 },
@@ -352,14 +348,16 @@ export const OrganizationMembersPage: React.FC = () => {
                                 Role: Unknown (ID: {currentUserId?.slice(0, 8)})
                             </Tag>
                         )}
-                        <Button
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => setIsCreateModalOpen(true)}
-                            className="min-h-[40px]"
-                        >
-                            Create New Member
-                        </Button>
+                        {canManage && (
+                            <Button
+                                type="primary"
+                                icon={<PlusOutlined />}
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="min-h-[40px]"
+                            >
+                                Create New Member
+                            </Button>
+                        )}
                     </div>
                 }
             />
@@ -462,6 +460,8 @@ export const OrganizationMembersPage: React.FC = () => {
                                     },
                                 },
                             ];
+                            if (!canManage) return null;
+
                             return (
                                 <Dropdown menu={{ items }} trigger={["click"]}>
                                     <Button
@@ -487,7 +487,7 @@ export const OrganizationMembersPage: React.FC = () => {
                     form={createForm}
                     layout="vertical"
                     onFinish={handleCreateMember}
-                    initialValues={{ role: "member" }}
+                    initialValues={{ role: "student" }}
                 >
                     <Form.Item
                         name="name"
@@ -510,11 +510,7 @@ export const OrganizationMembersPage: React.FC = () => {
                         label="Role"
                         rules={[createSchemaFieldRule(createMemberSchema.pick({ role: true }))]}
                     >
-                        <Select>
-                            <Select.Option value="member">Member</Select.Option>
-                            <Select.Option value="admin">Admin</Select.Option>
-                            <Select.Option value="owner">Owner</Select.Option>
-                        </Select>
+                        <Select options={ORG_ROLE_OPTIONS} />
                     </Form.Item>
 
                     <Form.Item className="mb-0 flex justify-end">

@@ -12,7 +12,7 @@ import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { CenteredResult, CenteredSpin } from "../../components/common/CenteredView";
 
 const { Title, Text } = Typography;
@@ -20,6 +20,12 @@ const { Title, Text } = Typography;
 export const PlaylistPlayerPage: React.FC = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigateOrg = useOrgNavigate();
+    const location = useLocation();
+
+    const isTeachingContext = location.pathname.includes("/teaching/");
+    const backRoute = isTeachingContext
+        ? AppRoutes.org.teaching.playlists
+        : AppRoutes.org.admin.playlists;
 
     const { getSequence } = usePlaylists();
     const { data: activePlaylist, isLoading: loadingPlaylist } = usePlaylist(playlistId);
@@ -64,10 +70,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                 title="Playlist Not Found"
                 subTitle="The playlist you are looking for does not exist or has been removed."
                 extra={
-                    <Button
-                        type="primary"
-                        onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}
-                    >
+                    <Button type="primary" onClick={() => navigateOrg(backRoute)}>
                         Back to Playlists
                     </Button>
                 }
@@ -194,7 +197,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                 <Button
                     type="text"
                     icon={<ArrowLeftOutlined />}
-                    onClick={() => navigateOrg(AppRoutes.org.manage.playlists)}
+                    onClick={() => navigateOrg(backRoute)}
                     className="self-start !px-0 !mb-2 text-gray-500"
                 >
                     Back to Playlists

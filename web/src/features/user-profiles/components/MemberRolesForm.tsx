@@ -1,4 +1,5 @@
 import { DeleteOutlined } from "@ant-design/icons";
+import { ORG_ROLE_OPTIONS } from "@shared";
 import { Button, Card, Popconfirm, Select, Typography } from "antd";
 
 const { Text } = Typography;
@@ -45,11 +46,7 @@ export const MemberRolesForm = ({
                             style={{ width: "100%" }}
                             placeholder="Select roles"
                             onChange={(values) => handleRoleChange(member.id as string, values)}
-                            options={[
-                                { value: "member", label: "Member" },
-                                { value: "admin", label: "Admin" },
-                                { value: "owner", label: "Owner" },
-                            ]}
+                            options={ORG_ROLE_OPTIONS}
                         />
                     </div>
                 ) : (

@@ -1,25 +1,30 @@
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
-import { DesktopSidebar } from "@web/src/components/navigation/Sidebar/DesktopSidebar";
-import { MobileSidebar } from "@web/src/components/navigation/Sidebar/MobileSidebar";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { GlobalUploadManager } from "@web/src/features/media";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
+import { DesktopSidebar } from "../shared/DesktopSidebar";
+import { MobileSidebar } from "../shared/MobileSidebar";
+import { OrgAdminSidebarContent } from "./OrgAdminSidebarContent";
 
 const { Sider, Content } = Layout;
 
-export const DashboardLayout: React.FC = () => {
+export const OrgAdminLayout: React.FC = () => {
     const { token } = theme.useToken();
 
     return (
         <Layout style={{ height: "100dvh", overflow: "hidden" }}>
-            <MobileSidebar />
+            <MobileSidebar>
+                <OrgAdminSidebarContent />
+            </MobileSidebar>
             <Sider
                 className="hidden md:block"
                 width={240}
                 style={{ height: "100%", overflow: "hidden" }}
             >
-                <DesktopSidebar />
+                <DesktopSidebar>
+                    <OrgAdminSidebarContent />
+                </DesktopSidebar>
             </Sider>
             <Layout hasSider style={{ flex: 1, overflow: "hidden" }}>
                 <Content

@@ -338,7 +338,7 @@ export const PlaylistManager: React.FC<{
                                     label: "View Detail",
                                     icon: <PlayCircleOutlined />,
                                     onClick: () =>
-                                        navigateOrg(AppRoutes.org.manage.playlistDetail(record.id)),
+                                        navigateOrg(AppRoutes.org.admin.playlistDetail(record.id)),
                                 },
                                 {
                                     key: "sequence",

@@ -1,6 +1,7 @@
 export * from "./auth/permissions";
 export * from "./constants/api";
 export * from "./constants/financial";
+export * from "./constants/roles";
 export * from "./constants/routes";
 export * from "./db/schema/index";
 export * from "./lib/id";

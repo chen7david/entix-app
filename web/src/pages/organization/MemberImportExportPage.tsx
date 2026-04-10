@@ -55,7 +55,7 @@ export const MemberImportExportPage: React.FC = () => {
             id: "user_123",
             email: "jane.doe@example.com",
             name: "Jane Doe",
-            role: "member",
+            role: "student",
             avatarUrl: "https://example.com/avatar.jpg",
             createdAt: "2023-01-01T00:00:00Z",
             updatedAt: "2023-01-01T00:00:00Z",
@@ -154,7 +154,7 @@ export const MemberImportExportPage: React.FC = () => {
                 <Space direction="vertical" size="middle" className="w-full">
                     <Alert
                         message="Quiet Import Mode & Role Enforcement"
-                        description="All members are imported silently (no welcome emails). For security, all imported users are set to the 'member' role by default. You can manually upgrade them to 'admin' or 'owner' in the dashboard after the import."
+                        description="All members are imported silently (no welcome emails). For security, all imported users are set to the 'student' role by default. You can manually upgrade them to 'admin' or 'owner' in the dashboard after the import."
                         type="info"
                         showIcon
                         icon={<InfoCircleOutlined />}
@@ -201,7 +201,7 @@ export const MemberImportExportPage: React.FC = () => {
                                     <code>avatarUrl</code> (String)
                                 </li>
                                 <li>
-                                    <code>role</code> (Defaults to 'member' for security; can be
+                                    <code>role</code> (Defaults to 'student' for security; can be
                                     changed later)
                                 </li>
                                 <li>

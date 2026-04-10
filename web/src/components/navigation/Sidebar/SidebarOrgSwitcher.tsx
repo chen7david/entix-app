@@ -27,7 +27,7 @@ export const SidebarOrgSwitcher: React.FC = () => {
         const slug = activeOrganization?.slug;
         if (slug) {
             setOpen(false);
-            navigate(`/org/${slug}${AppRoutes.org.manage.index}`);
+            navigate(`/org/${slug}${AppRoutes.org.admin.index}`);
         }
     };
 

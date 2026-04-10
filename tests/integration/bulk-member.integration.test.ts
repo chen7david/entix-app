@@ -97,7 +97,7 @@ describe("Bulk Member Integration Tests", () => {
             where: (m, { and, eq }) =>
                 and(eq(m.userId, user?.id ?? ""), eq(m.organizationId, orgId)),
         });
-        expect(member?.role).toBe("member"); // Enforced role
+        expect(member?.role).toBe("student"); // Enforced role
 
         const account = await db.query.authAccounts.findFirst({
             where: (a, { eq }) => eq(a.userId, user?.id ?? ""),
