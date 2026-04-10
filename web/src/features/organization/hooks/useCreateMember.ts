@@ -24,7 +24,7 @@ export const useCreateMember = (organizationId: string) => {
         onSuccess: () => {
             // Invalidate members query to refetch the list
             // Must match the key in useOrganization.ts line 34
-            queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
+            queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
             notification.success({
                 message: "Member Created",
                 description: "Member created successfully! Password reset email has been sent.",

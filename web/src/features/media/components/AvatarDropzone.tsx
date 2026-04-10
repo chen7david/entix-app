@@ -111,11 +111,11 @@ export const AvatarDropzone = ({
 
             // Refresh relevant query caches
             queryClient.invalidateQueries({ queryKey: ["organizationUploads", organizationId] });
-            queryClient.invalidateQueries({ queryKey: ["organizationMembers", organizationId] });
+            queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
+            queryClient.invalidateQueries({ queryKey: ["organizations"] });
 
-            // Note: If on ProfilePage, user session needs refetching possibly;
-            // The Auth lib handles useSession refresh, but we might want to trigger global invalidations if needed.
-            // Assuming session query gets invalidated or polled.
+            // Session is refetched above (line 106) for the current user.
+            // cookieCache is disabled globally, so refetch() always returns fresh DB data.
         } catch (err: any) {
             console.error("Avatar upload error:", err);
             onError?.(err);

@@ -38,7 +38,6 @@ export class AvatarService extends BaseService {
         this.assertExists(user, `User with ID ${targetUserId} not found`);
 
         const newUpload = await this.uploadService.getUserUploadById(uploadId, targetUserId);
-        // Note: getUserUploadById already uses assertExists within UploadService.
 
         if (newUpload.status !== "completed") {
             throw new ConflictError("Upload must be completed before updating avatar");
