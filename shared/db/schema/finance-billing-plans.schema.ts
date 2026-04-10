@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 import { financialCurrencies } from "./financial-currencies.schema";
 import { authOrganizations } from "./organization.schema";
@@ -7,24 +7,28 @@ import { authOrganizations } from "./organization.schema";
 /**
  * Organizations can create multiple billing plans for the same currency.
  */
-export const financeBillingPlans = sqliteTable("finance_billing_plans", {
-    id: text("id").primaryKey(),
-    organizationId: text("organization_id")
-        .notNull()
-        .references(() => authOrganizations.id, { onDelete: "cascade" }),
-    name: text("name").notNull(),
-    description: text("description"),
-    currencyId: text("currency_id")
-        .notNull()
-        .references(() => financialCurrencies.id),
-    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-        .notNull()
-        .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-        .notNull()
-        .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
-});
+export const financeBillingPlans = sqliteTable(
+    "finance_billing_plans",
+    {
+        id: text("id").primaryKey(),
+        organizationId: text("organization_id")
+            .notNull()
+            .references(() => authOrganizations.id, { onDelete: "cascade" }),
+        name: text("name").notNull(),
+        description: text("description"),
+        currencyId: text("currency_id")
+            .notNull()
+            .references(() => financialCurrencies.id),
+        isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+        createdAt: integer("created_at", { mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+    },
+    (table) => [index("idx_billing_plans_org_id").on(table.organizationId)]
+);
 
 /**
  * Assigns a billing plan to a student.
@@ -42,7 +46,7 @@ export const financeMemberBillingPlans = sqliteTable(
             .references(() => authOrganizations.id, { onDelete: "cascade" }),
         billingPlanId: text("billing_plan_id")
             .notNull()
-            .references(() => financeBillingPlans.id),
+            .references(() => financeBillingPlans.id, { onDelete: "restrict" }),
         // Denormalized for efficient deterministic lookup
         currencyId: text("currency_id")
             .notNull()

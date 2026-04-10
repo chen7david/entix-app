@@ -1,10 +1,11 @@
-import { ConflictError, NotFoundError } from "@api/errors/app.error";
+import { NotFoundError } from "@api/errors/app.error";
+import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinanceBillingPlansService } from "@api/services/financial/finance-billing-plans.service";
 import { FINANCIAL_CURRENCIES } from "@shared";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mocked, vi } from "vitest";
 
 describe("FinanceBillingPlansService Unit Test", () => {
-    let repo: any;
+    let repo: Mocked<FinanceBillingPlansRepository>;
     let service: FinanceBillingPlansService;
 
     beforeEach(() => {
@@ -12,14 +13,28 @@ describe("FinanceBillingPlansService Unit Test", () => {
             findById: vi.fn(),
             getMemberPlanByCurrency: vi.fn(),
             createPlan: vi.fn(),
-            createMemberPlan: vi.fn(),
-            replaceMemberPlan: vi.fn(),
+            upsertMemberPlan: vi.fn(),
             listOrgPlans: vi.fn(),
             listMemberPlans: vi.fn(),
             findMemberPlanById: vi.fn(),
             deleteMemberPlan: vi.fn(),
-        };
+        } as unknown as Mocked<FinanceBillingPlansRepository>;
         service = new FinanceBillingPlansService(repo);
+    });
+
+    const createMockRate = ({
+        participantCount,
+        rateCentsPerMinute,
+    }: {
+        participantCount: number;
+        rateCentsPerMinute: number;
+    }) => ({
+        id: "r1",
+        billingPlanId: "p1",
+        participantCount,
+        rateCentsPerMinute,
+        createdAt: new Date(),
+        updatedAt: new Date(),
     });
 
     describe("resolveBillingPlanRate", () => {
@@ -33,34 +48,110 @@ describe("FinanceBillingPlansService Unit Test", () => {
                     id: "p1",
                     name: "Tiered Plan",
                     isActive: true,
+                    description: null,
+                    organizationId: orgId,
+                    currencyId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
                     rates: [
-                        { participantCount: 1, rateCentsPerMinute: 100 },
-                        { participantCount: 5, rateCentsPerMinute: 80 },
+                        createMockRate({ participantCount: 5, rateCentsPerMinute: 80 }),
+                        createMockRate({ participantCount: 1, rateCentsPerMinute: 100 }),
                     ],
                 },
+                id: "assign_1",
+                userId,
+                organizationId: orgId,
+                billingPlanId: "p1",
+                currencyId,
+                assignedAt: new Date(),
+                assignedBy: null,
             });
 
             const rate = await service.resolveBillingPlanRate(userId, orgId, currencyId, 5);
             expect(rate).toBe(80);
         });
 
-        it("should throw NotFoundError if participant count is not configured", async () => {
+        it("should resolve Closest Lower Tier even if repository returns unsorted rates", async () => {
             repo.getMemberPlanByCurrency.mockResolvedValue({
                 plan: {
                     id: "p1",
-                    name: "Tiered Plan",
+                    name: "Ascending Rates Cloud",
                     isActive: true,
-                    rates: [{ participantCount: 1, rateCentsPerMinute: 100 }],
+                    description: null,
+                    organizationId: orgId,
+                    currencyId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    rates: [
+                        createMockRate({ participantCount: 1, rateCentsPerMinute: 100 }),
+                        createMockRate({ participantCount: 5, rateCentsPerMinute: 80 }),
+                        createMockRate({ participantCount: 10, rateCentsPerMinute: 60 }),
+                    ],
                 },
+                id: "assign_1",
+                userId,
+                organizationId: orgId,
+                billingPlanId: "p1",
+                currencyId,
+                assignedAt: new Date(),
+                assignedBy: null,
+            });
+
+            const rate = await service.resolveBillingPlanRate(userId, orgId, currencyId, 7);
+            expect(rate).toBe(80);
+        });
+
+        it("should resolve to the lowest tier configured when headcount meets it", async () => {
+            repo.getMemberPlanByCurrency.mockResolvedValue({
+                plan: {
+                    id: "p1",
+                    name: "Single Tier",
+                    isActive: true,
+                    description: null,
+                    organizationId: orgId,
+                    currencyId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    rates: [createMockRate({ participantCount: 5, rateCentsPerMinute: 100 })],
+                },
+                id: "assign_1",
+                userId,
+                organizationId: orgId,
+                billingPlanId: "p1",
+                currencyId,
+                assignedAt: new Date(),
+                assignedBy: null,
+            });
+
+            const rate = await service.resolveBillingPlanRate(userId, orgId, currencyId, 5);
+            expect(rate).toBe(100);
+        });
+
+        it("should throw NotFoundError if headcount is below the lowest tier", async () => {
+            repo.getMemberPlanByCurrency.mockResolvedValue({
+                plan: {
+                    id: "p1",
+                    name: "High Tier Only",
+                    isActive: true,
+                    description: null,
+                    organizationId: orgId,
+                    currencyId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    rates: [createMockRate({ participantCount: 5, rateCentsPerMinute: 80 })],
+                },
+                id: "assign_1",
+                userId,
+                organizationId: orgId,
+                billingPlanId: "p1",
+                currencyId,
+                assignedAt: new Date(),
+                assignedBy: null,
             });
 
             await expect(
-                service.resolveBillingPlanRate(userId, orgId, currencyId, 5)
+                service.resolveBillingPlanRate(userId, orgId, currencyId, 2)
             ).rejects.toThrow(NotFoundError);
-
-            await expect(
-                service.resolveBillingPlanRate(userId, orgId, currencyId, 5)
-            ).rejects.toThrow("is not configured for session size: 5");
         });
 
         it("should throw NotFoundError if no active plan is assigned", async () => {
@@ -69,20 +160,28 @@ describe("FinanceBillingPlansService Unit Test", () => {
             await expect(
                 service.resolveBillingPlanRate(userId, orgId, currencyId, 1)
             ).rejects.toThrow(NotFoundError);
-
-            await expect(
-                service.resolveBillingPlanRate(userId, orgId, currencyId, 1)
-            ).rejects.toThrow("No active billing plan assigned for student");
         });
 
         it("should throw NotFoundError if plan is inactive", async () => {
             repo.getMemberPlanByCurrency.mockResolvedValue({
                 plan: {
                     id: "p1",
-                    name: "Inactive Plan",
+                    name: "Inactive",
                     isActive: false,
-                    rates: [{ participantCount: 1, rateCentsPerMinute: 100 }],
+                    description: null,
+                    organizationId: orgId,
+                    currencyId,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    rates: [createMockRate({ participantCount: 1, rateCentsPerMinute: 100 })],
                 },
+                id: "assign_1",
+                userId,
+                organizationId: orgId,
+                billingPlanId: "p1",
+                currencyId,
+                assignedAt: new Date(),
+                assignedBy: null,
             });
 
             await expect(
@@ -92,16 +191,29 @@ describe("FinanceBillingPlansService Unit Test", () => {
     });
 
     describe("assignPlan", () => {
-        it("should throw ConflictError if plan for currency already exists", async () => {
+        it("should atomically upsert the member plan assignment", async () => {
             repo.findById.mockResolvedValue({
                 id: "p2",
+                name: "Test Plan",
                 organizationId: "o1",
-                currencyId: "fcur_etd",
+                currencyId: FINANCIAL_CURRENCIES.CNY,
+                description: null,
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                rates: [],
             });
-            repo.getMemberPlanByCurrency.mockResolvedValue({ id: "existing_assignment" });
 
-            await expect(service.assignPlan("o1", { userId: "u1", planId: "p2" })).rejects.toThrow(
-                ConflictError
+            await service.assignPlan("o1", { userId: "u1", planId: "p2" }, "admin_1");
+
+            expect(repo.upsertMemberPlan).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    userId: "u1",
+                    organizationId: "o1",
+                    billingPlanId: "p2",
+                    currencyId: FINANCIAL_CURRENCIES.CNY,
+                    assignedBy: "admin_1",
+                })
             );
         });
     });

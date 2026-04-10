@@ -1,6 +1,8 @@
 import { InternalServerError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
+    type BillingPlan,
+    type BillingPlanRate,
     financeBillingPlanRates,
     financeBillingPlans,
     financeMemberBillingPlans,
@@ -10,6 +12,17 @@ import {
     type NewMemberBillingPlan,
 } from "@shared/db/schema";
 import { and, desc, eq, lt } from "drizzle-orm";
+
+/**
+ * Composite type for a member's plan assignment including tiered rates.
+ */
+export type MemberPlanWithRates = MemberBillingPlan & {
+    plan:
+        | (BillingPlan & {
+              rates: BillingPlanRate[];
+          })
+        | null;
+};
 
 /**
  * Repository for Billing Plans and Student Assignments.
@@ -47,47 +60,43 @@ export class FinanceBillingPlansRepository {
     }
 
     /**
-     * Assigns a billing plan to a member (student).
+     * Atomically assigns or replaces a member's billing plan.
+     * Note: On conflict (update path), the existing record's `id` and `assignedAt` are preserved.
+     * The `id` passed in the `assignment` object is only used for new insertions.
      */
-    async createMemberPlan(input: NewMemberBillingPlan): Promise<MemberBillingPlan> {
+    async upsertMemberPlan(input: NewMemberBillingPlan): Promise<MemberBillingPlan> {
         const [assignment] = await this.db
             .insert(financeMemberBillingPlans)
             .values(input)
+            .onConflictDoUpdate({
+                target: [
+                    financeMemberBillingPlans.userId,
+                    financeMemberBillingPlans.organizationId,
+                    financeMemberBillingPlans.currencyId,
+                ],
+                set: {
+                    billingPlanId: input.billingPlanId,
+                    assignedBy: input.assignedBy,
+                    // Note: 'assignedAt' is NOT updated to preserve original assignment date
+                },
+            })
             .returning();
-        if (!assignment) throw new InternalServerError("Failed to assign billing plan");
+
+        if (!assignment) throw new InternalServerError("Failed to upsert billing plan assignment");
         return assignment;
     }
 
     /**
-     * Replaces a student's billing plan for a specific currency atomically.
-     * Uses db.batch() to ensure the old plan is removed and new one added.
+     * Retrieves the active billing plan for a student in a specific currency.
+     * Joins with finance_billing_plans and loads rates.
+     * Relationship Sort: Rates are returned DESC by participantCount to facilitate "Closest Lower Tier" logic in the service.
      */
-    async replaceMemberPlan(
+    async getMemberPlanByCurrency(
         userId: string,
         orgId: string,
-        currencyId: string,
-        newAssignment: NewMemberBillingPlan
-    ) {
-        return this.db.batch([
-            this.db
-                .delete(financeMemberBillingPlans)
-                .where(
-                    and(
-                        eq(financeMemberBillingPlans.userId, userId),
-                        eq(financeMemberBillingPlans.organizationId, orgId),
-                        eq(financeMemberBillingPlans.currencyId, currencyId)
-                    )
-                ),
-            this.db.insert(financeMemberBillingPlans).values(newAssignment),
-        ]);
-    }
-
-    /**
-     * Retrieves the active billing plan for a student in a specific currency.
-     * Joins with finance_billing_plans to get the rate.
-     */
-    async getMemberPlanByCurrency(userId: string, orgId: string, currencyId: string) {
-        return this.db.query.financeMemberBillingPlans.findFirst({
+        currencyId: string
+    ): Promise<MemberPlanWithRates | null> {
+        const result = await this.db.query.financeMemberBillingPlans.findFirst({
             where: and(
                 eq(financeMemberBillingPlans.userId, userId),
                 eq(financeMemberBillingPlans.organizationId, orgId),
@@ -95,10 +104,16 @@ export class FinanceBillingPlansRepository {
             ),
             with: {
                 plan: {
-                    with: { rates: true },
+                    with: {
+                        rates: {
+                            orderBy: [desc(financeBillingPlanRates.participantCount)],
+                        },
+                    },
                 },
             },
         });
+
+        return (result as MemberPlanWithRates) ?? null;
     }
 
     /**
@@ -107,6 +122,7 @@ export class FinanceBillingPlansRepository {
     async listOrgPlans(orgId: string, cursor?: string, limit: number = 20) {
         const conditions = [eq(financeBillingPlans.organizationId, orgId)];
 
+        // Cursor paginates descending by ID — lt() must match the desc() orderBy below
         if (cursor) {
             conditions.push(lt(financeBillingPlans.id, cursor));
         }
@@ -134,6 +150,7 @@ export class FinanceBillingPlansRepository {
             eq(financeMemberBillingPlans.organizationId, orgId),
         ];
 
+        // Cursor paginates descending by ID — lt() must match the desc() orderBy below
         if (cursor) {
             conditions.push(lt(financeMemberBillingPlans.id, cursor));
         }

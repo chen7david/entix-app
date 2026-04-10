@@ -45,7 +45,7 @@ export class FinanceBillingHandler {
         const body = ctx.req.valid("json");
         const currentUserId = ctx.get("userId");
 
-        const assignment = await getFinanceBillingPlansService(ctx).replacePlan(
+        const assignment = await getFinanceBillingPlansService(ctx).assignPlan(
             organizationId,
             { ...body, userId },
             currentUserId
@@ -74,8 +74,8 @@ export class FinanceBillingHandler {
     static unassignMemberPlan: AppHandler<typeof FinanceBillingRoutes.unassignMemberPlan> = async (
         ctx
     ) => {
-        const { organizationId, assignmentId } = ctx.req.valid("param");
-        await getFinanceBillingPlansService(ctx).unassignPlan(organizationId, assignmentId);
+        const { organizationId, userId, assignmentId } = ctx.req.valid("param");
+        await getFinanceBillingPlansService(ctx).unassignPlan(organizationId, userId, assignmentId);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 }

@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "@api/errors/app.error";
+import { NotFoundError } from "@api/errors/app.error";
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import {
     generateBillingPlanId,
@@ -43,8 +43,8 @@ export class FinanceBillingPlansService {
     }
 
     /**
-     * Assigns a billing plan to a member (student).
-     * Enforces uniqueness (1 plan per currency per org).
+     * Atomically assigns or replaces a billing plan for a member.
+     * Note: Handlers for both POST (assign) and PUT (replace) now delegate to this atomic upsert.
      */
     async assignPlan(orgId: string, input: AssignBillingPlanInput, assignedBy?: string) {
         const { userId, planId } = input;
@@ -54,37 +54,8 @@ export class FinanceBillingPlansService {
             throw new NotFoundError("Billing plan not found");
         }
 
-        const existing = await this.repo.getMemberPlanByCurrency(userId, orgId, plan.currencyId);
-        if (existing) {
-            throw new ConflictError(
-                `Student already has an active billing plan for ${plan.currencyId} in this organization. Use replace instead.`
-            );
-        }
-
         const id = generateMemberBillingPlanId();
-        return this.repo.createMemberPlan({
-            id,
-            userId,
-            organizationId: orgId,
-            billingPlanId: planId,
-            currencyId: plan.currencyId,
-            assignedBy: assignedBy ?? null,
-        });
-    }
-
-    /**
-     * Atomically replaces a student's billing plan for a specific currency.
-     */
-    async replacePlan(orgId: string, input: AssignBillingPlanInput, assignedBy?: string) {
-        const { userId, planId } = input;
-
-        const plan = await this.repo.findById(planId);
-        if (!plan || plan.organizationId !== orgId) {
-            throw new NotFoundError("Billing plan not found");
-        }
-
-        const id = generateMemberBillingPlanId();
-        return this.repo.replaceMemberPlan(userId, orgId, plan.currencyId, {
+        return this.repo.upsertMemberPlan({
             id,
             userId,
             organizationId: orgId,
@@ -110,18 +81,25 @@ export class FinanceBillingPlansService {
 
     /**
      * Removes a student's billing plan assignment.
+     * Fintech Security: Returns 404 if the assignment doesn't exist OR belongs to another user
+     * to prevent information leakage.
      */
-    async unassignPlan(orgId: string, assignmentId: string) {
+    async unassignPlan(orgId: string, userId: string, assignmentId: string) {
         const assignment = await this.repo.findMemberPlanById(assignmentId);
-        if (!assignment || assignment.organizationId !== orgId) {
+
+        // Security: Assignment must exist, belong to this org, AND belong to this specific user.
+        if (!assignment || assignment.organizationId !== orgId || assignment.userId !== userId) {
             throw new NotFoundError("Plan assignment not found");
         }
+
         return this.repo.deleteMemberPlan(assignmentId);
     }
 
     /**
      * Resolves the rate for a student in a specific currency based on participant count.
-     * Throws NotFoundError if no exact match for the participant count is found.
+     * Logic: Closest Lower Tier.
+     * Finds the highest configured participantCount that is less than or equal to the actualHeadcount.
+     * If headcount is below the lowest configured tier (e.g. headcount 2, lowest tier 5), throws NotFoundError.
      */
     async resolveBillingPlanRate(
         userId: string,
@@ -137,12 +115,17 @@ export class FinanceBillingPlansService {
             );
         }
 
-        const plan = assignment.plan as any; // Cast to access joined rates
-        const rateEntry = plan.rates?.find((r: any) => r.participantCount === participantCount);
+        const { plan } = assignment;
+        // Search using "Closest Lower Tier" logic.
+        // Rates are explicitly sorted DESC to ensure the highest tier ≤ headcount is picked first.
+        const sortedRates = [...(plan.rates ?? [])].sort(
+            (a, b) => b.participantCount - a.participantCount
+        );
+        const rateEntry = sortedRates.find((r) => r.participantCount <= participantCount);
 
         if (!rateEntry) {
             throw new NotFoundError(
-                `Billing plan ${plan.name} (${plan.id}) is not configured for session size: ${participantCount}`
+                `Billing plan ${plan.name} (${plan.id}) has no tier for session size: ${participantCount}. (Minimum required: ${sortedRates.at(-1)?.participantCount ?? "N/A"})`
             );
         }
 

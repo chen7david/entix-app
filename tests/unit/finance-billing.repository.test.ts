@@ -70,8 +70,8 @@ describe("FinanceBillingPlansRepository Unit Test", () => {
         });
     });
 
-    describe("replaceMemberPlan (Atomic)", () => {
-        it("should swap assignments in a single batch", async () => {
+    describe("upsertMemberPlan (Atomic)", () => {
+        it("should atomically upsert assignments and preserve ID", async () => {
             const userId = "user_01";
             const oldPlanId = "fbp_old";
             const newPlanId = "fbp_new";
@@ -112,8 +112,8 @@ describe("FinanceBillingPlansRepository Unit Test", () => {
                 currencyId: "fcur_etd",
             });
 
-            await repo.replaceMemberPlan(userId, "org_test", "fcur_etd", {
-                id: "fmbp_02",
+            await repo.upsertMemberPlan({
+                id: "fmbp_02", // This ID should be IGNORED on conflict
                 userId,
                 organizationId: "org_test",
                 billingPlanId: newPlanId,
@@ -126,7 +126,7 @@ describe("FinanceBillingPlansRepository Unit Test", () => {
                 .where(eq(financeMemberBillingPlans.userId, userId));
             expect(assignments).toHaveLength(1);
             expect(assignments[0].billingPlanId).toBe(newPlanId);
-            expect(assignments[0].id).toBe("fmbp_02");
+            expect(assignments[0].id).toBe("fmbp_01"); // MUST preserve the original record ID
         });
     });
 });

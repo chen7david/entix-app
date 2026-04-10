@@ -7,6 +7,13 @@ import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { authOrganizations } from "./organization.schema";
 
+export type TransactionMetadata = {
+    rateCentsPerMinute?: number;
+    durationMinutes?: number;
+    participantCount?: number;
+    sessionTitle?: string;
+} & Record<string, unknown>;
+
 export const financialTransactions = sqliteTable(
     "financial_transactions",
     {
@@ -32,13 +39,7 @@ export const financialTransactions = sqliteTable(
             .default("completed")
             .$type<"pending" | "completed" | "reversed">(),
         description: text("description"),
-        metadata: text("metadata", { mode: "json" }).$type<{
-            rateCentsPerMinute?: number;
-            durationMinutes?: number;
-            participantCount?: number;
-            sessionTitle?: string;
-            [key: string]: any;
-        }>(),
+        metadata: text("metadata", { mode: "json" }).$type<TransactionMetadata>(),
         transactionDate: integer("transaction_date", { mode: "timestamp_ms" }).notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()

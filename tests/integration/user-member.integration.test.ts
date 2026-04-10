@@ -2,7 +2,7 @@ import { env } from "cloudflare:test";
 import app from "@api/app";
 import * as schema from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockUserDbRecord } from "../factories/auth.factory";
 import { createMockMemberCreationPayload } from "../factories/member-creation.factory";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
@@ -34,21 +34,19 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
         const dummyName = "New AuthMember";
 
         const { MemberRepository } = await import("@api/repositories/member.repository");
-        const { vi } = await import("vitest");
         const spy = vi
             .spyOn(MemberRepository.prototype, "prepareInsertQuery")
-            .mockImplementation(function (this: any) {
-                const getDbClient = require("@api/factories/db.factory").getDbClient;
-                return getDbClient((this as any).ctx)
-                    .insert(schema.authMembers)
-                    .values({
+            .mockImplementation(
+                (_id: string, organizationId: string, userId: string, role: string) => {
+                    return db.insert(schema.authMembers).values({
                         id: "pre-existing-conflict", // Will conflict with existing member ID
-                        organizationId: orgId, // Must match foreign key
-                        userId: "will-not-save", // Assume uId
-                        role: "member",
+                        organizationId,
+                        userId,
+                        role,
                         createdAt: new Date(),
                     });
-            });
+                }
+            );
 
         const payload = createMockMemberCreationPayload({ email: targetEmail, name: dummyName });
         const realClient = createTestClient(app, env, cookie);
