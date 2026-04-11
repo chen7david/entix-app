@@ -7,6 +7,7 @@ import {
 } from "./finance-billing-plans.schema";
 import { financialAccounts } from "./financial-accounts.schema";
 import { financialCurrencies } from "./financial-currencies.schema";
+import { financialSessionPaymentEvents } from "./financial-session-payment-events.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { financialTransactionLines } from "./financial-transaction-lines.schema";
 import { financialTransactions } from "./financial-transactions.schema";
@@ -14,6 +15,7 @@ import { media, playlistMedia, playlists, uploads, userUploads } from "./media.s
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
+import { systemAuditEvents } from "./system-audit-events.schema";
 import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 
 export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
@@ -138,11 +140,12 @@ export const scheduledSessionsRelations = relations(scheduledSessions, ({ one, m
     attendances: many(sessionAttendances),
 }));
 
-export const sessionAttendancesRelations = relations(sessionAttendances, ({ one }) => ({
+export const sessionAttendancesRelations = relations(sessionAttendances, ({ one, many }) => ({
     session: one(scheduledSessions, {
         fields: [sessionAttendances.sessionId],
         references: [scheduledSessions.id],
     }),
+    paymentEvents: many(financialSessionPaymentEvents),
     organization: one(authOrganizations, {
         fields: [sessionAttendances.organizationId],
         references: [authOrganizations.id],
@@ -292,3 +295,32 @@ export const financeMemberBillingPlansRelations = relations(
         }),
     })
 );
+
+export const financialSessionPaymentEventsRelations = relations(
+    financialSessionPaymentEvents,
+    ({ one }) => ({
+        session: one(scheduledSessions, {
+            fields: [financialSessionPaymentEvents.sessionId],
+            references: [scheduledSessions.id],
+        }),
+        user: one(authUsers, {
+            fields: [financialSessionPaymentEvents.userId],
+            references: [authUsers.id],
+        }),
+        transaction: one(financialTransactions, {
+            fields: [financialSessionPaymentEvents.transactionId],
+            references: [financialTransactions.id],
+        }),
+    })
+);
+
+export const systemAuditEventsRelations = relations(systemAuditEvents, ({ one }) => ({
+    organization: one(authOrganizations, {
+        fields: [systemAuditEvents.organizationId],
+        references: [authOrganizations.id],
+    }),
+    acknowledgedByUser: one(authUsers, {
+        fields: [systemAuditEvents.acknowledgedBy],
+        references: [authUsers.id],
+    }),
+}));

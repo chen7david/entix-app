@@ -36,6 +36,13 @@
       "when": 1743955600000,
       "tag": "0004_simple_sprite",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1775900595178,
+      "tag": "0005_rare_skrulls",
+      "breakpoints": true
     }
   ]
 }

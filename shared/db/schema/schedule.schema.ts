@@ -53,7 +53,11 @@ export const sessionAttendances = sqliteTable(
         absent: integer("absent", { mode: "boolean" }).default(false).notNull(),
         absenceReason: text("absence_reason"),
         notes: text("notes"),
-        paidAt: integer("paid_at", { mode: "timestamp_ms" }),
+        paymentStatus: text("payment_status", {
+            enum: ["unpaid", "paid", "refunded"],
+        })
+            .notNull()
+            .default("unpaid"),
     },
     (table) => [
         primaryKey({ columns: [table.sessionId, table.userId] }),

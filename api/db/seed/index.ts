@@ -18,9 +18,10 @@ function getLocalD1Path(): string {
         );
     }
 
-    // Find the first .sqlite file recursively
+    // Find the first .sqlite file in the d1 directory specifically
     try {
-        const findCmd = `find "${d1Base}" -name "*.sqlite" ! -name "*-shm" ! -name "*-wal" | head -n 1`;
+        const d1SearchPath = path.join(d1Base, "v3/d1");
+        const findCmd = `find "${d1SearchPath}" -name "*.sqlite" ! -name "metadata.sqlite" ! -name "*-shm" ! -name "*-wal" | head -n 1`;
         const dbPath = execSync(findCmd, { encoding: "utf-8" }).trim();
 
         if (!dbPath) {

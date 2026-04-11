@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 import { financialCurrencies } from "./financial-currencies.schema";
 import { authOrganizations } from "./organization.schema";
@@ -26,8 +26,12 @@ export const financeBillingPlans = sqliteTable(
         updatedAt: integer("updated_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+        overdraftLimitCents: integer("overdraft_limit_cents").notNull().default(0),
     },
-    (table) => [index("idx_billing_plans_org_id").on(table.organizationId)]
+    (table) => [
+        check("overdraft_limit_non_negative", sql`${table.overdraftLimitCents} >= 0`),
+        index("idx_billing_plans_org_id").on(table.organizationId),
+    ]
 );
 
 /**
