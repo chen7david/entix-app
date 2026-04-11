@@ -53,6 +53,7 @@ describe("FinanceBillingPlansService Unit Test", () => {
                     currencyId,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    overdraftLimitCents: 0,
                     rates: [
                         createMockRate({ participantCount: 5, rateCentsPerMinute: 80 }),
                         createMockRate({ participantCount: 1, rateCentsPerMinute: 100 }),
@@ -82,6 +83,7 @@ describe("FinanceBillingPlansService Unit Test", () => {
                     currencyId,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    overdraftLimitCents: 0,
                     rates: [
                         createMockRate({ participantCount: 1, rateCentsPerMinute: 100 }),
                         createMockRate({ participantCount: 5, rateCentsPerMinute: 80 }),
@@ -112,6 +114,7 @@ describe("FinanceBillingPlansService Unit Test", () => {
                     currencyId,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    overdraftLimitCents: 0,
                     rates: [createMockRate({ participantCount: 5, rateCentsPerMinute: 100 })],
                 },
                 id: "assign_1",
@@ -138,6 +141,7 @@ describe("FinanceBillingPlansService Unit Test", () => {
                     currencyId,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    overdraftLimitCents: 0,
                     rates: [createMockRate({ participantCount: 5, rateCentsPerMinute: 80 })],
                 },
                 id: "assign_1",
@@ -173,6 +177,7 @@ describe("FinanceBillingPlansService Unit Test", () => {
                     currencyId,
                     createdAt: new Date(),
                     updatedAt: new Date(),
+                    overdraftLimitCents: 0,
                     rates: [createMockRate({ participantCount: 1, rateCentsPerMinute: 100 })],
                 },
                 id: "assign_1",
@@ -201,6 +206,7 @@ describe("FinanceBillingPlansService Unit Test", () => {
                 isActive: true,
                 createdAt: new Date(),
                 updatedAt: new Date(),
+                overdraftLimitCents: 0,
                 rates: [],
             });
 
