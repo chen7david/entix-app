@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d1dd6585-c43b-4e3a-bf8b-019a4d2b5a27",
+  "id": "7259e5ee-1324-44a6-bebb-3c33017cc819",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_accounts": {
@@ -904,6 +904,10 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
+        "overdraft_limit_non_negative": {
+          "name": "overdraft_limit_non_negative",
+          "value": "\"financial_accounts\".\"overdraft_limit_cents\" >= 0"
+        },
         "owner_type_check": {
           "name": "owner_type_check",
           "value": "\"financial_accounts\".\"owner_type\" IN ('user', 'org')"
@@ -916,9 +920,9 @@
           "name": "org_scoped_user_accounts",
           "value": "\"financial_accounts\".\"organization_id\" IS NOT NULL"
         },
-        "overdraft_limit_non_negative": {
-          "name": "overdraft_limit_non_negative",
-          "value": "\"financial_accounts\".\"overdraft_limit_cents\" >= 0"
+        "balance_within_overdraft": {
+          "name": "balance_within_overdraft",
+          "value": "\"financial_accounts\".\"balance_cents\" >= -\"financial_accounts\".\"overdraft_limit_cents\""
         }
       }
     },
@@ -1070,72 +1074,6 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "financial_transaction_categories": {
-      "name": "financial_transaction_categories",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_expense": {
-          "name": "is_expense",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_revenue": {
-          "name": "is_revenue",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "archived_at": {
-          "name": "archived_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
-        }
-      },
-      "indexes": {
-        "financial_transaction_categories_name_unique": {
-          "name": "financial_transaction_categories_name_unique",
-          "columns": [
-            "name"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "expense_revenue_exclusive": {
-          "name": "expense_revenue_exclusive",
-          "value": "NOT (\"financial_transaction_categories\".\"is_expense\" = 1 AND \"financial_transaction_categories\".\"is_revenue\" = 1)"
-        }
-      }
-    },
     "financial_session_payment_events": {
       "name": "financial_session_payment_events",
       "columns": {
@@ -1220,7 +1158,7 @@
             "transaction_id"
           ],
           "isUnique": true,
-          "where": "\"transaction_id\" IS NOT NULL"
+          "where": "\"financial_session_payment_events\".\"transaction_id\" IS NOT NULL"
         },
         "uq_spe_session_user_manual": {
           "name": "uq_spe_session_user_manual",
@@ -1230,7 +1168,7 @@
             "event_type"
           ],
           "isUnique": true,
-          "where": "\"transaction_id\" IS NULL"
+          "where": "\"financial_session_payment_events\".\"transaction_id\" IS NULL"
         },
         "idx_spe_session_id": {
           "name": "idx_spe_session_id",
@@ -1331,14 +1269,18 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
+        "event_type_check": {
+          "name": "event_type_check",
+          "value": "\"financial_session_payment_events\".\"event_type\" IN ('paid', 'refunded', 'manual_paid', 'manual_reset')"
+        },
         "manual_override_note_required": {
           "name": "manual_override_note_required",
-          "value": "\"event_type\" NOT IN ('manual_paid', 'manual_reset') OR \"note\" IS NOT NULL"
+          "value": "\"financial_session_payment_events\".\"event_type\" NOT IN ('manual_paid', 'manual_reset') OR \"financial_session_payment_events\".\"note\" IS NOT NULL"
         }
       }
     },
-    "system_audit_events": {
-      "name": "system_audit_events",
+    "financial_transaction_categories": {
+      "name": "financial_transaction_categories",
       "columns": {
         "id": {
           "name": "id",
@@ -1347,81 +1289,30 @@
           "notNull": true,
           "autoincrement": false
         },
-        "organization_id": {
-          "name": "organization_id",
+        "name": {
+          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "severity": {
-          "name": "severity",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'info'"
-        },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "actor_type": {
-          "name": "actor_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'system'"
-        },
-        "subject_type": {
-          "name": "subject_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "subject_id": {
-          "name": "subject_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "message": {
-          "name": "message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "acknowledged_at": {
-          "name": "acknowledged_at",
+        "is_expense": {
+          "name": "is_expense",
           "type": "integer",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
-        "acknowledged_by": {
-          "name": "acknowledged_by",
-          "type": "text",
+        "is_revenue": {
+          "name": "is_revenue",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
@@ -1436,80 +1327,21 @@
         }
       },
       "indexes": {
-        "idx_audit_org_id": {
-          "name": "idx_audit_org_id",
+        "financial_transaction_categories_name_unique": {
+          "name": "financial_transaction_categories_name_unique",
           "columns": [
-            "organization_id"
+            "name"
           ],
-          "isUnique": false
-        },
-        "idx_audit_severity": {
-          "name": "idx_audit_severity",
-          "columns": [
-            "severity"
-          ],
-          "isUnique": false
-        },
-        "idx_audit_event_type": {
-          "name": "idx_audit_event_type",
-          "columns": [
-            "event_type"
-          ],
-          "isUnique": false
-        },
-        "idx_audit_acknowledged": {
-          "name": "idx_audit_acknowledged",
-          "columns": [
-            "acknowledged_at"
-          ],
-          "isUnique": false
-        },
-        "idx_audit_created_at": {
-          "name": "idx_audit_created_at",
-          "columns": [
-            "created_at"
-          ],
-          "isUnique": false
+          "isUnique": true
         }
       },
-      "foreignKeys": {
-        "system_audit_events_organization_id_auth_organizations_id_fk": {
-          "name": "system_audit_events_organization_id_auth_organizations_id_fk",
-          "tableFrom": "system_audit_events",
-          "tableTo": "auth_organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "system_audit_events_acknowledged_by_auth_users_id_fk": {
-          "name": "system_audit_events_acknowledged_by_auth_users_id_fk",
-          "tableFrom": "system_audit_events",
-          "tableTo": "auth_users",
-          "columnsFrom": [
-            "acknowledged_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
-        "severity_check": {
-          "name": "severity_check",
-          "value": "\"severity\" IN ('info', 'warning', 'error', 'critical')"
-        },
-        "actor_type_check": {
-          "name": "actor_type_check",
-          "value": "\"actor_type\" IN ('system', 'user', 'admin')"
+        "expense_revenue_exclusive": {
+          "name": "expense_revenue_exclusive",
+          "value": "NOT (\"financial_transaction_categories\".\"is_expense\" = 1 AND \"financial_transaction_categories\".\"is_revenue\" = 1)"
         }
       }
     },
@@ -2888,7 +2720,12 @@
         }
       },
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "payment_status_check": {
+          "name": "payment_status_check",
+          "value": "\"session_attendances\".\"payment_status\" IN ('unpaid', 'paid')"
+        }
+      }
     },
     "social_media_types": {
       "name": "social_media_types",
@@ -3024,6 +2861,182 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
+    },
+    "system_audit_events": {
+      "name": "system_audit_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "severity": {
+          "name": "severity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'info'"
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "actor_type": {
+          "name": "actor_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'system'"
+        },
+        "subject_type": {
+          "name": "subject_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "subject_id": {
+          "name": "subject_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "acknowledged_at": {
+          "name": "acknowledged_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "acknowledged_by": {
+          "name": "acknowledged_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "idx_audit_org_id": {
+          "name": "idx_audit_org_id",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_severity": {
+          "name": "idx_audit_severity",
+          "columns": [
+            "severity"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_event_type": {
+          "name": "idx_audit_event_type",
+          "columns": [
+            "event_type"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_acknowledged": {
+          "name": "idx_audit_acknowledged",
+          "columns": [
+            "acknowledged_at"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_created_at": {
+          "name": "idx_audit_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "system_audit_events_organization_id_auth_organizations_id_fk": {
+          "name": "system_audit_events_organization_id_auth_organizations_id_fk",
+          "tableFrom": "system_audit_events",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "system_audit_events_acknowledged_by_auth_users_id_fk": {
+          "name": "system_audit_events_acknowledged_by_auth_users_id_fk",
+          "tableFrom": "system_audit_events",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "acknowledged_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "severity_check": {
+          "name": "severity_check",
+          "value": "\"system_audit_events\".\"severity\" IN ('info', 'warning', 'error', 'critical')"
+        },
+        "actor_type_check": {
+          "name": "actor_type_check",
+          "value": "\"system_audit_events\".\"actor_type\" IN ('system', 'user', 'admin')"
+        }
+      }
     },
     "user_addresses": {
       "name": "user_addresses",

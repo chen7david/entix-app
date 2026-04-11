@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
 
@@ -59,11 +59,12 @@ export const sessionAttendances = sqliteTable(
             .notNull()
             .default("unpaid"),
     },
-    (table) => [
-        primaryKey({ columns: [table.sessionId, table.userId] }),
-        index("session_attendance_sessionId_idx").on(table.sessionId),
-        index("session_attendance_userId_idx").on(table.userId),
-        index("session_attendance_orgId_idx").on(table.organizationId),
+    (t) => [
+        check("payment_status_check", sql`${t.paymentStatus} IN ('unpaid', 'paid')`),
+        primaryKey({ columns: [t.sessionId, t.userId] }),
+        index("session_attendance_sessionId_idx").on(t.sessionId),
+        index("session_attendance_userId_idx").on(t.userId),
+        index("session_attendance_orgId_idx").on(t.organizationId),
     ]
 );
 

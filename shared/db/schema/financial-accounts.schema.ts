@@ -40,6 +40,7 @@ export const financialAccounts = sqliteTable(
             sql`${t.accountType} IN ('savings', 'funding', 'treasury', 'system')`
         ),
         check("org_scoped_user_accounts", sql`${t.organizationId} IS NOT NULL`),
+        check("balance_within_overdraft", sql`${t.balanceCents} >= -${t.overdraftLimitCents}`),
         uniqueIndex("owner_org_name_currency_idx").on(
             t.ownerId,
             t.organizationId,

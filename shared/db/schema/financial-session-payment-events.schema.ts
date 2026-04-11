@@ -63,6 +63,11 @@ export const financialSessionPaymentEvents = sqliteTable(
             .where(sql`${t.transactionId} IS NULL`),
 
         check(
+            "event_type_check",
+            sql`${t.eventType} IN ('paid', 'refunded', 'manual_paid', 'manual_reset')`
+        ),
+
+        check(
             "manual_override_note_required",
             sql`${t.eventType} NOT IN ('manual_paid', 'manual_reset') OR ${t.note} IS NOT NULL`
         ),
