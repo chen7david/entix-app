@@ -157,7 +157,7 @@ export const FinanceAccountsPage: React.FC = () => {
                 defaultActiveKey="overview"
                 items={items}
                 destroyInactiveTabPane={false}
-                className="flex-1 min-h-0 custom-finance-tabs"
+                className="flex-1 overflow-y-auto custom-finance-tabs"
             />
 
             <ManageAccountDrawer
