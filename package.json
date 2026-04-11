@@ -35,7 +35,9 @@
         "format:check": "biome format .",
         "check": "biome check .",
         "check:fix": "biome check --write .",
-        "diff": "git diff --staged > changes.diff"
+        "diff": "git diff --staged > changes.diff",
+        "diff:staging": "git diff staging > changes.diff",
+        "diff:main": "git diff main > changes.diff"
     },
     "dependencies": {
         "@hono/zod-openapi": "^1.1.5",
