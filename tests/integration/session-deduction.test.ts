@@ -123,7 +123,7 @@ describe("Session Billing Integration", () => {
                 currencyId: FINANCIAL_CURRENCIES.CNY,
                 ownerType: "org",
                 ownerId: orgId,
-                accountType: "treasury",
+                accountType: "funding",
                 balanceCents: 0,
                 isActive: true,
             },
@@ -227,7 +227,7 @@ describe("Session Billing Integration", () => {
             currencyId: FINANCIAL_CURRENCIES.CNY,
             ownerType: "org",
             ownerId: orgId,
-            accountType: "treasury",
+            accountType: "funding",
             balanceCents: 0,
             isActive: true,
         });

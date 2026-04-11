@@ -18,7 +18,7 @@ export class FinanceWalletService extends FinancialBaseService {
     }
 
     /**
-     * Deducts funds from a student's wallet and credits it to the organization's treasury.
+     * Deducts funds from a student's wallet and credits it to the organization's funding account.
      */
     async executeSessionDeduction(input: {
         userId: string;
@@ -47,19 +47,19 @@ export class FinanceWalletService extends FinancialBaseService {
             throw new NotFoundError(`No active ${input.currencyId} wallet found for student`);
         }
 
-        // 2. Find the organization's treasury account for this currency
+        // 2. Find the organization's funding account for this currency
         const orgAccounts = await this.accountsRepo.findActiveByOwner(
             input.orgId,
             "org",
             input.orgId
         );
-        const orgTreasury = orgAccounts.find(
-            (a) => a.currencyId === input.currencyId && a.accountType === ACCOUNT_TYPES.TREASURY
+        const orgFundingAccount = orgAccounts.find(
+            (a) => a.currencyId === input.currencyId && a.accountType === ACCOUNT_TYPES.FUNDING
         );
 
-        if (!orgTreasury) {
+        if (!orgFundingAccount) {
             throw new NotFoundError(
-                `No active ${input.currencyId} treasury account found for organization`
+                `No active ${input.currencyId} funding account found for organization`
             );
         }
 
@@ -71,7 +71,7 @@ export class FinanceWalletService extends FinancialBaseService {
             organizationId: input.orgId,
             categoryId,
             sourceAccountId: userWallet.id,
-            destinationAccountId: orgTreasury.id,
+            destinationAccountId: orgFundingAccount.id,
             currencyId: input.currencyId,
             amountCents: input.amountCents,
             description: input.description,
