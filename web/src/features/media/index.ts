@@ -1,4 +1,4 @@
-export * from "./components/AvatarDropzone";
+export * from "./components/AvatarUpload";
 export * from "./components/AvatarUploader";
 export * from "./components/CoverArtUploader";
 export * from "./components/GlobalUploadManager";

@@ -273,4 +273,10 @@ export class SessionScheduleRepository {
             .returning();
         return updated ?? null;
     }
+
+    async findAttendancesBySessionId(sessionId: string) {
+        return this.db.query.sessionAttendances.findMany({
+            where: eq(schema.sessionAttendances.sessionId, sessionId),
+        });
+    }
 }

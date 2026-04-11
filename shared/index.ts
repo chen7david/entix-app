@@ -7,6 +7,7 @@ export * from "./db/schema/index";
 export * from "./lib/id";
 export * from "./schemas/dto/auth.dto";
 export * from "./schemas/dto/base.dto";
+export * from "./schemas/dto/billing-plan.dto";
 export * from "./schemas/dto/bulk-member.dto";
 export * from "./schemas/dto/email-insights.dto";
 export * from "./schemas/dto/financial.dto";
