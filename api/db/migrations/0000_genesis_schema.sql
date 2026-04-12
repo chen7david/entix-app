@@ -315,7 +315,7 @@ CREATE TABLE `auth_members` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
 	`user_id` text NOT NULL,
-	`role` text DEFAULT 'member' NOT NULL,
+	`role` text DEFAULT 'student' NOT NULL,
 	`created_at` integer NOT NULL,
 	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`user_id`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade

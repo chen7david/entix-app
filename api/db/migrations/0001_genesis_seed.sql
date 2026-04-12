@@ -1,11 +1,13 @@
 -- 0001_baseline_seed.sql
--- Baseline seed data required for the app to function in all environments.
+-- Consolidated baseline seed data required for the app to function in all environments.
 -- All inserts use INSERT OR IGNORE for idempotency.
--- DO NOT add environment-specific data here (no root admin, no test org).
+-- Includes platform entities and the root platform administrator.
 
--- 1. Platform Organization
+-- 1. Organizations (Platform & Test Org)
 INSERT OR IGNORE INTO `auth_organizations` (`id`, `name`, `slug`, `created_at`)
-VALUES ('platform', 'Platform', 'platform', (cast(unixepoch() * 1000 as integer)));
+VALUES 
+  ('platform', 'Platform', 'platform', (cast(unixepoch() * 1000 as integer))),
+  ('A6xj7krOIJ3n9uHiipspC', 'Test Org', 'testorg', (cast(unixepoch() * 1000 as integer)));
 
 -- 2. Financial Currencies
 INSERT OR IGNORE INTO `financial_currencies` (`id`, `code`, `name`, `symbol`, `default_account_name`, `created_at`)
@@ -51,9 +53,9 @@ VALUES
 INSERT OR IGNORE INTO `financial_accounts` (`id`, `owner_id`, `owner_type`, `currency_id`, `organization_id`, `name`, `balance_cents`, `overdraft_limit_cents`, `is_active`, `account_type`, `created_at`, `updated_at`)
 VALUES 
   ('facc_treasury_fcur_usd', 'platform', 'org', 'fcur_usd', 'platform', 'Platform Treasury — USD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
+  ('facc_treasury_fcur_cny', 'platform', 'org', 'fcur_cny', 'platform', 'Platform Treasury — CNY', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_etd', 'platform', 'org', 'fcur_etd', 'platform', 'Platform Treasury — ETD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_cad', 'platform', 'org', 'fcur_cad', 'platform', 'Platform Treasury — CAD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
-  ('facc_treasury_fcur_cny', 'platform', 'org', 'fcur_cny', 'platform', 'Platform Treasury — CNY', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_eur', 'platform', 'org', 'fcur_eur', 'platform', 'Platform Treasury — EUR', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_srd', 'platform', 'org', 'fcur_srd', 'platform', 'Platform Treasury — SRD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_aud', 'platform', 'org', 'fcur_aud', 'platform', 'Platform Treasury — AUD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer)));
@@ -62,9 +64,46 @@ VALUES
 INSERT OR IGNORE INTO `financial_accounts` (`id`, `owner_id`, `owner_type`, `currency_id`, `organization_id`, `name`, `balance_cents`, `overdraft_limit_cents`, `is_active`, `account_type`, `created_at`, `updated_at`)
 VALUES 
   ('facc_system_adjustment_fcur_usd', 'platform', 'org', 'fcur_usd', 'platform', 'System Adjustment — USD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
+  ('facc_system_adjustment_fcur_cny', 'platform', 'org', 'fcur_cny', 'platform', 'System Adjustment — CNY', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_etd', 'platform', 'org', 'fcur_etd', 'platform', 'System Adjustment — ETD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_cad', 'platform', 'org', 'fcur_cad', 'platform', 'System Adjustment — CAD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
-  ('facc_system_adjustment_fcur_cny', 'platform', 'org', 'fcur_cny', 'platform', 'System Adjustment — CNY', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_eur', 'platform', 'org', 'fcur_eur', 'platform', 'System Adjustment — EUR', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_srd', 'platform', 'org', 'fcur_srd', 'platform', 'System Adjustment — SRD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_aud', 'platform', 'org', 'fcur_aud', 'platform', 'System Adjustment — AUD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer)));
+
+-- 7. Root Admin User
+-- ⚠️ email_verified = 1, do not send email to this address
+INSERT OR IGNORE INTO `auth_users` (`id`, `xid`, `name`, `email`, `email_verified`, `role`, `created_at`, `updated_at`)
+VALUES (
+  'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
+  'ROOTADMIN',
+  'Root Admin',
+  'root@admin.com',
+  1,
+  'admin',
+  (cast(unixepoch() * 1000 as integer)),
+  (cast(unixepoch() * 1000 as integer))
+);
+
+-- 8. Root Admin Credential (r00tme)
+-- ⚠️ Password hash for 'r00tme'. Safe across BETTER_AUTH_SECRET rotations.
+INSERT OR IGNORE INTO `auth_accounts` (`id`, `account_id`, `provider_id`, `user_id`, `password`, `created_at`, `updated_at`)
+VALUES (
+  'AgQUkeQr8EQVxrJy02ypz7qCMpBWhslp',
+  'root@admin.com',
+  'credential',
+  'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
+  'cc2d5071f13d1f9e88de1fbc0af47530:d88750de3b087b92430198e8dea1e746d406da96c6a429c22c82edcdfeaad3ce06b82beda503d97e3fd0bff2e618be14f743b2d9fdd68cb5b52c2b9a686d858a',
+  (cast(unixepoch() * 1000 as integer)),
+  (cast(unixepoch() * 1000 as integer))
+);
+
+-- 9. Root Admin Organization Membership (Test Org)
+INSERT OR IGNORE INTO `auth_members` (`id`, `organization_id`, `user_id`, `role`, `created_at`)
+VALUES (
+  'E2QTyceWPwpj-n_1I5lyR',
+  'A6xj7krOIJ3n9uHiipspC',
+  'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
+  'owner',
+  (cast(unixepoch() * 1000 as integer))
+);

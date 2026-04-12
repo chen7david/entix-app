@@ -13,15 +13,9 @@ export const systemAuditEvents = sqliteTable(
     {
         id: text("id").primaryKey(),
         eventType: text("event_type").notNull(),
-        severity: text("severity")
-            .$type<"info" | "warning" | "error">()
-            .notNull()
-            .default("info"),
+        severity: text("severity").$type<"info" | "warning" | "error">().notNull().default("info"),
         message: text("message").notNull(),
-        actorType: text("actor_type")
-            .$type<"user" | "system">()
-            .notNull()
-            .default("system"),
+        actorType: text("actor_type").$type<"user" | "system">().notNull().default("system"),
         actorId: text("actor_id"),
         subjectType: text("subject_type"),
         subjectId: text("subject_id"),

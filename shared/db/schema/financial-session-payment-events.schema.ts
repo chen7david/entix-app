@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { authOrganizations } from "./organization.schema";
 import { authUsers } from "./auth.schema";
+import { authOrganizations } from "./organization.schema";
 
 /**
  * Append-only log of all session payment events.

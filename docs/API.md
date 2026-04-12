@@ -357,7 +357,7 @@ export const makeMember = (overrides: Partial<Member> = {}): Member => ({
     id: 'member-test-id',
     userId: 'user-test-id',
     organizationId: 'org-test-id',
-    role: 'member',
+    role: 'student',
     createdAt: new Date('2026-01-01'),
     ...overrides,
 });

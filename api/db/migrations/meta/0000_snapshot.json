@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "8fc29645-7bdc-4391-ae5b-6ad8f1aca88f",
+  "id": "ae4c2042-99f7-412e-a462-56420f06c921",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_accounts": {
@@ -2265,7 +2265,7 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'member'"
+          "default": "'student'"
         },
         "created_at": {
           "name": "created_at",
