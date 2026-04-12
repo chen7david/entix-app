@@ -15,6 +15,20 @@
       "when": 1776000446338,
       "tag": "0001_genesis_seed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1776022407887,
+      "tag": "0002_long_dagger",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1776029064786,
+      "tag": "0003_swift_eddie_brock",
+      "breakpoints": true
     }
   ]
 }

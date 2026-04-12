@@ -33,14 +33,14 @@ export const financialAccounts = sqliteTable(
         overdraftLimitCents: integer("overdraft_limit_cents").notNull().default(0),
     },
     (t) => [
+        check("overdraft_limit_non_negative", sql`${t.overdraftLimitCents} >= 0`),
         check("owner_type_check", sql`${t.ownerType} IN ('user', 'org')`),
         check(
             "account_type_check",
             sql`${t.accountType} IN ('savings', 'funding', 'treasury', 'system')`
         ),
-        check("balance_non_negative", sql`${t.balanceCents} >= 0`),
-        check("overdraft_limit_non_negative", sql`${t.overdraftLimitCents} >= 0`),
         check("org_scoped_user_accounts", sql`${t.organizationId} IS NOT NULL`),
+        check("balance_within_overdraft", sql`${t.balanceCents} >= -${t.overdraftLimitCents}`),
         uniqueIndex("owner_org_name_currency_idx").on(
             t.ownerId,
             t.organizationId,

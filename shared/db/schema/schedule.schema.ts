@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
 
@@ -35,6 +35,10 @@ export const scheduledSessions = sqliteTable(
 export type ScheduledSession = typeof scheduledSessions.$inferSelect;
 export type NewScheduledSession = typeof scheduledSessions.$inferInsert;
 
+export const SESSION_PAYMENT_STATUSES = ["unpaid", "paid", "refunded"] as const;
+
+export type SessionPaymentStatus = (typeof SESSION_PAYMENT_STATUSES)[number];
+
 export const sessionAttendances = sqliteTable(
     "session_attendances",
     {
@@ -53,10 +57,16 @@ export const sessionAttendances = sqliteTable(
         absent: integer("absent", { mode: "boolean" }).default(false).notNull(),
         absenceReason: text("absence_reason"),
         notes: text("notes"),
-        paidAt: integer("paid_at", { mode: "timestamp_ms" }),
+        paymentStatus: text("payment_status", { enum: SESSION_PAYMENT_STATUSES })
+            .notNull()
+            .default("unpaid"),
     },
     (table) => [
         primaryKey({ columns: [table.sessionId, table.userId] }),
+        check(
+            "payment_status_check",
+            sql`${table.paymentStatus} IN ('unpaid', 'paid', 'refunded')`
+        ),
         index("session_attendance_sessionId_idx").on(table.sessionId),
         index("session_attendance_userId_idx").on(table.userId),
         index("session_attendance_orgId_idx").on(table.organizationId),

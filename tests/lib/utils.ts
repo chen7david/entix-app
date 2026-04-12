@@ -12,7 +12,11 @@ import {
     financialCurrencies as currencyTable,
     socialMediaTypes as socialMediaTypesTable,
 } from "@shared/db/schema";
+import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { drizzle } from "drizzle-orm/d1";
+
+/** Convenience alias matching what AppDb is in the api package. */
+export type TestDb = DrizzleD1Database<typeof schema>;
 
 const migrationFiles = import.meta.glob("/api/db/migrations/*.sql", {
     eager: true,
@@ -121,5 +125,3 @@ export async function createTestDb() {
 
     return db;
 }
-
-export type TestDb = Awaited<ReturnType<typeof createTestDb>>;
