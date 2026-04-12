@@ -53,27 +53,22 @@ export const AdminCreditDrawer: React.FC<Props> = ({
 }) => {
     const { token } = theme.useToken();
     const [form] = Form.useForm();
-    const [activeTab, setActiveTab] = useState<"treasury" | "funding">("treasury");
+    const [activeTab, setActiveTab] = useState<"treasury" | "funding">("funding");
     const [direction, setDirection] = useState<"credit" | "debit">("credit");
     const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("fcur_usd");
 
-    // Mutations
     const { credit, debit, ensureFunding } = useAdminTransfer();
-
-    // Data Queries
     const { data: orgs, isLoading: isLoadingOrgs } = useAdminOrganizations();
     const { data: orgAccounts } = useAdminOrgAccounts(organizationId);
 
     const isPending = credit.isPending || debit.isPending || ensureFunding.isPending;
 
-    // Derived State
     const orgFundingAccount = orgAccounts?.find(
         (a) => a.currencyId === selectedCurrencyId && a.accountType === "funding"
     );
     const selectedCurrencyConfig =
         FINANCIAL_CURRENCY_CONFIG[selectedCurrencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
 
-    // Initialize/Sync Form
     useEffect(() => {
         if (open) {
             if (preSelectedAccount) {
@@ -89,7 +84,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     currencyId: "fcur_usd",
                     reasonSelect: COMMON_REASONS[0],
                 });
-                setActiveTab("funding"); // Default to funding if no account is clicked
+                setActiveTab("funding");
             }
         }
     }, [open, preSelectedAccount, form]);
@@ -115,13 +110,18 @@ export const AdminCreditDrawer: React.FC<Props> = ({
         const description =
             values.reasonSelect === "Other" ? values.description : values.reasonSelect;
         const platformTreasuryAccountId = getTreasuryAccountId(selectedCurrencyId);
-        const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT; // Default for admin adjustments
+        const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT;
 
         try {
             if (activeTab === "treasury") {
                 if (!preSelectedAccount) return;
 
-                // For treasury cards, the target ID is the ownerId (e.g. 'platform')
+                // Guard: prevent self-transfer when the selected account IS the treasury account
+                if (preSelectedAccount.id === platformTreasuryAccountId) {
+                    console.error("Cannot transfer to/from the same treasury account.");
+                    return;
+                }
+
                 const targetOrgId = preSelectedAccount.ownerId || "platform";
 
                 if (direction === "credit") {
@@ -146,7 +146,6 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     });
                 }
             } else {
-                // Tab 2: Org Funding (Treasury <-> Org General Fund)
                 if (!organizationId || !orgFundingAccount) return;
 
                 if (direction === "credit") {
@@ -195,7 +194,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
             onClose={onClose}
             extra={
                 <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    {activeTab === "treasury" ? "Transfer Funds" : "Transfer Funds"}
+                    {activeTab === "treasury" ? "Adjust Treasury" : "Fund Organization"}
                 </Button>
             }
         >
@@ -204,65 +203,6 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     activeKey={activeTab}
                     onChange={(key) => setActiveTab(key as any)}
                     items={[
-                        {
-                            key: "treasury",
-                            label: "Treasury Funding",
-                            children: (
-                                <div style={{ marginTop: 24 }}>
-                                    <div
-                                        style={{
-                                            display: "flex",
-                                            alignItems: "center",
-                                            gap: 12,
-                                            marginBottom: 24,
-                                        }}
-                                    >
-                                        <InfoCircleOutlined
-                                            style={{ color: token.colorPrimary, fontSize: 18 }}
-                                        />
-                                        <div>
-                                            <Title level={5} style={{ margin: 0 }}>
-                                                Adjust {selectedCurrencyConfig?.code} Wallet
-                                            </Title>
-                                            <Text type="secondary" style={{ fontSize: 12 }}>
-                                                Direct platform-to-account manual adjustment
-                                            </Text>
-                                        </div>
-                                    </div>
-                                    {preSelectedAccount ? (
-                                        <Alert
-                                            message={
-                                                <Space>
-                                                    <Text strong>Target:</Text>
-                                                    <Text>{preSelectedAccount.name}</Text>
-                                                </Space>
-                                            }
-                                            description={
-                                                <Text type="secondary">
-                                                    Current Balance:{" "}
-                                                    {selectedCurrencyConfig?.symbol}
-                                                    {(
-                                                        preSelectedAccount.balanceCents / 100
-                                                    ).toFixed(2)}{" "}
-                                                    {selectedCurrencyConfig?.code}
-                                                </Text>
-                                            }
-                                            type="info"
-                                            showIcon
-                                            style={{ marginBottom: 24 }}
-                                        />
-                                    ) : (
-                                        <Alert
-                                            message="No account selected"
-                                            description="Click a card on the main grid to pre-fill the adjustment target."
-                                            type="warning"
-                                            showIcon
-                                            style={{ marginBottom: 24 }}
-                                        />
-                                    )}
-                                </div>
-                            ),
-                        },
                         {
                             key: "funding",
                             label: "Organization Funding",
@@ -364,6 +304,77 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                                         <Alert
                                             message="Select an organization above"
                                             type="info"
+                                            showIcon
+                                            style={{ marginBottom: 24 }}
+                                        />
+                                    )}
+                                </div>
+                            ),
+                        },
+                        {
+                            key: "treasury",
+                            label: "Treasury Funding",
+                            children: (
+                                <div style={{ marginTop: 24 }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 12,
+                                            marginBottom: 24,
+                                        }}
+                                    >
+                                        <InfoCircleOutlined
+                                            style={{ color: token.colorPrimary, fontSize: 18 }}
+                                        />
+                                        <div>
+                                            <Title level={5} style={{ margin: 0 }}>
+                                                Adjust {selectedCurrencyConfig?.code} Wallet
+                                            </Title>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Direct platform-to-account manual adjustment
+                                            </Text>
+                                        </div>
+                                    </div>
+                                    {preSelectedAccount ? (
+                                        <>
+                                            <Alert
+                                                message={
+                                                    <Space>
+                                                        <Text strong>Target:</Text>
+                                                        <Text>{preSelectedAccount.name}</Text>
+                                                    </Space>
+                                                }
+                                                description={
+                                                    <Text type="secondary">
+                                                        Current Balance:{" "}
+                                                        {selectedCurrencyConfig?.symbol}
+                                                        {(
+                                                            preSelectedAccount.balanceCents / 100
+                                                        ).toFixed(2)}{" "}
+                                                        {selectedCurrencyConfig?.code}
+                                                    </Text>
+                                                }
+                                                type="info"
+                                                showIcon
+                                                style={{ marginBottom: 24 }}
+                                            />
+                                            {preSelectedAccount.id ===
+                                                getTreasuryAccountId(selectedCurrencyId) && (
+                                                <Alert
+                                                    type="error"
+                                                    showIcon
+                                                    style={{ marginBottom: 24 }}
+                                                    message="Self-transfer not allowed"
+                                                    description="This account is the platform treasury source. Select a different destination account."
+                                                />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Alert
+                                            message="No account selected"
+                                            description="Click a card on the main grid to pre-fill the adjustment target."
+                                            type="warning"
                                             showIcon
                                             style={{ marginBottom: 24 }}
                                         />
