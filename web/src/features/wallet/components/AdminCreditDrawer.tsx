@@ -71,9 +71,9 @@ export const AdminCreditDrawer: React.FC<Props> = ({
 
     useEffect(() => {
         if (open) {
+            setActiveTab("funding");
             if (preSelectedAccount) {
                 setSelectedCurrencyId(preSelectedAccount.currencyId);
-                setActiveTab("treasury");
                 form.setFieldsValue({
                     currencyId: preSelectedAccount.currencyId,
                     reasonSelect: COMMON_REASONS[0],
@@ -84,7 +84,6 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     currencyId: "fcur_usd",
                     reasonSelect: COMMON_REASONS[0],
                 });
-                setActiveTab("funding");
             }
         }
     }, [open, preSelectedAccount, form]);
