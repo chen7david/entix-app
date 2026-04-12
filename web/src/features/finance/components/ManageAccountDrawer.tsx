@@ -18,13 +18,15 @@ import {
     List,
     Popconfirm,
     Space,
+    Tabs,
     Tag,
     Typography,
     theme,
 } from "antd";
 import type React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useArchiveAccount, useUpdateAccount } from "../hooks/useAccountManagement";
+import { StudentFundingTab } from "./StudentFundingTab";
 
 const { Title, Text } = Typography;
 
@@ -46,23 +48,27 @@ export const ManageAccountDrawer: React.FC<Props> = ({
     const { notification } = App.useApp();
     const { token } = theme.useToken();
     const [form] = Form.useForm();
+    const [activeTab, setActiveTab] = useState<"student-funding" | "rename">("student-funding");
     const { mutate: update, isPending: isUpdating } = useUpdateAccount();
     const { mutate: archive, isPending: isArchiving } = useArchiveAccount();
 
     const { data: history, isLoading: isLoadingHistory } = useTransactionHistory(
-        orgId, // orgId is the primary ID for org-level history
+        orgId,
         "org",
-        undefined, // cursor (first page)
-        3, // limit
         undefined,
-        { accountId: account?.id } // Filter by this specific account
+        3,
+        undefined,
+        { accountId: account?.id }
     );
 
     useEffect(() => {
+        if (open) {
+            setActiveTab("student-funding");
+        }
         if (account) {
             form.setFieldsValue({ name: account.name });
         }
-    }, [account, form]);
+    }, [open, account, form]);
 
     const handleUpdate = async (values: { name: string }) => {
         if (!account) return;
@@ -117,18 +123,8 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                     width: size === "default" ? UI_CONSTANTS.RIGHT_DRAWER_WIDTH : undefined,
                 },
             }}
-            extra={
-                <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    loading={isUpdating}
-                    onClick={() => form.submit()}
-                >
-                    Save Changes
-                </Button>
-            }
         >
-            <div style={{ marginBottom: 24 }}>
+            <div style={{ marginBottom: 16 }}>
                 <Title level={4} style={{ margin: 0 }}>
                     {account.name}
                 </Title>
@@ -141,88 +137,157 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                 </Space>
             </div>
 
-            <Form form={form} layout="vertical" onFinish={handleUpdate}>
-                <Form.Item
-                    name="name"
-                    label="Account Label"
-                    rules={[{ required: true, message: "Please enter an account name" }]}
-                >
-                    <Input size="large" placeholder="Enter account display name" />
-                </Form.Item>
-            </Form>
+            <Tabs
+                activeKey={activeTab}
+                onChange={(key) => setActiveTab(key as "student-funding" | "rename")}
+                items={[
+                    {
+                        key: "student-funding",
+                        label: "Student Funding",
+                        children: orgId ? (
+                            <StudentFundingTab orgId={orgId} account={account} />
+                        ) : (
+                            <Text type="secondary">No organization context available.</Text>
+                        ),
+                    },
+                    {
+                        key: "rename",
+                        label: "Rename Account",
+                        children: (
+                            <div style={{ paddingTop: 8 }}>
+                                <Form form={form} layout="vertical" onFinish={handleUpdate}>
+                                    <Form.Item
+                                        name="name"
+                                        label="Account Label"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message: "Please enter an account name",
+                                            },
+                                        ]}
+                                    >
+                                        <Input
+                                            size="large"
+                                            placeholder="Enter account display name"
+                                        />
+                                    </Form.Item>
 
-            <Divider titlePlacement="left" style={{ margin: "32px 0 16px" }}>
-                Recent Activity
-            </Divider>
+                                    <Form.Item>
+                                        <Button
+                                            type="primary"
+                                            htmlType="submit"
+                                            icon={<SaveOutlined />}
+                                            loading={isUpdating}
+                                            size="large"
+                                            style={{ width: "100%" }}
+                                        >
+                                            Save Changes
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
 
-            <List
-                loading={isLoadingHistory}
-                dataSource={history?.data || []}
-                locale={{ emptyText: "No recent transactions" }}
-                renderItem={(tx) => (
-                    <List.Item style={{ padding: "12px 0" }}>
-                        <List.Item.Meta
-                            avatar={
-                                <ClockCircleOutlined style={{ color: token.colorTextTertiary }} />
-                            }
-                            title={
-                                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                                    <Text strong>{tx.category?.name || "Transfer"}</Text>
-                                    <Text strong>
-                                        {tx.currency?.symbol ?? "$"}
-                                        {(tx.amountCents / 100).toFixed(2)}
-                                    </Text>
-                                </div>
-                            }
-                            description={
-                                <Text type="secondary" style={{ fontSize: 11 }}>
-                                    {new Date(tx.transactionDate).toLocaleString()}
-                                </Text>
-                            }
-                        />
-                    </List.Item>
-                )}
+                                <Divider titlePlacement="left" style={{ margin: "32px 0 16px" }}>
+                                    Recent Activity
+                                </Divider>
+
+                                <List
+                                    loading={isLoadingHistory}
+                                    dataSource={history?.data || []}
+                                    locale={{ emptyText: "No recent transactions" }}
+                                    renderItem={(tx) => (
+                                        <List.Item style={{ padding: "12px 0" }}>
+                                            <List.Item.Meta
+                                                avatar={
+                                                    <ClockCircleOutlined
+                                                        style={{
+                                                            color: token.colorTextTertiary,
+                                                        }}
+                                                    />
+                                                }
+                                                title={
+                                                    <div
+                                                        style={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                        }}
+                                                    >
+                                                        <Text strong>
+                                                            {tx.category?.name || "Transfer"}
+                                                        </Text>
+                                                        <Text strong>
+                                                            {tx.currency?.symbol ?? "$"}
+                                                            {(tx.amountCents / 100).toFixed(2)}
+                                                        </Text>
+                                                    </div>
+                                                }
+                                                description={
+                                                    <Text type="secondary" style={{ fontSize: 11 }}>
+                                                        {new Date(
+                                                            tx.transactionDate
+                                                        ).toLocaleString()}
+                                                    </Text>
+                                                }
+                                            />
+                                        </List.Item>
+                                    )}
+                                />
+
+                                <Divider titlePlacement="left" style={{ margin: "32px 0 16px" }}>
+                                    Administrative Actions
+                                </Divider>
+
+                                <Card
+                                    size="small"
+                                    styles={{ body: { background: token.colorErrorBg } }}
+                                    style={{ borderColor: token.colorErrorBorder }}
+                                >
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "flex-start",
+                                            gap: 12,
+                                        }}
+                                    >
+                                        <InfoCircleOutlined
+                                            style={{ color: token.colorError, marginTop: 4 }}
+                                        />
+                                        <div style={{ flex: 1 }}>
+                                            <Text strong style={{ display: "block" }}>
+                                                Archive Account
+                                            </Text>
+                                            <Text
+                                                type="secondary"
+                                                style={{ fontSize: 12, display: "block" }}
+                                            >
+                                                This will hide the account from all dashboards. You
+                                                can only archive accounts with a zero balance.
+                                            </Text>
+                                            <Popconfirm
+                                                title="Archive this account?"
+                                                description="Are you sure you want to archive this treasury account?"
+                                                onConfirm={handleArchive}
+                                                okText="Yes, Archive"
+                                                cancelText="No"
+                                                okButtonProps={{ danger: true }}
+                                            >
+                                                <Button
+                                                    danger
+                                                    type="text"
+                                                    icon={<DeleteOutlined />}
+                                                    loading={isArchiving}
+                                                    style={{ marginTop: 8, padding: 0 }}
+                                                >
+                                                    Archive Account
+                                                </Button>
+                                            </Popconfirm>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
+                        ),
+                    },
+                ]}
             />
-
-            <Divider titlePlacement="left" style={{ margin: "32px 0 16px" }}>
-                Administrative Actions
-            </Divider>
-            <Card
-                size="small"
-                styles={{ body: { background: token.colorErrorBg } }}
-                style={{ borderColor: token.colorErrorBorder }}
-            >
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <InfoCircleOutlined style={{ color: token.colorError, marginTop: 4 }} />
-                    <div style={{ flex: 1 }}>
-                        <Text strong style={{ display: "block" }}>
-                            Archive Account
-                        </Text>
-                        <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
-                            This will hide the account from all dashboards. You can only archive
-                            accounts with a zero balance.
-                        </Text>
-                        <Popconfirm
-                            title="Archive this account?"
-                            description="Are you sure you want to archive this treasury account?"
-                            onConfirm={handleArchive}
-                            okText="Yes, Archive"
-                            cancelText="No"
-                            okButtonProps={{ danger: true }}
-                        >
-                            <Button
-                                danger
-                                type="text"
-                                icon={<DeleteOutlined />}
-                                loading={isArchiving}
-                                style={{ marginTop: 8, padding: 0 }}
-                            >
-                                Archive Account
-                            </Button>
-                        </Popconfirm>
-                    </div>
-                </div>
-            </Card>
         </Drawer>
     );
 };
