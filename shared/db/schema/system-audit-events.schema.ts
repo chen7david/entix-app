@@ -20,15 +20,11 @@ export const systemAuditEvents = sqliteTable(
 
         eventType: text("event_type").notNull(),
 
-        severity: text("severity", { enum: AUDIT_SEVERITIES })
-            .notNull()
-            .default("info"),
+        severity: text("severity", { enum: AUDIT_SEVERITIES }).notNull().default("info"),
 
         actorId: text("actor_id"),
 
-        actorType: text("actor_type", { enum: AUDIT_ACTOR_TYPES })
-            .notNull()
-            .default("system"),
+        actorType: text("actor_type", { enum: AUDIT_ACTOR_TYPES }).notNull().default("system"),
 
         subjectType: text("subject_type"),
 
@@ -47,14 +43,8 @@ export const systemAuditEvents = sqliteTable(
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
     },
     (t) => [
-        check(
-            "severity_check",
-            sql`${t.severity} IN ('info', 'warning', 'error', 'critical')`
-        ),
-        check(
-            "actor_type_check",
-            sql`${t.actorType} IN ('system', 'user', 'admin')`
-        ),
+        check("severity_check", sql`${t.severity} IN ('info', 'warning', 'error', 'critical')`),
+        check("actor_type_check", sql`${t.actorType} IN ('system', 'user', 'admin')`),
         index("idx_audit_org_id").on(t.organizationId),
         index("idx_audit_severity").on(t.severity),
         index("idx_audit_event_type").on(t.eventType),
