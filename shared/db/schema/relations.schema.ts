@@ -32,9 +32,11 @@ export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     phoneNumbers: many(userPhoneNumbers),
     addresses: many(userAddresses),
     socialMedias: many(userSocialMedias),
-    sessionPaymentEvents: many(financialSessionPaymentEvents),
+    sessionPaymentEvents: many(financialSessionPaymentEvents, {
+        relationName: "sessionPaymentEvent_user",
+    }),
     performedPaymentEvents: many(financialSessionPaymentEvents, {
-        relationName: "performedBy",
+        relationName: "sessionPaymentEvent_performedBy",
     }),
 }));
 
@@ -312,6 +314,7 @@ export const financialSessionPaymentEventsRelations = relations(
         user: one(authUsers, {
             fields: [financialSessionPaymentEvents.userId],
             references: [authUsers.id],
+            relationName: "sessionPaymentEvent_user",
         }),
         organization: one(authOrganizations, {
             fields: [financialSessionPaymentEvents.organizationId],
@@ -324,7 +327,7 @@ export const financialSessionPaymentEventsRelations = relations(
         performer: one(authUsers, {
             fields: [financialSessionPaymentEvents.performedBy],
             references: [authUsers.id],
-            relationName: "performedBy",
+            relationName: "sessionPaymentEvent_performedBy",
         }),
     })
 );
