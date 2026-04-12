@@ -28,7 +28,7 @@ export const authMembers = sqliteTable(
         userId: text("user_id")
             .notNull()
             .references(() => authUsers.id, { onDelete: "cascade" }),
-        role: text("role").default("student").notNull(),
+        role: text("role").default("member").notNull(),
         createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
     },
     (table) => [

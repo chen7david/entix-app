@@ -20,6 +20,7 @@ export const financeBillingPlans = sqliteTable(
             .notNull()
             .references(() => financialCurrencies.id),
         isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+        overdraftLimitCents: integer("overdraft_limit_cents").notNull().default(0),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),

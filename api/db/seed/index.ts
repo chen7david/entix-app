@@ -10,7 +10,7 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
  * Cloudflare Wrangler stores local D1 state in .wrangler/state/v3/d1/.../*.sqlite
  */
 function getLocalD1Path(): string {
-    const d1Base = path.resolve(".wrangler/state");
+    const d1Base = path.resolve(".wrangler/state/v3/d1");
 
     if (!existsSync(d1Base)) {
         throw new Error(
@@ -20,7 +20,7 @@ function getLocalD1Path(): string {
 
     // Find the first .sqlite file recursively
     try {
-        const findCmd = `find "${d1Base}" -name "*.sqlite" ! -name "*-shm" ! -name "*-wal" | head -n 1`;
+        const findCmd = `find "${d1Base}" -name "*.sqlite" ! -name "metadata.sqlite" ! -name "*-shm" ! -name "*-wal" | head -n 1`;
         const dbPath = execSync(findCmd, { encoding: "utf-8" }).trim();
 
         if (!dbPath) {
@@ -107,6 +107,18 @@ async function seedRootAdmin(db: any) {
 }
 
 async function main() {
+    const args = process.argv.slice(2);
+    const isRemote = args.includes("--remote");
+    const envArg = args.find((a) => a.startsWith("--env="))?.split("=")[1];
+
+    if (isRemote) {
+        console.log(`[SEED] Remote seeding requested for environment: ${envArg || "unknown"}`);
+        console.warn("⚠️ [SEED] Remote seeding via Drizzle + better-sqlite3 is not supported.");
+        console.warn("   To seed remote, please use 'wrangler d1 execute <DB> --remote --file=<SQL>'.");
+        console.warn("   This script only supports local D1 seeding for now.");
+        process.exit(0);
+    }
+
     const dbPath = getLocalD1Path();
     console.log(`[SEED] Connecting to local D1: ${dbPath}`);
 
