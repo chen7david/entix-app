@@ -76,7 +76,7 @@
                     {
                         "binding": "BILLING_RECONCILIATION_QUEUE",
                         "queue": "billing-reconciliation-queue-staging"
-                    },
+                    }
                 ],
                 "consumers": [
                     {
