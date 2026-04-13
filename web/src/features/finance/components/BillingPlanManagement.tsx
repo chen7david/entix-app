@@ -28,9 +28,13 @@ import { useState } from "react";
 
 const { Title, Text } = Typography;
 
+type BillingPlanFormValues = Partial<Omit<BillingPlanDTO, "overdraftLimitCents">> & {
+    overdraftLimitDollars?: number;
+};
+
 interface BillingPlanFormProps {
     orgId: string;
-    initialValues?: Partial<BillingPlanDTO>;
+    initialValues?: BillingPlanFormValues;
     onFinish: (values: any) => void;
     isLoading: boolean;
 }
@@ -59,7 +63,10 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                 // Map rates back to cents
                 const submission = {
                     ...values,
-                    overdraftLimitCents: Math.round((values.overdraftLimitDollars || 0) * 100),
+                    overdraftLimitCents:
+                        values.overdraftLimitDollars != null
+                            ? Math.round(values.overdraftLimitDollars * 100)
+                            : null,
                     rates:
                         values.rates?.map((r: any) => ({
                             ...r,
@@ -378,7 +385,9 @@ export const BillingPlanManagement: React.FC<{ orgId: string }> = ({ orgId }) =>
                             ? {
                                   ...editingPlan,
                                   overdraftLimitDollars:
-                                      (editingPlan.overdraftLimitCents || 0) / 100,
+                                      editingPlan.overdraftLimitCents != null
+                                          ? editingPlan.overdraftLimitCents / 100
+                                          : undefined,
                                   rates: editingPlan.rates?.map((r) => ({
                                       ...r,
                                       rateCentsPerMinute: r.rateCentsPerMinute / 100,

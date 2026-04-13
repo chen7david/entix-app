@@ -14,11 +14,18 @@ import { useAcknowledgeAuditLog, useAdminAuditLogs } from "../../features/admin/
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+interface AuditLogFilters {
+    search?: string;
+    severity?: "info" | "warning" | "error" | "critical";
+    unresolvedOnly?: boolean;
+}
+
 export const AuditLogPage: React.FC = () => {
-    const tableState = useCursorTableState({
+    const tableState = useCursorTableState<AuditLogFilters>({
         initialFilters: {
+            search: undefined,
             severity: undefined,
-            unresolvedOnly: true,
+            unresolvedOnly: false,
         },
     });
 
