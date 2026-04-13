@@ -35,7 +35,7 @@
                 "producers": [
                     {
                         "binding": "BILLING_RECONCILIATION_QUEUE",
-                        "queue_name": "billing-reconciliation-queue-dev"
+                        "queue": "billing-reconciliation-queue-dev"
                     }
                 ],
                 "consumers": [
@@ -67,7 +67,7 @@
                 {
                     "binding": "DB",
                     "database_name": "entix-app-staging",
-                    "database_id": "67022c1e-a5e9-44c1-835b-f50fea92d236",
+                    "database_id": "630037ef-d46e-4cad-bf7c-bb461200e170",
                     "migrations_dir": "api/db/migrations"
                 }
             ],
@@ -75,8 +75,8 @@
                 "producers": [
                     {
                         "binding": "BILLING_RECONCILIATION_QUEUE",
-                        "queue_name": "billing-reconciliation-queue-staging"
-                    }
+                        "queue": "billing-reconciliation-queue-staging"
+                    },
                 ],
                 "consumers": [
                     {
@@ -114,12 +114,12 @@
                 "producers": [
                     {
                         "binding": "BILLING_RECONCILIATION_QUEUE",
-                        "queue_name": "billing-reconciliation-queue"
+                        "queue": "billing-reconciliation-queue-production"
                     }
                 ],
                 "consumers": [
                     {
-                        "queue": "billing-reconciliation-queue"
+                        "queue": "billing-reconciliation-queue-production"
                     }
                 ]
             }

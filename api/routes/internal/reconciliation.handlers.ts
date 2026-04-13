@@ -123,7 +123,7 @@ export const ReconciliationHandler = {
                 sourceAccountId: sourceAccount.id,
                 destinationAccountId: destAccount.id,
                 categoryId: classFeeCategory.id,
-                performedBy: "system-reconciler",
+                performedBy: null,
                 note: `Automated retry for event ${eventId}`,
             });
 
@@ -131,7 +131,7 @@ export const ReconciliationHandler = {
                 .update(systemAuditEvents)
                 .set({
                     acknowledgedAt: new Date(),
-                    acknowledgedBy: "system-reconciler",
+                    acknowledgedBy: null,
                 })
                 .where(eq(systemAuditEvents.id, eventId));
 

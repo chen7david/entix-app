@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "07e7108e-9331-4d57-8fed-22e8e113f298",
+  "id": "d30aaa41-82de-4ccc-82d1-33237c814193",
   "prevId": "3da9ed1b-98f1-4661-9d65-79a8087a6926",
   "tables": {
     "auth_accounts": {
@@ -917,7 +917,7 @@
         },
         "org_scoped_user_accounts": {
           "name": "org_scoped_user_accounts",
-          "value": "\"financial_accounts\".\"organization_id\" IS NOT NULL"
+          "value": "\"financial_accounts\".\"account_type\" = 'system' OR \"financial_accounts\".\"organization_id\" IS NOT NULL"
         },
         "balance_within_overdraft": {
           "name": "balance_within_overdraft",
@@ -1261,7 +1261,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "restrict",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

@@ -282,6 +282,7 @@ export class SessionScheduleService extends BaseService {
                     metadata: JSON.stringify({
                         error: error.message,
                         amountCents,
+                        currencyId,
                         sessionId: session.id,
                         userId,
                     }),

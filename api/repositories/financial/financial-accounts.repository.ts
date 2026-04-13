@@ -26,6 +26,7 @@ export class FinancialAccountsRepository {
                     balanceCents: input.balanceCents ?? 0,
                     isActive: input.isActive ?? true,
                     accountType: input.accountType ?? "savings",
+                    overdraftLimitCents: input.overdraftLimitCents ?? null,
                 })
                 .returning();
 

@@ -48,7 +48,7 @@ export class SystemAuditRepository {
      * Default sort: createdAt DESC, id DESC.
      */
     async list(filters: {
-        organizationId: string;
+        organizationId?: string;
         severity?: AuditSeverity;
         eventType?: string;
         actorId?: string;
@@ -75,7 +75,10 @@ export class SystemAuditRepository {
             direction
         );
 
-        const conditions = [eq(systemAuditEvents.organizationId, organizationId)];
+        const conditions = [];
+        if (organizationId) {
+            conditions.push(eq(systemAuditEvents.organizationId, organizationId));
+        }
         if (severity) {
             conditions.push(eq(systemAuditEvents.severity, severity));
         }
