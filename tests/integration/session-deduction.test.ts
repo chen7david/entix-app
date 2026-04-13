@@ -119,11 +119,11 @@ describe("Session Billing Integration", () => {
             {
                 id: "facc_org_treasury",
                 organizationId: orgId,
-                name: "Org Treasury",
+                name: "Org Funding",
                 currencyId: FINANCIAL_CURRENCIES.CNY,
                 ownerType: "org",
                 ownerId: orgId,
-                accountType: "treasury",
+                accountType: "funding",
                 balanceCents: 0,
                 isActive: true,
             },
@@ -223,11 +223,11 @@ describe("Session Billing Integration", () => {
         await db.insert(financialAccounts).values({
             id: `facc_org_treasury_${orgId}`,
             organizationId: orgId,
-            name: "Org Treasury",
+            name: "Org Funding",
             currencyId: FINANCIAL_CURRENCIES.CNY,
             ownerType: "org",
             ownerId: orgId,
-            accountType: "treasury",
+            accountType: "funding",
             balanceCents: 0,
             isActive: true,
         });
