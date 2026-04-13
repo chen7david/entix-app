@@ -16,6 +16,38 @@ export class FinanceWalletService extends FinancialBaseService {
     ) {
         super(db, accountsRepo, transactionsRepo);
     }
+    /**
+     * Gets a specific wallet account for a user in a given currency.
+     */
+    async getWallet(userId: string, orgId: string, currencyId: string) {
+        const userAccounts = await this.accountsRepo.findActiveByOwner(userId, "user", orgId);
+        const wallet = userAccounts.find(
+            (a) => a.currencyId === currencyId && a.accountType === ACCOUNT_TYPES.SAVINGS
+        );
+
+        if (!wallet) {
+            throw new NotFoundError(`No active ${currencyId} wallet found for student`);
+        }
+
+        return wallet;
+    }
+    /**
+     * Gets an organization's treasury account for a given currency.
+     */
+    async getOrgTreasury(orgId: string, currencyId: string) {
+        const orgAccounts = await this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
+        const orgTreasury = orgAccounts.find(
+            (a) => a.currencyId === currencyId && a.accountType === ACCOUNT_TYPES.TREASURY
+        );
+
+        if (!orgTreasury) {
+            throw new NotFoundError(
+                `No active ${currencyId} treasury account found for organization`
+            );
+        }
+
+        return orgTreasury;
+    }
 
     /**
      * Deducts funds from a student's wallet and credits it to the organization's treasury.

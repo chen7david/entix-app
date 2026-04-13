@@ -2,6 +2,7 @@ import {
     ArrowDownOutlined,
     ArrowUpOutlined,
     InfoCircleOutlined,
+    SettingOutlined,
     WalletOutlined,
 } from "@ant-design/icons";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCY_CONFIG, getTreasuryAccountId } from "@shared";
@@ -53,11 +54,11 @@ export const AdminCreditDrawer: React.FC<Props> = ({
 }) => {
     const { token } = theme.useToken();
     const [form] = Form.useForm();
-    const [activeTab, setActiveTab] = useState<"treasury" | "funding">("funding");
+    const [activeTab, setActiveTab] = useState<"treasury" | "funding" | "settings">("funding");
     const [direction, setDirection] = useState<"credit" | "debit">("credit");
     const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("fcur_usd");
 
-    const { credit, debit, ensureFunding } = useAdminTransfer();
+    const { credit, debit, ensureFunding, updateAccount } = useAdminTransfer();
     const { data: orgs, isLoading: isLoadingOrgs } = useAdminOrganizations();
     const { data: orgAccounts } = useAdminOrgAccounts(organizationId);
 
@@ -77,6 +78,8 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                 form.setFieldsValue({
                     currencyId: preSelectedAccount.currencyId,
                     reasonSelect: COMMON_REASONS[0],
+                    name: preSelectedAccount.name,
+                    overdraftLimitDollars: (preSelectedAccount.overdraftLimitCents || 0) / 100,
                 });
             } else {
                 setSelectedCurrencyId("fcur_usd");
@@ -144,7 +147,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         description,
                     });
                 }
-            } else {
+            } else if (activeTab === "funding") {
                 if (!organizationId || !orgFundingAccount) return;
 
                 if (direction === "credit") {
@@ -168,6 +171,16 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         description: description || "Organization Funding Return",
                     });
                 }
+            } else if (activeTab === "settings") {
+                if (!preSelectedAccount) return;
+                await updateAccount.mutateAsync({
+                    id: preSelectedAccount.id,
+                    name: values.name,
+                    overdraftLimitCents:
+                        values.overdraftLimitDollars != null
+                            ? Math.round(values.overdraftLimitDollars * 100)
+                            : null,
+                });
             }
             form.resetFields();
             onClose();
@@ -193,7 +206,11 @@ export const AdminCreditDrawer: React.FC<Props> = ({
             onClose={onClose}
             extra={
                 <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    {activeTab === "treasury" ? "Adjust Treasury" : "Fund Organization"}
+                    {activeTab === "treasury"
+                        ? "Adjust Treasury"
+                        : activeTab === "settings"
+                          ? "Save Settings"
+                          : "Fund Organization"}
                 </Button>
             }
         >
@@ -381,132 +398,182 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                                 </div>
                             ),
                         },
+                        {
+                            key: "settings",
+                            label: "Account Settings",
+                            disabled: !preSelectedAccount,
+                            children: (
+                                <div style={{ marginTop: 24 }}>
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            gap: 12,
+                                            marginBottom: 24,
+                                        }}
+                                    >
+                                        <SettingOutlined
+                                            style={{ color: token.colorPrimary, fontSize: 18 }}
+                                        />
+                                        <div>
+                                            <Title level={5} style={{ margin: 0 }}>
+                                                Manage {preSelectedAccount?.name}
+                                            </Title>
+                                            <Text type="secondary" style={{ fontSize: 12 }}>
+                                                Update labels and overdraft controls
+                                            </Text>
+                                        </div>
+                                    </div>
+                                    <Form.Item
+                                        name="name"
+                                        label="Account Label"
+                                        rules={[{ required: true }]}
+                                    >
+                                        <Input size="large" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        name="overdraftLimitDollars"
+                                        label="Overdraft Limit"
+                                        extra="Set to 0 to use plan default if applicable."
+                                    >
+                                        <InputNumber
+                                            size="large"
+                                            style={{ width: "100%" }}
+                                            min={0}
+                                            prefix={selectedCurrencyConfig?.symbol}
+                                        />
+                                    </Form.Item>
+                                </div>
+                            ),
+                        },
                     ]}
                 />
 
-                <div style={{ marginTop: 0 }}>
-                    <Form.Item name="direction" label="Adjustment Type" initialValue="credit">
-                        <Radio.Group
-                            value={direction}
-                            onChange={(e) => setDirection(e.target.value)}
-                            style={{ width: "100%", display: "flex" }}
-                        >
-                            <Radio.Button
-                                value="credit"
-                                style={{
-                                    flex: 1,
-                                    textAlign: "center",
-                                    height: 48,
-                                    lineHeight: "46px",
-                                }}
+                {activeTab !== "settings" && (
+                    <div style={{ marginTop: 0 }}>
+                        <Form.Item name="direction" label="Adjustment Type" initialValue="credit">
+                            <Radio.Group
+                                value={direction}
+                                onChange={(e) => setDirection(e.target.value)}
+                                style={{ width: "100%", display: "flex" }}
                             >
-                                <Space>
-                                    <ArrowUpOutlined
-                                        style={{ color: "var(--ant-color-success)" }}
-                                    />{" "}
-                                    CREDIT
-                                </Space>
-                            </Radio.Button>
-                            <Radio.Button
-                                value="debit"
-                                style={{
-                                    flex: 1,
-                                    textAlign: "center",
-                                    height: 48,
-                                    lineHeight: "46px",
-                                }}
-                            >
-                                <Space>
-                                    <ArrowDownOutlined
-                                        style={{ color: "var(--ant-color-error)" }}
-                                    />{" "}
-                                    DEBIT
-                                </Space>
-                            </Radio.Button>
-                        </Radio.Group>
-                    </Form.Item>
-
-                    <Row gutter={16}>
-                        <Col span={12}>
-                            <Form.Item
-                                name="currencyId"
-                                label="Currency"
-                                rules={[{ required: true }]}
-                            >
-                                <Select
-                                    size="large"
-                                    disabled={!!preSelectedAccount}
-                                    onChange={setSelectedCurrencyId}
-                                    style={{ height: 48 }}
+                                <Radio.Button
+                                    value="credit"
+                                    style={{
+                                        flex: 1,
+                                        textAlign: "center",
+                                        height: 48,
+                                        lineHeight: "46px",
+                                    }}
                                 >
-                                    {Object.entries(FINANCIAL_CURRENCY_CONFIG).map(
-                                        ([id, config]) => (
-                                            <Select.Option key={id} value={id}>
-                                                {config.code}
-                                            </Select.Option>
-                                        )
-                                    )}
-                                </Select>
-                            </Form.Item>
-                        </Col>
-                        <Col span={12}>
-                            <Form.Item
-                                name="amountDollars"
-                                label="Amount"
-                                rules={[{ required: true }, { type: "number", min: 0.01 }]}
-                            >
-                                <InputNumber
-                                    size="large"
-                                    style={{ height: 48, lineHeight: "48px", width: "100%" }}
-                                    min={0.01}
-                                    precision={2}
-                                    prefix={
-                                        <span style={{ opacity: 0.4 }}>
-                                            {selectedCurrencyConfig?.symbol || "$"}
-                                        </span>
-                                    }
-                                    placeholder="0.00"
-                                />
-                            </Form.Item>
-                        </Col>
-                    </Row>
+                                    <Space>
+                                        <ArrowUpOutlined
+                                            style={{ color: "var(--ant-color-success)" }}
+                                        />{" "}
+                                        CREDIT
+                                    </Space>
+                                </Radio.Button>
+                                <Radio.Button
+                                    value="debit"
+                                    style={{
+                                        flex: 1,
+                                        textAlign: "center",
+                                        height: 48,
+                                        lineHeight: "46px",
+                                    }}
+                                >
+                                    <Space>
+                                        <ArrowDownOutlined
+                                            style={{ color: "var(--ant-color-error)" }}
+                                        />{" "}
+                                        DEBIT
+                                    </Space>
+                                </Radio.Button>
+                            </Radio.Group>
+                        </Form.Item>
 
-                    <Form.Item name="reasonSelect" label="Reason" rules={[{ required: true }]}>
-                        <Select
-                            size="large"
-                            onChange={(val) =>
-                                form.setFieldsValue({
-                                    description: val === "Other" ? "" : val,
-                                })
-                            }
-                        >
-                            {COMMON_REASONS.map((r) => (
-                                <Select.Option key={r} value={r}>
-                                    {r}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        shouldUpdate={(prev, curr) => prev.reasonSelect !== curr.reasonSelect}
-                    >
-                        {({ getFieldValue }) =>
-                            getFieldValue("reasonSelect") === "Other" && (
+                        <Row gutter={16}>
+                            <Col span={12}>
                                 <Form.Item
-                                    name="description"
-                                    label="Custom Reason"
+                                    name="currencyId"
+                                    label="Currency"
                                     rules={[{ required: true }]}
                                 >
-                                    <Input.TextArea
-                                        rows={3}
-                                        placeholder="Describe the adjustment..."
+                                    <Select
+                                        size="large"
+                                        disabled={!!preSelectedAccount}
+                                        onChange={setSelectedCurrencyId}
+                                        style={{ height: 48 }}
+                                    >
+                                        {Object.entries(FINANCIAL_CURRENCY_CONFIG).map(
+                                            ([id, config]) => (
+                                                <Select.Option key={id} value={id}>
+                                                    {config.code}
+                                                </Select.Option>
+                                            )
+                                        )}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="amountDollars"
+                                    label="Amount"
+                                    rules={[{ required: true }, { type: "number", min: 0.01 }]}
+                                >
+                                    <InputNumber
+                                        size="large"
+                                        style={{ height: 48, lineHeight: "48px", width: "100%" }}
+                                        min={0.01}
+                                        precision={2}
+                                        prefix={
+                                            <span style={{ opacity: 0.4 }}>
+                                                {selectedCurrencyConfig?.symbol || "$"}
+                                            </span>
+                                        }
+                                        placeholder="0.00"
                                     />
                                 </Form.Item>
-                            )
-                        }
-                    </Form.Item>
-                </div>
+                            </Col>
+                        </Row>
+
+                        <Form.Item name="reasonSelect" label="Reason" rules={[{ required: true }]}>
+                            <Select
+                                size="large"
+                                onChange={(val) =>
+                                    form.setFieldsValue({
+                                        description: val === "Other" ? "" : val,
+                                    })
+                                }
+                            >
+                                {COMMON_REASONS.map((r) => (
+                                    <Select.Option key={r} value={r}>
+                                        {r}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            shouldUpdate={(prev, curr) => prev.reasonSelect !== curr.reasonSelect}
+                        >
+                            {({ getFieldValue }) =>
+                                getFieldValue("reasonSelect") === "Other" && (
+                                    <Form.Item
+                                        name="description"
+                                        label="Custom Reason"
+                                        rules={[{ required: true }]}
+                                    >
+                                        <Input.TextArea
+                                            rows={3}
+                                            placeholder="Describe the adjustment..."
+                                        />
+                                    </Form.Item>
+                                )
+                            }
+                        </Form.Item>
+                    </div>
+                )}
             </Form>
         </Drawer>
     );

@@ -30,7 +30,7 @@ export const financialAccounts = sqliteTable(
             .$type<"savings" | "funding" | "treasury" | "system">()
             .notNull()
             .default(ACCOUNT_TYPES.SAVINGS),
-        overdraftLimitCents: integer("overdraft_limit_cents").notNull().default(0),
+        overdraftLimitCents: integer("overdraft_limit_cents"),
     },
     (t) => [
         check("overdraft_limit_non_negative", sql`${t.overdraftLimitCents} >= 0`),
@@ -39,8 +39,14 @@ export const financialAccounts = sqliteTable(
             "account_type_check",
             sql`${t.accountType} IN ('savings', 'funding', 'treasury', 'system')`
         ),
-        check("org_scoped_user_accounts", sql`${t.organizationId} IS NOT NULL`),
-        check("balance_within_overdraft", sql`${t.balanceCents} >= -${t.overdraftLimitCents}`),
+        check(
+            "org_scoped_user_accounts",
+            sql`${t.accountType} = 'system' OR ${t.organizationId} IS NOT NULL`
+        ),
+        check(
+            "balance_within_overdraft",
+            sql`${t.overdraftLimitCents} IS NULL OR ${t.balanceCents} >= -${t.overdraftLimitCents}`
+        ),
         uniqueIndex("owner_org_name_currency_idx").on(
             t.ownerId,
             t.organizationId,
@@ -64,10 +70,11 @@ export const createAccountRepoInputSchema = createInsertSchema(financialAccounts
     createdAt: z.date(),
     updatedAt: z.date(),
 }).superRefine((data, ctx) => {
-    if (!data.organizationId) {
+    // System accounts (shared across the platform) do not require an organization scope.
+    if (data.accountType !== "system" && !data.organizationId) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message: "organizationId is required for all accounts",
+            message: "organizationId is required for all non-system accounts",
             path: ["organizationId"],
         });
     }

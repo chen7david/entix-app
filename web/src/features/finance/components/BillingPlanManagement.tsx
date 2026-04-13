@@ -59,10 +59,12 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                 // Map rates back to cents
                 const submission = {
                     ...values,
-                    rates: values.rates.map((r: any) => ({
-                        ...r,
-                        rateCentsPerMinute: Math.round(r.rateCentsPerMinute * 100),
-                    })),
+                    overdraftLimitCents: Math.round((values.overdraftLimitDollars || 0) * 100),
+                    rates:
+                        values.rates?.map((r: any) => ({
+                            ...r,
+                            rateCentsPerMinute: Math.round(r.rateCentsPerMinute * 100),
+                        })) || [],
                 };
                 onFinish(submission);
             }}
@@ -73,6 +75,20 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                 rules={[{ required: true, message: "Please enter plan name" }]}
             >
                 <Input placeholder="e.g. Standard Hourly" variant="outlined" />
+            </Form.Item>
+
+            <Form.Item
+                name="overdraftLimitDollars"
+                label="Default Overdraft Limit"
+                tooltip="The maximum negative balance allowed for accounts on this plan if not overridden at the account level."
+            >
+                <InputNumber
+                    min={0}
+                    precision={2}
+                    prefix="$"
+                    className="w-full"
+                    placeholder="0.00"
+                />
             </Form.Item>
 
             <Form.Item name="description" label="Description">
@@ -361,6 +377,8 @@ export const BillingPlanManagement: React.FC<{ orgId: string }> = ({ orgId }) =>
                         editingPlan
                             ? {
                                   ...editingPlan,
+                                  overdraftLimitDollars:
+                                      (editingPlan.overdraftLimitCents || 0) / 100,
                                   rates: editingPlan.rates?.map((r) => ({
                                       ...r,
                                       rateCentsPerMinute: r.rateCentsPerMinute / 100,

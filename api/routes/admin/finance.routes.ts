@@ -121,10 +121,16 @@ export const AdminFinanceRoutes = {
         method: HttpMethods.PATCH,
         path: "/admin/finance/accounts/{id}",
         middleware: [requireAuth, requireSuperAdmin] as const,
-        summary: "Super admin: update account label",
+        summary: "Super admin: update account label and/or overdraft limit",
         request: {
             params: z.object({ id: z.string() }),
-            body: jsonContentRequired(z.object({ name: z.string().min(1) }), "Update details"),
+            body: jsonContentRequired(
+                z.object({
+                    name: z.string().min(1).optional(),
+                    overdraftLimitCents: z.number().int().min(0).nullable().optional(),
+                }),
+                "Update details"
+            ),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(

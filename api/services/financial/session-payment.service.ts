@@ -1,10 +1,11 @@
-import { BadRequestError } from "@api/errors/app.error";
-import type { BatchRunner } from "@api/factories/db.factory";
+import { BadRequestError, ConflictError } from "@api/errors/app.error";
+import type { AppDb, BatchRunner } from "@api/factories/db.factory";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { createTransactionRepoInputSchema } from "@shared/db/schema";
+import { createTransactionRepoInputSchema, financialSessionPaymentEvents } from "@shared/db/schema";
+import { and, eq, isNull } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
@@ -14,6 +15,7 @@ import { BaseService } from "../base.service";
  */
 export class SessionPaymentService extends BaseService {
     constructor(
+        private readonly db: AppDb,
         private readonly batchRunner: BatchRunner,
         private readonly transactionsRepo: FinancialTransactionsRepository,
         private readonly attendancesRepo: SessionAttendancesRepository,
@@ -24,20 +26,7 @@ export class SessionPaymentService extends BaseService {
     }
 
     /**
-     * Processes a session payment using a two-phase batch strategy:
-     *
-     * Phase 1 — Financial Ledger (D1 batch):
-     *   Atomically debits the source account and credits the destination account,
-     *   inserts the transaction header and journal lines.
-     *   D1 does NOT rollback on silent constraint failures, so we check
-     *   `rows_written` on the debit result before proceeding.
-     *
-     * Phase 2 — Application Writes (D1 batch, conditional):
-     *   Only executed if Phase 1 confirms the debit succeeded.
-     *   Inserts the payment event log and updates the attendance status.
-     *   System audit is appended last.
-     *
-     * This two-phase design ensures Phase 2 never fires on a failed debit.
+     * Processes a session payment using a two-phase batch strategy.
      */
     async processSessionPayment(input: {
         organizationId: string;
@@ -48,7 +37,7 @@ export class SessionPaymentService extends BaseService {
         sourceAccountId: string;
         destinationAccountId: string;
         categoryId: string;
-        performedBy: string;
+        performedBy: string | null;
         note?: string;
     }): Promise<{ transactionId: string; eventId: string; auditId: string }> {
         const now = new Date();
@@ -58,7 +47,7 @@ export class SessionPaymentService extends BaseService {
         const eventId = `spe_${nanoid()}`;
         const auditId = `aud_${nanoid()}`;
 
-        // ── Phase 1: Double-entry financial transaction ──────────────────────
+        // Phase 1: Financial Ledger
         const txInput = createTransactionRepoInputSchema.parse({
             id: txId,
             organizationId: input.organizationId,
@@ -79,15 +68,13 @@ export class SessionPaymentService extends BaseService {
             txStatements as Parameters<typeof this.batchRunner.batch>[0]
         );
 
-        // Guard: debit returned 0 rows → balance check or isActive check failed.
-        // Phase 2 must NOT run in this case.
         if (debitResult.meta.rows_written === 0) {
             throw new BadRequestError(
                 "Transaction failed: Insufficient funds or inactive account."
             );
         }
 
-        // ── Phase 2: Application-level writes (conditional on Phase 1 success) ─
+        // Phase 2: Application-level writes
         const eventStatement = this.paymentEventsRepo.prepareInsert({
             id: eventId,
             sessionId: input.sessionId,
@@ -96,7 +83,7 @@ export class SessionPaymentService extends BaseService {
             eventType: "paid",
             transactionId: txId,
             amountCents: input.amountCents,
-            performedBy: input.performedBy,
+            performedBy: input.performedBy ?? null,
             note: input.note,
             createdAt: now,
         });
@@ -112,8 +99,8 @@ export class SessionPaymentService extends BaseService {
             organizationId: input.organizationId,
             eventType: "session_payment_processed",
             severity: "info",
-            actorId: input.performedBy,
-            actorType: "user",
+            actorId: input.performedBy ?? null,
+            actorType: input.performedBy ? "user" : "system",
             subjectType: "session_attendance",
             subjectId: `${input.sessionId}:${input.userId}`,
             message: `Processed session payment for session ${input.sessionId}`,
@@ -131,5 +118,69 @@ export class SessionPaymentService extends BaseService {
         ] as Parameters<typeof this.batchRunner.batch>[0]);
 
         return { transactionId: txId, eventId, auditId };
+    }
+
+    /**
+     * Records a manual payment override (manual_paid or manual_reset).
+     * POLICY: Only one manual override is permitted per user/session pair to avoid accounting drift.
+     */
+    async manualOverride(input: {
+        organizationId: string;
+        sessionId: string;
+        userId: string;
+        eventType: "manual_paid" | "manual_reset";
+        performedBy: string;
+        note: string;
+    }) {
+        // Blocker Fix: Guard against the manual_reset -> manual_paid loophole.
+        // We check for ANY existing manual event (transactionId IS NULL) for this user/session.
+        const existingManualEvent = await this.db.query.financialSessionPaymentEvents.findFirst({
+            where: and(
+                eq(financialSessionPaymentEvents.sessionId, input.sessionId),
+                eq(financialSessionPaymentEvents.userId, input.userId),
+                isNull(financialSessionPaymentEvents.transactionId)
+            ),
+        });
+
+        if (existingManualEvent) {
+            throw new ConflictError(
+                `A manual override (${existingManualEvent.eventType}) already exists for this session-user pair. Multiple manual overrides are prohibited.`
+            );
+        }
+
+        const now = new Date();
+        const eventId = `spe_${nanoid()}`;
+
+        const eventStatement = this.paymentEventsRepo.prepareInsert({
+            id: eventId,
+            sessionId: input.sessionId,
+            userId: input.userId,
+            organizationId: input.organizationId,
+            eventType: input.eventType,
+            transactionId: null,
+            amountCents: null,
+            performedBy: input.performedBy,
+            note: input.note,
+            createdAt: now,
+        });
+
+        const attendanceStatement = this.attendancesRepo.prepareUpdatePaymentStatus(
+            input.sessionId,
+            input.userId,
+            input.eventType === "manual_paid" ? "paid" : "unpaid"
+        );
+
+        await this.batchRunner.batch([eventStatement, attendanceStatement] as Parameters<
+            typeof this.batchRunner.batch
+        >[0]);
+
+        return { eventId };
+    }
+
+    /**
+     * Utility to fetch the full payment history for a specific student in a session.
+     */
+    async getSessionEvents(sessionId: string, userId: string) {
+        return this.paymentEventsRepo.listByUserInSession(sessionId, userId);
     }
 }

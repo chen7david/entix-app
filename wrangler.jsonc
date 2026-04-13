@@ -30,7 +30,20 @@
                     "database_id": "12345678910",
                     "migrations_dir": "api/db/migrations"
                 }
-            ]
+            ],
+            "queues": {
+                "producers": [
+                    {
+                        "binding": "BILLING_RECONCILIATION_QUEUE",
+                        "queue_name": "billing-reconciliation-queue-dev"
+                    }
+                ],
+                "consumers": [
+                    {
+                        "queue": "billing-reconciliation-queue-dev"
+                    }
+                ]
+            }
         },
         "staging": {
             "name": "entix-app-staging",
@@ -57,7 +70,20 @@
                     "database_id": "67022c1e-a5e9-44c1-835b-f50fea92d236",
                     "migrations_dir": "api/db/migrations"
                 }
-            ]
+            ],
+            "queues": {
+                "producers": [
+                    {
+                        "binding": "BILLING_RECONCILIATION_QUEUE",
+                        "queue_name": "billing-reconciliation-queue-staging"
+                    }
+                ],
+                "consumers": [
+                    {
+                        "queue": "billing-reconciliation-queue-staging"
+                    }
+                ]
+            }
         },
         "production": {
             "name": "entix-app",
@@ -83,7 +109,20 @@
                     "database_id": "6c6880b4-7e49-40ae-a29e-78c5b15f8e0d",
                     "migrations_dir": "api/db/migrations"
                 }
-            ]
+            ],
+            "queues": {
+                "producers": [
+                    {
+                        "binding": "BILLING_RECONCILIATION_QUEUE",
+                        "queue_name": "billing-reconciliation-queue"
+                    }
+                ],
+                "consumers": [
+                    {
+                        "queue": "billing-reconciliation-queue"
+                    }
+                ]
+            }
         }
     }
 }

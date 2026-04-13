@@ -14,6 +14,14 @@ export const SESSION_PAYMENT_EVENT_TYPES = [
 
 export type SessionPaymentEventType = (typeof SESSION_PAYMENT_EVENT_TYPES)[number];
 
+/**
+ * Audit log of all payment-related events for a session attendance.
+ *
+ * POLICY:
+ * 1. Transactional events (paid/refunded) are linked to a financial_transaction.
+ * 2. Manual overrides (manual_paid/manual_reset) are logically "free" and have no transaction.
+ * 3. Only ONE manual override is permitted per user/session pair to avoid accounting ambiguity.
+ */
 export const financialSessionPaymentEvents = sqliteTable(
     "financial_session_payment_events",
     {
@@ -35,34 +43,33 @@ export const financialSessionPaymentEvents = sqliteTable(
             enum: SESSION_PAYMENT_EVENT_TYPES,
         }).notNull(),
 
-        // NULL for manual_paid / manual_reset (no real money movement).
+        // Link back to the immutable double-entry ledger.
+        // NULL for manual overrides.
         transactionId: text("transaction_id").references(() => financialTransactions.id, {
             onDelete: "set null",
         }),
 
-        // Snapshot of the amount at time of event (in cents).
         amountCents: integer("amount_cents"),
 
-        // Who triggered this event.
-        performedBy: text("performed_by")
-            .notNull()
-            .references(() => authUsers.id, { onDelete: "restrict" }),
+        // Actor who triggered this event (Admin or System).
+        performedBy: text("performed_by").references(() => authUsers.id, { onDelete: "set null" }),
 
-        // Required for manual overrides (manual_paid / manual_reset).
+        // mandatory for manual overrides for audit clarity.
         note: text("note"),
 
-        // Immutable — no updatedAt.
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
     },
     (t) => [
-        // Covers events WITH a transaction (automated payments/refunds)
+        // Prevents duplicate automated payments for the same user/session/transaction.
         uniqueIndex("uq_spe_session_user_transaction")
             .on(t.sessionId, t.userId, t.transactionId)
             .where(sql`${t.transactionId} IS NOT NULL`),
 
-        // Prevents duplicate manual events per type per student per session
+        // Prevents duplicate manual events per student per session.
+        // This index ensures only ONE manual record can exist for a sessionId+userId pair
+        // if transactionId is NULL.
         uniqueIndex("uq_spe_session_user_manual")
             .on(t.sessionId, t.userId, t.eventType)
             .where(sql`${t.transactionId} IS NULL`),

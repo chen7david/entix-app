@@ -145,6 +145,12 @@ export class UserFinancialService extends FinancialBaseService {
         // Normalize TransactionLines into the flat Transaction DTO expected by the frontend
         const data = lines.map((line) => {
             const tx = line.transaction;
+            const direction = line.direction; // 'debit' | 'credit'
+
+            // Resolve counterparty based on direction
+            const counterparty =
+                direction === "debit" ? (tx as any).destinationAccount : (tx as any).sourceAccount;
+
             return {
                 id: tx.id,
                 organizationId: tx.organizationId,
@@ -157,10 +163,13 @@ export class UserFinancialService extends FinancialBaseService {
                 description: tx.description,
                 transactionDate: tx.transactionDate,
                 createdAt: tx.createdAt,
+                direction,
+                counterpartyName: counterparty?.ownerName || counterparty?.name || "Unknown",
                 category: (tx as any).category,
                 currency: (tx as any).currency,
                 sourceAccount: (tx as any).sourceAccount,
                 destinationAccount: (tx as any).destinationAccount,
+                account: line.account,
             };
         });
 

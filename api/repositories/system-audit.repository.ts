@@ -7,6 +7,18 @@ import {
     systemAuditEvents,
 } from "@shared/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
+
+/**
+ * Convenience helper to prepare an audit event for db.batch().
+ * Explicitly typed to prevent API surface surprises.
+ */
+export function prepareAuditEvent(
+    repo: SystemAuditRepository,
+    input: NewSystemAuditEvent
+): BatchItem<"sqlite"> {
+    return repo.prepareInsert(input);
+}
 
 /**
  * Repository for system audit database operations.
@@ -97,5 +109,18 @@ export class SystemAuditRepository {
             }),
             cursor
         );
+    }
+
+    /**
+     * Acknowledges an audit event
+     */
+    async acknowledge(id: string, userId: string, now: Date = new Date()) {
+        await this.db
+            .update(systemAuditEvents)
+            .set({
+                acknowledgedAt: now,
+                acknowledgedBy: userId,
+            })
+            .where(eq(systemAuditEvents.id, id));
     }
 }
