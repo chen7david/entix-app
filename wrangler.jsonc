@@ -33,14 +33,14 @@
             ],
             "queues": {
                 "producers": [
-                    {
-                        "binding": "BILLING_RECONCILIATION_QUEUE",
-                        "queue": "billing-reconciliation-queue-dev"
-                    }
+                    { "binding": "QUEUE", "queue": "entix-queue-dev" },
+                    { "binding": "DLQ", "queue": "entix-dlq-dev" }
                 ],
                 "consumers": [
                     {
-                        "queue": "billing-reconciliation-queue-dev"
+                        "queue": "entix-queue-dev",
+                        "dead_letter_queue": "entix-dlq-dev",
+                        "max_retries": 3
                     }
                 ]
             }
@@ -73,14 +73,14 @@
             ],
             "queues": {
                 "producers": [
-                    {
-                        "binding": "BILLING_RECONCILIATION_QUEUE",
-                        "queue": "billing-reconciliation-queue-staging"
-                    }
+                    { "binding": "QUEUE", "queue": "entix-queue-staging" },
+                    { "binding": "DLQ", "queue": "entix-dlq-staging" }
                 ],
                 "consumers": [
                     {
-                        "queue": "billing-reconciliation-queue-staging"
+                        "queue": "entix-queue-staging",
+                        "dead_letter_queue": "entix-dlq-staging",
+                        "max_retries": 3
                     }
                 ]
             }
@@ -112,14 +112,14 @@
             ],
             "queues": {
                 "producers": [
-                    {
-                        "binding": "BILLING_RECONCILIATION_QUEUE",
-                        "queue": "billing-reconciliation-queue-production"
-                    }
+                    { "binding": "QUEUE", "queue": "entix-queue-production" },
+                    { "binding": "DLQ", "queue": "entix-dlq-production" }
                 ],
                 "consumers": [
                     {
-                        "queue": "billing-reconciliation-queue-production"
+                        "queue": "entix-queue-production",
+                        "dead_letter_queue": "entix-dlq-production",
+                        "max_retries": 3
                     }
                 ]
             }

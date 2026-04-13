@@ -46,3 +46,12 @@ export const retryMissedPaymentResponseSchema = z.object({
     status: z.enum(["retried", "acknowledged", "failed"]),
     message: z.string(),
 });
+
+export const requeueFailedPaymentRequestSchema = z.object({
+    eventId: z.string().min(1),
+    organizationId: z.string().min(1),
+});
+
+export const requeueFailedPaymentResponseSchema = z.object({
+    status: z.literal("queued"),
+});

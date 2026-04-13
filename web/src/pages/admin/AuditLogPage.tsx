@@ -9,7 +9,12 @@ import { Button, Card, Col, message, Row, Select, Space, Table, Tag, Typography 
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import type React from "react";
-import { useAcknowledgeAuditLog, useAdminAuditLogs } from "../../features/admin/hooks/useAuditLogs";
+import { useState } from "react";
+import {
+    useAcknowledgeAuditLog,
+    useAdminAuditLogs,
+    useRequeueFailedPayment,
+} from "../../features/admin/hooks/useAuditLogs";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -36,12 +41,32 @@ export const AuditLogPage: React.FC = () => {
     });
 
     const { mutate: acknowledge, isPending: isAcknowledging } = useAcknowledgeAuditLog();
+    const { mutate: requeue, isPending: isRequeueing } = useRequeueFailedPayment();
+    const [requeueingId, setRequeueingId] = useState<string | null>(null);
 
     const handleAcknowledge = (id: string) => {
         acknowledge(id, {
             onSuccess: () => message.success("Alert acknowledged"),
             onError: (err) => message.error(err.message),
         });
+    };
+
+    const handleRequeue = (record: any) => {
+        setRequeueingId(record.id);
+        const meta = JSON.parse(record.metadata ?? "{}");
+        requeue(
+            { eventId: meta.eventId ?? record.subjectId, organizationId: record.organizationId },
+            {
+                onSuccess: () => {
+                    message.success("Payment re-queued for retry");
+                    setRequeueingId(null);
+                },
+                onError: (err) => {
+                    message.error(err.message);
+                    setRequeueingId(null);
+                },
+            }
+        );
     };
 
     const columns: ColumnsType<any> = [
@@ -121,18 +146,33 @@ export const AuditLogPage: React.FC = () => {
         {
             title: "Action",
             key: "action",
-            width: 120,
-            render: (_, record) =>
-                !record.acknowledgedAt && (
-                    <Button
-                        type="link"
-                        size="small"
-                        onClick={() => handleAcknowledge(record.id)}
-                        loading={isAcknowledging}
-                    >
-                        Acknowledge
-                    </Button>
-                ),
+            width: 160,
+            render: (_, record) => {
+                if (record.acknowledgedAt) return null;
+                return (
+                    <Space size="small">
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => handleAcknowledge(record.id)}
+                            loading={isAcknowledging}
+                        >
+                            Acknowledge
+                        </Button>
+                        {record.eventType === "payment.reconciliation-failed" && (
+                            <Button
+                                type="primary"
+                                size="small"
+                                danger
+                                onClick={() => handleRequeue(record)}
+                                loading={isRequeueing && requeueingId === record.id}
+                            >
+                                Requeue
+                            </Button>
+                        )}
+                    </Space>
+                );
+            },
         },
     ];
 

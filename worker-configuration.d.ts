@@ -18,7 +18,8 @@ declare namespace Cloudflare {
 		BETTER_AUTH_SECRET: string;
 		RESEND_API_KEY: string;
 		R2_SECRET_ACCESS_KEY: string;
-		BILLING_RECONCILIATION_QUEUE: Queue;
+		QUEUE: Queue;
+		DLQ: Queue;
 		INTERNAL_SECRET: string;
 	}
 }

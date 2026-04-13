@@ -62,3 +62,33 @@ export const useAcknowledgeAuditLog = () => {
         },
     });
 };
+
+export type RequeuePayload = {
+    eventId: string;
+    organizationId: string;
+};
+
+export const useRequeueFailedPayment = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (payload: RequeuePayload) => {
+            const response = await fetch("/api/v1/admin/audit-logs/requeue-payment", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!response.ok) {
+                const error = await response
+                    .json()
+                    .catch(() => ({ message: "Failed to requeue payment" }));
+                throw new Error(error.message || "Failed to requeue payment");
+            }
+            return response.json() as Promise<{ status: "queued" }>;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["admin", "audit-logs"] });
+        },
+    });
+};
