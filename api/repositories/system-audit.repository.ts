@@ -1,10 +1,12 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import {
+    type AuditSeverity,
     type NewSystemAuditEvent,
     type SystemAuditEvent,
     systemAuditEvents,
 } from "@shared/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 
 /**
  * Repository for system audit database operations.
@@ -30,17 +32,70 @@ export class SystemAuditRepository {
     }
 
     /**
-     * Lists audit events for an organization.
-     *
-     * TODO: Replace with cursor pagination before exposing via API endpoint.
-     *       Currently capped at 500 rows as a safety guard against full-table scans.
+     * Lists audit events with cursor pagination.
+     * Default sort: createdAt DESC, id DESC.
      */
-    async listByOrg(organizationId: string, limit = 500): Promise<SystemAuditEvent[]> {
-        return this.db
+    async list(filters: {
+        organizationId: string;
+        severity?: AuditSeverity;
+        eventType?: string;
+        actorId?: string;
+        unresolvedOnly?: boolean;
+        limit?: number;
+        cursor?: string;
+        direction?: "next" | "prev";
+    }) {
+        const {
+            organizationId,
+            severity,
+            eventType,
+            actorId,
+            unresolvedOnly,
+            limit = 20,
+            cursor,
+            direction = "next",
+        } = filters;
+
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            systemAuditEvents.createdAt,
+            systemAuditEvents.id,
+            cursor,
+            direction
+        );
+
+        const conditions = [eq(systemAuditEvents.organizationId, organizationId)];
+        if (severity) {
+            conditions.push(eq(systemAuditEvents.severity, severity));
+        }
+        if (eventType) {
+            conditions.push(eq(systemAuditEvents.eventType, eventType));
+        }
+        if (actorId) {
+            conditions.push(eq(systemAuditEvents.actorId, actorId));
+        }
+        if (unresolvedOnly) {
+            conditions.push(isNull(systemAuditEvents.acknowledgedAt));
+        }
+        if (cursorWhere) {
+            conditions.push(cursorWhere);
+        }
+
+        const items = await this.db
             .select()
             .from(systemAuditEvents)
-            .where(eq(systemAuditEvents.organizationId, organizationId))
-            .orderBy(desc(systemAuditEvents.createdAt))
-            .limit(limit);
+            .where(and(...conditions))
+            .orderBy(...orderBy)
+            .limit(limit + 1);
+
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (item) => ({
+                primary: item.createdAt.getTime(),
+                secondary: item.id,
+            }),
+            cursor
+        );
     }
 }

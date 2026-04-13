@@ -1,4 +1,5 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import {
     type NewSessionAttendance,
     type SessionAttendance,
@@ -41,17 +42,61 @@ export class SessionAttendancesRepository {
     }
 
     /**
-     * Lists attendance records for an organization.
-     *
-     * TODO: Replace with cursor pagination before exposing via API endpoint.
-     *       Currently capped at 500 rows as a safety guard against full-table scans.
+     * Lists attendance records with cursor pagination.
+     * Default sort: joinedAt DESC, userId DESC.
      */
-    async listByOrg(organizationId: string, limit = 500): Promise<SessionAttendance[]> {
-        return this.db
+    async list(filters: {
+        organizationId: string;
+        sessionId?: string;
+        paymentStatus?: SessionPaymentStatus;
+        limit?: number;
+        cursor?: string;
+        direction?: "next" | "prev";
+    }) {
+        const {
+            organizationId,
+            sessionId,
+            paymentStatus,
+            limit = 20,
+            cursor,
+            direction = "next",
+        } = filters;
+
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            sessionAttendances.joinedAt,
+            sessionAttendances.userId,
+            cursor,
+            direction
+        );
+
+        const conditions = [eq(sessionAttendances.organizationId, organizationId)];
+        if (sessionId) {
+            conditions.push(eq(sessionAttendances.sessionId, sessionId));
+        }
+        if (paymentStatus) {
+            conditions.push(eq(sessionAttendances.paymentStatus, paymentStatus));
+        }
+        if (cursorWhere) {
+            conditions.push(cursorWhere);
+        }
+
+        const items = await this.db
             .select()
             .from(sessionAttendances)
-            .where(eq(sessionAttendances.organizationId, organizationId))
-            .limit(limit);
+            .where(and(...conditions))
+            .orderBy(...orderBy)
+            .limit(limit + 1);
+
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (item) => ({
+                primary: item.joinedAt.getTime(),
+                secondary: item.userId,
+            }),
+            cursor
+        );
     }
 
     /**
