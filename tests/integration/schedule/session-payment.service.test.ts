@@ -1,3 +1,4 @@
+import { ConflictError } from "@api/errors/app.error";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
@@ -35,6 +36,7 @@ describe("SessionPaymentService Integration", () => {
         db = await createTestDb();
 
         service = new SessionPaymentService(
+            db,
             db,
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
@@ -312,5 +314,56 @@ describe("SessionPaymentService Integration", () => {
             ),
         });
         expect(attendance).toBeUndefined(); // No attendance row was ever created
+    });
+
+    it("should allow creating a 'system' account without an organizationId", async () => {
+        const systemAccId = "acc_system_no_org";
+        await db.insert(financialAccounts).values({
+            id: systemAccId,
+            ownerId: "system",
+            ownerType: "org",
+            organizationId: null, // Proved by the new CHECK constraint
+            currencyId,
+            name: "Global Fee Collection",
+            balanceCents: 0,
+            isActive: true,
+            accountType: "system",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        const entry = await db.query.financialAccounts.findFirst({
+            where: eq(financialAccounts.id, systemAccId),
+        });
+        expect(entry).toBeDefined();
+        expect(entry?.organizationId).toBeNull();
+    });
+
+    it("should prevent duplicate manual overrides for the same session-user pair", async () => {
+        const payload = {
+            organizationId: orgId,
+            sessionId,
+            userId: studentId,
+            eventType: "manual_paid" as const,
+            performedBy: studentId,
+            note: "First manual override",
+        };
+
+        // First call succeeded
+        await service.manualOverride(payload);
+
+        // Second call should throw ConflictError
+        await expect(
+            service.manualOverride({
+                ...payload,
+                eventType: "manual_reset",
+                note: "Sneaky second override",
+            })
+        ).rejects.toThrow(ConflictError);
+
+        // Verify only ONE manual record exists
+        const events = await service.getSessionEvents(sessionId, studentId);
+        const manualEvents = events.filter((e) => e.transactionId === null);
+        expect(manualEvents).toHaveLength(1);
     });
 });

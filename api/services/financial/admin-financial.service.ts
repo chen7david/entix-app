@@ -136,11 +136,27 @@ export class AdminFinancialService extends FinancialBaseService {
     /**
      * Updates the name/label of any financial account.
      */
-    async updateAccount(id: string, name: string) {
+    /**
+     * Updates the name/label and/or overdraft limit of any financial account.
+     */
+    async updateAccount(id: string, name?: string, overdraftLimitCents?: number | null) {
         const account = await this.accountsRepo.findById(id);
         this.assertExists(account, "Account not found");
         const now = new Date();
-        const updated = await this.accountsRepo.updateName(id, name, now);
+
+        let updated = account;
+
+        if (name !== undefined) {
+            const res = await this.accountsRepo.updateName(id, name, now);
+            updated = this.assertExists(res, "Account not found");
+        }
+
+        if (overdraftLimitCents !== undefined) {
+            const res = await this.accountsRepo.updateOverdraftLimit(id, overdraftLimitCents, now);
+            updated = this.assertExists(res, "Account not found");
+        }
+
+        // Final assertExists ensures the return type is always non-null (fixes TS2322)
         return this.assertExists(updated, "Account not found");
     }
 

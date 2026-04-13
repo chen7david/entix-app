@@ -95,7 +95,9 @@ export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(
         getSessionScheduleRepository(ctx),
         getFinanceBillingPlansService(ctx),
-        getFinanceWalletService(ctx)
+        getFinanceWalletService(ctx),
+        getSessionPaymentService(ctx),
+        getSystemAuditRepository(ctx)
     );
 };
 
@@ -160,8 +162,10 @@ export const getFinanceWalletService = (ctx: AppContext) => {
 };
 
 export const getSessionPaymentService = (ctx: AppContext) => {
+    const db = getDbClient(ctx);
     return new SessionPaymentService(
-        getDbClient(ctx),
+        db,
+        db,
         getFinancialTransactionsRepository(ctx),
         getSessionAttendancesRepository(ctx),
         getSessionPaymentEventsRepository(ctx),

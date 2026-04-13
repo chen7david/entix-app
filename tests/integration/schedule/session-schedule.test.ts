@@ -6,6 +6,17 @@ describe("SessionScheduleService Architecture Bounds", () => {
     let mockRepo: any;
     let service: SessionScheduleService;
 
+    const mockSessionPaymentService = {
+        processSessionPayment: vi.fn().mockResolvedValue(undefined),
+    } as any;
+
+    const mockAuditRepo = {
+        insert: vi.fn().mockResolvedValue(undefined),
+        prepareInsert: vi.fn(),
+        list: vi.fn().mockResolvedValue({ items: [], nextCursor: null }),
+        acknowledge: vi.fn().mockResolvedValue(undefined),
+    } as any;
+
     beforeEach(() => {
         mockRepo = {
             createSessions: vi.fn().mockImplementation((sessions) =>
@@ -24,7 +35,13 @@ describe("SessionScheduleService Architecture Bounds", () => {
         };
         const mockBilling = {} as any;
         const mockWallet = {} as any;
-        service = new SessionScheduleService(mockRepo, mockBilling, mockWallet);
+        service = new SessionScheduleService(
+            mockRepo,
+            mockBilling,
+            mockWallet,
+            mockSessionPaymentService,
+            mockAuditRepo
+        );
     });
 
     it("creates a single session effortlessly scaling Drizzle mapping", async () => {

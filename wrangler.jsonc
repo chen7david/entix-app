@@ -30,7 +30,20 @@
                     "database_id": "12345678910",
                     "migrations_dir": "api/db/migrations"
                 }
-            ]
+            ],
+            "queues": {
+                "producers": [
+                    { "binding": "QUEUE", "queue": "entix-queue-dev" },
+                    { "binding": "DLQ", "queue": "entix-dlq-dev" }
+                ],
+                "consumers": [
+                    {
+                        "queue": "entix-queue-dev",
+                        "dead_letter_queue": "entix-dlq-dev",
+                        "max_retries": 3
+                    }
+                ]
+            }
         },
         "staging": {
             "name": "entix-app-staging",
@@ -54,10 +67,23 @@
                 {
                     "binding": "DB",
                     "database_name": "entix-app-staging",
-                    "database_id": "67022c1e-a5e9-44c1-835b-f50fea92d236",
+                    "database_id": "630037ef-d46e-4cad-bf7c-bb461200e170",
                     "migrations_dir": "api/db/migrations"
                 }
-            ]
+            ],
+            "queues": {
+                "producers": [
+                    { "binding": "QUEUE", "queue": "entix-queue-staging" },
+                    { "binding": "DLQ", "queue": "entix-dlq-staging" }
+                ],
+                "consumers": [
+                    {
+                        "queue": "entix-queue-staging",
+                        "dead_letter_queue": "entix-dlq-staging",
+                        "max_retries": 3
+                    }
+                ]
+            }
         },
         "production": {
             "name": "entix-app",
@@ -83,7 +109,20 @@
                     "database_id": "6c6880b4-7e49-40ae-a29e-78c5b15f8e0d",
                     "migrations_dir": "api/db/migrations"
                 }
-            ]
+            ],
+            "queues": {
+                "producers": [
+                    { "binding": "QUEUE", "queue": "entix-queue-production" },
+                    { "binding": "DLQ", "queue": "entix-dlq-production" }
+                ],
+                "consumers": [
+                    {
+                        "queue": "entix-queue-production",
+                        "dead_letter_queue": "entix-dlq-production",
+                        "max_retries": 3
+                    }
+                ]
+            }
         }
     }
 }

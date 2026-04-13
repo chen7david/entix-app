@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
 
@@ -50,6 +50,11 @@ export const systemAuditEvents = sqliteTable(
         index("idx_audit_event_type").on(t.eventType),
         index("idx_audit_acknowledged").on(t.acknowledgedAt),
         index("idx_audit_created_at").on(t.createdAt),
+
+        // Ensures only one acknowledgment per subject
+        uniqueIndex("uq_audit_payment_ack")
+            .on(t.subjectId, t.eventType)
+            .where(sql`${t.eventType} = 'payment.acknowledged'`),
     ]
 );
 

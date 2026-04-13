@@ -3,6 +3,7 @@ import {
     ArrowLeftOutlined,
     DashboardOutlined,
     DollarOutlined,
+    HistoryOutlined,
     LogoutOutlined,
     MailOutlined,
     MoreOutlined,
@@ -80,6 +81,11 @@ export const PlatformAdminSidebarContent: React.FC = () => {
             label: "Email Insights",
             key: AppRoutes.admin.emails,
             icon: <MailOutlined />,
+        },
+        {
+            label: "Audit Logs",
+            key: AppRoutes.admin.auditLogs,
+            icon: <HistoryOutlined />,
         },
     ];
 

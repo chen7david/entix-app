@@ -1,10 +1,14 @@
+import { BadRequestError } from "@api/errors/app.error";
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
-import { FINANCIAL_CURRENCIES } from "@shared";
+import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
+import { resolveOverdraftLimit } from "@shared/utils/billing";
 import { addDays, addMonths, addWeeks } from "date-fns";
 import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
 import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "./financial/finance-wallet.service";
+import type { SessionPaymentService } from "./financial/session-payment.service";
 
 export type CreateSessionDTO = {
     title: string;
@@ -32,7 +36,9 @@ export class SessionScheduleService extends BaseService {
     constructor(
         private readonly sessionRepo: SessionScheduleRepository,
         private readonly billingPlansService: FinanceBillingPlansService,
-        private readonly walletService: FinanceWalletService
+        private readonly walletService: FinanceWalletService,
+        private readonly sessionPaymentService: SessionPaymentService,
+        private readonly auditRepo: SystemAuditRepository
     ) {
         super();
     }
@@ -180,7 +186,7 @@ export class SessionScheduleService extends BaseService {
             const currencyId = FINANCIAL_CURRENCIES.CNY; // Default to CNY for now
 
             for (const attendance of attendances) {
-                if (attendance.absent) continue; // Don't bill if absent (policy dependent)
+                if (attendance.absent) continue; // Don't bill if absent
 
                 const rate = await this.billingPlansService.resolveBillingPlanRate(
                     attendance.userId,
@@ -190,26 +196,102 @@ export class SessionScheduleService extends BaseService {
                 );
 
                 if (rate > 0) {
-                    const amountCents = session.durationMinutes * rate;
-                    await this.walletService.executeSessionDeduction({
-                        userId: attendance.userId,
-                        orgId: organizationId,
-                        currencyId,
-                        amountCents,
-                        description: `Session Fee: ${session.title} (${rate} cents/min x ${session.durationMinutes} min for ${activeParticipantCount} students)`,
-                        metadata: {
-                            rateCentsPerMinute: rate,
-                            durationMinutes: session.durationMinutes,
-                            participantCount: activeParticipantCount,
-                            sessionTitle: session.title,
-                        },
-                        sessionDate: session.startTime,
-                    });
+                    await this.chargeAttendance(
+                        organizationId,
+                        session,
+                        attendance.userId,
+                        rate,
+                        activeParticipantCount
+                    );
                 }
             }
         }
 
         return result;
+    }
+
+    /**
+     * Delegates atomic payment processing to SessionPaymentService.
+     * Handles business failures (insufficient funds) by writing to the audit log.
+     */
+    private async chargeAttendance(
+        organizationId: string,
+        session: { id: string; title: string; durationMinutes: number; startTime: Date },
+        userId: string,
+        rateCentsPerMinute: number,
+        participantCount: number
+    ) {
+        const amountCents = rateCentsPerMinute * session.durationMinutes;
+        const currencyId = FINANCIAL_CURRENCIES.CNY;
+
+        try {
+            // 1. Pre-charge overdraft warning check (consistency with resolveOverdraftLimit)
+            const account = await this.walletService.getWallet(userId, organizationId, currencyId);
+            const plan = await this.billingPlansService.getMemberBillingPlan(
+                userId,
+                organizationId,
+                currencyId
+            );
+
+            const overdraftLimit = resolveOverdraftLimit(account, plan);
+            const isApproachingOverdraft =
+                account.balanceCents - amountCents <= -overdraftLimit * 0.9;
+
+            if (isApproachingOverdraft) {
+                await this.auditRepo.insert({
+                    id: `aud_${nanoid()}`,
+                    organizationId,
+                    eventType: "payment.overdraft_limit_approached",
+                    severity: "warning",
+                    subjectType: "user",
+                    subjectId: userId,
+                    message: `Member ${userId} is approaching their overdraft limit of ${overdraftLimit} cents.`,
+                    metadata: JSON.stringify({
+                        balanceCents: account.balanceCents,
+                        overdraftLimitCents: overdraftLimit,
+                    }),
+                });
+            }
+
+            const treasury = await this.walletService.getOrgTreasury(organizationId, currencyId);
+
+            // 2. Delegate atomic batch debit
+            await this.sessionPaymentService.processSessionPayment({
+                organizationId,
+                sessionId: session.id,
+                userId,
+                amountCents,
+                currencyId,
+                sourceAccountId: account.id,
+                destinationAccountId: treasury.id,
+                categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
+                performedBy: null,
+                note: `Session Fee: ${session.title} (${rateCentsPerMinute} cents/min x ${session.durationMinutes} min, ${participantCount} students)`,
+            });
+        } catch (error) {
+            if (error instanceof BadRequestError) {
+                // Business failure (e.g., Insufficient funds even with overdraft)
+                await this.auditRepo.insert({
+                    id: `aud_${nanoid()}`,
+                    organizationId,
+                    eventType: "payment.missed",
+                    severity: "warning",
+                    subjectType: "session_attendance",
+                    subjectId: `${session.id}:${userId}`,
+                    message: `Failed to collect payment for ${userId} in session ${session.id}: ${error.message}`,
+                    metadata: JSON.stringify({
+                        error: error.message,
+                        amountCents,
+                        currencyId,
+                        sessionId: session.id,
+                        userId,
+                    }),
+                });
+                return;
+            }
+            // Unexpected infrastructure errors bubble up
+            throw error;
+        }
     }
 
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
