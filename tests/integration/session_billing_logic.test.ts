@@ -20,6 +20,7 @@ import {
 import { and, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
+import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
@@ -102,7 +103,9 @@ describe("Session Billing Logic Verification", () => {
             organizationId: orgId,
             absent: false,
         });
-        await client.orgs.schedule.updateStatus(orgId, sid, { status: "completed" });
+        const res = await client.orgs.schedule.updateStatus(orgId, sid, { status: "completed" });
+        await drainQueue(env as unknown as CloudflareBindings);
+        expect(res.status).toBe(HttpStatusCodes.OK);
         return sid;
     };
 
@@ -115,7 +118,7 @@ describe("Session Billing Logic Verification", () => {
                     and(
                         eq(systemAuditEvents.organizationId, orgId),
                         eq(systemAuditEvents.subjectId, `${sessionId}:${userId}`),
-                        eq(systemAuditEvents.eventType, "payment.missed")
+                        eq(systemAuditEvents.eventType, "payment.failed")
                     )
                 )
         )[0];
@@ -144,6 +147,7 @@ describe("Session Billing Logic Verification", () => {
         let res = await client.orgs.schedule.updateStatus(orgId, sessionId, {
             status: "completed",
         });
+        await drainQueue(env as unknown as CloudflareBindings);
         expect(res.status).toBe(HttpStatusCodes.OK);
 
         const attendance = (
@@ -165,6 +169,7 @@ describe("Session Billing Logic Verification", () => {
 
         // 2. Second completion (should be idempotent)
         res = await client.orgs.schedule.updateStatus(orgId, sessionId, { status: "completed" });
+        await drainQueue(env as unknown as CloudflareBindings);
         expect(res.status).toBe(HttpStatusCodes.OK);
 
         account = (

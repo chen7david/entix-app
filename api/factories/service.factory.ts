@@ -16,6 +16,7 @@ import { MemberExportService } from "@api/services/member-export.service";
 import { MemberImportService } from "@api/services/member-import.service";
 import { NotificationService } from "@api/services/notification.service";
 import { OrganizationService } from "@api/services/organization.service";
+import { PaymentQueueService } from "@api/services/payment/payment-queue.service";
 import { PlaylistService } from "@api/services/playlist.service";
 import { RegistrationService } from "@api/services/registration.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
@@ -33,7 +34,7 @@ import {
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
-    getPaymentRequestsRepository,
+    getPaymentQueueRepository,
     getPlaylistRepository,
     getSessionAttendancesRepository,
     getSessionScheduleRepository,
@@ -97,7 +98,7 @@ export const getSessionScheduleService = (ctx: AppContext) => {
         getSessionScheduleRepository(ctx),
         getFinanceBillingPlansService(ctx),
         getFinanceWalletService(ctx),
-        getSessionPaymentService(ctx),
+        getPaymentQueueService(ctx),
         getSystemAuditRepository(ctx)
     );
 };
@@ -164,9 +165,13 @@ export const getSessionPaymentService = (ctx: AppContext) => {
         new DbBatchRunner(db),
         getFinancialTransactionsRepository(ctx),
         getSessionAttendancesRepository(ctx),
-        getPaymentRequestsRepository(ctx),
+        getPaymentQueueRepository(ctx),
         getSystemAuditRepository(ctx),
         getFinancialAccountsRepository(ctx),
         getFinanceBillingPlansRepository(ctx)
     );
+};
+
+export const getPaymentQueueService = (ctx: AppContext) => {
+    return new PaymentQueueService(getPaymentQueueRepository(ctx), ctx.env.QUEUE);
 };

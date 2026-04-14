@@ -18,6 +18,7 @@ import {
 } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
+import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
@@ -149,6 +150,7 @@ describe("Session Billing Integration", () => {
         const response = await client.orgs.schedule.updateStatus(orgId, sessionId, {
             status: "completed",
         });
+        await drainQueue(env as unknown as CloudflareBindings);
         expect(response.status).toBe(HttpStatusCodes.OK);
 
         const txs = await db
@@ -254,6 +256,7 @@ describe("Session Billing Integration", () => {
         const response = await client.orgs.schedule.updateStatus(orgId, sessionId, {
             status: "completed",
         });
+        await drainQueue(env as unknown as CloudflareBindings);
         expect(response.status).toBe(HttpStatusCodes.OK);
 
         const txs = await db
@@ -326,6 +329,7 @@ describe("Session Billing Integration", () => {
         const response = await client.orgs.schedule.updateStatus(orgId, sessionId, {
             status: "completed",
         });
+        // We do not drainQueue if the endpoint itself returns a 4xx error and doesn't enqueue.
         expect(response.status).toBe(HttpStatusCodes.NOT_FOUND);
         const body = (await response.json()) as any;
         expect(body.error).toContain("has no tier for session size: 1");

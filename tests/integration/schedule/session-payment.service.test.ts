@@ -3,7 +3,7 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
+import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
@@ -42,7 +42,7 @@ describe("SessionPaymentService Integration", () => {
             new DbBatchRunner(db),
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
-            new PaymentRequestsRepository(db),
+            new PaymentQueueRepository(db),
             new SystemAuditRepository(db),
             new FinancialAccountsRepository(db),
             new FinanceBillingPlansRepository(db)

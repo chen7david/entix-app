@@ -102,11 +102,11 @@ export class FinancialTransactionsRepository {
      */
     prepareStatements(
         input: CreateTransactionRepoInput,
-        overdraftOverrideCents: number | null = null
+        effectiveOverdraftLimit: number | null = null
     ) {
         const overdraftExpr =
-            overdraftOverrideCents !== null
-                ? sql`${overdraftOverrideCents}`
+            effectiveOverdraftLimit !== null
+                ? sql`${effectiveOverdraftLimit}`
                 : sql`COALESCE(${financialAccounts.overdraftLimitCents}, 0)`;
 
         // 1. Debit Source
@@ -190,9 +190,9 @@ export class FinancialTransactionsRepository {
      */
     async insert(
         input: CreateTransactionRepoInput,
-        overdraftOverrideCents: number | null = null
+        effectiveOverdraftLimit: number | null = null
     ): Promise<string> {
-        const statements = this.prepareStatements(input, overdraftOverrideCents);
+        const statements = this.prepareStatements(input, effectiveOverdraftLimit);
 
         // Phase 1: Debit + Credit only.
         // The debit uses a WHERE guard: balance + overdraft >= amount.
