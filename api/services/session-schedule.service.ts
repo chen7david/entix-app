@@ -188,6 +188,17 @@ export class SessionScheduleService extends BaseService {
             for (const attendance of attendances) {
                 if (attendance.absent) continue; // Don't bill if absent
 
+                // IDEMPOTENCY GUARD: paymentStatus is set atomically to "paid" by
+                // processSessionPayment() in the same db.batch() as the transaction.
+                // If already paid or refunded, skip — prevents double charging on
+                // repeated calls (e.g. UI tab switching re-firing the endpoint).
+                if (
+                    attendance.paymentStatus === "paid" ||
+                    attendance.paymentStatus === "refunded"
+                ) {
+                    continue;
+                }
+
                 const rate = await this.billingPlansService.resolveBillingPlanRate(
                     attendance.userId,
                     organizationId,
