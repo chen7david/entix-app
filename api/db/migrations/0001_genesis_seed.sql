@@ -1,7 +1,6 @@
--- 0001_baseline_seed.sql
+-- 0001_genesis_seed.sql
 -- Consolidated baseline seed data required for the app to function in all environments.
 -- All inserts use INSERT OR IGNORE for idempotency.
--- Includes platform entities and the root platform administrator.
 
 -- 1. Organizations (Platform & Test Org)
 INSERT OR IGNORE INTO `auth_organizations` (`id`, `name`, `slug`, `created_at`)
@@ -26,6 +25,7 @@ VALUES
   ('fcat_cash_deposit', 'Cash Deposit', 0, 1, (cast(unixepoch() * 1000 as integer))),
   ('fcat_store_purchase', 'Store Purchase', 1, 0, (cast(unixepoch() * 1000 as integer))),
   ('fcat_service_fee', 'Service Fee', 1, 0, (cast(unixepoch() * 1000 as integer))),
+  ('fcat_session_payment', 'Session Payment', 1, 0, (cast(unixepoch() * 1000 as integer))),
   ('fcat_refund', 'Refund', 0, 0, (cast(unixepoch() * 1000 as integer))),
   ('fcat_internal_transfer', 'Internal Transfer', 0, 0, (cast(unixepoch() * 1000 as integer))),
   ('fcat_system_adjustment', 'System Adjustment', 0, 0, (cast(unixepoch() * 1000 as integer)));
