@@ -1,11 +1,11 @@
-import { BadRequestError } from "@api/errors/app.error";
-import type { AppDb } from "@api/factories/db.factory";
+import { BadRequestError, NotFoundError } from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import {
     ACCOUNT_TYPES,
     type EnsureFundingAccountRequest,
     FINANCIAL_CURRENCY_CONFIG,
+    generateAccountId,
 } from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
@@ -16,11 +16,10 @@ import { FinancialBaseService } from "./financial-base.service";
  */
 export class AdminFinancialService extends FinancialBaseService {
     constructor(
-        protected readonly db: AppDb,
         protected readonly accountsRepo: FinancialAccountsRepository,
         protected readonly transactionsRepo: FinancialTransactionsRepository
     ) {
-        super(db, accountsRepo, transactionsRepo);
+        super(accountsRepo, transactionsRepo);
     }
 
     async adminCredit(input: {
@@ -116,7 +115,7 @@ export class AdminFinancialService extends FinancialBaseService {
         }
 
         const newAccount = await this.accountsRepo.insert({
-            id: `facc_${input.organizationId}_${input.currencyId}_funding`,
+            id: generateAccountId(),
             organizationId: input.organizationId,
             ownerId: input.organizationId,
             ownerType: "org",
@@ -127,9 +126,6 @@ export class AdminFinancialService extends FinancialBaseService {
             updatedAt: new Date(),
         });
 
-        console.log(
-            `Auto-created funding account for org ${input.organizationId} [${input.currencyId}]`
-        );
         return newAccount;
     }
 
@@ -156,8 +152,11 @@ export class AdminFinancialService extends FinancialBaseService {
             updated = this.assertExists(res, "Account not found");
         }
 
-        // Final assertExists ensures the return type is always non-null (fixes TS2322)
-        return this.assertExists(updated, "Account not found");
+        // Return the most-recently updated snapshot.
+        if (!updated) {
+            throw new NotFoundError("Account not found");
+        }
+        return updated;
     }
 
     /**

@@ -125,7 +125,6 @@ export const getMemberImportService = (ctx: AppContext) => {
 
 export const getOrgFinancialService = (ctx: AppContext) => {
     return new OrgFinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx),
         getFinancialCurrenciesRepository(ctx)
@@ -134,7 +133,6 @@ export const getOrgFinancialService = (ctx: AppContext) => {
 
 export const getUserFinancialService = (ctx: AppContext) => {
     return new UserFinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx),
         getFinancialCurrenciesRepository(ctx),
@@ -144,7 +142,6 @@ export const getUserFinancialService = (ctx: AppContext) => {
 
 export const getAdminFinancialService = (ctx: AppContext) => {
     return new AdminFinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx)
     );
@@ -156,7 +153,6 @@ export const getFinanceBillingPlansService = (ctx: AppContext) => {
 
 export const getFinanceWalletService = (ctx: AppContext) => {
     return new FinanceWalletService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx)
     );
