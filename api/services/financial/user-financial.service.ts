@@ -1,10 +1,9 @@
 import { ConflictError } from "@api/errors/app.error";
-import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
 import {
-    encodeTransactionCursor,
+    buildTransactionCursor,
     type FinancialTransactionsRepository,
 } from "@api/repositories/financial/financial-transactions.repository";
 import { ACCOUNT_TYPES, type FinancialAccount, generateAccountId } from "@shared";
@@ -17,13 +16,12 @@ import { FinancialBaseService } from "./financial-base.service";
  */
 export class UserFinancialService extends FinancialBaseService {
     constructor(
-        protected readonly db: AppDb,
         protected readonly accountsRepo: FinancialAccountsRepository,
         protected readonly transactionsRepo: FinancialTransactionsRepository,
         private readonly currenciesRepo: FinancialCurrenciesRepository,
         private readonly orgSettingsRepo: FinancialOrgSettingsRepository
     ) {
-        super(db, accountsRepo, transactionsRepo);
+        super(accountsRepo, transactionsRepo);
     }
 
     /**
@@ -173,14 +171,12 @@ export class UserFinancialService extends FinancialBaseService {
             };
         });
 
-        // Find last element for next cursor encoding
-        const lastLine = lines.length >= pagination.limit ? lines[lines.length - 1] : null;
-        const nextCursor = lastLine
-            ? encodeTransactionCursor({
-                  transactionDate: lastLine.transaction.transactionDate,
-                  id: lastLine.id,
-              })
-            : null;
+        // Build next-page cursor from results
+        const cursorItems = lines.map((l) => ({
+            transactionDate: l.transaction.transactionDate,
+            id: l.id,
+        }));
+        const nextCursor = buildTransactionCursor(cursorItems, pagination.limit);
 
         return {
             data,

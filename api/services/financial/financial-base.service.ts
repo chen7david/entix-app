@@ -1,5 +1,4 @@
 import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.error";
-import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { ACCOUNT_TYPES } from "@shared";
@@ -15,7 +14,6 @@ import { BaseService } from "../base.service";
  */
 export abstract class FinancialBaseService extends BaseService {
     constructor(
-        protected readonly db: AppDb,
         protected readonly accountsRepo: FinancialAccountsRepository,
         protected readonly transactionsRepo: FinancialTransactionsRepository
     ) {
