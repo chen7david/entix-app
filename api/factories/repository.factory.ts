@@ -9,7 +9,7 @@ import { FinancialTransactionsRepository } from "@api/repositories/financial/fin
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
-import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
+import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { PlaylistRepository } from "@api/repositories/playlist.repository";
 import { ScheduledSessionsRepository } from "@api/repositories/scheduled-sessions.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
@@ -97,8 +97,8 @@ export const getSessionAttendancesRepository = (ctx: AppContext) => {
     return new SessionAttendancesRepository(getDbClient(ctx));
 };
 
-export const getPaymentRequestsRepository = (ctx: AppContext) => {
-    return new PaymentRequestsRepository(getDbClient(ctx));
+export const getPaymentQueueRepository = (ctx: AppContext) => {
+    return new PaymentQueueRepository(getDbClient(ctx));
 };
 
 export const getSystemAuditRepository = (ctx: AppContext) => {

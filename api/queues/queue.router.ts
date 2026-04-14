@@ -14,6 +14,6 @@ export async function routeQueue(
     }
 
     for (const message of batch.messages) {
-        await EntixQueueHandler.process(message, env);
+        await EntixQueueHandler.process(message, env, _ctx);
     }
 }

@@ -3,7 +3,7 @@ import type { DbBatchRunner } from "@api/helpers/batch-runner";
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import type { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
+import type { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import {
@@ -11,8 +11,9 @@ import {
     FINANCIAL_CURRENCIES,
     getSystemAdjustmentAccountId,
 } from "@shared/constants/financial";
-import { createTransactionRepoInputSchema } from "@shared/db/schema";
+import { createTransactionRepoInputSchema, type PaymentRequest } from "@shared/db/schema";
 import { resolveOverdraftLimit } from "@shared/utils/billing";
+import { IdempotencyKeys } from "@shared/utils/idempotency-keys";
 import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
@@ -25,7 +26,7 @@ export class SessionPaymentService extends BaseService {
         private readonly dbBatchRunner: DbBatchRunner,
         private readonly transactionsRepo: FinancialTransactionsRepository,
         private readonly attendancesRepo: SessionAttendancesRepository,
-        private readonly paymentRequestsRepo: PaymentRequestsRepository,
+        private readonly paymentRequestsRepo: PaymentQueueRepository,
         private readonly auditRepo: SystemAuditRepository,
         private readonly accountsRepo: FinancialAccountsRepository,
         private readonly billingPlansRepo: FinanceBillingPlansRepository
@@ -36,8 +37,8 @@ export class SessionPaymentService extends BaseService {
     /**
      * Processes a session payment using a two-phase batch strategy.
      *
-     * Idempotency: callers should supply a stable idempotency key in the format
-     * `session_payment:{sessionId}:{userId}` to prevent double-charging.
+     * @deprecated Use `PaymentQueueService.enqueue()` and the asynchronous queue consumer instead.
+     * This method remains for synchronous internal needs.
      */
     async processSessionPayment(input: {
         organizationId: string;
@@ -50,11 +51,9 @@ export class SessionPaymentService extends BaseService {
         categoryId: string;
         performedBy: string | null;
         note?: string;
-        overdraftOverrideCents?: number;
     }): Promise<{ transactionId: string; paymentRequestId: string; auditId: string }> {
-        const idempotencyKey = `session_payment:${input.sessionId}:${input.userId}`;
+        const idempotencyKey = IdempotencyKeys.sessionPayment(input.sessionId, input.userId);
 
-        // Guard: reject if a completed payment request already exists for this key.
         const existing = await this.paymentRequestsRepo.findByIdempotencyKey(idempotencyKey);
         if (existing?.status === "completed") {
             throw new ConflictError(
@@ -62,29 +61,8 @@ export class SessionPaymentService extends BaseService {
             );
         }
 
-        const [sourceAccount, memberPlan] = await Promise.all([
-            this.accountsRepo.findById(input.sourceAccountId),
-            this.billingPlansRepo
-                .getMemberPlanByCurrency(input.userId, input.organizationId, input.currencyId)
-                .catch(() => null),
-        ]);
-
-        const resolvedOverdraft =
-            input.overdraftOverrideCents ??
-            resolveOverdraftLimit(
-                { overdraftLimitCents: sourceAccount?.overdraftLimitCents ?? null },
-                memberPlan?.plan ?? null
-            );
-
-        const now = new Date();
-        const txId = `tx_${nanoid()}`;
-        const debitLineId = `txl_${nanoid()}`;
-        const creditLineId = `txl_${nanoid()}`;
         const paymentRequestId = `pr_${nanoid()}`;
-        const auditId = `aud_${nanoid()}`;
-
-        // Create the payment request record (intent-first).
-        await this.paymentRequestsRepo.insert({
+        const record = await this.paymentRequestsRepo.insert({
             id: paymentRequestId,
             organizationId: input.organizationId,
             type: "session_payment",
@@ -98,74 +76,104 @@ export class SessionPaymentService extends BaseService {
             referenceType: "session",
             referenceId: input.sessionId,
             requestedBy: input.performedBy ?? null,
-            userId: input.userId, // Attribution to the student paying
+            userId: input.userId,
             note: input.note ?? null,
+
             attemptCount: 1,
-            lastAttemptedAt: now,
-            createdAt: now,
-            updatedAt: now,
+            lastAttemptedAt: new Date(),
         });
 
-        try {
-            const txInput = createTransactionRepoInputSchema.parse({
-                id: txId,
-                organizationId: input.organizationId,
-                categoryId: input.categoryId,
-                sourceAccountId: input.sourceAccountId,
-                destinationAccountId: input.destinationAccountId,
-                currencyId: input.currencyId,
-                amountCents: input.amountCents,
-                transactionDate: now,
-                createdAt: now,
-                debitLineId,
-                creditLineId,
-                description: input.note ?? `Payment for session ${input.sessionId}`,
-            });
+        const { txId, auditId } = await this.processFromRequest(record);
 
-            // Phase 1 + 2: Financial Ledger (Debit + Credit + Header + Lines)
-            await this.transactionsRepo.insert(txInput, resolvedOverdraft);
+        await this.paymentRequestsRepo.updateStatus(paymentRequestId, "completed", {
+            transactionId: txId,
+            processedAt: new Date(),
+        });
 
-            // Phase 3: Application-level writes — attendance status + audit log
-            const attendanceStatement = this.attendancesRepo.prepareUpdatePaymentStatus(
-                input.sessionId,
-                input.userId,
-                "paid"
-            );
+        return { transactionId: txId, paymentRequestId, auditId };
+    }
 
-            const auditStatement = this.auditRepo.prepareInsert({
-                id: auditId,
-                organizationId: input.organizationId,
-                eventType: "session_payment_processed",
-                severity: "info",
-                actorId: input.performedBy ?? null,
-                actorType: input.performedBy ? "user" : "system",
-                subjectType: "session_attendance",
-                subjectId: `${input.sessionId}:${input.userId}`,
-                message: `Processed session payment for session ${input.sessionId}`,
-                metadata: JSON.stringify({
-                    amountCents: input.amountCents,
-                    transactionId: txId,
-                    paymentRequestId,
-                }),
-                createdAt: now,
-            });
-
-            await this.dbBatchRunner.batch([attendanceStatement, auditStatement]);
-
-            // Mark the payment request as completed.
-            await this.paymentRequestsRepo.updateStatus(paymentRequestId, "completed", {
-                transactionId: txId,
-                processedAt: now,
-            });
-
-            return { transactionId: txId, paymentRequestId, auditId };
-        } catch (err) {
-            await this.paymentRequestsRepo.updateStatus(paymentRequestId, "failed", {
-                failureReason: err instanceof Error ? err.message : String(err),
-                lastAttemptedAt: now,
-            });
-            throw err;
+    /**
+     * Core payment execution logic invoked by the asynchronous queue consumer.
+     * Handles ledger writes and application-level status updates for a pre-recorded request.
+     *
+     * @param pr - The payment request record to process.
+     * @returns The generated transaction ID on success.
+     */
+    async processFromRequest(pr: PaymentRequest): Promise<{ txId: string; auditId: string }> {
+        if (pr.type !== "session_payment") {
+            throw new Error(`Invalid payment request type for session processing: ${pr.type}`);
         }
+
+        const userId = pr.userId;
+        if (!userId) {
+            throw new Error(`Attribution userId missing for payment request ${pr.id}`);
+        }
+
+        const [sourceAccount, memberPlan] = await Promise.all([
+            this.accountsRepo.findById(pr.sourceAccountId),
+            this.billingPlansRepo
+                .getMemberPlanByCurrency(userId, pr.organizationId, pr.currencyId)
+                .catch(() => null),
+        ]);
+
+        const resolvedOverdraft = resolveOverdraftLimit(
+            { overdraftLimitCents: sourceAccount?.overdraftLimitCents ?? null },
+            memberPlan?.plan ?? null
+        );
+
+        const now = new Date();
+        const txId = `tx_${nanoid()}`;
+        const debitLineId = `txl_${nanoid()}`;
+        const creditLineId = `txl_${nanoid()}`;
+
+        const txInput = createTransactionRepoInputSchema.parse({
+            id: txId,
+            organizationId: pr.organizationId,
+            categoryId: pr.categoryId,
+            sourceAccountId: pr.sourceAccountId,
+            destinationAccountId: pr.destinationAccountId,
+            currencyId: pr.currencyId,
+            amountCents: pr.amountCents,
+            transactionDate: now,
+            createdAt: now,
+            debitLineId,
+            creditLineId,
+            description: pr.note ?? `Payment for session ${pr.referenceId}`,
+        });
+
+        // 1. Financial Ledger Entry
+        await this.transactionsRepo.insert(txInput, resolvedOverdraft);
+
+        // 2. Application Writes (Attendance + Audit)
+        const attendanceStatement = this.attendancesRepo.prepareUpdatePaymentStatus(
+            pr.referenceId,
+            userId,
+            "paid"
+        );
+
+        const auditId = `aud_${nanoid()}`;
+        const auditStatement = this.auditRepo.prepareInsert({
+            id: auditId,
+            organizationId: pr.organizationId,
+            eventType: "session_payment_processed",
+            severity: "info",
+            actorId: pr.requestedBy ?? null,
+            actorType: pr.requestedBy ? "user" : "system",
+            subjectType: "session_attendance",
+            subjectId: `${pr.referenceId}:${userId}`,
+            message: `Processed session payment for session ${pr.referenceId}`,
+            metadata: JSON.stringify({
+                amountCents: pr.amountCents,
+                transactionId: txId,
+                paymentRequestId: pr.id,
+            }),
+            createdAt: now,
+        });
+
+        await this.dbBatchRunner.batch([attendanceStatement, auditStatement]);
+
+        return { txId, auditId };
     }
 
     /**

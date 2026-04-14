@@ -1,4 +1,4 @@
-import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
+import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
 import {
     authOrganizations,
@@ -13,14 +13,14 @@ import { createTestDb } from "../../lib/utils";
 
 describe("PaymentRequestsRepository Integration", () => {
     let db: TestDb;
-    let repo: PaymentRequestsRepository;
+    let repo: PaymentQueueRepository;
     const orgId = "org_pay_req";
     const sessionId = "sess_pay_req";
     const userId = "user_pay_req";
 
     beforeEach(async () => {
         db = await createTestDb();
-        repo = new PaymentRequestsRepository(db);
+        repo = new PaymentQueueRepository(db);
 
         // Setup prerequisites
         await db

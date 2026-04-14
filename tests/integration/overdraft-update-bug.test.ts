@@ -4,7 +4,7 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
+import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
@@ -20,6 +20,7 @@ import {
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
+import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestDb } from "../lib/utils";
 
@@ -147,7 +148,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             new DbBatchRunner(db),
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
-            new PaymentRequestsRepository(db),
+            new PaymentQueueRepository(db),
             new SystemAuditRepository(db),
             new FinancialAccountsRepository(db),
             new FinanceBillingPlansRepository(db)
@@ -164,6 +165,9 @@ describe("Hierarchical Overdraft Resolution", () => {
             categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
             performedBy: null,
         });
+
+        // DRAIN QUEUE: Process the async payment request
+        await drainQueue(env as unknown as CloudflareBindings);
 
         // 8. Assert success (balance -300)
         const updatedAcc = await db.query.financialAccounts.findFirst({

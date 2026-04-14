@@ -8,7 +8,7 @@ export * from "./financial/financial-transactions.repository";
 export * from "./media.repository";
 export * from "./member.repository";
 export * from "./organization.repository";
-export * from "./payment-requests.repository";
+export * from "./payment/payment-queue.repository";
 export * from "./playlist.repository";
 export * from "./scheduled-sessions.repository";
 export * from "./session-attendances.repository";

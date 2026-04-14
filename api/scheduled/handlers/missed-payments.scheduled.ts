@@ -1,36 +1,31 @@
-import { getDbClient } from "@api/factories/db.factory";
+import { getPaymentQueueRepository } from "@api/factories/repository.factory";
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { EntixQueueMessage } from "@api/queues/entix.queue";
-import { systemAuditEvents } from "@shared/db/schema";
-import { and, eq, isNull, lt } from "drizzle-orm";
 
+/**
+ * Scheduled task to reconcile "stuck" payment requests.
+ * Scans for requests that have been in the 'pending' state for more than 5 minutes
+ * and re-enqueues them to the processing queue.
+ */
 export async function enqueueMissedPayments(env: CloudflareBindings): Promise<void> {
     const ctx = { env } as AppContext;
-    const db = getDbClient(ctx);
+    const paymentQueueRepo = getPaymentQueueRepository(ctx);
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const missedPayments = await db
-        .select({
-            id: systemAuditEvents.id,
-            organizationId: systemAuditEvents.organizationId,
-        })
-        .from(systemAuditEvents)
-        .where(
-            and(
-                eq(systemAuditEvents.eventType, "payment.missed"),
-                isNull(systemAuditEvents.acknowledgedAt),
-                lt(systemAuditEvents.createdAt, fiveMinutesAgo)
-            )
-        );
+    // Find all requests that haven't been picked up by a worker yet
+    const pendingRequests = await paymentQueueRepo.findPendingOlderThan(fiveMinutesAgo);
 
-    for (const payment of missedPayments) {
+    for (const pr of pendingRequests) {
         const msg: EntixQueueMessage = {
-            type: "billing.retry-missed-payment",
-            eventId: payment.id,
-            organizationId: payment.organizationId,
+            type: "billing.process-payment",
+            paymentRequestId: pr.id,
         };
         await env.QUEUE.send(msg);
     }
 
-    console.log(`[Scheduled:MissedPayments] Enqueued ${missedPayments.length} missed payments`);
+    if (pendingRequests.length > 0) {
+        console.log(
+            `[Scheduled:MissedPayments] Re-enqueued ${pendingRequests.length} legacy pending payments`
+        );
+    }
 }

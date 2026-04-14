@@ -1,14 +1,13 @@
 import { BadRequestError } from "@api/errors/app.error";
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
-import { resolveOverdraftLimit } from "@shared/utils/billing";
+import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, IdempotencyKeys } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
 import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
 import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "./financial/finance-wallet.service";
-import type { SessionPaymentService } from "./financial/session-payment.service";
+import type { PaymentQueueService } from "./payment/payment-queue.service";
 
 export type CreateSessionDTO = {
     title: string;
@@ -37,7 +36,7 @@ export class SessionScheduleService extends BaseService {
         private readonly sessionRepo: SessionScheduleRepository,
         private readonly billingPlansService: FinanceBillingPlansService,
         private readonly walletService: FinanceWalletService,
-        private readonly sessionPaymentService: SessionPaymentService,
+        private readonly paymentQueueService: PaymentQueueService,
         private readonly auditRepo: SystemAuditRepository
     ) {
         super();
@@ -189,9 +188,9 @@ export class SessionScheduleService extends BaseService {
                 if (attendance.absent) continue; // Don't bill if absent
 
                 // IDEMPOTENCY GUARD: paymentStatus is set atomically to "paid" by
-                // processSessionPayment() in the same db.batch() as the transaction.
-                // If already paid or refunded, skip — prevents double charging on
-                // repeated calls (e.g. UI tab switching re-firing the endpoint).
+                // the queue consumer in the same db.batch() as the transaction.
+                // If already paid or refunded, skip — prevents double-enqueueing
+                // on repeated calls (e.g. session being marked completed multiple times).
                 if (
                     attendance.paymentStatus === "paid" ||
                     attendance.paymentStatus === "refunded"
@@ -222,8 +221,8 @@ export class SessionScheduleService extends BaseService {
     }
 
     /**
-     * Delegates atomic payment processing to SessionPaymentService.
-     * Handles business failures (insufficient funds) by writing to the audit log.
+     * Enqueues a payment request for asynchronous processing.
+     * Uses centralized idempotency keys to prevent duplicate billing.
      */
     private async chargeAttendance(
         organizationId: string,
@@ -236,52 +235,32 @@ export class SessionScheduleService extends BaseService {
         const currencyId = FINANCIAL_CURRENCIES.CNY;
 
         try {
-            // 1. Pre-charge overdraft warning check (consistency with resolveOverdraftLimit)
+            // 1. Resolve source and destination accounts
             const account = await this.walletService.getWallet(userId, organizationId, currencyId);
-            const plan = await this.billingPlansService.getMemberBillingPlan(
-                userId,
-                organizationId,
-                currencyId
-            );
-
-            const overdraftLimit = resolveOverdraftLimit(account, plan);
-            const isApproachingOverdraft =
-                account.balanceCents - amountCents <= -overdraftLimit * 0.9;
-
-            if (isApproachingOverdraft) {
-                await this.auditRepo.insert({
-                    id: `aud_${nanoid()}`,
-                    organizationId,
-                    eventType: "payment.overdraft_limit_approached",
-                    severity: "warning",
-                    subjectType: "user",
-                    subjectId: userId,
-                    message: `Member ${userId} is approaching their overdraft limit of ${overdraftLimit} cents.`,
-                    metadata: JSON.stringify({
-                        balanceCents: account.balanceCents,
-                        overdraftLimitCents: overdraftLimit,
-                    }),
-                });
-            }
-
             const orgFunding = await this.walletService.getOrgFunding(organizationId, currencyId);
 
-            // 2. Delegate atomic batch debit
-            await this.sessionPaymentService.processSessionPayment({
+            // 2. Generate stable idempotency key
+            const idempotencyKey = IdempotencyKeys.sessionPayment(session.id, userId);
+
+            // 3. Enqueue for asynchronous processing
+            await this.paymentQueueService.enqueue({
                 organizationId,
-                sessionId: session.id,
-                userId,
+                type: "session_payment",
                 amountCents,
                 currencyId,
                 sourceAccountId: account.id,
                 destinationAccountId: orgFunding.id,
                 categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
-                performedBy: null,
+                idempotencyKey,
+                referenceType: "session",
+                referenceId: session.id,
+                requestedBy: null, // System-initiated
+                userId, // Attributed student
                 note: `Session Fee: ${session.title} (${rateCentsPerMinute} cents/min x ${session.durationMinutes} min, ${participantCount} students)`,
             });
         } catch (error) {
             if (error instanceof BadRequestError) {
-                // Business failure (e.g., Insufficient funds even with overdraft)
+                // Business failure (e.g., wallet not found)
                 await this.auditRepo.insert({
                     id: `aud_${nanoid()}`,
                     organizationId,
@@ -289,18 +268,16 @@ export class SessionScheduleService extends BaseService {
                     severity: "warning",
                     subjectType: "session_attendance",
                     subjectId: `${session.id}:${userId}`,
-                    message: `Failed to collect payment for ${userId} in session ${session.id}: ${error.message}`,
+                    message: `Failed to enqueue payment for ${userId} in session ${session.id}: ${error.message}`,
                     metadata: JSON.stringify({
                         error: error.message,
                         amountCents,
-                        currencyId,
                         sessionId: session.id,
                         userId,
                     }),
                 });
                 return;
             }
-            // Unexpected infrastructure errors bubble up
             throw error;
         }
     }
