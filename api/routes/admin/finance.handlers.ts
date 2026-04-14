@@ -49,13 +49,9 @@ export class AdminFinanceHandler {
 
     static updateAccount: AppHandler<typeof AdminFinanceRoutes.updateAccount> = async (ctx) => {
         const { id } = ctx.req.valid("param");
-        const { name, overdraftLimitCents } = ctx.req.valid("json");
+        const { name } = ctx.req.valid("json");
 
-        const account = await getAdminFinancialService(ctx).updateAccount(
-            id,
-            name,
-            overdraftLimitCents
-        );
+        const account = await getAdminFinancialService(ctx).updateAccount(id, name);
         return ctx.json({ data: account }, HttpStatusCodes.OK);
     };
 

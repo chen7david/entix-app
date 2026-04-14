@@ -24,7 +24,6 @@ export const billingPlanSchema = z.object({
     description: z.string().nullable(),
     currencyId: z.string(),
     isActive: z.boolean(),
-    overdraftLimitCents: z.number().int().nonnegative().default(0),
     rates: z.array(billingPlanRateSchema).optional(),
     createdAt: z.union([z.string(), z.date(), z.number()]),
     updatedAt: z.union([z.string(), z.date(), z.number()]),
@@ -61,7 +60,6 @@ export const createBillingPlanSchema = z.object({
     name: z.string().min(1).max(100),
     description: z.string().optional(),
     currencyId: z.string().min(1),
-    overdraftLimitCents: z.number().int().nonnegative().default(0),
     rates: z
         .array(
             z.object({

@@ -1,8 +1,6 @@
 import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
-    authOrganizations,
-    authUsers,
     type CreateTransactionRepoInput,
     financialAccounts,
     financialCurrencies,
@@ -11,7 +9,7 @@ import {
     financialTransactions,
 } from "@shared/db/schema";
 import type { TransactionFilters } from "@shared/schemas/dto/financial.dto";
-import { aliasedTable, and, desc, eq, gte, like, lt, lte, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, like, lt, lte, or, sql } from "drizzle-orm";
 
 /**
  * Encodes transactionDate + id into a base64 cursor for stable pagination.
@@ -76,15 +74,6 @@ export class FinancialTransactionsRepository {
      * 2. Credit the destination account
      * 3. Insert the transaction header
      * 4. Insert the transaction lines
-     *
-     * Concurrency note:
-     *   The debit WHERE clause checks `balance >= amount` at read time.
-     *   This is safe because Cloudflare D1 serializes all writes to a single
-     *   primary — there is no parallel write path that could race within the
-     *   same db.batch() call.
-     *   If the architecture ever moves to a multi-writer setup (e.g. read
-     *   replicas with write forwarding), this guard must be replaced with a
-     *   SELECT ... FOR UPDATE or an optimistic-lock retry loop.
      */
     prepareStatements(input: CreateTransactionRepoInput) {
         // 1. Debit Source
@@ -98,10 +87,7 @@ export class FinancialTransactionsRepository {
                 and(
                     eq(financialAccounts.id, input.sourceAccountId),
                     eq(financialAccounts.isActive, true),
-                    gte(
-                        sql`${financialAccounts.balanceCents} + COALESCE(${financialAccounts.overdraftLimitCents}, 0)`,
-                        input.amountCents
-                    )
+                    gte(financialAccounts.balanceCents, input.amountCents)
                 )
             );
 
@@ -226,11 +212,6 @@ export class FinancialTransactionsRepository {
             );
         }
 
-        const srcUser = aliasedTable(authUsers, "src_user");
-        const srcOrg = aliasedTable(authOrganizations, "src_org");
-        const destUser = aliasedTable(authUsers, "dest_user");
-        const destOrg = aliasedTable(authOrganizations, "dest_org");
-
         const rows = await this.db
             .select({
                 transaction: financialTransactions,
@@ -239,16 +220,10 @@ export class FinancialTransactionsRepository {
                 sourceAccount: {
                     id: sql<string>`src.id`,
                     name: sql<string>`src.name`,
-                    ownerId: sql<string>`src.owner_id`,
-                    ownerType: sql<string>`src.owner_type`,
-                    ownerName: sql<string>`COALESCE(src_user.name, src_org.name)`,
                 },
                 destinationAccount: {
                     id: sql<string>`dest.id`,
                     name: sql<string>`dest.name`,
-                    ownerId: sql<string>`dest.owner_id`,
-                    ownerType: sql<string>`dest.owner_type`,
-                    ownerName: sql<string>`COALESCE(dest_user.name, dest_org.name)`,
                 },
             })
             .from(financialTransactions)
@@ -268,10 +243,6 @@ export class FinancialTransactionsRepository {
                 sql`${financialAccounts} as dest`,
                 eq(financialTransactions.destinationAccountId, sql`dest.id`)
             )
-            .leftJoin(srcUser, eq(sql`src.owner_id`, srcUser.id))
-            .leftJoin(srcOrg, eq(sql`src.owner_id`, srcOrg.id))
-            .leftJoin(destUser, eq(sql`dest.owner_id`, destUser.id))
-            .leftJoin(destOrg, eq(sql`dest.owner_id`, destOrg.id))
             .where(and(...conditions))
             .orderBy(desc(financialTransactions.transactionDate), desc(financialTransactions.id))
             .limit(filters.limit ?? 20);
@@ -381,11 +352,6 @@ export class FinancialTransactionsRepository {
             );
         }
 
-        const srcUser = aliasedTable(authUsers, "src_user");
-        const srcOrg = aliasedTable(authOrganizations, "src_org");
-        const destUser = aliasedTable(authUsers, "dest_user");
-        const destOrg = aliasedTable(authOrganizations, "dest_org");
-
         const rows = await this.db
             .select({
                 line: financialTransactionLines,
@@ -396,16 +362,10 @@ export class FinancialTransactionsRepository {
                 sourceAccount: {
                     id: sql<string>`src.id`,
                     name: sql<string>`src.name`,
-                    ownerId: sql<string>`src.owner_id`,
-                    ownerType: sql<string>`src.owner_type`,
-                    ownerName: sql<string>`COALESCE(src_user.name, src_org.name)`,
                 },
                 destinationAccount: {
                     id: sql<string>`dest.id`,
                     name: sql<string>`dest.name`,
-                    ownerId: sql<string>`dest.owner_id`,
-                    ownerType: sql<string>`dest.owner_type`,
-                    ownerName: sql<string>`COALESCE(dest_user.name, dest_org.name)`,
                 },
             })
             .from(financialTransactionLines)
@@ -433,10 +393,6 @@ export class FinancialTransactionsRepository {
                 sql`${financialAccounts} as dest`,
                 eq(financialTransactions.destinationAccountId, sql`dest.id`)
             )
-            .leftJoin(srcUser, eq(sql`src.owner_id`, srcUser.id))
-            .leftJoin(srcOrg, eq(sql`src.owner_id`, srcOrg.id))
-            .leftJoin(destUser, eq(sql`dest.owner_id`, destUser.id))
-            .leftJoin(destOrg, eq(sql`dest.owner_id`, destOrg.id))
             .where(and(...conditions))
             .orderBy(
                 desc(financialTransactions.transactionDate),

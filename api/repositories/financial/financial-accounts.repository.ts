@@ -26,7 +26,6 @@ export class FinancialAccountsRepository {
                     balanceCents: input.balanceCents ?? 0,
                     isActive: input.isActive ?? true,
                     accountType: input.accountType ?? "savings",
-                    overdraftLimitCents: input.overdraftLimitCents ?? null,
                 })
                 .returning();
 
@@ -140,27 +139,6 @@ export class FinancialAccountsRepository {
             .update(financialAccounts)
             .set({
                 name,
-                updatedAt,
-            })
-            .where(eq(financialAccounts.id, id))
-            .returning();
-
-        return account ?? null;
-    }
-
-    /**
-     * Updates the overdraft limit of an account.
-     * Passing null makes the account inherit the limit from its billing plan.
-     */
-    async updateOverdraftLimit(
-        id: string,
-        overdraftLimitCents: number | null,
-        updatedAt: Date
-    ): Promise<FinancialAccount | null> {
-        const [account] = await this.db
-            .update(financialAccounts)
-            .set({
-                overdraftLimitCents,
                 updatedAt,
             })
             .where(eq(financialAccounts.id, id))

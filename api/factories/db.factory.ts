@@ -3,7 +3,6 @@ import * as schema from "@shared/db/schema";
 import { type DrizzleD1Database, drizzle } from "drizzle-orm/d1";
 
 export type AppDb = DrizzleD1Database<typeof schema>;
-export type BatchRunner = { batch: AppDb["batch"] };
 
 export const getDbClient = (ctx: AppContext): AppDb => {
     const db = drizzle(ctx.env.DB, {

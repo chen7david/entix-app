@@ -28,7 +28,7 @@ export const OrgAdminLayout: React.FC = () => {
             </Sider>
             <Layout hasSider style={{ flex: 1, overflow: "hidden" }}>
                 <Content
-                    className="relative"
+                    className="flex flex-col relative"
                     style={{
                         height: "100%",
                         overflowY: "auto",
@@ -36,8 +36,8 @@ export const OrgAdminLayout: React.FC = () => {
                     }}
                 >
                     <Toolbar />
-                    <div className="p-8">
-                        <div className="max-w-7xl mx-auto w-full">
+                    <div className="flex-1 flex flex-col min-h-0 p-8">
+                        <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full min-h-0">
                             <ImpersonationBanner />
                             <Outlet />
                         </div>

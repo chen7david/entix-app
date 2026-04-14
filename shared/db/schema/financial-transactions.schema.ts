@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { financialAccounts } from "./financial-accounts.schema";
@@ -51,12 +51,6 @@ export const financialTransactions = sqliteTable(
         check("status_values", sql`${t.status} IN ('pending', 'completed', 'reversed')`),
         // Prevent a transaction from being its own source and destination.
         check("source_dest_different", sql`${t.sourceAccountId} != ${t.destinationAccountId}`),
-
-        // Performance indexes
-        index("idx_fin_tx_org_id").on(t.organizationId),
-        index("idx_fin_tx_org_date").on(t.organizationId, t.transactionDate),
-        index("idx_fin_tx_source_acc").on(t.sourceAccountId),
-        index("idx_fin_tx_dest_acc").on(t.destinationAccountId),
     ]
 );
 

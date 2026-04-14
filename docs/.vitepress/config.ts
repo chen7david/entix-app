@@ -18,10 +18,6 @@ export default defineConfig({
                     { text: "Overview", link: "/architecture/01-overview" },
                     { text: "Request Lifecycle", link: "/architecture/02-request-lifecycle" },
                     { text: "Repo & Service Pattern", link: "/architecture/03-repository-service" },
-                    {
-                        text: "Queues & Scheduled Tasks",
-                        link: "/architecture/04-queues-and-scheduled-tasks",
-                    },
                 ],
             },
             {

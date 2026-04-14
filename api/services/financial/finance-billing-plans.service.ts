@@ -5,7 +5,6 @@ import {
     generateBillingPlanRateId,
     generateMemberBillingPlanId,
 } from "@shared";
-import type { BillingPlan, financeBillingPlanRates } from "@shared/db/schema";
 import type {
     AssignBillingPlanInput,
     BillingPlanPaginationInput,
@@ -103,10 +102,17 @@ export class FinanceBillingPlansService {
     }
 
     /**
-     * Gets a member's active billing plan for a specific currency.
-     * Narrowing: Ensures that the returned object has a guaranteed non-null plan and rates array.
+     * Resolves the rate for a student in a specific currency based on participant count.
+     * Logic: Closest Lower Tier.
+     * Finds the highest configured participantCount that is less than or equal to the actualHeadcount.
+     * If headcount is below the lowest configured tier (e.g. headcount 2, lowest tier 5), throws NotFoundError.
      */
-    async getMemberBillingPlan(userId: string, orgId: string, currencyId: string) {
+    async resolveBillingPlanRate(
+        userId: string,
+        orgId: string,
+        currencyId: string,
+        participantCount: number
+    ): Promise<number> {
         const assignment = await this.repo.getMemberPlanByCurrency(userId, orgId, currencyId);
 
         if (!assignment?.plan?.isActive) {
@@ -115,27 +121,12 @@ export class FinanceBillingPlansService {
             );
         }
 
-        // TypeScript narrowing via non-null assertion or re-casting after the check
-        return assignment.plan as BillingPlan & {
-            rates: (typeof financeBillingPlanRates.$inferSelect)[];
-        };
-    }
-
-    /**
-     * Resolves the rate for a student in a specific currency based on participant count.
-     * Logic: Closest Lower Tier.
-     */
-    async resolveBillingPlanRate(
-        userId: string,
-        orgId: string,
-        currencyId: string,
-        participantCount: number
-    ): Promise<number> {
-        const plan = await this.getMemberBillingPlan(userId, orgId, currencyId);
-
+        const { plan } = assignment;
         // Search using "Closest Lower Tier" logic.
         // Rates are explicitly sorted DESC to ensure the highest tier ≤ headcount is picked first.
-        const sortedRates = [...plan.rates].sort((a, b) => b.participantCount - a.participantCount);
+        const sortedRates = [...(plan.rates ?? [])].sort(
+            (a, b) => b.participantCount - a.participantCount
+        );
         const rateEntry = sortedRates.find((r) => r.participantCount <= participantCount);
 
         if (!rateEntry) {

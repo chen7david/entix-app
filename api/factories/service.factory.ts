@@ -6,7 +6,6 @@ import { AdminFinancialService } from "@api/services/financial/admin-financial.s
 import { FinanceBillingPlansService } from "@api/services/financial/finance-billing-plans.service";
 import { FinanceWalletService } from "@api/services/financial/finance-wallet.service";
 import { OrgFinancialService } from "@api/services/financial/org-financial.service";
-import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { UserFinancialService } from "@api/services/financial/user-financial.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
@@ -33,11 +32,8 @@ import {
     getMemberRepository,
     getOrganizationRepository,
     getPlaylistRepository,
-    getSessionAttendancesRepository,
-    getSessionPaymentEventsRepository,
     getSessionScheduleRepository,
     getSocialMediaRepository,
-    getSystemAuditRepository,
     getUserProfileRepository,
     getUserRepository,
 } from "./repository.factory";
@@ -95,9 +91,7 @@ export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(
         getSessionScheduleRepository(ctx),
         getFinanceBillingPlansService(ctx),
-        getFinanceWalletService(ctx),
-        getSessionPaymentService(ctx),
-        getSystemAuditRepository(ctx)
+        getFinanceWalletService(ctx)
     );
 };
 
@@ -158,17 +152,5 @@ export const getFinanceWalletService = (ctx: AppContext) => {
         getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx)
-    );
-};
-
-export const getSessionPaymentService = (ctx: AppContext) => {
-    const db = getDbClient(ctx);
-    return new SessionPaymentService(
-        db,
-        db,
-        getFinancialTransactionsRepository(ctx),
-        getSessionAttendancesRepository(ctx),
-        getSessionPaymentEventsRepository(ctx),
-        getSystemAuditRepository(ctx)
     );
 };

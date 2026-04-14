@@ -3,7 +3,6 @@ import {
     ArrowLeftOutlined,
     DashboardOutlined,
     DollarOutlined,
-    HistoryOutlined,
     LogoutOutlined,
     MailOutlined,
     MoreOutlined,
@@ -82,11 +81,6 @@ export const PlatformAdminSidebarContent: React.FC = () => {
             key: AppRoutes.admin.emails,
             icon: <MailOutlined />,
         },
-        {
-            label: "Audit Logs",
-            key: AppRoutes.admin.auditLogs,
-            icon: <HistoryOutlined />,
-        },
     ];
 
     const handleNavClick = (e: { key: string }) => {
@@ -128,13 +122,9 @@ export const PlatformAdminSidebarContent: React.FC = () => {
                     <div className="flex items-center gap-3 overflow-hidden">
                         <Avatar
                             size={32}
-                            src={getAvatarUrl(user?.image, "sm") || undefined}
+                            src={getAvatarUrl(user?.image, "sm")}
                             icon={<UserOutlined />}
                             className="flex-shrink-0"
-                            style={{
-                                backgroundColor: token.colorPrimary,
-                                flexShrink: 0,
-                            }}
                         />
                         <div className="flex flex-col min-w-0">
                             <Text strong className="truncate text-xs text-gray-900">

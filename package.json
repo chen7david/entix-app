@@ -13,11 +13,12 @@
         "build:docs": "vitepress build docs",
         "db:generate": "drizzle-kit generate",
         "db:studio": "drizzle-kit studio",
-        "db:reset:dev": "echo '⚠️  Wiping local D1...' && rm -rf .wrangler/state/v3/d1 && npm run db:migrate:development",
+        "db:seed": "tsx api/db/seed/index.ts",
+        "db:reset:dev": "echo '⚠️  Wiping local D1...' && rm -rf .wrangler/state/v3/d1 && npm run db:migrate:development && npm run db:seed",
         "deploy:staging": "npm run build:web && npm run db:migrate:staging && wrangler deploy --minify --env staging",
         "deploy:staging:preview": "npm run build:web && npm run db:migrate:staging && wrangler versions upload --minify --env staging",
         "deploy:production": "npm run build:web && npm run db:migrate:production && wrangler deploy --minify --env production",
-        "db:migrate:dev": "npx wrangler d1 migrations apply entix-app-development --local --env development",
+        "db:migrate:development": "npx wrangler d1 migrations apply entix-app-development --local --env development",
         "db:migrate:staging": "npx wrangler d1 migrations apply entix-app-staging --remote --env staging",
         "db:migrate:production": "npx wrangler d1 migrations apply entix-app-production --remote --env production",
         "auth:generate": "npx @better-auth/cli generate --config ./better-auth.config.ts",
@@ -34,9 +35,7 @@
         "format:check": "biome format .",
         "check": "biome check .",
         "check:fix": "biome check --write .",
-        "diff": "git diff --staged > changes.diff",
-        "diff:staging": "git diff staging > changes.diff",
-        "diff:main": "git diff main > changes.diff"
+        "diff": "git diff --staged > changes.diff"
     },
     "dependencies": {
         "@hono/zod-openapi": "^1.1.5",

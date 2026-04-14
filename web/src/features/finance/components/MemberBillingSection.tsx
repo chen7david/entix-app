@@ -63,7 +63,7 @@ const BillingSelector: React.FC<BillingSelectorProps> = ({ orgId, userId, curren
             </Select>
 
             {/* Rate Tier Summary */}
-            {selectedPlan?.rates && selectedPlan.rates.length > 0 && (
+            {selectedPlan && selectedPlan.rates && selectedPlan.rates.length > 0 && (
                 <Card
                     size="small"
                     className="border-dashed"

@@ -13,7 +13,6 @@ import { AuthLayout } from "./layouts/auth/AuthLayout";
 import { OrgAdminLayout } from "./layouts/org-admin/OrgAdminLayout";
 import { PlatformAdminLayout } from "./layouts/platform-admin/PlatformAdminLayout";
 import { AdminDashboardPage } from "./pages/admin/AdminDashboardPage";
-import { AuditLogPage } from "./pages/admin/AuditLogPage";
 import { EmailInsightsPage } from "./pages/admin/EmailInsightsPage";
 import { GlobalOrganizationsPage } from "./pages/admin/GlobalOrganizationsPage";
 import { GlobalUsersPage } from "./pages/admin/GlobalUsersPage";
@@ -270,7 +269,6 @@ export default function App() {
                                             path="admin/financial"
                                             element={<FinancialManagementPage />}
                                         />
-                                        <Route path="admin/audit-logs" element={<AuditLogPage />} />
                                     </Route>
                                 </Route>
                             </Route>

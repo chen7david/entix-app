@@ -79,14 +79,8 @@ export abstract class FinancialBaseService extends BaseService {
         }
 
         // Balance Check (Atomic inside repo, but we fail fast here too)
-        // Overdraft-aware: available = balance + overdraftLimit.
-        // overdraftLimitCents null means no overdraft configured → treat as 0.
-        const overdraftLimit = source.overdraftLimitCents ?? 0;
-        const availableBalance = source.balanceCents + overdraftLimit;
-        if (availableBalance < input.amountCents) {
-            throw new BadRequestError(
-                `Insufficient funds (balance: ${source.balanceCents}, overdraft: ${overdraftLimit}, required: ${input.amountCents})`
-            );
+        if (source.balanceCents < input.amountCents) {
+            throw new BadRequestError("Insufficient funds");
         }
 
         // Generate IDs and timestamps (Rule 78)

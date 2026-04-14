@@ -10,7 +10,6 @@ export const walletAccountDTOSchema = z.object({
     balanceCents: z.number(),
     isActive: z.boolean(),
     accountType: z.enum(["savings", "funding", "treasury", "system"]),
-    overdraftLimitCents: z.number().int().nonnegative().nullable(),
     archivedAt: z.union([z.string(), z.date()]).nullable(),
     createdAt: z.union([z.string(), z.date()]),
     updatedAt: z.union([z.string(), z.date()]),
