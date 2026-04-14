@@ -74,7 +74,7 @@ export class SessionPaymentService extends BaseService {
             );
         }
 
-        // Phase 1b: Ledger records (Credit + Header + Lines)
+        // Phase 2: Debit confirmed — credit destination and write immutable ledger records.
         await this.batchRunner.batch([
             txStatements[1], // credit destination
             txStatements[2], // transaction header
@@ -82,7 +82,7 @@ export class SessionPaymentService extends BaseService {
             txStatements[4], // credit line
         ] as Parameters<typeof this.batchRunner.batch>[0]);
 
-        // Phase 2: Application-level writes
+        // Phase 3: Application-level writes
         const eventStatement = this.paymentEventsRepo.prepareInsert({
             id: eventId,
             sessionId: input.sessionId,
