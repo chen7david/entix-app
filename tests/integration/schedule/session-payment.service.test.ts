@@ -3,8 +3,8 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
@@ -12,7 +12,7 @@ import {
     authOrganizations,
     authUsers,
     financialAccounts,
-    financialSessionPaymentEvents,
+    paymentRequests,
     scheduledSessions,
     sessionAttendances,
     systemAuditEvents,
@@ -42,7 +42,7 @@ describe("SessionPaymentService Integration", () => {
             new DbBatchRunner(db),
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
-            new SessionPaymentEventsRepository(db),
+            new PaymentRequestsRepository(db),
             new SystemAuditRepository(db),
             new FinancialAccountsRepository(db),
             new FinanceBillingPlansRepository(db)
@@ -156,12 +156,13 @@ describe("SessionPaymentService Integration", () => {
         });
         expect(attendance?.paymentStatus).toBe("paid");
 
-        // Verify Payment Event logged
-        const event = await db.query.financialSessionPaymentEvents.findFirst({
-            where: eq(financialSessionPaymentEvents.sessionId, sessionId),
+        // Verify Payment Event logged via payment_requests
+        const request = await db.query.paymentRequests.findFirst({
+            where: eq(paymentRequests.referenceId, sessionId),
         });
-        expect(event).toBeDefined();
-        expect(event?.amountCents).toBe(amountCents);
+        expect(request).toBeDefined();
+        expect(request?.amountCents).toBe(amountCents);
+        expect(request?.status).toBe("completed");
 
         // Verify Audit Log created
         const audit = await db.query.systemAuditEvents.findFirst({
@@ -366,8 +367,8 @@ describe("SessionPaymentService Integration", () => {
         ).rejects.toThrow(ConflictError);
 
         // Verify only ONE manual record exists
-        const events = await service.getSessionEvents(sessionId, studentId);
-        const manualEvents = events.filter((e) => e.transactionId === null);
+        const requests = await service.getSessionPaymentRequests(sessionId);
+        const manualEvents = requests.filter((r) => r.type === "manual_payment");
         expect(manualEvents).toHaveLength(1);
     });
 });

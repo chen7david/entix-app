@@ -79,11 +79,12 @@ CREATE TABLE `finance_billing_plans` (
 	`description` text,
 	`currency_id` text NOT NULL,
 	`is_active` integer DEFAULT true NOT NULL,
-	`overdraft_limit_cents` integer DEFAULT 0 NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`overdraft_limit_cents` integer DEFAULT 0 NOT NULL,
 	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`currency_id`) REFERENCES `financial_currencies`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`currency_id`) REFERENCES `financial_currencies`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "overdraft_limit_non_negative" CHECK("finance_billing_plans"."overdraft_limit_cents" >= 0)
 );
 --> statement-breakpoint
 CREATE INDEX `idx_billing_plans_org_id` ON `finance_billing_plans` (`organization_id`);--> statement-breakpoint
@@ -116,14 +117,14 @@ CREATE TABLE `financial_accounts` (
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`account_type` text DEFAULT 'savings' NOT NULL,
-	`overdraft_limit_cents` integer DEFAULT 0 NOT NULL,
+	`overdraft_limit_cents` integer,
 	FOREIGN KEY (`currency_id`) REFERENCES `financial_currencies`(`id`) ON UPDATE no action ON DELETE no action,
 	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "overdraft_limit_non_negative" CHECK("financial_accounts"."overdraft_limit_cents" >= 0),
 	CONSTRAINT "owner_type_check" CHECK("financial_accounts"."owner_type" IN ('user', 'org')),
 	CONSTRAINT "account_type_check" CHECK("financial_accounts"."account_type" IN ('savings', 'funding', 'treasury', 'system')),
-	CONSTRAINT "balance_non_negative" CHECK("financial_accounts"."balance_cents" >= 0),
-	CONSTRAINT "overdraft_limit_non_negative" CHECK("financial_accounts"."overdraft_limit_cents" >= 0),
-	CONSTRAINT "org_scoped_user_accounts" CHECK("financial_accounts"."organization_id" IS NOT NULL)
+	CONSTRAINT "org_scoped_user_accounts" CHECK("financial_accounts"."account_type" = 'system' OR "financial_accounts"."organization_id" IS NOT NULL),
+	CONSTRAINT "balance_within_overdraft" CHECK("financial_accounts"."overdraft_limit_cents" IS NULL OR "financial_accounts"."balance_cents" >= -"financial_accounts"."overdraft_limit_cents")
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `owner_org_name_currency_idx` ON `financial_accounts` (`owner_id`,`organization_id`,`name`,`currency_id`);--> statement-breakpoint
@@ -150,25 +151,6 @@ CREATE TABLE `financial_org_settings` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `financial_org_settings_organization_id_unique` ON `financial_org_settings` (`organization_id`);--> statement-breakpoint
-CREATE TABLE `financial_session_payment_events` (
-	`id` text PRIMARY KEY NOT NULL,
-	`session_id` text NOT NULL,
-	`organization_id` text NOT NULL,
-	`user_id` text NOT NULL,
-	`event_type` text NOT NULL,
-	`amount_cents` integer NOT NULL,
-	`currency_id` text NOT NULL,
-	`note` text,
-	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	`created_by` text,
-	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`user_id`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`created_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE no action
-);
---> statement-breakpoint
-CREATE INDEX `idx_session_payment_events_session_id` ON `financial_session_payment_events` (`session_id`);--> statement-breakpoint
-CREATE INDEX `idx_session_payment_events_user_id` ON `financial_session_payment_events` (`user_id`);--> statement-breakpoint
-CREATE INDEX `idx_session_payment_events_org_id` ON `financial_session_payment_events` (`organization_id`);--> statement-breakpoint
 CREATE TABLE `financial_transaction_categories` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
@@ -218,6 +200,10 @@ CREATE TABLE `financial_transactions` (
 	CONSTRAINT "source_dest_different" CHECK("financial_transactions"."source_account_id" != "financial_transactions"."destination_account_id")
 );
 --> statement-breakpoint
+CREATE INDEX `idx_fin_tx_org_id` ON `financial_transactions` (`organization_id`);--> statement-breakpoint
+CREATE INDEX `idx_fin_tx_org_date` ON `financial_transactions` (`organization_id`,`transaction_date`);--> statement-breakpoint
+CREATE INDEX `idx_fin_tx_source_acc` ON `financial_transactions` (`source_account_id`);--> statement-breakpoint
+CREATE INDEX `idx_fin_tx_dest_acc` ON `financial_transactions` (`destination_account_id`);--> statement-breakpoint
 CREATE TABLE `media` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
@@ -335,6 +321,48 @@ CREATE TABLE `auth_organizations` (
 --> statement-breakpoint
 CREATE UNIQUE INDEX `auth_organizations_slug_unique` ON `auth_organizations` (`slug`);--> statement-breakpoint
 CREATE UNIQUE INDEX `organization_slug_uidx` ON `auth_organizations` (`slug`);--> statement-breakpoint
+CREATE TABLE `payment_requests` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organization_id` text NOT NULL,
+	`type` text NOT NULL,
+	`status` text DEFAULT 'pending' NOT NULL,
+	`amount_cents` integer NOT NULL,
+	`currency_id` text NOT NULL,
+	`source_account_id` text NOT NULL,
+	`destination_account_id` text NOT NULL,
+	`category_id` text NOT NULL,
+	`idempotency_key` text NOT NULL,
+	`reference_type` text NOT NULL,
+	`reference_id` text NOT NULL,
+	`transaction_id` text,
+	`requested_by` text,
+	`user_id` text,
+	`note` text,
+	`failure_reason` text,
+	`attempt_count` integer DEFAULT 0 NOT NULL,
+	`last_attempted_at` integer,
+	`processed_at` integer,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`currency_id`) REFERENCES `financial_currencies`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`source_account_id`) REFERENCES `financial_accounts`(`id`) ON UPDATE no action ON DELETE restrict,
+	FOREIGN KEY (`destination_account_id`) REFERENCES `financial_accounts`(`id`) ON UPDATE no action ON DELETE restrict,
+	FOREIGN KEY (`category_id`) REFERENCES `financial_transaction_categories`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`transaction_id`) REFERENCES `financial_transactions`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`requested_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`user_id`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE set null,
+	CONSTRAINT "pr_type_check" CHECK("payment_requests"."type" IN ('session_payment', 'manual_payment')),
+	CONSTRAINT "pr_status_check" CHECK("payment_requests"."status" IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+	CONSTRAINT "pr_amount_non_negative" CHECK("payment_requests"."amount_cents" >= 0),
+	CONSTRAINT "pr_attempt_count_non_negative" CHECK("payment_requests"."attempt_count" >= 0)
+);
+--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_payment_request_idempotency_key` ON `payment_requests` (`idempotency_key`);--> statement-breakpoint
+CREATE INDEX `idx_pr_organization_id` ON `payment_requests` (`organization_id`);--> statement-breakpoint
+CREATE INDEX `idx_pr_status` ON `payment_requests` (`status`);--> statement-breakpoint
+CREATE INDEX `idx_pr_reference` ON `payment_requests` (`reference_type`,`reference_id`);--> statement-breakpoint
+CREATE INDEX `idx_pr_created_at` ON `payment_requests` (`created_at`);--> statement-breakpoint
 CREATE TABLE `scheduled_sessions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
@@ -360,11 +388,12 @@ CREATE TABLE `session_attendances` (
 	`absent` integer DEFAULT false NOT NULL,
 	`absence_reason` text,
 	`notes` text,
-	`paid_at` integer,
+	`payment_status` text DEFAULT 'unpaid' NOT NULL,
 	PRIMARY KEY(`session_id`, `user_id`),
 	FOREIGN KEY (`session_id`) REFERENCES `scheduled_sessions`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`user_id`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "payment_status_check" CHECK("session_attendances"."payment_status" IN ('unpaid', 'paid', 'refunded'))
 );
 --> statement-breakpoint
 CREATE INDEX `session_attendance_sessionId_idx` ON `session_attendances` (`session_id`);--> statement-breakpoint
@@ -392,24 +421,30 @@ CREATE TABLE `user_social_medias` (
 --> statement-breakpoint
 CREATE TABLE `system_audit_events` (
 	`id` text PRIMARY KEY NOT NULL,
+	`organization_id` text NOT NULL,
 	`event_type` text NOT NULL,
 	`severity` text DEFAULT 'info' NOT NULL,
-	`message` text NOT NULL,
-	`actor_type` text DEFAULT 'system' NOT NULL,
 	`actor_id` text,
+	`actor_type` text DEFAULT 'system' NOT NULL,
 	`subject_type` text,
 	`subject_id` text,
+	`message` text NOT NULL,
 	`metadata` text,
 	`acknowledged_at` integer,
 	`acknowledged_by` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	FOREIGN KEY (`acknowledged_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`acknowledged_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE no action,
+	CONSTRAINT "severity_check" CHECK("system_audit_events"."severity" IN ('info', 'warning', 'error', 'critical')),
+	CONSTRAINT "actor_type_check" CHECK("system_audit_events"."actor_type" IN ('system', 'user', 'admin'))
 );
 --> statement-breakpoint
-CREATE INDEX `idx_audit_events_severity` ON `system_audit_events` (`severity`);--> statement-breakpoint
-CREATE INDEX `idx_audit_events_event_type` ON `system_audit_events` (`event_type`);--> statement-breakpoint
-CREATE INDEX `idx_audit_events_created_at` ON `system_audit_events` (`created_at`);--> statement-breakpoint
-CREATE INDEX `idx_audit_events_acknowledged_at` ON `system_audit_events` (`acknowledged_at`);--> statement-breakpoint
+CREATE INDEX `idx_audit_org_id` ON `system_audit_events` (`organization_id`);--> statement-breakpoint
+CREATE INDEX `idx_audit_severity` ON `system_audit_events` (`severity`);--> statement-breakpoint
+CREATE INDEX `idx_audit_event_type` ON `system_audit_events` (`event_type`);--> statement-breakpoint
+CREATE INDEX `idx_audit_acknowledged` ON `system_audit_events` (`acknowledged_at`);--> statement-breakpoint
+CREATE INDEX `idx_audit_created_at` ON `system_audit_events` (`created_at`);--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_audit_payment_ack` ON `system_audit_events` (`subject_id`,`event_type`) WHERE "system_audit_events"."event_type" = 'payment.acknowledged';--> statement-breakpoint
 CREATE TABLE `user_addresses` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,

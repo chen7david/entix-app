@@ -83,11 +83,15 @@ export const FINANCIAL_CATEGORIES = {
     SYSTEM_ADJUSTMENT: "fcat_system_adjustment",
 } as const;
 
-/**
- * Returns the deterministic platform treasury account ID for a given currency.
- * This ensures that every currency has a valid source for admin credits.
- */
+/** Returns the deterministic platform treasury account ID for a given currency. */
 export const getTreasuryAccountId = (currencyId: string) => `facc_treasury_${currencyId}`;
+
+/**
+ * Returns the deterministic platform system adjustment account ID for a given currency.
+ * Used for manual status overrides (zero-amount markers).
+ */
+export const getSystemAdjustmentAccountId = (currencyId: string) =>
+    `facc_system_adjustment_${currencyId}`;
 
 export const FINANCIAL_ACCOUNTS = {
     // Deprecated: Use getTreasuryAccountId(currencyId) instead for multi-currency support.

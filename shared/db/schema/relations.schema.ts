@@ -7,12 +7,12 @@ import {
 } from "./finance-billing-plans.schema";
 import { financialAccounts } from "./financial-accounts.schema";
 import { financialCurrencies } from "./financial-currencies.schema";
-import { financialSessionPaymentEvents } from "./financial-session-payment-events.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { financialTransactionLines } from "./financial-transaction-lines.schema";
 import { financialTransactions } from "./financial-transactions.schema";
 import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
+import { paymentRequests } from "./payment-requests.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
 import { systemAuditEvents } from "./system-audit-events.schema";
@@ -32,12 +32,7 @@ export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     phoneNumbers: many(userPhoneNumbers),
     addresses: many(userAddresses),
     socialMedias: many(userSocialMedias),
-    sessionPaymentEvents: many(financialSessionPaymentEvents, {
-        relationName: "sessionPaymentEvent_user",
-    }),
-    performedPaymentEvents: many(financialSessionPaymentEvents, {
-        relationName: "sessionPaymentEvent_performedBy",
-    }),
+    paymentRequests: many(paymentRequests),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -62,6 +57,7 @@ export const authOrganizationsRelations = relations(authOrganizations, ({ many }
     playlists: many(playlists),
     scheduledSessions: many(scheduledSessions),
     auditEvents: many(systemAuditEvents),
+    paymentRequests: many(paymentRequests),
 }));
 
 export const authMembersRelations = relations(authMembers, ({ one }) => ({
@@ -145,7 +141,7 @@ export const scheduledSessionsRelations = relations(scheduledSessions, ({ one, m
         references: [authOrganizations.id],
     }),
     attendances: many(sessionAttendances),
-    paymentEvents: many(financialSessionPaymentEvents),
+    paymentRequests: many(paymentRequests, { relationName: "paymentRequest_session" }),
 }));
 
 export const sessionAttendancesRelations = relations(sessionAttendances, ({ one }) => ({
@@ -159,6 +155,39 @@ export const sessionAttendancesRelations = relations(sessionAttendances, ({ one 
     }),
     user: one(authUsers, {
         fields: [sessionAttendances.userId],
+        references: [authUsers.id],
+    }),
+}));
+
+export const paymentRequestsRelations = relations(paymentRequests, ({ one }) => ({
+    organization: one(authOrganizations, {
+        fields: [paymentRequests.organizationId],
+        references: [authOrganizations.id],
+    }),
+    currency: one(financialCurrencies, {
+        fields: [paymentRequests.currencyId],
+        references: [financialCurrencies.id],
+    }),
+    sourceAccount: one(financialAccounts, {
+        fields: [paymentRequests.sourceAccountId],
+        references: [financialAccounts.id],
+        relationName: "paymentRequest_sourceAccount",
+    }),
+    destinationAccount: one(financialAccounts, {
+        fields: [paymentRequests.destinationAccountId],
+        references: [financialAccounts.id],
+        relationName: "paymentRequest_destinationAccount",
+    }),
+    category: one(financialTransactionCategories, {
+        fields: [paymentRequests.categoryId],
+        references: [financialTransactionCategories.id],
+    }),
+    transaction: one(financialTransactions, {
+        fields: [paymentRequests.transactionId],
+        references: [financialTransactions.id],
+    }),
+    requestedBy: one(authUsers, {
+        fields: [paymentRequests.requestedBy],
         references: [authUsers.id],
     }),
 }));
@@ -207,6 +236,12 @@ export const financialAccountsRelations = relations(financialAccounts, ({ one, m
     sourceTransactions: many(financialTransactions, { relationName: "sourceAccount" }),
     destinationTransactions: many(financialTransactions, { relationName: "destinationAccount" }),
     lines: many(financialTransactionLines),
+    sourcePaymentRequests: many(paymentRequests, {
+        relationName: "paymentRequest_sourceAccount",
+    }),
+    destinationPaymentRequests: many(paymentRequests, {
+        relationName: "paymentRequest_destinationAccount",
+    }),
 }));
 
 export const financialTransactionsRelations = relations(financialTransactions, ({ one, many }) => ({
@@ -229,7 +264,10 @@ export const financialTransactionsRelations = relations(financialTransactions, (
         references: [financialTransactionCategories.id],
     }),
     lines: many(financialTransactionLines),
-    sessionPaymentEvents: many(financialSessionPaymentEvents),
+    paymentRequest: one(paymentRequests, {
+        fields: [financialTransactions.id],
+        references: [paymentRequests.transactionId],
+    }),
 }));
 
 export const financialTransactionLinesRelations = relations(
@@ -300,34 +338,6 @@ export const financeMemberBillingPlansRelations = relations(
         assignedBy: one(authUsers, {
             fields: [financeMemberBillingPlans.assignedBy],
             references: [authUsers.id],
-        }),
-    })
-);
-
-export const financialSessionPaymentEventsRelations = relations(
-    financialSessionPaymentEvents,
-    ({ one }) => ({
-        session: one(scheduledSessions, {
-            fields: [financialSessionPaymentEvents.sessionId],
-            references: [scheduledSessions.id],
-        }),
-        user: one(authUsers, {
-            fields: [financialSessionPaymentEvents.userId],
-            references: [authUsers.id],
-            relationName: "sessionPaymentEvent_user",
-        }),
-        organization: one(authOrganizations, {
-            fields: [financialSessionPaymentEvents.organizationId],
-            references: [authOrganizations.id],
-        }),
-        transaction: one(financialTransactions, {
-            fields: [financialSessionPaymentEvents.transactionId],
-            references: [financialTransactions.id],
-        }),
-        performer: one(authUsers, {
-            fields: [financialSessionPaymentEvents.performedBy],
-            references: [authUsers.id],
-            relationName: "sessionPaymentEvent_performedBy",
         }),
     })
 );
