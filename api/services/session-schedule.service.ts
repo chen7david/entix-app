@@ -253,7 +253,7 @@ export class SessionScheduleService extends BaseService {
                 });
             }
 
-            const treasury = await this.walletService.getOrgTreasury(organizationId, currencyId);
+            const orgFunding = await this.walletService.getOrgFunding(organizationId, currencyId);
 
             // 2. Delegate atomic batch debit
             await this.sessionPaymentService.processSessionPayment({
@@ -263,7 +263,7 @@ export class SessionScheduleService extends BaseService {
                 amountCents,
                 currencyId,
                 sourceAccountId: account.id,
-                destinationAccountId: treasury.id,
+                destinationAccountId: orgFunding.id,
                 categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
                 performedBy: null,
                 note: `Session Fee: ${session.title} (${rateCentsPerMinute} cents/min x ${session.durationMinutes} min, ${participantCount} students)`,

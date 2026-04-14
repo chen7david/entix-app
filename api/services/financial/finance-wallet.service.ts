@@ -50,6 +50,25 @@ export class FinanceWalletService extends FinancialBaseService {
     }
 
     /**
+     * Gets an organization's funding account for a given currency.
+     * This is the correct destination for session fee payments from student wallets.
+     */
+    async getOrgFunding(orgId: string, currencyId: string) {
+        const orgAccounts = await this.accountsRepo.findActiveByOwner(orgId, "org", orgId);
+        const funding = orgAccounts.find(
+            (a) => a.currencyId === currencyId && a.accountType === ACCOUNT_TYPES.FUNDING
+        );
+
+        if (!funding) {
+            throw new NotFoundError(
+                `No active ${currencyId} funding account found for organization`
+            );
+        }
+
+        return funding;
+    }
+
+    /**
      * Deducts funds from a student's wallet and credits it to the organization's treasury.
      */
     async executeSessionDeduction(input: {
