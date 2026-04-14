@@ -5,33 +5,37 @@ import {
     type PaymentRequestStatus,
     paymentRequests,
 } from "@shared/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, lt } from "drizzle-orm";
 
 /**
  * Repository for payment_requests database operations.
- * Supports insert, status transitions, and idempotency-key lookups.
+ * Centralizes all reads and writes for the payment queue architecture.
  */
-export class PaymentRequestsRepository {
+export class PaymentQueueRepository {
     constructor(private readonly db: AppDb) {}
 
     /**
-     * Inserts a new payment request and returns the created record.
+     * Attempts to persist a new payment request.
+     * Uses ON CONFLICT (idempotency_key) DO NOTHING to ensure atomicity.
+     * Returns the created record, or null if a duplicate was detected.
+     */
+    async enqueue(input: NewPaymentRequest): Promise<PaymentRequest | null> {
+        const [record] = await this.db
+            .insert(paymentRequests)
+            .values(input)
+            .onConflictDoNothing({ target: paymentRequests.idempotencyKey })
+            .returning();
+
+        return record ?? null;
+    }
+
+    /**
+     * Legacy/Helper insert method (same as enqueue but without conflict handling).
+     * Primarily used for seeding and internal test cases.
      */
     async insert(input: NewPaymentRequest): Promise<PaymentRequest> {
         const [record] = await this.db.insert(paymentRequests).values(input).returning();
         return record;
-    }
-
-    /**
-     * Looks up an existing payment request by idempotency key.
-     * Use before processing to detect duplicate submissions.
-     */
-    async findByIdempotencyKey(idempotencyKey: string): Promise<PaymentRequest | null> {
-        return (
-            (await this.db.query.paymentRequests.findFirst({
-                where: eq(paymentRequests.idempotencyKey, idempotencyKey),
-            })) ?? null
-        );
     }
 
     /**
@@ -41,6 +45,17 @@ export class PaymentRequestsRepository {
         return (
             (await this.db.query.paymentRequests.findFirst({
                 where: eq(paymentRequests.id, id),
+            })) ?? null
+        );
+    }
+
+    /**
+     * Looks up an existing payment request by idempotency key.
+     */
+    async findByIdempotencyKey(idempotencyKey: string): Promise<PaymentRequest | null> {
+        return (
+            (await this.db.query.paymentRequests.findFirst({
+                where: eq(paymentRequests.idempotencyKey, idempotencyKey),
             })) ?? null
         );
     }
@@ -76,6 +91,20 @@ export class PaymentRequestsRepository {
             .where(eq(paymentRequests.id, id))
             .returning();
         return updated;
+    }
+
+    /**
+     * Finds all pending payment requests older than the specified cutoff.
+     * Used for the missed-payments cron reconciliation.
+     */
+    async findPendingOlderThan(cutoff: Date): Promise<PaymentRequest[]> {
+        return this.db
+            .select()
+            .from(paymentRequests)
+            .where(
+                and(eq(paymentRequests.status, "pending"), lt(paymentRequests.createdAt, cutoff))
+            )
+            .orderBy(asc(paymentRequests.createdAt));
     }
 
     /**

@@ -1,5 +1,5 @@
 import { DbBatchRunner } from "@api/helpers/batch-runner";
-import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
+import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -13,7 +13,7 @@ import { createTestDb } from "../helpers/test-db.helper";
 
 describe("SessionPaymentService", () => {
     let db: ReturnType<typeof createTestDb>;
-    let paymentRequestsRepo: PaymentRequestsRepository;
+    let paymentRequestsRepo: PaymentQueueRepository;
     let service: SessionPaymentService;
 
     const sessionId = "ses_test001";
@@ -22,7 +22,7 @@ describe("SessionPaymentService", () => {
 
     beforeEach(() => {
         db = createTestDb();
-        paymentRequestsRepo = new PaymentRequestsRepository(db);
+        paymentRequestsRepo = new PaymentQueueRepository(db);
         service = new SessionPaymentService(
             new DbBatchRunner(db),
             buildMockTransactionsRepo(),

@@ -19,6 +19,7 @@ import {
 } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
+import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
@@ -112,6 +113,9 @@ describe("Ghost Transaction Prevention", () => {
             status: "completed",
         });
         expect(res.status).toBe(HttpStatusCodes.OK);
+
+        // DRAIN QUEUE: Process the async payment request
+        await drainQueue(env as unknown as CloudflareBindings);
 
         // ASSERTION 1: Zero transactions in financial_transactions
         const txs = await db
@@ -209,6 +213,7 @@ describe("Ghost Transaction Prevention", () => {
         const res = await client.orgs.schedule.updateStatus(orgId, "sess_success", {
             status: "completed",
         });
+        await drainQueue(env as unknown as CloudflareBindings);
         expect(res.status).toBe(HttpStatusCodes.OK);
 
         // ASSERTION 1: Exactly one transaction record
