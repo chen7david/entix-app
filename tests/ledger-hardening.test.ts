@@ -19,9 +19,8 @@ describe("Ledger Hardening - Name Uniqueness", async () => {
     const settingsRepo = new FinancialOrgSettingsRepository(db);
 
     // Services
-    const orgService = new OrgFinancialService(db, accountsRepo, txRepo, currenciesRepo);
+    const orgService = new OrgFinancialService(accountsRepo, txRepo, currenciesRepo);
     const userService = new UserFinancialService(
-        db,
         accountsRepo,
         txRepo,
         currenciesRepo,
