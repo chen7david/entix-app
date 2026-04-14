@@ -5,36 +5,36 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1743955200000,
-      "tag": "0000_auth_schema",
+      "when": 1776000446337,
+      "tag": "0000_genesis_schema",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1743955300000,
-      "tag": "0001_platform_schema",
+      "when": 1776000446338,
+      "tag": "0001_genesis_seed",
       "breakpoints": true
     },
     {
       "idx": 2,
       "version": "6",
-      "when": 1743955400000,
-      "tag": "0002_root_seed",
+      "when": 1776022407887,
+      "tag": "0002_long_dagger",
       "breakpoints": true
     },
     {
       "idx": 3,
       "version": "6",
-      "when": 1743955500000,
-      "tag": "0003_financial_seed",
+      "when": 1776029064786,
+      "tag": "0003_swift_eddie_brock",
       "breakpoints": true
     },
     {
       "idx": 4,
       "version": "6",
-      "when": 1743955600000,
-      "tag": "0004_simple_sprite",
+      "when": 1776109664435,
+      "tag": "0004_wise_the_captain",
       "breakpoints": true
     }
   ]

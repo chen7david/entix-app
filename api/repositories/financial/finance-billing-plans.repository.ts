@@ -129,7 +129,7 @@ export class FinanceBillingPlansRepository {
 
         if (search) {
             conditions.push(
-                sql`lower(${financeBillingPlans.name}) LIKE ${"%" + search.toLowerCase() + "%"}`
+                sql`lower(${financeBillingPlans.name}) LIKE ${`%${search.toLowerCase()}%`}`
             );
         }
 

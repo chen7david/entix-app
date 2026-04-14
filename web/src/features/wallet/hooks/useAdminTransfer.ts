@@ -70,5 +70,25 @@ export const useAdminTransfer = () => {
         },
     });
 
-    return { ensureFunding, credit, debit };
+    const updateAccount = useMutation({
+        mutationFn: async (params: {
+            id: string;
+            name?: string;
+            overdraftLimitCents?: number | null;
+        }) => {
+            const res = await fetch(`${API_V1}/admin/finance/accounts/${params.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(params),
+            });
+            if (!res.ok) await parseApiError(res);
+            return (await res.json()) as { data: WalletAccountDTO };
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["treasuryBalance"] });
+            queryClient.invalidateQueries({ queryKey: ["adminOrgAccounts"] });
+        },
+    });
+
+    return { ensureFunding, credit, debit, updateAccount };
 };

@@ -15,7 +15,7 @@ import { createMiddleware } from "hono/factory";
  * Must be used AFTER requireAuth (sets userId).
  * Must be used AFTER requireOrgMembership (if checking membership roles).
  *
- * @param resource - The resource to check (e.g. 'member', 'invitation', 'project')
+ * @param resource - The resource to check (e.g. 'student', 'invitation', 'project')
  * @param actions  - The action(s) required (e.g. 'create', 'delete')
  * @param allowSelfTargetParam - (Optional) If provided, bypasses RBAC if ctx.req.param(allowSelfTargetParam) === ctx.get('userId'). Useful for profile updates.
  * @returns Middleware function
