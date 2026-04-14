@@ -5,36 +5,15 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1776000446337,
+      "when": 1776181084749,
       "tag": "0000_genesis_schema",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "6",
-      "when": 1776000446338,
+      "when": 1776181084750,
       "tag": "0001_genesis_seed",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1776022407887,
-      "tag": "0002_long_dagger",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1776029064786,
-      "tag": "0003_swift_eddie_brock",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1776109664435,
-      "tag": "0004_wise_the_captain",
       "breakpoints": true
     }
   ]

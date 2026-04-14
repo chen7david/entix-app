@@ -1,13 +1,13 @@
 import { ConflictError, NotFoundError } from "@api/errors/app.error";
-import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import {
-    encodeTransactionCursor,
+    buildTransactionCursor,
     type FinancialTransactionsRepository,
 } from "@api/repositories/financial/financial-transactions.repository";
 import {
     ACCOUNT_TYPES,
+    FINANCIAL_CATEGORIES,
     type FinancialAccount,
     generateAccountId,
     type TransactionFilters,
@@ -22,12 +22,11 @@ import { FinancialBaseService } from "./financial-base.service";
  */
 export class OrgFinancialService extends FinancialBaseService {
     constructor(
-        protected readonly db: AppDb,
         protected readonly accountsRepo: FinancialAccountsRepository,
         protected readonly transactionsRepo: FinancialTransactionsRepository,
         private readonly currenciesRepo: FinancialCurrenciesRepository
     ) {
-        super(db, accountsRepo, transactionsRepo);
+        super(accountsRepo, transactionsRepo);
     }
 
     /**
@@ -60,7 +59,7 @@ export class OrgFinancialService extends FinancialBaseService {
         // Execute mirror transaction (swap source and destination)
         const reversalTxId = await this.executeTransaction({
             organizationId,
-            categoryId: "fcat_refund",
+            categoryId: FINANCIAL_CATEGORIES.REFUND,
             sourceAccountId: original.destinationAccountId,
             destinationAccountId: original.sourceAccountId,
             currencyId: original.currencyId,
@@ -177,15 +176,9 @@ export class OrgFinancialService extends FinancialBaseService {
     }
 
     async getTransactionHistory(orgId: string, filters: TransactionFilters) {
+        const limit = filters.limit ?? 20;
         const transactions = await this.transactionsRepo.findByOrgId(orgId, filters);
-
-        // Find last element for next cursor encoding
-        const lastTx =
-            transactions.length >= (filters.limit ?? 20)
-                ? transactions[transactions.length - 1]
-                : null;
-        const nextCursor = lastTx ? encodeTransactionCursor(lastTx) : null;
-
+        const nextCursor = buildTransactionCursor(transactions, limit);
         return {
             data: transactions,
             nextCursor,

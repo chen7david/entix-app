@@ -36,10 +36,8 @@ describe("Financial Services - NotFoundError Coverage", () => {
             findAllWithOrgStatus: vi.fn(),
         } as any;
 
-        const db = {} as any;
-
-        adminService = new AdminFinancialService(db, accountsRepo, transactionsRepo);
-        orgService = new OrgFinancialService(db, accountsRepo, transactionsRepo, currenciesRepo);
+        adminService = new AdminFinancialService(accountsRepo, transactionsRepo);
+        orgService = new OrgFinancialService(accountsRepo, transactionsRepo, currenciesRepo);
     });
 
     describe("OrgFinancialService", () => {

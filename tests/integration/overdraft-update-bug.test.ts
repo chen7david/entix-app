@@ -4,8 +4,8 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
@@ -20,13 +20,14 @@ import {
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
+import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestDb } from "../lib/utils";
 
 describe("Hierarchical Overdraft Resolution", () => {
     let orgId: string;
     let userId: string;
-    let db: any;
+    let db: ReturnType<typeof createTestDb> extends Promise<infer T> ? T : never;
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -65,7 +66,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             where: eq(financeBillingPlans.id, planId),
         });
 
-        expect(updatedPlan.overdraftLimitCents).toBe(5000);
+        expect(updatedPlan?.overdraftLimitCents).toBe(5000);
     });
 
     it("should succeed when account overdraft is NULL but billing plan has sufficient overdraft", async () => {
@@ -147,7 +148,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             new DbBatchRunner(db),
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
-            new SessionPaymentEventsRepository(db),
+            new PaymentQueueRepository(db),
             new SystemAuditRepository(db),
             new FinancialAccountsRepository(db),
             new FinanceBillingPlansRepository(db)
@@ -165,10 +166,13 @@ describe("Hierarchical Overdraft Resolution", () => {
             performedBy: null,
         });
 
+        // DRAIN QUEUE: Process the async payment request
+        await drainQueue(env as unknown as CloudflareBindings);
+
         // 8. Assert success (balance -300)
         const updatedAcc = await db.query.financialAccounts.findFirst({
             where: eq(financialAccounts.id, accId),
         });
-        expect(updatedAcc.balanceCents).toBe(-300);
+        expect(updatedAcc?.balanceCents).toBe(-300);
     });
 });

@@ -1,5 +1,4 @@
 import { NotFoundError } from "@api/errors/app.error";
-import type { AppDb } from "@api/factories/db.factory";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { ACCOUNT_TYPES, FINANCIAL_CATEGORIES } from "@shared";
@@ -10,11 +9,10 @@ import { FinancialBaseService } from "./financial-base.service";
  */
 export class FinanceWalletService extends FinancialBaseService {
     constructor(
-        protected readonly db: AppDb,
         protected readonly accountsRepo: FinancialAccountsRepository,
         protected readonly transactionsRepo: FinancialTransactionsRepository
     ) {
-        super(db, accountsRepo, transactionsRepo);
+        super(accountsRepo, transactionsRepo);
     }
     /**
      * Gets a specific wallet account for a user in a given currency.
@@ -69,7 +67,14 @@ export class FinanceWalletService extends FinancialBaseService {
     }
 
     /**
-     * Deducts funds from a student's wallet and credits it to the organization's funding account.
+     * Deducts funds from a student's wallet and credits it to the organization's treasury.
+     *
+     * @deprecated This method is not invoked by any active controller. New session billing
+     * flows should use `SessionPaymentService.processSessionPayment()` instead.
+     *
+     * NOTE: This deprecation applies ONLY to `executeSessionDeduction`. The helper methods
+     * `getWallet`, `getOrgTreasury`, and `getOrgFunding` remain active and are used by
+     * other services (e.g., SessionScheduleService).
      */
     async executeSessionDeduction(input: {
         userId: string;
@@ -84,45 +89,15 @@ export class FinanceWalletService extends FinancialBaseService {
             return; // No deduction needed for free sessions
         }
 
-        // 1. Find the student's primary wallet for this currency
-        const userAccounts = await this.accountsRepo.findActiveByOwner(
-            input.userId,
-            "user",
-            input.orgId
-        );
-        const userWallet = userAccounts.find(
-            (a) => a.currencyId === input.currencyId && a.accountType === ACCOUNT_TYPES.SAVINGS
-        );
-
-        if (!userWallet) {
-            throw new NotFoundError(`No active ${input.currencyId} wallet found for student`);
-        }
-
-        // 2. Find the organization's funding account for this currency
-        const orgAccounts = await this.accountsRepo.findActiveByOwner(
-            input.orgId,
-            "org",
-            input.orgId
-        );
-        const orgFundingAccount = orgAccounts.find(
-            (a) => a.currencyId === input.currencyId && a.accountType === ACCOUNT_TYPES.FUNDING
-        );
-
-        if (!orgFundingAccount) {
-            throw new NotFoundError(
-                `No active ${input.currencyId} funding account found for organization`
-            );
-        }
-
-        // 3. Resolve Category for Session Fees
+        const userWallet = await this.getWallet(input.userId, input.orgId, input.currencyId);
+        const orgTreasury = await this.getOrgTreasury(input.orgId, input.currencyId);
         const categoryId = FINANCIAL_CATEGORIES.SERVICE_FEE;
 
-        // 4. Atomic Transaction via Base Service
         return this.executeTransaction({
             organizationId: input.orgId,
             categoryId,
             sourceAccountId: userWallet.id,
-            destinationAccountId: orgFundingAccount.id,
+            destinationAccountId: orgTreasury.id,
             currencyId: input.currencyId,
             amountCents: input.amountCents,
             description: input.description,

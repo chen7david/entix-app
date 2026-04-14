@@ -16,6 +16,7 @@ import { MemberExportService } from "@api/services/member-export.service";
 import { MemberImportService } from "@api/services/member-import.service";
 import { NotificationService } from "@api/services/notification.service";
 import { OrganizationService } from "@api/services/organization.service";
+import { PaymentQueueService } from "@api/services/payment/payment-queue.service";
 import { PlaylistService } from "@api/services/playlist.service";
 import { RegistrationService } from "@api/services/registration.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
@@ -33,9 +34,9 @@ import {
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
+    getPaymentQueueRepository,
     getPlaylistRepository,
     getSessionAttendancesRepository,
-    getSessionPaymentEventsRepository,
     getSessionScheduleRepository,
     getSocialMediaRepository,
     getSystemAuditRepository,
@@ -97,7 +98,7 @@ export const getSessionScheduleService = (ctx: AppContext) => {
         getSessionScheduleRepository(ctx),
         getFinanceBillingPlansService(ctx),
         getFinanceWalletService(ctx),
-        getSessionPaymentService(ctx),
+        getPaymentQueueService(ctx),
         getSystemAuditRepository(ctx)
     );
 };
@@ -125,7 +126,6 @@ export const getMemberImportService = (ctx: AppContext) => {
 
 export const getOrgFinancialService = (ctx: AppContext) => {
     return new OrgFinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx),
         getFinancialCurrenciesRepository(ctx)
@@ -134,7 +134,6 @@ export const getOrgFinancialService = (ctx: AppContext) => {
 
 export const getUserFinancialService = (ctx: AppContext) => {
     return new UserFinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx),
         getFinancialCurrenciesRepository(ctx),
@@ -144,7 +143,6 @@ export const getUserFinancialService = (ctx: AppContext) => {
 
 export const getAdminFinancialService = (ctx: AppContext) => {
     return new AdminFinancialService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx)
     );
@@ -156,7 +154,6 @@ export const getFinanceBillingPlansService = (ctx: AppContext) => {
 
 export const getFinanceWalletService = (ctx: AppContext) => {
     return new FinanceWalletService(
-        getDbClient(ctx),
         getFinancialAccountsRepository(ctx),
         getFinancialTransactionsRepository(ctx)
     );
@@ -168,9 +165,13 @@ export const getSessionPaymentService = (ctx: AppContext) => {
         new DbBatchRunner(db),
         getFinancialTransactionsRepository(ctx),
         getSessionAttendancesRepository(ctx),
-        getSessionPaymentEventsRepository(ctx),
+        getPaymentQueueRepository(ctx),
         getSystemAuditRepository(ctx),
         getFinancialAccountsRepository(ctx),
         getFinanceBillingPlansRepository(ctx)
     );
+};
+
+export const getPaymentQueueService = (ctx: AppContext) => {
+    return new PaymentQueueService(getPaymentQueueRepository(ctx), ctx.env.QUEUE);
 };

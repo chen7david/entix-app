@@ -27,3 +27,5 @@ export const generateTransactionLineId = () => generateId("flne");
 export const generateBillingPlanId = () => generateId("fbp");
 export const generateMemberBillingPlanId = () => generateId("fmbp");
 export const generateBillingPlanRateId = () => generateId("fbpr");
+export const generatePaymentRequestId = () => generateId("pr");
+export const generateAuditId = () => generateId("aud");

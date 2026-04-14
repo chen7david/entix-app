@@ -39,6 +39,20 @@ function decodeTransactionCursor(cursor: string): { date: string; id: string } {
 }
 
 /**
+ * Builds a stable pagination cursor from the last item in a result set.
+ * Returns null if the result set is smaller than the requested limit (no next page).
+ * Use this in services instead of inlining the encodeTransactionCursor + null check.
+ */
+export function buildTransactionCursor(
+    items: { transactionDate: Date | string; id: string }[],
+    limit: number
+): string | null {
+    if (items.length < limit) return null;
+    const last = items[items.length - 1];
+    return encodeTransactionCursor(last);
+}
+
+/**
  * Financial transactions are NEVER hard-deleted to preserve ledger integrity.
  * All writes go through FinancialService.executeTransaction() via db.batch()
  * to guarantee atomicity on Cloudflare D1.
@@ -88,11 +102,11 @@ export class FinancialTransactionsRepository {
      */
     prepareStatements(
         input: CreateTransactionRepoInput,
-        overdraftOverrideCents: number | null = null
+        effectiveOverdraftLimit: number | null = null
     ) {
         const overdraftExpr =
-            overdraftOverrideCents !== null
-                ? sql`${overdraftOverrideCents}`
+            effectiveOverdraftLimit !== null
+                ? sql`${effectiveOverdraftLimit}`
                 : sql`COALESCE(${financialAccounts.overdraftLimitCents}, 0)`;
 
         // 1. Debit Source
@@ -176,9 +190,9 @@ export class FinancialTransactionsRepository {
      */
     async insert(
         input: CreateTransactionRepoInput,
-        overdraftOverrideCents: number | null = null
+        effectiveOverdraftLimit: number | null = null
     ): Promise<string> {
-        const statements = this.prepareStatements(input, overdraftOverrideCents);
+        const statements = this.prepareStatements(input, effectiveOverdraftLimit);
 
         // Phase 1: Debit + Credit only.
         // The debit uses a WHERE guard: balance + overdraft >= amount.
