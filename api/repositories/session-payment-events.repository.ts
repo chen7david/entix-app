@@ -4,7 +4,7 @@ import {
     financialSessionPaymentEvents,
     type NewFinancialSessionPaymentEvent,
 } from "@shared/db/schema";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 /**
  * Repository for session payment event database operations.
@@ -12,6 +12,22 @@ import { and, desc, eq } from "drizzle-orm";
  */
 export class SessionPaymentEventsRepository {
     constructor(private readonly db: AppDb) {}
+
+    /**
+     * Policy: Only one manual override is permitted per user/session pair.
+     * Manual events are identified by having a null transactionId.
+     */
+    async findExistingManualEvent(sessionId: string, userId: string) {
+        return (
+            (await this.db.query.financialSessionPaymentEvents.findFirst({
+                where: and(
+                    eq(financialSessionPaymentEvents.sessionId, sessionId),
+                    eq(financialSessionPaymentEvents.userId, userId),
+                    isNull(financialSessionPaymentEvents.transactionId)
+                ),
+            })) ?? null
+        );
+    }
 
     /**
      * Inserts a new session payment event and returns the created record.

@@ -1,11 +1,13 @@
-import { BadRequestError, ConflictError } from "@api/errors/app.error";
-import type { AppDb, BatchRunner } from "@api/factories/db.factory";
+import { ConflictError } from "@api/errors/app.error";
+import type { DbBatchRunner } from "@api/helpers/batch-runner";
+import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
+import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { createTransactionRepoInputSchema, financialSessionPaymentEvents } from "@shared/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { createTransactionRepoInputSchema } from "@shared/db/schema";
+import { resolveOverdraftLimit } from "@shared/utils/billing";
 import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
@@ -15,12 +17,13 @@ import { BaseService } from "../base.service";
  */
 export class SessionPaymentService extends BaseService {
     constructor(
-        private readonly db: AppDb,
-        private readonly batchRunner: BatchRunner,
+        private readonly dbBatchRunner: DbBatchRunner,
         private readonly transactionsRepo: FinancialTransactionsRepository,
         private readonly attendancesRepo: SessionAttendancesRepository,
         private readonly paymentEventsRepo: SessionPaymentEventsRepository,
-        private readonly auditRepo: SystemAuditRepository
+        private readonly auditRepo: SystemAuditRepository,
+        private readonly accountsRepo: FinancialAccountsRepository,
+        private readonly billingPlansRepo: FinanceBillingPlansRepository
     ) {
         super();
     }
@@ -39,7 +42,22 @@ export class SessionPaymentService extends BaseService {
         categoryId: string;
         performedBy: string | null;
         note?: string;
+        overdraftOverrideCents?: number;
     }): Promise<{ transactionId: string; eventId: string; auditId: string }> {
+        const [sourceAccount, memberPlan] = await Promise.all([
+            this.accountsRepo.findById(input.sourceAccountId),
+            this.billingPlansRepo
+                .getMemberPlanByCurrency(input.userId, input.organizationId, input.currencyId)
+                .catch(() => null), // graceful fallback if no plan assigned
+        ]);
+
+        const resolvedOverdraft =
+            input.overdraftOverrideCents ??
+            resolveOverdraftLimit(
+                { overdraftLimitCents: sourceAccount?.overdraftLimitCents ?? null },
+                memberPlan?.plan ?? null
+            );
+
         const now = new Date();
         const txId = `tx_${nanoid()}`;
         const debitLineId = `txl_${nanoid()}`;
@@ -47,7 +65,6 @@ export class SessionPaymentService extends BaseService {
         const eventId = `spe_${nanoid()}`;
         const auditId = `aud_${nanoid()}`;
 
-        // Phase 1: Financial Ledger
         const txInput = createTransactionRepoInputSchema.parse({
             id: txId,
             organizationId: input.organizationId,
@@ -63,18 +80,11 @@ export class SessionPaymentService extends BaseService {
             description: input.note ?? `Payment for session ${input.sessionId}`,
         });
 
-        const txStatements = this.transactionsRepo.prepareStatements(txInput);
-        const [debitResult] = await this.batchRunner.batch(
-            txStatements as Parameters<typeof this.batchRunner.batch>[0]
-        );
+        // Phase 1 + 2: Financial Ledger (Debit + Credit + Header + Lines)
+        // Handled atomically by the repository to ensure strict ledger integrity.
+        await this.transactionsRepo.insert(txInput, resolvedOverdraft);
 
-        if (debitResult.meta.rows_written === 0) {
-            throw new BadRequestError(
-                "Transaction failed: Insufficient funds or inactive account."
-            );
-        }
-
-        // Phase 2: Application-level writes
+        // Phase 3: Application-level writes
         const eventStatement = this.paymentEventsRepo.prepareInsert({
             id: eventId,
             sessionId: input.sessionId,
@@ -111,11 +121,7 @@ export class SessionPaymentService extends BaseService {
             createdAt: now,
         });
 
-        await this.batchRunner.batch([
-            eventStatement,
-            attendanceStatement,
-            auditStatement,
-        ] as Parameters<typeof this.batchRunner.batch>[0]);
+        await this.dbBatchRunner.batch([eventStatement, attendanceStatement, auditStatement]);
 
         return { transactionId: txId, eventId, auditId };
     }
@@ -134,13 +140,10 @@ export class SessionPaymentService extends BaseService {
     }) {
         // Blocker Fix: Guard against the manual_reset -> manual_paid loophole.
         // We check for ANY existing manual event (transactionId IS NULL) for this user/session.
-        const existingManualEvent = await this.db.query.financialSessionPaymentEvents.findFirst({
-            where: and(
-                eq(financialSessionPaymentEvents.sessionId, input.sessionId),
-                eq(financialSessionPaymentEvents.userId, input.userId),
-                isNull(financialSessionPaymentEvents.transactionId)
-            ),
-        });
+        const existingManualEvent = await this.paymentEventsRepo.findExistingManualEvent(
+            input.sessionId,
+            input.userId
+        );
 
         if (existingManualEvent) {
             throw new ConflictError(
@@ -170,9 +173,7 @@ export class SessionPaymentService extends BaseService {
             input.eventType === "manual_paid" ? "paid" : "unpaid"
         );
 
-        await this.batchRunner.batch([eventStatement, attendanceStatement] as Parameters<
-            typeof this.batchRunner.batch
-        >[0]);
+        await this.dbBatchRunner.batch([eventStatement, attendanceStatement]);
 
         return { eventId };
     }

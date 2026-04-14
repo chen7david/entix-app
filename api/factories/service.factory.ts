@@ -1,3 +1,4 @@
+import { DbBatchRunner } from "@api/helpers/batch-runner";
 import type { AppContext } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
@@ -164,11 +165,12 @@ export const getFinanceWalletService = (ctx: AppContext) => {
 export const getSessionPaymentService = (ctx: AppContext) => {
     const db = getDbClient(ctx);
     return new SessionPaymentService(
-        db,
-        db,
+        new DbBatchRunner(db),
         getFinancialTransactionsRepository(ctx),
         getSessionAttendancesRepository(ctx),
         getSessionPaymentEventsRepository(ctx),
-        getSystemAuditRepository(ctx)
+        getSystemAuditRepository(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinanceBillingPlansRepository(ctx)
     );
 };
