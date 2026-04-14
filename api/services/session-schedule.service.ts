@@ -245,13 +245,6 @@ export class SessionScheduleService extends BaseService {
             );
 
             const overdraftLimit = resolveOverdraftLimit(account, plan);
-            const availableBalance = account.balanceCents + overdraftLimit;
-            if (availableBalance < amountCents) {
-                throw new BadRequestError(
-                    `Insufficient funds (balance: ${account.balanceCents}, overdraft: ${overdraftLimit}, required: ${amountCents})`
-                );
-            }
-
             const isApproachingOverdraft =
                 account.balanceCents - amountCents <= -overdraftLimit * 0.9;
 
