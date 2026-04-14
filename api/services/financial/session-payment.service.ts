@@ -64,15 +64,23 @@ export class SessionPaymentService extends BaseService {
         });
 
         const txStatements = this.transactionsRepo.prepareStatements(txInput);
-        const [debitResult] = await this.batchRunner.batch(
-            txStatements as Parameters<typeof this.batchRunner.batch>[0]
-        );
+        const [debitResult] = await this.batchRunner.batch([
+            txStatements[0], // debit source only
+        ] as Parameters<typeof this.batchRunner.batch>[0]);
 
         if (debitResult.meta.rows_written === 0) {
             throw new BadRequestError(
                 "Transaction failed: Insufficient funds or inactive account."
             );
         }
+
+        // Phase 1b: Ledger records (Credit + Header + Lines)
+        await this.batchRunner.batch([
+            txStatements[1], // credit destination
+            txStatements[2], // transaction header
+            txStatements[3], // debit line
+            txStatements[4], // credit line
+        ] as Parameters<typeof this.batchRunner.batch>[0]);
 
         // Phase 2: Application-level writes
         const eventStatement = this.paymentEventsRepo.prepareInsert({
