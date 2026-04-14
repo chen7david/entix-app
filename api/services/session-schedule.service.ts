@@ -192,7 +192,10 @@ export class SessionScheduleService extends BaseService {
                 // processSessionPayment() in the same db.batch() as the transaction.
                 // If already paid or refunded, skip — prevents double charging on
                 // repeated calls (e.g. UI tab switching re-firing the endpoint).
-                if (attendance.paymentStatus === "paid" || attendance.paymentStatus === "refunded") {
+                if (
+                    attendance.paymentStatus === "paid" ||
+                    attendance.paymentStatus === "refunded"
+                ) {
                     continue;
                 }
 
