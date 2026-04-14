@@ -39,6 +39,7 @@ export class FinanceBillingPlansService {
                 description: input.description ?? null,
                 currencyId: input.currencyId,
                 isActive: true,
+                overdraftLimitCents: input.overdraftLimitCents ?? 0,
             },
             rates
         );
