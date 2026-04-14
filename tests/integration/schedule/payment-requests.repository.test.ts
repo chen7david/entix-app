@@ -164,7 +164,6 @@ describe("PaymentRequestsRepository Integration", () => {
             sourceAccountId: "acc_src",
             destinationAccountId: "acc_dest",
             categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
-            performedBy: userId,
             transactionDate: new Date(),
             createdAt: new Date(),
         });
