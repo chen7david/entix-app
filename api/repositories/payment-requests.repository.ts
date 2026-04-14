@@ -81,10 +81,7 @@ export class PaymentRequestsRepository {
     /**
      * Lists all payment requests for a given reference (e.g. a session).
      */
-    async listByReference(
-        referenceType: string,
-        referenceId: string
-    ): Promise<PaymentRequest[]> {
+    async listByReference(referenceType: string, referenceId: string): Promise<PaymentRequest[]> {
         return this.db
             .select()
             .from(paymentRequests)

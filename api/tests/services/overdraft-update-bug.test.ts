@@ -1,7 +1,7 @@
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { createTestDb } from "../helpers/test-db.helper";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
     buildMockAccountsRepo,
     buildMockAttendancesRepo,
@@ -9,6 +9,7 @@ import {
     buildMockBillingPlansRepo,
     buildMockTransactionsRepo,
 } from "../helpers/mock-repos.helper";
+import { createTestDb } from "../helpers/test-db.helper";
 
 /**
  * Regression suite: ensures the overdraft balance check is not corrupted
@@ -42,13 +43,33 @@ describe("SessionPaymentService — overdraft regression (EN-312)", () => {
 
     it("throws ConflictError when member balance is at overdraft limit", async () => {
         await expect(
-            service.processSessionPayment({ sessionId, userId, organizationId })
+            service.processSessionPayment({
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            })
         ).rejects.toThrow("overdraft");
     });
 
     it("does not persist a payment_request when the overdraft guard fires", async () => {
         try {
-            await service.processSessionPayment({ sessionId, userId, organizationId });
+            await service.processSessionPayment({
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            });
         } catch {
             // expected
         }

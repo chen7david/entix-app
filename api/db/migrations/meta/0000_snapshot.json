@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ae4c2042-99f7-412e-a462-56420f06c921",
+  "id": "0c034327-e9ec-4442-9570-930dac63479d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_accounts": {
@@ -552,14 +552,6 @@
           "autoincrement": false,
           "default": true
         },
-        "overdraft_limit_cents": {
-          "name": "overdraft_limit_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -575,6 +567,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "overdraft_limit_cents": {
+          "name": "overdraft_limit_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
         }
       },
       "indexes": {
@@ -616,7 +616,12 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "overdraft_limit_non_negative": {
+          "name": "overdraft_limit_non_negative",
+          "value": "\"finance_billing_plans\".\"overdraft_limit_cents\" >= 0"
+        }
+      }
     },
     "finance_member_billing_plans": {
       "name": "finance_member_billing_plans",
@@ -851,9 +856,8 @@
           "name": "overdraft_limit_cents",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
+          "notNull": false,
+          "autoincrement": false
         }
       },
       "indexes": {
@@ -899,6 +903,10 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
+        "overdraft_limit_non_negative": {
+          "name": "overdraft_limit_non_negative",
+          "value": "\"financial_accounts\".\"overdraft_limit_cents\" >= 0"
+        },
         "owner_type_check": {
           "name": "owner_type_check",
           "value": "\"financial_accounts\".\"owner_type\" IN ('user', 'org')"
@@ -907,17 +915,13 @@
           "name": "account_type_check",
           "value": "\"financial_accounts\".\"account_type\" IN ('savings', 'funding', 'treasury', 'system')"
         },
-        "balance_non_negative": {
-          "name": "balance_non_negative",
-          "value": "\"financial_accounts\".\"balance_cents\" >= 0"
-        },
-        "overdraft_limit_non_negative": {
-          "name": "overdraft_limit_non_negative",
-          "value": "\"financial_accounts\".\"overdraft_limit_cents\" >= 0"
-        },
         "org_scoped_user_accounts": {
           "name": "org_scoped_user_accounts",
-          "value": "\"financial_accounts\".\"organization_id\" IS NOT NULL"
+          "value": "\"financial_accounts\".\"account_type\" = 'system' OR \"financial_accounts\".\"organization_id\" IS NOT NULL"
+        },
+        "balance_within_overdraft": {
+          "name": "balance_within_overdraft",
+          "value": "\"financial_accounts\".\"overdraft_limit_cents\" IS NULL OR \"financial_accounts\".\"balance_cents\" >= -\"financial_accounts\".\"overdraft_limit_cents\""
         }
       }
     },
@@ -1057,149 +1061,6 @@
           "tableTo": "auth_organizations",
           "columnsFrom": [
             "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "financial_session_payment_events": {
-      "name": "financial_session_payment_events",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "session_id": {
-          "name": "session_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "organization_id": {
-          "name": "organization_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "user_id": {
-          "name": "user_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "event_type": {
-          "name": "event_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "amount_cents": {
-          "name": "amount_cents",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "currency_id": {
-          "name": "currency_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "note": {
-          "name": "note",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "idx_session_payment_events_session_id": {
-          "name": "idx_session_payment_events_session_id",
-          "columns": [
-            "session_id"
-          ],
-          "isUnique": false
-        },
-        "idx_session_payment_events_user_id": {
-          "name": "idx_session_payment_events_user_id",
-          "columns": [
-            "user_id"
-          ],
-          "isUnique": false
-        },
-        "idx_session_payment_events_org_id": {
-          "name": "idx_session_payment_events_org_id",
-          "columns": [
-            "organization_id"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "financial_session_payment_events_organization_id_auth_organizations_id_fk": {
-          "name": "financial_session_payment_events_organization_id_auth_organizations_id_fk",
-          "tableFrom": "financial_session_payment_events",
-          "tableTo": "auth_organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "financial_session_payment_events_user_id_auth_users_id_fk": {
-          "name": "financial_session_payment_events_user_id_auth_users_id_fk",
-          "tableFrom": "financial_session_payment_events",
-          "tableTo": "auth_users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "financial_session_payment_events_created_by_auth_users_id_fk": {
-          "name": "financial_session_payment_events_created_by_auth_users_id_fk",
-          "tableFrom": "financial_session_payment_events",
-          "tableTo": "auth_users",
-          "columnsFrom": [
-            "created_by"
           ],
           "columnsTo": [
             "id"
@@ -1472,7 +1333,37 @@
           "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "idx_fin_tx_org_id": {
+          "name": "idx_fin_tx_org_id",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "idx_fin_tx_org_date": {
+          "name": "idx_fin_tx_org_date",
+          "columns": [
+            "organization_id",
+            "transaction_date"
+          ],
+          "isUnique": false
+        },
+        "idx_fin_tx_source_acc": {
+          "name": "idx_fin_tx_source_acc",
+          "columns": [
+            "source_account_id"
+          ],
+          "isUnique": false
+        },
+        "idx_fin_tx_dest_acc": {
+          "name": "idx_fin_tx_dest_acc",
+          "columns": [
+            "destination_account_id"
+          ],
+          "isUnique": false
+        }
+      },
       "foreignKeys": {
         "financial_transactions_organization_id_auth_organizations_id_fk": {
           "name": "financial_transactions_organization_id_auth_organizations_id_fk",
@@ -2398,6 +2289,313 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "payment_requests": {
+      "name": "payment_requests",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currency_id": {
+          "name": "currency_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_account_id": {
+          "name": "source_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "destination_account_id": {
+          "name": "destination_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reference_type": {
+          "name": "reference_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reference_id": {
+          "name": "reference_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "requested_by": {
+          "name": "requested_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "failure_reason": {
+          "name": "failure_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "attempt_count": {
+          "name": "attempt_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "last_attempted_at": {
+          "name": "last_attempted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "processed_at": {
+          "name": "processed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "uq_payment_request_idempotency_key": {
+          "name": "uq_payment_request_idempotency_key",
+          "columns": [
+            "idempotency_key"
+          ],
+          "isUnique": true
+        },
+        "idx_pr_organization_id": {
+          "name": "idx_pr_organization_id",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "idx_pr_status": {
+          "name": "idx_pr_status",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        },
+        "idx_pr_reference": {
+          "name": "idx_pr_reference",
+          "columns": [
+            "reference_type",
+            "reference_id"
+          ],
+          "isUnique": false
+        },
+        "idx_pr_created_at": {
+          "name": "idx_pr_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "payment_requests_organization_id_auth_organizations_id_fk": {
+          "name": "payment_requests_organization_id_auth_organizations_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "payment_requests_currency_id_financial_currencies_id_fk": {
+          "name": "payment_requests_currency_id_financial_currencies_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "financial_currencies",
+          "columnsFrom": [
+            "currency_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payment_requests_source_account_id_financial_accounts_id_fk": {
+          "name": "payment_requests_source_account_id_financial_accounts_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "financial_accounts",
+          "columnsFrom": [
+            "source_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "payment_requests_destination_account_id_financial_accounts_id_fk": {
+          "name": "payment_requests_destination_account_id_financial_accounts_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "financial_accounts",
+          "columnsFrom": [
+            "destination_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "payment_requests_category_id_financial_transaction_categories_id_fk": {
+          "name": "payment_requests_category_id_financial_transaction_categories_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "financial_transaction_categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "payment_requests_transaction_id_financial_transactions_id_fk": {
+          "name": "payment_requests_transaction_id_financial_transactions_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "financial_transactions",
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "payment_requests_requested_by_auth_users_id_fk": {
+          "name": "payment_requests_requested_by_auth_users_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "requested_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "pr_type_check": {
+          "name": "pr_type_check",
+          "value": "\"payment_requests\".\"type\" IN ('session_payment', 'manual_payment')"
+        },
+        "pr_status_check": {
+          "name": "pr_status_check",
+          "value": "\"payment_requests\".\"status\" IN ('pending', 'processing', 'completed', 'failed', 'cancelled')"
+        },
+        "pr_amount_non_negative": {
+          "name": "pr_amount_non_negative",
+          "value": "\"payment_requests\".\"amount_cents\" >= 0"
+        },
+        "pr_attempt_count_non_negative": {
+          "name": "pr_attempt_count_non_negative",
+          "value": "\"payment_requests\".\"attempt_count\" >= 0"
+        }
+      }
+    },
     "scheduled_sessions": {
       "name": "scheduled_sessions",
       "columns": {
@@ -2570,12 +2768,13 @@
           "notNull": false,
           "autoincrement": false
         },
-        "paid_at": {
-          "name": "paid_at",
-          "type": "integer",
+        "payment_status": {
+          "name": "payment_status",
+          "type": "text",
           "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'unpaid'"
         }
       },
       "indexes": {
@@ -2652,7 +2851,12 @@
         }
       },
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "payment_status_check": {
+          "name": "payment_status_check",
+          "value": "\"session_attendances\".\"payment_status\" IN ('unpaid', 'paid', 'refunded')"
+        }
+      }
     },
     "social_media_types": {
       "name": "social_media_types",
@@ -2799,6 +3003,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "event_type": {
           "name": "event_type",
           "type": "text",
@@ -2814,11 +3025,11 @@
           "autoincrement": false,
           "default": "'info'"
         },
-        "message": {
-          "name": "message",
+        "actor_id": {
+          "name": "actor_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "actor_type": {
@@ -2828,13 +3039,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "'system'"
-        },
-        "actor_id": {
-          "name": "actor_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         },
         "subject_type": {
           "name": "subject_type",
@@ -2848,6 +3052,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false,
+          "autoincrement": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
           "autoincrement": false
         },
         "metadata": {
@@ -2881,36 +3092,65 @@
         }
       },
       "indexes": {
-        "idx_audit_events_severity": {
-          "name": "idx_audit_events_severity",
+        "idx_audit_org_id": {
+          "name": "idx_audit_org_id",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_severity": {
+          "name": "idx_audit_severity",
           "columns": [
             "severity"
           ],
           "isUnique": false
         },
-        "idx_audit_events_event_type": {
-          "name": "idx_audit_events_event_type",
+        "idx_audit_event_type": {
+          "name": "idx_audit_event_type",
           "columns": [
             "event_type"
           ],
           "isUnique": false
         },
-        "idx_audit_events_created_at": {
-          "name": "idx_audit_events_created_at",
+        "idx_audit_acknowledged": {
+          "name": "idx_audit_acknowledged",
+          "columns": [
+            "acknowledged_at"
+          ],
+          "isUnique": false
+        },
+        "idx_audit_created_at": {
+          "name": "idx_audit_created_at",
           "columns": [
             "created_at"
           ],
           "isUnique": false
         },
-        "idx_audit_events_acknowledged_at": {
-          "name": "idx_audit_events_acknowledged_at",
+        "uq_audit_payment_ack": {
+          "name": "uq_audit_payment_ack",
           "columns": [
-            "acknowledged_at"
+            "subject_id",
+            "event_type"
           ],
-          "isUnique": false
+          "isUnique": true,
+          "where": "\"system_audit_events\".\"event_type\" = 'payment.acknowledged'"
         }
       },
       "foreignKeys": {
+        "system_audit_events_organization_id_auth_organizations_id_fk": {
+          "name": "system_audit_events_organization_id_auth_organizations_id_fk",
+          "tableFrom": "system_audit_events",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
         "system_audit_events_acknowledged_by_auth_users_id_fk": {
           "name": "system_audit_events_acknowledged_by_auth_users_id_fk",
           "tableFrom": "system_audit_events",
@@ -2927,7 +3167,16 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "severity_check": {
+          "name": "severity_check",
+          "value": "\"system_audit_events\".\"severity\" IN ('info', 'warning', 'error', 'critical')"
+        },
+        "actor_type_check": {
+          "name": "actor_type_check",
+          "value": "\"system_audit_events\".\"actor_type\" IN ('system', 'user', 'admin')"
+        }
+      }
     },
     "user_addresses": {
       "name": "user_addresses",
