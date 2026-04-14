@@ -1,1 +1,0 @@
--- tombstone: consolidated into 0000_genesis_schema.sql
