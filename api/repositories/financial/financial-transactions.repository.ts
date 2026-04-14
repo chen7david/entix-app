@@ -86,7 +86,15 @@ export class FinancialTransactionsRepository {
      *   replicas with write forwarding), this guard must be replaced with a
      *   SELECT ... FOR UPDATE or an optimistic-lock retry loop.
      */
-    prepareStatements(input: CreateTransactionRepoInput) {
+    prepareStatements(
+        input: CreateTransactionRepoInput,
+        overdraftOverrideCents: number | null = null
+    ) {
+        const overdraftExpr =
+            overdraftOverrideCents !== null
+                ? sql`${overdraftOverrideCents}`
+                : sql`COALESCE(${financialAccounts.overdraftLimitCents}, 0)`;
+
         // 1. Debit Source
         const debitStatement = this.db
             .update(financialAccounts)
@@ -99,7 +107,7 @@ export class FinancialTransactionsRepository {
                     eq(financialAccounts.id, input.sourceAccountId),
                     eq(financialAccounts.isActive, true),
                     gte(
-                        sql`${financialAccounts.balanceCents} + COALESCE(${financialAccounts.overdraftLimitCents}, 0)`,
+                        sql`${financialAccounts.balanceCents} + ${overdraftExpr}`,
                         input.amountCents
                     )
                 )
@@ -166,8 +174,11 @@ export class FinancialTransactionsRepository {
     /**
      * Atomic double-entry insert using D1 batch.
      */
-    async insert(input: CreateTransactionRepoInput): Promise<string> {
-        const statements = this.prepareStatements(input);
+    async insert(
+        input: CreateTransactionRepoInput,
+        overdraftOverrideCents: number | null = null
+    ): Promise<string> {
+        const statements = this.prepareStatements(input, overdraftOverrideCents);
 
         // Phase 1: Debit + Credit only.
         // The debit uses a WHERE guard: balance + overdraft >= amount.

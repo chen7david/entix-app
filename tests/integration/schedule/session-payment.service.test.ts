@@ -1,4 +1,7 @@
 import { ConflictError } from "@api/errors/app.error";
+import { DbBatchRunner } from "@api/helpers/batch-runner";
+import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
+import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
@@ -36,12 +39,13 @@ describe("SessionPaymentService Integration", () => {
         db = await createTestDb();
 
         service = new SessionPaymentService(
-            db,
-            db,
+            new DbBatchRunner(db),
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
             new SessionPaymentEventsRepository(db),
-            new SystemAuditRepository(db)
+            new SystemAuditRepository(db),
+            new FinancialAccountsRepository(db),
+            new FinanceBillingPlansRepository(db)
         );
 
         // Setup seed data

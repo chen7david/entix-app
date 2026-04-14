@@ -195,6 +195,7 @@ export class FinanceBillingPlansRepository {
                     name: updates.name,
                     description: updates.description,
                     isActive: updates.isActive,
+                    overdraftLimitCents: updates.overdraftLimitCents,
                     updatedAt: new Date(),
                 })
                 .where(eq(financeBillingPlans.id, planId))
