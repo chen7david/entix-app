@@ -6,6 +6,11 @@ import type { FinancialTransactionsRepository } from "@api/repositories/financia
 import type { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import {
+    FINANCIAL_CATEGORIES,
+    FINANCIAL_CURRENCIES,
+    getSystemAdjustmentAccountId,
+} from "@shared/constants/financial";
 import { createTransactionRepoInputSchema } from "@shared/db/schema";
 import { resolveOverdraftLimit } from "@shared/utils/billing";
 import { nanoid } from "nanoid";
@@ -93,6 +98,7 @@ export class SessionPaymentService extends BaseService {
             referenceType: "session",
             referenceId: input.sessionId,
             requestedBy: input.performedBy ?? null,
+            userId: input.userId, // Attribution to the student paying
             note: input.note ?? null,
             attemptCount: 1,
             lastAttemptedAt: now,
@@ -100,58 +106,66 @@ export class SessionPaymentService extends BaseService {
             updatedAt: now,
         });
 
-        const txInput = createTransactionRepoInputSchema.parse({
-            id: txId,
-            organizationId: input.organizationId,
-            categoryId: input.categoryId,
-            sourceAccountId: input.sourceAccountId,
-            destinationAccountId: input.destinationAccountId,
-            currencyId: input.currencyId,
-            amountCents: input.amountCents,
-            transactionDate: now,
-            createdAt: now,
-            debitLineId,
-            creditLineId,
-            description: input.note ?? `Payment for session ${input.sessionId}`,
-        });
-
-        // Phase 1 + 2: Financial Ledger (Debit + Credit + Header + Lines)
-        await this.transactionsRepo.insert(txInput, resolvedOverdraft);
-
-        // Phase 3: Application-level writes — attendance status + audit log
-        const attendanceStatement = this.attendancesRepo.prepareUpdatePaymentStatus(
-            input.sessionId,
-            input.userId,
-            "paid"
-        );
-
-        const auditStatement = this.auditRepo.prepareInsert({
-            id: auditId,
-            organizationId: input.organizationId,
-            eventType: "session_payment_processed",
-            severity: "info",
-            actorId: input.performedBy ?? null,
-            actorType: input.performedBy ? "user" : "system",
-            subjectType: "session_attendance",
-            subjectId: `${input.sessionId}:${input.userId}`,
-            message: `Processed session payment for session ${input.sessionId}`,
-            metadata: JSON.stringify({
+        try {
+            const txInput = createTransactionRepoInputSchema.parse({
+                id: txId,
+                organizationId: input.organizationId,
+                categoryId: input.categoryId,
+                sourceAccountId: input.sourceAccountId,
+                destinationAccountId: input.destinationAccountId,
+                currencyId: input.currencyId,
                 amountCents: input.amountCents,
+                transactionDate: now,
+                createdAt: now,
+                debitLineId,
+                creditLineId,
+                description: input.note ?? `Payment for session ${input.sessionId}`,
+            });
+
+            // Phase 1 + 2: Financial Ledger (Debit + Credit + Header + Lines)
+            await this.transactionsRepo.insert(txInput, resolvedOverdraft);
+
+            // Phase 3: Application-level writes — attendance status + audit log
+            const attendanceStatement = this.attendancesRepo.prepareUpdatePaymentStatus(
+                input.sessionId,
+                input.userId,
+                "paid"
+            );
+
+            const auditStatement = this.auditRepo.prepareInsert({
+                id: auditId,
+                organizationId: input.organizationId,
+                eventType: "session_payment_processed",
+                severity: "info",
+                actorId: input.performedBy ?? null,
+                actorType: input.performedBy ? "user" : "system",
+                subjectType: "session_attendance",
+                subjectId: `${input.sessionId}:${input.userId}`,
+                message: `Processed session payment for session ${input.sessionId}`,
+                metadata: JSON.stringify({
+                    amountCents: input.amountCents,
+                    transactionId: txId,
+                    paymentRequestId,
+                }),
+                createdAt: now,
+            });
+
+            await this.dbBatchRunner.batch([attendanceStatement, auditStatement]);
+
+            // Mark the payment request as completed.
+            await this.paymentRequestsRepo.updateStatus(paymentRequestId, "completed", {
                 transactionId: txId,
-                paymentRequestId,
-            }),
-            createdAt: now,
-        });
+                processedAt: now,
+            });
 
-        await this.dbBatchRunner.batch([attendanceStatement, auditStatement]);
-
-        // Mark the payment request as completed.
-        await this.paymentRequestsRepo.updateStatus(paymentRequestId, "completed", {
-            transactionId: txId,
-            processedAt: now,
-        });
-
-        return { transactionId: txId, paymentRequestId, auditId };
+            return { transactionId: txId, paymentRequestId, auditId };
+        } catch (err) {
+            await this.paymentRequestsRepo.updateStatus(paymentRequestId, "failed", {
+                failureReason: err instanceof Error ? err.message : String(err),
+                lastAttemptedAt: now,
+            });
+            throw err;
+        }
     }
 
     /**
@@ -171,7 +185,7 @@ export class SessionPaymentService extends BaseService {
         const existing = await this.paymentRequestsRepo.findByIdempotencyKey(idempotencyKey);
         if (existing) {
             throw new ConflictError(
-                `A manual override (${input.eventType}) already exists for this session-user pair. Multiple manual overrides are prohibited.`
+                "A manual override already exists for this session-user pair. Multiple manual overrides are prohibited."
             );
         }
 
@@ -184,14 +198,15 @@ export class SessionPaymentService extends BaseService {
             type: "manual_payment",
             status: "completed",
             amountCents: 0,
-            currencyId: "fcur_etd",
-            sourceAccountId: `facc_system_adjustment_fcur_etd`,
-            destinationAccountId: `facc_system_adjustment_fcur_etd`,
-            categoryId: "fcat_system_adjustment",
+            currencyId: FINANCIAL_CURRENCIES.ETD,
+            sourceAccountId: getSystemAdjustmentAccountId(FINANCIAL_CURRENCIES.ETD),
+            destinationAccountId: getSystemAdjustmentAccountId(FINANCIAL_CURRENCIES.ETD),
+            categoryId: FINANCIAL_CATEGORIES.SYSTEM_ADJUSTMENT,
             idempotencyKey,
             referenceType: "session",
             referenceId: input.sessionId,
             requestedBy: input.performedBy,
+            userId: input.userId,
             note: input.note,
             attemptCount: 1,
             lastAttemptedAt: now,

@@ -1,7 +1,7 @@
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
     buildMockAccountsRepo,
     buildMockAttendancesRepo,
@@ -92,6 +92,51 @@ describe("SessionPaymentService", () => {
             const expectedKey = `session_payment:${sessionId}:${userId}`;
             const record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
             expect(record?.id).toMatch(/^pr_/);
+        });
+
+        it("allows re-submission after a failure", async () => {
+            const payload = {
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            };
+
+            // 1. Mock a failure in the transaction layer
+            const mockTransactions = buildMockTransactionsRepo();
+            mockTransactions.insert = vi.fn().mockRejectedValueOnce(new Error("Simulated failure"));
+
+            const failingService = new SessionPaymentService(
+                new DbBatchRunner(db),
+                mockTransactions,
+                buildMockAttendancesRepo(),
+                paymentRequestsRepo,
+                buildMockAuditRepo(),
+                buildMockAccountsRepo(),
+                buildMockBillingPlansRepo()
+            );
+
+            // 2. First attempt fails
+            await expect(failingService.processSessionPayment(payload)).rejects.toThrow(
+                "Simulated failure"
+            );
+
+            const expectedKey = `session_payment:${sessionId}:${userId}`;
+            let record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
+            expect(record?.status).toBe("failed");
+            expect(record?.failureReason).toBe("Simulated failure");
+
+            // 3. Second attempt succeeds (mock success this time)
+            mockTransactions.insert = vi.fn().mockResolvedValueOnce(undefined);
+            await failingService.processSessionPayment(payload);
+
+            record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
+            expect(record?.status).toBe("completed");
         });
     });
 

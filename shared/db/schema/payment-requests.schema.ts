@@ -77,6 +77,10 @@ export const paymentRequests = sqliteTable(
             onDelete: "set null",
         }),
 
+        userId: text("user_id").references(() => authUsers.id, {
+            onDelete: "set null",
+        }),
+
         note: text("note"),
         failureReason: text("failure_reason"),
 
