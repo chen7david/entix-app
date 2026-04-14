@@ -168,12 +168,28 @@ export class FinancialTransactionsRepository {
      */
     async insert(input: CreateTransactionRepoInput): Promise<string> {
         const statements = this.prepareStatements(input);
-        const [debitResult] = await this.db.batch(statements as any);
 
-        // Verify the debit actually hit a row (balance check + active check)
+        // Phase 1: Debit + Credit only.
+        // The debit uses a WHERE guard: balance + overdraft >= amount.
+        // We check rows_written BEFORE inserting any permanent ledger records.
+        // This prevents ghost transactions from being written when a debit fails.
+        const [debitResult] = await this.db.batch([
+            statements[0], // debit source only
+        ] as any);
+
         if (debitResult.meta.rows_written === 0) {
-            throw new BadRequestError("Insufficient funds, inactive account, or currency mismatch");
+            throw new BadRequestError(
+                "Transaction failed: Insufficient funds or inactive account."
+            );
         }
+
+        // Phase 2: Debit confirmed — now credit destination and write ledger records atomically
+        await this.db.batch([
+            statements[1], // credit destination
+            statements[2], // transaction header
+            statements[3], // debit line
+            statements[4], // credit line
+        ] as any);
 
         return input.id;
     }

@@ -64,9 +64,9 @@ export class SessionPaymentService extends BaseService {
         });
 
         const txStatements = this.transactionsRepo.prepareStatements(txInput);
-        const [debitResult] = await this.batchRunner.batch(
-            txStatements as Parameters<typeof this.batchRunner.batch>[0]
-        );
+        const [debitResult] = await this.batchRunner.batch([
+            txStatements[0], // debit source only
+        ] as Parameters<typeof this.batchRunner.batch>[0]);
 
         if (debitResult.meta.rows_written === 0) {
             throw new BadRequestError(
@@ -74,7 +74,15 @@ export class SessionPaymentService extends BaseService {
             );
         }
 
-        // Phase 2: Application-level writes
+        // Phase 2: Debit confirmed — credit destination and write immutable ledger records.
+        await this.batchRunner.batch([
+            txStatements[1], // credit destination
+            txStatements[2], // transaction header
+            txStatements[3], // debit line
+            txStatements[4], // credit line
+        ] as Parameters<typeof this.batchRunner.batch>[0]);
+
+        // Phase 3: Application-level writes
         const eventStatement = this.paymentEventsRepo.prepareInsert({
             id: eventId,
             sessionId: input.sessionId,
