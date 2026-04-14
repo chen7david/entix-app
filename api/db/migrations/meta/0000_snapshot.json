@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "0c034327-e9ec-4442-9570-930dac63479d",
+  "id": "f8be7ed5-f3c9-4a7f-8673-3f232d2ba11a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_accounts": {
@@ -2391,6 +2391,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "note": {
           "name": "note",
           "type": "text",
@@ -2567,6 +2574,19 @@
           "tableTo": "auth_users",
           "columnsFrom": [
             "requested_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "payment_requests_user_id_auth_users_id_fk": {
+          "name": "payment_requests_user_id_auth_users_id_fk",
+          "tableFrom": "payment_requests",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "user_id"
           ],
           "columnsTo": [
             "id"

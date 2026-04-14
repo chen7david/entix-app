@@ -5,8 +5,15 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1776178172730,
-      "tag": "0000_productive_longshot",
+      "when": 1776181084749,
+      "tag": "0000_genesis_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776181084750,
+      "tag": "0001_genesis_seed",
       "breakpoints": true
     }
   ]
