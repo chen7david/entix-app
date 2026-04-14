@@ -4,8 +4,8 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import { SessionPaymentEventsRepository } from "@api/repositories/session-payment-events.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
@@ -26,7 +26,7 @@ import { createTestDb } from "../lib/utils";
 describe("Hierarchical Overdraft Resolution", () => {
     let orgId: string;
     let userId: string;
-    let db: any;
+    let db: ReturnType<typeof createTestDb> extends Promise<infer T> ? T : never;
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -65,7 +65,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             where: eq(financeBillingPlans.id, planId),
         });
 
-        expect(updatedPlan.overdraftLimitCents).toBe(5000);
+        expect(updatedPlan?.overdraftLimitCents).toBe(5000);
     });
 
     it("should succeed when account overdraft is NULL but billing plan has sufficient overdraft", async () => {
@@ -147,7 +147,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             new DbBatchRunner(db),
             new FinancialTransactionsRepository(db),
             new SessionAttendancesRepository(db),
-            new SessionPaymentEventsRepository(db),
+            new PaymentRequestsRepository(db),
             new SystemAuditRepository(db),
             new FinancialAccountsRepository(db),
             new FinanceBillingPlansRepository(db)
@@ -169,6 +169,6 @@ describe("Hierarchical Overdraft Resolution", () => {
         const updatedAcc = await db.query.financialAccounts.findFirst({
             where: eq(financialAccounts.id, accId),
         });
-        expect(updatedAcc.balanceCents).toBe(-300);
+        expect(updatedAcc?.balanceCents).toBe(-300);
     });
 });

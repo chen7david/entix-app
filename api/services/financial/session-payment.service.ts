@@ -166,7 +166,7 @@ export class SessionPaymentService extends BaseService {
         performedBy: string;
         note: string;
     }) {
-        const idempotencyKey = `${input.eventType}:${input.sessionId}:${input.userId}`;
+        const idempotencyKey = `manual_override:${input.sessionId}:${input.userId}`;
 
         const existing = await this.paymentRequestsRepo.findByIdempotencyKey(idempotencyKey);
         if (existing) {

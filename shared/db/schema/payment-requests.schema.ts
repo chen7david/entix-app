@@ -2,9 +2,9 @@ import { sql } from "drizzle-orm";
 import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { authUsers } from "./auth.schema";
 import { financialAccounts } from "./financial-accounts.schema";
+import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { financialTransactions } from "./financial-transactions.schema";
-import { financialCurrencies } from "./financial-currencies.schema";
 import { authOrganizations } from "./organization.schema";
 
 export const PAYMENT_REQUEST_TYPES = ["session_payment", "manual_payment"] as const;
@@ -40,9 +40,7 @@ export const paymentRequests = sqliteTable(
 
         type: text("type", { enum: PAYMENT_REQUEST_TYPES }).notNull(),
 
-        status: text("status", { enum: PAYMENT_REQUEST_STATUSES })
-            .notNull()
-            .default("pending"),
+        status: text("status", { enum: PAYMENT_REQUEST_STATUSES }).notNull().default("pending"),
 
         amountCents: integer("amount_cents").notNull(),
 
@@ -105,7 +103,7 @@ export const paymentRequests = sqliteTable(
             "pr_status_check",
             sql`${t.status} IN ('pending', 'processing', 'completed', 'failed', 'cancelled')`
         ),
-        check("pr_amount_positive", sql`${t.amountCents} > 0`),
+        check("pr_amount_non_negative", sql`${t.amountCents} >= 0`),
         check("pr_attempt_count_non_negative", sql`${t.attemptCount} >= 0`),
     ]
 );

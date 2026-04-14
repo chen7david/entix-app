@@ -1,8 +1,7 @@
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { paymentRequests } from "@shared/db/schema";
-import { createTestDb } from "../helpers/test-db.helper";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
     buildMockAccountsRepo,
     buildMockAttendancesRepo,
@@ -10,6 +9,7 @@ import {
     buildMockBillingPlansRepo,
     buildMockTransactionsRepo,
 } from "../helpers/mock-repos.helper";
+import { createTestDb } from "../helpers/test-db.helper";
 
 describe("SessionPaymentService", () => {
     let db: ReturnType<typeof createTestDb>;
@@ -36,7 +36,17 @@ describe("SessionPaymentService", () => {
 
     describe("processSessionPayment", () => {
         it("inserts a payment_request with correct idempotency key", async () => {
-            await service.processSessionPayment({ sessionId, userId, organizationId });
+            await service.processSessionPayment({
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            });
 
             const expectedKey = `session_payment:${sessionId}:${userId}`;
             const record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
@@ -49,15 +59,36 @@ describe("SessionPaymentService", () => {
         });
 
         it("is idempotent — second call does not create a duplicate", async () => {
-            await service.processSessionPayment({ sessionId, userId, organizationId });
-            await service.processSessionPayment({ sessionId, userId, organizationId });
+            const payload = {
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            };
+            await service.processSessionPayment(payload);
+            await service.processSessionPayment(payload);
 
             const results = await paymentRequestsRepo.listByReference("session", sessionId);
             expect(results).toHaveLength(1);
         });
 
         it("uses pr_ prefix for the payment request id", async () => {
-            await service.processSessionPayment({ sessionId, userId, organizationId });
+            await service.processSessionPayment({
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            });
             const expectedKey = `session_payment:${sessionId}:${userId}`;
             const record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
             expect(record?.id).toMatch(/^pr_/);
@@ -66,7 +97,17 @@ describe("SessionPaymentService", () => {
 
     describe("getSessionPaymentRequests", () => {
         it("returns all payment requests for a given session", async () => {
-            await service.processSessionPayment({ sessionId, userId, organizationId });
+            await service.processSessionPayment({
+                sessionId,
+                userId,
+                organizationId,
+                amountCents: 1000,
+                currencyId: "fcur_usd",
+                sourceAccountId: "acc_src",
+                destinationAccountId: "acc_dest",
+                categoryId: "fcat_service_fee",
+                performedBy: userId,
+            });
             const results = await service.getSessionPaymentRequests(sessionId);
             expect(results).toHaveLength(1);
             expect(results[0].referenceId).toBe(sessionId);

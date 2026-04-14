@@ -1,5 +1,5 @@
 import { PaymentRequestsRepository } from "@api/repositories/payment-requests.repository";
-import { paymentRequests } from "@shared/db/schema";
+import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb } from "../helpers/test-db.helper";
 
 describe("PaymentRequestsRepository", () => {
@@ -40,7 +40,9 @@ describe("PaymentRequestsRepository", () => {
     describe("findByIdempotencyKey", () => {
         it("returns the record when the key exists", async () => {
             await repo.insert(baseRequest);
-            const found = await repo.findByIdempotencyKey("session_payment:ses_test001:usr_test001");
+            const found = await repo.findByIdempotencyKey(
+                "session_payment:ses_test001:usr_test001"
+            );
             expect(found).not.toBeNull();
             expect(found?.id).toBe("pr_test001");
         });
