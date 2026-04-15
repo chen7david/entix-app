@@ -1,4 +1,4 @@
-import { BadRequestError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
     authOrganizations,
@@ -11,7 +11,15 @@ import {
     financialTransactions,
 } from "@shared/db/schema";
 import type { TransactionFilters } from "@shared/schemas/dto/financial.dto";
-import { aliasedTable, and, desc, eq, gte, like, lt, lte, or, sql } from "drizzle-orm";
+import { aliasedTable, and, desc, eq, gte, like, lt, lte, or, type SQL, sql } from "drizzle-orm";
+
+export const LEDGER_BATCH_INDEX = {
+    credit: 0,
+    header: 1,
+    debitLine: 2,
+    creditLine: 3,
+    debit: 4,
+} as const;
 
 /**
  * Encodes transactionDate + id into a base64 cursor for stable pagination.
@@ -100,34 +108,20 @@ export class FinancialTransactionsRepository {
      *   replicas with write forwarding), this guard must be replaced with a
      *   SELECT ... FOR UPDATE or an optimistic-lock retry loop.
      */
-    prepareStatements(
-        input: CreateTransactionRepoInput,
-        effectiveOverdraftLimit: number | null = null
-    ) {
-        const overdraftExpr =
-            effectiveOverdraftLimit !== null
-                ? sql`${effectiveOverdraftLimit}`
-                : sql`COALESCE(${financialAccounts.overdraftLimitCents}, 0)`;
+    prepareStatements(input: CreateTransactionRepoInput, guard: SQL) {
+        // All guard logic is now handled by the caller and passed in via 'guard'.
+        // We just use it to condition our statements.
 
-        // 1. Debit Source
+        // 1. Debit Source (uses the guard directly)
         const debitStatement = this.db
             .update(financialAccounts)
             .set({
                 balanceCents: sql`${financialAccounts.balanceCents} - ${input.amountCents}`,
                 updatedAt: input.createdAt,
             })
-            .where(
-                and(
-                    eq(financialAccounts.id, input.sourceAccountId),
-                    eq(financialAccounts.isActive, true),
-                    gte(
-                        sql`${financialAccounts.balanceCents} + ${overdraftExpr}`,
-                        input.amountCents
-                    )
-                )
-            );
+            .where(guard);
 
-        // 2. Credit Destination
+        // 2. Credit Destination (matches dest ID AND the guard)
         const creditStatement = this.db
             .update(financialAccounts)
             .set({
@@ -137,84 +131,112 @@ export class FinancialTransactionsRepository {
             .where(
                 and(
                     eq(financialAccounts.id, input.destinationAccountId),
-                    eq(financialAccounts.isActive, true)
+                    sql`EXISTS (SELECT 1 FROM ${financialAccounts} WHERE ${guard})`
                 )
             );
 
-        // 3. Insert Transaction Header
-        const insertStatement = this.db.insert(financialTransactions).values({
-            id: input.id,
-            organizationId: input.organizationId,
-            categoryId: input.categoryId,
-            sourceAccountId: input.sourceAccountId,
-            destinationAccountId: input.destinationAccountId,
-            currencyId: input.currencyId,
-            amountCents: input.amountCents,
-            description: input.description,
-            metadata: input.metadata,
-            transactionDate: input.transactionDate,
-            createdAt: input.createdAt,
-            status: "completed",
-        });
+        // 3. Insert Transaction Header — batch-compatible conditional INSERT.
+        // Uses a typed SELECT from accounts with the balance guard.
+        const insertStatement = this.db.insert(financialTransactions).select(
+            this.db
+                .select({
+                    id: sql`${input.id}`.as("id"),
+                    organizationId: sql`${input.organizationId}`.as("organizationId"),
+                    categoryId: sql`${input.categoryId}`.as("categoryId"),
+                    sourceAccountId: sql`${input.sourceAccountId}`.as("sourceAccountId"),
+                    destinationAccountId: sql`${input.destinationAccountId}`.as(
+                        "destinationAccountId"
+                    ),
+                    currencyId: sql`${input.currencyId}`.as("currencyId"),
+                    amountCents: sql`${input.amountCents}`.as("amountCents"),
+                    status: sql`'completed'`.as("status"),
+                    description: sql`${input.description ?? null}`.as("description"),
+                    metadata: sql`${input.metadata ? JSON.stringify(input.metadata) : null}`.as(
+                        "metadata"
+                    ),
+                    transactionDate: sql`${input.transactionDate.getTime()}`.as("transactionDate"),
+                    idempotencyKey: sql`${input.idempotencyKey ?? null}`.as("idempotencyKey"),
+                    createdAt: sql`${input.createdAt.getTime()}`.as("createdAt"),
+                })
+                .from(financialAccounts)
+                .where(guard)
+        );
 
-        // 4. Insert Transaction Lines (for audit trail)
-        const debitLineStatement = this.db.insert(financialTransactionLines).values({
-            id: input.debitLineId,
-            transactionId: input.id,
-            accountId: input.sourceAccountId,
-            amountCents: input.amountCents,
-            direction: "debit",
-            createdAt: input.createdAt,
-        });
+        // 4. Insert Debit Line
+        const debitLineStatement = this.db.insert(financialTransactionLines).select(
+            this.db
+                .select({
+                    id: sql`${input.debitLineId}`.as("id"),
+                    transactionId: sql`${input.id}`.as("transactionId"),
+                    accountId: sql`${input.sourceAccountId}`.as("accountId"),
+                    direction: sql`'debit'`.as("direction"),
+                    amountCents: sql`${input.amountCents}`.as("amountCents"),
+                    createdAt: sql`${input.createdAt.getTime()}`.as("createdAt"),
+                })
+                .from(financialAccounts)
+                .where(guard)
+        );
 
-        const creditLineStatement = this.db.insert(financialTransactionLines).values({
-            id: input.creditLineId,
-            transactionId: input.id,
-            accountId: input.destinationAccountId,
-            amountCents: input.amountCents,
-            direction: "credit",
-            createdAt: input.createdAt,
-        });
+        // 5. Insert Credit Line
+        const creditLineStatement = this.db.insert(financialTransactionLines).select(
+            this.db
+                .select({
+                    id: sql`${input.creditLineId}`.as("id"),
+                    transactionId: sql`${input.id}`.as("transactionId"),
+                    accountId: sql`${input.destinationAccountId}`.as("accountId"),
+                    direction: sql`'credit'`.as("direction"),
+                    amountCents: sql`${input.amountCents}`.as("amountCents"),
+                    createdAt: sql`${input.createdAt.getTime()}`.as("createdAt"),
+                })
+                .from(financialAccounts)
+                .where(guard)
+        );
 
         return [
-            debitStatement,
             creditStatement,
             insertStatement,
             debitLineStatement,
             creditLineStatement,
+            debitStatement,
         ] as const;
     }
 
     /**
-     * Atomic double-entry insert using D1 batch.
+     * Atomic double-entry insert using a SINGLE D1 batch.
+     *
+     * Previous two-phase approach had a gap between Phase 1 (debit) and
+     * Phase 2 (credit + ledger), leaving a window where a concurrent
+     * request could bypass idempotency or a crash could leave a partial state.
+     *
+     * In this single-batch approach, all 5 statements (debit, credit, header, 2 lines)
+     * are submitted atomically to D1. We then verify that the debit statement actually
+     * matched a row; if not (e.g. balance check failed), we throw an error.
      */
-    async insert(
-        input: CreateTransactionRepoInput,
-        effectiveOverdraftLimit: number | null = null
-    ): Promise<string> {
-        const statements = this.prepareStatements(input, effectiveOverdraftLimit);
+    async insert(input: CreateTransactionRepoInput, guard: SQL): Promise<string> {
+        const statements = this.prepareStatements(input, guard);
 
-        // Phase 1: Debit + Credit only.
-        // The debit uses a WHERE guard: balance + overdraft >= amount.
-        // We check rows_written BEFORE inserting any permanent ledger records.
-        // This prevents ghost transactions from being written when a debit fails.
-        const [debitResult] = await this.db.batch([
-            statements[0], // debit source only
-        ] as any);
+        // db.batch() returns a readonly tuple; plain any[] would cause TS4104.
+        let results: any;
+        try {
+            // statements are now all proper BatchItem<"sqlite"> objects — no cast needed.
+            results = await this.db.batch(statements as Parameters<AppDb["batch"]>[0]);
+        } catch (err: unknown) {
+            // D1 surfaces UNIQUE constraint violations as thrown errors (not result meta).
+            // Translate the idempotency_key violation into a 409 so callers handle it correctly.
+            const msg = err instanceof Error ? err.message : String(err);
+            if (msg.includes("UNIQUE constraint failed") && msg.includes("idempotency_key")) {
+                throw new ConflictError("A transaction with this idempotency key already exists.");
+            }
+            throw err;
+        }
+
+        const debitResult = results[LEDGER_BATCH_INDEX.debit];
 
         if (debitResult.meta.rows_written === 0) {
             throw new BadRequestError(
                 "Transaction failed: Insufficient funds or inactive account."
             );
         }
-
-        // Phase 2: Debit confirmed — now credit destination and write ledger records atomically
-        await this.db.batch([
-            statements[1], // credit destination
-            statements[2], // transaction header
-            statements[3], // debit line
-            statements[4], // credit line
-        ] as any);
 
         return input.id;
     }

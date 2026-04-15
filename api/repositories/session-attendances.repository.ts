@@ -6,7 +6,7 @@ import {
     type SessionPaymentStatus,
     sessionAttendances,
 } from "@shared/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, type SQL } from "drizzle-orm";
 
 /**
  * Repository for session attendance database operations.
@@ -145,16 +145,25 @@ export class SessionAttendancesRepository {
     /**
      * Returns a prepared statement for updating payment status (for use in db.batch()).
      */
-    prepareUpdatePaymentStatus(sessionId: string, userId: string, status: SessionPaymentStatus) {
+    prepareUpdatePaymentStatus(
+        sessionId: string,
+        userId: string,
+        status: SessionPaymentStatus,
+        guard?: SQL
+    ) {
+        const conditions = [
+            eq(sessionAttendances.sessionId, sessionId),
+            eq(sessionAttendances.userId, userId),
+        ];
+
+        if (guard) {
+            conditions.push(guard);
+        }
+
         return this.db
             .update(sessionAttendances)
             .set({ paymentStatus: status })
-            .where(
-                and(
-                    eq(sessionAttendances.sessionId, sessionId),
-                    eq(sessionAttendances.userId, userId)
-                )
-            );
+            .where(and(...conditions));
     }
 
     /**

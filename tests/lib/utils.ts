@@ -18,7 +18,7 @@ import { drizzle } from "drizzle-orm/d1";
 /** Convenience alias matching what AppDb is in the api package. */
 export type TestDb = DrizzleD1Database<typeof schema>;
 
-const migrationFiles = import.meta.glob("/api/db/migrations/*.sql", {
+const migrationFiles = import.meta.glob("../../api/db/migrations/*.sql", {
     eager: true,
     query: "?raw",
     import: "default",

@@ -6,6 +6,7 @@ import { FinancialCurrenciesRepository } from "@api/repositories/financial/finan
 import { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
 import { FinancialTransactionCategoriesRepository } from "@api/repositories/financial/financial-transaction-categories.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { CloudflareKvCacheRepository } from "@api/repositories/kv-cache.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
@@ -103,4 +104,8 @@ export const getPaymentQueueRepository = (ctx: AppContext) => {
 
 export const getSystemAuditRepository = (ctx: AppContext) => {
     return new SystemAuditRepository(getDbClient(ctx));
+};
+
+export const getKvCacheRepository = (ctx: AppContext) => {
+    return new CloudflareKvCacheRepository(ctx.env.IDEMPOTENCY_KV);
 };

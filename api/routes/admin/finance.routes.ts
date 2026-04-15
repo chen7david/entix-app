@@ -5,6 +5,7 @@ import {
     jsonContentRequired,
 } from "@api/helpers/http.helpers";
 import { requireAuth } from "@api/middleware/auth.middleware";
+import { idempotencyMiddleware } from "@api/middleware/idempotency.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
@@ -69,7 +70,7 @@ export const AdminFinanceRoutes = {
         tags,
         method: HttpMethods.POST,
         path: "/admin/finance/orgs/{organizationId}/credit",
-        middleware: [requireAuth, requireSuperAdmin] as const,
+        middleware: [requireAuth, requireSuperAdmin, idempotencyMiddleware] as const,
         summary: "Super admin: platform-initiated credit to an account",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -87,7 +88,7 @@ export const AdminFinanceRoutes = {
         tags,
         method: HttpMethods.POST,
         path: "/admin/finance/orgs/{organizationId}/debit",
-        middleware: [requireAuth, requireSuperAdmin] as const,
+        middleware: [requireAuth, requireSuperAdmin, idempotencyMiddleware] as const,
         summary: "Super admin: platform-initiated debit from an account",
         request: {
             params: z.object({ organizationId: z.string() }),

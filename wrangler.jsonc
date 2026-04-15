@@ -31,6 +31,13 @@
                     "migrations_dir": "api/db/migrations"
                 }
             ],
+            "kv_namespaces": [
+                {
+                    "binding": "IDEMPOTENCY_KV",
+                    "id": "local",
+                    "preview_id": "local"
+                }
+            ],
             "queues": {
                 "producers": [
                     { "binding": "QUEUE", "queue": "entix-queue-dev" },
@@ -71,6 +78,13 @@
                     "migrations_dir": "api/db/migrations"
                 }
             ],
+            "kv_namespaces": [
+                {
+                    "binding": "IDEMPOTENCY_KV",
+                    "id": "970a9b8099d740d58cf8313ec73f6a59",
+                    "preview_id": "970a9b8099d740d58cf8313ec73f6a59"
+                }
+            ],
             "queues": {
                 "producers": [
                     { "binding": "QUEUE", "queue": "entix-queue-staging" },
@@ -108,6 +122,12 @@
                     "database_name": "entix-app-production",
                     "database_id": "01e3d448-9bf6-4d6d-987c-6fab5f70c9ab",
                     "migrations_dir": "api/db/migrations"
+                }
+            ],
+            "kv_namespaces": [
+                {
+                    "binding": "IDEMPOTENCY_KV",
+                    "id": "0ee3faaba3a844b39972e94457f4d242"
                 }
             ],
             "queues": {

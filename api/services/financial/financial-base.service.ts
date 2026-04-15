@@ -2,7 +2,8 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { ACCOUNT_TYPES } from "@shared";
-import { createTransactionRepoInputSchema } from "@shared/db/schema";
+import { createTransactionRepoInputSchema, financialAccounts } from "@shared/db/schema";
+import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
@@ -34,7 +35,16 @@ export abstract class FinancialBaseService extends BaseService {
         description?: string | null;
         metadata?: any;
         transactionDate?: Date; // Optional, defaults to now
+        idempotencyKey?: string | null;
     }): Promise<string> {
+        // Fast-fail on obviously invalid input before any DB reads
+        if (input.amountCents <= 0) {
+            throw new BadRequestError("Transaction amount must be a positive integer.");
+        }
+        if (input.sourceAccountId === input.destinationAccountId) {
+            throw new BadRequestError("Source and destination accounts must be different.");
+        }
+
         const [source, destination] = await Promise.all([
             this.accountsRepo.findById(input.sourceAccountId),
             this.accountsRepo.findById(input.destinationAccountId),
@@ -95,15 +105,29 @@ export abstract class FinancialBaseService extends BaseService {
 
         // Validate at Service Boundary (Rule 85)
         const repoInput = createTransactionRepoInputSchema.parse({
-            ...input,
             id: txId,
+            organizationId: input.organizationId,
+            categoryId: input.categoryId,
+            sourceAccountId: input.sourceAccountId,
+            destinationAccountId: input.destinationAccountId,
+            currencyId: input.currencyId,
+            amountCents: input.amountCents,
+            description: input.description,
+            metadata: input.metadata,
             transactionDate: input.transactionDate ?? now,
             createdAt: now,
             debitLineId,
             creditLineId,
+            // Always populate — repository needs this for the DB unique index guard.
+            // If no key was provided by the caller, generate a one-off nanoid.
+            // This means non-idempotent callers are safe but won't get dedup replay.
+            idempotencyKey: input.idempotencyKey ?? nanoid(),
         });
 
-        return this.transactionsRepo.insert(repoInput);
+        // 1. Guard Condition (shared across all statements in the batch)
+        const balanceGuard = sql`${financialAccounts.id} = ${input.sourceAccountId} AND ${financialAccounts.isActive} IS NOT 0 AND ${financialAccounts.balanceCents} + ${overdraftLimit} >= ${input.amountCents}`;
+
+        return this.transactionsRepo.insert(repoInput, balanceGuard);
     }
 
     /**

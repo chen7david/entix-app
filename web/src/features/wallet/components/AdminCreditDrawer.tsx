@@ -24,8 +24,9 @@ import {
     Typography,
     theme,
 } from "antd";
+import { nanoid } from "nanoid";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const { Text, Title } = Typography;
 
@@ -57,6 +58,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
     const [activeTab, setActiveTab] = useState<"treasury" | "funding" | "settings">("funding");
     const [direction, setDirection] = useState<"credit" | "debit">("credit");
     const [selectedCurrencyId, setSelectedCurrencyId] = useState<string>("fcur_usd");
+    const idempotencyKey = useRef(nanoid());
 
     const { credit, debit, ensureFunding, updateAccount } = useAdminTransfer();
     const { data: orgs, isLoading: isLoadingOrgs } = useAdminOrganizations();
@@ -88,6 +90,8 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                     reasonSelect: COMMON_REASONS[0],
                 });
             }
+            // Generate a fresh idempotency key every time the drawer opens
+            idempotencyKey.current = nanoid();
         }
     }, [open, preSelectedAccount, form]);
 
@@ -135,6 +139,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         currencyId: selectedCurrencyId,
                         amountCents,
                         description,
+                        idempotencyKey: idempotencyKey.current,
                     });
                 } else {
                     await debit.mutateAsync({
@@ -145,6 +150,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         currencyId: selectedCurrencyId,
                         amountCents,
                         description,
+                        idempotencyKey: idempotencyKey.current,
                     });
                 }
             } else if (activeTab === "funding") {
@@ -159,6 +165,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         currencyId: selectedCurrencyId,
                         amountCents,
                         description: description || "Organization Funding",
+                        idempotencyKey: idempotencyKey.current,
                     });
                 } else {
                     await debit.mutateAsync({
@@ -169,6 +176,7 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                         currencyId: selectedCurrencyId,
                         amountCents,
                         description: description || "Organization Funding Return",
+                        idempotencyKey: idempotencyKey.current,
                     });
                 }
             } else if (activeTab === "settings") {

@@ -1,8 +1,11 @@
-import { ConflictError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError } from "@api/errors/app.error";
 import type { DbBatchRunner } from "@api/helpers/batch-runner";
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
-import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import {
+    type FinancialTransactionsRepository,
+    LEDGER_BATCH_INDEX,
+} from "@api/repositories/financial/financial-transactions.repository";
 import type { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
@@ -11,9 +14,15 @@ import {
     FINANCIAL_CURRENCIES,
     getSystemAdjustmentAccountId,
 } from "@shared/constants/financial";
-import { createTransactionRepoInputSchema, type PaymentRequest } from "@shared/db/schema";
+import {
+    createTransactionRepoInputSchema,
+    financialAccounts,
+    financialTransactions,
+    type PaymentRequest,
+} from "@shared/db/schema";
 import { resolveOverdraftLimit } from "@shared/utils/billing";
 import { IdempotencyKeys } from "@shared/utils/idempotency-keys";
+import { sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
@@ -140,38 +149,83 @@ export class SessionPaymentService extends BaseService {
             debitLineId,
             creditLineId,
             description: pr.note ?? `Payment for session ${pr.referenceId}`,
+            idempotencyKey: pr.idempotencyKey,
         });
 
-        // 1. Financial Ledger Entry
-        await this.transactionsRepo.insert(txInput, resolvedOverdraft);
+        // 1. Prepare Financial Ledger Statements
+        const overdraftExpr =
+            resolvedOverdraft !== null
+                ? sql`${resolvedOverdraft}`
+                : sql`COALESCE(${financialAccounts.overdraftLimitCents}, 0)`;
 
-        // 2. Application Writes (Attendance + Audit)
+        const balanceGuard = sql`${financialAccounts.id} = ${pr.sourceAccountId} AND ${financialAccounts.isActive} IS NOT 0 AND ${financialAccounts.balanceCents} + ${overdraftExpr} >= ${pr.amountCents}`;
+
+        const ledgerStatements = this.transactionsRepo.prepareStatements(txInput, balanceGuard);
+        const transactionExistsGuard = sql`EXISTS (SELECT 1 FROM ${financialTransactions} WHERE ${financialTransactions.id} = ${txId})`;
+
+        // 2. Prepare Application Writes (Attendance + Audit)
         const attendanceStatement = this.attendancesRepo.prepareUpdatePaymentStatus(
             pr.referenceId,
             userId,
-            "paid"
+            "paid",
+            transactionExistsGuard
         );
 
         const auditId = `aud_${nanoid()}`;
-        const auditStatement = this.auditRepo.prepareInsert({
-            id: auditId,
-            organizationId: pr.organizationId,
-            eventType: "session_payment_processed",
-            severity: "info",
-            actorId: pr.requestedBy ?? null,
-            actorType: pr.requestedBy ? "user" : "system",
-            subjectType: "session_attendance",
-            subjectId: `${pr.referenceId}:${userId}`,
-            message: `Processed session payment for session ${pr.referenceId}`,
-            metadata: JSON.stringify({
-                amountCents: pr.amountCents,
-                transactionId: txId,
-                paymentRequestId: pr.id,
-            }),
-            createdAt: now,
-        });
+        const auditStatement = this.auditRepo.prepareGuardedInsert(
+            {
+                id: auditId,
+                organizationId: pr.organizationId,
+                eventType: "session_payment_processed",
+                severity: "info",
+                actorId: pr.requestedBy ?? null,
+                actorType: pr.requestedBy ? "user" : "system",
+                subjectType: "session_attendance",
+                subjectId: `${pr.referenceId}:${userId}`,
+                message: `Processed session payment for session ${pr.referenceId}`,
+                metadata: JSON.stringify({
+                    amountCents: pr.amountCents,
+                    transactionId: txId,
+                    paymentRequestId: pr.id,
+                }),
+                createdAt: now,
+            },
+            transactionExistsGuard
+        );
 
-        await this.dbBatchRunner.batch([attendanceStatement, auditStatement]);
+        // 3. Execute Unified Atomic Batch
+        // Keep debit last so guards evaluate pre-debit state.
+        const [
+            creditStatement,
+            headerStatement,
+            debitLineStatement,
+            creditLineStatement,
+            debitStatement,
+        ] = ledgerStatements;
+
+        let results: any[];
+        try {
+            results = await this.dbBatchRunner.batch([
+                creditStatement,
+                headerStatement,
+                debitLineStatement,
+                creditLineStatement,
+                attendanceStatement,
+                auditStatement,
+                debitStatement,
+            ]);
+        } catch (err: unknown) {
+            const batchError = err instanceof Error ? err.message : String(err);
+            console.error("[SessionPaymentService] Batch Error Detail:", batchError);
+            throw new Error(`DB_BATCH_FAILURE: ${batchError}`);
+        }
+
+        // 4. Verify ledger success.
+        const debitResult = results[LEDGER_BATCH_INDEX.debit + 2] as any;
+
+        if (!debitResult.meta?.rows_written || debitResult.meta.rows_written === 0) {
+            throw new BadRequestError("Payment failed: Insufficient funds or inactive account.");
+        }
 
         return { txId, auditId };
     }

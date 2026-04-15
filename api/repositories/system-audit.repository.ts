@@ -6,7 +6,7 @@ import {
     type SystemAuditEvent,
     systemAuditEvents,
 } from "@shared/db/schema";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, type SQL, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 
 /**
@@ -41,6 +41,43 @@ export class SystemAuditRepository {
      */
     prepareInsert(input: NewSystemAuditEvent) {
         return this.db.insert(systemAuditEvents).values(input);
+    }
+
+    /**
+     * Returns a prepared insert statement that only executes if the guard condition is met.
+     *
+     * `guard` MUST be a complete boolean SQL expression — typically an EXISTS subquery.
+     * SQLite allows `SELECT <values> WHERE <condition>` without a FROM clause:
+     *   - condition truthy  → 1 row returned → INSERT fires.
+     *   - condition falsy   → 0 rows returned → INSERT is a no-op (no ghost row).
+     *
+     * Column order MUST match systemAuditEvents schema definition order:
+     *   id, organizationId, eventType, severity, actorId, actorType,
+     *   subjectType, subjectId, message, metadata, acknowledgedAt, acknowledgedBy, createdAt
+     */
+    prepareGuardedInsert(input: NewSystemAuditEvent, guard: SQL) {
+        const createdAt = input.createdAt instanceof Date ? input.createdAt.getTime() : Date.now();
+
+        return this.db.insert(systemAuditEvents).select(
+            this.db
+                .select({
+                    id: sql`${input.id}`.as("id"),
+                    organizationId: sql`${input.organizationId}`.as("organizationId"),
+                    eventType: sql`${input.eventType}`.as("eventType"),
+                    severity: sql`${input.severity ?? "info"}`.as("severity"),
+                    actorId: sql`${input.actorId ?? null}`.as("actorId"),
+                    actorType: sql`${input.actorType ?? "system"}`.as("actorType"),
+                    subjectType: sql`${input.subjectType ?? null}`.as("subjectType"),
+                    subjectId: sql`${input.subjectId ?? null}`.as("subjectId"),
+                    message: sql`${input.message}`.as("message"),
+                    metadata: sql`${input.metadata ?? null}`.as("metadata"),
+                    acknowledgedAt: sql`null`.as("acknowledgedAt"),
+                    acknowledgedBy: sql`null`.as("acknowledgedBy"),
+                    createdAt: sql`${createdAt}`.as("createdAt"),
+                })
+                .from(sql`(SELECT 1) AS one_row_source`)
+                .where(guard)
+        );
     }
 
     /**
