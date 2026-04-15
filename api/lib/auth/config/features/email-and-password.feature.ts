@@ -8,7 +8,7 @@ export const getEmailAndPasswordConfig = (
     ctx?: AppContext,
     mailer?: MailService
 ): Partial<BetterAuthOptions> => {
-    const requireEmailVerification = ctx?.env.SKIP_EMAIL_VERIFICATION !== "true";
+    const requireEmailVerification = (ctx?.env.SKIP_EMAIL_VERIFICATION as string) !== "true";
 
     return {
         emailAndPassword: {

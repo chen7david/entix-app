@@ -30,6 +30,7 @@ export class AdminFinancialService extends FinancialBaseService {
         currencyId: string;
         amountCents: number;
         description?: string;
+        idempotencyKey?: string | null;
     }) {
         return this.executeTransaction({
             organizationId: input.organizationId,
@@ -39,6 +40,7 @@ export class AdminFinancialService extends FinancialBaseService {
             currencyId: input.currencyId,
             amountCents: input.amountCents,
             description: input.description,
+            idempotencyKey: input.idempotencyKey,
             transactionDate: new Date(),
         });
     }
@@ -51,6 +53,7 @@ export class AdminFinancialService extends FinancialBaseService {
         currencyId: string;
         amountCents: number;
         description?: string;
+        idempotencyKey?: string | null;
     }) {
         return this.executeTransaction({
             organizationId: input.organizationId,
@@ -60,6 +63,7 @@ export class AdminFinancialService extends FinancialBaseService {
             currencyId: input.currencyId,
             amountCents: input.amountCents,
             description: input.description,
+            idempotencyKey: input.idempotencyKey,
             transactionDate: new Date(),
         });
     }

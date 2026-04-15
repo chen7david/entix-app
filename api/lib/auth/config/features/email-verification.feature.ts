@@ -6,7 +6,7 @@ export const getEmailVerificationConfig = (
     ctx?: AppContext,
     mailer?: MailService
 ): Partial<BetterAuthOptions> => {
-    if (ctx?.env.SKIP_EMAIL_VERIFICATION === "true") {
+    if ((ctx?.env.SKIP_EMAIL_VERIFICATION as string) === "true") {
         return {};
     }
 

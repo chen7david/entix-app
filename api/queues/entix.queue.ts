@@ -121,7 +121,7 @@ async function handleBillingProcess(
         });
 
         // Restore audit write for business failures (insufficient funds, etc.)
-        if (err instanceof BadRequestError) {
+        if (err instanceof BadRequestError || (err as any).status === 400) {
             await auditRepo.insert({
                 id: `aud_${nanoid()}`,
                 organizationId: pr.organizationId,
