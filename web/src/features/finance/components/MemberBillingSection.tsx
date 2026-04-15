@@ -113,7 +113,7 @@ export const MemberBillingSection: React.FC<{ orgId: string; userId: string }> =
     if (!currencies || currencies.length === 0) {
         return (
             <Empty
-                description="No active currencies found. Activate a currency in the Finance dashboard to manage billing plans."
+                description="No active currencies found. Activate a currency in the Billing dashboard to manage billing plans."
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
         );

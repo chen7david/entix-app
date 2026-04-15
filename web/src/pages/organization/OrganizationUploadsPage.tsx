@@ -82,6 +82,8 @@ export const OrganizationUploadsPage = () => {
                         type="primary"
                         icon={<CloudUploadOutlined />}
                         onClick={() => setIsUploadModalOpen(true)}
+                        size="large"
+                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Upload Files
                     </Button>

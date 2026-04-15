@@ -18,6 +18,8 @@ export const OrganizationPlaylistsPage: React.FC = () => {
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={() => setIsCreateModalOpen(true)}
+                        size="large"
+                        className="h-11 font-semibold transition-all duration-200"
                     >
                         New Playlist
                     </Button>

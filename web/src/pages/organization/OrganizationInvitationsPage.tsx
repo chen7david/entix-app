@@ -125,6 +125,8 @@ export const OrganizationInvitationsPage = () => {
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={() => setIsModalOpen(true)}
+                        size="large"
+                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Invite Member
                     </Button>

@@ -4,6 +4,7 @@ import {
     InfoCircleOutlined,
     WarningOutlined,
 } from "@ant-design/icons";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { Button, Card, Col, message, Row, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -16,7 +17,7 @@ import {
     useRequeueFailedPayment,
 } from "../../features/admin/hooks/useAuditLogs";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { Option } = Select;
 
 interface AuditLogFilters {
@@ -178,14 +179,10 @@ export const AuditLogPage: React.FC = () => {
 
     return (
         <Space direction="vertical" size="large" style={{ width: "100%" }}>
-            <div>
-                <Title level={2} style={{ margin: 0 }}>
-                    System Audit Logs
-                </Title>
-                <Text type="secondary">
-                    Monitor platform events, alerts, and billing reconciliation status
-                </Text>
-            </div>
+            <PageHeader
+                title="System Audit Logs"
+                subtitle="High-fidelity monitoring of platform events, mission-critical alerts, and billing reconciliation status."
+            />
 
             <Card size="small">
                 <Row gutter={16} align="middle">

@@ -63,8 +63,8 @@ export const PlatformAdminSidebarContent: React.FC = () => {
             icon: <DashboardOutlined />,
         },
         {
-            label: "Financial",
-            key: "/admin/financial",
+            label: "Billing",
+            key: AppRoutes.admin.billing,
             icon: <DollarOutlined />,
         },
         {

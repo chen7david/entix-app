@@ -2,13 +2,14 @@ import { CheckCircleOutlined, SendOutlined, WarningOutlined } from "@ant-design/
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/features/admin";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { Alert, type TableColumnsType, Tag, Typography } from "antd";
 import type React from "react";
 import { useCallback, useState } from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const eventTagProps: Record<string, { color: string; label: string }> = {
     delivered: { color: "green", label: "Delivered" },
@@ -110,16 +111,10 @@ export const EmailInsightsPage: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Email Insights
-                    </Title>
-                    <Text type="secondary">
-                        Monitor email delivery status and activity via Resend
-                    </Text>
-                </div>
-            </div>
+            <PageHeader
+                title="Email Insights"
+                subtitle="Monitor email delivery status, activity, and dispatch logs via Resend architecture."
+            />
 
             <SummaryCardsRow
                 loading={isLoading}

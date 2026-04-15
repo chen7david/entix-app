@@ -1,10 +1,8 @@
 import { SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { UserTable, useAdminUsers } from "@web/src/features/admin";
-import { Typography } from "antd";
 import type React from "react";
-
-const { Title, Text } = Typography;
 
 export const GlobalUsersPage: React.FC = () => {
     const { data: userData, isPending: isLoading } = useAdminUsers();
@@ -16,14 +14,10 @@ export const GlobalUsersPage: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Global Users
-                    </Title>
-                    <Text type="secondary">Manage all platform users, roles, and access</Text>
-                </div>
-            </div>
+            <PageHeader
+                title="Global Users"
+                subtitle="Manage all platform users, roles, and access controls from a centralized authority."
+            />
 
             <SummaryCardsRow
                 loading={isLoading}

@@ -1,4 +1,6 @@
+import { PlusOutlined } from "@ant-design/icons";
 import type { WalletAccountDTO } from "@shared";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { AdminCreditDrawer } from "@web/src/features/wallet/components/AdminCreditDrawer";
 import {
     FinancialAccountCard,
@@ -29,22 +31,24 @@ export const FinancialManagementPage: React.FC = () => {
 
     return (
         <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Financial Oversight
-                </Title>
-                <Button
-                    type="primary"
-                    size="large"
-                    onClick={() => {
-                        setSelectedAccount(undefined);
-                        setCreditDrawerOpen(true);
-                    }}
-                    style={{ height: 44, fontWeight: 600, backgroundColor: "#1e40af" }}
-                >
-                    + Org Funding
-                </Button>
-            </div>
+            <PageHeader
+                title="Billing Oversight"
+                subtitle="Centralized platform treasury management and organizational funding controls."
+                actions={
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        size="large"
+                        className="h-11 font-semibold transition-all duration-200"
+                        onClick={() => {
+                            setSelectedAccount(undefined);
+                            setCreditDrawerOpen(true);
+                        }}
+                    >
+                        Org Funding
+                    </Button>
+                }
+            />
 
             {/* Treasury Health */}
             <div style={{ marginBottom: 32 }}>

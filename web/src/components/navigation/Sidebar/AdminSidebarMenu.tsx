@@ -48,8 +48,8 @@ export const AdminSidebarMenu: React.FC = () => {
             icon: <MailOutlined />,
         },
         {
-            label: "Financial Management",
-            key: AppRoutes.admin.financial,
+            label: "Billing Management",
+            key: AppRoutes.admin.billing,
             icon: <DollarOutlined />,
         },
     ];

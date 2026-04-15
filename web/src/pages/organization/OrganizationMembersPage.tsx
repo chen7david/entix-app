@@ -354,7 +354,8 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                                 type="primary"
                                 icon={<PlusOutlined />}
                                 onClick={() => setIsCreateModalOpen(true)}
-                                className="min-h-[40px]"
+                                size="large"
+                                className="h-11 font-semibold transition-all duration-200"
                             >
                                 Create New Member
                             </Button>

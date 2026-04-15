@@ -16,7 +16,7 @@ import { useState } from "react";
 
 const { Title, Text } = Typography;
 
-export const FinanceTransactionsPage: React.FC = () => {
+export const BillingTransactionsPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
@@ -80,11 +80,11 @@ export const FinanceTransactionsPage: React.FC = () => {
         <div>
             <div style={{ marginBottom: 32 }}>
                 <Title level={2} style={{ margin: 0 }}>
-                    Financial Ledger
+                    Transaction Ledger
                 </Title>
                 <Text type="secondary" className="text-base">
-                    A comprehensive, immutable record of all organizational financial transactions
-                    and reversals.
+                    A comprehensive, immutable record of all organizational billing transactions and
+                    reversals.
                 </Text>
             </div>
 
