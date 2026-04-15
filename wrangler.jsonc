@@ -81,8 +81,8 @@
             "kv_namespaces": [
                 {
                     "binding": "IDEMPOTENCY_KV",
-                    "id": "db2771d6342d45c39606886f34567890",
-                    "preview_id": "db2771d6342d45c39606886f34567890"
+                    "id": "970a9b8099d740d58cf8313ec73f6a59",
+                    "preview_id": "970a9b8099d740d58cf8313ec73f6a59"
                 }
             ],
             "queues": {
@@ -127,7 +127,7 @@
             "kv_namespaces": [
                 {
                     "binding": "IDEMPOTENCY_KV",
-                    "id": "ef1d16719876543210abcd5555555555"
+                    "id": "0ee3faaba3a844b39972e94457f4d242"
                 }
             ],
             "queues": {
