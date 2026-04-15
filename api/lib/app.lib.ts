@@ -38,7 +38,7 @@ export const createApp = () => {
                 const allowedOrigins = getCorsOrigins(ctx);
                 return allowedOrigins.includes(origin) ? origin : null;
             },
-            allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+            allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
             allowHeaders: ["Content-Type", "Authorization", "Origin", "Accept"],
             exposeHeaders: ["Content-Length", "X-Kuma-Revision"],
             maxAge: 600,

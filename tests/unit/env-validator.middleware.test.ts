@@ -59,10 +59,8 @@ describe("envValidatorMiddleware", () => {
         expect(body.success).toBe(false);
     });
 
-    it("should return 500 when RESEND_API_KEY does not start with re_", async () => {
-        const res = await buildTestApp({ ...validEnv, RESEND_API_KEY: "invalid_key_format" })(
-            "/health"
-        );
+    it("should return 500 when RESEND_API_KEY is empty", async () => {
+        const res = await buildTestApp({ ...validEnv, RESEND_API_KEY: "" })("/health");
         expect(res.status).toBe(500);
         const body = await parseJson<ErrorResponse>(res);
         expect(body.success).toBe(false);

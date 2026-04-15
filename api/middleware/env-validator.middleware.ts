@@ -9,7 +9,7 @@ import { z } from "zod";
 const envSchema = z.object({
     FRONTEND_URL: z.string().url(),
     BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-    RESEND_API_KEY: z.string().startsWith("re_", "RESEND_API_KEY must start with 're_'"),
+    RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
     CLOUDFLARE_ACCOUNT_ID: z.string().min(10, "CLOUDFLARE_ACCOUNT_ID is required"),
     R2_ACCESS_KEY_ID: z.string().min(10, "R2_ACCESS_KEY_ID is required"),
     R2_SECRET_ACCESS_KEY: z.string().min(10, "R2_SECRET_ACCESS_KEY is required"),
