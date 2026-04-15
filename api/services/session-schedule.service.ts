@@ -1,7 +1,12 @@
 import { BadRequestError } from "@api/errors/app.error";
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, IdempotencyKeys } from "@shared";
+import {
+    calculateClassChargeCents,
+    FINANCIAL_CATEGORIES,
+    FINANCIAL_CURRENCIES,
+    IdempotencyKeys,
+} from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
 import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
@@ -231,7 +236,9 @@ export class SessionScheduleService extends BaseService {
         rateCentsPerMinute: number,
         participantCount: number
     ) {
-        const amountCents = rateCentsPerMinute * session.durationMinutes;
+        const amountCents = calculateClassChargeCents(rateCentsPerMinute, session.durationMinutes, {
+            roundToNearestDollar: true,
+        });
         const currencyId = FINANCIAL_CURRENCIES.CNY;
 
         try {

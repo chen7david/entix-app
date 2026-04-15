@@ -5,6 +5,7 @@ import {
     WalletOutlined,
 } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
+import { POSInput } from "@web/src/components/ui/POSInput";
 import { useMembers } from "@web/src/features/organization/hooks/useMembers";
 import { useInitializeWallet } from "@web/src/features/wallet/hooks/useInitializeWallet";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
@@ -14,7 +15,6 @@ import {
     Divider,
     Form,
     Input,
-    InputNumber,
     Popconfirm,
     Radio,
     Select,
@@ -237,15 +237,11 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                 label="Adjustment Amount"
                 rules={[{ required: true, type: "number", min: 0.01 }]}
             >
-                <InputNumber
-                    style={{ height: 48, lineHeight: "48px", width: "100%" }}
+                <POSInput
                     size="large"
-                    precision={2}
-                    prefix={<span style={{ opacity: 0.4 }}>{currencyMeta?.symbol ?? "$"}</span>}
+                    prefix={currencyMeta?.symbol ?? "$"}
                     placeholder="0.00"
-                    controls={false}
                     disabled={formDisabled}
-                    onFocus={(e) => e.target.select()}
                 />
             </Form.Item>
 

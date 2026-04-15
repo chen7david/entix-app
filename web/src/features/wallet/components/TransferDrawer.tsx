@@ -1,7 +1,8 @@
 import type { WalletAccountDTO } from "@shared";
+import { POSInput } from "@web/src/components/ui/POSInput";
 import { useActivatedCurrencies } from "@web/src/features/finance";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Button, Drawer, Form, Input, InputNumber, Select } from "antd";
+import { App, Button, Drawer, Form, Input, Select } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
 type TransferDrawerProps = {
@@ -96,12 +97,7 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                     getValueFromEvent={(val) => Math.round(val * 100)}
                     getValueProps={(val) => ({ value: val ? val / 100 : undefined })}
                 >
-                    <InputNumber
-                        min={0.01}
-                        style={{ width: "100%" }}
-                        placeholder="0.00"
-                        precision={2}
-                    />
+                    <POSInput placeholder="0.00" />
                 </Form.Item>
 
                 <Form.Item

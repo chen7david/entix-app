@@ -1,6 +1,7 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import type { BillingPlanDTO, UpdateBillingPlanInput } from "@shared/schemas/dto/billing-plan.dto";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { POSInput } from "@web/src/components/ui/POSInput";
 import {
     useBillingPlanActions,
     useBillingPlans,
@@ -56,7 +57,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
             initialValues={
                 initialValues || {
                     isActive: true,
-                    rates: [{ participantCount: 1, rateCentsPerMinute: 0 }],
+                    rates: [{ participantCount: 1, hourlyRateDollars: 0 }],
                 }
             }
             onFinish={(values) => {
@@ -70,7 +71,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                     rates:
                         values.rates?.map((r: any) => ({
                             ...r,
-                            rateCentsPerMinute: Math.round(r.rateCentsPerMinute * 100),
+                            rateCentsPerMinute: Math.round((r.hourlyRateDollars * 100) / 60),
                         })) || [],
                 };
                 onFinish(submission);
@@ -89,13 +90,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                 label="Default Overdraft Limit"
                 tooltip="The maximum negative balance allowed for accounts on this plan if not overridden at the account level."
             >
-                <InputNumber
-                    min={0}
-                    precision={2}
-                    prefix="$"
-                    className="w-full"
-                    placeholder="0.00"
-                />
+                <POSInput placeholder="0.00" />
             </Form.Item>
 
             <Form.Item name="description" label="Description">
@@ -167,23 +162,12 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
 
                                 <Form.Item
                                     {...restField}
-                                    name={[name, "rateCentsPerMinute"]}
-                                    label="Rate / min"
+                                    name={[name, "hourlyRateDollars"]}
+                                    label="Hourly Rate"
                                     rules={[{ required: true, message: "Req" }]}
                                     className="mb-0 flex-1"
                                 >
-                                    <InputNumber<number>
-                                        min={0}
-                                        className="w-full"
-                                        placeholder="0.00"
-                                        step={0.01}
-                                        formatter={(value) =>
-                                            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                        }
-                                        parser={(value) =>
-                                            value?.replace(/\$\s?|(,*)/g, "") as unknown as number
-                                        }
-                                    />
+                                    <POSInput placeholder="0.00" />
                                 </Form.Item>
 
                                 <Button
@@ -390,7 +374,8 @@ export const BillingPlanManagement: React.FC<{ orgId: string }> = ({ orgId }) =>
                                           : undefined,
                                   rates: editingPlan.rates?.map((r) => ({
                                       ...r,
-                                      rateCentsPerMinute: r.rateCentsPerMinute / 100,
+                                      hourlyRateDollars:
+                                          Math.round(((r.rateCentsPerMinute * 60) / 100) * 2) / 2,
                                   })),
                               }
                             : undefined

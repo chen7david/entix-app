@@ -1,18 +1,8 @@
 import { ArrowDownOutlined, ArrowUpOutlined, WalletOutlined } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { POSInput } from "@web/src/components/ui/POSInput";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
-import {
-    Alert,
-    Button,
-    Divider,
-    Form,
-    Input,
-    InputNumber,
-    Radio,
-    Select,
-    Skeleton,
-    Space,
-} from "antd";
+import { Alert, Button, Divider, Form, Input, Radio, Select, Skeleton, Space } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
@@ -209,19 +199,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
                         label="Adjustment Amount"
                         rules={[{ required: true, type: "number", min: 0.01 }]}
                     >
-                        <InputNumber
-                            style={{ height: 48, lineHeight: "48px", width: "100%" }}
-                            size="large"
-                            precision={2}
-                            prefix={
-                                <span style={{ opacity: 0.4 }}>
-                                    {selectedCurrencyMeta?.symbol || "$"}
-                                </span>
-                            }
-                            placeholder="0.00"
-                            controls={false}
-                            onFocus={(e) => e.target.select()}
-                        />
+                        <POSInput prefix={selectedCurrencyMeta?.symbol} placeholder="0.00" />
                     </Form.Item>
 
                     <Form.Item
