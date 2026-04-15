@@ -29,6 +29,7 @@ export class AdminFinanceHandler {
 
         const txId = await getAdminFinancialService(ctx).adminCredit({
             organizationId,
+            idempotencyKey: ctx.req.header("Idempotency-Key"),
             ...body,
         });
 
@@ -41,6 +42,7 @@ export class AdminFinanceHandler {
 
         const txId = await getAdminFinancialService(ctx).adminDebit({
             organizationId,
+            idempotencyKey: ctx.req.header("Idempotency-Key"),
             ...body,
         });
 

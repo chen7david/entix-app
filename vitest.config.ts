@@ -14,6 +14,7 @@ export default defineWorkersConfig({
                 wrangler: { configPath: "./wrangler.jsonc" },
                 miniflare: {
                     d1Databases: ["DB"],
+                    kvNamespaces: ["IDEMPOTENCY_KV"],
                     queueProducers: {
                         QUEUE: "entix-queue",
                         DLQ: "entix-dlq",

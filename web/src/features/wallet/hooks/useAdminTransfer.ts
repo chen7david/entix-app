@@ -28,13 +28,18 @@ export const useAdminTransfer = () => {
             currencyId: string;
             amountCents: number;
             description?: string;
+            idempotencyKey?: string;
         }) => {
+            const { idempotencyKey, ...body } = params;
             const res = await fetch(
                 `${API_V1}/admin/finance/orgs/${params.organizationId}/credit`,
                 {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(params),
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+                    },
+                    body: JSON.stringify(body),
                 }
             );
             if (!res.ok) await parseApiError(res);
@@ -55,11 +60,16 @@ export const useAdminTransfer = () => {
             currencyId: string;
             amountCents: number;
             description?: string;
+            idempotencyKey?: string;
         }) => {
+            const { idempotencyKey, ...body } = params;
             const res = await fetch(`${API_V1}/admin/finance/orgs/${params.organizationId}/debit`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(params),
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+                },
+                body: JSON.stringify(body),
             });
             if (!res.ok) await parseApiError(res);
             return res.json();

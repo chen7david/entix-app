@@ -2,6 +2,7 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import type { AppContext } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
 import { AvatarService } from "@api/services/avatar.service";
+import { CacheService } from "@api/services/cache.service";
 import { DashboardService } from "@api/services/dashboard.service";
 import { AdminFinancialService } from "@api/services/financial/admin-financial.service";
 import { FinanceBillingPlansService } from "@api/services/financial/finance-billing-plans.service";
@@ -31,6 +32,7 @@ import {
     getFinancialCurrenciesRepository,
     getFinancialOrgSettingsRepository,
     getFinancialTransactionsRepository,
+    getKvCacheRepository,
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
@@ -174,4 +176,8 @@ export const getSessionPaymentService = (ctx: AppContext) => {
 
 export const getPaymentQueueService = (ctx: AppContext) => {
     return new PaymentQueueService(getPaymentQueueRepository(ctx), ctx.env.QUEUE);
+};
+
+export const getCacheService = (ctx: AppContext) => {
+    return new CacheService(getKvCacheRepository(ctx));
 };

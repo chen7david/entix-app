@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { financialAccounts } from "./financial-accounts.schema";
@@ -41,6 +41,7 @@ export const financialTransactions = sqliteTable(
         description: text("description"),
         metadata: text("metadata", { mode: "json" }).$type<TransactionMetadata>(),
         transactionDate: integer("transaction_date", { mode: "timestamp_ms" }).notNull(),
+        idempotencyKey: text("idempotency_key"),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
@@ -51,6 +52,8 @@ export const financialTransactions = sqliteTable(
         check("status_values", sql`${t.status} IN ('pending', 'completed', 'reversed')`),
         // Prevent a transaction from being its own source and destination.
         check("source_dest_different", sql`${t.sourceAccountId} != ${t.destinationAccountId}`),
+
+        uniqueIndex("idx_tx_idem").on(t.organizationId, t.idempotencyKey),
 
         // Performance indexes
         index("idx_fin_tx_org_id").on(t.organizationId),
@@ -73,6 +76,7 @@ export const createTransactionRepoInputSchema = createInsertSchema(financialTran
 }).extend({
     debitLineId: z.string().min(1),
     creditLineId: z.string().min(1),
+    idempotencyKey: z.string().optional().nullable(),
 });
 
 export type CreateTransactionRepoInput = z.infer<typeof createTransactionRepoInputSchema>;
