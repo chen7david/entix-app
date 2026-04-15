@@ -3,7 +3,7 @@ import { useAuth } from "../../features/auth/context/AuthContext";
 import { useOrgCurrencies } from "../../features/finance/hooks/useOrgCurrencies";
 import { useOrganization } from "../../features/organization/hooks/useOrganization";
 import { useWalletBalance } from "../../features/wallet/hooks/useWalletBalance";
-import { FinanceAccountsPage } from "../../pages/dashboard/finance/FinanceAccountsPage";
+import { BillingAccountsPage } from "../../pages/dashboard/billing/BillingAccountsPage";
 import { renderWithProviders } from "../test-utils";
 
 // Mock hooks
@@ -34,7 +34,7 @@ vi.mock("antd", async () => {
     };
 });
 
-describe("FinanceAccountsPage Smoke Tests", () => {
+describe("BillingAccountsPage Smoke Tests", () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
@@ -63,7 +63,7 @@ describe("FinanceAccountsPage Smoke Tests", () => {
         vi.mocked(useWalletBalance).mockReturnValue({ data: undefined, isLoading: true } as any);
 
         // This is exactly what crashed - it should now render without throwing
-        expect(() => renderWithProviders(<FinanceAccountsPage />)).not.toThrow();
+        expect(() => renderWithProviders(<BillingAccountsPage />)).not.toThrow();
     });
 
     it("renders without crash when data is empty array", () => {
@@ -73,7 +73,7 @@ describe("FinanceAccountsPage Smoke Tests", () => {
             isLoading: false,
         } as any);
 
-        expect(() => renderWithProviders(<FinanceAccountsPage />)).not.toThrow();
+        expect(() => renderWithProviders(<BillingAccountsPage />)).not.toThrow();
     });
 
     it("renders without crash with populated data", () => {
@@ -96,6 +96,6 @@ describe("FinanceAccountsPage Smoke Tests", () => {
             isLoading: false,
         } as any);
 
-        expect(() => renderWithProviders(<FinanceAccountsPage />)).not.toThrow();
+        expect(() => renderWithProviders(<BillingAccountsPage />)).not.toThrow();
     });
 });

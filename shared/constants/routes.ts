@@ -31,10 +31,11 @@ export const AppRoutes = {
             schedule: "/admin/schedule",
             uploads: "/admin/uploads",
             bulk: "/admin/bulk",
-            finance: {
-                index: "/admin/finance",
-                accounts: "/admin/finance/accounts",
-                transactions: "/admin/finance/transactions",
+            billing: {
+                index: "/admin/billing",
+                accounts: "/admin/billing/accounts",
+                transactions: "/admin/billing/transactions",
+                plans: "/admin/billing/plans",
             },
             organizations: "/admin/organizations",
         },
@@ -52,7 +53,7 @@ export const AppRoutes = {
         users: "/admin/users",
         emails: "/admin/emails",
         organizations: "/admin/organizations",
-        financial: "/admin/financial",
+        billing: "/admin/billing",
         auditLogs: "/admin/audit-logs",
     },
     onboarding: {

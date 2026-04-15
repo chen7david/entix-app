@@ -8,6 +8,7 @@ import {
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useAdminCreateUserWithOrg, useAdminOrganizations } from "@web/src/features/admin";
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
 import { CreateOrganizationForm } from "@web/src/features/organization";
@@ -18,7 +19,7 @@ import dayjs from "dayjs";
 import type React from "react";
 import { useState } from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const GlobalOrganizationsPage: React.FC = () => {
     const { notification } = App.useApp();
@@ -135,30 +136,31 @@ export const GlobalOrganizationsPage: React.FC = () => {
 
     return (
         <div>
-            {/* Header */}
-            <div
-                className="flex justify-between items-start flex-wrap gap-4"
-                style={{ marginBottom: 32 }}
-            >
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Global Organizations
-                    </Title>
-                    <Text type="secondary">Manage all platform organizations and their owners</Text>
-                </div>
-                <div className="flex gap-2">
-                    <Button icon={<PlusOutlined />} onClick={() => setIsCreateOrgModalOpen(true)}>
-                        Create Organization
-                    </Button>
-                    <Button
-                        type="primary"
-                        icon={<UserAddOutlined />}
-                        onClick={() => setIsCreateUserWithOrgModalOpen(true)}
-                    >
-                        Create User + Org
-                    </Button>
-                </div>
-            </div>
+            <PageHeader
+                title="Global Organizations"
+                subtitle="Manage all platform organizations and their owners from a centralized authority."
+                actions={
+                    <div className="flex gap-2">
+                        <Button
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsCreateOrgModalOpen(true)}
+                            size="large"
+                            className="h-11 font-semibold transition-all duration-200"
+                        >
+                            Create Organization
+                        </Button>
+                        <Button
+                            type="primary"
+                            icon={<UserAddOutlined />}
+                            onClick={() => setIsCreateUserWithOrgModalOpen(true)}
+                            size="large"
+                            className="h-11 font-semibold transition-all duration-200"
+                        >
+                            Create User + Org
+                        </Button>
+                    </div>
+                }
+            />
 
             {/* Stats */}
             <SummaryCardsRow

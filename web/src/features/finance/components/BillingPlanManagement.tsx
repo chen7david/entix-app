@@ -1,6 +1,7 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import type { BillingPlanDTO, UpdateBillingPlanInput } from "@shared/schemas/dto/billing-plan.dto";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { POSInput } from "@web/src/components/ui/POSInput";
 import {
     useBillingPlanActions,
     useBillingPlans,
@@ -23,10 +24,9 @@ import {
     theme,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import type React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 type BillingPlanFormValues = Partial<Omit<BillingPlanDTO, "overdraftLimitCents">> & {
     overdraftLimitDollars?: number;
@@ -56,11 +56,12 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
             initialValues={
                 initialValues || {
                     isActive: true,
-                    rates: [{ participantCount: 1, rateCentsPerMinute: 0 }],
+                    rates: [{ participantCount: 1, hourlyRateDollars: 0 }],
                 }
             }
             onFinish={(values) => {
                 // Map rates back to cents
+                // rateCentsPerMinute = (hourlyRateDollars * 100) / 60
                 const submission = {
                     ...values,
                     overdraftLimitCents:
@@ -70,7 +71,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                     rates:
                         values.rates?.map((r: any) => ({
                             ...r,
-                            rateCentsPerMinute: Math.round(r.rateCentsPerMinute * 100),
+                            rateCentsPerMinute: Math.round((r.hourlyRateDollars * 100) / 60),
                         })) || [],
                 };
                 onFinish(submission);
@@ -89,13 +90,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                 label="Default Overdraft Limit"
                 tooltip="The maximum negative balance allowed for accounts on this plan if not overridden at the account level."
             >
-                <InputNumber
-                    min={0}
-                    precision={2}
-                    prefix="$"
-                    className="w-full"
-                    placeholder="0.00"
-                />
+                <POSInput placeholder="0.00" />
             </Form.Item>
 
             <Form.Item name="description" label="Description">
@@ -167,23 +162,12 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
 
                                 <Form.Item
                                     {...restField}
-                                    name={[name, "rateCentsPerMinute"]}
-                                    label="Rate / min"
+                                    name={[name, "hourlyRateDollars"]}
+                                    label="Hourly Rate"
                                     rules={[{ required: true, message: "Req" }]}
                                     className="mb-0 flex-1"
                                 >
-                                    <InputNumber<number>
-                                        min={0}
-                                        className="w-full"
-                                        placeholder="0.00"
-                                        step={0.01}
-                                        formatter={(value) =>
-                                            `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                        }
-                                        parser={(value) =>
-                                            value?.replace(/\$\s?|(,*)/g, "") as unknown as number
-                                        }
-                                    />
+                                    <POSInput placeholder="0.00" />
                                 </Form.Item>
 
                                 <Button
@@ -220,195 +204,197 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
     );
 };
 
-export const BillingPlanManagement: React.FC<{ orgId: string }> = ({ orgId }) => {
-    const { modal } = App.useApp();
-    const [search, setSearch] = useState("");
-    const [limit, setLimit] = useState(20);
-    const [drawerVisible, setDrawerVisible] = useState(false);
-    const [editingPlan, setEditingPlan] = useState<BillingPlanDTO | null>(null);
+export interface BillingPlanManagementRef {
+    handleCreate: () => void;
+}
 
-    const { data, isLoading: loadingPlans } = useBillingPlans(orgId, { search, limit });
-    const { createPlan, updatePlan, deletePlan } = useBillingPlanActions(orgId);
-    const { data: currencies } = useOrgCurrencies(orgId);
+export const BillingPlanManagement = React.forwardRef<BillingPlanManagementRef, { orgId: string }>(
+    ({ orgId }, ref) => {
+        const { modal } = App.useApp();
+        const [search, setSearch] = useState("");
+        const [limit, setLimit] = useState(20);
+        const [drawerVisible, setDrawerVisible] = useState(false);
+        const [editingPlan, setEditingPlan] = useState<BillingPlanDTO | null>(null);
 
-    const handleEdit = (plan: BillingPlanDTO) => {
-        setEditingPlan(plan);
-        setDrawerVisible(true);
-    };
-
-    const handleDelete = (plan: BillingPlanDTO) => {
-        modal.confirm({
-            title: "Delete Billing Plan?",
-            content: `Are you sure you want to delete "${plan.name}"? This cannot be undone.`,
-            okText: "Delete",
-            okType: "danger",
-            onOk: async () => {
-                await deletePlan.mutateAsync(plan.id);
-            },
+        const { data, isLoading: loadingPlans } = useBillingPlans(orgId, {
+            search,
+            limit,
         });
-    };
+        const { createPlan, updatePlan, deletePlan } = useBillingPlanActions(orgId);
+        const { data: currencies } = useOrgCurrencies(orgId);
 
-    const columns: ColumnsType<BillingPlanDTO> = [
-        {
-            title: "Plan Name",
-            dataIndex: "name",
-            key: "name",
-            render: (name, record) => (
-                <Space direction="vertical" size={0}>
-                    <Text strong>{name}</Text>
-                    <Text type="secondary" className="text-xs">
-                        {record.description || "No description"}
-                    </Text>
-                </Space>
-            ),
-        },
-        {
-            title: "Currency",
-            dataIndex: "currencyId",
-            key: "currency",
-            width: 100,
-            render: (id) => {
-                const c = currencies?.find((curr: CurrencyWithStatus) => curr.id === id);
-                return <Tag color="blue">{c?.code || id}</Tag>;
+        React.useImperativeHandle(ref, () => ({
+            handleCreate: () => {
+                setEditingPlan(null);
+                setDrawerVisible(true);
             },
-        },
-        {
-            title: "Tiers",
-            dataIndex: "rates",
-            key: "tiers",
-            width: 100,
-            render: (rates) => <Tag>{rates?.length || 0} Tiers</Tag>,
-        },
-        {
-            title: "Status",
-            dataIndex: "isActive",
-            key: "status",
-            width: 100,
-            render: (isActive, record) => (
-                <Switch
-                    size="small"
-                    checked={isActive}
-                    loading={updatePlan.isPending && editingPlan?.id === record.id}
-                    onChange={(checked) => {
-                        setEditingPlan(record);
-                        updatePlan.mutate({ planId: record.id, updates: { isActive: checked } });
-                    }}
-                />
-            ),
-        },
-        {
-            title: "Created",
-            dataIndex: "createdAt",
-            key: "createdAt",
-            width: 150,
-            render: (date) => DateUtils.fromNow(date),
-        },
-        {
-            title: "Actions",
-            key: "actions",
-            width: 100,
-            render: (_, record) => (
-                <Space>
-                    <Button
-                        type="text"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(record)}
-                    />
-                    <Button
-                        type="text"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDelete(record)}
-                    />
-                </Space>
-            ),
-        },
-    ];
+        }));
 
-    return (
-        <div className="flex flex-col h-full">
-            <div className="mb-6 flex justify-between items-center">
-                <Space direction="vertical" size={2}>
-                    <Title level={4}>Billing Plans</Title>
-                    <Text type="secondary">
-                        Define tiered hourly rates for different currencies.
-                    </Text>
-                </Space>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                        setEditingPlan(null);
-                        setDrawerVisible(true);
-                    }}
-                >
-                    Create Plan
-                </Button>
-            </div>
+        const handleEdit = (plan: BillingPlanDTO) => {
+            setEditingPlan(plan);
+            setDrawerVisible(true);
+        };
 
-            <div className="flex-1 min-h-0">
-                <DataTableWithFilters<BillingPlanDTO>
-                    config={{
-                        columns,
-                        data: data?.data || [],
-                        loading: loadingPlans,
-                        rowKey: "id",
-                        filters: [
-                            {
-                                type: "search",
-                                key: "search",
-                                placeholder: "Search plans...",
-                            },
-                        ],
-                        onFiltersChange: (f) => setSearch(f.search || ""),
-                        pagination: {
-                            hasNextPage: !!data?.nextCursor,
-                            hasPrevPage: false,
-                            pageSize: limit,
-                            onPageSizeChange: setLimit,
-                        },
-                    }}
-                />
-            </div>
+        const handleDelete = (plan: BillingPlanDTO) => {
+            modal.confirm({
+                title: "Delete Billing Plan?",
+                content: `Are you sure you want to delete "${plan.name}"? This cannot be undone.`,
+                okText: "Delete",
+                okType: "danger",
+                onOk: async () => {
+                    await deletePlan.mutateAsync(plan.id);
+                },
+            });
+        };
 
-            <Drawer
-                title={editingPlan ? "Edit Billing Plan" : "Create New Plan"}
-                width={520}
-                onClose={() => setDrawerVisible(false)}
-                open={drawerVisible}
-                destroyOnClose
-            >
-                <BillingPlanForm
-                    orgId={orgId}
-                    initialValues={
-                        editingPlan
-                            ? {
-                                  ...editingPlan,
-                                  overdraftLimitDollars:
-                                      editingPlan.overdraftLimitCents != null
-                                          ? editingPlan.overdraftLimitCents / 100
-                                          : undefined,
-                                  rates: editingPlan.rates?.map((r) => ({
-                                      ...r,
-                                      rateCentsPerMinute: r.rateCentsPerMinute / 100,
-                                  })),
-                              }
-                            : undefined
-                    }
-                    isLoading={createPlan.isPending || updatePlan.isPending}
-                    onFinish={async (values) => {
-                        if (editingPlan) {
-                            await updatePlan.mutateAsync({
-                                planId: editingPlan.id,
-                                updates: values as UpdateBillingPlanInput,
+        const columns: ColumnsType<BillingPlanDTO> = [
+            {
+                title: "Plan Name",
+                dataIndex: "name",
+                key: "name",
+                render: (name, record) => (
+                    <Space direction="vertical" size={0}>
+                        <Text strong>{name}</Text>
+                        <Text type="secondary" className="text-xs">
+                            {record.description || "No description"}
+                        </Text>
+                    </Space>
+                ),
+            },
+            {
+                title: "Currency",
+                dataIndex: "currencyId",
+                key: "currency",
+                width: 100,
+                render: (id) => {
+                    const c = currencies?.find((curr: CurrencyWithStatus) => curr.id === id);
+                    return <Tag color="blue">{c?.code || id}</Tag>;
+                },
+            },
+            {
+                title: "Tiers",
+                dataIndex: "rates",
+                key: "tiers",
+                width: 100,
+                render: (rates) => <Tag>{rates?.length || 0} Tiers</Tag>,
+            },
+            {
+                title: "Status",
+                dataIndex: "isActive",
+                key: "status",
+                width: 100,
+                render: (isActive, record) => (
+                    <Switch
+                        size="small"
+                        checked={isActive}
+                        loading={updatePlan.isPending && editingPlan?.id === record.id}
+                        onChange={(checked) => {
+                            setEditingPlan(record);
+                            updatePlan.mutate({
+                                planId: record.id,
+                                updates: { isActive: checked },
                             });
-                        } else {
-                            await createPlan.mutateAsync(values);
+                        }}
+                    />
+                ),
+            },
+            {
+                title: "Created",
+                dataIndex: "createdAt",
+                key: "createdAt",
+                width: 150,
+                render: (date) => DateUtils.fromNow(date),
+            },
+            {
+                title: "Actions",
+                key: "actions",
+                width: 100,
+                render: (_, record) => (
+                    <Space>
+                        <Button
+                            type="text"
+                            icon={<EditOutlined />}
+                            onClick={() => handleEdit(record)}
+                        />
+                        <Button
+                            type="text"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleDelete(record)}
+                        />
+                    </Space>
+                ),
+            },
+        ];
+
+        return (
+            <div className="flex flex-col">
+                <div className="flex-1 min-h-0">
+                    <DataTableWithFilters<BillingPlanDTO>
+                        config={{
+                            columns,
+                            data: data?.data || [],
+                            loading: loadingPlans,
+                            rowKey: "id",
+                            filters: [
+                                {
+                                    type: "search",
+                                    key: "search",
+                                    placeholder: "Search plans...",
+                                },
+                            ],
+                            onFiltersChange: (f) => setSearch(f.search || ""),
+                            pagination: {
+                                hasNextPage: !!data?.nextCursor,
+                                hasPrevPage: false,
+                                pageSize: limit,
+                                onPageSizeChange: setLimit,
+                            },
+                        }}
+                    />
+                </div>
+
+                <Drawer
+                    title={editingPlan ? "Edit Billing Plan" : "Create New Plan"}
+                    width={520}
+                    onClose={() => setDrawerVisible(false)}
+                    open={drawerVisible}
+                    destroyOnClose
+                >
+                    <BillingPlanForm
+                        orgId={orgId}
+                        initialValues={
+                            editingPlan
+                                ? {
+                                      ...editingPlan,
+                                      overdraftLimitDollars:
+                                          editingPlan.overdraftLimitCents != null
+                                              ? editingPlan.overdraftLimitCents / 100
+                                              : undefined,
+                                      rates: editingPlan.rates?.map((r) => ({
+                                          ...r,
+                                          hourlyRateDollars:
+                                              Math.round(((r.rateCentsPerMinute * 60) / 100) * 2) /
+                                              2,
+                                      })),
+                                  }
+                                : undefined
                         }
-                        setDrawerVisible(false);
-                    }}
-                />
-            </Drawer>
-        </div>
-    );
-};
+                        isLoading={createPlan.isPending || updatePlan.isPending}
+                        onFinish={async (values) => {
+                            if (editingPlan) {
+                                await updatePlan.mutateAsync({
+                                    planId: editingPlan.id,
+                                    updates: values as UpdateBillingPlanInput,
+                                });
+                            } else {
+                                await createPlan.mutateAsync(values);
+                            }
+                            setDrawerVisible(false);
+                        }}
+                    />
+                </Drawer>
+            </div>
+        );
+    }
+);

@@ -6,6 +6,7 @@ import {
     WalletOutlined,
 } from "@ant-design/icons";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCY_CONFIG, getTreasuryAccountId } from "@shared";
+import { POSInput } from "@web/src/components/ui/POSInput";
 import {
     Alert,
     Button,
@@ -14,7 +15,6 @@ import {
     Flex,
     Form,
     Input,
-    InputNumber,
     Popconfirm,
     Radio,
     Row,
@@ -444,10 +444,8 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                                         label="Overdraft Limit"
                                         extra="Set to 0 to use plan default if applicable."
                                     >
-                                        <InputNumber
+                                        <POSInput
                                             size="large"
-                                            style={{ width: "100%" }}
-                                            min={0}
                                             prefix={selectedCurrencyConfig?.symbol}
                                         />
                                     </Form.Item>
@@ -529,16 +527,9 @@ export const AdminCreditDrawer: React.FC<Props> = ({
                                     label="Amount"
                                     rules={[{ required: true }, { type: "number", min: 0.01 }]}
                                 >
-                                    <InputNumber
+                                    <POSInput
                                         size="large"
-                                        style={{ height: 48, lineHeight: "48px", width: "100%" }}
-                                        min={0.01}
-                                        precision={2}
-                                        prefix={
-                                            <span style={{ opacity: 0.4 }}>
-                                                {selectedCurrencyConfig?.symbol || "$"}
-                                            </span>
-                                        }
+                                        prefix={selectedCurrencyConfig?.symbol}
                                         placeholder="0.00"
                                     />
                                 </Form.Item>

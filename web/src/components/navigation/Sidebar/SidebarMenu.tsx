@@ -23,6 +23,7 @@ import { useOrganization, useOrgNavigate } from "@web/src/features/organization"
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Menu, type MenuProps } from "antd";
 import type React from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
 export const SidebarMenu: React.FC = () => {
@@ -40,6 +41,30 @@ export const SidebarMenu: React.FC = () => {
     if (orgPrefix && activeKey.startsWith(orgPrefix)) {
         activeKey = activeKey.replace(orgPrefix, "") || "/";
     }
+
+    // Single-open accordion logic
+    const rootSubmenuKeys = ["billing_group", "teaching_group", "admin_group"];
+    const [openKeys, setOpenKeys] = useState<string[]>([]);
+
+    // Initialize open keys based on active path
+    useEffect(() => {
+        if (activeKey.includes("/admin/billing")) {
+            setOpenKeys(["billing_group"]);
+        } else if (activeKey.includes("/teaching")) {
+            setOpenKeys(["teaching_group"]);
+        } else if (activeKey.includes("/admin")) {
+            setOpenKeys(["admin_group"]);
+        }
+    }, [activeKey]);
+
+    const onOpenChange: MenuProps["onOpenChange"] = (keys) => {
+        const latestOpenKey = keys.find((key) => openKeys.indexOf(key) === -1);
+        if (latestOpenKey && rootSubmenuKeys.indexOf(latestOpenKey) === -1) {
+            setOpenKeys(keys);
+        } else {
+            setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
+        }
+    };
 
     const menuItems: MenuProps["items"] = [
         {
@@ -86,19 +111,24 @@ export const SidebarMenu: React.FC = () => {
                   ...(isAdminOrOwner
                       ? [
                             {
-                                label: "Finance",
-                                key: "finance_group",
+                                label: "Billing",
+                                key: "billing_group",
                                 icon: <DollarOutlined />,
                                 children: [
                                     {
+                                        label: "Transactions",
+                                        key: AppRoutes.org.admin.billing.transactions,
+                                        icon: <TransactionOutlined />,
+                                    },
+                                    {
                                         label: "Accounts",
-                                        key: AppRoutes.org.admin.finance.accounts,
+                                        key: AppRoutes.org.admin.billing.accounts,
                                         icon: <BankOutlined />,
                                     },
                                     {
-                                        label: "Transactions",
-                                        key: AppRoutes.org.admin.finance.transactions,
-                                        icon: <TransactionOutlined />,
+                                        label: "Plans",
+                                        key: AppRoutes.org.admin.billing.plans,
+                                        icon: <OrderedListOutlined />,
                                     },
                                 ],
                             },
@@ -179,7 +209,7 @@ export const SidebarMenu: React.FC = () => {
 
     const handleMenuClick = (e: { key: string }) => {
         // Disregard non-routable group keys
-        if (e.key === "teaching_group" || e.key === "admin_group" || e.key === "finance_group")
+        if (e.key === "teaching_group" || e.key === "admin_group" || e.key === "billing_group")
             return;
 
         navigateOrg(e.key);
@@ -190,6 +220,8 @@ export const SidebarMenu: React.FC = () => {
         <Menu
             mode="inline"
             selectedKeys={[activeKey]}
+            openKeys={openKeys}
+            onOpenChange={onOpenChange}
             style={{ height: "100%", borderRight: 0 }}
             onClick={handleMenuClick}
             items={menuItems}

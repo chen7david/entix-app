@@ -3,9 +3,14 @@
  */
 export function calculateClassChargeCents(
     rateCentsPerMinute: number,
-    durationMinutes: number
+    durationMinutes: number,
+    options?: { roundToNearestDollar?: boolean }
 ): number {
-    return rateCentsPerMinute * durationMinutes;
+    const raw = rateCentsPerMinute * durationMinutes;
+    if (options?.roundToNearestDollar) {
+        return Math.round(raw / 100) * 100;
+    }
+    return raw;
 }
 
 /**

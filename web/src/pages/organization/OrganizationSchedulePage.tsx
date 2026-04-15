@@ -67,6 +67,7 @@ export const OrganizationSchedulePage: React.FC = () => {
                         icon={<PlusOutlined />}
                         onClick={handleCreate}
                         size="large"
+                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Schedule Session
                     </Button>

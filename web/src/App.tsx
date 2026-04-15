@@ -23,8 +23,9 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 import { SignInPage } from "./pages/auth/SignInPage";
 import { SignUpPage } from "./pages/auth/SignUpPage";
 import { VerifyEmailPage } from "./pages/auth/VerifyEmailPage";
-import { FinanceAccountsPage } from "./pages/dashboard/finance/FinanceAccountsPage";
-import { FinanceTransactionsPage } from "./pages/dashboard/finance/FinanceTransactionsPage";
+import { BillingAccountsPage } from "./pages/dashboard/billing/BillingAccountsPage";
+import { BillingPlansPage } from "./pages/dashboard/billing/BillingPlansPage";
+import { BillingTransactionsPage } from "./pages/dashboard/billing/BillingTransactionsPage";
 import { LessonsPage } from "./pages/dashboard/lessons/LessonsPage";
 import { MoviesPage } from "./pages/dashboard/movies/MoviesPage";
 import { OrdersPage } from "./pages/dashboard/orders/OrdersPage";
@@ -199,18 +200,22 @@ export default function App() {
                                                     path="uploads"
                                                     element={<OrganizationUploadsPage />}
                                                 />
-                                                <Route path="finance">
+                                                <Route path="billing">
                                                     <Route
                                                         index
                                                         element={<Navigate to="accounts" replace />}
                                                     />
                                                     <Route
                                                         path="accounts"
-                                                        element={<FinanceAccountsPage />}
+                                                        element={<BillingAccountsPage />}
+                                                    />
+                                                    <Route
+                                                        path="plans"
+                                                        element={<BillingPlansPage />}
                                                     />
                                                     <Route
                                                         path="transactions"
-                                                        element={<FinanceTransactionsPage />}
+                                                        element={<BillingTransactionsPage />}
                                                     />
                                                 </Route>
                                             </Route>
@@ -267,7 +272,7 @@ export default function App() {
                                             element={<EmailInsightsPage />}
                                         />
                                         <Route
-                                            path="admin/financial"
+                                            path="admin/billing"
                                             element={<FinancialManagementPage />}
                                         />
                                         <Route path="admin/audit-logs" element={<AuditLogPage />} />
