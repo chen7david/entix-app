@@ -4,11 +4,12 @@ import {
     UserOutlined,
     WalletOutlined,
 } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
+import { FINANCIAL_CURRENCY_CONFIG, type MemberDTO, type WalletAccountDTO } from "@shared";
 import { POSInput } from "@web/src/components/ui/POSInput";
 import { useMembers } from "@web/src/features/organization/hooks/useMembers";
 import { useInitializeWallet } from "@web/src/features/wallet/hooks/useInitializeWallet";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
+import { FINANCIAL_ADJUSTMENT_REASONS, UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     Avatar,
     Button,
@@ -22,20 +23,12 @@ import {
     Typography,
 } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
 
 const { Text } = Typography;
 
-const COMMON_REASONS = [
-    "Promotional Credit",
-    "Usage Reimbursement",
-    "Account Correction",
-    "Service Refund",
-    "Goodwill Credit",
-    "Manual Adjustment",
-    "Other",
-];
+const DEFAULT_REASON = FINANCIAL_ADJUSTMENT_REASONS[0];
 
 type Props = {
     orgId: string;
@@ -43,14 +36,19 @@ type Props = {
 };
 
 export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
-    const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-    const [reasonType, setReasonType] = useState<string>("Manual Adjustment");
+    const [selectedMember, setSelectedMember] = useState<MemberDTO | null>(null);
+    const [reasonType, setReasonType] = useState<string>(DEFAULT_REASON);
+    const [searchInput, setSearchInput] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [form] = Form.useForm();
 
-    const { members, loadingMembers } = useMembers(undefined, { limit: 100 });
-
-    const selectedMember = members.find((m) => m.id === selectedMemberId);
+    const selectedMemberId = selectedMember?.id ?? null;
     const selectedUserId = selectedMember?.userId;
+
+    // Server-side debounced search — no limit option so the infinite query
+    // mode is used and ?search= is applied across all members in the DB.
+    const { members, loadingMembers } = useMembers(debouncedSearch || undefined);
 
     const { data: memberWallet, isLoading: isLoadingMemberWallet } = useWalletBalance(
         selectedUserId,
@@ -85,13 +83,42 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
               ? `no ${currencyMeta?.code ?? account.currencyId} account`
               : `${currencyMeta?.symbol}${(studentAccount.balanceCents / 100).toFixed(2)} ${currencyMeta?.code}`;
 
+    // Clear debounce timer on unmount to prevent setState on an unmounted component.
+    useEffect(() => {
+        return () => {
+            if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        };
+    }, []);
+
     useEffect(() => {
         if (selectedMemberId !== undefined) {
             form.resetFields();
-            setReasonType("Manual Adjustment");
-            form.setFieldsValue({ reasonSelect: "Manual Adjustment" });
+            setReasonType(DEFAULT_REASON);
+            form.setFieldsValue({ reasonSelect: DEFAULT_REASON });
         }
     }, [selectedMemberId, form]);
+
+    const handleSearch = (value: string) => {
+        setSearchInput(value);
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(() => {
+            setDebouncedSearch(value);
+        }, UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE);
+    };
+
+    const handleMemberChange = (val: string | undefined) => {
+        if (!val) {
+            setSelectedMember(null);
+        } else {
+            const member = members.find((m) => m.id === val) ?? null;
+            setSelectedMember(member);
+        }
+        // Reset search so the full list is shown on the next open
+        // and the input field is cleared after selection.
+        setSearchInput("");
+        setDebouncedSearch("");
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
 
     const handleReasonChange = (value: string) => {
         setReasonType(value);
@@ -115,19 +142,45 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
             {
                 onSuccess: () => {
                     form.resetFields();
-                    setReasonType("Manual Adjustment");
-                    form.setFieldsValue({ reasonSelect: "Manual Adjustment" });
+                    setReasonType(DEFAULT_REASON);
+                    form.setFieldsValue({ reasonSelect: DEFAULT_REASON });
                 },
             }
         );
     };
+
+    const studentOptions = useMemo(() => {
+        const baseOptions = members.map((m) => ({
+            label: m.name ?? m.email ?? m.userId,
+            value: m.id,
+            avatarUrl: m.avatarUrl ?? null,
+            email: m.email ?? null,
+        }));
+
+        // If the selected student isn't in the current search results page,
+        // we must manually add them to the options list so the Select component
+        // can still resolve their ID to a display name.
+        if (selectedMember && !baseOptions.some((o) => o.value === selectedMember.id)) {
+            return [
+                {
+                    label: selectedMember.name ?? selectedMember.email ?? selectedMember.userId,
+                    value: selectedMember.id,
+                    avatarUrl: selectedMember.avatarUrl ?? null,
+                    email: selectedMember.email ?? null,
+                },
+                ...baseOptions,
+            ];
+        }
+
+        return baseOptions;
+    }, [members, selectedMember]);
 
     return (
         <Form
             form={form}
             layout="vertical"
             onFinish={onFinish}
-            initialValues={{ type: "credit", amount: 0, reasonSelect: "Manual Adjustment" }}
+            initialValues={{ type: "credit", amount: 0, reasonSelect: DEFAULT_REASON }}
             style={{ padding: "8px 0" }}
         >
             {/* ── Student selector ── */}
@@ -170,18 +223,15 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                     size="large"
                     placeholder="Search and select a student..."
                     value={selectedMemberId}
-                    onChange={(val) => setSelectedMemberId(val ?? null)}
+                    onChange={handleMemberChange}
                     loading={loadingMembers}
                     showSearch
                     allowClear
-                    optionFilterProp="label"
+                    filterOption={false}
+                    searchValue={searchInput}
+                    onSearch={handleSearch}
                     style={{ width: "100%" }}
-                    options={members.map((m) => ({
-                        label: m.name ?? m.email ?? m.userId,
-                        value: m.id,
-                        avatarUrl: m.avatarUrl ?? null,
-                        email: m.email ?? null,
-                    }))}
+                    options={studentOptions}
                     optionRender={(option) => (
                         <Space size={10} style={{ padding: "2px 0" }}>
                             <Avatar
@@ -253,7 +303,7 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                     style={{ height: 48 }}
                     disabled={formDisabled}
                 >
-                    {COMMON_REASONS.map((r) => (
+                    {FINANCIAL_ADJUSTMENT_REASONS.map((r) => (
                         <Select.Option key={r} value={r}>
                             {r}
                         </Select.Option>
