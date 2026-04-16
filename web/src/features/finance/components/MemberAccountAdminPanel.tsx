@@ -8,6 +8,8 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
 
+const DEFAULT_REASON = FINANCIAL_ADJUSTMENT_REASONS[0];
+
 type Props = {
     memberId: string;
     orgId: string;
@@ -16,7 +18,7 @@ type Props = {
 
 export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memberName }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-    const [reasonType, setReasonType] = useState<string>("Top Up");
+    const [reasonType, setReasonType] = useState<string>(DEFAULT_REASON);
     const [form] = Form.useForm();
 
     const { data: balanceData, isLoading: isLoadingMember } = useWalletBalance(
@@ -92,8 +94,8 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
             {
                 onSuccess: () => {
                     form.resetFields();
-                    setReasonType("Top Up");
-                    form.setFieldsValue({ reasonSelect: "Top Up" });
+                    setReasonType(DEFAULT_REASON);
+                    form.setFieldsValue({ reasonSelect: DEFAULT_REASON });
                 },
             }
         );
@@ -118,7 +120,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
             initialValues={{
                 type: "credit",
                 amount: 0,
-                reasonSelect: "Top Up",
+                reasonSelect: DEFAULT_REASON,
             }}
             style={{ padding: "8px 0" }}
         >
