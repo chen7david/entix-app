@@ -22,35 +22,38 @@ import {
     Typography,
 } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import {
+    FINANCIAL_ADJUSTMENT_REASONS,
+    UI_CONSTANTS,
+} from "@web/src/utils/constants";
+import { useEffect, useRef, useState } from "react";
 import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
+
 
 const { Text } = Typography;
 
-const COMMON_REASONS = [
-    "Promotional Credit",
-    "Usage Reimbursement",
-    "Account Correction",
-    "Service Refund",
-    "Goodwill Credit",
-    "Manual Adjustment",
-    "Other",
-];
 
 type Props = {
     orgId: string;
     account: WalletAccountDTO;
 };
 
+
 export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
     const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-    const [reasonType, setReasonType] = useState<string>("Manual Adjustment");
+    const [reasonType, setReasonType] = useState<string>("Top Up");
+    const [searchInput, setSearchInput] = useState<string>("");
+    const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+    const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [form] = Form.useForm();
 
-    const { members, loadingMembers } = useMembers(undefined, { limit: 100 });
+    // Server-side debounced search — no limit option so the infinite query
+    // mode is used and ?search= is applied across all members in the DB.
+    const { members, loadingMembers } = useMembers(debouncedSearch || undefined);
 
     const selectedMember = members.find((m) => m.id === selectedMemberId);
     const selectedUserId = selectedMember?.userId;
+
 
     const { data: memberWallet, isLoading: isLoadingMemberWallet } = useWalletBalance(
         selectedUserId,
@@ -58,12 +61,15 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
         orgId
     );
 
+
     const { data: orgWallet } = useWalletBalance(orgId, "org");
     const { mutate: adjust, isPending } = useAdminAdjustWallet(orgId);
     const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(orgId);
 
+
     const currencyMeta =
         FINANCIAL_CURRENCY_CONFIG[account.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG];
+
 
     const memberAccounts = memberWallet?.accounts ?? [];
     const walletReady = !!selectedUserId && !isLoadingMemberWallet && memberAccounts.length > 0;
@@ -73,30 +79,42 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
         (a) => a.currencyId === account.currencyId && a.accountType === "funding"
     );
 
+
     const formDisabled = !walletReady || !studentAccount || !orgFundingAccount;
+
 
     const walletStatus = !selectedUserId
         ? null
         : isLoadingMemberWallet
-          ? "checking..."
-          : walletMissing
-            ? "no wallet"
-            : !studentAccount
-              ? `no ${currencyMeta?.code ?? account.currencyId} account`
-              : `${currencyMeta?.symbol}${(studentAccount.balanceCents / 100).toFixed(2)} ${currencyMeta?.code}`;
+            ? "checking..."
+            : walletMissing
+                ? "no wallet"
+                : !studentAccount
+                    ? `no ${currencyMeta?.code ?? account.currencyId} account`
+                    : `${currencyMeta?.symbol}${(studentAccount.balanceCents / 100).toFixed(2)} ${currencyMeta?.code}`;
+
 
     useEffect(() => {
         if (selectedMemberId !== undefined) {
             form.resetFields();
-            setReasonType("Manual Adjustment");
-            form.setFieldsValue({ reasonSelect: "Manual Adjustment" });
+            setReasonType("Top Up");
+            form.setFieldsValue({ reasonSelect: "Top Up" });
         }
     }, [selectedMemberId, form]);
+
+    const handleSearch = (value: string) => {
+        setSearchInput(value);
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+        debounceTimer.current = setTimeout(() => {
+            setDebouncedSearch(value);
+        }, UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE);
+    };
 
     const handleReasonChange = (value: string) => {
         setReasonType(value);
         form.setFieldsValue({ description: value !== "Other" ? value : "" });
     };
+
 
     const onFinish = (values: any) => {
         if (!studentAccount || !orgFundingAccount) return;
@@ -115,19 +133,20 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
             {
                 onSuccess: () => {
                     form.resetFields();
-                    setReasonType("Manual Adjustment");
-                    form.setFieldsValue({ reasonSelect: "Manual Adjustment" });
+                    setReasonType("Top Up");
+                    form.setFieldsValue({ reasonSelect: "Top Up" });
                 },
             }
         );
     };
+
 
     return (
         <Form
             form={form}
             layout="vertical"
             onFinish={onFinish}
-            initialValues={{ type: "credit", amount: 0, reasonSelect: "Manual Adjustment" }}
+            initialValues={{ type: "credit", amount: 0, reasonSelect: "Top Up" }}
             style={{ padding: "8px 0" }}
         >
             {/* ── Student selector ── */}
@@ -174,7 +193,9 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                     loading={loadingMembers}
                     showSearch
                     allowClear
-                    optionFilterProp="label"
+                    filterOption={false}
+                    searchValue={searchInput}
+                    onSearch={handleSearch}
                     style={{ width: "100%" }}
                     options={members.map((m) => ({
                         label: m.name ?? m.email ?? m.userId,
@@ -203,9 +224,11 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                 />
             </Form.Item>
 
+
             <Divider
                 style={{ marginTop: 0, marginBottom: 16, borderStyle: "dashed", opacity: 0.4 }}
             />
+
 
             {/* ── Adjustment type ── */}
             <Form.Item name="type" label="Adjustment Type" rules={[{ required: true }]}>
@@ -231,6 +254,7 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                 </Radio.Group>
             </Form.Item>
 
+
             {/* ── Amount ── */}
             <Form.Item
                 name="amount"
@@ -245,6 +269,7 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                 />
             </Form.Item>
 
+
             {/* ── Reason ── */}
             <Form.Item name="reasonSelect" label="Adjustment Reason" rules={[{ required: true }]}>
                 <Select
@@ -253,13 +278,14 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                     style={{ height: 48 }}
                     disabled={formDisabled}
                 >
-                    {COMMON_REASONS.map((r) => (
+                    {FINANCIAL_ADJUSTMENT_REASONS.map((r) => (
                         <Select.Option key={r} value={r}>
                             {r}
                         </Select.Option>
                     ))}
                 </Select>
             </Form.Item>
+
 
             {reasonType === "Other" && (
                 <Form.Item
@@ -274,6 +300,7 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
                     />
                 </Form.Item>
             )}
+
 
             {/* ── Submit ── */}
             <Form.Item style={{ marginTop: 8, marginBottom: 0 }}>

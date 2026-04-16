@@ -2,20 +2,11 @@ import { ArrowDownOutlined, ArrowUpOutlined, WalletOutlined } from "@ant-design/
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { POSInput } from "@web/src/components/ui/POSInput";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
+import { FINANCIAL_ADJUSTMENT_REASONS } from "@web/src/utils/constants";
 import { Alert, Button, Divider, Form, Input, Radio, Select, Skeleton, Space } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
-
-const COMMON_REASONS = [
-    "Promotional Credit",
-    "Usage Reimbursement",
-    "Account Correction",
-    "Service Refund",
-    "Goodwill Credit",
-    "Manual Adjustment",
-    "Other",
-];
 
 type Props = {
     memberId: string;
@@ -25,7 +16,7 @@ type Props = {
 
 export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memberName }) => {
     const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-    const [reasonType, setReasonType] = useState<string>("Manual Adjustment");
+    const [reasonType, setReasonType] = useState<string>("Top Up");
     const [form] = Form.useForm();
 
     const { data: balanceData, isLoading: isLoadingMember } = useWalletBalance(
@@ -101,8 +92,8 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
             {
                 onSuccess: () => {
                     form.resetFields();
-                    setReasonType("Manual Adjustment");
-                    form.setFieldsValue({ reasonSelect: "Manual Adjustment" });
+                    setReasonType("Top Up");
+                    form.setFieldsValue({ reasonSelect: "Top Up" });
                 },
             }
         );
@@ -127,7 +118,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
             initialValues={{
                 type: "credit",
                 amount: 0,
-                reasonSelect: "Manual Adjustment",
+                reasonSelect: "Top Up",
             }}
             style={{ padding: "8px 0" }}
         >
@@ -208,7 +199,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
                         rules={[{ required: true }]}
                     >
                         <Select size="large" onChange={handleReasonChange} style={{ height: 48 }}>
-                            {COMMON_REASONS.map((r) => (
+                            {FINANCIAL_ADJUSTMENT_REASONS.map((r) => (
                                 <Select.Option key={r} value={r}>
                                     {r}
                                 </Select.Option>

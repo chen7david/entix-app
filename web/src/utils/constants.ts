@@ -24,3 +24,18 @@ export const UI_CONSTANTS = {
     },
     RIGHT_DRAWER_WIDTH: 400,
 } as const;
+
+/**
+ * Predefined reasons for manual financial adjustments (credits/debits).
+ * Used across admin and organization management panels.
+ */
+export const FINANCIAL_ADJUSTMENT_REASONS = [
+    "Top Up",
+    "Promotional Credit",
+    "Usage Reimbursement",
+    "Account Correction",
+    "Service Refund",
+    "Goodwill Credit",
+    "Manual Adjustment",
+    "Other",
+] as const;
