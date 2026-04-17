@@ -44,7 +44,7 @@ describe("SessionPaymentService", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             });
 
@@ -67,7 +67,7 @@ describe("SessionPaymentService", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             };
             await service.processSessionPayment(payload);
@@ -86,7 +86,7 @@ describe("SessionPaymentService", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             });
             const expectedKey = `session_payment:${sessionId}:${userId}`;
@@ -103,7 +103,7 @@ describe("SessionPaymentService", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             };
 
@@ -150,7 +150,7 @@ describe("SessionPaymentService", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             });
             const results = await service.getSessionPaymentRequests(sessionId);

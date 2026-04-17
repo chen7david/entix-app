@@ -90,14 +90,14 @@ export class FinanceWalletService extends FinancialBaseService {
         }
 
         const userWallet = await this.getWallet(input.userId, input.orgId, input.currencyId);
-        const orgTreasury = await this.getOrgTreasury(input.orgId, input.currencyId);
-        const categoryId = FINANCIAL_CATEGORIES.SERVICE_FEE;
+        const orgFunding = await this.getOrgFunding(input.orgId, input.currencyId);
+        const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT;
 
         return this.executeTransaction({
             organizationId: input.orgId,
             categoryId,
             sourceAccountId: userWallet.id,
-            destinationAccountId: orgTreasury.id,
+            destinationAccountId: orgFunding.id,
             currencyId: input.currencyId,
             amountCents: input.amountCents,
             description: input.description,
