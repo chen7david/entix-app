@@ -74,7 +74,7 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
             extra={extra}
             className="shadow-sm h-full"
         >
-            <div style={{ width: "100%", height: 200 }}>
+            <div style={{ width: "100%", height: 240 }}>
                 <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie
@@ -97,7 +97,11 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
                                 boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                             }}
                         />
-                        <Legend verticalAlign="bottom" height={36} />
+                        <Legend 
+                            verticalAlign="bottom" 
+                            height={40} 
+                            wrapperStyle={{ paddingTop: '20px' }}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
             </div>
