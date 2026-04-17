@@ -4,7 +4,7 @@ import { useTransactions } from "@web/src/features/finance/hooks/useTransactions
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
 import { NumberUtils } from "@web/src/utils/number";
-import { Button, Card, List, Typography } from "antd";
+import { Button, Card, List, Tooltip, Typography } from "antd";
 import type React from "react";
 
 const { Text } = Typography;
@@ -39,7 +39,8 @@ export const RecentTransactionsCard: React.FC = () => {
                 loading={isLoading}
                 dataSource={transactions?.items || []}
                 renderItem={(item) => {
-                    const isIncoming = item.category.isRevenue;
+                    const isRevenue = item.category.isRevenue;
+                    const isExpense = item.category.isExpense;
                     return (
                         <List.Item
                             className="px-0 py-3"
@@ -48,12 +49,17 @@ export const RecentTransactionsCard: React.FC = () => {
                                     <Text
                                         strong
                                         className={
-                                            isIncoming ? "text-emerald-600" : "text-slate-800"
+                                            isRevenue
+                                                ? "text-emerald-600"
+                                                : isExpense
+                                                  ? "text-rose-600"
+                                                  : "text-slate-800"
                                         }
                                         style={{ fontSize: "15px" }}
                                     >
+                                        {isRevenue ? "+" : isExpense ? "-" : ""}
                                         {NumberUtils.formatCurrency(
-                                            item.amountCents,
+                                            Math.abs(item.amountCents),
                                             item.currency.symbol
                                         )}
                                     </Text>
@@ -68,9 +74,17 @@ export const RecentTransactionsCard: React.FC = () => {
                         >
                             <List.Item.Meta
                                 title={
-                                    <Text strong className="text-sm block truncate max-w-[180px]">
-                                        {item.description || "Transaction"}
-                                    </Text>
+                                    <Tooltip
+                                        title={item.description || "Transaction"}
+                                        mouseEnterDelay={0.5}
+                                    >
+                                        <Text
+                                            strong
+                                            className="text-sm block truncate max-w-[180px]"
+                                        >
+                                            {item.description || "Transaction"}
+                                        </Text>
+                                    </Tooltip>
                                 }
                                 description={
                                     <Text type="secondary" className="text-xs">

@@ -30,7 +30,7 @@ describe("SessionPaymentService Integration", () => {
     const studentId = "student_svc_test";
     const sessionId = "sess_svc_test";
     const currencyId = FINANCIAL_CURRENCIES.USD;
-    const categoryId = FINANCIAL_CATEGORIES.SERVICE_FEE;
+    const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT;
 
     let studentAccountId: string;
     let orgAccountId: string;
