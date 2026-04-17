@@ -97,10 +97,10 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
                                 boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
                             }}
                         />
-                        <Legend 
-                            verticalAlign="bottom" 
-                            height={40} 
-                            wrapperStyle={{ paddingTop: '20px' }}
+                        <Legend
+                            verticalAlign="bottom"
+                            height={40}
+                            wrapperStyle={{ paddingTop: "20px" }}
                         />
                     </PieChart>
                 </ResponsiveContainer>
