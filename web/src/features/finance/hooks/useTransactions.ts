@@ -16,7 +16,7 @@ export type TransactionRecord = {
     createdAt: string;
     sourceAccount: { name: string };
     destinationAccount: { name: string };
-    category: { name: string };
+    category: { name: string; isExpense: boolean; isRevenue: boolean };
     currency: { code: string; symbol: string };
 };
 

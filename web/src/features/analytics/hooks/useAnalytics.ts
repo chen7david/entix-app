@@ -1,6 +1,7 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
 import { parseApiError } from "@web/src/utils/api";
+import { DateUtils } from "@web/src/utils/date";
 
 export interface SessionTrend {
     date: string;
@@ -17,13 +18,27 @@ export interface AttendanceTrend {
     absent: number;
 }
 
+const USER_TZ_OFFSET =
+    DateUtils.getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone) || "+00:00";
+
 export function useAnalytics(organizationId?: string, startDate?: number, endDate?: number) {
+    const tzOffset = USER_TZ_OFFSET;
+
     const sessionsQuery = useQuery({
-        queryKey: ["orgTracker", organizationId, "analytics", "sessions", startDate, endDate],
+        queryKey: [
+            "orgTracker",
+            organizationId,
+            "analytics",
+            "sessions",
+            startDate,
+            endDate,
+            tzOffset,
+        ],
         queryFn: async (): Promise<SessionTrend[]> => {
             const params = new URLSearchParams();
             if (startDate) params.append("startDate", startDate.toString());
             if (endDate) params.append("endDate", endDate.toString());
+            params.append("tzOffset", tzOffset);
 
             const queryString = params.toString();
             const url = `${API_V1}/orgs/${organizationId}/analytics/sessions${queryString ? `?${queryString}` : ""}`;
@@ -33,14 +48,26 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
             return res.json();
         },
         enabled: !!organizationId,
+        staleTime: 120000,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
     });
 
     const attendanceQuery = useQuery({
-        queryKey: ["orgTracker", organizationId, "analytics", "attendance", startDate, endDate],
+        queryKey: [
+            "orgTracker",
+            organizationId,
+            "analytics",
+            "attendance",
+            startDate,
+            endDate,
+            tzOffset,
+        ],
         queryFn: async (): Promise<AttendanceTrend[]> => {
             const params = new URLSearchParams();
             if (startDate) params.append("startDate", startDate.toString());
             if (endDate) params.append("endDate", endDate.toString());
+            params.append("tzOffset", tzOffset);
 
             const queryString = params.toString();
             const url = `${API_V1}/orgs/${organizationId}/analytics/attendance${queryString ? `?${queryString}` : ""}`;
@@ -50,6 +77,9 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
             return res.json();
         },
         enabled: !!organizationId,
+        staleTime: 120000,
+        refetchOnMount: true,
+        refetchOnWindowFocus: true,
     });
 
     return {

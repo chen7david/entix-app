@@ -1,20 +1,20 @@
-import {
-    ArrowRightOutlined,
-    GiftOutlined,
-    LineChartOutlined,
-    NotificationOutlined,
-    TeamOutlined,
-    ThunderboltOutlined,
-    UploadOutlined,
-    WarningOutlined,
-} from "@ant-design/icons";
+import { GiftOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { SessionVolumeChart, useAnalytics } from "@web/src/features/analytics";
-import { DashboardMetricCards } from "@web/src/features/dashboard";
+import {
+    AttendanceTrendChart,
+    SessionVolumeChart,
+    useAnalytics,
+} from "@web/src/features/analytics";
+import {
+    DashboardMetricCards,
+    EngagementRiskChart,
+    RecentTransactionsCard,
+    UpcomingSessionsCard,
+} from "@web/src/features/dashboard";
 import { useBulkMembers, useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
-import { Alert, Button, Card, Col, Divider, Row, Space, Typography } from "antd";
-import type React from "react";
+import { Button, Card, Col, Row, Select, Space, Tag, Typography } from "antd";
+import { useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -23,87 +23,115 @@ export const AdminPortal: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const { metrics, isLoadingMetrics } = useBulkMembers(activeOrganization?.id);
 
-    // Default to last 30 days for activity chart
-    const queryEnd = DateUtils.endOf("day");
-    const queryStart = DateUtils.offsetStartOf(-30, "day", "day");
+    // Dashboard defaults to "This Month" preset
+    const [range, setRange] = useState<{ start: number; end: number; label: string }>({
+        start: DateUtils.startOf("month"),
+        end: DateUtils.endOf("month"),
+        label: "This Month",
+    });
 
-    const { sessionTrends, isLoadingSessions } = useAnalytics(
-        activeOrganization?.id,
-        queryStart,
-        queryEnd
-    );
+    const { sessionTrends, isLoadingSessions, attendanceTrends, isLoadingAttendance } =
+        useAnalytics(activeOrganization?.id, range.start, range.end);
+
+    const handlePresetChange = (label: string) => {
+        let start: number;
+        let end: number;
+
+        if (label === "This Month") {
+            start = DateUtils.startOf("month");
+            end = DateUtils.endOf("month");
+        } else if (label === "Last 7 Days") {
+            start = DateUtils.offsetStartOf(-7, "day", "day");
+            end = DateUtils.endOf("day");
+        } else if (label === "This Year") {
+            start = DateUtils.startOf("year");
+            end = DateUtils.endOf("year");
+        } else if (label === "Last 30 Days") {
+            start = DateUtils.offsetStartOf(-30, "day", "day");
+            end = DateUtils.endOf("day");
+        } else {
+            // Default to Last 30 Days if somehow another label is passed
+            start = DateUtils.offsetStartOf(-30, "day", "day");
+            end = DateUtils.endOf("day");
+        }
+
+        setRange({ start, end, label });
+    };
 
     return (
-        <div>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Organization Dashboard
-                </Title>
-                <Text type="secondary">
-                    Welcome back to {activeOrganization?.name}. Your central command for
-                    organization health.
-                </Text>
-            </div>
+        <div className="pb-8">
+            <Row justify="space-between" align="bottom" style={{ marginBottom: 32 }}>
+                <Col>
+                    <Title level={2} style={{ margin: 0 }}>
+                        Organization Dashboard
+                    </Title>
+                    <Text type="secondary">
+                        Welcome back to {activeOrganization?.name}. Your central command for
+                        organization health.
+                    </Text>
+                </Col>
+                <Col className="mt-4 md:mt-0">
+                    <Space>
+                        <Text
+                            type="secondary"
+                            className="text-xs font-medium uppercase tracking-wider"
+                        >
+                            Filter:
+                        </Text>
+                        <Select
+                            value={range.label}
+                            onChange={handlePresetChange}
+                            className="min-w-[140px]"
+                            options={[
+                                { label: "Last 7 Days", value: "Last 7 Days" },
+                                { label: "Last 30 Days", value: "Last 30 Days" },
+                                { label: "This Month", value: "This Month" },
+                                { label: "This Year", value: "This Year" },
+                            ]}
+                        />
+                    </Space>
+                </Col>
+            </Row>
 
             <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
 
             <Row gutter={[24, 24]}>
-                <Col xs={24} lg={16}>
-                    <Card
-                        title={
-                            <span>
-                                <LineChartOutlined className="mr-2" /> Member Activity (Last 30
-                                Days)
-                            </span>
-                        }
-                        className="shadow-sm h-full"
-                    >
-                        <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
-                    </Card>
+                <Col xs={24} lg={12}>
+                    <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
                 </Col>
+                <Col xs={24} lg={12}>
+                    <AttendanceTrendChart data={attendanceTrends} isLoading={isLoadingAttendance} />
+                </Col>
+
+                <Col xs={24} lg={16}>
+                    <Row gutter={[24, 24]}>
+                        <Col xs={24} lg={12}>
+                            <UpcomingSessionsCard />
+                        </Col>
+                        <Col xs={24} lg={12}>
+                            <RecentTransactionsCard />
+                        </Col>
+                    </Row>
+                </Col>
+
                 <Col xs={24} lg={8}>
                     <Space size="middle" direction="vertical" className="w-full">
-                        <Card
-                            title={
-                                <span>
-                                    <ThunderboltOutlined className="mr-2 text-yellow-500" /> Quick
-                                    Actions
-                                </span>
-                            }
-                            className="shadow-sm"
-                        >
-                            <Space size="middle" direction="vertical" className="w-full">
-                                <Button
-                                    block
-                                    icon={<TeamOutlined />}
-                                    onClick={() => navigateOrg(AppRoutes.org.admin.members)}
-                                >
-                                    Manage Members
-                                </Button>
-                                <Button
-                                    block
-                                    icon={<UploadOutlined />}
-                                    onClick={() => navigateOrg(AppRoutes.org.admin.bulk)}
-                                >
-                                    Bulk Import/Export
-                                </Button>
-                                <Divider className="my-2" />
-                                <Button
-                                    type="link"
-                                    block
-                                    onClick={() => navigateOrg(AppRoutes.org.admin.analytics)}
-                                >
-                                    View Full Analytics <ArrowRightOutlined />
-                                </Button>
-                            </Space>
-                        </Card>
-
                         <Card
                             title={
                                 <span>
                                     <GiftOutlined className="mr-2 text-rose-500" /> Upcoming
                                     Birthdays
                                 </span>
+                            }
+                            extra={
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    className="p-0 text-xs"
+                                    onClick={() => navigateOrg(AppRoutes.org.admin.members)}
+                                >
+                                    View All
+                                </Button>
                             }
                             className="shadow-sm"
                         >
@@ -120,10 +148,18 @@ export const AdminPortal: React.FC = () => {
                                                     {DateUtils.format(b.birthDate, "MMMM D")}
                                                 </Text>
                                             </div>
-                                            <div className="text-rose-500 text-xs font-semibold">
-                                                {b.daysUntil === 0
-                                                    ? "Today!"
-                                                    : `in ${b.daysUntil} days`}
+                                            <div>
+                                                {b.daysUntil === 0 ? (
+                                                    <Tag color="red" icon={<GiftOutlined />}>
+                                                        Today! 🎉
+                                                    </Tag>
+                                                ) : b.daysUntil === 1 ? (
+                                                    <Tag color="orange">Tomorrow</Tag>
+                                                ) : b.daysUntil <= 3 ? (
+                                                    <Tag color="orange">{b.daysUntil} days</Tag>
+                                                ) : (
+                                                    <Tag color="default">in {b.daysUntil} days</Tag>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -135,42 +171,11 @@ export const AdminPortal: React.FC = () => {
                             )}
                         </Card>
 
-                        <Card
-                            title={
-                                <span>
-                                    <WarningOutlined className="mr-2 text-orange-500" /> Engagement
-                                    Risk
-                                </span>
-                            }
-                            className="shadow-sm"
-                        >
-                            {metrics && metrics.engagementRisk > 0 ? (
-                                <div className="text-center py-2">
-                                    <Title level={3} className="m-0 text-orange-500">
-                                        {metrics.engagementRisk}
-                                    </Title>
-                                    <Text type="secondary">
-                                        Members have zero activity in the last 14 days.
-                                    </Text>
-                                    <Button
-                                        type="primary"
-                                        ghost
-                                        className="mt-4"
-                                        icon={<NotificationOutlined />}
-                                        onClick={() => navigateOrg(AppRoutes.org.admin.members)}
-                                    >
-                                        Review Members
-                                    </Button>
-                                </div>
-                            ) : (
-                                <Alert
-                                    message="Healthy Engagement"
-                                    description="All members have been active recently."
-                                    type="success"
-                                    showIcon
-                                />
-                            )}
-                        </Card>
+                        <EngagementRiskChart
+                            totalMembers={metrics?.totalMembers || 0}
+                            atRiskMembers={metrics?.engagementRisk || 0}
+                            loading={isLoadingMetrics}
+                        />
                     </Space>
                 </Col>
             </Row>
