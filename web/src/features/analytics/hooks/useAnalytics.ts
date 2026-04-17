@@ -18,9 +18,11 @@ export interface AttendanceTrend {
     absent: number;
 }
 
+const USER_TZ_OFFSET =
+    DateUtils.getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone) || "+00:00";
+
 export function useAnalytics(organizationId?: string, startDate?: number, endDate?: number) {
-    const tzOffset =
-        DateUtils.getTimezoneOffset(Intl.DateTimeFormat().resolvedOptions().timeZone) || "+00:00";
+    const tzOffset = USER_TZ_OFFSET;
 
     const sessionsQuery = useQuery({
         queryKey: [

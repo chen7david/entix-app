@@ -5,6 +5,7 @@ import { useSchedule } from "@web/src/features/schedule/hooks/useSchedule";
 import { DateUtils } from "@web/src/utils/date";
 import { Badge, Button, Card, List, Space, Typography } from "antd";
 import type React from "react";
+import { useMemo } from "react";
 
 const { Text } = Typography;
 
@@ -12,9 +13,10 @@ export const UpcomingSessionsCard: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const navigateOrg = useOrgNavigate();
 
-    const { sessions, isLoading } = useSchedule(activeOrganization?.id, DateUtils.now());
+    const startDate = useMemo(() => DateUtils.startOf("day"), []);
+    const { sessions, isLoading } = useSchedule(activeOrganization?.id, startDate);
 
-    const nextSessions = sessions.slice(0, 5);
+    const nextSessions = (sessions || []).slice(0, 5);
 
     return (
         <Card
@@ -24,7 +26,7 @@ export const UpcomingSessionsCard: React.FC = () => {
                 </span>
             }
             className="shadow-sm h-full"
-            bodyStyle={{ padding: "12px 20px" }}
+            styles={{ body: { padding: "12px 20px" } }}
             extra={
                 <Button
                     type="link"
@@ -54,7 +56,7 @@ export const UpcomingSessionsCard: React.FC = () => {
                                         text={
                                             <Text
                                                 type="secondary"
-                                                className="text-[10px] uppercase"
+                                                className="text-[10px] capitalize"
                                             >
                                                 {item.status}
                                             </Text>

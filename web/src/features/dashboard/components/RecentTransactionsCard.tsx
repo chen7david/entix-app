@@ -1,8 +1,9 @@
+import { HistoryOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { useTransactions } from "@web/src/features/finance/hooks/useTransactions";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
-import { CurrencyUtils } from "@web/src/utils/number";
+import { NumberUtils } from "@web/src/utils/number";
 import { Button, Card, List, Typography } from "antd";
 import type React from "react";
 
@@ -17,7 +18,11 @@ export const RecentTransactionsCard: React.FC = () => {
 
     return (
         <Card
-            title="Recent Transactions"
+            title={
+                <span>
+                    <HistoryOutlined className="mr-2 text-emerald-500" /> Recent Transactions
+                </span>
+            }
             className="shadow-sm h-full"
             extra={
                 <Button
@@ -34,7 +39,7 @@ export const RecentTransactionsCard: React.FC = () => {
                 loading={isLoading}
                 dataSource={transactions?.items || []}
                 renderItem={(item) => {
-                    const isPositive = item.amountCents > 0;
+                    const isIncoming = item.category.isRevenue;
                     return (
                         <List.Item
                             className="px-0 py-3"
@@ -43,11 +48,11 @@ export const RecentTransactionsCard: React.FC = () => {
                                     <Text
                                         strong
                                         className={
-                                            isPositive ? "text-emerald-600" : "text-slate-800"
+                                            isIncoming ? "text-emerald-600" : "text-slate-800"
                                         }
                                         style={{ fontSize: "15px" }}
                                     >
-                                        {CurrencyUtils.format(
+                                        {NumberUtils.formatCurrency(
                                             item.amountCents,
                                             item.currency.symbol
                                         )}

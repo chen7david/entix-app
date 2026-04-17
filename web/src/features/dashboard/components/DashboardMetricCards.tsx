@@ -6,7 +6,7 @@ import {
 } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import type { BulkMetrics } from "@web/src/features/organization";
-import { CurrencyUtils } from "@web/src/utils/number";
+import { NumberUtils } from "@web/src/utils/number";
 
 interface DashboardMetricCardsProps {
     metrics?: BulkMetrics;
@@ -29,21 +29,21 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
                 {
                     key: "members",
                     label: "Total Members",
-                    value: CurrencyUtils.formatNumber(metrics?.totalMembers || 0),
+                    value: NumberUtils.formatNumber(metrics?.totalMembers || 0),
                     icon: <TeamOutlined />,
                     color: "#2563eb",
                 },
                 {
                     key: "sessions",
                     label: "Active Sessions",
-                    value: CurrencyUtils.formatNumber(metrics?.activeSessions || 0),
+                    value: NumberUtils.formatNumber(metrics?.activeSessions || 0),
                     icon: <ThunderboltOutlined />,
                     color: "#10b981",
                 },
                 {
                     key: "risk",
                     label: "Engagement Risk",
-                    value: CurrencyUtils.formatNumber(metrics?.engagementRisk || 0),
+                    value: NumberUtils.formatNumber(metrics?.engagementRisk || 0),
                     icon: <WarningOutlined />,
                     color: (metrics?.engagementRisk || 0) > 0 ? "#fa8c16" : "#10b981",
                 },

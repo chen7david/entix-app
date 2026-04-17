@@ -1,10 +1,4 @@
-import {
-    ArrowRightOutlined,
-    GiftOutlined,
-    NotificationOutlined,
-    TeamOutlined,
-    ThunderboltOutlined,
-} from "@ant-design/icons";
+import { GiftOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import {
     AttendanceTrendChart,
@@ -40,8 +34,8 @@ export const AdminPortal: React.FC = () => {
         useAnalytics(activeOrganization?.id, range.start, range.end);
 
     const handlePresetChange = (label: string) => {
-        let start = DateUtils.offsetStartOf(-30, "day", "day");
-        let end = DateUtils.endOf("day");
+        let start: number;
+        let end: number;
 
         if (label === "This Month") {
             start = DateUtils.startOf("month");
@@ -52,6 +46,13 @@ export const AdminPortal: React.FC = () => {
         } else if (label === "This Year") {
             start = DateUtils.startOf("year");
             end = DateUtils.endOf("year");
+        } else if (label === "Last 30 Days") {
+            start = DateUtils.offsetStartOf(-30, "day", "day");
+            end = DateUtils.endOf("day");
+        } else {
+            // Default to Last 30 Days if somehow another label is passed
+            start = DateUtils.offsetStartOf(-30, "day", "day");
+            end = DateUtils.endOf("day");
         }
 
         setRange({ start, end, label });
@@ -110,41 +111,6 @@ export const AdminPortal: React.FC = () => {
                         <Col xs={24} lg={12}>
                             <RecentTransactionsCard />
                         </Col>
-                        <Col xs={24}>
-                            <Card
-                                title={
-                                    <span>
-                                        <ThunderboltOutlined className="mr-2 text-yellow-500" />{" "}
-                                        Quick Actions
-                                    </span>
-                                }
-                                className="shadow-sm"
-                            >
-                                <Row gutter={16}>
-                                    <Col span={12}>
-                                        <Button
-                                            block
-                                            icon={<TeamOutlined />}
-                                            onClick={() => navigateOrg(AppRoutes.org.admin.members)}
-                                        >
-                                            Manage Members
-                                        </Button>
-                                    </Col>
-                                    <Col span={12}>
-                                        <Button
-                                            block
-                                            type="primary"
-                                            ghost
-                                            onClick={() =>
-                                                navigateOrg(AppRoutes.org.admin.analytics)
-                                            }
-                                        >
-                                            Full Analytics <ArrowRightOutlined />
-                                        </Button>
-                                    </Col>
-                                </Row>
-                            </Card>
-                        </Col>
                     </Row>
                 </Col>
 
@@ -156,6 +122,16 @@ export const AdminPortal: React.FC = () => {
                                     <GiftOutlined className="mr-2 text-rose-500" /> Upcoming
                                     Birthdays
                                 </span>
+                            }
+                            extra={
+                                <Button
+                                    type="link"
+                                    size="small"
+                                    className="p-0 text-xs"
+                                    onClick={() => navigateOrg(AppRoutes.org.admin.members)}
+                                >
+                                    View All
+                                </Button>
                             }
                             className="shadow-sm"
                         >
@@ -200,29 +176,6 @@ export const AdminPortal: React.FC = () => {
                             atRiskMembers={metrics?.engagementRisk || 0}
                             loading={isLoadingMetrics}
                         />
-
-                        <Card className="shadow-sm bg-blue-50 border-blue-100">
-                            <div className="flex items-start gap-4">
-                                <NotificationOutlined className="text-blue-500 mt-1" />
-                                <div>
-                                    <Text strong className="block text-blue-800">
-                                        Need Help?
-                                    </Text>
-                                    <Text className="text-xs text-blue-600">
-                                        Check the members list to re-engage with at-risk students or
-                                        review attendance trends for patterns.
-                                    </Text>
-                                    <Button
-                                        type="link"
-                                        size="small"
-                                        className="p-0 mt-2 text-blue-700 font-semibold"
-                                        onClick={() => navigateOrg(AppRoutes.org.admin.members)}
-                                    >
-                                        Review Members →
-                                    </Button>
-                                </div>
-                            </div>
-                        </Card>
                     </Space>
                 </Col>
             </Row>

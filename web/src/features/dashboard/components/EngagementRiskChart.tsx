@@ -1,6 +1,8 @@
 import { WarningOutlined } from "@ant-design/icons";
-import { CurrencyUtils } from "@web/src/utils/number";
-import { Card, Spin, Typography } from "antd";
+import { AppRoutes } from "@shared";
+import { useOrgNavigate } from "@web/src/features/organization";
+import { NumberUtils } from "@web/src/utils/number";
+import { Alert, Button, Card, Spin, Typography } from "antd";
 import type React from "react";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -17,6 +19,7 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
     atRiskMembers,
     loading,
 }) => {
+    const navigateOrg = useOrgNavigate();
     const activeMembers = Math.max(0, totalMembers - atRiskMembers);
 
     const data = [
@@ -32,6 +35,35 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
         );
     }
 
+    const extra = (
+        <Button
+            type="link"
+            size="small"
+            className="p-0 text-xs"
+            onClick={() => navigateOrg(AppRoutes.org.admin.members)}
+        >
+            View All
+        </Button>
+    );
+
+    if (!loading && totalMembers === 0) {
+        return (
+            <Card
+                title={
+                    <span>
+                        <WarningOutlined className="mr-2 text-orange-500" /> Engagement Risk
+                    </span>
+                }
+                extra={extra}
+                className="shadow-sm h-full"
+            >
+                <div className="py-4">
+                    <Alert message="No member data available." type="info" showIcon />
+                </div>
+            </Card>
+        );
+    }
+
     return (
         <Card
             title={
@@ -39,6 +71,7 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
                     <WarningOutlined className="mr-2 text-orange-500" /> Engagement Risk
                 </span>
             }
+            extra={extra}
             className="shadow-sm h-full"
         >
             <div style={{ width: "100%", height: 200 }}>
@@ -70,8 +103,7 @@ export const EngagementRiskChart: React.FC<EngagementRiskChartProps> = ({
             </div>
             <div className="text-center mt-2">
                 <Text type="secondary" className="text-xs">
-                    {CurrencyUtils.formatNumber(atRiskMembers)} members with zero activity in 14
-                    days
+                    {NumberUtils.formatNumber(atRiskMembers)} members with zero activity in 14 days
                 </Text>
             </div>
         </Card>
