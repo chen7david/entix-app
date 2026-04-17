@@ -51,7 +51,7 @@ describe("SessionPaymentService — overdraft regression (EN-312)", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             })
         ).rejects.toThrow("overdraft");
@@ -67,7 +67,7 @@ describe("SessionPaymentService — overdraft regression (EN-312)", () => {
                 currencyId: "fcur_usd",
                 sourceAccountId: "acc_src",
                 destinationAccountId: "acc_dest",
-                categoryId: "fcat_service_fee",
+                categoryId: "fcat_cash_deposit",
                 performedBy: userId,
             });
         } catch {

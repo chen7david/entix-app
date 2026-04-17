@@ -162,7 +162,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             currencyId: FINANCIAL_CURRENCIES.CNY,
             sourceAccountId: accId,
             destinationAccountId: destId,
-            categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
+            categoryId: FINANCIAL_CATEGORIES.CASH_DEPOSIT,
             performedBy: null,
         });
 

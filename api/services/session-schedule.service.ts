@@ -257,7 +257,7 @@ export class SessionScheduleService extends BaseService {
                 currencyId,
                 sourceAccountId: account.id,
                 destinationAccountId: orgFunding.id,
-                categoryId: FINANCIAL_CATEGORIES.SERVICE_FEE,
+                categoryId: FINANCIAL_CATEGORIES.CASH_DEPOSIT,
                 idempotencyKey,
                 referenceType: "session",
                 referenceId: session.id,
