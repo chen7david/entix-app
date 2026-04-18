@@ -6,7 +6,12 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 // useOrganization import removed
-import { MediaPlayer, usePlaylist, usePlaylistSequence } from "@web/src/features/media";
+import {
+    MediaPlayer,
+    usePlaylist,
+    usePlaylistSequence,
+    useRecordMediaPlay,
+} from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
@@ -41,6 +46,9 @@ export const PlaylistPlayerPage: React.FC = () => {
     }, [playlistId]);
 
     const isLoading = loadingPlaylist || isLoadingSequence;
+
+    const playlistActiveMediaId = sequence[currentIndex]?.media?.id;
+    const onPlaybackStarted = useRecordMediaPlay(playlistActiveMediaId);
 
     if (loadingPlaylist) {
         return <CenteredSpin tip="Loading playlist..." />;
@@ -203,6 +211,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 mimeType={activeMedia.mimeType}
                                 loop={false}
                                 onEnded={handleMediaEnd}
+                                onPlay={onPlaybackStarted}
                                 autoPlay={isAutoPlay}
                                 onNext={hasNext ? handleNext : undefined}
                                 onPrevious={hasPrev ? handlePrev : undefined}
