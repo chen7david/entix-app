@@ -1,6 +1,6 @@
-import { SearchOutlined } from "@ant-design/icons";
+import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import { DateUtils } from "@web/src/utils/date";
-import { DatePicker, Input, Select } from "antd";
+import { Button, DatePicker, Input, Select, Tooltip } from "antd";
 import type React from "react";
 import type { TimelineFilter } from "../../hooks/useScheduleState";
 
@@ -15,6 +15,7 @@ type Props = {
     onRangeChange: (dates: any) => void;
     timeline: TimelineFilter;
     onTimelineChange: (val: TimelineFilter) => void;
+    onReset?: () => void;
 };
 
 export const ScheduleFilterBar: React.FC<Props> = ({
@@ -26,6 +27,7 @@ export const ScheduleFilterBar: React.FC<Props> = ({
     onRangeChange,
     timeline,
     onTimelineChange,
+    onReset,
 }) => {
     return (
         <div className="flex items-center gap-4 flex-wrap mb-6">
@@ -46,7 +48,6 @@ export const ScheduleFilterBar: React.FC<Props> = ({
             />
             <Select
                 value={
-                    // ... the ternary logic ...
                     startDate === DateUtils.startOf("day") && endDate === DateUtils.endOf("day")
                         ? "Today"
                         : startDate === DateUtils.offsetStartOf(1, "day", "day") &&
@@ -67,7 +68,6 @@ export const ScheduleFilterBar: React.FC<Props> = ({
                 className="h-[40px] rounded-lg"
                 variant="outlined"
                 onChange={(val) => {
-                    // ... onChange logic ...
                     if (val === "Today")
                         onRangeChange([
                             DateUtils.toLibDate(DateUtils.startOf("day")),
@@ -129,6 +129,11 @@ export const ScheduleFilterBar: React.FC<Props> = ({
                 }
                 allowClear={false}
             />
+            {onReset && (
+                <Tooltip title="Reset filters">
+                    <Button icon={<ReloadOutlined />} className="h-[40px]" onClick={onReset} />
+                </Tooltip>
+            )}
         </div>
     );
 };

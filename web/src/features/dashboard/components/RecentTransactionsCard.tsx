@@ -4,8 +4,9 @@ import { useTransactions } from "@web/src/features/finance/hooks/useTransactions
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
 import { NumberUtils } from "@web/src/utils/number";
-import { Button, Card, List, Tooltip, Typography } from "antd";
+import { List, Tooltip, Typography } from "antd";
 import type React from "react";
+import { DashboardCard } from "./DashboardCard";
 
 const { Text } = Typography;
 
@@ -17,23 +18,10 @@ export const RecentTransactionsCard: React.FC = () => {
     });
 
     return (
-        <Card
-            title={
-                <span>
-                    <HistoryOutlined className="mr-2 text-emerald-500" /> Recent Transactions
-                </span>
-            }
-            className="shadow-sm h-full"
-            extra={
-                <Button
-                    type="link"
-                    size="small"
-                    className="p-0 text-xs"
-                    onClick={() => navigateOrg(AppRoutes.org.admin.billing.transactions)}
-                >
-                    View All
-                </Button>
-            }
+        <DashboardCard
+            titleText="Recent Transactions"
+            icon={<HistoryOutlined className="text-emerald-500" />}
+            onViewAll={() => navigateOrg(AppRoutes.org.admin.billing.transactions)}
         >
             <List
                 loading={isLoading}
@@ -103,6 +91,6 @@ export const RecentTransactionsCard: React.FC = () => {
                     ),
                 }}
             />
-        </Card>
+        </DashboardCard>
     );
 };

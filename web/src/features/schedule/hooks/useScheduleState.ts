@@ -46,7 +46,7 @@ export const useScheduleState = (organizationId?: string) => {
     }, [debouncedSearch, searchParams, setSearchParams]);
 
     // Timeline filtering
-    const [timeline, setTimeline] = useState<TimelineFilter>("All");
+    const [timeline, setTimeline] = useState<TimelineFilter>("Upcoming");
 
     // Data fetching
     const { metrics } = useScheduleMetrics(organizationId, queryStart, queryEnd);
@@ -64,8 +64,8 @@ export const useScheduleState = (organizationId?: string) => {
         isFetchingNextPage,
     } = useSchedule(organizationId, queryStart, queryEnd, debouncedSearch);
 
-    // Derived Display Logic
-    let displaySessions = sessions || [];
+    // Derived Display Logic — always sorted ascending by start time (next session first)
+    let displaySessions = [...(sessions || [])].sort((a, b) => a.startTime - b.startTime);
     const now = Date.now();
     if (timeline === "Upcoming")
         displaySessions = displaySessions.filter((s) => s.startTime >= now);
@@ -90,6 +90,15 @@ export const useScheduleState = (organizationId?: string) => {
             params.delete("startDate");
             params.delete("endDate");
         }
+        setSearchParams(params, { replace: true });
+    };
+
+    const handleReset = () => {
+        setLocalSearch("");
+        setTimeline("Upcoming");
+        const params = new URLSearchParams();
+        params.set("startDate", defaultStart.toString());
+        params.set("endDate", defaultEnd.toString());
         setSearchParams(params, { replace: true });
     };
 
@@ -166,5 +175,6 @@ export const useScheduleState = (organizationId?: string) => {
             await updateAttendance.mutateAsync({ sessionId, attendances });
         },
         fetchNextPage,
+        handleReset,
     };
 };
