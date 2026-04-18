@@ -7,7 +7,7 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 // useOrganization import removed
-import { MediaPlayer, useMedia, usePlaylist, usePlaylists } from "@web/src/features/media";
+import { MediaPlayer, usePlaylist, usePlaylistSequence } from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
@@ -27,37 +27,21 @@ export const PlaylistPlayerPage: React.FC = () => {
         ? AppRoutes.org.teaching.playlists
         : AppRoutes.org.admin.playlists;
 
-    const { getSequence } = usePlaylists();
     const { data: activePlaylist, isLoading: loadingPlaylist } = usePlaylist(playlistId);
-    const { media } = useMedia();
     const { token } = theme.useToken();
 
-    const [sequence, setSequence] = useState<string[]>([]);
-    const [isLoadingSequence, setIsLoadingSequence] = useState(true);
+    const { data: sequence = [], isLoading: isLoadingSequence } = usePlaylistSequence(playlistId);
 
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [isAutoPlay, setIsAutoPlay] = useState(true);
     const [isShuffle, setIsShuffle] = useState(false);
 
-    const isLoading = loadingPlaylist || isLoadingSequence;
-
+    // biome-ignore lint/correctness/useExhaustiveDependencies: playlistId is the trigger, setCurrentIndex is stable
     useEffect(() => {
-        if (playlistId) {
-            setIsLoadingSequence(true);
-            getSequence(playlistId)
-                .then((items) => {
-                    // sort by position
-                    const sorted = items
-                        .sort((a, b) => a.position - b.position)
-                        .map((item) => item.mediaId);
-                    setSequence(sorted);
-                    setCurrentIndex(0);
-                })
-                .finally(() => {
-                    setIsLoadingSequence(false);
-                });
-        }
-    }, [playlistId, getSequence]);
+        setCurrentIndex(0);
+    }, [playlistId]);
+
+    const isLoading = loadingPlaylist || isLoadingSequence;
 
     if (loadingPlaylist) {
         return <CenteredSpin tip="Loading playlist..." />;
@@ -108,24 +92,15 @@ export const PlaylistPlayerPage: React.FC = () => {
     const hasNext = isShuffle ? sequence.length > 1 : currentIndex < sequence.length - 1;
     const hasPrev = currentIndex > 0;
 
-    const activeMediaId = sequence[currentIndex];
-    const activeMedia = media.find((m) => m.id === activeMediaId) || {
-        id: "not-found",
-        title: "Media not found",
-        description: "The requested media asset could not be located.",
-        mediaUrl: "",
-        mimeType: "video/mp4",
-        coverArtUrl: null,
-    };
+    const activeItem = sequence[currentIndex];
+    const activeMedia = activeItem?.media ?? null;
 
     const queueList = (
         <List
             className="w-full"
             dataSource={sequence}
-            renderItem={(mediaId, index) => {
-                const item = media.find((m) => m.id === mediaId);
-                if (!item) return null;
-
+            renderItem={(item, index) => {
+                const { media: mediaItem } = item;
                 const isPlaying = index === currentIndex;
 
                 return (
@@ -144,7 +119,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                             if (!isPlaying) e.currentTarget.style.backgroundColor = "transparent";
                         }}
                     >
-                        {item.mimeType.startsWith("video/") ? (
+                        {mediaItem.mimeType.startsWith("video/") ? (
                             <PlaySquareOutlined
                                 className={`transition-colors`}
                                 style={{
@@ -164,17 +139,21 @@ export const PlaylistPlayerPage: React.FC = () => {
                             />
                         )}
                         <div className="flex flex-col flex-1 min-w-0">
-                            <Tooltip title={item.title} placement="topLeft" mouseEnterDelay={0.5}>
+                            <Tooltip
+                                title={mediaItem.title}
+                                placement="topLeft"
+                                mouseEnterDelay={0.5}
+                            >
                                 <Text
                                     className={`truncate block font-medium transition-colors`}
                                     style={{ color: isPlaying ? token.colorPrimary : undefined }}
                                 >
-                                    {item.title}
+                                    {mediaItem.title}
                                 </Text>
                             </Tooltip>
-                            {item.description ? (
+                            {mediaItem.description ? (
                                 <Text type="secondary" className="text-xs truncate block mt-0.5">
-                                    {item.description}
+                                    {mediaItem.description}
                                 </Text>
                             ) : (
                                 <Text

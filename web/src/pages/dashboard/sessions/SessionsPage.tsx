@@ -13,6 +13,7 @@ import {
     useRevokeOtherSessions,
     useRevokeSession,
 } from "@web/src/features/auth";
+import { DateUtils } from "@web/src/utils/date";
 import {
     App,
     Button,
@@ -27,11 +28,7 @@ import {
     Typography,
     theme,
 } from "antd";
-import dayjs from "dayjs";
-import relativeTime from "dayjs/plugin/relativeTime";
 import React from "react";
-
-dayjs.extend(relativeTime);
 
 const { Title, Text } = Typography;
 
@@ -239,7 +236,9 @@ export const SessionsPage: React.FC = () => {
                                                                 style={{ fontSize: 12 }}
                                                             >
                                                                 <ClockCircleOutlined /> Active{" "}
-                                                                {dayjs(session.createdAt).fromNow()}
+                                                                {DateUtils.fromNow(
+                                                                    session.createdAt
+                                                                )}
                                                             </Text>
                                                         </Space>
                                                     </div>
