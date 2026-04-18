@@ -77,22 +77,34 @@ media-player::part(provider) {
  * - Add horizontal inset so skip targets sit clear of the large circular play hit area.
  * - Clear trailing margin-right on the last control before the flex spacer (theme adds 2.5px).
  */
-[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .entix-transport-skip {
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip {
     pointer-events: auto;
     position: relative;
     z-index: 3;
     transform: translateY(25%);
 }
 
-[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .entix-transport-skip--prev {
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip--prev {
     margin-right: 14px;
 }
 
-[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .entix-transport-skip--next {
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip--next {
     margin-left: 14px;
 }
 
-[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .vds-button:has(+ .vds-controls-spacer) {
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .vds-button:has(+ .vds-controls-spacer) {
     margin-right: 0;
 }
 
