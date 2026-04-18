@@ -12,10 +12,10 @@ const { Title, Paragraph } = Typography;
 export const NoOrganizationPage: React.FC = () => {
     const { mutate: signOut } = useSignOut();
     const navigate = useNavigate();
-    const { organizations, orgsLoaded } = useOrganization();
+    const { organizations, orgsLoaded, orgsFetching } = useOrganization();
 
     useEffect(() => {
-        if (!orgsLoaded) return; // only act on confirmed server data
+        if (!orgsLoaded || orgsFetching) return; // settled list only (not stale cache mid-refetch)
 
         if (organizations.length === 1) {
             navigate(`/org/${organizations[0].slug}${AppRoutes.org.dashboard.index}`, {
@@ -24,10 +24,10 @@ export const NoOrganizationPage: React.FC = () => {
         } else if (organizations.length > 1) {
             navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
         }
-    }, [organizations, orgsLoaded, navigate]);
+    }, [organizations, orgsLoaded, orgsFetching, navigate]);
 
     // Spinner while waiting for confirmed org data
-    if (!orgsLoaded) return <CenteredSpin />;
+    if (!orgsLoaded || orgsFetching) return <CenteredSpin />;
 
     const handleSignOut = () => {
         signOut(undefined, {

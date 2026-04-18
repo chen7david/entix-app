@@ -201,20 +201,6 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
         },
     });
 
-    // Record Play
-    const recordPlayMutation = useMutation({
-        mutationFn: async (mediaId: string) => {
-            if (!orgId) throw new Error("AuthOrganization ID missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}/play`, {
-                method: "POST",
-            });
-            if (!res.ok) await parseApiError(res);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["media"] });
-        },
-    });
-
     return {
         media,
         isLoadingMedia: isPagedMode ? pagedQuery.isLoading : infiniteQuery.isLoading,
@@ -235,10 +221,6 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
         deleteMedia: useCallback(
             (mediaId: string) => deleteMediaMutation.mutateAsync(mediaId),
             [deleteMediaMutation]
-        ),
-        recordPlay: useCallback(
-            (mediaId: string) => recordPlayMutation.mutateAsync(mediaId),
-            [recordPlayMutation]
         ),
 
         isCreating: createMediaMutation.isPending,
