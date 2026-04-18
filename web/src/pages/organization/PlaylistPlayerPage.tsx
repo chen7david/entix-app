@@ -261,11 +261,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 >
                                     Shuffle
                                 </Text>
-                                <Switch
-                                    size="small"
-                                    checked={isShuffle}
-                                    onChange={setIsShuffle}
-                                />
+                                <Switch size="small" checked={isShuffle} onChange={setIsShuffle} />
                             </div>
                         </div>
                     </div>

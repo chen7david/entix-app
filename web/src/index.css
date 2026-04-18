@@ -119,7 +119,9 @@ media-player::part(provider) {
  * Mobile / small layout only: dark translucent circular chips for play (Vidstack) + prev/next.
  * Large layout keeps Vidstack defaults: transparent controls + light icon color.
  */
-[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .entix-transport-skip.vds-button:not(.entix-transport-skip--placeholder) {
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .entix-transport-skip.vds-button:not(.entix-transport-skip--placeholder) {
     border: none;
     border-radius: 100%;
     background-color: var(--video-sm-play-button-bg, rgb(0 0 0 / 0.6));

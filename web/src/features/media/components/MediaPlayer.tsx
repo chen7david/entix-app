@@ -100,7 +100,9 @@ function TransportLoopControl({ variant = "overlay" }: { variant?: TransportLoop
                 remote.userPrefersLoopChange(!userPrefersLoop);
             }}
         >
-            <span className={isSettings ? `text-lg ${loopIconWeight}` : `text-xl ${loopIconWeight}`}>
+            <span
+                className={isSettings ? `text-lg ${loopIconWeight}` : `text-xl ${loopIconWeight}`}
+            >
                 <RetweetOutlined />
             </span>
         </button>
@@ -266,9 +268,13 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
                 <div className="pointer-events-none absolute inset-0 z-[1] flex flex-col items-center justify-center bg-gradient-to-b from-zinc-800 via-zinc-900 to-black px-6 text-center">
                     <AudioOutlined className="mb-3 text-5xl text-blue-400/80" />
                     <AudioPlaceholderWave />
-                    <h3 className="mt-6 w-full truncate text-2xl font-semibold text-white/95">{title}</h3>
+                    <h3 className="mt-6 w-full truncate text-2xl font-semibold text-white/95">
+                        {title}
+                    </h3>
                     {description ? (
-                        <p className="mt-2 line-clamp-2 max-w-lg text-sm text-white/50">{description}</p>
+                        <p className="mt-2 line-clamp-2 max-w-lg text-sm text-white/50">
+                            {description}
+                        </p>
                     ) : (
                         <p className="mt-2 text-sm text-white/40">Audio</p>
                     )}
