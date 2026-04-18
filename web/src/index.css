@@ -69,6 +69,33 @@ media-player::part(provider) {
     background-color: black;
 }
 
+/*
+ * Vidstack small-layout center transport row:
+ * - The row uses `pointer-events: none` so only `.vds-play-button` (Vidstack CSS) receives taps.
+ *   Custom prev/next slot buttons must opt back in or taps hit the gesture layer (toggle play).
+ * - Match the play control's `translateY(25%)` so skip icons line up vertically.
+ * - Add horizontal inset so skip targets sit clear of the large circular play hit area.
+ * - Clear trailing margin-right on the last control before the flex spacer (theme adds 2.5px).
+ */
+[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .entix-transport-skip {
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+    transform: translateY(25%);
+}
+
+[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .entix-transport-skip--prev {
+    margin-right: 14px;
+}
+
+[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .entix-transport-skip--next {
+    margin-left: 14px;
+}
+
+[data-media-player][data-layout="video"] .vds-video-layout[data-sm] .vds-controls-group[style*="pointer-events: none"] .vds-button:has(+ .vds-controls-spacer) {
+    margin-right: 0;
+}
+
 @layer components {
     /* Data Table Pro Customizations */
     .data-table-pro-container .ant-table-wrapper

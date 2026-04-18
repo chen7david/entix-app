@@ -37,8 +37,12 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
     const prevButton = onPrevious ? (
         <button
             type="button"
-            className="vds-button"
-            onClick={onPrevious}
+            className="vds-button entix-transport-skip entix-transport-skip--prev"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+                e.stopPropagation();
+                onPrevious();
+            }}
             aria-label="Previous Track"
         >
             <StepBackwardOutlined className="text-xl" />
@@ -46,7 +50,16 @@ export const MediaPlayer: React.FC<MediaPlayerProps> = ({
     ) : null;
 
     const nextButton = onNext ? (
-        <button type="button" className="vds-button" onClick={onNext} aria-label="Next Track">
+        <button
+            type="button"
+            className="vds-button entix-transport-skip entix-transport-skip--next"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+                e.stopPropagation();
+                onNext();
+            }}
+            aria-label="Next Track"
+        >
             <StepForwardOutlined className="text-xl" />
         </button>
     ) : null;
