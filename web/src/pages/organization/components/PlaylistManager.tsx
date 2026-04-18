@@ -34,7 +34,12 @@ import {
 } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
-import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
+import {
+    CoverArtUploader,
+    useMedia,
+    usePlaylistSequence,
+    usePlaylists,
+} from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
@@ -52,7 +57,7 @@ import {
     Typography,
 } from "antd";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -147,7 +152,6 @@ export const PlaylistManager: React.FC<{
         createPlaylist,
         updatePlaylist,
         deletePlaylist,
-        getSequence,
         updateSequence,
     } = usePlaylists({
         search: debouncedSearch,
@@ -174,6 +178,20 @@ export const PlaylistManager: React.FC<{
     const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
     const [sequenceItems, setSequenceItems] = useState<EnrichedPlaylistMediaItemDTO[]>([]);
 
+    // Fetches eagerly when a playlist is active — acts as prefetch for sequence drawer
+    const { data: fetchedSequence } = usePlaylistSequence(activePlaylist?.id);
+    const hasSeeded = useRef(false);
+
+    useEffect(() => {
+        if (isSequenceDrawerOpen && fetchedSequence && !hasSeeded.current) {
+            setSequenceItems(fetchedSequence);
+            hasSeeded.current = true;
+        }
+        if (!isSequenceDrawerOpen) {
+            hasSeeded.current = false;
+        }
+    }, [isSequenceDrawerOpen, fetchedSequence]);
+
     const [editForm] = Form.useForm();
 
     const sensors = useSensors(
@@ -188,10 +206,8 @@ export const PlaylistManager: React.FC<{
         setIsCreateModalOpen(false);
     };
 
-    const openSequenceManager = async (playlist: PlaylistDTO) => {
+    const openSequenceManager = (playlist: PlaylistDTO) => {
         setActivePlaylist(playlist);
-        const seq = await getSequence(playlist.id);
-        setSequenceItems(seq as EnrichedPlaylistMediaItemDTO[]);
         setIsSequenceDrawerOpen(true);
     };
 
