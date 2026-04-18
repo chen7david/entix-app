@@ -1,13 +1,17 @@
 import {
     ArrowLeftOutlined,
     AudioOutlined,
-    InteractionOutlined,
     MenuUnfoldOutlined,
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 // useOrganization import removed
-import { MediaPlayer, usePlaylist, usePlaylistSequence } from "@web/src/features/media";
+import {
+    MediaPlayer,
+    usePlaylist,
+    usePlaylistSequence,
+    useRecordMediaPlay,
+} from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
@@ -42,6 +46,9 @@ export const PlaylistPlayerPage: React.FC = () => {
     }, [playlistId]);
 
     const isLoading = loadingPlaylist || isLoadingSequence;
+
+    const playlistActiveMediaId = sequence[currentIndex]?.media?.id;
+    const onPlaybackStarted = useRecordMediaPlay(playlistActiveMediaId);
 
     if (loadingPlaylist) {
         return <CenteredSpin tip="Loading playlist..." />;
@@ -202,7 +209,9 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 mediaUrl={activeMedia.mediaUrl}
                                 coverArtUrl={activeMedia.coverArtUrl || undefined}
                                 mimeType={activeMedia.mimeType}
-                                onEnd={handleMediaEnd}
+                                loop={false}
+                                onEnded={handleMediaEnd}
+                                onPlay={onPlaybackStarted}
                                 autoPlay={isAutoPlay}
                                 onNext={hasNext ? handleNext : undefined}
                                 onPrevious={hasPrev ? handlePrev : undefined}
@@ -240,8 +249,8 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 Up Next
                             </Title>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between gap-4">
                                 <Text
                                     type="secondary"
                                     className="text-xs font-semibold uppercase tracking-wider"
@@ -254,15 +263,15 @@ export const PlaylistPlayerPage: React.FC = () => {
                                     onChange={setIsAutoPlay}
                                 />
                             </div>
-                            <Button
-                                type={isShuffle ? "primary" : "default"}
-                                size="small"
-                                icon={<InteractionOutlined />}
-                                onClick={() => setIsShuffle(!isShuffle)}
-                                className={`rounded-none ${isShuffle ? "" : "text-gray-500"}`}
-                            >
-                                Shuffle
-                            </Button>
+                            <div className="flex items-center justify-between gap-4">
+                                <Text
+                                    type="secondary"
+                                    className="text-xs font-semibold uppercase tracking-wider"
+                                >
+                                    Shuffle
+                                </Text>
+                                <Switch size="small" checked={isShuffle} onChange={setIsShuffle} />
+                            </div>
                         </div>
                     </div>
 

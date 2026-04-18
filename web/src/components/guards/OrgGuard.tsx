@@ -34,11 +34,12 @@ export const OrgGuard: React.FC = () => {
     const auth = useAuth();
 
     // 1. Fetch the user's org list (cached; shared centrally via useOrganization)
-    const { organizations, orgsLoaded } = useOrganization();
+    const { organizations, orgsLoaded, orgsFetching } = useOrganization();
 
     // 2. Resolve org from URL slug (pure client-side; no extra network call)
+    const orgListSettled = orgsLoaded && !orgsFetching;
     const activeOrganization =
-        orgsLoaded && slug ? organizations.find((o) => o.slug === slug) || null : null;
+        orgListSettled && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
     // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (in this tab)
     useEffect(() => {
@@ -51,7 +52,7 @@ export const OrgGuard: React.FC = () => {
     //    isSyncing starts as true so children never render before the first sync completes.
     // biome-ignore lint/correctness/useExhaustiveDependencies: URL-driven sync is stable by activeOrganization?.id
     useEffect(() => {
-        if (!orgsLoaded) return; // wait for org list before deciding anything
+        if (!orgsLoaded || orgsFetching) return; // wait for settled org list
         if (!activeOrganization) {
             // Org not found in the list — stop blocking so the 403 result can render
             setIsSyncing(false);
@@ -95,10 +96,10 @@ export const OrgGuard: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [activeOrganization?.id, orgsLoaded, auth.refreshAuth, queryClient]);
+    }, [activeOrganization?.id, orgsLoaded, orgsFetching, auth.refreshAuth, queryClient]);
 
     // Block children while resolving the org list or syncing the server session
-    if (!orgsLoaded || isSyncing) {
+    if (!orgsLoaded || orgsFetching || isSyncing) {
         return <CenteredSpin />;
     }
 

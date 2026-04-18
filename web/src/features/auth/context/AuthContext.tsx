@@ -1,6 +1,6 @@
 import { authClient } from "@web/src/lib/auth-client";
 import type React from "react";
-import { createContext, useCallback, useContext, useMemo, useRef } from "react";
+import { createContext, useCallback, useContext, useMemo } from "react";
 
 export type UserRole = "admin" | "user";
 export type OrgRole = "owner" | "admin" | "teacher" | "student";
@@ -35,16 +35,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await Promise.all([session.refetch(), activeMember.refetch()]);
     }, [session.refetch, activeMember.refetch]);
 
-    // Hold the last known member data through better-auth's nanostore blink
-    // (data → undefined during refetch, confirmed by better-auth #3837 and #6879).
-    // Only mark as truly loading if we have NEVER had data.
-    const lastMemberData = useRef(activeMember.data);
-    if (activeMember.data !== undefined) {
-        lastMemberData.current = activeMember.data;
-    }
+    // better-auth's useAuthQuery initializes with `data: null` (not undefined) while
+    // `isPending: true` (see better-auth/client/query). The old `data === undefined`
+    // check never matched, so the first paint had isLoading=false and guest routes
+    // flashed the sign-in screen before /get-session completed.
+    const isSessionLoading = session.isPending && session.data === null;
 
-    const isSessionLoading = session.isPending && session.data === undefined;
-    const isMemberLoading = activeMember.isPending && lastMemberData.current === undefined;
+    // Once the session has a user, keep global auth in "loading" until active member
+    // resolves. Refetches keep prior `data` while pending is false (see better-auth
+    // client/query onRequest), so we do not usually flash on background refetch.
+    const isMemberLoading = Boolean(session.data?.user) && activeMember.isPending;
 
     const isLoading = isSessionLoading || isMemberLoading;
 

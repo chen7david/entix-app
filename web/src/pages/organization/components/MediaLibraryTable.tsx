@@ -10,12 +10,17 @@ import {
 import type { Media } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
-import { CoverArtUploader, MediaPlayer, useMedia } from "@web/src/features/media";
+import {
+    CoverArtUploader,
+    MediaPlayer,
+    useMedia,
+    useRecordMediaPlay,
+} from "@web/src/features/media";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Tooltip, Typography } from "antd";
 import type React from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MediaDropzone } from "./MediaDropzone";
 
 const { Title, Text } = Typography;
@@ -37,7 +42,6 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         media,
         isLoadingMedia: loading,
         deleteMedia,
-        recordPlay,
         updateMedia,
         isUpdating,
         nextCursor,
@@ -74,19 +78,11 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         }
     }, [activeMedia, form]);
 
-    const hasRecordedPlay = useRef<boolean>(false);
-
     const handlePlayMedia = (record: Media) => {
-        hasRecordedPlay.current = false;
         setActiveMedia(record);
     };
 
-    const handleOnPlay = () => {
-        if (activeMedia && !hasRecordedPlay.current) {
-            hasRecordedPlay.current = true;
-            recordPlay(activeMedia.id);
-        }
-    };
+    const onPlaybackStarted = useRecordMediaPlay(activeMedia?.id);
 
     const handleCloseModal = () => {
         setActiveMedia(null);
@@ -267,7 +263,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                                 mediaUrl={activeMedia.mediaUrl}
                                 coverArtUrl={activeMedia.coverArtUrl || undefined}
                                 mimeType={activeMedia.mimeType}
-                                onPlay={handleOnPlay}
+                                onPlay={onPlaybackStarted}
                             />
                         </div>
 

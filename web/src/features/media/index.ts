@@ -7,6 +7,7 @@ export * from "./components/Uploader";
 
 export * from "./hooks/useMedia";
 export * from "./hooks/usePlaylists";
+export * from "./hooks/useRecordMediaPlay";
 export * from "./hooks/useUploads";
 
 export * from "./store/upload.store";

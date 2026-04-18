@@ -69,6 +69,147 @@ media-player::part(provider) {
     background-color: black;
 }
 
+/* Faux “waveform” strip for audio-without-artwork (decorative, not real audio analysis) */
+@keyframes entix-audio-wave {
+    from {
+        transform: scaleY(0.35);
+        opacity: 0.45;
+    }
+    to {
+        transform: scaleY(1);
+        opacity: 1;
+    }
+}
+
+.entix-audio-placeholder-wave__bar {
+    transform-origin: bottom center;
+    animation: entix-audio-wave 0.85s ease-in-out infinite alternate;
+}
+
+.entix-audio-placeholder-wave__bar:nth-child(1) {
+    animation-delay: 0s;
+}
+.entix-audio-placeholder-wave__bar:nth-child(2) {
+    animation-delay: 0.1s;
+}
+.entix-audio-placeholder-wave__bar:nth-child(3) {
+    animation-delay: 0.05s;
+}
+.entix-audio-placeholder-wave__bar:nth-child(4) {
+    animation-delay: 0.15s;
+}
+.entix-audio-placeholder-wave__bar:nth-child(5) {
+    animation-delay: 0.08s;
+}
+.entix-audio-placeholder-wave__bar:nth-child(6) {
+    animation-delay: 0.12s;
+}
+.entix-audio-placeholder-wave__bar:nth-child(7) {
+    animation-delay: 0.02s;
+}
+
+/* Loop toggle in top chrome: stay above scrim/gestures and receive taps */
+[data-media-player][data-layout="video"] .entix-transport-loop--overlay {
+    pointer-events: auto;
+    position: relative;
+    z-index: 20;
+}
+
+/*
+ * Mobile / small layout only: dark translucent circular chips for play (Vidstack) + prev/next.
+ * Large layout keeps Vidstack defaults: transparent controls + light icon color.
+ */
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .entix-transport-skip.vds-button:not(.entix-transport-skip--placeholder) {
+    border: none;
+    border-radius: 100%;
+    background-color: var(--video-sm-play-button-bg, rgb(0 0 0 / 0.6));
+    color: var(--media-controls-color, #f5f5f5);
+}
+
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .entix-transport-skip.vds-button:not(.entix-transport-skip--placeholder):hover {
+    background-color: rgb(0 0 0 / 0.75);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    /* Small layout: preserve vertical nudge with Vidstack’s hover scale */
+    [data-media-player][data-layout="video"]
+        .vds-video-layout[data-sm]
+        .vds-controls-group[style*="pointer-events: none"]
+        .entix-transport-skip.vds-button:not(.entix-transport-skip--placeholder):hover {
+        transform: translateY(25%) scale(1.05);
+    }
+
+    [data-media-player][data-layout="video"]
+        .vds-video-layout:not([data-sm])
+        .entix-transport-skip.vds-button:not(.entix-transport-skip--placeholder):hover {
+        transform: var(--media-button-hover-transform, scale(1.05));
+    }
+}
+
+/* Invisible skip spacers: keep layout width (do not put aria-hidden on `.vds-button` — theme uses display:none) */
+[data-media-player][data-layout="video"] .entix-transport-skip--placeholder.vds-button {
+    opacity: 0;
+    pointer-events: none;
+    cursor: default;
+}
+
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip--placeholder.vds-button {
+    transform: translateY(25%);
+}
+
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip--placeholder.vds-button:hover {
+    transform: translateY(25%);
+}
+
+/*
+ * Vidstack small-layout center transport row:
+ * - The row uses `pointer-events: none` so only `.vds-play-button` (Vidstack CSS) receives taps.
+ *   Custom prev/next slot buttons must opt back in or taps hit the gesture layer (toggle play).
+ * - Match the play control's `translateY(25%)` so skip icons line up vertically.
+ * - Add horizontal inset so skip targets sit clear of the large circular play hit area.
+ * - Clear trailing margin-right on the last control before the flex spacer (theme adds 2.5px).
+ */
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip {
+    pointer-events: auto;
+    position: relative;
+    z-index: 3;
+    transform: translateY(25%);
+}
+
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip--prev {
+    margin-right: 14px;
+}
+
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .entix-transport-skip--next {
+    margin-left: 14px;
+}
+
+[data-media-player][data-layout="video"]
+    .vds-video-layout[data-sm]
+    .vds-controls-group[style*="pointer-events: none"]
+    .vds-button:has(+ .vds-controls-spacer) {
+    margin-right: 0;
+}
+
 @layer components {
     /* Data Table Pro Customizations */
     .data-table-pro-container .ant-table-wrapper

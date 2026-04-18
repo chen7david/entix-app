@@ -12,7 +12,11 @@ export const useOrganization = () => {
     const contextVal = useContext(OrgContext);
 
     // 1. Fetch user's organizations
-    const { data: organizations = [], isSuccess: orgsLoaded } = useQuery({
+    const {
+        data: organizations = [],
+        isSuccess: orgsLoaded,
+        isFetching: orgsFetching,
+    } = useQuery({
         queryKey: ["organizations"],
         queryFn: async () => {
             const { data } = await authClient.organization.list();
@@ -48,6 +52,8 @@ export const useOrganization = () => {
         organizations,
         activeOrganization,
         orgsLoaded,
+        /** True while the org list request is in flight (including post-login refetch). */
+        orgsFetching,
         isSwitching,
         setActive,
     };
