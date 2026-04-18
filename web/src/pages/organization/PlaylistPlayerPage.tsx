@@ -1,7 +1,6 @@
 import {
     ArrowLeftOutlined,
     AudioOutlined,
-    InteractionOutlined,
     MenuUnfoldOutlined,
     PlaySquareOutlined,
 } from "@ant-design/icons";
@@ -202,7 +201,8 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 mediaUrl={activeMedia.mediaUrl}
                                 coverArtUrl={activeMedia.coverArtUrl || undefined}
                                 mimeType={activeMedia.mimeType}
-                                onEnd={handleMediaEnd}
+                                loop={false}
+                                onEnded={handleMediaEnd}
                                 autoPlay={isAutoPlay}
                                 onNext={hasNext ? handleNext : undefined}
                                 onPrevious={hasPrev ? handlePrev : undefined}
@@ -240,8 +240,8 @@ export const PlaylistPlayerPage: React.FC = () => {
                                 Up Next
                             </Title>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between gap-4">
                                 <Text
                                     type="secondary"
                                     className="text-xs font-semibold uppercase tracking-wider"
@@ -254,15 +254,19 @@ export const PlaylistPlayerPage: React.FC = () => {
                                     onChange={setIsAutoPlay}
                                 />
                             </div>
-                            <Button
-                                type={isShuffle ? "primary" : "default"}
-                                size="small"
-                                icon={<InteractionOutlined />}
-                                onClick={() => setIsShuffle(!isShuffle)}
-                                className={`rounded-none ${isShuffle ? "" : "text-gray-500"}`}
-                            >
-                                Shuffle
-                            </Button>
+                            <div className="flex items-center justify-between gap-4">
+                                <Text
+                                    type="secondary"
+                                    className="text-xs font-semibold uppercase tracking-wider"
+                                >
+                                    Shuffle
+                                </Text>
+                                <Switch
+                                    size="small"
+                                    checked={isShuffle}
+                                    onChange={setIsShuffle}
+                                />
+                            </div>
                         </div>
                     </div>
 
