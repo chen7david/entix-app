@@ -48,6 +48,7 @@ describe("HomeRedirect UX Logic", () => {
             organizations: [],
             activeOrganization: null,
             orgsLoaded: true,
+            orgsFetching: false,
             isSwitching: false,
             setActive: vi.fn(),
         });
@@ -88,6 +89,7 @@ describe("HomeRedirect UX Logic", () => {
             organizations: [],
             activeOrganization: null,
             orgsLoaded: false,
+            orgsFetching: true,
             isSwitching: false,
             setActive: vi.fn(),
         });
@@ -121,6 +123,7 @@ describe("HomeRedirect UX Logic", () => {
             organizations: [],
             activeOrganization: null,
             orgsLoaded: true,
+            orgsFetching: false,
             isSwitching: false,
             setActive: vi.fn(),
         });
@@ -139,5 +142,38 @@ describe("HomeRedirect UX Logic", () => {
 
         const onboardingPage = await screen.findByTestId("no-org-page");
         expect(onboardingPage).toBeInTheDocument();
+    });
+
+    it("should keep spinner while org list is refetching (stale empty cache)", async () => {
+        vi.mocked(useAuth).mockReturnValue({
+            user: { id: "1" } as any,
+            isAuthenticated: true,
+            isLoading: false,
+            isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
+            refreshAuth: vi.fn() as any,
+        });
+
+        vi.mocked(useOrganization).mockReturnValue({
+            organizations: [],
+            activeOrganization: null,
+            orgsLoaded: true,
+            orgsFetching: true,
+            isSwitching: false,
+            setActive: vi.fn(),
+        });
+
+        render(
+            <MemoryRouter initialEntries={["/"]}>
+                <App />
+            </MemoryRouter>
+        );
+
+        expect(await screen.findByTestId("loading-spinner")).toBeInTheDocument();
     });
 });

@@ -21,10 +21,14 @@ import { useAuth } from "../context/AuthContext";
  *
  * @note organizations is already cached by useOrganization (staleTime 5 min),
  *       so this hook causes zero additional network requests after the first mount.
+ *
+ * After sign-in, `invalidateQueries` refetches the org list while keeping prior
+ * cached data — `isSuccess` can stay true with a stale `[]` until the refetch
+ * completes. Wait for `!orgsFetching` so we do not flash no-organization.
  */
 export function useHomeRedirect() {
     const { isAuthenticated, isLoading: loadingAuth } = useAuth();
-    const { organizations, orgsLoaded } = useOrganization();
+    const { organizations, orgsLoaded, orgsFetching } = useOrganization();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -40,7 +44,7 @@ export function useHomeRedirect() {
         // Step 3: authenticated — wait for a confirmed successful org fetch
         // isSuccess is only true after a real network response, immune to the
         // TanStack Query v5 "idle gap" where isPending=true but isFetching=false
-        if (!orgsLoaded) return;
+        if (!orgsLoaded || orgsFetching) return;
 
         // Step 4: route based on confirmed org data
         const savedSlug = sessionStorage.getItem(STORAGE_KEYS.lastOrgSlug);
@@ -65,5 +69,5 @@ export function useHomeRedirect() {
         }
 
         navigate(AppRoutes.onboarding.selectOrganization, { replace: true });
-    }, [isAuthenticated, loadingAuth, orgsLoaded, organizations, navigate]);
+    }, [isAuthenticated, loadingAuth, orgsLoaded, orgsFetching, organizations, navigate]);
 }
