@@ -1,5 +1,6 @@
 import { z } from "@hono/zod-openapi";
 import { baseSchema } from "./base.dto";
+import { mediaSchema } from "./media.dto";
 
 export const playlistSchema = baseSchema.extend({
     organizationId: z.string().openapi({ example: "org_123" }),
@@ -14,6 +15,11 @@ export const playlistMediaItemSchema = z.object({
     mediaId: z.string().openapi({ example: "media_123" }),
     position: z.number().openapi({ example: 1 }),
     addedAt: z.coerce.date().openapi({ example: "2023-01-01T00:00:00Z" }),
+    media: mediaSchema.optional(),
+});
+
+export const enrichedPlaylistMediaItemSchema = playlistMediaItemSchema.extend({
+    media: mediaSchema,
 });
 
 export const createPlaylistSchema = z.object({
@@ -30,6 +36,7 @@ export const updateSequenceSchema = z.object({
 
 export type PlaylistDTO = z.infer<typeof playlistSchema>;
 export type PlaylistMediaItemDTO = z.infer<typeof playlistMediaItemSchema>;
+export type EnrichedPlaylistMediaItemDTO = z.infer<typeof enrichedPlaylistMediaItemSchema>;
 export type CreatePlaylistDTO = z.infer<typeof createPlaylistSchema>;
 export type UpdatePlaylistDTO = z.infer<typeof updatePlaylistSchema>;
 export type UpdateSequenceDTO = z.infer<typeof updateSequenceSchema>;

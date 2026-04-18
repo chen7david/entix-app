@@ -123,4 +123,45 @@ describe("Playlist Routes Integration Tests", () => {
             expect(body.items[0].title).toBe("Test Playlist Alpha");
         });
     });
+
+    describe("GET /orgs/:organizationId/playlists/:playlistId/sequence", () => {
+        it("should return enriched sequence with media details", async () => {
+            // Seed a playlist
+            const playlistId = "test-playlist";
+            await db.insert(schema.playlists).values({
+                id: playlistId,
+                organizationId: orgId,
+                title: "Sequence Test",
+                createdBy: userId,
+            });
+
+            // Seed some media
+            const mediaId = "test-media";
+            await db.insert(schema.media).values({
+                id: mediaId,
+                organizationId: orgId,
+                title: "Test Media",
+                mimeType: "video/mp4",
+                mediaUrl: "http://example.com/video.mp4",
+                uploadedBy: userId,
+            });
+
+            // Set sequence
+            await db.insert(schema.playlistMedia).values({
+                playlistId,
+                mediaId,
+                position: 0,
+            });
+
+            // Fetch sequence
+            const res = await client.orgs.playlists.getSequence(orgId, playlistId);
+            expect(res.status).toBe(200);
+
+            const body = (await res.json()) as any[];
+            expect(body).toHaveLength(1);
+            expect(body[0].mediaId).toBe(mediaId);
+            expect(body[0].media).toBeDefined();
+            expect(body[0].media.title).toBe("Test Media");
+        });
+    });
 });

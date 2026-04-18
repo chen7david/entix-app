@@ -140,10 +140,17 @@ export class PlaylistRepository {
         }
     }
 
-    async findMediaSequence(playlistId: string): Promise<schema.PlaylistMedia[]> {
+    async findMediaSequence(playlistId: string) {
         return await this.db
-            .select()
+            .select({
+                playlistId: schema.playlistMedia.playlistId,
+                mediaId: schema.playlistMedia.mediaId,
+                position: schema.playlistMedia.position,
+                addedAt: schema.playlistMedia.addedAt,
+                media: schema.media,
+            })
             .from(schema.playlistMedia)
+            .innerJoin(schema.media, eq(schema.playlistMedia.mediaId, schema.media.id))
             .where(eq(schema.playlistMedia.playlistId, playlistId))
             .orderBy(schema.playlistMedia.position);
     }
