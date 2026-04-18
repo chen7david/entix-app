@@ -26,10 +26,20 @@ import {
     verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { AppRoutes, type CreatePlaylistDTO, type PlaylistDTO } from "@shared";
+import {
+    AppRoutes,
+    type CreatePlaylistDTO,
+    type EnrichedPlaylistMediaItemDTO,
+    type PlaylistDTO,
+} from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
-import { CoverArtUploader, useMedia, usePlaylists } from "@web/src/features/media";
+import {
+    CoverArtUploader,
+    useMedia,
+    usePlaylistSequence,
+    usePlaylists,
+} from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
@@ -47,7 +57,7 @@ import {
     Typography,
 } from "antd";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const { Title, Text } = Typography;
 
@@ -142,7 +152,6 @@ export const PlaylistManager: React.FC<{
         createPlaylist,
         updatePlaylist,
         deletePlaylist,
-        getSequence,
         updateSequence,
     } = usePlaylists({
         search: debouncedSearch,
@@ -167,7 +176,21 @@ export const PlaylistManager: React.FC<{
     const [activePlaylist, setActivePlaylist] = useState<PlaylistDTO | null>(null);
     const [isSequenceDrawerOpen, setIsSequenceDrawerOpen] = useState(false);
     const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-    const [sequenceItems, setSequenceItems] = useState<string[]>([]);
+    const [sequenceItems, setSequenceItems] = useState<EnrichedPlaylistMediaItemDTO[]>([]);
+
+    // Fetches eagerly when a playlist is active — acts as prefetch for sequence drawer
+    const { data: fetchedSequence } = usePlaylistSequence(activePlaylist?.id);
+    const hasSeeded = useRef(false);
+
+    useEffect(() => {
+        if (isSequenceDrawerOpen && fetchedSequence && !hasSeeded.current) {
+            setSequenceItems(fetchedSequence);
+            hasSeeded.current = true;
+        }
+        if (!isSequenceDrawerOpen) {
+            hasSeeded.current = false;
+        }
+    }, [isSequenceDrawerOpen, fetchedSequence]);
 
     const [editForm] = Form.useForm();
 
@@ -183,10 +206,8 @@ export const PlaylistManager: React.FC<{
         setIsCreateModalOpen(false);
     };
 
-    const openSequenceManager = async (playlist: PlaylistDTO) => {
+    const openSequenceManager = (playlist: PlaylistDTO) => {
         setActivePlaylist(playlist);
-        const seq = await getSequence(playlist.id);
-        setSequenceItems(seq.map((item) => item.mediaId));
         setIsSequenceDrawerOpen(true);
     };
 
@@ -211,12 +232,13 @@ export const PlaylistManager: React.FC<{
 
         if (over && active.id !== over.id) {
             setSequenceItems((items) => {
-                const oldIndex = items.indexOf(active.id as string);
-                const newIndex = items.indexOf(over.id as string);
+                const oldIndex = items.findIndex((item) => item.mediaId === active.id);
+                const newIndex = items.findIndex((item) => item.mediaId === over.id);
                 const newArray = arrayMove(items, oldIndex, newIndex);
 
                 if (activePlaylist) {
-                    updateSequence(activePlaylist.id, newArray).catch((_err) =>
+                    const mediaIds = newArray.map((item) => item.mediaId);
+                    updateSequence(activePlaylist.id, mediaIds).catch((_err) =>
                         notification.error({
                             message: "Order Update Failed",
                             description: "Failed to update sequence order.",
@@ -230,10 +252,11 @@ export const PlaylistManager: React.FC<{
     };
 
     const handleRemoveFromSequence = (mediaIdToRemove: string) => {
-        const newItems = sequenceItems.filter((id) => id !== mediaIdToRemove);
+        const newItems = sequenceItems.filter((item) => item.mediaId !== mediaIdToRemove);
         setSequenceItems(newItems);
         if (activePlaylist) {
-            updateSequence(activePlaylist.id, newItems).catch((_err) =>
+            const mediaIds = newItems.map((item) => item.mediaId);
+            updateSequence(activePlaylist.id, mediaIds).catch((_err) =>
                 notification.error({
                     message: "Removal Failed",
                     description: "Failed to remove item from sequence.",
@@ -243,11 +266,24 @@ export const PlaylistManager: React.FC<{
     };
 
     const handleAddMedia = (mediaId: string) => {
-        if (!sequenceItems.includes(mediaId)) {
-            const newItems = [...sequenceItems, mediaId];
+        const alreadyIn = sequenceItems.some((item) => item.mediaId === mediaId);
+        if (!alreadyIn) {
+            const mediaItem = media.find((m) => m.id === mediaId);
+            if (!mediaItem) return;
+
+            const newItem: EnrichedPlaylistMediaItemDTO = {
+                playlistId: activePlaylist?.id || "",
+                mediaId,
+                position: sequenceItems.length,
+                addedAt: new Date(),
+                media: mediaItem,
+            };
+
+            const newItems = [...sequenceItems, newItem];
             setSequenceItems(newItems);
             if (activePlaylist) {
-                updateSequence(activePlaylist.id, newItems).catch((_err) =>
+                const mediaIds = newItems.map((item) => item.mediaId);
+                updateSequence(activePlaylist.id, mediaIds).catch((_err) =>
                     notification.error({
                         message: "Add Failed",
                         description: "Failed to add item to sequence.",
@@ -445,7 +481,9 @@ export const PlaylistManager: React.FC<{
                                     .includes(input.toLowerCase())
                             }
                             options={media
-                                ?.filter((m: any) => !sequenceItems.includes(m.id))
+                                ?.filter(
+                                    (m: any) => !sequenceItems.some((item) => item.mediaId === m.id)
+                                )
                                 ?.map((m: any) => ({
                                     value: m.id,
                                     label: `${m.title} (${m.mimeType.split("/")[0]})`,
@@ -483,18 +521,18 @@ export const PlaylistManager: React.FC<{
                                 onDragEnd={handleDragEnd}
                             >
                                 <SortableContext
-                                    items={sequenceItems}
+                                    items={sequenceItems.map((item) => item.mediaId)}
                                     strategy={verticalListSortingStrategy}
                                 >
-                                    {sequenceItems.map((mediaId) => {
-                                        const mediaItem = media.find((m) => m.id === mediaId);
-                                        if (!mediaItem) return null;
+                                    {sequenceItems.map((item) => {
                                         return (
                                             <SortableItem
-                                                key={mediaId}
-                                                id={mediaId}
-                                                mediaItem={mediaItem}
-                                                onRemove={() => handleRemoveFromSequence(mediaId)}
+                                                key={item.mediaId}
+                                                id={item.mediaId}
+                                                mediaItem={item.media}
+                                                onRemove={() =>
+                                                    handleRemoveFromSequence(item.mediaId)
+                                                }
                                             />
                                         );
                                     })}

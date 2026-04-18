@@ -62,7 +62,7 @@ describe("useScheduleState", () => {
         const { result } = renderHook(() => useScheduleState(mockOrganizationId));
 
         expect(result.current.localSearch).toBe("");
-        expect(result.current.timeline).toBe("All");
+        expect(result.current.timeline).toBe("Upcoming");
         expect(result.current.drawerOpen).toBe(false);
     });
 
@@ -105,7 +105,14 @@ describe("useScheduleState", () => {
 
         const { result } = renderHook(() => useScheduleState(mockOrganizationId));
 
-        // Default All
+        // Default is "Upcoming" — only the future session shows
+        expect(result.current.displaySessions).toHaveLength(1);
+        expect(result.current.displaySessions[0].id).toBe("1");
+
+        // Switch to All — both sessions show
+        act(() => {
+            result.current.setTimeline("All");
+        });
         expect(result.current.displaySessions).toHaveLength(2);
 
         // Upcoming

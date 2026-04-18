@@ -3,7 +3,7 @@ import { requirePermission } from "@api/middleware/require-permission.middleware
 import { createRoute, z } from "@hono/zod-openapi";
 import {
     createPlaylistSchema,
-    playlistMediaItemSchema,
+    enrichedPlaylistMediaItemSchema,
     playlistSchema,
     updatePlaylistSchema,
     updateSequenceSchema,
@@ -113,7 +113,7 @@ export const PlaylistRoutes = {
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(
-                z.array(playlistMediaItemSchema),
+                z.array(enrichedPlaylistMediaItemSchema),
                 "Playlist media sequence"
             ),
         },

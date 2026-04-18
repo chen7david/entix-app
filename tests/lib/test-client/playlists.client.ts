@@ -37,6 +37,21 @@ export function createPlaylistsClient(request: Requester) {
                 body,
             });
         },
+
+        /** GET /api/v1/orgs/:orgId/playlists/:playlistId/sequence */
+        getSequence: (orgId: string, playlistId: string) => {
+            return request(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`, {
+                method: "GET",
+            });
+        },
+
+        /** PUT /api/v1/orgs/:orgId/playlists/:playlistId/sequence */
+        updateSequence: (orgId: string, playlistId: string, mediaIds: string[]) => {
+            return request(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`, {
+                method: "PUT",
+                body: { mediaIds },
+            });
+        },
     };
 }
 

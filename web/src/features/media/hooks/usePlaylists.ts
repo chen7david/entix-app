@@ -1,15 +1,18 @@
 import type {
     CreatePlaylistDTO,
+    EnrichedPlaylistMediaItemDTO,
     PaginatedResponse,
     PlaylistDTO,
-    PlaylistMediaItemDTO,
+    PlaylistMediaItemDTO, // TODO: remove with getSequence
     UpdatePlaylistDTO,
 } from "@shared";
+import { enrichedPlaylistMediaItemSchema } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
+import { z } from "zod";
 
 export type PlaylistFilters = {
     search?: string;
@@ -29,6 +32,27 @@ export const usePlaylist = (playlistId?: string) => {
             const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`);
             if (!res.ok) await parseApiError(res);
             return (await res.json()) as PlaylistDTO;
+        },
+        enabled: !!orgId && !!playlistId,
+    });
+};
+
+export const usePlaylistSequence = (playlistId?: string) => {
+    const { activeOrganization } = useOrganization();
+    const orgId = activeOrganization?.id;
+
+    return useQuery({
+        queryKey: ["playlistSequence", orgId, playlistId],
+        // refetchOnWindowFocus intentionally disabled globally (App.tsx).
+        // Player will reflect server state on mount; sequence changes in
+        // other tabs require a page reload to appear.
+        queryFn: async (): Promise<EnrichedPlaylistMediaItemDTO[]> => {
+            if (!orgId || !playlistId) throw new Error("Missing org or playlist id");
+            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`);
+            if (!res.ok) await parseApiError(res);
+            const raw = await res.json();
+            const parsed = z.array(enrichedPlaylistMediaItemSchema).parse(raw);
+            return [...parsed].sort((a, b) => a.position - b.position);
         },
         enabled: !!orgId && !!playlistId,
     });
@@ -147,6 +171,7 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
     });
 
     // Generic helper for Sequence operations
+    /** @deprecated Use usePlaylistSequence instead */
     const getSequence = useCallback(
         async (playlistId: string): Promise<PlaylistMediaItemDTO[]> => {
             if (!orgId) return [];
@@ -174,7 +199,9 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             if (!res.ok) await parseApiError(res);
         },
         onSuccess: (_, variables) => {
-            queryClient.invalidateQueries({ queryKey: ["playlistSequence", variables.playlistId] });
+            queryClient.invalidateQueries({
+                queryKey: ["playlistSequence", orgId, variables.playlistId],
+            });
         },
         onError: (error: Error) => {
             notification.error({

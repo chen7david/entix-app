@@ -26,7 +26,7 @@ export class DashboardService extends BaseService {
                     daysUntil,
                 };
             })
-            .filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 7)
+            .filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 30)
             .sort((a, b) => a.daysUntil - b.daysUntil);
 
         return {

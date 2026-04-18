@@ -1,6 +1,7 @@
 import { UserOutlined } from "@ant-design/icons";
-import { Card, Empty, Typography } from "antd";
+import { Empty, Typography } from "antd";
 import type React from "react";
+import { DashboardCard } from "./DashboardCard";
 
 const { Text } = Typography;
 
@@ -12,13 +13,9 @@ const { Text } = Typography;
  */
 export const RecentLoginsCard: React.FC = () => {
     return (
-        <Card
-            title={
-                <span>
-                    <UserOutlined className="mr-2 text-blue-500" /> Recent Activity
-                </span>
-            }
-            className="shadow-sm h-full"
+        <DashboardCard
+            titleText="Recent Activity"
+            icon={<UserOutlined className="text-blue-500" />}
         >
             <div className="flex flex-col items-center justify-center py-8">
                 <Empty
@@ -36,6 +33,6 @@ export const RecentLoginsCard: React.FC = () => {
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                 />
             </div>
-        </Card>
+        </DashboardCard>
     );
 };

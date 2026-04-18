@@ -1,24 +1,11 @@
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
+import { mediaSchema } from "@shared/schemas/dto/media.dto";
 import {
     createPaginatedResponseSchema,
     PaginationQuerySchema,
 } from "@shared/schemas/pagination.schema";
-
-const MediaResponseSchema = z.object({
-    id: z.string(),
-    organizationId: z.string(),
-    title: z.string(),
-    description: z.string().nullable(),
-    mimeType: z.string(),
-    mediaUrl: z.string(),
-    coverArtUrl: z.string().nullable(),
-    playCount: z.number(),
-    uploadedBy: z.string(),
-    createdAt: z.coerce.date(),
-    updatedAt: z.coerce.date(),
-});
 
 export const MediaRoutes = {
     listMedia: createRoute({
@@ -41,7 +28,7 @@ export const MediaRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            data: createPaginatedResponseSchema(MediaResponseSchema),
+                            data: createPaginatedResponseSchema(mediaSchema),
                         }),
                     },
                 },
@@ -76,7 +63,7 @@ export const MediaRoutes = {
             [HttpStatusCodes.CREATED]: {
                 content: {
                     "application/json": {
-                        schema: MediaResponseSchema,
+                        schema: mediaSchema,
                     },
                 },
                 description: "Media created successfully",
@@ -110,7 +97,7 @@ export const MediaRoutes = {
             [HttpStatusCodes.OK]: {
                 content: {
                     "application/json": {
-                        schema: MediaResponseSchema,
+                        schema: mediaSchema,
                     },
                 },
                 description: "Media updated successfully",

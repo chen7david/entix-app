@@ -44,6 +44,7 @@ export const OrganizationSchedulePage: React.FC = () => {
         handleUpdateStatus,
         handleSaveAttendance,
         fetchNextPage,
+        handleReset,
     } = useScheduleState(activeOrganization?.id);
 
     if (error) {
@@ -85,6 +86,7 @@ export const OrganizationSchedulePage: React.FC = () => {
                 onRangeChange={handleRangeChange}
                 timeline={timeline}
                 onTimelineChange={setTimeline}
+                onReset={handleReset}
             />
 
             <div className="flex-1 min-h-0 flex flex-col">
