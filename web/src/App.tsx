@@ -67,10 +67,16 @@ function logError(error: unknown, info: { componentStack?: string | null }) {
 }
 
 import { useHomeRedirect } from "./features/auth/hooks/useHomeRedirect";
+import { useTimezoneInit } from "./hooks/useTimezoneInit";
 
 function HomeRedirect() {
     useHomeRedirect();
     return <CenteredSpin />;
+}
+
+function PreferenceSync() {
+    useTimezoneInit();
+    return null;
 }
 
 export default function App() {
@@ -84,6 +90,7 @@ export default function App() {
         >
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
+                    <PreferenceSync />
                     <div className="flex h-[calc(100dvh)] m-0 p-0">
                         <Routes>
                             <Route path="/" element={<HomeRedirect />} />
