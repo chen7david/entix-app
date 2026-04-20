@@ -9,10 +9,10 @@ import { GuestRoute, OrgGuard, ProtectedRoute } from "./components/guards";
 import { AuthProvider } from "./features/auth/context/AuthContext";
 import { useHomeRedirect } from "./features/auth/hooks/useHomeRedirect";
 import { useTimezoneInit } from "./hooks/useTimezoneInit";
-import { QUERY_STALE_MS } from "./lib/query-config";
 import { AuthLayout } from "./layouts/auth/AuthLayout";
 import { OrgAdminLayout } from "./layouts/org-admin/OrgAdminLayout";
 import { PlatformAdminLayout } from "./layouts/platform-admin/PlatformAdminLayout";
+import { QUERY_STALE_MS } from "./lib/query-config";
 import {
     AcceptInvitationPage,
     AdminDashboardPage,
