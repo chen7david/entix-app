@@ -3,7 +3,7 @@
 **Scope:** Alignment with `docs/API.md` and `docs/UI.md`, test health, logical/code-quality issues, and implications of adopting a **typed Hono client** (RPC/`hc` or OpenAPI-generated client — referred to below as the “Hono REST client” migration).
 
 **Audit completed:** 2026-04-19  
-**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (22 tests) ✓ · `web/npm run build` ✓
+**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (31 tests) ✓ · `web/npm run build` ✓
 
 ---
 
@@ -17,7 +17,7 @@
 | UI.md — fetching, HTTP, hooks location | **DONE** | **`docs/UI.md`** Rules **2, 5, 41** aligned with **`getApiClient()`** + feature hooks (Phase **K**, 2026-04-20) |
 | UI.md — pages, lazy load, structure | **DONE** | **`React.lazy`** (Phase **G**); **`docs/UI.md`** Rules **6–7, 9, 30, 57** now describe **`web/src/`**, PascalCase **`*Page.tsx`**, **`features/<domain>/hooks/`** (Phase **K**) |
 | UI.md — notifications, boundaries | **PARTIAL** | **`RouteErrorBoundary`** on **org**, **platform-admin**, and **auth** layouts (Phase **J**); mixed `App.useApp` vs static APIs |
-| UI.md — tests (ui + hooks) | **DONE** | Far below mandated coverage |
+| UI.md — tests (ui + hooks) | **PARTIAL** | Added initial `components/ui` + `renderHook` coverage in Phase **L**; still below full mandate |
 | Hono client migration | **DONE** | Scoped in §5 |
 | Remediation **Phase A** (nanoid → service) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase B** (repo error purity) | **DONE** | See §7.3 log (2026-04-19) |
@@ -30,6 +30,7 @@
 | Remediation **Phase I** (Hono `hc` client + `hcJson`) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase J** (layout error boundaries) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase K** (UI.md structure / hooks / pages) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase L** (web test expansion) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -106,7 +107,7 @@ The frontend **does not currently match UI.md** on every point: **`docs/UI.md`**
 | Suite | Location | Result (2026-04-19) |
 |-------|----------|---------------------|
 | API | `tests/` (+ `api/tests/` for some service tests) | **57 files, 240 tests passed** |
-| Web | `web/src/**/*.test.*` | **6 files, 22 tests passed** |
+| Web | `web/src/**/*.test.*` | **9 files, 31 tests passed** |
 
 ### 3.2 Gaps vs API.md (testing)
 
@@ -115,8 +116,8 @@ The frontend **does not currently match UI.md** on every point: **`docs/UI.md`**
 
 ### 3.3 Gaps vs UI.md (testing)
 
-- **Missing critical coverage:** Most **data hooks** (finance, media, wallet, schedule) have **no `renderHook` tests**.
-- **`components/ui`:** No co-located tests.
+- **Missing critical coverage:** Most **data hooks** (finance, media, wallet, schedule) still have **no `renderHook` tests**.
+- **`components/ui`:** Initial tests added for **`POSInput`** and **`EntityAvatar`**; broader coverage still missing.
 - **Smoke tests** exist (`pages.smoke.test.tsx`) — useful but **not** a substitute for hook/ui mandates.
 
 ### 3.4 Duplication / redundancy
@@ -262,9 +263,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-20 | **I** | **`web/src/lib/api-client.ts`**: **`createApiClient` / `getApiClient`** with **`hono/client`** + **`credentials: "include"`**. Client chain typed as **`any`** at the root (avoids **`tsc -b`** pulling the full API graph); responses narrowed with **`hcJson<T>`** in **`web/src/lib/hc-json.ts`**. Migrated feature hooks + upload components from raw **`fetch('/api/v1/...')`** to **`getApiClient()`**; presigned R2 uploads still use **`fetch`**. **`web` build** uses **`tsc --noEmit -p tsconfig.app.json`** (not **`tsc -b`**) so the app project does not typecheck **`api/**`** with web-only TS options. Removed **`hono`** path/alias overrides that broke **`hono/utils/url`** resolution for **`@hono/zod-openapi`**. **`api/app.ts`** exports **`AppType`** for optional future strict typing. Restored **`useActivatedCurrencies`**. Wallet member paths avoid **`orgId!`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **J** | **`RouteErrorBoundary`** (`react-error-boundary` + **`SectionErrorFallback`**) wraps **`ImpersonationBanner`** + **`Outlet`** in **`OrgAdminLayout`** and **`PlatformAdminLayout`**, and **`Outlet`** in **`AuthLayout`**. **`resetKeys={[pathname]}`** clears errors on navigation. Root boundary in **`App.tsx`** unchanged. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **K** | **`docs/UI.md`**: Rule **5** → shared **Hono** client (**`getApiClient`**, **`hcJson`**); Rules **2, 41** → no raw **`/api`** **`fetch`** in components. Rules **6–7, 9, 20, 30, 57, 59** → **`web/src/`** tree, **`features/<domain>/hooks/`**, PascalCase **`*Page.tsx`**, lazy **`routes/lazy-pages.ts`**, updated feature-module example; Rule **36** softened to **SHOULD** with greenfield **MUST**. **No file moves** — documentation-only alignment. | — (docs) | *pending your sign-off* |
+| 2026-04-20 | **L** | Added **`components/ui`** tests: **`EntityAvatar.test.tsx`** and **`POSInput.test.tsx`**. Added finance hook test **`useOrgCurrencies.test.tsx`** covering disabled behavior and **`useActivatedCurrencies`** filtering via mocked **`getApiClient`** / **`hcJson`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (31) ✓ · web `build` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **L** (web test expansion — **`renderHook`**, **`components/ui`** tests) — §7.1 row **L**.
+**Next:** follow-up test expansion (continue Phase **L**) — prioritize high-traffic hooks in wallet/media/schedule and remaining reusable UI components.
 
 ---
 
