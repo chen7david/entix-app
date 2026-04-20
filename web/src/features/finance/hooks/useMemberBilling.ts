@@ -1,8 +1,8 @@
-import { API_V1 } from "@shared";
 import type { MemberBillingPlanDTO } from "@shared/schemas/dto/billing-plan.dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
-import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 
 /**
@@ -17,10 +17,14 @@ export const useMemberBilling = (orgId: string, userId: string) => {
     const { data: assignments, isLoading } = useQuery({
         queryKey,
         queryFn: async () => {
-            const res = await fetch(`${API_V1}/orgs/${orgId}/members/${userId}/billing-plans`);
-            if (!res.ok) await parseApiError(res);
-            const { data } = await res.json();
-            return data as MemberBillingPlanDTO[];
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].members[":userId"][
+                "billing-plans"
+            ].$get({
+                param: { organizationId: orgId, userId },
+            });
+            const body = await hcJson<{ data: MemberBillingPlanDTO[] }>(res);
+            return body.data;
         },
         enabled: !!orgId && !!userId,
         staleTime: QUERY_STALE_MS,
@@ -28,18 +32,23 @@ export const useMemberBilling = (orgId: string, userId: string) => {
 
     const assignOrReplaceMutation = useMutation({
         mutationFn: async ({ planId, currencyId }: { planId: string; currencyId: string }) => {
-            // Check if there's already an assignment for this currency to decide POST (assign) or PUT (replace)
             const existing = assignments?.find((a) => a.currencyId === currencyId);
-            const method = existing ? "PUT" : "POST";
+            const api = getApiClient();
+            const res = existing
+                ? await api.api.v1.orgs[":organizationId"].members[":userId"]["billing-plans"].$put(
+                      {
+                          param: { organizationId: orgId, userId },
+                          json: { planId, userId },
+                      }
+                  )
+                : await api.api.v1.orgs[":organizationId"].members[":userId"][
+                      "billing-plans"
+                  ].$post({
+                      param: { organizationId: orgId, userId },
+                      json: { planId, userId },
+                  });
 
-            const res = await fetch(`${API_V1}/orgs/${orgId}/members/${userId}/billing-plans`, {
-                method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ planId, userId }),
-            });
-
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: (_, variables) => {
             queryClient.invalidateQueries({ queryKey });

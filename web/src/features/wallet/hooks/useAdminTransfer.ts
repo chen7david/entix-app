@@ -1,5 +1,6 @@
-import { API_V1, type WalletAccountDTO } from "@shared";
+import type { WalletAccountDTO } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
 import { parseApiError } from "@web/src/utils/api";
 
 export const useAdminTransfer = () => {
@@ -7,10 +8,12 @@ export const useAdminTransfer = () => {
 
     const ensureFunding = useMutation({
         mutationFn: async (params: { organizationId: string; currencyId: string }) => {
-            const res = await fetch(
-                `${API_V1}/admin/finance/orgs/${params.organizationId}/currencies/${params.currencyId}/ensure-funding`,
-                { method: "POST" }
-            );
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.orgs[":organizationId"].currencies[
+                ":currencyId"
+            ]["ensure-funding"].$post({
+                param: { organizationId: params.organizationId, currencyId: params.currencyId },
+            });
             if (!res.ok) await parseApiError(res);
             return (await res.json()) as { data: WalletAccountDTO };
         },
@@ -31,16 +34,13 @@ export const useAdminTransfer = () => {
             idempotencyKey?: string;
         }) => {
             const { idempotencyKey, ...body } = params;
-            const res = await fetch(
-                `${API_V1}/admin/finance/orgs/${params.organizationId}/credit`,
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.orgs[":organizationId"].credit.$post(
                 {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
-                    },
-                    body: JSON.stringify(body),
-                }
+                    param: { organizationId: params.organizationId },
+                    json: body,
+                },
+                idempotencyKey ? { headers: { "Idempotency-Key": idempotencyKey } } : undefined
             );
             if (!res.ok) await parseApiError(res);
             return res.json();
@@ -63,14 +63,14 @@ export const useAdminTransfer = () => {
             idempotencyKey?: string;
         }) => {
             const { idempotencyKey, ...body } = params;
-            const res = await fetch(`${API_V1}/admin/finance/orgs/${params.organizationId}/debit`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.orgs[":organizationId"].debit.$post(
+                {
+                    param: { organizationId: params.organizationId },
+                    json: body,
                 },
-                body: JSON.stringify(body),
-            });
+                idempotencyKey ? { headers: { "Idempotency-Key": idempotencyKey } } : undefined
+            );
             if (!res.ok) await parseApiError(res);
             return res.json();
         },
@@ -86,10 +86,11 @@ export const useAdminTransfer = () => {
             name?: string;
             overdraftLimitCents?: number | null;
         }) => {
-            const res = await fetch(`${API_V1}/admin/finance/accounts/${params.id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(params),
+            const { id, ...body } = params;
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.accounts[":id"].$patch({
+                param: { id },
+                json: body,
             });
             if (!res.ok) await parseApiError(res);
             return (await res.json()) as { data: WalletAccountDTO };

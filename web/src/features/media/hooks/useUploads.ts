@@ -1,5 +1,7 @@
 import type { PaginatedResponse, UploadDto } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
@@ -20,22 +22,18 @@ export const useOrganizationUploads = (
         queryFn: async () => {
             if (!organizationId) throw new Error("Organization ID is required");
 
-            const params = new URLSearchParams();
-            if (filters?.search) params.append("search", filters.search);
-            if (filters?.type && filters.type !== "all") params.append("type", filters.type);
-            if (filters?.cursor) params.append("cursor", filters.cursor);
-            if (filters?.limit) params.append("limit", filters.limit.toString());
-            if (filters?.direction) params.append("direction", filters.direction);
-
-            const queryString = params.toString() ? `?${params.toString()}` : "";
-            const response = await fetch(`/api/v1/orgs/${organizationId}/uploads${queryString}`);
-
-            if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.message || "Failed to fetch uploads");
-            }
-
-            return response.json() as Promise<PaginatedResponse<UploadDto>>;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].uploads.$get({
+                param: { organizationId },
+                query: {
+                    search: filters?.search,
+                    type: filters?.type && filters.type !== "all" ? filters.type : undefined,
+                    cursor: filters?.cursor,
+                    limit: filters?.limit,
+                    direction: filters?.direction,
+                },
+            });
+            return hcJson<PaginatedResponse<UploadDto>>(res);
         },
         enabled: !!organizationId,
         staleTime: QUERY_STALE_MS,
@@ -50,12 +48,12 @@ export const useDeleteUpload = (organizationId: string | undefined) => {
     return useMutation({
         mutationFn: async (uploadId: string) => {
             if (!organizationId) throw new Error("Organization ID is required");
-            const response = await fetch(`/api/v1/orgs/${organizationId}/uploads/${uploadId}`, {
-                method: "DELETE",
+            const api = getApiClient();
+            const response = await api.api.v1.orgs[":organizationId"].uploads[":uploadId"].$delete({
+                param: { organizationId, uploadId },
             });
 
             if (!response.ok) {
-                // Return 404 or 403 nicely
                 if (response.status !== 404 && response.status !== 204) {
                     const error = await response.text();
                     throw new Error(error || "Failed to delete upload");

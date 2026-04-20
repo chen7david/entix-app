@@ -1,5 +1,6 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { App } from "antd";
 
 export const useReverseTransaction = (orgId?: string) => {
@@ -9,20 +10,14 @@ export const useReverseTransaction = (orgId?: string) => {
     return useMutation({
         mutationFn: async ({ txId, reason }: { txId: string; reason: string }) => {
             if (!orgId) throw new Error("Organization ID required");
-            const url = `${API_V1}/orgs/${orgId}/finance/transactions/${txId}/reverse`;
-
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ reason }),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance.transactions[
+                ":txId"
+            ].reverse.$post({
+                param: { organizationId: orgId, txId },
+                json: { reason },
             });
-
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.message || "Failed to reverse transaction");
-            }
-
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             notification.success({

@@ -7,7 +7,7 @@
  */
 export async function parseApiError(res: Response): Promise<never> {
     try {
-        const body = await res.json();
+        const body = (await res.json()) as { message?: string; error?: string };
         // Default to the standardized 'message' or 'error' key, then fallback to status text
         const errorMessage =
             body.message || body.error || `Request failed with status ${res.status}`;

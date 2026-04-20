@@ -3,7 +3,7 @@
 **Scope:** Alignment with `docs/API.md` and `docs/UI.md`, test health, logical/code-quality issues, and implications of adopting a **typed Hono client** (RPC/`hc` or OpenAPI-generated client — referred to below as the “Hono REST client” migration).
 
 **Audit completed:** 2026-04-19  
-**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (22 tests) ✓
+**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (22 tests) ✓ · `web/npm run build` ✓
 
 ---
 
@@ -26,6 +26,8 @@
 | Remediation **Phase E** (`BaseService` alignment) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase F** (axios / shared HTTP) | **DEFERRED** | Skipped in favor of **Hono `hc` client** (Phase **I**) to avoid double migration |
 | Remediation **Phase G** (lazy routes + guard docs) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase H** (explicit `staleTime` on queries) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase I** (Hono `hc` client + `hcJson`) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -33,11 +35,11 @@
 
 The backend generally follows the documented **layered architecture** (many services extend `BaseService`, cursor helpers exist, typecheck and API tests pass). However, there are **multiple explicit API.md violations** (nanoid and errors in repositories, handlers calling repositories or `db` directly, `new Error` in production paths, handler `try/catch`, and at least one response shape that does not match the documented envelope).
 
-The frontend **does not currently match UI.md** on several mandatory points: **almost all API traffic uses `fetch`**, there is **no shared `lib/axios.ts` instance** (and **no `axios` usage** despite it being a dependency), **route pages are not lazy-loaded**, **hooks live under `features/*/hooks` instead of `src/hooks/`**, and **mandated test coverage for `ui/` and hooks is largely absent**.
+The frontend **does not currently match UI.md** on several mandatory points: **app API traffic** is centralized on **`getApiClient()`** (**Hono `hc`**, Phase **I**) rather than **`lib/axios.ts`** (Phase **F** deferred); **no `axios` usage** despite it being a dependency. **Route pages** are lazy-loaded (Phase **G**). **Hooks** still live under **`features/*/hooks` instead of `src/hooks/`**, and **mandated test coverage for `ui/` and hooks is largely absent**.
 
 **Tests:** API test suite is broad and green. Web tests are minimal smoke/unit coverage relative to UI.md Rules 35–36. No automated audit found obvious duplicate test files; some integration areas (auth, avatar, finance) overlap in *intent* and could be consolidated in a future cleanup.
 
-**Hono REST client:** Moving to `hono/client` (or an OpenAPI client generated from your Zod/OpenAPI spec) would primarily touch **the web data layer** (dozens of `fetch` call sites). **Backend route handlers need not change** if URLs and payloads stay the same. **Regression** should lean on existing **integration tests** plus targeted **web hook tests** after swapping the transport. **Tests that mock `fetch`** (if any) would need updating; current hooks mostly inline `fetch` without a single injectable client, which makes migration a good time to introduce one abstraction.
+**Hono REST client:** Phase **I** introduced **`hono/client`** + **`hcJson`** at the web boundary; **presigned R2** flows still use raw **`fetch`**. Optional next step: **`hc<AppType>`** end-to-end once composite **`tsc -b`** constraints are acceptable or API types are published as a slim consumer package.
 
 ---
 
@@ -74,8 +76,8 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 
 | Rule | Severity | Finding |
 |------|----------|---------|
-| **5** | **Critical** | **`axios` is listed in `web/package.json` but is unused** in `web/src` (grep: no imports). **All HTTP uses `fetch`** across features (finance, media, wallet, admin, schedule, organization, etc.). Doc: **all HTTP MUST use shared instance from `lib/axios.ts`** and **never `fetch()`** for app API calls. |
-| **2, 41** | High | Server IO is concentrated in hooks (good), but **implementation violates the mandated transport** (`fetch` instead of axios instance). |
+| **5** | **Partial (Phase I)** | **`axios` is listed in `web/package.json` but is unused** in `web/src`. **Worker `/api/v1` calls** go through **`getApiClient()`** (**`hono/client`**) + **`hcJson`**; **presigned uploads** still use **`fetch`**. Doc still names **`lib/axios.ts`** — align doc or add a thin alias export if you want the letter of UI.md. |
+| **2, 41** | Medium | Server IO is concentrated in hooks (good). Transport is **`hc`** + shared helpers rather than **`lib/axios.ts`**. |
 | **6, 20** | Medium | Domain hooks live under **`web/src/features/*/hooks/`** and **`web/src/features/*/*.hooks.ts`**, not **`web/src/hooks/`** as mandated. Only **`useTimezoneInit`** appears under `web/src/hooks/`. |
 | **7, 9** | Medium | Pages are **`OrganizationMembersPage.tsx`**, etc. — **not** **`kebab-case.page.tsx`**. Several pages use **`useQueryClient`** only (acceptable), but doc’s naming convention is not followed. |
 | **30** | ~~High~~ **Mitigated (Phase G)** | Route **pages** are **`React.lazy`**-loaded via **`web/src/routes/lazy-pages.ts`** with **`Suspense`** in **`App.tsx`**. Layouts/guards stay eager. |
@@ -253,9 +255,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-20 | **F** | **Deferred** — no **`lib/axios.ts`**; team preference to go straight to **Hono typed client** (Phase **I**) instead of axios + migration churn. | — | *recorded* |
 | 2026-04-20 | **G** | **`web/src/routes/lazy-pages.ts`**: all route-level pages + **`FinancialManagementPage`** use **`React.lazy`**. **`App.tsx`**: **`Suspense`** fallback **`CenteredSpin`**; imports from **`components/guards`** barrel. **`components/guards/index.ts`**: documented stack (**`GuestRoute`** → **`ProtectedRoute`** → nested **`OrgGuard`** / role gates) to avoid redundant membership vs role checks. | `check:fix` ✓ · web `typecheck` + `test:run` (22) ✓ · `web` `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **H** | **`web/src/lib/query-config.ts`**: shared **`QUERY_STALE_*`** constants. **`App.tsx`** default **`staleTime`** uses **`QUERY_STALE_MS`**. Every **`useQuery`** / **`useInfiniteQuery`** in **`web/src/features/**`** now sets explicit **`staleTime`** (5 min default, 2 min analytics/metrics, 24h org currencies, 1h social types). **`useMembers` / `useMedia`** paged + infinite modes both covered. **Deferred:** migrating playlist/billing list hooks to **`useInfiniteQuery`** only (consumer audit). | web `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
+| 2026-04-20 | **I** | **`web/src/lib/api-client.ts`**: **`createApiClient` / `getApiClient`** with **`hono/client`** + **`credentials: "include"`**. Client chain typed as **`any`** at the root (avoids **`tsc -b`** pulling the full API graph); responses narrowed with **`hcJson<T>`** in **`web/src/lib/hc-json.ts`**. Migrated feature hooks + upload components from raw **`fetch('/api/v1/...')`** to **`getApiClient()`**; presigned R2 uploads still use **`fetch`**. **`web` build** uses **`tsc --noEmit -p tsconfig.app.json`** (not **`tsc -b`**) so the app project does not typecheck **`api/**`** with web-only TS options. Removed **`hono`** path/alias overrides that broke **`hono/utils/url`** resolution for **`@hono/zod-openapi`**. **`api/app.ts`** exports **`AppType`** for optional future strict typing. Restored **`useActivatedCurrencies`**. Wallet member paths avoid **`orgId!`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **I** (Hono **`hc`** typed client) — §7.1 row **I** — or **Phase J** (error boundaries) if you want UI resilience before transport work.
+**Next:** Phase **J** (error boundaries per **UI.md 32**) — §7.1 row **J**.
 
 ---
 

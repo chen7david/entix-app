@@ -1,6 +1,7 @@
 import type { WalletAccountDTO } from "@shared";
 import { POSInput } from "@web/src/components/ui/POSInput";
 import { useActivatedCurrencies } from "@web/src/features/finance";
+import type { CurrencyWithStatus } from "@web/src/features/finance/hooks/useOrgCurrencies";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { App, Button, Drawer, Form, Input, Select } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
@@ -106,7 +107,7 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                     rules={[{ required: true, message: "Please select a currency" }]}
                 >
                     <Select placeholder="Select currency">
-                        {currencies?.map((c) => (
+                        {currencies?.map((c: CurrencyWithStatus) => (
                             <Select.Option key={c.id} value={c.id}>
                                 {c.symbol} {c.code} — {c.name}
                             </Select.Option>

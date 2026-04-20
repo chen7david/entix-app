@@ -1,7 +1,7 @@
-import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_CATALOG_MS } from "@web/src/lib/query-config";
-import { parseApiError } from "@web/src/utils/api";
 
 export type CurrencyWithStatus = {
     id: string;
@@ -18,9 +18,11 @@ export const useOrgCurrencies = (orgId?: string) => {
         queryKey: ["orgCurrencies", orgId],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/currencies`);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as { data: CurrencyWithStatus[] };
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance.currencies.$get({
+                param: { organizationId: orgId },
+            });
+            return hcJson<{ data: CurrencyWithStatus[] }>(res);
         },
         select: (res) => res?.data,
         enabled: !!orgId,
@@ -29,7 +31,7 @@ export const useOrgCurrencies = (orgId?: string) => {
     });
 };
 
-// Convenience selector — only activated currencies for dropdowns
+/** Convenience selector — only activated currencies for dropdowns */
 export const useActivatedCurrencies = (orgId?: string) => {
     const query = useOrgCurrencies(orgId);
 

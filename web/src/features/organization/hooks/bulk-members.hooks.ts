@@ -1,5 +1,6 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_ANALYTICS_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
@@ -34,9 +35,11 @@ export const useBulkMembers = (orgId?: string) => {
         queryKey: ["bulkMetrics", orgId],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/bulk/metrics`);
-            if (!res.ok) throw new Error("Failed to fetch dashboard metrics");
-            return res.json();
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].bulk.metrics.$get({
+                param: { organizationId: orgId },
+            });
+            return hcJson<BulkMetrics>(res);
         },
         enabled: !!orgId,
         staleTime: QUERY_STALE_ANALYTICS_MS,
@@ -45,11 +48,12 @@ export const useBulkMembers = (orgId?: string) => {
     const exportMembers = async () => {
         if (!orgId) return;
         try {
-            const res = await fetch(`${API_V1}/orgs/${orgId}/bulk/export`);
-            if (!res.ok) throw new Error("Failed to export members");
-            const data = await res.json();
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].bulk.export.$get({
+                param: { organizationId: orgId },
+            });
+            const data = await hcJson<unknown>(res);
 
-            // Trigger download
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -76,13 +80,12 @@ export const useBulkMembers = (orgId?: string) => {
     const importMembersMutation = useMutation<ImportResult, Error, any[]>({
         mutationFn: async (data: any[]) => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/bulk/import`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].bulk.import.$post({
+                param: { organizationId: orgId },
+                json: data,
             });
-            if (!res.ok) throw new Error("Failed to import members");
-            return res.json();
+            return hcJson<ImportResult>(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });

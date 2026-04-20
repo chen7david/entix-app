@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export type EmailEvent =
@@ -39,14 +41,15 @@ export const useAdminEmails = (options?: {
     }>({
         queryKey: ["admin", "emails", options?.cursor, options?.limit, options?.direction],
         queryFn: async () => {
-            const url = new URL("/api/v1/admin/emails", window.location.origin);
-            if (options?.cursor) url.searchParams.set("cursor", options.cursor);
-            if (options?.limit) url.searchParams.set("limit", options.limit.toString());
-            if (options?.direction) url.searchParams.set("direction", options.direction);
-
-            const res = await fetch(url.toString(), { credentials: "include" });
-            if (!res.ok) throw new Error(`Failed to fetch emails: ${res.status}`);
-            return res.json();
+            const api = getApiClient();
+            const res = await api.api.v1.admin.emails.$get({
+                query: {
+                    cursor: options?.cursor,
+                    limit: options?.limit,
+                    direction: options?.direction,
+                },
+            });
+            return hcJson(res);
         },
         staleTime: QUERY_STALE_MS,
     });

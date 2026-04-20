@@ -1,4 +1,4 @@
-import { API_V1, type MemberDTO, type OrgRole, type PaginatedResponse } from "@shared";
+import type { MemberDTO, OrgRole, PaginatedResponse } from "@shared";
 import {
     type InfiniteData,
     keepPreviousData,
@@ -8,9 +8,10 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
+import { getApiClient } from "@web/src/lib/api-client";
 import { authClient } from "@web/src/lib/auth-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
-import { parseApiError } from "@web/src/utils/api";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
 
@@ -42,19 +43,17 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
             if (!activeOrganization?.id)
                 return { items: [], total: 0, nextCursor: null, prevCursor: null };
 
-            const params = new URLSearchParams({
-                limit: (options?.limit ?? 10).toString(),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].users.$get({
+                param: { organizationId: activeOrganization.id },
+                query: {
+                    limit: options?.limit ?? 10,
+                    cursor: options?.cursor,
+                    direction: options?.direction,
+                    search: searchQuery,
+                },
             });
-            if (options?.cursor) params.set("cursor", options.cursor);
-            if (options?.direction) params.set("direction", options.direction);
-            if (searchQuery) params.set("search", searchQuery);
-
-            const res = await fetch(
-                `${API_V1}/orgs/${activeOrganization.id}/users?${params.toString()}`
-            );
-            if (!res.ok) await parseApiError(res);
-
-            return (await res.json()) as PaginatedResponse<MemberDTO>;
+            return hcJson<PaginatedResponse<MemberDTO>>(res);
         },
         enabled: !!activeOrganization?.id && isPagedMode,
         placeholderData: keepPreviousData,
@@ -74,16 +73,16 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
             if (!activeOrganization?.id)
                 return { items: [], total: 0, nextCursor: null, prevCursor: null };
 
-            const params = new URLSearchParams({ limit: "10" });
-            if (pageParam) params.set("cursor", pageParam);
-            if (searchQuery) params.set("search", searchQuery);
-
-            const res = await fetch(
-                `${API_V1}/orgs/${activeOrganization.id}/users?${params.toString()}`
-            );
-            if (!res.ok) await parseApiError(res);
-
-            return (await res.json()) as PaginatedResponse<MemberDTO>;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].users.$get({
+                param: { organizationId: activeOrganization.id },
+                query: {
+                    limit: 10,
+                    cursor: pageParam,
+                    search: searchQuery,
+                },
+            });
+            return hcJson<PaginatedResponse<MemberDTO>>(res);
         },
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         initialPageParam: undefined,

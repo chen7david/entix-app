@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
 import {
     authClient,
     changePassword,
@@ -11,6 +12,7 @@ import {
     useSession,
     verifyEmail,
 } from "@web/src/lib/auth-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 
 export const useBetterAuth = () => {
@@ -55,20 +57,12 @@ export const useSignUpWithOrg = () => {
             name: string;
             organizationName: string;
         }) => {
-            const response = await fetch("/api/v1/auth/signup-with-org", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(values),
+            const api = getApiClient();
+            const response = await api.api.v1.auth["signup-with-org"].$post({
+                json: values,
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Failed to sign up");
-            }
-
-            return response.json();
+            return hcJson(response);
         },
     });
 };

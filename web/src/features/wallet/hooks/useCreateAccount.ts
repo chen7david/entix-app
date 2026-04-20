@@ -1,5 +1,6 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { App } from "antd";
 
 export type CreateAccountInput = {
@@ -16,14 +17,12 @@ export const useCreateAccount = (orgId?: string) => {
     return useMutation({
         mutationFn: async (input: CreateAccountInput) => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/accounts`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance.accounts.$post({
+                param: { organizationId: orgId },
+                json: input,
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Failed to create account");
-            return data;
+            return hcJson(res);
         },
         onSuccess: () => {
             notification.success({
