@@ -14,8 +14,8 @@
 | API.md — repos / services / handlers | **DONE** | Several documented violations |
 | API.md — pagination & responses | **DONE** | Mostly cursor-based; a few shape mismatches |
 | API.md — tests layout & patterns | **DONE** | Root `tests/` differs from doc tree; factories exist |
-| UI.md — fetching, HTTP, hooks location | **DONE** | Major gaps vs `fetch`/axios rules |
-| UI.md — pages, lazy load, structure | **PARTIAL** | **`React.lazy`** + **`Suspense`** in **`App.tsx`** (Phase **G**, 2026-04-20); still no **`.page.tsx`** naming |
+| UI.md — fetching, HTTP, hooks location | **DONE** | **`docs/UI.md`** Rules **2, 5, 41** aligned with **`getApiClient()`** + feature hooks (Phase **K**, 2026-04-20) |
+| UI.md — pages, lazy load, structure | **DONE** | **`React.lazy`** (Phase **G**); **`docs/UI.md`** Rules **6–7, 9, 30, 57** now describe **`web/src/`**, PascalCase **`*Page.tsx`**, **`features/<domain>/hooks/`** (Phase **K**) |
 | UI.md — notifications, boundaries | **PARTIAL** | **`RouteErrorBoundary`** on **org**, **platform-admin**, and **auth** layouts (Phase **J**); mixed `App.useApp` vs static APIs |
 | UI.md — tests (ui + hooks) | **DONE** | Far below mandated coverage |
 | Hono client migration | **DONE** | Scoped in §5 |
@@ -29,6 +29,7 @@
 | Remediation **Phase H** (explicit `staleTime` on queries) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase I** (Hono `hc` client + `hcJson`) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase J** (layout error boundaries) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase K** (UI.md structure / hooks / pages) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -36,7 +37,7 @@
 
 The backend generally follows the documented **layered architecture** (many services extend `BaseService`, cursor helpers exist, typecheck and API tests pass). However, there are **multiple explicit API.md violations** (nanoid and errors in repositories, handlers calling repositories or `db` directly, `new Error` in production paths, handler `try/catch`, and at least one response shape that does not match the documented envelope).
 
-The frontend **does not currently match UI.md** on several mandatory points: **app API traffic** is centralized on **`getApiClient()`** (**Hono `hc`**, Phase **I**) rather than **`lib/axios.ts`** (Phase **F** deferred); **no `axios` usage** despite it being a dependency. **Route pages** are lazy-loaded (Phase **G**). **Hooks** still live under **`features/*/hooks` instead of `src/hooks/`**, and **mandated test coverage for `ui/` and hooks is largely absent**.
+The frontend **does not currently match UI.md** on every point: **`docs/UI.md`** is now aligned with **feature-colocated hooks** and **PascalCase pages** (Phase **K**). **App API traffic** uses **`getApiClient()`** (Phase **I**). **No `axios` usage** despite it being a dependency. **Mandated test coverage** for **`ui/`** and hooks remains **largely absent** (Phase **L**).
 
 **Tests:** API test suite is broad and green. Web tests are minimal smoke/unit coverage relative to UI.md Rules 35–36. No automated audit found obvious duplicate test files; some integration areas (auth, avatar, finance) overlap in *intent* and could be consolidated in a future cleanup.
 
@@ -79,12 +80,12 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 
 | Rule | Severity | Finding |
 |------|----------|---------|
-| **5** | **Partial (Phase I)** | **`axios` is listed in `web/package.json` but is unused** in `web/src`. **Worker `/api/v1` calls** go through **`getApiClient()`** (**`hono/client`**) + **`hcJson`**; **presigned uploads** still use **`fetch`**. Doc still names **`lib/axios.ts`** — align doc or add a thin alias export if you want the letter of UI.md. |
-| **2, 41** | Medium | Server IO is concentrated in hooks (good). Transport is **`hc`** + shared helpers rather than **`lib/axios.ts`**. |
-| **6, 20** | Medium | Domain hooks live under **`web/src/features/*/hooks/`** and **`web/src/features/*/*.hooks.ts`**, not **`web/src/hooks/`** as mandated. Only **`useTimezoneInit`** appears under `web/src/hooks/`. |
-| **7, 9** | Medium | Pages are **`OrganizationMembersPage.tsx`**, etc. — **not** **`kebab-case.page.tsx`**. Several pages use **`useQueryClient`** only (acceptable), but doc’s naming convention is not followed. |
+| **5** | ~~Medium~~ **Mitigated (Phases I + K)** | **`docs/UI.md`** Rule **5** documents **`getApiClient()`** / **`hcJson`**; legacy **`lib/axios.ts`** wording removed. **`axios`** may remain unused in **`web/package.json`**. |
+| **2, 41** | ~~Medium~~ **Mitigated (Phases I + K)** | Rules **2** and **41** updated for Hono client + feature hooks. |
+| **6, 20** | ~~Medium~~ **Mitigated (Phase K)** | **`docs/UI.md`** Rules **6** and **20**: domain hooks **`features/<domain>/hooks/`**, optional **`src/hooks/`** for cross-cutting utilities. |
+| **7, 9** | ~~Medium~~ **Mitigated (Phase K)** | **`docs/UI.md`** Rules **7** and **9**: PascalCase **`*Page.tsx`**, lazy **`routes/lazy-pages.ts`**. |
 | **30** | ~~High~~ **Mitigated (Phase G)** | Route **pages** are **`React.lazy`**-loaded via **`web/src/routes/lazy-pages.ts`** with **`Suspense`** in **`App.tsx`**. Layouts/guards stay eager. |
-| **21** | Medium | **QueryClient defaults** set **`staleTime: 5m`** globally (helps), but many hooks **do not set per-query `staleTime`**; doc requires **explicit** `staleTime` on every `useQuery` (no reliance on default `0` semantics). |
+| **21** | ~~Medium~~ **Mitigated (Phase H)** | Explicit **`staleTime`** on feature queries + **`QUERY_*`** helpers; **`docs/UI.md`** Rule **21** text unchanged — defaults in **`App.tsx`** still supplement per-query values. |
 | **22** | Partial | **`useInfiniteQuery`** is used for some lists (`useMembers`, `useSchedule`, `useMedia`). Many other list flows use **`useQuery` + `fetch`** — verify each list endpoint is **cursor-based** end-to-end (backend + hook). |
 | **32** | **Partial (Phase J)** | **Root `ErrorBoundary`** in **`App.tsx`** plus **`RouteErrorBoundary`** in **`OrgAdminLayout`**, **`PlatformAdminLayout`**, and **`AuthLayout`** (nested **`SectionErrorFallback`**). Doc’s “every fetching section” is **not** fully met (no per-widget boundaries). |
 | **48** | Low–Med | Many files use **`App.useApp()`** correctly; **`AuditLogPage`** uses **`message.success` / `message.error`** without checking if that path is under `App` provider (may still work if wrapped — verify). Other files may still import static APIs — grep showed widespread `notification.*` usage **from components that also use `App.useApp`** in many places (good). |
@@ -131,9 +132,9 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 
 ## 4. Improvements (logic, hooks, simplification)
 
-1. **Single HTTP client module** (`web/src/lib/api-client.ts` or adopt **`axios` + interceptors** as UI.md states): centralize **credentials, base URL, error parsing, and typed responses**. Removes dozens of duplicated `fetch` + `if (!res.ok)` blocks.
-2. **Align with UI.md directory rules:** gradually move **`useX`** domain hooks to **`web/src/hooks/`** (or update UI.md if the team prefers feature colocation — **docs and code should match**).
-3. **Lazy routes:** convert `App.tsx` imports to **`React.lazy` + `Suspense`** per route group (auth, org, admin) for bundle size and Rule 30 compliance.
+1. ~~**Single HTTP client module**~~ — **`api-client.ts`** + **`hcJson`** (Phase **I**).
+2. ~~**Align UI.md directory rules**~~ — **`docs/UI.md`** amended for **feature-colocated hooks** and PascalCase pages (Phase **K**).
+3. ~~**Lazy routes**~~ — **`lazy-pages.ts`** + **`Suspense`** (Phase **G**).
 4. **API handler cleanup:** **`uploads.handlers.ts`** — remove try/catch, replace **`new Error("Unauthorized")`** with **`AppError`/403**, normalize **list response** to **`{ data, nextCursor }`**, remove **`as any`**.
 5. **Repository purity:** move **nanoid** and **domain throws** out of repos listed in §1.1; add **service-level** constraint handling where needed.
 6. **Admin/reconciliation handlers:** introduce **small services** (e.g. `AuditAppService`, `ReconciliationService`) so handlers only call **`createXService(ctx)`** — restores Rule 3 and makes testing easier.
@@ -178,7 +179,7 @@ If continuing this audit in a future session:
 2. [ ] Grep all **`findFirst`** returns for missing **`?? null`**.
 3. [ ] Inventory **list route OpenAPI schemas** vs **Rule 23** response shape (`data` / `nextCursor`).
 4. [ ] Map **middleware org membership** to **every org-scoped service** entrypoint (Rule 19 parity with docs).
-5. [ ] Decide **doc vs code** for **`web/src/hooks/`** and **`.page.tsx`** — update one side to match the other.
+5. [x] ~~Decide **doc vs code** for hooks/pages~~ — **`docs/UI.md`** updated (Phase **K**).
 6. [ ] Add **web** test matrix: top **10 hooks** by usage + **`components/ui`**.
 
 ---
@@ -260,9 +261,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-20 | **H** | **`web/src/lib/query-config.ts`**: shared **`QUERY_STALE_*`** constants. **`App.tsx`** default **`staleTime`** uses **`QUERY_STALE_MS`**. Every **`useQuery`** / **`useInfiniteQuery`** in **`web/src/features/**`** now sets explicit **`staleTime`** (5 min default, 2 min analytics/metrics, 24h org currencies, 1h social types). **`useMembers` / `useMedia`** paged + infinite modes both covered. **Deferred:** migrating playlist/billing list hooks to **`useInfiniteQuery`** only (consumer audit). | web `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **I** | **`web/src/lib/api-client.ts`**: **`createApiClient` / `getApiClient`** with **`hono/client`** + **`credentials: "include"`**. Client chain typed as **`any`** at the root (avoids **`tsc -b`** pulling the full API graph); responses narrowed with **`hcJson<T>`** in **`web/src/lib/hc-json.ts`**. Migrated feature hooks + upload components from raw **`fetch('/api/v1/...')`** to **`getApiClient()`**; presigned R2 uploads still use **`fetch`**. **`web` build** uses **`tsc --noEmit -p tsconfig.app.json`** (not **`tsc -b`**) so the app project does not typecheck **`api/**`** with web-only TS options. Removed **`hono`** path/alias overrides that broke **`hono/utils/url`** resolution for **`@hono/zod-openapi`**. **`api/app.ts`** exports **`AppType`** for optional future strict typing. Restored **`useActivatedCurrencies`**. Wallet member paths avoid **`orgId!`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **J** | **`RouteErrorBoundary`** (`react-error-boundary` + **`SectionErrorFallback`**) wraps **`ImpersonationBanner`** + **`Outlet`** in **`OrgAdminLayout`** and **`PlatformAdminLayout`**, and **`Outlet`** in **`AuthLayout`**. **`resetKeys={[pathname]}`** clears errors on navigation. Root boundary in **`App.tsx`** unchanged. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
+| 2026-04-20 | **K** | **`docs/UI.md`**: Rule **5** → shared **Hono** client (**`getApiClient`**, **`hcJson`**); Rules **2, 41** → no raw **`/api`** **`fetch`** in components. Rules **6–7, 9, 20, 30, 57, 59** → **`web/src/`** tree, **`features/<domain>/hooks/`**, PascalCase **`*Page.tsx`**, lazy **`routes/lazy-pages.ts`**, updated feature-module example; Rule **36** softened to **SHOULD** with greenfield **MUST**. **No file moves** — documentation-only alignment. | — (docs) | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **K** (hooks location / **`.page.tsx`** / doc alignment) — §7.1 row **K**.
+**Next:** Phase **L** (web test expansion — **`renderHook`**, **`components/ui`** tests) — §7.1 row **L**.
 
 ---
 

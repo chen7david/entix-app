@@ -20,7 +20,7 @@ Enforce: All rules below are MANDATORY. Violations = bugs.
 | 2  | React Query Fetching      | 1. Core Stack     |
 | 3  | Jotai Scope               | 1. Core Stack     |
 | 4  | Router URL State          | 1. Core Stack     |
-| 5  | Axios Instance            | 1. Core Stack     |
+| 5  | Shared API Client (Hono)  | 1. Core Stack     |
 | 63 | Dependency Version Sync   | 1. Core Stack     |
 | 6  | Directory Structure       | 2. Architecture   |
 | 7  | Page Orchestrator         | 2. Architecture   |
@@ -97,7 +97,7 @@ Each type of state has exactly one owner. Never mix responsibilities.
 
 ### Rule 2 — React Query is the Only Fetching Layer
 - Never use `useEffect` + `useState` to fetch data.
-- Never use `axios` directly inside a component.
+- Never call **`axios`** or raw **`fetch`** to same-origin **`/api`** routes inside a component — use hooks that call **`getApiClient()`** (`lib/api-client.ts`).
 - All server interaction goes through a `useQuery` or `useMutation` hook.
 
 ### Rule 3 — Jotai Scope
@@ -108,10 +108,10 @@ Each type of state has exactly one owner. Never mix responsibilities.
 ### Rule 4 — React Router for URL-Driven State
 - Filters, pagination cursors, active tabs, and search terms that should survive a page refresh MUST live in the URL as query params, not in Jotai or `useState`.
 
-### Rule 5 — Axios Instance
-- All HTTP calls MUST use the shared Axios instance from `lib/axios.ts`.
-- Never instantiate `axios.create()` in a feature file.
-- Never call `fetch()` directly.
+### Rule 5 — Shared API Client (Hono `hc`)
+- All **app** HTTP calls to the Worker (**`/api/v1/...`**) MUST go through **`getApiClient()`** in **`lib/api-client.ts`** (Hono RPC client) and shared helpers such as **`hcJson`** — not ad-hoc `fetch` or `axios`.
+- **Exception:** **Presigned R2 URLs** and other **non-app** endpoints MAY use raw **`fetch`** when the hook documents why.
+- Do not add new `axios.create()` instances for Entix API traffic. (Legacy UI.md referred to `lib/axios.ts`; the project standard is the Hono client — Phase **I**.)
 
 ### Rule 63 — Dependency Version Synchronization
 Developers and AI assistants MUST verify the exact version of core dependencies in `package.json` before implementation.
@@ -124,22 +124,33 @@ Developers and AI assistants MUST verify the exact version of core dependencies 
 ## 2. Component Architecture
 
 ### Rule 6 — Directory Structure
+Actual **`web/src/`** layout (Phase **K** — doc alignment with code):
+
 ```text
-src/
+web/src/
   components/
-    ui/           ← Pure presentational. No hooks. No Jotai. Props only.
-    features/     ← Domain-specific. Uses React Query hooks and Jotai.
-    layouts/      ← Page shells and responsive wrappers.
-  hooks/          ← Domain hooks: useMemberList.ts, useFinanceStats.ts
-  pages/          ← Route components. Thin orchestrators only.
-  lib/            ← Shared utilities, axios instance, query client config.
-  theme/          ← tokens.ts and Ant Design theme config.
+    ui/             ← Pure presentational. No React Query. Props only.
+    common/, error/, guards/, navigation/ … ← Shared shell pieces
+  features/         ← Domain modules (primary home for data hooks)
+    <domain>/
+      hooks/        ← useMembers.ts, useBillingPlans.ts, …
+      components/
+      *.hooks.ts    ← Allowed when colocated with a small surface
+      index.ts      ← Barrel exports where used
+  layouts/          ← Auth, org, platform-admin shells
+  pages/            ← Route-level pages (thin orchestrators)
+  hooks/            ← Optional cross-cutting hooks (e.g. useTimezoneInit, useTheme)
+  lib/              ← api-client, hc-json, auth-client, query-config, …
+  routes/           ← lazy page imports (e.g. lazy-pages.ts)
+  theme/            ← tokens and Ant Design theme
 ```
 
+**Hooks:** Prefer **`features/<domain>/hooks/`** for domain server IO. Use **`src/hooks/`** only for app-wide utilities that are not tied to one domain.
+
 ### Rule 7 — Page Components are Orchestrators Only
-- No inline `useQuery` or `useMutation` calls directly in `.page.tsx` files.
-- Pages compose feature components; feature components own data hooks.
-- Page files are named `[route].page.tsx` in kebab-case.
+- No inline `useQuery` or `useMutation` in **page** files — keep pages thin; **feature** components and **hooks own data fetching**.
+- Route pages live under **`pages/`** and are lazy-loaded via **`routes/lazy-pages.ts`** (see Rule **30**).
+- Page files use **PascalCase** and a **`Page`** suffix — e.g. **`OrganizationMembersPage.tsx`**, not kebab-case **`.page.tsx`** (naming migration deferred; new pages MUST follow PascalCase).
 
 ### Rule 8 — UI Component Purity
 - Components in `ui/` receive data and callbacks via props only.
@@ -147,13 +158,13 @@ src/
 - These components must be fully testable with props alone.
 
 ### Rule 9 — Naming Conventions
-| Entity         | Convention                   | Example                  |
-|----------------|------------------------------|--------------------------|
-| Components     | PascalCase `.tsx`            | `MemberCard.tsx`         |
-| Hooks          | camelCase, `use-` prefix     | `use-member.ts`          |
-| Pages          | kebab-case, `.page.tsx`      | `member-list.page.tsx`   |
-| Utility files  | kebab-case                   | `format-currency.ts`     |
-| Query keys     | Domain-first string arrays   | `['members', orgId]`     |
+| Entity         | Convention                   | Example                          |
+|----------------|------------------------------|----------------------------------|
+| Components     | PascalCase `.tsx`            | `MemberCard.tsx`                 |
+| Hooks          | camelCase, `use` prefix      | `useMembers.ts`                  |
+| Pages          | PascalCase, `*Page.tsx`      | `OrganizationMembersPage.tsx`    |
+| Utility files  | kebab-case                   | `format-currency.ts`             |
+| Query keys     | Domain-first string arrays   | `['members', orgId]`             |
 
 ### Rule 40 — Component Size & Single Responsibility
 A component MUST be split when it exceeds **150 lines** (hard limit). Use a Container/Presentational split:
@@ -173,11 +184,11 @@ export function MemberCard({ member }: Props) {
 ```
 
 ### Rule 41 — No APIs Directly in Components
-Components MUST NEVER call `axios` or `fetch` directly. All server interaction goes through a hook in `src/hooks/`. This applies to mutations too — no `axios.post()` inline in a click handler.
+Components MUST NOT call **`axios`**, raw **`fetch`** to **`/api`**, or **`getApiClient()`** inline. All server interaction goes through a **custom hook** in **`features/<domain>/hooks/`** (or **`src/hooks/`** for cross-cutting utilities). Mutations belong in hooks — not in click handlers.
 
 ```ts
 // ❌ Prohibited
-const handleSubmit = async () => { await axios.post('/api/members', data); };
+const handleSubmit = async () => { await fetch('/api/v1/...', { ... }); };
 
 // ✅ Correct
 const { mutate: createMember } = useCreateMember();
@@ -213,24 +224,26 @@ Split when **any one** of the following is true:
 Do NOT split preemptively — extract only when a condition is met.
 
 ### Rule 57 — Feature Module Structure
-Each domain MUST be self-contained in `features/[domain]/`.
+Each domain MUST be self-contained in **`features/[domain]/`**.
 
 ```text
-src/features/
+web/src/features/
   members/
-    components/        ← domain-specific, not shared
-      MemberCard.tsx
-      MemberFilters.tsx
-    MembersFeature.tsx ← only export consumed by pages
-  finance/
+    hooks/
+      useMembers.ts
+      useCreateMember.ts
     components/
-      CurrencyGrid.tsx
-    FinanceFeature.tsx
+      MemberCard.tsx
+    index.ts             ← barrel: export what pages need
+  finance/
+    hooks/
+    components/
+    index.ts
 ```
 
-- Feature folders MUST NOT import from other feature folders.
-- Cross-feature dependencies go through `components/ui/` or `hooks/`.
-- Pages import only the feature root file, never internal components directly.
+- Feature folders MUST NOT import from other **`features/<other>`** internals — share via **`components/ui/`**, **`lib/`**, or **`shared/`**.
+- **Cross-feature** dependencies go through **`components/ui/`**, **`src/hooks/`** (cross-cutting), or **`shared/`**.
+- **Pages** import from **feature barrels** and **`components/`** — avoid deep imports of another feature’s internals.
 
 ### Rule 58 — Factory & Provider Naming
 | Pattern                  | Convention           | Example              |
@@ -247,9 +260,8 @@ src/features/
 - App-wide providers live in `src/providers/`. Domain-scoped providers are co-located in their feature folder.
 
 ### Rule 59 — Helper vs Hook
-- **Pure transformation** (format date, calculate total) → Helper in `src/lib/`.
-- **Logic needing React state or lifecycle** → Custom hook in `src/hooks/`.
-- **Logic needing React Query** → Custom hook in `src/hooks/`.
+- **Pure transformation** (format date, calculate total) → Helper in **`src/lib/`** or **`shared/`**.
+- **Logic needing React state, lifecycle, or React Query** → Custom hook in **`features/<domain>/hooks/`**, or **`src/hooks/`** if used across many domains.
 - Helper functions MUST be pure. Never put business logic (permission checks, pricing rules) in a helper.
 - Helper files MUST have 100% unit test coverage.
 
@@ -461,8 +473,8 @@ startTime: z.coerce.date().refine(
 ## 6. Data Fetching & React Query
 
 ### Rule 20 — Hook Per Domain
-- One React Query hook file per backend domain in `src/hooks/`.
-- Export one `useQuery` wrapper and one `useMutation` wrapper per operation.
+- **React Query** hooks for a backend domain live under **`features/<domain>/hooks/`** (or split files by sub-area when large).
+- Prefer one primary **`useQuery`** / **`useMutation`** surface per operation; avoid duplicate hook files for the same endpoint.
 
 ### Rule 21 — Mandatory staleTime
 - Every `useQuery` MUST declare an explicit `staleTime`. Default `staleTime: 0` is prohibited.
@@ -537,7 +549,11 @@ All `key` props MUST be stable unique IDs from the data. Array indices as keys a
 All page-level components MUST be lazy-loaded. No page may be in the main bundle.
 
 ```ts
-const MemberListPage = React.lazy(() => import('./pages/member-list.page'));
+// Centralized in web/src/routes/lazy-pages.ts — uses lazyNamed() for named exports:
+const OrganizationMembersPage = lazyNamed(
+    () => import("@web/src/pages/organization/OrganizationMembersPage"),
+    "OrganizationMembersPage"
+);
 ```
 
 ### Rule 31 — Media & Heavy Assets
@@ -600,7 +616,7 @@ const { notification, message } = App.useApp();
 - Tests use `@testing-library/react` and `vitest`.
 
 ### Rule 36 — Hook Test Mandate
-- Every custom hook in `hooks/` MUST have a unit test using `renderHook`.
+- Every custom hook in **`features/**/hooks/`** or **`src/hooks/`** SHOULD have a unit test using **`renderHook`** (mandate applies per team capacity; greenfield hooks MUST add tests).
 - Mock React Query and Jotai — never test against a live API in unit tests.
 
 ---
