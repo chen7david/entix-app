@@ -1,4 +1,3 @@
-import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import { generateBillingPlanRateId } from "@shared";
 import {
@@ -187,7 +186,7 @@ export class FinanceBillingPlansRepository {
      * Updates an organization-level billing plan.
      * Uses db.batch() instead of .transaction() for D1 compatibility.
      */
-    async updatePlan(planId: string, updates: UpdateBillingPlanInput): Promise<BillingPlan> {
+    async updatePlan(planId: string, updates: UpdateBillingPlanInput): Promise<BillingPlan | null> {
         const statements: any[] = [
             this.db
                 .update(financeBillingPlans)
@@ -225,33 +224,20 @@ export class FinanceBillingPlansRepository {
         const results = await this.db.batch(statements as any);
         const [plan] = results[0] as any;
 
-        if (!plan) throw new NotFoundError("Billing plan not found");
-        return plan as BillingPlan;
+        return (plan as BillingPlan | undefined) ?? null;
     }
 
     /**
-     * Deletes a billing plan.
-     * RESTRICT Constraint: Throws ConflictError if any members are currently assigned to this plan.
+     * Deletes a billing plan row when present.
+     * Foreign-key / RESTRICT failures surface as driver errors for the service layer.
      */
-    async deletePlan(planId: string) {
-        try {
-            const [deleted] = await this.db
-                .delete(financeBillingPlans)
-                .where(eq(financeBillingPlans.id, planId))
-                .returning();
+    async deletePlan(planId: string): Promise<BillingPlan | null> {
+        const [deleted] = await this.db
+            .delete(financeBillingPlans)
+            .where(eq(financeBillingPlans.id, planId))
+            .returning();
 
-            if (!deleted) throw new NotFoundError("Billing plan not found");
-            return deleted;
-        } catch (e: any) {
-            // Catch D1/SQLite RESTRICT constraint failure specifically
-            if (e?.message?.includes("FOREIGN KEY constraint failed")) {
-                throw new ConflictError(
-                    "This billing plan is assigned to one or more members and cannot be deleted. " +
-                        "Deactivate it using the Active toggle instead."
-                );
-            }
-            throw e;
-        }
+        return deleted ?? null;
     }
 
     /**

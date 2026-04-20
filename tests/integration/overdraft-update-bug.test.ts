@@ -65,9 +65,10 @@ describe("Hierarchical Overdraft Resolution", () => {
         );
         const repo = new FinanceBillingPlansRepository(db);
 
-        await repo.updatePlan(planId, {
+        const updated = await repo.updatePlan(planId, {
             overdraftLimitCents: 5000,
         });
+        expect(updated).not.toBeNull();
 
         const updatedPlan = await db.query.financeBillingPlans.findFirst({
             where: eq(financeBillingPlans.id, planId),

@@ -1,4 +1,3 @@
-import { BadRequestError, ConflictError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import {
     authOrganizations,
@@ -34,17 +33,38 @@ export function encodeTransactionCursor(tx: {
 }
 
 /**
- * Decodes a base64 cursor and validates its shape.
+ * Decodes a base64 transaction pagination cursor.
+ * Returns null if the cursor is malformed — callers in the service layer should
+ * reject invalid input with a service-layer `BadRequestError` before hitting the repository.
  */
-function decodeTransactionCursor(cursor: string): { date: string; id: string } {
+export function parseTransactionCursor(cursor: string): { date: string; id: string } | null {
     try {
         const decoded = JSON.parse(Buffer.from(cursor, "base64").toString("utf-8"));
-        if (!decoded.date || !decoded.id) throw new Error();
-        return decoded;
+        if (!decoded?.date || !decoded?.id) return null;
+        return { date: decoded.date, id: decoded.id };
     } catch {
-        throw new BadRequestError("Invalid pagination cursor");
+        return null;
     }
 }
+
+/** @internal Assumes the service layer validated the cursor when present. */
+function requireTransactionCursor(cursor: string): { date: string; id: string } {
+    const decoded = parseTransactionCursor(cursor);
+    if (!decoded) {
+        throw new TypeError(
+            "FinanceTransactionsRepository: invalid cursor — validate via parseTransactionCursor in the service layer before querying"
+        );
+    }
+    return decoded;
+}
+
+/**
+ * Outcome of a single-batch ledger insert (no AppError throws from the repository).
+ */
+export type LedgerInsertOutcome =
+    | { ok: true; transactionId: string }
+    | { ok: false; code: "idempotency_conflict" }
+    | { ok: false; code: "debit_guard_failed" };
 
 /**
  * Builds a stable pagination cursor from the last item in a result set.
@@ -212,7 +232,7 @@ export class FinancialTransactionsRepository {
      * are submitted atomically to D1. We then verify that the debit statement actually
      * matched a row; if not (e.g. balance check failed), we throw an error.
      */
-    async insert(input: CreateTransactionRepoInput, guard: SQL): Promise<string> {
+    async insert(input: CreateTransactionRepoInput, guard: SQL): Promise<LedgerInsertOutcome> {
         const statements = this.prepareStatements(input, guard);
 
         // db.batch() returns a readonly tuple; plain any[] would cause TS4104.
@@ -221,11 +241,9 @@ export class FinancialTransactionsRepository {
             // statements are now all proper BatchItem<"sqlite"> objects — no cast needed.
             results = await this.db.batch(statements as Parameters<AppDb["batch"]>[0]);
         } catch (err: unknown) {
-            // D1 surfaces UNIQUE constraint violations as thrown errors (not result meta).
-            // Translate the idempotency_key violation into a 409 so callers handle it correctly.
             const msg = err instanceof Error ? err.message : String(err);
             if (msg.includes("UNIQUE constraint failed") && msg.includes("idempotency_key")) {
-                throw new ConflictError("A transaction with this idempotency key already exists.");
+                return { ok: false, code: "idempotency_conflict" };
             }
             throw err;
         }
@@ -233,12 +251,10 @@ export class FinancialTransactionsRepository {
         const debitResult = results[LEDGER_BATCH_INDEX.debit];
 
         if (debitResult.meta.rows_written === 0) {
-            throw new BadRequestError(
-                "Transaction failed: Insufficient funds or inactive account."
-            );
+            return { ok: false, code: "debit_guard_failed" };
         }
 
-        return input.id;
+        return { ok: true, transactionId: input.id };
     }
 
     async findByOrgId(organizationId: string, filters: TransactionFilters) {
@@ -277,7 +293,7 @@ export class FinancialTransactionsRepository {
         }
 
         if (filters.cursor) {
-            const decoded = decodeTransactionCursor(filters.cursor);
+            const decoded = requireTransactionCursor(filters.cursor);
             conditions.push(
                 or(
                     lt(financialTransactions.transactionDate, new Date(decoded.date)),
@@ -355,7 +371,7 @@ export class FinancialTransactionsRepository {
         const conditions = [eq(financialTransactionLines.accountId, accountId)];
 
         if (cursor) {
-            const decoded = decodeTransactionCursor(cursor);
+            const decoded = requireTransactionCursor(cursor);
             conditions.push(
                 or(
                     lt(financialTransactions.transactionDate, new Date(decoded.date)),
@@ -432,7 +448,7 @@ export class FinancialTransactionsRepository {
         }
 
         if (cursor) {
-            const decoded = decodeTransactionCursor(cursor);
+            const decoded = requireTransactionCursor(cursor);
             conditions.push(
                 or(
                     lt(financialTransactions.transactionDate, new Date(decoded.date)),

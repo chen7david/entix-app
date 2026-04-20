@@ -1,9 +1,10 @@
-import { ConflictError, NotFoundError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import {
     buildTransactionCursor,
     type FinancialTransactionsRepository,
+    parseTransactionCursor,
 } from "@api/repositories/financial/financial-transactions.repository";
 import {
     ACCOUNT_TYPES,
@@ -176,6 +177,9 @@ export class OrgFinancialService extends FinancialBaseService {
     }
 
     async getTransactionHistory(orgId: string, filters: TransactionFilters) {
+        if (filters.cursor && !parseTransactionCursor(filters.cursor)) {
+            throw new BadRequestError("Invalid pagination cursor");
+        }
         const limit = filters.limit ?? 20;
         const transactions = await this.transactionsRepo.findByOrgId(orgId, filters);
         const nextCursor = buildTransactionCursor(transactions, limit);

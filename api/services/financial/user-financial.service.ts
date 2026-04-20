@@ -1,10 +1,11 @@
-import { ConflictError, InternalServerError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
 import {
     buildTransactionCursor,
     type FinancialTransactionsRepository,
+    parseTransactionCursor,
 } from "@api/repositories/financial/financial-transactions.repository";
 import { ACCOUNT_TYPES, type FinancialAccount, generateAccountId } from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
@@ -148,6 +149,9 @@ export class UserFinancialService extends FinancialBaseService {
         pagination: { cursor?: string; limit: number },
         filters: any = {}
     ) {
+        if (pagination.cursor && !parseTransactionCursor(pagination.cursor)) {
+            throw new BadRequestError("Invalid pagination cursor");
+        }
         const lines = await this.transactionsRepo.findByOwnerId(
             userId,
             "user",
