@@ -1,5 +1,6 @@
 import { ServiceUnavailableError } from "@api/errors/app.error";
 import { Resend } from "resend";
+import { BaseService } from "./base.service";
 
 type SendTemplateParams = {
     to: string;
@@ -19,12 +20,13 @@ type SendPasswordResetParams = {
     resetUrl: string;
 };
 
-export class MailService {
+export class MailService extends BaseService {
     private $client: Resend | null = null;
     private isFallback: boolean = false;
     private sender: string = "Entix <donotreply@entix.org>";
 
     constructor(apiKey?: string) {
+        super();
         if (!apiKey || apiKey === "LOCAL_DEV_REPLACE_ME") {
             this.isFallback = true;
             console.warn("[MAILER] No RESEND_API_KEY provided. Falling back to console logging.");

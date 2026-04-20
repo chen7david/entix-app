@@ -12,12 +12,15 @@ import type {
     CreateBillingPlanInput,
     UpdateBillingPlanInput,
 } from "@shared/schemas/dto/billing-plan.dto";
+import { BaseService } from "../base.service";
 
 /**
  * Service for managing Billing Plans and Student Assignments.
  */
-export class FinanceBillingPlansService {
-    constructor(private readonly repo: FinanceBillingPlansRepository) {}
+export class FinanceBillingPlansService extends BaseService {
+    constructor(private readonly repo: FinanceBillingPlansRepository) {
+        super();
+    }
 
     /**
      * Creates a new organization-level billing plan.

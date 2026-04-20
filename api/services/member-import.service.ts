@@ -6,14 +6,17 @@ import { generateOpaqueId } from "@shared";
 import type { OrgRole } from "@shared/auth/permissions";
 import type * as schema from "@shared/db/schema";
 import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
+import { BaseService } from "./base.service";
 
-export class MemberImportService {
+export class MemberImportService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private memberRepo: MemberRepository,
         private profileRepo: UserProfileRepository,
         private socialRepo: SocialMediaRepository
-    ) {}
+    ) {
+        super();
+    }
 
     async importMembers(organizationId: string, members: BulkMemberItemDTO[]) {
         const results = {

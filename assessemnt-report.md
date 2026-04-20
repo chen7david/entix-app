@@ -23,6 +23,7 @@
 | Remediation **Phase B** (repo error purity) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase C** (handler layering) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase D** (handler errors / uploads) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase E** (`BaseService` alignment) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -47,7 +48,7 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 | **1** | High | Repositories import/use **`nanoid`**: `member.repository.ts`, `financial-org-settings.repository.ts`, `financial-currencies.repository.ts`, `financial-transaction-categories.repository.ts`. IDs MUST be generated in the Service layer. |
 | **2** | ~~High~~ **Mitigated (Phase B)** | ~~Repos above~~ — billing-plan / ledger repo throws addressed in Phase **B**; revisit if new repo throws appear. |
 | **3** | ~~High~~ **Mitigated (Phase C)** | ~~Audit/reconciliation handlers~~ — routed through **`AdminAuditService`** / **`ReconciliationService`** (Phase **C**). |
-| **4** | Medium | **`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, **`MailService`** do not extend **`BaseService`** (pattern drift vs doc). |
+| **4** | ~~Medium~~ **Mitigated (Phase E)** | Listed services now **`extend BaseService`** and call **`super()`** in constructors (**`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, **`MailService`**). |
 | **6** | Low–Med | Many `findFirst` usages **do** use `?? null` (good). Spot-check any `findFirst` path that returns a value without coercion (grep shows many sites — verify any that return directly to services). |
 | **13–15** | ~~Medium~~ **Partial (Phase D)** | **`uploads.handlers`**, **`session-payment.service`**, **`mailer.service`**, **`entix.queue`** — generic **`Error`** replaced with **`AppError`** subclasses where touched in Phase **D**. Grep for remaining **`new Error`** under **`api/`** after merges. |
 | **14** | ~~Medium~~ **Mitigated (Phase D)** | **`uploads.handlers.ts`** — **`try/catch`** removed (Phase **D**). |
@@ -246,9 +247,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-19 | **B** | **`FinanceBillingPlansRepository`**: **`updatePlan`** / **`deletePlan`** return `null` instead of throwing **`NotFoundError`** / **`ConflictError`**; **`FinanceBillingPlansService`** maps null → **`NotFoundError`**, FK **`FOREIGN KEY constraint failed`** → **`ConflictError`**. **`FinancialTransactionsRepository.insert`** returns **`LedgerInsertOutcome`** (`idempotency_conflict` / `debit_guard_failed` / success); **`FinancialBaseService.executeTransaction`** maps those to **`ConflictError`** / **`BadRequestError`**. Cursor parsing: exported **`parseTransactionCursor`**; **`OrgFinancialService`** / **`UserFinancialService`** validate cursors and throw **`BadRequestError`** before list queries; repo uses **`requireTransactionCursor`** only after service validation. | `typecheck:api` ✓ · `test:api` ✓ | *pending your sign-off* |
 | 2026-04-19 | **C** | **`AdminAuditHandler`** / **`ReconciliationHandler`** now call **`getAdminAuditService`** / **`getReconciliationService`** only (no **`getDbClient`** / repo factories in handlers). New **`AdminAuditService`** (list, acknowledge, requeue + queue send) and **`ReconciliationService`** (missed-payment list + retry orchestration). **`SystemAuditRepository`**: **`findByIdAndOrganization`**, **`setAcknowledged`** (optional org scope); **`acknowledge`** delegates to **`setAcknowledged`**. Malformed event **`metadata`** JSON → **422** (`invalid_metadata`) instead of an uncaught parse error. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
 | 2026-04-20 | **D** | **`OrgUploadsHandler`**: removed no-op **`try/catch`**; missing **`userId`** → **`UnauthorizedError`** (401). **`listUploads`** returns explicit **`{ items, nextCursor, prevCursor }`** with typed **`UploadDto[]`** (matches **`createPaginatedResponseSchema`** — web **`useOrganizationUploads`** unchanged). **`completeUpload`** builds a typed **`UploadDto`** (no **`as any`**). Replaced **`new Error`** with **`AppError`** subclasses: **`SessionPaymentService`** (**`UnprocessableEntityError`**, **`InternalServerError`** for batch failures), **`MailService`** (**`ServiceUnavailableError`** when Resend client missing), **`entix.queue`** unsupported payment type → **`InternalServerError`**. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ · web `typecheck` ✓ | *pending your sign-off* |
+| 2026-04-20 | **E** | **`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, and **`MailService`** now **`extend BaseService`** with **`super()`** in constructors (API.md Rule **4** / **`assertExists`** availability). No call-site changes. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **E** (optional **`BaseService`** alignment) — §7.1 row **E**.
+**Next:** Phase **F** (web transport DRY — **`web/src/lib/axios.ts`** or approved equivalent per UI.md **5**) — §7.1 row **F**.
 
 ---
 
