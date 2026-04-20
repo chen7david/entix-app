@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
-import { nanoid } from "nanoid";
+import { generateOpaqueId } from "@shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseJson } from "../lib/api-request.helper";
 import { createSuperAdmin, getAuthCookie } from "../lib/auth-test.helper";
@@ -43,8 +43,8 @@ describe("Admin Organizations Integration", () => {
             const db = getDbClient(ctxMock);
             const repo = new OrganizationRepository(db);
 
-            await repo.prepareInsert(nanoid(), "Test Org 1", "test-org-1").execute();
-            await repo.prepareInsert(nanoid(), "Test Org 2", "test-org-2").execute();
+            await repo.prepareInsert(generateOpaqueId(), "Test Org 1", "test-org-1").execute();
+            await repo.prepareInsert(generateOpaqueId(), "Test Org 2", "test-org-2").execute();
 
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);

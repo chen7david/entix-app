@@ -1,11 +1,11 @@
 import { MemberRepository } from "@api/repositories/member.repository";
 import { MemberService } from "@api/services/member.service";
+import { generateOpaqueId } from "@shared";
 import {
     authMembers as member,
     authOrganizations as organization,
     authUsers as user,
 } from "@shared/db/schema";
-import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockUser } from "../factories/user.factory";
 import type { TestDb } from "../lib/utils";
@@ -23,9 +23,9 @@ describe("MemberService Unit Test", () => {
 
     describe("getMember", () => {
         it("should return a member if they exist", async () => {
-            const orgId = nanoid();
-            const userId = nanoid();
-            const memberId = nanoid();
+            const orgId = generateOpaqueId();
+            const userId = generateOpaqueId();
+            const memberId = generateOpaqueId();
 
             // Seed organization and user first (required for FK constraints)
             await db
@@ -59,8 +59,8 @@ describe("MemberService Unit Test", () => {
 
     describe("existsMember", () => {
         it("should return true if member exists", async () => {
-            const orgId = nanoid();
-            const userId = nanoid();
+            const orgId = generateOpaqueId();
+            const userId = generateOpaqueId();
 
             await db
                 .insert(organization)
@@ -69,7 +69,7 @@ describe("MemberService Unit Test", () => {
             await db.insert(user).values(newUser);
 
             await db.insert(member).values({
-                id: nanoid(),
+                id: generateOpaqueId(),
                 organizationId: orgId,
                 userId: userId,
                 role: "admin",

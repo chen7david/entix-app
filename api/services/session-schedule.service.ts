@@ -5,10 +5,11 @@ import {
     calculateClassChargeCents,
     FINANCIAL_CATEGORIES,
     FINANCIAL_CURRENCIES,
+    generateAuditId,
+    generateOpaqueId,
     IdempotencyKeys,
 } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
-import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
 import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "./financial/finance-wallet.service";
@@ -65,14 +66,15 @@ export class SessionScheduleService extends BaseService {
 
     async createSession(organizationId: string, data: CreateSessionDTO) {
         const isRecurring = !!data.recurrence;
-        const seriesId = isRecurring ? nanoid() : null;
+        // Recurring sessions share one `seriesId` across rows; it is not a table PK default.
+        const seriesId = isRecurring ? generateOpaqueId() : null;
         const count = isRecurring ? (data.recurrence?.count ?? 1) : 1;
         const recurrenceRule = isRecurring
             ? `FREQ=${data.recurrence?.frequency.toUpperCase()};COUNT=${count}`
             : null;
 
+        // Session PKs: schema `$defaultFn` on `scheduled_sessions.id`; `.returning()` supplies ids for attendances.
         const sessionsToInsert = Array.from({ length: count }).map((_, i) => ({
-            id: nanoid(),
             organizationId,
             title: data.title,
             description: data.description ?? null,
@@ -269,7 +271,7 @@ export class SessionScheduleService extends BaseService {
             if (error instanceof BadRequestError) {
                 // Business failure (e.g., wallet not found)
                 await this.auditRepo.insert({
-                    id: `aud_${nanoid()}`,
+                    id: generateAuditId(),
                     organizationId,
                     eventType: "payment.missed",
                     severity: "warning",
@@ -333,7 +335,6 @@ export class SessionScheduleService extends BaseService {
                     );
 
                     sessionsToInsert.push({
-                        id: nanoid(),
                         organizationId,
                         title: data.title,
                         description: data.description ?? null,

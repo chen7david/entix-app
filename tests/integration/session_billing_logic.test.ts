@@ -6,6 +6,7 @@ import {
     generateBillingPlanId,
     generateBillingPlanRateId,
     generateMemberBillingPlanId,
+    generateOpaqueId,
 } from "@shared";
 import {
     financeBillingPlanRates,
@@ -18,7 +19,6 @@ import {
     systemAuditEvents,
 } from "@shared/db/schema";
 import { and, eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
@@ -89,7 +89,7 @@ describe("Session Billing Logic Verification", () => {
     };
 
     const runSession = async (student: any, duration: number) => {
-        const sid = `sess_${nanoid()}`;
+        const sid = generateOpaqueId();
         await db.insert(scheduledSessions).values({
             id: sid,
             organizationId: orgId,

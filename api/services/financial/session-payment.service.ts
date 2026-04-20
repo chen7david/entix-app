@@ -10,6 +10,12 @@ import type { PaymentQueueRepository } from "@api/repositories/payment/payment-q
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import {
+    generateAuditId,
+    generatePaymentRequestId,
+    generateTransactionId,
+    generateTransactionLineId,
+} from "@shared";
+import {
     FINANCIAL_CATEGORIES,
     FINANCIAL_CURRENCIES,
     getSystemAdjustmentAccountId,
@@ -23,7 +29,6 @@ import {
 import { resolveOverdraftLimit } from "@shared/utils/billing";
 import { IdempotencyKeys } from "@shared/utils/idempotency-keys";
 import { sql } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
 /**
@@ -70,7 +75,8 @@ export class SessionPaymentService extends BaseService {
             );
         }
 
-        const paymentRequestId = `pr_${nanoid()}`;
+        // Payment request id is referenced immediately; ledger + audit batch needs stable tx/line ids before D1 batch.
+        const paymentRequestId = generatePaymentRequestId();
         const record = await this.paymentRequestsRepo.insert({
             id: paymentRequestId,
             organizationId: input.organizationId,
@@ -132,9 +138,10 @@ export class SessionPaymentService extends BaseService {
         );
 
         const now = new Date();
-        const txId = `tx_${nanoid()}`;
-        const debitLineId = `txl_${nanoid()}`;
-        const creditLineId = `txl_${nanoid()}`;
+        // Double-entry batch: transaction header and line ids are referenced inside the same batch statements.
+        const txId = generateTransactionId();
+        const debitLineId = generateTransactionLineId();
+        const creditLineId = generateTransactionLineId();
 
         const txInput = createTransactionRepoInputSchema.parse({
             id: txId,
@@ -171,7 +178,7 @@ export class SessionPaymentService extends BaseService {
             transactionExistsGuard
         );
 
-        const auditId = `aud_${nanoid()}`;
+        const auditId = generateAuditId();
         const auditStatement = this.auditRepo.prepareGuardedInsert(
             {
                 id: auditId,
@@ -252,7 +259,8 @@ export class SessionPaymentService extends BaseService {
         }
 
         const now = new Date();
-        const paymentRequestId = `pr_${nanoid()}`;
+        // Manual override path still materializes a concrete payment-request id for downstream statements.
+        const paymentRequestId = generatePaymentRequestId();
 
         const paymentRequestStatement = this.paymentRequestsRepo.insert({
             id: paymentRequestId,

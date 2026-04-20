@@ -49,6 +49,7 @@ The project's definitive rulebook.
 - [**API.md — Backend Rules**](./API) — Architecture, naming, error handling, testing, response standards.
 - [**UI.md — Frontend Rules**](./UI) — Component architecture, design system, state, accessibility.
 - [**Naming Conventions**](./conventions/01-naming) — DB tables, columns, and TypeScript layer naming.
+- [**ID generation**](./conventions/02-id-generation) — Centralized `nanoid` helpers in `shared/lib/id.ts`.
 
 ---
 

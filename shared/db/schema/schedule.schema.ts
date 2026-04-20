@@ -1,12 +1,16 @@
 import { sql } from "drizzle-orm";
 import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { generateOpaqueId } from "../../lib/id";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
 
 export const scheduledSessions = sqliteTable(
     "scheduled_sessions",
     {
-        id: text("id").primaryKey(),
+        /** Omitted when inserting; `.returning()` supplies ids for attendances. Explicit ids only when batching with other statements that reference the row before insert (rare). */
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => generateOpaqueId()),
         organizationId: text("organization_id")
             .notNull()
             .references(() => authOrganizations.id, { onDelete: "cascade" }),

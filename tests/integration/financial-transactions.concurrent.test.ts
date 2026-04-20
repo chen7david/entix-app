@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
+import { generateAccountId, generateOpaqueId } from "@shared";
 import { authOrganizations, financialAccounts, financialTransactions } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createSuperAdmin } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
@@ -28,16 +28,16 @@ describe("Financial Idempotency Verification", () => {
         superAdminCookie = admin.cookie;
 
         // 2. Setup Test Organization
-        organizationId = `org_${nanoid()}`;
+        organizationId = `org_${generateOpaqueId()}`;
         await db.insert(authOrganizations).values({
             id: organizationId,
             name: "Test Idempotency Org",
-            slug: `test-idem-org-${nanoid()}`,
+            slug: `test-idem-org-${generateOpaqueId()}`,
             createdAt: new Date(),
         });
 
         // 3. Setup Target Funding Account
-        targetAccountId = `facc_funding_${nanoid()}`;
+        targetAccountId = generateAccountId();
         const repo = new FinancialAccountsRepository(db as any);
         await repo.insert({
             id: targetAccountId,
@@ -60,7 +60,7 @@ describe("Financial Idempotency Verification", () => {
      * 3. DB has a unique index on idempotencyKey.
      */
     it("should prevent double-debiting when concurrent requests use the same Idempotency-Key", async () => {
-        const idempotencyKey = `idem_${nanoid()}`;
+        const idempotencyKey = `idem_${generateOpaqueId()}`;
         const amountCents = 1000; // $10.00
 
         const payload = {

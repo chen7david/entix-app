@@ -2,7 +2,6 @@ import type { AppDb } from "@api/factories/db.factory";
 import type { OrgRole } from "@shared/auth/permissions";
 import * as schema from "@shared/db/schema";
 import { and, eq, inArray } from "drizzle-orm";
-import { nanoid } from "nanoid";
 
 export type AddMemberInput = {
     userId: string;
@@ -61,14 +60,22 @@ export class MemberRepository {
 
     /**
      * Add a member to an organization and return the actual DB record.
+     * `id` is assigned by schema default unless you use {@link prepareInsertQuery} for batches.
      */
     async insert(
         organizationId: string,
         userId: string,
         role: string
     ): Promise<schema.AuthMember | null> {
-        const id = nanoid();
-        const results = await this.prepareInsertQuery(id, organizationId, userId, role).returning();
+        const results = await this.db
+            .insert(schema.authMembers)
+            .values({
+                organizationId,
+                userId,
+                role,
+                createdAt: new Date(),
+            })
+            .returning();
 
         return results[0] ?? null;
     }

@@ -1,10 +1,14 @@
 import { sql } from "drizzle-orm";
 import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { FINANCIAL_CURRENCIES } from "../../constants/financial";
+import { generateOpaqueId } from "../../lib/id";
 import { authOrganizations } from "./organization.schema";
 
 export const financialOrgSettings = sqliteTable("financial_org_settings", {
-    id: text("id").primaryKey(),
+    /** Omitted on insert; service only needs the row to exist (no same-transaction FK to this id). */
+    id: text("id")
+        .primaryKey()
+        .$defaultFn(() => generateOpaqueId()),
     organizationId: text("organization_id")
         .notNull()
         .unique()

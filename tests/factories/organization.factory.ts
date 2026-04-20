@@ -1,10 +1,10 @@
+import { generateOpaqueId } from "@shared";
 import type { NewAuthOrganization } from "@shared/db/schema";
-import { nanoid } from "nanoid";
 
 export function createMockOrganization(
     overrides: Partial<NewAuthOrganization> = {}
 ): NewAuthOrganization {
-    const id = nanoid();
+    const id = generateOpaqueId();
     const now = new Date();
 
     return {

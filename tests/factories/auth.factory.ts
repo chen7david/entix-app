@@ -1,5 +1,5 @@
+import { generateOpaqueId, generateShortUpperToken } from "@shared";
 import type * as schema from "@shared/db/schema";
-import { nanoid } from "nanoid";
 import { vi } from "vitest";
 
 /**
@@ -49,8 +49,8 @@ export const createMockUserDbRecord = (
 ): schema.AuthUser => {
     const now = new Date();
     return {
-        id: nanoid(),
-        xid: nanoid(8).toUpperCase(),
+        id: generateOpaqueId(),
+        xid: generateShortUpperToken(8),
         name: "Test User",
         email: `user.${Date.now()}@example.com`,
         emailVerified: false,
