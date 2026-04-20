@@ -1,5 +1,6 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 
 export type TransferInput = {
     categoryId: string;
@@ -16,16 +17,14 @@ export const useWalletTransfer = (orgId?: string) => {
     return useMutation({
         mutationFn: async (data: TransferInput) => {
             if (!orgId) throw new Error("Organization ID required");
-            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/transfer`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance.transfer.$post({
+                param: { organizationId: orgId },
+                json: data,
             });
-            if (!res.ok) throw new Error("Transfer failed. Please check balance.");
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
-            // Invalidate queries to refresh balance and history
             queryClient.invalidateQueries({ queryKey: ["walletBalance", orgId] });
             queryClient.invalidateQueries({ queryKey: ["transactionHistory", orgId] });
         },

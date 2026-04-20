@@ -53,6 +53,7 @@ import {
     Input,
     Modal,
     Select,
+    Space,
     Tooltip,
     Typography,
 } from "antd";
@@ -193,6 +194,7 @@ export const PlaylistManager: React.FC<{
     }, [isSequenceDrawerOpen, fetchedSequence]);
 
     const [editForm] = Form.useForm();
+    const [createForm] = Form.useForm();
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -430,7 +432,7 @@ export const PlaylistManager: React.FC<{
                 footer={null}
                 destroyOnClose
             >
-                <Form layout="vertical" onFinish={handleCreateFinish}>
+                <Form form={createForm} layout="vertical" onFinish={handleCreateFinish}>
                     <Form.Item
                         name="title"
                         label="Title"
@@ -445,9 +447,12 @@ export const PlaylistManager: React.FC<{
                         />
                     </Form.Item>
                     <Form.Item className="mb-0 flex justify-end">
-                        <Button type="primary" htmlType="submit">
-                            Create Playlist
-                        </Button>
+                        <Space>
+                            <Button onClick={() => createForm.resetFields()}>Reset</Button>
+                            <Button type="primary" htmlType="submit">
+                                Create Playlist
+                            </Button>
+                        </Space>
                     </Form.Item>
                 </Form>
             </Modal>
@@ -552,9 +557,12 @@ export const PlaylistManager: React.FC<{
                 width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
                 extra={
-                    <Button type="primary" onClick={() => editForm.submit()}>
-                        Save Settings
-                    </Button>
+                    <Space>
+                        <Button onClick={() => editForm.resetFields()}>Reset</Button>
+                        <Button type="primary" onClick={() => editForm.submit()}>
+                            Save Settings
+                        </Button>
+                    </Space>
                 }
             >
                 {/* Frictionless Cover Art Upload Zone */}

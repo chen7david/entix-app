@@ -23,6 +23,8 @@ export const auditLogQuerySchema = PaginationQuerySchema.extend({
     severity: auditSeveritySchema.optional(),
     eventType: z.string().optional(),
     actorId: z.string().optional(),
+    startDate: z.coerce.date().optional(),
+    endDate: z.coerce.date().optional(),
     unresolvedOnly: z.coerce.boolean().optional(),
 });
 

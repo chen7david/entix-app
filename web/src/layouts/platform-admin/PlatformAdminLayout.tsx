@@ -1,3 +1,4 @@
+import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Layout, theme } from "antd";
@@ -37,8 +38,10 @@ export const PlatformAdminLayout: React.FC = () => {
                     <Toolbar />
                     <div className="flex-1 flex flex-col min-h-0 p-8">
                         <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full min-h-0">
-                            <ImpersonationBanner />
-                            <Outlet />
+                            <RouteErrorBoundary>
+                                <ImpersonationBanner />
+                                <Outlet />
+                            </RouteErrorBoundary>
                         </div>
                     </div>
                 </Content>

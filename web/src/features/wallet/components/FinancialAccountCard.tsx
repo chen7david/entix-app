@@ -1,5 +1,6 @@
 import { LockOutlined, WalletOutlined } from "@ant-design/icons";
 import { ACCOUNT_TYPES, FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { Card, Flex, Skeleton, Space, Statistic, Tag, Typography, theme } from "antd";
 import type React from "react";
 
@@ -186,7 +187,10 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                         title={account.name}
                         style={{ fontSize: 14, display: "block", marginBottom: 4 }}
                     >
-                        {account.name}
+                        {formatAccountDisplayName(
+                            account.name,
+                            config?.code ?? account.currencyId.split("_").pop()
+                        )}
                     </Text>
                 }
                 value={account.balanceCents / 100}

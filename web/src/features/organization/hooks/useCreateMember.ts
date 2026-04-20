@@ -1,5 +1,7 @@
 import type { CreateMemberDTO, CreateMemberResponseDTO } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { App } from "antd";
 
 export const useCreateMember = (organizationId: string) => {
@@ -8,22 +10,14 @@ export const useCreateMember = (organizationId: string) => {
 
     return useMutation({
         mutationFn: async (values: CreateMemberDTO) => {
-            const response = await fetch(`/api/v1/orgs/${organizationId}/members`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(values),
+            const api = getApiClient();
+            const response = await api.api.v1.orgs[":organizationId"].members.$post({
+                param: { organizationId },
+                json: values,
             });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Failed to create member");
-            }
-
-            return response.json() as Promise<CreateMemberResponseDTO>;
+            return hcJson<CreateMemberResponseDTO>(response);
         },
         onSuccess: () => {
-            // Invalidate members query to refetch the list
-            // Must match the key in useOrganization.ts line 34
             queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
             notification.success({
                 message: "Member Created",

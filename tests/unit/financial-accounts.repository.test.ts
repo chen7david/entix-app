@@ -1,7 +1,7 @@
 import { BadRequestError } from "@api/errors/app.error";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
+import { generateAccountId } from "@shared";
 import { authOrganizations, type CreateAccountRepoInput } from "@shared/db/schema";
-import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createTestDb, type TestDb } from "../lib/utils";
 
@@ -13,7 +13,7 @@ describe("financialAccountsRepository", () => {
     const makeAccountInput = (
         overrides?: Partial<CreateAccountRepoInput>
     ): CreateAccountRepoInput => ({
-        id: `facc_${nanoid()}`,
+        id: generateAccountId(),
         ownerId: "user_test_01",
         ownerType: "user",
         currencyId: "fcur_usd",

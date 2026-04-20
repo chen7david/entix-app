@@ -327,16 +327,26 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
 
             {/* ── Submit ── */}
             <Form.Item style={{ marginTop: 8, marginBottom: 0 }}>
-                <Button
-                    type="primary"
-                    htmlType="submit"
-                    loading={isPending}
-                    disabled={formDisabled}
-                    size="large"
-                    style={{ fontWeight: 600, width: "100%" }}
-                >
-                    Execute Adjustment
-                </Button>
+                <Space direction="vertical" size={8} style={{ width: "100%" }}>
+                    <Button
+                        onClick={() => form.resetFields()}
+                        disabled={isPending}
+                        size="large"
+                        style={{ width: "100%" }}
+                    >
+                        Reset
+                    </Button>
+                    <Button
+                        type="primary"
+                        htmlType="submit"
+                        loading={isPending}
+                        disabled={formDisabled}
+                        size="large"
+                        style={{ fontWeight: 600, width: "100%" }}
+                    >
+                        Execute Adjustment
+                    </Button>
+                </Space>
             </Form.Item>
         </Form>
     );

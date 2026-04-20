@@ -49,6 +49,7 @@ The project's definitive rulebook.
 - [**API.md — Backend Rules**](./API) — Architecture, naming, error handling, testing, response standards.
 - [**UI.md — Frontend Rules**](./UI) — Component architecture, design system, state, accessibility.
 - [**Naming Conventions**](./conventions/01-naming) — DB tables, columns, and TypeScript layer naming.
+- [**ID generation**](./conventions/02-id-generation) — Centralized `nanoid` helpers in `shared/lib/id.ts`.
 
 ---
 
@@ -57,6 +58,7 @@ The project's definitive rulebook.
 Client-side development standards for React 19 + Ant Design 6.
 - [**UI.md — Frontend Architecture Reference**](./UI) — Full frontend rulebook.
 - [**Frontend Navigation**](./frontend/01-navigation) — Type-safe routing in a multi-tenant shell.
+- [**Unified Filter Bar**](./frontend/02-unified-filter-bar) — Shared filter architecture, reset rules, and plugin/adapter patterns.
 
 ---
 

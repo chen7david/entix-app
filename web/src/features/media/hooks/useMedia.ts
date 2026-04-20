@@ -8,6 +8,9 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback, useMemo } from "react";
@@ -62,19 +65,22 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
         queryFn: async () => {
             if (!orgId) return { data: { items: [], nextCursor: null, prevCursor: null } };
 
-            const params = new URLSearchParams();
-            if (type) params.append("type", type);
-            if (search) params.append("search", search);
-            if (options?.cursor) params.append("cursor", options.cursor);
-            if (options?.direction) params.append("direction", options.direction);
-            params.append("limit", (options?.limit ?? 15).toString());
-
-            const res = await fetch(`/api/v1/orgs/${orgId}/media?${params.toString()}`);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as MediaPaginatedResponse;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].media.$get({
+                param: { organizationId: orgId },
+                query: {
+                    type,
+                    search,
+                    cursor: options?.cursor,
+                    direction: options?.direction,
+                    limit: options?.limit ?? 15,
+                },
+            });
+            return hcJson<MediaPaginatedResponse>(res);
         },
         enabled: !!orgId && isPagedMode,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Infinite Query (Legacy / Load More)
@@ -89,23 +95,24 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
         queryFn: async ({ pageParam }) => {
             if (!orgId) return { data: { items: [], nextCursor: null, prevCursor: null } };
 
-            const params = new URLSearchParams();
-            if (type) params.append("type", type);
-            if (search) params.append("search", search);
-            if (pageParam) {
-                params.append("cursor", pageParam);
-                params.append("direction", "next");
-            }
-            params.append("limit", "15");
-
-            const res = await fetch(`/api/v1/orgs/${orgId}/media?${params.toString()}`);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as MediaPaginatedResponse;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].media.$get({
+                param: { organizationId: orgId },
+                query: {
+                    type,
+                    search,
+                    cursor: pageParam ?? undefined,
+                    direction: pageParam ? "next" : undefined,
+                    limit: 15,
+                },
+            });
+            return hcJson<MediaPaginatedResponse>(res);
         },
         enabled: !!orgId && !isPagedMode,
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.data.nextCursor,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Unified Result Mapping
@@ -119,13 +126,12 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
     const createMediaMutation = useMutation({
         mutationFn: async (input: CreateMediaInput) => {
             if (!orgId) throw new Error("AuthOrganization ID missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/media`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].media.$post({
+                param: { organizationId: orgId },
+                json: input,
             });
-            if (!res.ok) await parseApiError(res);
-            return await res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             notification.success({
@@ -154,13 +160,12 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
             updates: UpdateMediaInput;
         }) => {
             if (!orgId) throw new Error("AuthOrganization ID missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updates),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].media[":mediaId"].$patch({
+                param: { organizationId: orgId, mediaId },
+                json: updates,
             });
-            if (!res.ok) await parseApiError(res);
-            return await res.json();
+            return hcJson<Media>(res);
         },
         onSuccess: () => {
             notification.success({
@@ -181,8 +186,9 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
     const deleteMediaMutation = useMutation({
         mutationFn: async (mediaId: string) => {
             if (!orgId) throw new Error("AuthOrganization ID missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/media/${mediaId}`, {
-                method: "DELETE",
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].media[":mediaId"].$delete({
+                param: { organizationId: orgId, mediaId },
             });
             if (!res.ok) await parseApiError(res);
         },

@@ -1,6 +1,7 @@
 import type { OrgRole } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { useCallback } from "react";
 import { useOrganization } from "./useOrganization";
 
@@ -20,6 +21,7 @@ export const useInvitations = () => {
             return data || [];
         },
         enabled: !!activeOrganization?.id,
+        staleTime: QUERY_STALE_MS,
     });
 
     const { mutateAsync: inviteMemberMutation, isPending: isInviting } = useMutation({

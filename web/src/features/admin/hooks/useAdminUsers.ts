@@ -1,5 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
 import { authClient } from "@web/src/lib/auth-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export const useAdminUsers = (
     search?: string,
@@ -8,25 +11,22 @@ export const useAdminUsers = (
     return useQuery({
         queryKey: ["admin", "users", search, options?.cursor, options?.limit, options?.direction],
         queryFn: async () => {
-            const url = new URL("/api/v1/admin/users", window.location.origin);
-            if (search) url.searchParams.set("search", search);
-            if (options?.cursor) url.searchParams.set("cursor", options.cursor);
-            if (options?.limit) url.searchParams.set("limit", options.limit.toString());
-            if (options?.direction) url.searchParams.set("direction", options.direction);
-
-            const response = await fetch(url.toString());
-            if (!response.ok) {
-                const error = await response
-                    .json()
-                    .catch(() => ({ message: "Failed to fetch global users" }));
-                throw new Error(error.message || "Failed to fetch global users");
-            }
-            return response.json() as Promise<{
+            const api = getApiClient();
+            const res = await api.api.v1.admin.users.$get({
+                query: {
+                    search,
+                    cursor: options?.cursor,
+                    limit: options?.limit,
+                    direction: options?.direction,
+                },
+            });
+            return hcJson<{
                 items: any[];
                 nextCursor: string | null;
                 prevCursor: string | null;
-            }>;
+            }>(res);
         },
+        staleTime: QUERY_STALE_MS,
     });
 };
 

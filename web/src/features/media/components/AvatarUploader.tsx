@@ -1,5 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useUpdateAvatar } from "@web/src/features/user-profiles";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import type { UploadFile, UploadProps } from "antd";
 import { App, Modal, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
@@ -52,22 +54,22 @@ export const AvatarUploader = ({ organizationId, userId, open, onClose }: Avatar
         setUploading(true);
 
         try {
-            // 1. Request presigned URL via the dedicated user avatar endpoint
-            const presignResponse = await fetch(`/api/v1/users/${userId}/avatar/presigned-url`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    originalName: fileObj.name || "avatar.jpg",
-                    contentType: fileObj.type || "image/jpeg",
-                    fileSize: fileObj.size,
-                }),
-            });
+            const api = getApiClient();
+            const presignResponse = await api.api.v1.users[":userId"].avatar["presigned-url"].$post(
+                {
+                    param: { userId },
+                    json: {
+                        originalName: fileObj.name || "avatar.jpg",
+                        contentType: fileObj.type || "image/jpeg",
+                        fileSize: fileObj.size,
+                    },
+                }
+            );
 
-            if (!presignResponse.ok) {
-                throw new Error(await presignResponse.text());
-            }
-
-            const { uploadId, presignedUrl } = await presignResponse.json();
+            const { uploadId, presignedUrl } = await hcJson<{
+                uploadId: string;
+                presignedUrl: string;
+            }>(presignResponse);
 
             // 2. Upload to R2 directly
             const uploadResponse = await fetch(presignedUrl, {
@@ -82,11 +84,11 @@ export const AvatarUploader = ({ organizationId, userId, open, onClose }: Avatar
 
             onProgress?.({ percent: 70 });
 
-            // 3. Mark upload as complete via user assets endpoint
-            const completeResponse = await fetch(
-                `/api/v1/users/${userId}/assets/${uploadId}/complete`,
-                { method: "POST" }
-            );
+            const completeResponse = await api.api.v1.users[":userId"].assets[
+                ":uploadId"
+            ].complete.$post({
+                param: { userId, uploadId },
+            });
 
             if (!completeResponse.ok) {
                 throw new Error("Failed to complete upload registration");

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
+import { generateOpaqueId } from "@shared";
 import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
-import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
@@ -36,7 +36,7 @@ describe("Hardened Member Import Integration", () => {
         // 2. Try to import the same email but with a DIFFERENT forced ID
         const conflictPayload: BulkMemberItemDTO[] = [
             {
-                id: `wrong_id_${nanoid()}`,
+                id: `wrong_id_${generateOpaqueId()}`,
                 email: existingEmail,
                 name: "Imposter",
             },

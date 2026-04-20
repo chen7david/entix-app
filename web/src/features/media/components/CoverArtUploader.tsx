@@ -1,4 +1,6 @@
 import { CloudUploadOutlined, VideoCameraOutlined } from "@ant-design/icons";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import type { UploadProps } from "antd";
 import { App, Spin, theme, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
@@ -41,19 +43,20 @@ export const CoverArtUploader = ({
         setUploading(true);
 
         try {
-            // 1. Request presigned URL
-            const presignResponse = await fetch(`/api/v1/orgs/${organizationId}/uploads`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            const api = getApiClient();
+            const presignResponse = await api.api.v1.orgs[":organizationId"].uploads.$post({
+                param: { organizationId },
+                json: {
                     originalName: fileObj.name || "cover.jpg",
                     contentType: fileObj.type || "image/jpeg",
                     fileSize: fileObj.size,
-                }),
+                },
             });
 
-            if (!presignResponse.ok) throw new Error(await presignResponse.text());
-            const { uploadId, presignedUrl } = await presignResponse.json();
+            const { uploadId, presignedUrl } = await hcJson<{
+                uploadId: string;
+                presignedUrl: string;
+            }>(presignResponse);
 
             // 2. Upload to R2 directly
             const uploadResponse = await fetch(presignedUrl, {
@@ -65,11 +68,11 @@ export const CoverArtUploader = ({
             if (!uploadResponse.ok) throw new Error("Failed to upload file to storage");
             onProgress?.({ percent: 70 });
 
-            // 3. Mark upload as complete
-            const completeResponse = await fetch(
-                `/api/v1/orgs/${organizationId}/uploads/${uploadId}/complete`,
-                { method: "POST" }
-            );
+            const completeResponse = await api.api.v1.orgs[":organizationId"].uploads[
+                ":uploadId"
+            ].complete.$post({
+                param: { organizationId, uploadId },
+            });
 
             if (!completeResponse.ok) throw new Error("Failed to complete upload registration");
             onProgress?.({ percent: 90 });

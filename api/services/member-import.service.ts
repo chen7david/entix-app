@@ -2,18 +2,21 @@ import type { MemberRepository } from "@api/repositories/member.repository";
 import type { SocialMediaRepository } from "@api/repositories/social-media.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
 import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import { generateOpaqueId } from "@shared";
 import type { OrgRole } from "@shared/auth/permissions";
 import type * as schema from "@shared/db/schema";
 import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
-import { nanoid } from "nanoid";
+import { BaseService } from "./base.service";
 
-export class MemberImportService {
+export class MemberImportService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private memberRepo: MemberRepository,
         private profileRepo: UserProfileRepository,
         private socialRepo: SocialMediaRepository
-    ) {}
+    ) {
+        super();
+    }
 
     async importMembers(organizationId: string, members: BulkMemberItemDTO[]) {
         const results = {
@@ -26,6 +29,8 @@ export class MemberImportService {
 
         if (members.length === 0) return results;
 
+        // Each user is flushed via `executeBatch`: member/user rows reference ids in the same batch.
+        // `MemberRepository.prepareInsertQuery` therefore takes explicit ids (see schema default on simple `insert` only).
         try {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             const preValidatedMembers = members.map((m) => ({
@@ -107,7 +112,7 @@ export class MemberImportService {
                     }
                 }
 
-                const targetUserId = input.id || userByEmailId || nanoid();
+                const targetUserId = input.id || userByEmailId || generateOpaqueId();
                 const isNewUser = !userByEmailId && (!input.id || !userMapById.has(input.id));
                 const userBatch: any[] = [];
 
@@ -147,7 +152,7 @@ export class MemberImportService {
                 if (isNewUser || !memberSet.has(targetUserId)) {
                     userBatch.push(
                         this.memberRepo.prepareInsertQuery(
-                            nanoid(),
+                            generateOpaqueId(),
                             organizationId,
                             targetUserId,
                             roleToUse
@@ -158,7 +163,7 @@ export class MemberImportService {
 
                     userBatch.push(
                         this.userRepo.prepareAccountInsertRaw({
-                            id: nanoid(),
+                            id: generateOpaqueId(),
                             userId: targetUserId,
                             accountId: targetUserId,
                             providerId: "credential",
@@ -172,7 +177,7 @@ export class MemberImportService {
                 if (input.profile) {
                     userBatch.push(
                         this.profileRepo.prepareUpsert({
-                            id: input.profile.id || nanoid(),
+                            id: input.profile.id || generateOpaqueId(),
                             userId: targetUserId,
                             firstName: input.profile.firstName,
                             lastName: input.profile.lastName,
@@ -196,7 +201,7 @@ export class MemberImportService {
                     for (const p of input.phones) {
                         userBatch.push(
                             this.profileRepo.preparePhoneInsert({
-                                id: p.id || nanoid(),
+                                id: p.id || generateOpaqueId(),
                                 userId: targetUserId,
                                 countryCode: p.countryCode,
                                 number: p.number,
@@ -215,7 +220,7 @@ export class MemberImportService {
                     for (const a of input.addresses) {
                         userBatch.push(
                             this.profileRepo.prepareAddressInsert({
-                                id: a.id || nanoid(),
+                                id: a.id || generateOpaqueId(),
                                 userId: targetUserId,
                                 country: a.country,
                                 state: a.state,
@@ -238,7 +243,7 @@ export class MemberImportService {
                         if (typeId) {
                             userBatch.push(
                                 this.profileRepo.prepareSocialMediaInsert({
-                                    id: s.id || nanoid(),
+                                    id: s.id || generateOpaqueId(),
                                     userId: targetUserId,
                                     socialMediaTypeId: typeId as string,
                                     urlOrHandle: s.urlOrHandle,

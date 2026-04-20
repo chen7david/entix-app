@@ -1,4 +1,5 @@
 import { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
+import { generateCurrencyId } from "@shared";
 import {
     financialAccounts,
     financialCurrencies,
@@ -30,24 +31,26 @@ describe("FinancialCurrenciesRepository", () => {
     });
 
     describe("insert", () => {
-        it("creates a currency with a generated ID", async () => {
-            const currency = await repo.insert(BASE_INPUT);
+        it("creates a currency when the service layer supplies a prefixed id", async () => {
+            const id = generateCurrencyId();
+            const currency = await repo.insert(id, BASE_INPUT);
             if (!currency) throw new Error("Insert failed");
-            expect(currency.id).toMatch(/^fcur_/);
+            expect(currency.id).toBe(id);
             expect(currency.code).toBe("TST");
             expect(currency.archivedAt).toBeNull();
         });
 
         it("returns null on duplicate code (DB constraint)", async () => {
-            await repo.insert(BASE_INPUT);
-            const second = await repo.insert(BASE_INPUT);
+            const id1 = generateCurrencyId();
+            await repo.insert(id1, BASE_INPUT);
+            const second = await repo.insert(generateCurrencyId(), BASE_INPUT);
             expect(second).toBeNull();
         });
     });
 
     describe("findById", () => {
         it("returns currency when found", async () => {
-            const created = await repo.insert(BASE_INPUT);
+            const created = await repo.insert(generateCurrencyId(), BASE_INPUT);
             if (!created) throw new Error("Insert failed");
             const found = await repo.findById(created.id);
             expect(found?.id).toBe(created.id);
@@ -61,7 +64,7 @@ describe("FinancialCurrenciesRepository", () => {
 
     describe("findByCode", () => {
         it("returns currency when found (case-insensitive)", async () => {
-            await repo.insert(BASE_INPUT);
+            await repo.insert(generateCurrencyId(), BASE_INPUT);
             const found = await repo.findByCode("tst");
             expect(found?.code).toBe("TST");
         });
@@ -74,9 +77,13 @@ describe("FinancialCurrenciesRepository", () => {
 
     describe("findAllActive", () => {
         it("only returns non-archived currencies", async () => {
-            const active = await repo.insert(BASE_INPUT);
+            const active = await repo.insert(generateCurrencyId(), BASE_INPUT);
             if (!active) throw new Error("Insert failed");
-            const archived = await repo.insert({ code: "ARC", name: "Archived", symbol: "A" });
+            const archived = await repo.insert(generateCurrencyId(), {
+                code: "ARC",
+                name: "Archived",
+                symbol: "A",
+            });
             if (!archived) throw new Error("Insert failed");
             await repo.archive(archived.id);
 
@@ -88,7 +95,7 @@ describe("FinancialCurrenciesRepository", () => {
 
     describe("archive", () => {
         it("sets archivedAt timestamp", async () => {
-            const currency = await repo.insert(BASE_INPUT);
+            const currency = await repo.insert(generateCurrencyId(), BASE_INPUT);
             if (!currency) throw new Error("Insert failed");
             const updated = await repo.archive(currency.id);
             expect(updated?.archivedAt).toBeInstanceOf(Date);

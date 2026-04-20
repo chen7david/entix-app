@@ -1,4 +1,3 @@
-import { API_V1 } from "@shared";
 import {
     keepPreviousData,
     useInfiniteQuery,
@@ -7,6 +6,9 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_ANALYTICS_MS, QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
 export type SessionDTO = {
@@ -60,26 +62,27 @@ export const useSchedule = (
         queryKey,
         queryFn: async ({ pageParam = undefined }) => {
             if (!organizationId) return { items: [], nextCursor: null, prevCursor: null };
-            let url = `${API_V1}/orgs/${organizationId}/schedule`;
-            const params = new URLSearchParams({ limit: "50" }); // Fetch generously for calendar maps natively
-            if (startDate) params.append("startDate", startDate.toString());
-            if (endDate) params.append("endDate", endDate.toString());
-            if (pageParam) params.append("cursor", pageParam);
-            if (searchQuery) params.append("search", searchQuery);
-
-            if (params.toString()) url += `?${params.toString()}`;
-
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("Failed to fetch sessions");
-            return res.json();
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule.$get({
+                param: { organizationId },
+                query: {
+                    limit: 50,
+                    startDate,
+                    endDate,
+                    cursor: pageParam,
+                    search: searchQuery,
+                    direction: "next",
+                },
+            });
+            return hcJson(res);
         },
         getNextPageParam: (lastPage: any) => lastPage.nextCursor ?? undefined,
         initialPageParam: undefined,
         enabled: !!organizationId && isAuthenticated,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
-    // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.
     const sessions = (sessionsPages?.pages.flatMap((p: any) => p.items) || []) as SessionDTO[];
 
     const createSession = useMutation({
@@ -91,15 +94,13 @@ export const useSchedule = (
             userIds: string[];
             recurrence?: { frequency: "daily" | "weekly" | "biweekly" | "monthly"; count: number };
         }) => {
-            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule.$post({
+                param: { organizationId },
+                json: payload,
             });
-            if (!res.ok) throw new Error("Failed to create session");
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             notification.success({ message: "Session(s) created successfully" });
@@ -128,13 +129,13 @@ export const useSchedule = (
                 status?: "scheduled" | "completed" | "cancelled";
             };
         }) => {
-            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/${sessionId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule[":sessionId"].$patch({
+                param: { organizationId, sessionId },
+                json: payload,
             });
-            if (!res.ok) throw new Error("Failed to update session");
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             notification.success({ message: "Session updated successfully" });
@@ -155,20 +156,18 @@ export const useSchedule = (
             sessionId: string;
             payload: { status: "scheduled" | "completed" | "cancelled" };
         }) => {
-            const res = await fetch(
-                `${API_V1}/orgs/${organizationId}/schedule/${sessionId}/status`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload),
-                }
-            );
-            if (!res.ok) throw new Error("Failed to update status");
-            return res.json();
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule[
+                ":sessionId"
+            ].status.$patch({
+                param: { organizationId, sessionId },
+                json: payload,
+            });
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
-            // Prefix-match invalidation covers all date-range variants of scheduleMetrics
             queryClient.invalidateQueries({ queryKey: ["scheduleMetrics", organizationId] });
             notification.success({
                 message: "Status Updated",
@@ -190,13 +189,13 @@ export const useSchedule = (
             sessionId: string;
             deleteForward: boolean;
         }) => {
-            const res = await fetch(`${API_V1}/orgs/${organizationId}/schedule/${sessionId}`, {
-                method: "DELETE",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ deleteForward }),
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule[":sessionId"].$delete({
+                param: { organizationId, sessionId },
+                json: { deleteForward },
             });
-            if (!res.ok) throw new Error("Failed to delete session");
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
@@ -223,17 +222,16 @@ export const useSchedule = (
                 notes?: string | null;
             }[];
         }) => {
-            const res = await fetch(
-                `${API_V1}/orgs/${organizationId}/schedule/${sessionId}/attendances`,
-                {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ attendances }),
-                }
-            );
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule[
+                ":sessionId"
+            ].attendances.$patch({
+                param: { organizationId, sessionId },
+                json: { attendances },
+            });
 
-            if (!res.ok) throw new Error("Failed to update participation states");
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["schedule", organizationId] });
@@ -272,18 +270,16 @@ export function useScheduleMetrics(organizationId?: string, startDate?: number, 
         queryFn: async () => {
             if (!organizationId) return { total: 0, completed: 0, cancelled: 0 };
 
-            const params = new URLSearchParams();
-            if (startDate) params.set("startDate", startDate.toString());
-            if (endDate) params.set("endDate", endDate.toString());
-
-            const res = await fetch(
-                `${API_V1}/orgs/${organizationId}/schedule/metrics?${params.toString()}`
-            );
-            if (!res.ok) throw new Error("Failed to fetch schedule metrics");
-            return res.json() as Promise<{ total: number; completed: number; cancelled: number }>;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule.metrics.$get({
+                param: { organizationId },
+                query: { startDate, endDate },
+            });
+            return hcJson<{ total: number; completed: number; cancelled: number }>(res);
         },
         enabled: !!organizationId,
         refetchOnWindowFocus: false,
+        staleTime: QUERY_STALE_ANALYTICS_MS,
     });
 
     return {

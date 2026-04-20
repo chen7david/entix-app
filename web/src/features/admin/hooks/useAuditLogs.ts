@@ -1,9 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export type AuditLogFilters = {
     organizationId?: string;
     severity?: "info" | "warning" | "error" | "critical";
     eventType?: string;
+    actorId?: string;
+    startDate?: string | null;
+    endDate?: string | null;
     unresolvedOnly?: boolean;
     cursor?: string;
     limit?: number;
@@ -14,30 +20,28 @@ export const useAdminAuditLogs = (filters: AuditLogFilters) => {
     return useQuery({
         queryKey: ["admin", "audit-logs", filters],
         queryFn: async () => {
-            const url = new URL("/api/v1/admin/audit-logs", window.location.origin);
-            if (filters.organizationId)
-                url.searchParams.set("organizationId", filters.organizationId);
-            if (filters.severity) url.searchParams.set("severity", filters.severity);
-            if (filters.eventType) url.searchParams.set("eventType", filters.eventType);
-            if (filters.unresolvedOnly !== undefined)
-                url.searchParams.set("unresolvedOnly", filters.unresolvedOnly.toString());
-            if (filters.cursor) url.searchParams.set("cursor", filters.cursor);
-            if (filters.limit) url.searchParams.set("limit", filters.limit.toString());
-            if (filters.direction) url.searchParams.set("direction", filters.direction);
-
-            const response = await fetch(url.toString());
-            if (!response.ok) {
-                const error = await response
-                    .json()
-                    .catch(() => ({ message: "Failed to fetch audit logs" }));
-                throw new Error(error.message || "Failed to fetch audit logs");
-            }
-            return response.json() as Promise<{
+            const api = getApiClient();
+            const res = await api.api.v1.admin["audit-logs"].$get({
+                query: {
+                    organizationId: filters.organizationId,
+                    severity: filters.severity,
+                    eventType: filters.eventType,
+                    actorId: filters.actorId,
+                    startDate: filters.startDate || undefined,
+                    endDate: filters.endDate || undefined,
+                    unresolvedOnly: filters.unresolvedOnly,
+                    cursor: filters.cursor,
+                    limit: filters.limit,
+                    direction: filters.direction,
+                },
+            });
+            return hcJson<{
                 items: any[];
                 nextCursor: string | null;
                 prevCursor: string | null;
-            }>;
+            }>(res);
         },
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -45,17 +49,11 @@ export const useAcknowledgeAuditLog = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (id: string) => {
-            const response = await fetch(`/api/v1/admin/audit-logs/${id}/acknowledge`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            const api = getApiClient();
+            const res = await api.api.v1.admin["audit-logs"][":id"].acknowledge.$post({
+                param: { id },
             });
-            if (!response.ok) {
-                const error = await response
-                    .json()
-                    .catch(() => ({ message: "Failed to acknowledge audit log" }));
-                throw new Error(error.message || "Failed to acknowledge audit log");
-            }
-            return response.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin", "audit-logs"] });
@@ -72,20 +70,11 @@ export const useRequeueFailedPayment = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: async (payload: RequeuePayload) => {
-            const response = await fetch("/api/v1/admin/audit-logs/requeue-payment", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(payload),
+            const api = getApiClient();
+            const res = await api.api.v1.admin["audit-logs"]["requeue-payment"].$post({
+                json: payload,
             });
-            if (!response.ok) {
-                const error = await response
-                    .json()
-                    .catch(() => ({ message: "Failed to requeue payment" }));
-                throw new Error(error.message || "Failed to requeue payment");
-            }
-            return response.json() as Promise<{ status: "queued" }>;
+            return hcJson<{ status: "queued" }>(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin", "audit-logs"] });

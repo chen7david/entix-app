@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export interface Session {
     id: string;
@@ -18,6 +19,7 @@ export function useListSessions() {
             const response = await authClient.listSessions();
             return response.data as Session[];
         },
+        staleTime: QUERY_STALE_MS,
     });
 }
 

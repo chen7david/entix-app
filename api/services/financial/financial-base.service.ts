@@ -1,10 +1,19 @@
-import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.error";
+import {
+    BadRequestError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+} from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { ACCOUNT_TYPES } from "@shared";
+import {
+    ACCOUNT_TYPES,
+    generateOpaqueId,
+    generateTransactionId,
+    generateTransactionLineId,
+} from "@shared";
 import { createTransactionRepoInputSchema, financialAccounts } from "@shared/db/schema";
 import { sql } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { BaseService } from "../base.service";
 
 /**
@@ -97,11 +106,11 @@ export abstract class FinancialBaseService extends BaseService {
             );
         }
 
-        // Generate IDs and timestamps (Rule 78)
+        // Ledger batch ties header + debit/credit lines + idempotency in one atomic batch — ids must exist before `transactionsRepo.insert`.
         const now = new Date();
-        const txId = `tx_${nanoid()}`;
-        const debitLineId = `txl_${nanoid()}`;
-        const creditLineId = `txl_${nanoid()}`;
+        const txId = generateTransactionId();
+        const debitLineId = generateTransactionLineId();
+        const creditLineId = generateTransactionLineId();
 
         // Validate at Service Boundary (Rule 85)
         const repoInput = createTransactionRepoInputSchema.parse({
@@ -121,13 +130,22 @@ export abstract class FinancialBaseService extends BaseService {
             // Always populate — repository needs this for the DB unique index guard.
             // If no key was provided by the caller, generate a one-off nanoid.
             // This means non-idempotent callers are safe but won't get dedup replay.
-            idempotencyKey: input.idempotencyKey ?? nanoid(),
+            idempotencyKey: input.idempotencyKey ?? generateOpaqueId(),
         });
 
         // 1. Guard Condition (shared across all statements in the batch)
         const balanceGuard = sql`${financialAccounts.id} = ${input.sourceAccountId} AND ${financialAccounts.isActive} IS NOT 0 AND ${financialAccounts.balanceCents} + ${overdraftLimit} >= ${input.amountCents}`;
 
-        return this.transactionsRepo.insert(repoInput, balanceGuard);
+        const outcome = await this.transactionsRepo.insert(repoInput, balanceGuard);
+        if (!outcome.ok) {
+            if (outcome.code === "idempotency_conflict") {
+                throw new ConflictError("A transaction with this idempotency key already exists.");
+            }
+            throw new BadRequestError(
+                "Transaction failed: Insufficient funds or inactive account."
+            );
+        }
+        return outcome.transactionId;
     }
 
     /**

@@ -5,7 +5,6 @@ import {
     type NewFinancialTransactionCategory,
 } from "@shared/db/schema";
 import { eq, isNull } from "drizzle-orm";
-import { nanoid } from "nanoid";
 
 /**
  * Repository for managing financial transaction categories.
@@ -16,11 +15,12 @@ export class FinancialTransactionCategoriesRepository {
 
     /**
      * Creates a new transaction category.
-     * Generates a prefixed ID (fcat_).
+     * `id` MUST be generated in the Service layer (API.md), e.g. `generateCategoryId()` from `@shared/lib/id`.
      */
-    async create(input: NewFinancialTransactionCategory): Promise<FinancialTransactionCategory> {
-        const id = `fcat_${nanoid(10)}`;
-
+    async create(
+        id: string,
+        input: NewFinancialTransactionCategory
+    ): Promise<FinancialTransactionCategory | null> {
         const [category] = await this.db
             .insert(financialTransactionCategories)
             .values({

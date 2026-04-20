@@ -1,3 +1,6 @@
+/**
+ * See `components/guards/index.ts` for how this composes with `GuestRoute` and `OrgGuard`.
+ */
 import { AppRoutes } from "@shared";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
 import { type OrgRole, type UserRole, useAuth } from "@web/src/features/auth";

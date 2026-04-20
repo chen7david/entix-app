@@ -1,6 +1,8 @@
-import { API_V1, type PaginatedResponse, type TransactionFilters } from "@shared";
+import type { PaginatedResponse, TransactionFilters } from "@shared";
 import { useQuery } from "@tanstack/react-query";
-import { parseApiError } from "@web/src/utils/api";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export type TransactionRecord = {
     id: string;
@@ -31,28 +33,29 @@ export const useTransactions = (orgId?: string, filters: Partial<TransactionFilt
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
 
-            const params = new URLSearchParams();
-            if (filters.cursor) params.append("cursor", filters.cursor);
-            if (filters.limit) params.append("limit", filters.limit.toString());
-            if (filters.startDate) params.append("startDate", filters.startDate);
-            if (filters.endDate) params.append("endDate", filters.endDate);
-            if (filters.minAmount) params.append("minAmount", filters.minAmount.toString());
-            if (filters.maxAmount) params.append("maxAmount", filters.maxAmount.toString());
-            if (filters.txId) params.append("txId", filters.txId);
-            if (filters.accountId) params.append("accountId", filters.accountId);
-            if (filters.status) params.append("status", filters.status);
-
-            const url = `${API_V1}/orgs/${orgId}/finance/transactions?${params.toString()}`;
-
-            const res = await fetch(url);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as TransactionsResponse;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance.transactions.$get({
+                param: { organizationId: orgId },
+                query: {
+                    cursor: filters.cursor,
+                    limit: filters.limit,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    minAmount: filters.minAmount,
+                    maxAmount: filters.maxAmount,
+                    txId: filters.txId,
+                    accountId: filters.accountId,
+                    status: filters.status,
+                },
+            });
+            return hcJson<TransactionsResponse>(res);
         },
         select: (res): PaginatedResponse<TransactionRecord> => ({
             items: res.data,
             nextCursor: res.nextCursor,
             prevCursor: null,
         }),
+        staleTime: QUERY_STALE_MS,
         enabled: !!orgId,
     });
 };

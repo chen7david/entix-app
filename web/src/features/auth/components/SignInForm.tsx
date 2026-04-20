@@ -1,6 +1,6 @@
 import { LockOutlined, MailOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { Alert, Button, Form, Input, Typography } from "antd";
+import { Alert, Button, Form, Input, Space, Typography } from "antd";
 import type React from "react";
 import { Link } from "react-router";
 
@@ -55,9 +55,14 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                 </div>
 
                 <Form.Item>
-                    <Button type="primary" htmlType="submit" block loading={isLoading}>
-                        Sign In
-                    </Button>
+                    <Space.Compact block>
+                        <Button onClick={() => form.resetFields()} disabled={isLoading}>
+                            Reset
+                        </Button>
+                        <Button type="primary" htmlType="submit" loading={isLoading}>
+                            Sign In
+                        </Button>
+                    </Space.Compact>
                 </Form.Item>
 
                 <div style={{ textAlign: "center" }}>

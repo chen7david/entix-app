@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { OrgContext } from "@web/src/context/OrgContext";
 import { authClient } from "@web/src/lib/auth-client";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { useCallback, useContext } from "react";
 import { useAuth } from "../../auth/context/AuthContext";
 
@@ -23,7 +24,7 @@ export const useOrganization = () => {
             return data || [];
         },
         enabled: isAuthenticated,
-        staleTime: 1000 * 60 * 5, // consistent with OrgGuard — no re-fetch on tab focus
+        staleTime: QUERY_STALE_MS,
         refetchOnWindowFocus: false,
     });
 

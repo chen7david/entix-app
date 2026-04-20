@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { generateOpaqueId } from "../../lib/id";
 import { authUsers } from "./auth.schema"; // Import correctly explicitly
 
 export const authOrganizations = sqliteTable(
@@ -21,7 +22,10 @@ export type NewAuthOrganization = typeof authOrganizations.$inferInsert;
 export const authMembers = sqliteTable(
     "auth_members",
     {
-        id: text("id").primaryKey(),
+        /** Omitted on simple inserts; set explicitly in `prepareInsertQuery` for multi-row batches (registration, import). */
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => generateOpaqueId()),
         organizationId: text("organization_id")
             .notNull()
             .references(() => authOrganizations.id, { onDelete: "cascade" }),

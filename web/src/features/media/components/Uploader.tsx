@@ -1,5 +1,7 @@
 import { InboxOutlined } from "@ant-design/icons";
 import { useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import type { UploadProps } from "antd";
 import { App, Upload } from "antd";
 
@@ -43,22 +45,20 @@ export const Uploader = ({
             }
 
             try {
-                // 1. Get presigned URL
-                const response = await fetch(`/api/v1/orgs/${organizationId}/uploads`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
+                const api = getApiClient();
+                const response = await api.api.v1.orgs[":organizationId"].uploads.$post({
+                    param: { organizationId },
+                    json: {
                         originalName: fileObj.name,
                         contentType: fileObj.type || "application/octet-stream",
                         fileSize: fileObj.size,
-                    }),
+                    },
                 });
 
-                if (!response.ok) {
-                    throw new Error(await response.text());
-                }
-
-                const data = await response.json();
+                const data = await hcJson<{
+                    presignedUrl: string;
+                    uploadId: string;
+                }>(response);
 
                 // 2. Upload to R2 directly with PUT
                 const uploadResponse = await fetch(data.presignedUrl, {
@@ -75,13 +75,11 @@ export const Uploader = ({
 
                 onProgress?.({ percent: 100 });
 
-                // 3. Mark as complete
-                const completeResponse = await fetch(
-                    `/api/v1/orgs/${organizationId}/uploads/${data.uploadId}/complete`,
-                    {
-                        method: "POST",
-                    }
-                );
+                const completeResponse = await api.api.v1.orgs[":organizationId"].uploads[
+                    ":uploadId"
+                ].complete.$post({
+                    param: { organizationId, uploadId: data.uploadId },
+                });
 
                 if (!completeResponse.ok) {
                     throw new Error("Failed to complete upload registration");

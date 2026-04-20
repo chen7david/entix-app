@@ -1,3 +1,4 @@
+import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
 import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { GlobalUploadManager } from "@web/src/features/media";
@@ -37,9 +38,11 @@ export const OrgAdminLayout: React.FC = () => {
                 >
                     <Toolbar />
                     <div className="p-8">
-                        <div className="max-w-7xl mx-auto w-full">
-                            <ImpersonationBanner />
-                            <Outlet />
+                        <div className="max-w-7xl mx-auto w-full min-h-0 flex flex-col flex-1">
+                            <RouteErrorBoundary>
+                                <ImpersonationBanner />
+                                <Outlet />
+                            </RouteErrorBoundary>
                         </div>
                     </div>
                 </Content>

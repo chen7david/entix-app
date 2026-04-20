@@ -1,5 +1,6 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { App } from "antd";
 
 export type AdminCreditInput = {
@@ -18,18 +19,12 @@ export const useAdminCredit = () => {
 
     return useMutation({
         mutationFn: async (input: AdminCreditInput) => {
-            const res = await fetch(`${API_V1}/admin/finance/orgs/${input.organizationId}/credit`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.orgs[":organizationId"].credit.$post({
+                param: { organizationId: input.organizationId },
+                json: input,
             });
-
-            if (!res.ok) {
-                const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.message || "Credit failed");
-            }
-
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: (_, vars) => {
             notification.success({

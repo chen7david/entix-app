@@ -1,5 +1,7 @@
-import { API_V1, FINANCIAL_CATEGORIES, getTreasuryAccountId } from "@shared";
+import { FINANCIAL_CATEGORIES, getTreasuryAccountId } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { App } from "antd";
 
 type AdminAdjustment = {
@@ -20,10 +22,6 @@ export const useAdminAdjustWallet = (orgId?: string) => {
         mutationFn: async (input: AdminAdjustment) => {
             if (!orgId) throw new Error("Organization ID required");
 
-            const endpoint = input.type === "credit" ? "credit" : "debit";
-            const url = `${API_V1}/admin/finance/orgs/${orgId}/${endpoint}`;
-
-            // Use provided counterparty account (e.g. Org Funding) or fallback to global Treasury
             const resolvedTreasuryId =
                 input.platformTreasuryAccountId || getTreasuryAccountId(input.currencyId);
 
@@ -46,18 +44,19 @@ export const useAdminAdjustWallet = (orgId?: string) => {
                           description: input.description,
                       };
 
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body),
-            });
+            const api = getApiClient();
+            const res =
+                input.type === "credit"
+                    ? await api.api.v1.admin.finance.orgs[":organizationId"].credit.$post({
+                          param: { organizationId: orgId },
+                          json: body,
+                      })
+                    : await api.api.v1.admin.finance.orgs[":organizationId"].debit.$post({
+                          param: { organizationId: orgId },
+                          json: body,
+                      });
 
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.message || `Failed to execute admin ${input.type}`);
-            }
-
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: (_, variables) => {
             notification.success({

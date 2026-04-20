@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { nanoid } from "nanoid";
+import { generateMediaId } from "../../lib/id";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
 
@@ -9,7 +9,7 @@ export const uploads = sqliteTable(
     {
         id: text("id")
             .primaryKey()
-            .$defaultFn(() => nanoid()),
+            .$defaultFn(() => generateMediaId()),
         originalName: text("original_name").notNull(),
         bucketKey: text("bucket_key").notNull(),
         url: text("url").notNull(),
