@@ -16,7 +16,7 @@
 | API.md — tests layout & patterns | **DONE** | Root `tests/` differs from doc tree; factories exist |
 | UI.md — fetching, HTTP, hooks location | **DONE** | Major gaps vs `fetch`/axios rules |
 | UI.md — pages, lazy load, structure | **PARTIAL** | **`React.lazy`** + **`Suspense`** in **`App.tsx`** (Phase **G**, 2026-04-20); still no **`.page.tsx`** naming |
-| UI.md — notifications, boundaries | **PARTIAL** | Mixed `App.useApp` vs static APIs |
+| UI.md — notifications, boundaries | **PARTIAL** | **`RouteErrorBoundary`** on **org**, **platform-admin**, and **auth** layouts (Phase **J**); mixed `App.useApp` vs static APIs |
 | UI.md — tests (ui + hooks) | **DONE** | Far below mandated coverage |
 | Hono client migration | **DONE** | Scoped in §5 |
 | Remediation **Phase A** (nanoid → service) | **DONE** | See §7.3 log (2026-04-19) |
@@ -28,6 +28,7 @@
 | Remediation **Phase G** (lazy routes + guard docs) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase H** (explicit `staleTime` on queries) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase I** (Hono `hc` client + `hcJson`) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase J** (layout error boundaries) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -40,6 +41,8 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 **Tests:** API test suite is broad and green. Web tests are minimal smoke/unit coverage relative to UI.md Rules 35–36. No automated audit found obvious duplicate test files; some integration areas (auth, avatar, finance) overlap in *intent* and could be consolidated in a future cleanup.
 
 **Hono REST client:** Phase **I** introduced **`hono/client`** + **`hcJson`** at the web boundary; **presigned R2** flows still use raw **`fetch`**. Optional next step: **`hc<AppType>`** end-to-end once composite **`tsc -b`** constraints are acceptable or API types are published as a slim consumer package.
+
+**Error boundaries:** Phase **J** added **`RouteErrorBoundary`** + **`SectionErrorFallback`** (`resetKeys` on pathname) around main layout outlets so route render failures do not replace the entire app shell.
 
 ---
 
@@ -83,7 +86,7 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 | **30** | ~~High~~ **Mitigated (Phase G)** | Route **pages** are **`React.lazy`**-loaded via **`web/src/routes/lazy-pages.ts`** with **`Suspense`** in **`App.tsx`**. Layouts/guards stay eager. |
 | **21** | Medium | **QueryClient defaults** set **`staleTime: 5m`** globally (helps), but many hooks **do not set per-query `staleTime`**; doc requires **explicit** `staleTime` on every `useQuery` (no reliance on default `0` semantics). |
 | **22** | Partial | **`useInfiniteQuery`** is used for some lists (`useMembers`, `useSchedule`, `useMedia`). Many other list flows use **`useQuery` + `fetch`** — verify each list endpoint is **cursor-based** end-to-end (backend + hook). |
-| **32** | Medium | **Single top-level `ErrorBoundary`** in `App.tsx`. Doc: **each route-level page** and **each independently fetching section** should be wrapped. Not met. |
+| **32** | **Partial (Phase J)** | **Root `ErrorBoundary`** in **`App.tsx`** plus **`RouteErrorBoundary`** in **`OrgAdminLayout`**, **`PlatformAdminLayout`**, and **`AuthLayout`** (nested **`SectionErrorFallback`**). Doc’s “every fetching section” is **not** fully met (no per-widget boundaries). |
 | **48** | Low–Med | Many files use **`App.useApp()`** correctly; **`AuditLogPage`** uses **`message.success` / `message.error`** without checking if that path is under `App` provider (may still work if wrapped — verify). Other files may still import static APIs — grep showed widespread `notification.*` usage **from components that also use `App.useApp`** in many places (good). |
 | **35–36** | High | **`web/src/components/ui/`** has almost no components and **zero `*.test.tsx`**. Only **3** feature-level tests under `web/src/features` plus **`ForgotPasswordForm.test.tsx`**, **`App.test.tsx`**, smoke tests — **far below** “every `ui/` component” and “every hook” mandates. |
 
@@ -256,9 +259,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-20 | **G** | **`web/src/routes/lazy-pages.ts`**: all route-level pages + **`FinancialManagementPage`** use **`React.lazy`**. **`App.tsx`**: **`Suspense`** fallback **`CenteredSpin`**; imports from **`components/guards`** barrel. **`components/guards/index.ts`**: documented stack (**`GuestRoute`** → **`ProtectedRoute`** → nested **`OrgGuard`** / role gates) to avoid redundant membership vs role checks. | `check:fix` ✓ · web `typecheck` + `test:run` (22) ✓ · `web` `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **H** | **`web/src/lib/query-config.ts`**: shared **`QUERY_STALE_*`** constants. **`App.tsx`** default **`staleTime`** uses **`QUERY_STALE_MS`**. Every **`useQuery`** / **`useInfiniteQuery`** in **`web/src/features/**`** now sets explicit **`staleTime`** (5 min default, 2 min analytics/metrics, 24h org currencies, 1h social types). **`useMembers` / `useMedia`** paged + infinite modes both covered. **Deferred:** migrating playlist/billing list hooks to **`useInfiniteQuery`** only (consumer audit). | web `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **I** | **`web/src/lib/api-client.ts`**: **`createApiClient` / `getApiClient`** with **`hono/client`** + **`credentials: "include"`**. Client chain typed as **`any`** at the root (avoids **`tsc -b`** pulling the full API graph); responses narrowed with **`hcJson<T>`** in **`web/src/lib/hc-json.ts`**. Migrated feature hooks + upload components from raw **`fetch('/api/v1/...')`** to **`getApiClient()`**; presigned R2 uploads still use **`fetch`**. **`web` build** uses **`tsc --noEmit -p tsconfig.app.json`** (not **`tsc -b`**) so the app project does not typecheck **`api/**`** with web-only TS options. Removed **`hono`** path/alias overrides that broke **`hono/utils/url`** resolution for **`@hono/zod-openapi`**. **`api/app.ts`** exports **`AppType`** for optional future strict typing. Restored **`useActivatedCurrencies`**. Wallet member paths avoid **`orgId!`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
+| 2026-04-20 | **J** | **`RouteErrorBoundary`** (`react-error-boundary` + **`SectionErrorFallback`**) wraps **`ImpersonationBanner`** + **`Outlet`** in **`OrgAdminLayout`** and **`PlatformAdminLayout`**, and **`Outlet`** in **`AuthLayout`**. **`resetKeys={[pathname]}`** clears errors on navigation. Root boundary in **`App.tsx`** unchanged. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **J** (error boundaries per **UI.md 32**) — §7.1 row **J**.
+**Next:** Phase **K** (hooks location / **`.page.tsx`** / doc alignment) — §7.1 row **K**.
 
 ---
 

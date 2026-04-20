@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@web/src/components/common/ThemeToggle";
+import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
 import { theme } from "antd";
 import { Outlet } from "react-router";
 
@@ -13,7 +14,9 @@ export const AuthLayout = () => {
             <div className="fixed top-6 right-6 z-50">
                 <ThemeToggle />
             </div>
-            <Outlet />
+            <RouteErrorBoundary>
+                <Outlet />
+            </RouteErrorBoundary>
         </div>
     );
 };
