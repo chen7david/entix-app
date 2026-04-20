@@ -3,7 +3,7 @@
 **Scope:** Alignment with `docs/API.md` and `docs/UI.md`, test health, logical/code-quality issues, and implications of adopting a **typed Hono client** (RPC/`hc` or OpenAPI-generated client — referred to below as the “Hono REST client” migration).
 
 **Audit completed:** 2026-04-19  
-**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (47 tests) ✓ · `web/npm run build` ✓
+**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (53 tests) ✓ · `web/npm run build` ✓
 
 ---
 
@@ -107,7 +107,7 @@ The frontend **does not currently match UI.md** on every point: **`docs/UI.md`**
 | Suite | Location | Result (2026-04-19) |
 |-------|----------|---------------------|
 | API | `tests/` (+ `api/tests/` for some service tests) | **57 files, 240 tests passed** |
-| Web | `web/src/**/*.test.*` | **17 files, 47 tests passed** |
+| Web | `web/src/**/*.test.*` | **20 files, 53 tests passed** |
 
 ### 3.2 Gaps vs API.md (testing)
 
@@ -263,10 +263,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-20 | **I** | **`web/src/lib/api-client.ts`**: **`createApiClient` / `getApiClient`** with **`hono/client`** + **`credentials: "include"`**. Client chain typed as **`any`** at the root (avoids **`tsc -b`** pulling the full API graph); responses narrowed with **`hcJson<T>`** in **`web/src/lib/hc-json.ts`**. Migrated feature hooks + upload components from raw **`fetch('/api/v1/...')`** to **`getApiClient()`**; presigned R2 uploads still use **`fetch`**. **`web` build** uses **`tsc --noEmit -p tsconfig.app.json`** (not **`tsc -b`**) so the app project does not typecheck **`api/**`** with web-only TS options. Removed **`hono`** path/alias overrides that broke **`hono/utils/url`** resolution for **`@hono/zod-openapi`**. **`api/app.ts`** exports **`AppType`** for optional future strict typing. Restored **`useActivatedCurrencies`**. Wallet member paths avoid **`orgId!`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **J** | **`RouteErrorBoundary`** (`react-error-boundary` + **`SectionErrorFallback`**) wraps **`ImpersonationBanner`** + **`Outlet`** in **`OrgAdminLayout`** and **`PlatformAdminLayout`**, and **`Outlet`** in **`AuthLayout`**. **`resetKeys={[pathname]}`** clears errors on navigation. Root boundary in **`App.tsx`** unchanged. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | 2026-04-20 | **K** | **`docs/UI.md`**: Rule **5** → shared **Hono** client (**`getApiClient`**, **`hcJson`**); Rules **2, 41** → no raw **`/api`** **`fetch`** in components. Rules **6–7, 9, 20, 30, 57, 59** → **`web/src/`** tree, **`features/<domain>/hooks/`**, PascalCase **`*Page.tsx`**, lazy **`routes/lazy-pages.ts`**, updated feature-module example; Rule **36** softened to **SHOULD** with greenfield **MUST**. **No file moves** — documentation-only alignment. | — (docs) | *pending your sign-off* |
-| 2026-04-20 | **L** | Added **`components/ui`** tests: **`EntityAvatar.test.tsx`** and **`POSInput.test.tsx`**. Added hook tests **`useOrgCurrencies.test.tsx`**, **`useWalletBalance.test.tsx`**, **`useTransactionHistory.test.tsx`**, **`useCreateAccount.test.tsx`**, **`useInitializeWallet.test.tsx`**, **`useWalletTransfer.test.tsx`**, **`useRecordMediaPlay.test.tsx`**, **`useScheduleMetrics.test.tsx`**, and **`useMedia.test.tsx`** (disabled states, query params, selected/filtered data, mutation success/error paths, and once-per-media playback behavior with mocked **`getApiClient`** + **`hcJson`**). | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (47) ✓ · web `build` ✓ | *pending your sign-off* |
+| 2026-04-20 | **L** | Added **`components/ui`** tests: **`EntityAvatar.test.tsx`** and **`POSInput.test.tsx`**. Added hook tests **`useOrgCurrencies.test.tsx`**, **`useTransactions.test.tsx`**, **`useWalletBalance.test.tsx`**, **`useTransactionHistory.test.tsx`**, **`useTreasuryBalance.test.tsx`**, **`useCreateAccount.test.tsx`**, **`useInitializeWallet.test.tsx`**, **`useWalletTransfer.test.tsx`**, **`useRecordMediaPlay.test.tsx`**, **`useScheduleMetrics.test.tsx`**, **`useSchedule.test.tsx`**, and **`useMedia.test.tsx`** (disabled states, query params, selected/filtered data, and mutation success/error paths with mocked **`getApiClient`** + **`hcJson`**). | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (53) ✓ · web `build` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** follow-up test expansion (continue Phase **L**) — prioritize high-traffic hooks in wallet/media/schedule and remaining reusable UI components.
+**Next:** No remaining planned phases in §7.1. Optional follow-up: continue incremental test coverage in wallet/media/schedule until UI.md test mandates are fully satisfied.
 
 ---
 
