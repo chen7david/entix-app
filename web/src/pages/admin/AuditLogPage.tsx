@@ -4,13 +4,21 @@ import {
     InfoCircleOutlined,
     WarningOutlined,
 } from "@ant-design/icons";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import {
+    type DatePresetOption,
+    getPresetFromRange,
+    getRangeFromPreset,
+    toIsoRange,
+} from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
-import { Button, Card, Col, message, Row, Select, Space, Table, Tag, Typography } from "antd";
+import { DateUtils } from "@web/src/utils/date";
+import { Button, message, Space, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import type React from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
     useAcknowledgeAuditLog,
     useAdminAuditLogs,
@@ -18,21 +26,71 @@ import {
 } from "../../features/admin/hooks/useAuditLogs";
 
 const { Text } = Typography;
-const { Option } = Select;
-
 interface AuditLogFilters {
     search?: string;
     severity?: "info" | "warning" | "error" | "critical";
+    eventType?: string;
+    actorId?: string;
+    preset?: string;
+    startDate?: string | null;
+    endDate?: string | null;
     unresolvedOnly?: boolean;
 }
 
+const CUSTOM_RANGE_PRESET = "__custom";
+const AUDIT_EVENT_TYPE_OPTIONS = [
+    { label: "Payment Failed", value: "payment.failed" },
+    { label: "Payment Missed", value: "payment.missed" },
+    { label: "Payment Reconciliation Failed", value: "payment.reconciliation-failed" },
+    { label: "Session Payment Processed", value: "session_payment_processed" },
+];
+
 export const AuditLogPage: React.FC = () => {
-    const tableState = useCursorTableState<AuditLogFilters>({
-        initialFilters: {
-            search: undefined,
+    const datePresetOptions = useMemo<DatePresetOption[]>(
+        () => [
+            { label: "Today", start: DateUtils.startOf("day"), end: DateUtils.endOf("day") },
+            {
+                label: "This Week",
+                start: DateUtils.startOf("week"),
+                end: DateUtils.endOf("week"),
+            },
+            {
+                label: "Last Week",
+                start: DateUtils.offsetStartOf(-1, "week", "week"),
+                end: DateUtils.offsetEndOf(-1, "week", "week"),
+            },
+            {
+                label: "This Month",
+                start: DateUtils.startOf("month"),
+                end: DateUtils.endOf("month"),
+            },
+            {
+                label: "Last Month",
+                start: DateUtils.offsetStartOf(-1, "month", "month"),
+                end: DateUtils.offsetEndOf(-1, "month", "month"),
+            },
+        ],
+        []
+    );
+    const initialDateRange = getRangeFromPreset(datePresetOptions, "This Week");
+    const initialIsoRange = initialDateRange
+        ? toIsoRange(initialDateRange.start, initialDateRange.end)
+        : { startDate: null, endDate: null };
+    const initialFilters = useMemo<AuditLogFilters>(
+        () => ({
             severity: undefined,
+            eventType: undefined,
+            actorId: "",
+            preset: "This Week",
+            startDate: initialIsoRange.startDate,
+            endDate: initialIsoRange.endDate,
             unresolvedOnly: false,
-        },
+        }),
+        [initialIsoRange.endDate, initialIsoRange.startDate]
+    );
+
+    const tableState = useCursorTableState<AuditLogFilters>({
+        initialFilters,
     });
 
     const { data, isPending: isLoading } = useAdminAuditLogs({
@@ -184,65 +242,118 @@ export const AuditLogPage: React.FC = () => {
                 subtitle="High-fidelity monitoring of platform events, mission-critical alerts, and billing reconciliation status."
             />
 
-            <Card size="small">
-                <Row gutter={16} align="middle">
-                    <Col span={6}>
-                        <Text type="secondary">Severity</Text>
-                        <Select
-                            placeholder="All Severities"
-                            style={{ width: "100%", marginTop: 4 }}
-                            allowClear
-                            onChange={(val) => tableState.onFiltersChange({ severity: val })}
-                        >
-                            <Option value="info">Info</Option>
-                            <Option value="warning">Warning</Option>
-                            <Option value="error">Error</Option>
-                            <Option value="critical">Critical</Option>
-                        </Select>
-                    </Col>
-                    <Col span={6}>
-                        <Text type="secondary">Status</Text>
-                        <Select
-                            defaultValue={true}
-                            style={{ width: "100%", marginTop: 4 }}
-                            onChange={(val: any) =>
-                                tableState.onFiltersChange({ unresolvedOnly: val })
-                            }
-                        >
-                            <Option value={true}>Pending Only</Option>
-                            <Option value={false}>All Events</Option>
-                        </Select>
-                    </Col>
-                </Row>
-            </Card>
+            <Text type="secondary">Showing {data?.items.length || 0} events</Text>
 
-            <Table
-                columns={columns}
-                dataSource={data?.items || []}
-                loading={isLoading}
-                rowKey="id"
-                pagination={false}
-                scroll={{ x: 1000 }}
-                footer={() => (
-                    <div className="flex justify-between items-center px-4">
-                        <Text type="secondary">Showing {data?.items.length || 0} events</Text>
-                        <Space>
-                            <Button
-                                onClick={tableState.onPrev}
-                                disabled={tableState.cursorStack.length === 0}
-                            >
-                                Previous
-                            </Button>
-                            <Button
-                                onClick={() => tableState.onNext(data?.nextCursor)}
-                                disabled={!data?.nextCursor}
-                            >
-                                Next
-                            </Button>
-                        </Space>
-                    </div>
-                )}
-            />
+            <div className="min-h-[520px]">
+                <DataTableWithFilters
+                    config={{
+                        columns,
+                        data: data?.items || [],
+                        loading: isLoading,
+                        rowKey: "id",
+                        filters: [
+                            {
+                                type: "select",
+                                key: "eventType",
+                                placeholder: "Event Type",
+                                options: AUDIT_EVENT_TYPE_OPTIONS,
+                                showSearch: true,
+                            },
+                            {
+                                type: "search",
+                                key: "actorId",
+                                placeholder: "Actor ID...",
+                            },
+                            {
+                                type: "select",
+                                key: "preset",
+                                placeholder: "Date Preset",
+                                allowClear: false,
+                                options: [
+                                    ...datePresetOptions.map((preset) => ({
+                                        label: preset.label,
+                                        value: preset.label,
+                                    })),
+                                    { label: "Custom Range", value: CUSTOM_RANGE_PRESET },
+                                ],
+                            },
+                            {
+                                type: "dateRange",
+                                key: "dateRange",
+                                keys: ["startDate", "endDate"],
+                                visibleWhen: (values) => values.preset === CUSTOM_RANGE_PRESET,
+                            },
+                            {
+                                type: "select",
+                                key: "severity",
+                                placeholder: "All Severities",
+                                options: [
+                                    { label: "Info", value: "info" },
+                                    { label: "Warning", value: "warning" },
+                                    { label: "Error", value: "error" },
+                                    { label: "Critical", value: "critical" },
+                                ],
+                            },
+                            {
+                                type: "select",
+                                key: "unresolvedOnly",
+                                placeholder: "Status",
+                                allowClear: false,
+                                options: [
+                                    { label: "Pending Only", value: true },
+                                    { label: "All Events", value: false },
+                                ],
+                            },
+                        ],
+                        initialFilters,
+                        filterBar: {
+                            showReset: true,
+                        },
+                        onFiltersChange: (next) => {
+                            const normalized = { ...next };
+                            const nextPreset = normalized.preset as string | null;
+                            if (
+                                nextPreset &&
+                                nextPreset !== CUSTOM_RANGE_PRESET &&
+                                nextPreset !== tableState.filters.preset
+                            ) {
+                                const range = getRangeFromPreset(datePresetOptions, nextPreset);
+                                if (range) {
+                                    const iso = toIsoRange(range.start, range.end);
+                                    normalized.startDate = iso.startDate;
+                                    normalized.endDate = iso.endDate;
+                                }
+                            }
+                            if (normalized.startDate && normalized.endDate) {
+                                const matched = getPresetFromRange(
+                                    datePresetOptions,
+                                    DateUtils.startOf("day", normalized.startDate),
+                                    DateUtils.endOf("day", normalized.endDate)
+                                );
+                                normalized.preset = matched ?? CUSTOM_RANGE_PRESET;
+                            }
+
+                            tableState.onFiltersChange({
+                                severity: normalized.severity,
+                                eventType: normalized.eventType || undefined,
+                                actorId: normalized.actorId || undefined,
+                                preset: normalized.preset,
+                                startDate: normalized.startDate || undefined,
+                                endDate: normalized.endDate || undefined,
+                                unresolvedOnly: normalized.unresolvedOnly,
+                            });
+                        },
+                        pagination: {
+                            pageSize: tableState.pageSize,
+                            hasNextPage: !!data?.nextCursor,
+                            hasPrevPage: tableState.cursorStack.length > 0,
+                            onNext: () => tableState.onNext(data?.nextCursor),
+                            onPrev: tableState.onPrev,
+                            onPageSizeChange: tableState.onPageSizeChange,
+                        },
+                    }}
+                />
+            </div>
         </Space>
     );
 };

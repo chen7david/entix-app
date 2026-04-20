@@ -1,7 +1,19 @@
 import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import * as schema from "@shared/db/schema";
-import { and, eq, like, or } from "drizzle-orm";
+import { and, eq, like, or, type SQL, sql } from "drizzle-orm";
+
+function buildTokenizedUserSearchCondition(rawSearch: string): SQL | undefined {
+    const normalizedTokens = rawSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+
+    if (normalizedTokens.length === 0) return undefined;
+
+    const perTokenConditions = normalizedTokens.map(
+        (token) => like(sql`lower(${schema.authUsers.name})`, `%${token}%`) as SQL
+    );
+
+    return and(...perTokenConditions) as SQL;
+}
 
 /**
  * Repository for user-related database operations.
@@ -66,11 +78,8 @@ export class UserRepository {
         if (cursorWhere) conditions.push(cursorWhere);
 
         if (search) {
-            const searchFilter = or(
-                like(schema.authUsers.name, `%${search}%`),
-                like(schema.authUsers.email, `%${search}%`)
-            );
-            if (searchFilter) {
+            const searchFilter = buildTokenizedUserSearchCondition(search);
+            if (searchFilter !== undefined) {
                 conditions.push(searchFilter);
             }
         }
@@ -207,7 +216,7 @@ export class UserRepository {
                 like(schema.authUsers.name, `%${search}%`),
                 like(schema.authUsers.email, `%${search}%`)
             );
-            if (searchFilter) {
+            if (searchFilter !== undefined) {
                 filters.push(searchFilter);
             }
         }

@@ -19,6 +19,7 @@ type Props = {
     isReversing?: string | null;
     pagination: CursorPaginationConfig;
     filters: FilterConfig[];
+    initialFilters?: Record<string, any>;
 };
 
 export const TransactionLedgerTable: React.FC<Props> = ({
@@ -29,6 +30,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
     isReversing,
     pagination,
     filters,
+    initialFilters,
 }) => {
     const { notification } = App.useApp();
     const [reversalModal, setReversalModal] = useState<{ id: string } | null>(null);
@@ -62,6 +64,10 @@ export const TransactionLedgerTable: React.FC<Props> = ({
                           )
                         : undefined,
                     onFiltersChange,
+                    initialFilters,
+                    filterBar: {
+                        showReset: true,
+                    },
                 }}
             />
 

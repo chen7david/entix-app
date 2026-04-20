@@ -1,3 +1,8 @@
+import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
+import {
+    type DatePresetOption,
+    getRangeFromPreset,
+} from "@web/src/components/data/filter-bar/datePresetAdapter";
 import {
     AttendanceTrendChart,
     SessionVolumeChart,
@@ -11,7 +16,7 @@ import {
 } from "@web/src/features/dashboard";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
-import { Col, Row, Select, Space, Typography } from "antd";
+import { Col, Row, Typography } from "antd";
 import { useState } from "react";
 
 const { Title, Text } = Typography;
@@ -30,30 +35,52 @@ export const AdminPortal: React.FC = () => {
     const { sessionTrends, isLoadingSessions, attendanceTrends, isLoadingAttendance } =
         useAnalytics(activeOrganization?.id, range.start, range.end);
 
+    const dashboardPresetOptions: DatePresetOption[] = [
+        {
+            label: "Last 7 Days",
+            start: DateUtils.offsetStartOf(-7, "day", "day"),
+            end: DateUtils.endOf("day"),
+        },
+        {
+            label: "Last 30 Days",
+            start: DateUtils.offsetStartOf(-30, "day", "day"),
+            end: DateUtils.endOf("day"),
+        },
+        {
+            label: "This Month",
+            start: DateUtils.startOf("month"),
+            end: DateUtils.endOf("month"),
+        },
+        {
+            label: "This Year",
+            start: DateUtils.startOf("year"),
+            end: DateUtils.endOf("year"),
+        },
+    ];
+
     const handlePresetChange = (label: string) => {
-        let start: number;
-        let end: number;
-
-        if (label === "This Month") {
-            start = DateUtils.startOf("month");
-            end = DateUtils.endOf("month");
-        } else if (label === "Last 7 Days") {
-            start = DateUtils.offsetStartOf(-7, "day", "day");
-            end = DateUtils.endOf("day");
-        } else if (label === "This Year") {
-            start = DateUtils.startOf("year");
-            end = DateUtils.endOf("year");
-        } else if (label === "Last 30 Days") {
-            start = DateUtils.offsetStartOf(-30, "day", "day");
-            end = DateUtils.endOf("day");
-        } else {
-            // Default to Last 30 Days if somehow another label is passed
-            start = DateUtils.offsetStartOf(-30, "day", "day");
-            end = DateUtils.endOf("day");
+        const preset = getRangeFromPreset(dashboardPresetOptions, label);
+        if (!preset) {
+            const fallback = getRangeFromPreset(dashboardPresetOptions, "This Month");
+            if (!fallback) return;
+            setRange({ start: fallback.start, end: fallback.end, label: "This Month" });
+            return;
         }
-
-        setRange({ start, end, label });
+        setRange({ start: preset.start, end: preset.end, label });
     };
+
+    const dashboardFilters: FilterConfig[] = [
+        {
+            type: "select",
+            key: "preset",
+            minWidth: 160,
+            options: dashboardPresetOptions.map((preset) => ({
+                label: preset.label,
+                value: preset.label,
+            })),
+            allowClear: false,
+        },
+    ];
 
     return (
         <div className="pb-8">
@@ -67,30 +94,17 @@ export const AdminPortal: React.FC = () => {
                         organization health.
                     </Text>
                 </Col>
-                <Col className="mt-4 md:mt-0">
-                    <Space>
-                        <Text
-                            type="secondary"
-                            className="text-xs font-medium uppercase tracking-wider"
-                        >
-                            Filter:
-                        </Text>
-                        <Select
-                            value={range.label}
-                            onChange={handlePresetChange}
-                            className="min-w-[140px]"
-                            options={[
-                                { label: "Last 7 Days", value: "Last 7 Days" },
-                                { label: "Last 30 Days", value: "Last 30 Days" },
-                                { label: "This Month", value: "This Month" },
-                                { label: "This Year", value: "This Year" },
-                            ]}
-                        />
-                    </Space>
-                </Col>
             </Row>
 
             <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
+            <FilterBar
+                filters={dashboardFilters}
+                values={{ preset: range.label }}
+                initialValues={{ preset: "This Month" }}
+                onChange={(next) => handlePresetChange(next.preset as string)}
+                onReset={() => handlePresetChange("This Month")}
+                showReset
+            />
 
             <Row gutter={[24, 24]}>
                 {/* Analytics Row */}

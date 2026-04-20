@@ -6,7 +6,7 @@ import {
     type SystemAuditEvent,
     systemAuditEvents,
 } from "@shared/db/schema";
-import { and, eq, isNull, type SQL, sql } from "drizzle-orm";
+import { and, eq, gte, isNull, like, lte, or, type SQL, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 
 /**
@@ -89,6 +89,8 @@ export class SystemAuditRepository {
         severity?: AuditSeverity;
         eventType?: string;
         actorId?: string;
+        startDate?: Date;
+        endDate?: Date;
         unresolvedOnly?: boolean;
         limit?: number;
         cursor?: string;
@@ -99,6 +101,8 @@ export class SystemAuditRepository {
             severity,
             eventType,
             actorId,
+            startDate,
+            endDate,
             unresolvedOnly,
             limit = 20,
             cursor,
@@ -120,10 +124,30 @@ export class SystemAuditRepository {
             conditions.push(eq(systemAuditEvents.severity, severity));
         }
         if (eventType) {
-            conditions.push(eq(systemAuditEvents.eventType, eventType));
+            const trimmed = eventType.trim();
+            if (trimmed) {
+                conditions.push(eq(systemAuditEvents.eventType, trimmed));
+            }
         }
         if (actorId) {
-            conditions.push(eq(systemAuditEvents.actorId, actorId));
+            const trimmed = actorId.trim();
+            if (trimmed) {
+                conditions.push(
+                    or(
+                        like(
+                            sql`lower(${systemAuditEvents.actorId})`,
+                            `%${trimmed.toLowerCase()}%`
+                        ),
+                        like(sql`lower(${systemAuditEvents.message})`, `%${trimmed.toLowerCase()}%`)
+                    ) as SQL
+                );
+            }
+        }
+        if (startDate) {
+            conditions.push(gte(systemAuditEvents.createdAt, startDate));
+        }
+        if (endDate) {
+            conditions.push(lte(systemAuditEvents.createdAt, endDate));
         }
         if (unresolvedOnly) {
             conditions.push(isNull(systemAuditEvents.acknowledgedAt));

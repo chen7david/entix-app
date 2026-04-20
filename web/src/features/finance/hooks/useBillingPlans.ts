@@ -15,14 +15,15 @@ import { App } from "antd";
  */
 export const useBillingPlans = (orgId: string, query: Partial<BillingPlanPaginationInput> = {}) => {
     const { limit = 20, cursor, search } = query;
+    const normalizedSearch = search?.trim() || undefined;
 
     return useQuery({
-        queryKey: ["billing-plans", orgId, { limit, cursor, search }],
+        queryKey: ["billing-plans", orgId, { limit, cursor, search: normalizedSearch }],
         queryFn: async () => {
             const api = getApiClient();
             const res = await api.api.v1.orgs[":organizationId"].finance["billing-plans"].$get({
                 param: { organizationId: orgId },
-                query: { limit, cursor, search },
+                query: { limit, cursor, search: normalizedSearch },
             });
             const { data, nextCursor } = await hcJson<{
                 data: BillingPlanDTO[];

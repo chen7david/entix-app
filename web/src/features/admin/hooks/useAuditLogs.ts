@@ -7,6 +7,9 @@ export type AuditLogFilters = {
     organizationId?: string;
     severity?: "info" | "warning" | "error" | "critical";
     eventType?: string;
+    actorId?: string;
+    startDate?: string | null;
+    endDate?: string | null;
     unresolvedOnly?: boolean;
     cursor?: string;
     limit?: number;
@@ -23,6 +26,9 @@ export const useAdminAuditLogs = (filters: AuditLogFilters) => {
                     organizationId: filters.organizationId,
                     severity: filters.severity,
                     eventType: filters.eventType,
+                    actorId: filters.actorId,
+                    startDate: filters.startDate || undefined,
+                    endDate: filters.endDate || undefined,
                     unresolvedOnly: filters.unresolvedOnly,
                     cursor: filters.cursor,
                     limit: filters.limit,

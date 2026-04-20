@@ -2,15 +2,33 @@ import { InfoCircleOutlined, PlusCircleOutlined, ReloadOutlined } from "@ant-des
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import {
+    type DatePresetOption,
+    getPresetFromRange,
+    getRangeFromPreset,
+    toIsoRange,
+} from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
 import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { useSession } from "@web/src/lib/auth-client";
+import { DateUtils } from "@web/src/utils/date";
 import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
+const CUSTOM_RANGE_PRESET = "__custom";
+
+function areWalletFiltersEqual(a: Record<string, any>, b: Record<string, any>): boolean {
+    return (
+        (a.txId ?? "") === (b.txId ?? "") &&
+        (a.preset ?? "") === (b.preset ?? "") &&
+        (a.startDate ?? null) === (b.startDate ?? null) &&
+        (a.endDate ?? null) === (b.endDate ?? null) &&
+        (a.status ?? undefined) === (b.status ?? undefined)
+    );
+}
 
 export const WalletPage = () => {
     const { data: session } = useSession();
@@ -18,9 +36,49 @@ export const WalletPage = () => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
+    const datePresetOptions = useMemo<DatePresetOption[]>(
+        () => [
+            { label: "Today", start: DateUtils.startOf("day"), end: DateUtils.endOf("day") },
+            {
+                label: "This Week",
+                start: DateUtils.startOf("week"),
+                end: DateUtils.endOf("week"),
+            },
+            {
+                label: "Last Week",
+                start: DateUtils.offsetStartOf(-1, "week", "week"),
+                end: DateUtils.offsetEndOf(-1, "week", "week"),
+            },
+            {
+                label: "This Month",
+                start: DateUtils.startOf("month"),
+                end: DateUtils.endOf("month"),
+            },
+            {
+                label: "Last Month",
+                start: DateUtils.offsetStartOf(-1, "month", "month"),
+                end: DateUtils.offsetEndOf(-1, "month", "month"),
+            },
+        ],
+        []
+    );
+    const walletInitialFilters = useMemo(() => {
+        const today = getRangeFromPreset(datePresetOptions, "Today");
+        const todayIso = today
+            ? toIsoRange(today.start, today.end)
+            : { startDate: null, endDate: null };
+        return {
+            txId: "",
+            preset: "Today",
+            startDate: todayIso.startDate,
+            endDate: todayIso.endDate,
+            status: undefined,
+        };
+    }, [datePresetOptions]);
+
     // Cursor stack for pagination
     const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [filters, setFilters] = useState<Record<string, any>>({});
+    const [filters, setFilters] = useState<Record<string, any>>(walletInitialFilters);
     const [isTransferOpen, setIsTransferOpen] = useState(false);
 
     const currentCursor = cursorStack[cursorStack.length - 1];
@@ -49,9 +107,23 @@ export const WalletPage = () => {
             placeholder: "Search ID...",
         },
         {
+            type: "select",
+            key: "preset",
+            placeholder: "Date Preset",
+            allowClear: false,
+            options: [
+                ...datePresetOptions.map((preset) => ({
+                    label: preset.label,
+                    value: preset.label,
+                })),
+                { label: "Custom Range", value: CUSTOM_RANGE_PRESET },
+            ],
+        },
+        {
             type: "dateRange",
             key: "dateRange",
             keys: ["startDate", "endDate"],
+            visibleWhen: (values) => values.preset === CUSTOM_RANGE_PRESET,
         },
         {
             type: "select",
@@ -71,7 +143,30 @@ export const WalletPage = () => {
     };
 
     const handleFiltersChange = (newFilters: Record<string, any>) => {
-        setFilters(newFilters);
+        const nextFilters = { ...newFilters };
+        const nextPreset = nextFilters.preset as string | null;
+
+        if (nextPreset && nextPreset !== filters.preset && nextPreset !== CUSTOM_RANGE_PRESET) {
+            const presetRange = getRangeFromPreset(datePresetOptions, nextPreset);
+            if (presetRange) {
+                const isoRange = toIsoRange(presetRange.start, presetRange.end);
+                nextFilters.startDate = isoRange.startDate;
+                nextFilters.endDate = isoRange.endDate;
+            }
+        }
+
+        if (nextFilters.startDate && nextFilters.endDate) {
+            const matchedPreset = getPresetFromRange(
+                datePresetOptions,
+                DateUtils.startOf("day", nextFilters.startDate),
+                DateUtils.endOf("day", nextFilters.endDate)
+            );
+            nextFilters.preset = matchedPreset ?? CUSTOM_RANGE_PRESET;
+        }
+
+        if (areWalletFiltersEqual(nextFilters, filters)) return;
+
+        setFilters(nextFilters);
         setCursorStack([]); // Reset to first page on filter change
     };
 
@@ -202,6 +297,7 @@ export const WalletPage = () => {
                             onPrev: handlePrev,
                         }}
                         filters={filterConfig}
+                        initialFilters={walletInitialFilters}
                         onFiltersChange={handleFiltersChange}
                     />
                 </Col>

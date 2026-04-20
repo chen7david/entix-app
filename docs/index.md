@@ -58,6 +58,7 @@ The project's definitive rulebook.
 Client-side development standards for React 19 + Ant Design 6.
 - [**UI.md — Frontend Architecture Reference**](./UI) — Full frontend rulebook.
 - [**Frontend Navigation**](./frontend/01-navigation) — Type-safe routing in a multi-tenant shell.
+- [**Unified Filter Bar**](./frontend/02-unified-filter-bar) — Shared filter architecture, reset rules, and plugin/adapter patterns.
 
 ---
 
