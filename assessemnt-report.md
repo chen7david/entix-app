@@ -15,7 +15,7 @@
 | API.md — pagination & responses | **DONE** | Mostly cursor-based; a few shape mismatches |
 | API.md — tests layout & patterns | **DONE** | Root `tests/` differs from doc tree; factories exist |
 | UI.md — fetching, HTTP, hooks location | **DONE** | Major gaps vs `fetch`/axios rules |
-| UI.md — pages, lazy load, structure | **DONE** | No `.page.tsx`; no `React.lazy` |
+| UI.md — pages, lazy load, structure | **PARTIAL** | **`React.lazy`** + **`Suspense`** in **`App.tsx`** (Phase **G**, 2026-04-20); still no **`.page.tsx`** naming |
 | UI.md — notifications, boundaries | **PARTIAL** | Mixed `App.useApp` vs static APIs |
 | UI.md — tests (ui + hooks) | **DONE** | Far below mandated coverage |
 | Hono client migration | **DONE** | Scoped in §5 |
@@ -24,6 +24,8 @@
 | Remediation **Phase C** (handler layering) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase D** (handler errors / uploads) | **DONE** | See §7.3 log (2026-04-20) |
 | Remediation **Phase E** (`BaseService` alignment) | **DONE** | See §7.3 log (2026-04-20) |
+| Remediation **Phase F** (axios / shared HTTP) | **DEFERRED** | Skipped in favor of **Hono `hc` client** (Phase **I**) to avoid double migration |
+| Remediation **Phase G** (lazy routes + guard docs) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -76,7 +78,7 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 | **2, 41** | High | Server IO is concentrated in hooks (good), but **implementation violates the mandated transport** (`fetch` instead of axios instance). |
 | **6, 20** | Medium | Domain hooks live under **`web/src/features/*/hooks/`** and **`web/src/features/*/*.hooks.ts`**, not **`web/src/hooks/`** as mandated. Only **`useTimezoneInit`** appears under `web/src/hooks/`. |
 | **7, 9** | Medium | Pages are **`OrganizationMembersPage.tsx`**, etc. — **not** **`kebab-case.page.tsx`**. Several pages use **`useQueryClient`** only (acceptable), but doc’s naming convention is not followed. |
-| **30** | High | **`App.tsx`** uses **static imports for every page** — **no `React.lazy`**. Doc: all page components MUST be lazy-loaded. |
+| **30** | ~~High~~ **Mitigated (Phase G)** | Route **pages** are **`React.lazy`**-loaded via **`web/src/routes/lazy-pages.ts`** with **`Suspense`** in **`App.tsx`**. Layouts/guards stay eager. |
 | **21** | Medium | **QueryClient defaults** set **`staleTime: 5m`** globally (helps), but many hooks **do not set per-query `staleTime`**; doc requires **explicit** `staleTime` on every `useQuery` (no reliance on default `0` semantics). |
 | **22** | Partial | **`useInfiniteQuery`** is used for some lists (`useMembers`, `useSchedule`, `useMedia`). Many other list flows use **`useQuery` + `fetch`** — verify each list endpoint is **cursor-based** end-to-end (backend + hook). |
 | **32** | Medium | **Single top-level `ErrorBoundary`** in `App.tsx`. Doc: **each route-level page** and **each independently fetching section** should be wrapped. Not met. |
@@ -248,9 +250,11 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-19 | **C** | **`AdminAuditHandler`** / **`ReconciliationHandler`** now call **`getAdminAuditService`** / **`getReconciliationService`** only (no **`getDbClient`** / repo factories in handlers). New **`AdminAuditService`** (list, acknowledge, requeue + queue send) and **`ReconciliationService`** (missed-payment list + retry orchestration). **`SystemAuditRepository`**: **`findByIdAndOrganization`**, **`setAcknowledged`** (optional org scope); **`acknowledge`** delegates to **`setAcknowledged`**. Malformed event **`metadata`** JSON → **422** (`invalid_metadata`) instead of an uncaught parse error. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
 | 2026-04-20 | **D** | **`OrgUploadsHandler`**: removed no-op **`try/catch`**; missing **`userId`** → **`UnauthorizedError`** (401). **`listUploads`** returns explicit **`{ items, nextCursor, prevCursor }`** with typed **`UploadDto[]`** (matches **`createPaginatedResponseSchema`** — web **`useOrganizationUploads`** unchanged). **`completeUpload`** builds a typed **`UploadDto`** (no **`as any`**). Replaced **`new Error`** with **`AppError`** subclasses: **`SessionPaymentService`** (**`UnprocessableEntityError`**, **`InternalServerError`** for batch failures), **`MailService`** (**`ServiceUnavailableError`** when Resend client missing), **`entix.queue`** unsupported payment type → **`InternalServerError`**. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ · web `typecheck` ✓ | *pending your sign-off* |
 | 2026-04-20 | **E** | **`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, and **`MailService`** now **`extend BaseService`** with **`super()`** in constructors (API.md Rule **4** / **`assertExists`** availability). No call-site changes. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
+| 2026-04-20 | **F** | **Deferred** — no **`lib/axios.ts`**; team preference to go straight to **Hono typed client** (Phase **I**) instead of axios + migration churn. | — | *recorded* |
+| 2026-04-20 | **G** | **`web/src/routes/lazy-pages.ts`**: all route-level pages + **`FinancialManagementPage`** use **`React.lazy`**. **`App.tsx`**: **`Suspense`** fallback **`CenteredSpin`**; imports from **`components/guards`** barrel. **`components/guards/index.ts`**: documented stack (**`GuestRoute`** → **`ProtectedRoute`** → nested **`OrgGuard`** / role gates) to avoid redundant membership vs role checks. | `check:fix` ✓ · web `typecheck` + `test:run` (22) ✓ · `web` `build` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **F** (web transport DRY — **`web/src/lib/axios.ts`** or approved equivalent per UI.md **5**) — §7.1 row **F**.
+**Next:** Phase **H** (explicit **`staleTime`** on queries; cursor / **`useInfiniteQuery`** alignment) — §7.1 row **H** — or **Phase I** (Hono **`hc`**) if prioritizing typed client over query polish.
 
 ---
 
