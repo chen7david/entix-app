@@ -1,6 +1,6 @@
 import { KeyOutlined } from "@ant-design/icons";
 import { changePassword } from "@web/src/lib/auth-client";
-import { Alert, App, Button, Card, Form, Input } from "antd";
+import { Alert, App, Button, Card, Form, Input, Space } from "antd";
 import { useState } from "react";
 
 export const PasswordUpdateForm = () => {
@@ -89,9 +89,14 @@ export const PasswordUpdateForm = () => {
                 </Form.Item>
 
                 <Form.Item className="mb-0 text-right mt-6">
-                    <Button type="primary" htmlType="submit" loading={loading}>
-                        Update Password
-                    </Button>
+                    <Space>
+                        <Button onClick={() => form.resetFields()} disabled={loading}>
+                            Reset
+                        </Button>
+                        <Button type="primary" htmlType="submit" loading={loading}>
+                            Update Password
+                        </Button>
+                    </Space>
                 </Form.Item>
             </Form>
         </Card>

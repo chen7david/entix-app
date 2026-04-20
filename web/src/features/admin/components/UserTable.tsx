@@ -10,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import { getAvatarUrl } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import {
     useAdminUsers,
@@ -45,7 +46,7 @@ export const UserTable: React.FC = () => {
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 
     const [debouncedSearch] = useDebouncedValue(searchText, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,

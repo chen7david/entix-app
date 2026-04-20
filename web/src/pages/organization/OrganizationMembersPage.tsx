@@ -13,6 +13,7 @@ import {
 import { getAvatarUrl, getRoleColor, type MemberDTO, ORG_ROLE_OPTIONS } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
@@ -92,7 +93,7 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     }, [debouncedSearch, setSearchParams, searchParams]);
     const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
     const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(10);
+    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 
     const [createForm] = Form.useForm();
     // Store only the ID — the drawer derives live data from the members cache
@@ -518,6 +519,12 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                     <Form.Item className="mb-0 flex justify-end">
                         <Space>
                             <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
+                            <Button
+                                onClick={() => createForm.resetFields()}
+                                disabled={createMemberMutation.isPending}
+                            >
+                                Reset
+                            </Button>
                             <Button
                                 type="primary"
                                 htmlType="submit"

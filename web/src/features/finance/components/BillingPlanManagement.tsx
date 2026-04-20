@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import type { BillingPlanDTO, UpdateBillingPlanInput } from "@shared/schemas/dto/billing-plan.dto";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { POSInput } from "@web/src/components/ui/POSInput";
 import {
@@ -212,7 +213,7 @@ export const BillingPlanManagement = React.forwardRef<BillingPlanManagementRef, 
     ({ orgId }, ref) => {
         const { modal } = App.useApp();
         const [search, setSearch] = useState("");
-        const [limit, setLimit] = useState(20);
+        const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
         const [drawerVisible, setDrawerVisible] = useState(false);
         const [editingPlan, setEditingPlan] = useState<BillingPlanDTO | null>(null);
 

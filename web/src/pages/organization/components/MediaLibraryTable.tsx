@@ -8,6 +8,7 @@ import {
     VideoCameraOutlined,
 } from "@ant-design/icons";
 import type { Media } from "@shared";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import {
@@ -18,7 +19,7 @@ import {
 } from "@web/src/features/media";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
-import { Button, Drawer, Dropdown, Form, Input, Tooltip, Typography } from "antd";
+import { Button, Drawer, Dropdown, Form, Input, Space, Tooltip, Typography } from "antd";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { MediaDropzone } from "./MediaDropzone";
@@ -36,7 +37,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
 
     const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
     const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
     const {
         media,
@@ -248,9 +249,14 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                 width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
                 destroyOnClose
                 extra={
-                    <Button type="primary" onClick={() => form.submit()} loading={isUpdating}>
-                        Save Changes
-                    </Button>
+                    <Space>
+                        <Button onClick={() => form.resetFields()} disabled={isUpdating}>
+                            Reset
+                        </Button>
+                        <Button type="primary" onClick={() => form.submit()} loading={isUpdating}>
+                            Save Changes
+                        </Button>
+                    </Space>
                 }
             >
                 {activeMedia && (

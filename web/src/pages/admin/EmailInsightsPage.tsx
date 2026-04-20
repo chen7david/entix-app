@@ -1,5 +1,6 @@
 import { CheckCircleOutlined, SendOutlined, WarningOutlined } from "@ant-design/icons";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
@@ -35,7 +36,7 @@ export const EmailInsightsPage: React.FC = () => {
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(20);
+    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 
     const [debouncedSearch] = useDebouncedValue(searchText, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,

@@ -4,7 +4,7 @@ import { useActivatedCurrencies } from "@web/src/features/finance";
 import type { CurrencyWithStatus } from "@web/src/features/finance/hooks/useOrgCurrencies";
 import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Button, Drawer, Form, Input, Select } from "antd";
+import { App, Button, Drawer, Form, Input, Select, Space } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
 type TransferDrawerProps = {
@@ -46,9 +46,14 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
             onClose={onClose}
             open={open}
             extra={
-                <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    Confirm Transfer
-                </Button>
+                <Space>
+                    <Button onClick={() => form.resetFields()} disabled={isPending}>
+                        Reset
+                    </Button>
+                    <Button type="primary" onClick={() => form.submit()} loading={isPending}>
+                        Confirm Transfer
+                    </Button>
+                </Space>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>
