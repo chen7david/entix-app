@@ -22,6 +22,7 @@
 | Remediation **Phase A** (nanoid → service) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase B** (repo error purity) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase C** (handler layering) | **DONE** | See §7.3 log (2026-04-19) |
+| Remediation **Phase D** (handler errors / uploads) | **DONE** | See §7.3 log (2026-04-20) |
 
 ---
 
@@ -44,15 +45,15 @@ The frontend **does not currently match UI.md** on several mandatory points: **a
 | Rule | Severity | Finding |
 |------|----------|---------|
 | **1** | High | Repositories import/use **`nanoid`**: `member.repository.ts`, `financial-org-settings.repository.ts`, `financial-currencies.repository.ts`, `financial-transaction-categories.repository.ts`. IDs MUST be generated in the Service layer. |
-| **2** | High | **`finance-billing-plans.repository.ts`** throws `NotFoundError` / `ConflictError`. Repos MUST return `null` / propagate DB errors for services to interpret. **`financial-transactions.repository.ts`** throws `ConflictError` on idempotency. |
-| **3** | High | Handlers bypass services: **`api/routes/admin/audit.handlers.ts`** uses `getSystemAuditRepository`, **`api/routes/internal/reconciliation.handlers.ts`** uses repos, `getDbClient`, and `paymentService` in one handler. |
+| **2** | ~~High~~ **Mitigated (Phase B)** | ~~Repos above~~ — billing-plan / ledger repo throws addressed in Phase **B**; revisit if new repo throws appear. |
+| **3** | ~~High~~ **Mitigated (Phase C)** | ~~Audit/reconciliation handlers~~ — routed through **`AdminAuditService`** / **`ReconciliationService`** (Phase **C**). |
 | **4** | Medium | **`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, **`MailService`** do not extend **`BaseService`** (pattern drift vs doc). |
 | **6** | Low–Med | Many `findFirst` usages **do** use `?? null` (good). Spot-check any `findFirst` path that returns a value without coercion (grep shows many sites — verify any that return directly to services). |
-| **13–15** | Medium | **`new Error(...)`** in runtime code: e.g. **`uploads.handlers.ts`** (`Unauthorized`), **`session-payment.service.ts`**, **`mailer.service.ts`**, **`financial-transactions.repository.ts`** (`throw new Error()`), **`entix.queue.ts`**, **`uploads.handlers.ts`**. Doc requires **`AppError`** (or subclasses), not generic `Error`. |
-| **14** | Medium | **`uploads.handlers.ts`**: methods wrap service calls in **`try/catch`** (even if rethrowing). Doc: handlers MUST NOT use try/catch; middleware should own errors. |
-| **14 / 45** | Low | **`reconciliation.handlers.ts`** uses `try` around payment processing (read through end of file for full pattern). |
+| **13–15** | ~~Medium~~ **Partial (Phase D)** | **`uploads.handlers`**, **`session-payment.service`**, **`mailer.service`**, **`entix.queue`** — generic **`Error`** replaced with **`AppError`** subclasses where touched in Phase **D**. Grep for remaining **`new Error`** under **`api/`** after merges. |
+| **14** | ~~Medium~~ **Mitigated (Phase D)** | **`uploads.handlers.ts`** — **`try/catch`** removed (Phase **D**). |
+| **14 / 45** | ~~Low~~ **Mitigated (Phase C)** | Retry **`try/catch`** moved into **`ReconciliationService`**; handler maps outcomes only. |
 | **19** | Process | Doc references **`MemberService.assertMembership`**. Code uses **`requireOrgMembership`** middleware and **`getMember`** patterns. Not necessarily wrong, but **naming and doc are out of sync**; confirm every org-scoped service path is covered by middleware + service checks. **`assertMembership` grep:** no matches. |
-| **23–27** | Medium | **`uploads.handlers.ts` `listUploads`**: returns **`{ ...result, items }`** rather than documented **`{ data, nextCursor, total? }`**. **`completeUpload`** returns a spread with **`as any`**. Risk: contract drift vs clients and OpenAPI. |
+| **23–27** | ~~Medium~~ **Mitigated (Phase D)** | **`listUploads`** returns explicit **`{ items, nextCursor, prevCursor }`** aligned with **`createPaginatedResponseSchema`**. **`completeUpload`** returns typed **`UploadDto`** (no **`as any`**). |
 | **28–32** | Process | Tests live under repo-root **`tests/`** with **`tests/factories/`** — conceptually aligned, but **folder layout differs** from API.md’s `tests/unit` + `tests/mocks` examples (`makeMember` vs `createMockMember` naming). |
 
 ### 1.2 Positive observations (API)
@@ -244,9 +245,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-19 | **A** | **`MemberRepository.insert`** now requires `id` (first arg); **`MemberService`** generates `nanoid()`. **`FinancialOrgSettingsRepository`**: removed `nanoid` / `findOrCreate`; added **`insertDefaults(id, orgId)`** + **`findByOrgId`** with `?? null`; **`UserFinancialService`** owns **`ensureOrgFinancialSettings()`** with `nanoid()` + **`InternalServerError`** if insert returns null. **`FinancialCurrenciesRepository.insert(id, input)`** and **`FinancialTransactionCategoriesRepository.create(id, input)`** — tests generate prefixed ids to simulate the service layer. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (240) ✓ · web `typecheck` + `test:run` (22) ✓ · `build:web` ✓ | *pending your sign-off* |
 | 2026-04-19 | **B** | **`FinanceBillingPlansRepository`**: **`updatePlan`** / **`deletePlan`** return `null` instead of throwing **`NotFoundError`** / **`ConflictError`**; **`FinanceBillingPlansService`** maps null → **`NotFoundError`**, FK **`FOREIGN KEY constraint failed`** → **`ConflictError`**. **`FinancialTransactionsRepository.insert`** returns **`LedgerInsertOutcome`** (`idempotency_conflict` / `debit_guard_failed` / success); **`FinancialBaseService.executeTransaction`** maps those to **`ConflictError`** / **`BadRequestError`**. Cursor parsing: exported **`parseTransactionCursor`**; **`OrgFinancialService`** / **`UserFinancialService`** validate cursors and throw **`BadRequestError`** before list queries; repo uses **`requireTransactionCursor`** only after service validation. | `typecheck:api` ✓ · `test:api` ✓ | *pending your sign-off* |
 | 2026-04-19 | **C** | **`AdminAuditHandler`** / **`ReconciliationHandler`** now call **`getAdminAuditService`** / **`getReconciliationService`** only (no **`getDbClient`** / repo factories in handlers). New **`AdminAuditService`** (list, acknowledge, requeue + queue send) and **`ReconciliationService`** (missed-payment list + retry orchestration). **`SystemAuditRepository`**: **`findByIdAndOrganization`**, **`setAcknowledged`** (optional org scope); **`acknowledge`** delegates to **`setAcknowledged`**. Malformed event **`metadata`** JSON → **422** (`invalid_metadata`) instead of an uncaught parse error. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
+| 2026-04-20 | **D** | **`OrgUploadsHandler`**: removed no-op **`try/catch`**; missing **`userId`** → **`UnauthorizedError`** (401). **`listUploads`** returns explicit **`{ items, nextCursor, prevCursor }`** with typed **`UploadDto[]`** (matches **`createPaginatedResponseSchema`** — web **`useOrganizationUploads`** unchanged). **`completeUpload`** builds a typed **`UploadDto`** (no **`as any`**). Replaced **`new Error`** with **`AppError`** subclasses: **`SessionPaymentService`** (**`UnprocessableEntityError`**, **`InternalServerError`** for batch failures), **`MailService`** (**`ServiceUnavailableError`** when Resend client missing), **`entix.queue`** unsupported payment type → **`InternalServerError`**. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ · web `typecheck` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **D** (handler error & response hygiene) — §7.1 row **D** (`uploads.handlers.ts`, **`new Error`** cleanup, upload list envelope + web if shape changes).
+**Next:** Phase **E** (optional **`BaseService`** alignment) — §7.1 row **E**.
 
 ---
 

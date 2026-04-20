@@ -1,3 +1,4 @@
+import { ServiceUnavailableError } from "@api/errors/app.error";
 import { Resend } from "resend";
 
 type SendTemplateParams = {
@@ -34,7 +35,9 @@ export class MailService {
 
     public async listEmails(options: { limit?: number; after?: string; before?: string }) {
         if (!this.$client) {
-            throw new Error("MailService client is not initialized (fallback mode).");
+            throw new ServiceUnavailableError(
+                "MailService client is not initialized (fallback mode)."
+            );
         }
 
         const paginationParam = options.after
@@ -51,7 +54,9 @@ export class MailService {
 
     public async getEmail(emailId: string) {
         if (!this.$client) {
-            throw new Error("MailService client is not initialized (fallback mode).");
+            throw new ServiceUnavailableError(
+                "MailService client is not initialized (fallback mode)."
+            );
         }
 
         return this.$client.emails.get(emailId);

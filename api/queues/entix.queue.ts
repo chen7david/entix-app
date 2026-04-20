@@ -1,5 +1,5 @@
 import app from "@api/app";
-import { BadRequestError } from "@api/errors/app.error";
+import { BadRequestError, InternalServerError } from "@api/errors/app.error";
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
@@ -151,7 +151,9 @@ async function processPaymentRequest(
         case "session_payment":
             return sessionPaymentService.processFromRequest(pr);
         default:
-            throw new Error(`[Queue:Payment] Unsupported request type: ${pr.type}`);
+            throw new InternalServerError(
+                `[Queue:Payment] Unsupported request type: ${pr.type as string}`
+            );
     }
 }
 

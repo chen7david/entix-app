@@ -1,4 +1,9 @@
-import { BadRequestError, ConflictError } from "@api/errors/app.error";
+import {
+    BadRequestError,
+    ConflictError,
+    InternalServerError,
+    UnprocessableEntityError,
+} from "@api/errors/app.error";
 import type { DbBatchRunner } from "@api/helpers/batch-runner";
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
@@ -117,12 +122,16 @@ export class SessionPaymentService extends BaseService {
      */
     async processFromRequest(pr: PaymentRequest): Promise<{ txId: string; auditId: string }> {
         if (pr.type !== "session_payment") {
-            throw new Error(`Invalid payment request type for session processing: ${pr.type}`);
+            throw new UnprocessableEntityError(
+                `Invalid payment request type for session processing: ${pr.type}`
+            );
         }
 
         const userId = pr.userId;
         if (!userId) {
-            throw new Error(`Attribution userId missing for payment request ${pr.id}`);
+            throw new UnprocessableEntityError(
+                `Attribution userId missing for payment request ${pr.id}`
+            );
         }
 
         const [sourceAccount, memberPlan] = await Promise.all([
@@ -224,7 +233,7 @@ export class SessionPaymentService extends BaseService {
         } catch (err: unknown) {
             const batchError = err instanceof Error ? err.message : String(err);
             console.error("[SessionPaymentService] Batch Error Detail:", batchError);
-            throw new Error(`DB_BATCH_FAILURE: ${batchError}`);
+            throw new InternalServerError(`DB_BATCH_FAILURE: ${batchError}`);
         }
 
         // 4. Verify ledger success.
