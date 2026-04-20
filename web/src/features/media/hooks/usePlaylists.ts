@@ -3,12 +3,15 @@ import type {
     EnrichedPlaylistMediaItemDTO,
     PaginatedResponse,
     PlaylistDTO,
-    PlaylistMediaItemDTO, // TODO: remove with getSequence
+    PlaylistMediaItemDTO,
     UpdatePlaylistDTO,
 } from "@shared";
 import { enrichedPlaylistMediaItemSchema } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
@@ -29,11 +32,14 @@ export const usePlaylist = (playlistId?: string) => {
         queryKey: ["playlist", orgId, playlistId],
         queryFn: async () => {
             if (!orgId || !playlistId) throw new Error("Missing org or playlist id");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as PlaylistDTO;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists[":playlistId"].$get({
+                param: { organizationId: orgId, playlistId },
+            });
+            return hcJson<PlaylistDTO>(res);
         },
         enabled: !!orgId && !!playlistId,
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -43,18 +49,20 @@ export const usePlaylistSequence = (playlistId?: string) => {
 
     return useQuery({
         queryKey: ["playlistSequence", orgId, playlistId],
-        // refetchOnWindowFocus intentionally disabled globally (App.tsx).
-        // Player will reflect server state on mount; sequence changes in
-        // other tabs require a page reload to appear.
         queryFn: async (): Promise<EnrichedPlaylistMediaItemDTO[]> => {
             if (!orgId || !playlistId) throw new Error("Missing org or playlist id");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`);
-            if (!res.ok) await parseApiError(res);
-            const raw = await res.json();
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists[
+                ":playlistId"
+            ].sequence.$get({
+                param: { organizationId: orgId, playlistId },
+            });
+            const raw = await hcJson<unknown>(res);
             const parsed = z.array(enrichedPlaylistMediaItemSchema).parse(raw);
             return [...parsed].sort((a, b) => a.position - b.position);
         },
         enabled: !!orgId && !!playlistId,
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -64,37 +72,36 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
-    // List Playlists (Paginated)
     const { data: playlistsResponse, isLoading: isLoadingPlaylists } = useQuery({
         queryKey: ["playlists", orgId, filters],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization missing");
-            const params = new URLSearchParams();
-            if (filters?.search) params.append("search", filters.search);
-            if (filters?.cursor) params.append("cursor", filters.cursor);
-            if (filters?.limit) params.append("limit", filters.limit.toString());
-            if (filters?.direction) params.append("direction", filters.direction);
-
-            const queryString = params.toString() ? `?${params.toString()}` : "";
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists${queryString}`);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as PaginatedResponse<PlaylistDTO>;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists.$get({
+                param: { organizationId: orgId },
+                query: {
+                    search: filters?.search,
+                    cursor: filters?.cursor,
+                    limit: filters?.limit,
+                    direction: filters?.direction,
+                },
+            });
+            return hcJson<PaginatedResponse<PlaylistDTO>>(res);
         },
         enabled: !!orgId,
+        staleTime: QUERY_STALE_MS,
         placeholderData: (previousData) => previousData,
     });
 
-    // Create Playlist
     const createPlaylistMutation = useMutation({
         mutationFn: async (input: CreatePlaylistDTO) => {
             if (!orgId) throw new Error("Organization missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists.$post({
+                param: { organizationId: orgId },
+                json: input,
             });
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as PlaylistDTO;
+            return hcJson<PlaylistDTO>(res);
         },
         onSuccess: () => {
             notification.success({
@@ -112,7 +119,6 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
         },
     });
 
-    // Update Playlist
     const updatePlaylistMutation = useMutation({
         mutationFn: async ({
             playlistId,
@@ -122,13 +128,12 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             updates: UpdatePlaylistDTO;
         }) => {
             if (!orgId) throw new Error("Organization missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updates),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists[":playlistId"].$patch({
+                param: { organizationId: orgId, playlistId },
+                json: updates,
             });
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as PlaylistDTO;
+            return hcJson<PlaylistDTO>(res);
         },
         onSuccess: () => {
             notification.success({
@@ -146,12 +151,12 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
         },
     });
 
-    // Delete Playlist
     const deletePlaylistMutation = useMutation({
         mutationFn: async (playlistId: string) => {
             if (!orgId) throw new Error("Organization missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}`, {
-                method: "DELETE",
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists[":playlistId"].$delete({
+                param: { organizationId: orgId, playlistId },
             });
             if (!res.ok) await parseApiError(res);
         },
@@ -170,12 +175,16 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
         },
     });
 
-    // Generic helper for Sequence operations
     /** @deprecated Use usePlaylistSequence instead */
     const getSequence = useCallback(
         async (playlistId: string): Promise<PlaylistMediaItemDTO[]> => {
             if (!orgId) return [];
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`);
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists[
+                ":playlistId"
+            ].sequence.$get({
+                param: { organizationId: orgId, playlistId },
+            });
             if (!res.ok) await parseApiError(res);
             return await res.json();
         },
@@ -191,10 +200,12 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             mediaIds: string[];
         }) => {
             if (!orgId) throw new Error("Organization missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/playlists/${playlistId}/sequence`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ mediaIds }),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].playlists[
+                ":playlistId"
+            ].sequence.$put({
+                param: { organizationId: orgId, playlistId },
+                json: { mediaIds },
             });
             if (!res.ok) await parseApiError(res);
         },

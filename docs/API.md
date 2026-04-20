@@ -75,14 +75,14 @@
 - **Database**: Cloudflare D1 (SQLite) via Drizzle ORM
 - **Auth**: Better Auth (strictly in Service layer via `auth.api.*`)
 - **Validation**: Zod (all request/response schemas)
-- **ID Generation**: `nanoid` (Service layer only — never in Repositories)
+- **ID Generation**: Use **`shared/lib/id.ts`** (`generateOpaqueId`, `generateTransactionId`, etc.); **`nanoid` only inside that module**. Services mint IDs before insert for batches and any flow that needs the id early; repositories never import `nanoid`. Drizzle **`$defaultFn`** may call the same helpers **only** for simple single-table inserts (see [ID generation](./conventions/02-id-generation) — hybrid policy).
 
 ---
 
 ## 🛡️ Strict Architectural Rules
 
 ### Rule 1 — Dumb Repositories
-Repositories MUST NOT import Auth, Stripe, nanoid, or any external client.
+Repositories MUST NOT import Auth, Stripe, **`nanoid`**, or any external client. (IDs come from services via **`@shared/lib/id`** helpers, not raw `nanoid`.)
 Allowed dependency: `AppDb` (Drizzle) only.
 
 ### Rule 2 — No Exceptions in Repos
@@ -172,11 +172,13 @@ export const authMembers = sqliteTable('auth_members', { ... });
 
 ### Rule 10 — Primary Key Standard
 Never use auto-increment integers as primary keys.
-All primary keys MUST be `nanoid` strings, generated in the Service layer before insert.
+All primary keys MUST be opaque strings (21-char `nanoid` or prefixed helpers from **`shared/lib/id.ts`**), generated in the Service layer before insert.
 
 ```ts
+import { generateOpaqueId } from "@shared";
+
 // ✅ id generated in Service, passed into Repository
-const member = await this.repo.insert({ id: nanoid(), ...input });
+const member = await this.repo.insert({ id: generateOpaqueId(), ...input });
 ```
 
 ### Rule 11 — Required Table Fields
@@ -257,14 +259,16 @@ Repositories expose `prepareInsert(input)` returning an un-awaited Drizzle query
 Services compose these into a single `db.batch([...])` call.
 
 ```ts
+import { generateOpaqueId } from "@shared";
+
 // Repository
 prepareInsert(input: InsertMemberInput) {
     return this.db.insert(schema.authMembers).values(input);
 }
 
 // Service — atomic batch
-const q1 = this.orgRepo.prepareInsert({ id: nanoid(), ...orgInput });
-const q2 = this.memberRepo.prepareInsert({ id: nanoid(), ...memberInput });
+const q1 = this.orgRepo.prepareInsert({ id: generateOpaqueId(), ...orgInput });
+const q2 = this.memberRepo.prepareInsert({ id: generateOpaqueId(), ...memberInput });
 await this.db.batch([q1, q2]);
 ```
 
@@ -558,7 +562,7 @@ Before submitting any generated code, verify every item:
 - [ ] All `findFirst` calls use `?? null` coercion
 - [ ] Service `get*` methods call `assertExists()`
 - [ ] Service `find*` methods return `T | null`
-- [ ] `nanoid()` called in Service layer, never in Repository
+- [ ] IDs created via **`@shared/lib/id`** helpers (or `generateOpaqueId`) in Service layer, never raw `nanoid` outside `shared/lib/id.ts`, never in Repository
 - [ ] Handler calls only Service factory functions — no direct repo access
 - [ ] All list routes use cursor pagination via `buildCursorPagination`
 - [ ] All responses wrapped in `{ data: T }` or `{ data: T[], nextCursor }`

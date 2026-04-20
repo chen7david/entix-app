@@ -1,6 +1,8 @@
-import { API_V1, type WalletSummaryDTO } from "@shared";
+import type { WalletSummaryDTO } from "@shared";
 import { useQuery } from "@tanstack/react-query";
-import { parseApiError } from "@web/src/utils/api";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 type WalletSummaryResponse = {
     data: WalletSummaryDTO;
@@ -15,19 +17,26 @@ export const useWalletBalance = (
         queryKey: ["walletBalance", id, ownerType, orgId],
         queryFn: async () => {
             if (!id) throw new Error("ID required");
-            if (ownerType === "user" && !orgId)
-                throw new Error("Organization ID required for member wallets");
 
-            const url =
-                ownerType === "org"
-                    ? `${API_V1}/orgs/${id}/finance/summary`
-                    : `${API_V1}/orgs/${orgId}/members/${id}/wallet/summary`;
+            const api = getApiClient();
 
-            const res = await fetch(url);
-            if (!res.ok) await parseApiError(res);
-            return (await res.json()) as WalletSummaryResponse;
+            if (ownerType === "org") {
+                const res = await api.api.v1.orgs[":organizationId"].finance.summary.$get({
+                    param: { organizationId: id },
+                });
+                return hcJson<WalletSummaryResponse>(res);
+            }
+
+            if (!orgId) throw new Error("Organization ID required for member wallets");
+            const res = await api.api.v1.orgs[":organizationId"].members[
+                ":userId"
+            ].wallet.summary.$get({
+                param: { organizationId: orgId, userId: id },
+            });
+            return hcJson<WalletSummaryResponse>(res);
         },
         select: (res) => res?.data,
+        staleTime: QUERY_STALE_MS,
         enabled: ownerType === "org" ? !!id : !!id && !!orgId,
     });
 };

@@ -106,4 +106,40 @@ describe("SystemAuditRepository Integration", () => {
         expect(userActorOnly.items).toHaveLength(1);
         expect(userActorOnly.items[0].id).toBe("aud_2");
     });
+
+    it("findByIdAndOrganization returns null when org does not match", async () => {
+        await repo.insert({
+            id: "aud_org_scoped",
+            organizationId: orgId,
+            eventType: "test",
+            severity: "info",
+            actorType: "system",
+            message: "scoped",
+            createdAt: new Date(),
+        });
+        const found = await repo.findByIdAndOrganization("aud_org_scoped", orgId);
+        expect(found?.id).toBe("aud_org_scoped");
+        const wrongOrg = await repo.findByIdAndOrganization("aud_org_scoped", "org_other");
+        expect(wrongOrg).toBeNull();
+    });
+
+    it("setAcknowledged with organizationId only updates matching row", async () => {
+        await repo.insert({
+            id: "aud_ack_org",
+            organizationId: orgId,
+            eventType: "test",
+            severity: "info",
+            actorType: "system",
+            message: "ack test",
+            createdAt: new Date(),
+        });
+        await repo.setAcknowledged("aud_ack_org", {
+            at: new Date(),
+            acknowledgedBy: null,
+            organizationId: orgId,
+        });
+        const row = await repo.findByIdAndOrganization("aud_ack_org", orgId);
+        expect(row?.acknowledgedBy).toBeNull();
+        expect(row?.acknowledgedAt).toBeInstanceOf(Date);
+    });
 });

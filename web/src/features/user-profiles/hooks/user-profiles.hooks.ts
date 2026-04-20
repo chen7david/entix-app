@@ -1,5 +1,7 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 
 export const useUserProfile = (userId?: string) => {
@@ -8,68 +10,137 @@ export const useUserProfile = (userId?: string) => {
     const { data: aggregate, isLoading } = useQuery({
         queryKey: ["userProfile", userId],
         queryFn: async () => {
-            const res = await fetch(`${API_V1}/users/${userId}/profile`);
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.$get({
+                param: { userId },
+            });
+            return hcJson(res) as any;
         },
         enabled: !!userId,
+        staleTime: QUERY_STALE_MS,
     });
-
-    const buildMutation = (method: "POST" | "PUT" | "DELETE", pathSuffix: string) => {
-        return async (payload?: any) => {
-            const res = await fetch(`${API_V1}/users/${userId}/profile${pathSuffix}`, {
-                method,
-                headers: payload ? { "Content-Type": "application/json" } : undefined,
-                body: payload ? JSON.stringify(payload) : undefined,
-            });
-            if (!res.ok) await parseApiError(res);
-            return res.json();
-        };
-    };
 
     const invalidate = () => queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });
 
     const upsertProfile = useMutation({
-        mutationFn: buildMutation("PUT", ""),
+        mutationFn: async (payload: any) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.$put({
+                param: { userId },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const addPhone = useMutation({
-        mutationFn: buildMutation("POST", "/phones"),
+        mutationFn: async (payload: any) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.phones.$post({
+                param: { userId },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const updatePhone = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: any }) =>
-            buildMutation("PUT", `/phones/${id}`)(payload),
+        mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.phones[":id"].$put({
+                param: { userId, id },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const deletePhone = useMutation({
-        mutationFn: (id: string) => buildMutation("DELETE", `/phones/${id}`)(),
+        mutationFn: async (id: string) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.phones[":id"].$delete({
+                param: { userId, id },
+            });
+            if (!res.ok) await parseApiError(res);
+            return res.json().catch(() => undefined);
+        },
         onSuccess: invalidate,
     });
     const addAddress = useMutation({
-        mutationFn: buildMutation("POST", "/addresses"),
+        mutationFn: async (payload: any) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.addresses.$post({
+                param: { userId },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const updateAddress = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: any }) =>
-            buildMutation("PUT", `/addresses/${id}`)(payload),
+        mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.addresses[":id"].$put({
+                param: { userId, id },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const deleteAddress = useMutation({
-        mutationFn: (id: string) => buildMutation("DELETE", `/addresses/${id}`)(),
+        mutationFn: async (id: string) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.addresses[":id"].$delete({
+                param: { userId, id },
+            });
+            if (!res.ok) await parseApiError(res);
+            return res.json().catch(() => undefined);
+        },
         onSuccess: invalidate,
     });
     const addSocial = useMutation({
-        mutationFn: buildMutation("POST", "/socials"),
+        mutationFn: async (payload: any) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.socials.$post({
+                param: { userId },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const updateSocial = useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: any }) =>
-            buildMutation("PUT", `/socials/${id}`)(payload),
+        mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.socials[":id"].$put({
+                param: { userId, id },
+                json: payload,
+            });
+            return hcJson(res);
+        },
         onSuccess: invalidate,
     });
     const deleteSocial = useMutation({
-        mutationFn: (id: string) => buildMutation("DELETE", `/socials/${id}`)(),
+        mutationFn: async (id: string) => {
+            if (!userId) throw new Error("User ID required");
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].profile.socials[":id"].$delete({
+                param: { userId, id },
+            });
+            if (!res.ok) await parseApiError(res);
+            return res.json().catch(() => undefined);
+        },
         onSuccess: invalidate,
     });
 

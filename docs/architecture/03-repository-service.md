@@ -13,7 +13,8 @@ Entix-App enforces a strict separation between data access mechanics and busines
 4.  **Service-Only Access**: Handlers (Hono) must **NEVER** call a repository directly. All database interaction must flow through a Service.
 5.  **Service-Owned Errors**: Only the Service layer determines if a missing record constitutes a `NotFoundError`.
 6.  **No External Leakage**: Repositories must not depend on external APIs (e.g., BetterAuth, Stripe). These dependencies belong in the Service layer.
-7.  **No Raw DB in Services**: Services must never use the `db` client directly. They must use repositories for all persistence.
+7.  **Centralized IDs**: All id helpers live in **`shared/lib/id.ts`** (import `@shared`). Repositories must not import **`nanoid`**. Some tables use **`$defaultFn`** in Drizzle schema for simple inserts; services still mint ids explicitly for **`executeBatch` / `prepareInsert`** paths. See [ID generation](../conventions/02-id-generation).
+8.  **No Raw DB in Services**: Services must never use the `db` client directly. They must use repositories for all persistence.
 
 ## The `find*` vs `get*` Protocol
 
@@ -74,4 +75,4 @@ export class UserService extends BaseService {
 -   **Security**: RBAC checks are performed in the Service layer before calling the Repository, ensuring data is never accessed unauthorized.
 
 ---
-Last updated: 2026-03-30
+Last updated: 2026-04-19

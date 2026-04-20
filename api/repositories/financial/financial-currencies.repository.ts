@@ -6,7 +6,6 @@ import {
     type NewFinancialCurrency,
 } from "@shared/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { nanoid } from "nanoid";
 
 /**
  * Repository for managing financial currencies.
@@ -17,12 +16,10 @@ export class FinancialCurrenciesRepository {
 
     /**
      * Creates a new currency.
-     * Generates a prefixed ID if not provided (though code is often used as ID).
+     * `id` MUST be generated in the Service layer (API.md), e.g. `generateCurrencyId()` from `@shared/lib/id`.
      */
-    async insert(input: NewFinancialCurrency): Promise<FinancialCurrency | null> {
+    async insert(id: string, input: NewFinancialCurrency): Promise<FinancialCurrency | null> {
         try {
-            const id = `fcur_${nanoid(10)}`;
-
             const [currency] = await this.db
                 .insert(financialCurrencies)
                 .values({

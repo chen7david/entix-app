@@ -1,7 +1,7 @@
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Button, Drawer, Form, Modal, Tabs } from "antd";
+import { App, Button, Drawer, Form, Modal, Space, Tabs } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
@@ -284,9 +284,14 @@ export const SessionDetailsDrawer = ({
             destroyOnClose
             styles={{ body: { paddingBottom: 80 } }}
             extra={
-                <Button type="primary" onClick={() => form.submit()} loading={isSubmitting}>
-                    {session ? "Save Changes" : "Create Session"}
-                </Button>
+                <Space>
+                    <Button onClick={() => form.resetFields()} disabled={isSubmitting}>
+                        Reset
+                    </Button>
+                    <Button type="primary" onClick={() => form.submit()} loading={isSubmitting}>
+                        {session ? "Save Changes" : "Create Session"}
+                    </Button>
+                </Space>
             }
         >
             <Form form={form} layout="vertical" onFinish={handleFinish} id="session-form">

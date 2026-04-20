@@ -1,5 +1,5 @@
 import app from "@api/app";
-import { BadRequestError } from "@api/errors/app.error";
+import { BadRequestError, InternalServerError } from "@api/errors/app.error";
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
@@ -8,9 +8,9 @@ import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
+import { generateAuditId } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
-import { nanoid } from "nanoid";
 
 // ─── Message Type Union ───────────────────────────────────────────────────────
 
@@ -122,8 +122,9 @@ async function handleBillingProcess(
 
         // Restore audit write for business failures (insufficient funds, etc.)
         if (err instanceof BadRequestError || (err as any).status === 400) {
+            // Standalone audit row after payment failure — explicit id keeps logging independent of optional FK wiring.
             await auditRepo.insert({
-                id: `aud_${nanoid()}`,
+                id: generateAuditId(),
                 organizationId: pr.organizationId,
                 eventType: "payment.failed",
                 severity: "warning",
@@ -150,7 +151,9 @@ async function processPaymentRequest(
         case "session_payment":
             return sessionPaymentService.processFromRequest(pr);
         default:
-            throw new Error(`[Queue:Payment] Unsupported request type: ${pr.type}`);
+            throw new InternalServerError(
+                `[Queue:Payment] Unsupported request type: ${pr.type as string}`
+            );
     }
 }
 
@@ -219,7 +222,7 @@ async function writePermanentFailureAuditEvent(
         const db = drizzle(env.DB, { schema });
         const auditRepo = new SystemAuditRepository(db);
         await auditRepo.insert({
-            id: `aud_${nanoid()}`,
+            id: generateAuditId(), // isolated insert; explicit id for clarity in queue failure path
             eventType: "payment.reconciliation-failed",
             severity: "critical",
             subjectType: "payment_event",

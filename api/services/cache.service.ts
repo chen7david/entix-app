@@ -1,5 +1,6 @@
 import { KvCacheKeys } from "@api/repositories/kv-cache.keys";
 import type { KvCacheRepository } from "@api/repositories/kv-cache.repository";
+import { BaseService } from "./base.service";
 
 /** Sentinel stored in KV while a request is in-flight. */
 const PENDING_SENTINEL = "PENDING" as const;
@@ -24,8 +25,10 @@ export type IdempotencyCheckResult =
     | { status: "pending" }
     | { status: "completed"; cachedResponse: string };
 
-export class CacheService {
-    constructor(private readonly kvRepo: KvCacheRepository) {}
+export class CacheService extends BaseService {
+    constructor(private readonly kvRepo: KvCacheRepository) {
+        super();
+    }
 
     /**
      * Three-state idempotency check:

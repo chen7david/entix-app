@@ -14,6 +14,8 @@ import { Outlet, useNavigate, useParams } from "react-router";
 /**
  * OrgGuard - Organization context guard and provider.
  *
+ * Full guard ordering and non-redundancy rules: see `components/guards/index.ts`.
+ *
  * The URL slug is the SINGLE source of truth for which organization is active.
  * We do NOT call getFullOrganization() to decide identity — we only call it
  * to detect a server-side mismatch and then fix it via setActive().

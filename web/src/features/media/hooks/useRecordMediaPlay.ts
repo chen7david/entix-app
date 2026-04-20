@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { getApiClient } from "@web/src/lib/api-client";
 import { parseApiError } from "@web/src/utils/api";
 import { useCallback, useRef } from "react";
 
@@ -15,8 +16,9 @@ export function useRecordMediaPlay(mediaId: string | undefined | null) {
     const mutation = useMutation({
         mutationFn: async (id: string) => {
             if (!orgId) throw new Error("Organization missing");
-            const res = await fetch(`/api/v1/orgs/${orgId}/media/${id}/play`, {
-                method: "POST",
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].media[":mediaId"].play.$post({
+                param: { organizationId: orgId, mediaId: id },
             });
             if (!res.ok) await parseApiError(res);
         },
@@ -25,9 +27,7 @@ export function useRecordMediaPlay(mediaId: string | undefined | null) {
         },
     });
 
-    /** Dedupe repeated `onPlay` (e.g. pause → play) for the same asset. */
     const countedForIdRef = useRef<string | null>(null);
-    /** When this differs from current `mediaId`, we clear the play dedupe (track change, drawer closed, etc.). */
     const sessionMediaIdRef = useRef<string | null | undefined>(undefined);
 
     const onPlaybackStarted = useCallback(() => {

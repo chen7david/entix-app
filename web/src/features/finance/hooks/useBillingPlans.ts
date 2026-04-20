@@ -1,4 +1,3 @@
-import { API_V1 } from "@shared";
 import type {
     BillingPlanDTO,
     BillingPlanPaginationInput,
@@ -6,7 +5,9 @@ import type {
     UpdateBillingPlanInput,
 } from "@shared/schemas/dto/billing-plan.dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseApiError } from "@web/src/utils/api";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
 /**
@@ -14,23 +15,24 @@ import { App } from "antd";
  */
 export const useBillingPlans = (orgId: string, query: Partial<BillingPlanPaginationInput> = {}) => {
     const { limit = 20, cursor, search } = query;
+    const normalizedSearch = search?.trim() || undefined;
 
     return useQuery({
-        queryKey: ["billing-plans", orgId, { limit, cursor, search }],
+        queryKey: ["billing-plans", orgId, { limit, cursor, search: normalizedSearch }],
         queryFn: async () => {
-            const params = new URLSearchParams();
-            if (cursor) params.append("cursor", cursor);
-            params.append("limit", limit.toString());
-            if (search) params.append("search", search);
-
-            const res = await fetch(
-                `${API_V1}/orgs/${orgId}/finance/billing-plans?${params.toString()}`
-            );
-            if (!res.ok) await parseApiError(res);
-            const { data, nextCursor } = await res.json();
-            return { data: data as BillingPlanDTO[], nextCursor: nextCursor as string | null };
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance["billing-plans"].$get({
+                param: { organizationId: orgId },
+                query: { limit, cursor, search: normalizedSearch },
+            });
+            const { data, nextCursor } = await hcJson<{
+                data: BillingPlanDTO[];
+                nextCursor: string | null;
+            }>(res);
+            return { data, nextCursor };
         },
         enabled: !!orgId,
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -43,13 +45,12 @@ export const useBillingPlanActions = (orgId: string) => {
 
     const createMutation = useMutation({
         mutationFn: async (input: CreateBillingPlanInput) => {
-            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/billing-plans`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(input),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance["billing-plans"].$post({
+                param: { organizationId: orgId },
+                json: input,
             });
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["billing-plans", orgId] });
@@ -68,13 +69,14 @@ export const useBillingPlanActions = (orgId: string) => {
             planId: string;
             updates: UpdateBillingPlanInput;
         }) => {
-            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/billing-plans/${planId}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(updates),
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance["billing-plans"][
+                ":planId"
+            ].$patch({
+                param: { organizationId: orgId, planId },
+                json: updates,
             });
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["billing-plans", orgId] });
@@ -87,14 +89,15 @@ export const useBillingPlanActions = (orgId: string) => {
 
     const deleteMutation = useMutation({
         mutationFn: async (planId: string) => {
-            const res = await fetch(`${API_V1}/orgs/${orgId}/finance/billing-plans/${planId}`, {
-                method: "DELETE",
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].finance["billing-plans"][
+                ":planId"
+            ].$delete({
+                param: { organizationId: orgId, planId },
             });
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            return hcJson(res);
         },
         onMutate: async (planId) => {
-            // Optimistic removal for better UX
             await queryClient.cancelQueries({ queryKey: ["billing-plans", orgId] });
             const previousPlans = queryClient.getQueryData(["billing-plans", orgId]);
 

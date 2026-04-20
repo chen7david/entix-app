@@ -15,4 +15,5 @@ mountBetterAuth(app);
 
 configureOpenApi(app);
 
+export type AppType = typeof app;
 export default app;

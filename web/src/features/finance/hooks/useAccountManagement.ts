@@ -1,7 +1,6 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { parseApiError } from "@web/src/utils/api";
-
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 /**
  * Hook to update the display label (name) of a financial account.
  */
@@ -10,13 +9,12 @@ export const useUpdateAccount = () => {
 
     return useMutation({
         mutationFn: async ({ id, name }: { id: string; name: string }) => {
-            const res = await fetch(`${API_V1}/admin/finance/accounts/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name }),
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.accounts[":id"].$patch({
+                param: { id },
+                json: { name },
             });
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
@@ -34,11 +32,11 @@ export const useArchiveAccount = () => {
 
     return useMutation({
         mutationFn: async (id: string) => {
-            const res = await fetch(`${API_V1}/admin/finance/accounts/${id}/archive`, {
-                method: "PATCH",
+            const api = getApiClient();
+            const res = await api.api.v1.admin.finance.accounts[":id"].archive.$patch({
+                param: { id },
             });
-            if (!res.ok) await parseApiError(res);
-            return res.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["walletBalance"] });

@@ -1,7 +1,6 @@
 import type { AppDb } from "@api/factories/db.factory";
 import { financialOrgSettings } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 
 export class FinancialOrgSettingsRepository {
     constructor(private db: AppDb) {}
@@ -11,33 +10,25 @@ export class FinancialOrgSettingsRepository {
      * Returns null if no settings have been initialized yet.
      */
     async findByOrgId(organizationId: string) {
-        return this.db.query.financialOrgSettings.findFirst({
-            where: eq(financialOrgSettings.organizationId, organizationId),
-        });
+        return (
+            (await this.db.query.financialOrgSettings.findFirst({
+                where: eq(financialOrgSettings.organizationId, organizationId),
+            })) ?? null
+        );
     }
 
     /**
-     * Initializes default financial settings for an organization.
+     * Inserts default financial settings for an organization.
+     * Primary key comes from schema `$defaultFn` (see `financial-org-settings.schema.ts`).
      */
-    async initializeDefaults(organizationId: string) {
-        const id = nanoid();
+    async insertDefaults(organizationId: string) {
         const [settings] = await this.db
             .insert(financialOrgSettings)
             .values({
-                id,
                 organizationId,
                 // Defaults are handled by schema: ["fcur_etd", "fcur_usd"]
             })
             .returning();
-        return settings;
-    }
-
-    /**
-     * Ensures settings exist for an organization, creating them if necessary.
-     */
-    async findOrCreate(organizationId: string) {
-        const existing = await this.findByOrgId(organizationId);
-        if (existing) return existing;
-        return this.initializeDefaults(organizationId);
+        return settings ?? null;
     }
 }

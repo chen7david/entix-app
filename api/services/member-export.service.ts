@@ -1,8 +1,11 @@
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrgRole } from "@shared/auth/permissions";
+import { BaseService } from "./base.service";
 
-export class MemberExportService {
-    constructor(private memberRepo: MemberRepository) {}
+export class MemberExportService extends BaseService {
+    constructor(private memberRepo: MemberRepository) {
+        super();
+    }
 
     async exportMembers(organizationId: string) {
         const results = await this.memberRepo.findAllDetailed(organizationId);

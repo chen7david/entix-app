@@ -1,5 +1,7 @@
-import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 // Matches the full TransactionRecord shape expected by TransactionLedgerTable
 export type Transaction = {
@@ -55,29 +57,36 @@ export const useTransactionHistory = (
         ],
         queryFn: async () => {
             if (!id) throw new Error("ID required");
-            if (ownerType === "user" && !orgId)
-                throw new Error("Organization ID required for member transactions");
 
-            const baseUrl =
-                ownerType === "org"
-                    ? `${API_V1}/orgs/${id}/finance/transactions`
-                    : `${API_V1}/orgs/${orgId}/members/${id}/wallet/transactions`;
+            const api = getApiClient();
+            const query = {
+                limit,
+                cursor,
+                startDate: filters?.startDate,
+                endDate: filters?.endDate,
+                status: filters?.status,
+                txId: filters?.txId,
+                accountId: filters?.accountId,
+            };
 
-            const params = new URLSearchParams({
-                limit: limit.toString(),
+            if (ownerType === "org") {
+                const res = await api.api.v1.orgs[":organizationId"].finance.transactions.$get({
+                    param: { organizationId: id },
+                    query,
+                });
+                return hcJson<TransactionHistoryResponse>(res);
+            }
+
+            if (!orgId) throw new Error("Organization ID required for member transactions");
+            const res = await api.api.v1.orgs[":organizationId"].members[
+                ":userId"
+            ].wallet.transactions.$get({
+                param: { organizationId: orgId, userId: id },
+                query,
             });
-
-            if (cursor) params.append("cursor", cursor);
-            if (filters?.startDate) params.append("startDate", filters.startDate);
-            if (filters?.endDate) params.append("endDate", filters.endDate);
-            if (filters?.status) params.append("status", filters.status);
-            if (filters?.txId) params.append("txId", filters.txId);
-            if (filters?.accountId) params.append("accountId", filters.accountId);
-
-            const res = await fetch(`${baseUrl}?${params.toString()}`);
-            if (!res.ok) throw new Error("Failed to fetch transaction history");
-            return res.json();
+            return hcJson<TransactionHistoryResponse>(res);
         },
         enabled: ownerType === "org" ? !!id : !!id && !!orgId,
+        staleTime: QUERY_STALE_MS,
     });
 };

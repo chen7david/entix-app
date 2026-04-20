@@ -1,5 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getApiClient } from "@web/src/lib/api-client";
 import { authClient } from "@web/src/lib/auth-client";
+import { hcJson } from "@web/src/lib/hc-json";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export const useAdminOrganizations = (
     search?: string,
@@ -15,26 +18,23 @@ export const useAdminOrganizations = (
             options?.direction,
         ],
         queryFn: async () => {
-            const url = new URL("/api/v1/admin/organizations", window.location.origin);
-            if (search) url.searchParams.set("search", search);
-            if (options?.cursor) url.searchParams.set("cursor", options.cursor);
-            if (options?.limit) url.searchParams.set("limit", options.limit.toString());
-            if (options?.direction) url.searchParams.set("direction", options.direction);
-
-            const response = await fetch(url.toString());
-            if (!response.ok) {
-                const error = await response
-                    .json()
-                    .catch(() => ({ message: "Failed to fetch global organizations" }));
-                throw new Error(error.message || "Failed to fetch global organizations");
-            }
-            return response.json() as Promise<{
+            const api = getApiClient();
+            const res = await api.api.v1.admin.organizations.$get({
+                query: {
+                    search,
+                    cursor: options?.cursor,
+                    limit: options?.limit,
+                    direction: options?.direction,
+                },
+            });
+            return hcJson<{
                 items: any[];
                 nextCursor: string | null;
                 prevCursor: string | null;
-            }>;
+            }>(res);
         },
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -62,16 +62,11 @@ export const useAdminCreateUserWithOrg = () => {
             name: string;
             organizationName: string;
         }) => {
-            const response = await fetch("/api/v1/auth/signup-with-org", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(values),
+            const api = getApiClient();
+            const res = await api.api.v1.auth["signup-with-org"].$post({
+                json: values,
             });
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "Failed to create user and organization");
-            }
-            return response.json();
+            return hcJson(res);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["admin", "organizations"] });

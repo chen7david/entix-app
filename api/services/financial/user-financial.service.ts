@@ -1,10 +1,11 @@
-import { ConflictError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import type { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
 import {
     buildTransactionCursor,
     type FinancialTransactionsRepository,
+    parseTransactionCursor,
 } from "@api/repositories/financial/financial-transactions.repository";
 import { ACCOUNT_TYPES, type FinancialAccount, generateAccountId } from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
@@ -99,10 +100,25 @@ export class UserFinancialService extends FinancialBaseService {
     }
 
     /**
+     * Ensures org financial settings exist. New row PK comes from schema default (no batch FK here).
+     */
+    private async ensureOrgFinancialSettings(organizationId: string) {
+        const existing = await this.orgSettingsRepo.findByOrgId(organizationId);
+        if (existing) {
+            return existing;
+        }
+        const created = await this.orgSettingsRepo.insertDefaults(organizationId);
+        if (!created) {
+            throw new InternalServerError("Failed to initialize organization financial settings");
+        }
+        return created;
+    }
+
+    /**
      * Provisions default wallets for a user based on the organization's settings.
      */
     async provisionUserAccounts(userId: string, orgId: string) {
-        const settings = await this.orgSettingsRepo.findOrCreate(orgId);
+        const settings = await this.ensureOrgFinancialSettings(orgId);
         const currenciesToProvision: string[] = JSON.parse(settings.autoProvisionCurrencies);
 
         // Fetch currency defaults
@@ -133,6 +149,9 @@ export class UserFinancialService extends FinancialBaseService {
         pagination: { cursor?: string; limit: number },
         filters: any = {}
     ) {
+        if (pagination.cursor && !parseTransactionCursor(pagination.cursor)) {
+            throw new BadRequestError("Invalid pagination cursor");
+        }
         const lines = await this.transactionsRepo.findByOwnerId(
             userId,
             "user",

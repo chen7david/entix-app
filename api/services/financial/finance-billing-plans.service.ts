@@ -1,4 +1,4 @@
-import { NotFoundError } from "@api/errors/app.error";
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import {
     generateBillingPlanId,
@@ -12,12 +12,15 @@ import type {
     CreateBillingPlanInput,
     UpdateBillingPlanInput,
 } from "@shared/schemas/dto/billing-plan.dto";
+import { BaseService } from "../base.service";
 
 /**
  * Service for managing Billing Plans and Student Assignments.
  */
-export class FinanceBillingPlansService {
-    constructor(private readonly repo: FinanceBillingPlansRepository) {}
+export class FinanceBillingPlansService extends BaseService {
+    constructor(private readonly repo: FinanceBillingPlansRepository) {
+        super();
+    }
 
     /**
      * Creates a new organization-level billing plan.
@@ -156,7 +159,11 @@ export class FinanceBillingPlansService {
         if (!plan || plan.organizationId !== orgId) {
             throw new NotFoundError("Billing plan not found");
         }
-        return this.repo.updatePlan(planId, updates);
+        const updated = await this.repo.updatePlan(planId, updates);
+        if (!updated) {
+            throw new NotFoundError("Billing plan not found");
+        }
+        return updated;
     }
 
     /**
@@ -167,6 +174,21 @@ export class FinanceBillingPlansService {
         if (!plan || plan.organizationId !== orgId) {
             throw new NotFoundError("Billing plan not found");
         }
-        return this.repo.deletePlan(planId);
+        try {
+            const deleted = await this.repo.deletePlan(planId);
+            if (!deleted) {
+                throw new NotFoundError("Billing plan not found");
+            }
+            return deleted;
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (msg.includes("FOREIGN KEY constraint failed")) {
+                throw new ConflictError(
+                    "This billing plan is assigned to one or more members and cannot be deleted. " +
+                        "Deactivate it using the Active toggle instead."
+                );
+            }
+            throw e;
+        }
     }
 }

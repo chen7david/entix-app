@@ -1,5 +1,6 @@
 import { InternalServerError } from "@api/errors/app.error";
 import type { AwsClient } from "aws4fetch";
+import { BaseService } from "./base.service";
 
 export type BucketConfig = {
     bucketName: string;
@@ -24,11 +25,13 @@ export type UploadResponse = {
     created_at: string;
 };
 
-export class BucketService {
+export class BucketService extends BaseService {
     constructor(
         private readonly client: AwsClient,
         public readonly config: BucketConfig
-    ) {}
+    ) {
+        super();
+    }
 
     /**
      * Uploads a file to R2 with a Cloudinary-style response

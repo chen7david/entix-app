@@ -1,6 +1,6 @@
 import { FINANCIAL_CURRENCIES, FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { Button, Drawer, Form, Input, Select } from "antd";
+import { Button, Drawer, Form, Input, Select, Space } from "antd";
 import type React from "react";
 import { useCreateAccount } from "../hooks/useCreateAccount";
 
@@ -40,9 +40,14 @@ export const CreateAccountDrawer: React.FC<Props> = ({ open, onClose, orgId }) =
             open={open}
             onClose={onClose}
             extra={
-                <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    Create
-                </Button>
+                <Space>
+                    <Button onClick={() => form.resetFields()} disabled={isPending}>
+                        Reset
+                    </Button>
+                    <Button type="primary" onClick={() => form.submit()} loading={isPending}>
+                        Create
+                    </Button>
+                </Space>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>

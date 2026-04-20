@@ -1,4 +1,6 @@
 import { ArrowRightOutlined, CopyOutlined } from "@ant-design/icons";
+import { TransactionAmount } from "@web/src/components/ui/TransactionAmount";
+import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { Badge, Space, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { format } from "date-fns";
@@ -15,7 +17,7 @@ export type TransactionRecord = {
     currencyId: string;
     sourceAccount: { name: string };
     destinationAccount: { name: string };
-    category: { name: string };
+    category: { name: string; isRevenue?: boolean; isExpense?: boolean };
     currency: { symbol: string; code: string };
 };
 
@@ -87,7 +89,10 @@ export const getTransactionColumns = (notification: any): ColumnsType<Transactio
                     className="truncate text-[11px] block max-w-[110px]"
                     title={record.sourceAccount?.name}
                 >
-                    {record.sourceAccount?.name}
+                    {formatAccountDisplayName(
+                        record.sourceAccount?.name ?? "",
+                        record.currency?.code
+                    )}
                 </Text>
                 <ArrowRightOutlined className="text-zinc-300 scale-75" />
                 <Text
@@ -95,7 +100,10 @@ export const getTransactionColumns = (notification: any): ColumnsType<Transactio
                     className="truncate text-[11px] block max-w-[110px]"
                     title={record.destinationAccount?.name}
                 >
-                    {record.destinationAccount?.name}
+                    {formatAccountDisplayName(
+                        record.destinationAccount?.name ?? "",
+                        record.currency?.code
+                    )}
                 </Text>
             </Space>
         ),
@@ -107,15 +115,14 @@ export const getTransactionColumns = (notification: any): ColumnsType<Transactio
         align: "right",
         width: 130,
         render: (amount, record) => (
-            <div className="flex flex-col items-end">
-                <Text strong className="text-sm tabular-nums tracking-tight">
-                    {record.currency?.symbol ?? ""}
-                    {(amount / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                </Text>
-                <Text type="secondary" className="text-[9px] uppercase font-bold tracking-widest">
-                    {record.currencyId}
-                </Text>
-            </div>
+            <TransactionAmount
+                amountCents={amount}
+                currencySymbol={record.currency?.symbol ?? "$"}
+                currencyCode={record.currency?.code}
+                isRevenue={record.category?.isRevenue}
+                isExpense={record.category?.isExpense}
+                compact
+            />
         ),
     },
     {

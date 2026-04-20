@@ -8,7 +8,15 @@ import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES } from "@shared";
+import {
+    FINANCIAL_CATEGORIES,
+    FINANCIAL_CURRENCIES,
+    generateAccountId,
+    generateBillingPlanId,
+    generateBillingPlanRateId,
+    generateMemberBillingPlanId,
+    generateOpaqueId,
+} from "@shared";
 import {
     financeBillingPlanRates,
     financeBillingPlans,
@@ -18,7 +26,6 @@ import {
     sessionAttendances,
 } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
-import { nanoid } from "nanoid";
 import { beforeEach, describe, expect, it } from "vitest";
 import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
@@ -58,9 +65,10 @@ describe("Hierarchical Overdraft Resolution", () => {
         );
         const repo = new FinanceBillingPlansRepository(db);
 
-        await repo.updatePlan(planId, {
+        const updated = await repo.updatePlan(planId, {
             overdraftLimitCents: 5000,
         });
+        expect(updated).not.toBeNull();
 
         const updatedPlan = await db.query.financeBillingPlans.findFirst({
             where: eq(financeBillingPlans.id, planId),
@@ -70,10 +78,10 @@ describe("Hierarchical Overdraft Resolution", () => {
     });
 
     it("should succeed when account overdraft is NULL but billing plan has sufficient overdraft", async () => {
-        const planId = `plan_${nanoid()}`;
-        const accId = `facc_${nanoid()}`;
-        const destId = `facc_dest_${nanoid()}`;
-        const sessId = `sess_${nanoid()}`;
+        const planId = generateBillingPlanId();
+        const accId = generateAccountId();
+        const destId = generateAccountId();
+        const sessId = generateOpaqueId();
 
         // 1. Create a plan with 500 overdraft
         await db.insert(financeBillingPlans).values({
@@ -85,7 +93,7 @@ describe("Hierarchical Overdraft Resolution", () => {
             isActive: true,
         });
         await db.insert(financeBillingPlanRates).values({
-            id: `rate_${nanoid()}`,
+            id: generateBillingPlanRateId(),
             billingPlanId: planId,
             participantCount: 1,
             rateCentsPerMinute: 300,
@@ -118,7 +126,7 @@ describe("Hierarchical Overdraft Resolution", () => {
 
         // 4. Assign plan to member
         await db.insert(financeMemberBillingPlans).values({
-            id: `fmbp_${nanoid()}`,
+            id: generateMemberBillingPlanId(),
             userId,
             organizationId: orgId,
             billingPlanId: planId,

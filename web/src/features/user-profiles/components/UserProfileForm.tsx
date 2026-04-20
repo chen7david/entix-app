@@ -1,5 +1,5 @@
 import { useUserProfile } from "@web/src/features/user-profiles";
-import { App, Button, DatePicker, Form, Input, Select, Spin } from "antd";
+import { App, Button, DatePicker, Form, Input, Select, Space, Spin } from "antd";
 import dayjs from "dayjs";
 import { useEffect } from "react";
 
@@ -71,9 +71,14 @@ export const UserProfileForm = ({ userId }: { userId: string }) => {
                 <DatePicker className="w-full" />
             </Form.Item>
             <Form.Item className="mb-0 pt-2">
-                <Button type="primary" htmlType="submit" loading={upsertProfile.isPending}>
-                    Save Changes
-                </Button>
+                <Space>
+                    <Button onClick={() => form.resetFields()} disabled={upsertProfile.isPending}>
+                        Reset
+                    </Button>
+                    <Button type="primary" htmlType="submit" loading={upsertProfile.isPending}>
+                        Save Changes
+                    </Button>
+                </Space>
             </Form.Item>
         </Form>
     );

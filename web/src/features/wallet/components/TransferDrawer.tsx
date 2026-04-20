@@ -1,8 +1,10 @@
 import type { WalletAccountDTO } from "@shared";
 import { POSInput } from "@web/src/components/ui/POSInput";
 import { useActivatedCurrencies } from "@web/src/features/finance";
+import type { CurrencyWithStatus } from "@web/src/features/finance/hooks/useOrgCurrencies";
+import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Button, Drawer, Form, Input, Select } from "antd";
+import { App, Button, Drawer, Form, Input, Select, Space } from "antd";
 import { type TransferInput, useWalletTransfer } from "../hooks/useWalletTransfer";
 
 type TransferDrawerProps = {
@@ -44,9 +46,14 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
             onClose={onClose}
             open={open}
             extra={
-                <Button type="primary" onClick={() => form.submit()} loading={isPending}>
-                    Confirm Transfer
-                </Button>
+                <Space>
+                    <Button onClick={() => form.resetFields()} disabled={isPending}>
+                        Reset
+                    </Button>
+                    <Button type="primary" onClick={() => form.submit()} loading={isPending}>
+                        Confirm Transfer
+                    </Button>
+                </Space>
             }
         >
             <Form form={form} layout="vertical" onFinish={onFinish}>
@@ -58,7 +65,8 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                     <Select placeholder="Select source account">
                         {accounts?.map((acc) => (
                             <Select.Option key={acc.id} value={acc.id} disabled={!acc.isActive}>
-                                {acc.name} (Balance: ${(acc.balanceCents / 100).toFixed(2)})
+                                {formatAccountDisplayName(acc.name)} (Balance: $
+                                {(acc.balanceCents / 100).toFixed(2)})
                             </Select.Option>
                         ))}
                     </Select>
@@ -84,7 +92,7 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                     <Select placeholder="Select destination account">
                         {accounts?.map((acc) => (
                             <Select.Option key={acc.id} value={acc.id} disabled={!acc.isActive}>
-                                {acc.name}
+                                {formatAccountDisplayName(acc.name)}
                             </Select.Option>
                         ))}
                     </Select>
@@ -106,7 +114,7 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
                     rules={[{ required: true, message: "Please select a currency" }]}
                 >
                     <Select placeholder="Select currency">
-                        {currencies?.map((c) => (
+                        {currencies?.map((c: CurrencyWithStatus) => (
                             <Select.Option key={c.id} value={c.id}>
                                 {c.symbol} {c.code} — {c.name}
                             </Select.Option>

@@ -1,6 +1,7 @@
-import { API_V1 } from "@shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
+import { getApiClient } from "@web/src/lib/api-client";
+import { hcJson } from "@web/src/lib/hc-json";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 
@@ -16,22 +17,17 @@ export const useUpdateAvatar = () => {
 
     return useMutation({
         mutationFn: async ({ userId, uploadId }: { userId: string; uploadId: string }) => {
-            const response = await fetch(`${API_V1}/users/${userId}/avatar`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ uploadId }),
+            const api = getApiClient();
+            const res = await api.api.v1.users[":userId"].avatar.$patch({
+                param: { userId },
+                json: { uploadId },
             });
 
-            if (!response.ok) await parseApiError(response);
-
-            return (await response.json()) as Promise<{ imageUrl: string }>;
+            return hcJson<{ imageUrl: string }>(res);
         },
         onSuccess: async () => {
-            // Invalidate the members list to update the table immediately
             queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
 
-            // Globally refresh the active session to sync Sidebar and Top Nav
-            // This triggers refetch() on useSession and useActiveMember hooks
             await refreshAuth();
 
             notification.success({
@@ -59,8 +55,9 @@ export const useRemoveAvatar = () => {
 
     return useMutation({
         mutationFn: async (userId: string) => {
-            const response = await fetch(`${API_V1}/users/${userId}/avatar`, {
-                method: "DELETE",
+            const api = getApiClient();
+            const response = await api.api.v1.users[":userId"].avatar.$delete({
+                param: { userId },
             });
 
             if (!response.ok && response.status !== 204) await parseApiError(response);
@@ -68,10 +65,8 @@ export const useRemoveAvatar = () => {
             return true;
         },
         onSuccess: async () => {
-            // Invalidate the members list
             queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
 
-            // Globally refresh session data for UI consistency
             await refreshAuth();
 
             notification.success({

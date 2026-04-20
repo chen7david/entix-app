@@ -2,9 +2,9 @@ import { ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrganizationRepository } from "@api/repositories/organization.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
+import { generateOpaqueId, generateSecretToken } from "@shared";
 import { hashPassword } from "better-auth/crypto";
 import type { PinoLogger } from "hono-pino";
-import { nanoid } from "nanoid";
 import { BaseService } from "./base.service";
 import type { UserFinancialService } from "./financial/user-financial.service";
 import type { UserService } from "./user.service";
@@ -47,15 +47,17 @@ export class RegistrationService extends BaseService {
         }
 
         try {
-            const uId = nanoid();
-            const oId = nanoid();
-            const acctId = nanoid();
-            const memberId = nanoid();
+            // All four rows run in one `executeBatch`: FKs cross-reference these ids before any row exists.
+            // Schema defaults cannot substitute — ids must be fixed before the batch runs.
+            const uId = generateOpaqueId();
+            const oId = generateOpaqueId();
+            const acctId = generateOpaqueId();
+            const memberId = generateOpaqueId();
             const emailVerified = false; // By default BetterAuth sets this false/unverified
 
             const hashedPassword = input.password
                 ? await hashPassword(input.password)
-                : await hashPassword(nanoid(32));
+                : await hashPassword(generateSecretToken());
 
             const userQuery = this.userRepo.prepareInsert(
                 uId,
@@ -108,12 +110,13 @@ export class RegistrationService extends BaseService {
             throw new ConflictError("User with this email already exists");
         }
 
-        const uId = nanoid();
-        const acctId = nanoid();
-        const memberId = nanoid();
+        // Same-transaction batch (user + credential account + member): explicit ids for FK wiring.
+        const uId = generateOpaqueId();
+        const acctId = generateOpaqueId();
+        const memberId = generateOpaqueId();
         const emailVerified = false;
 
-        const dummyPassword = nanoid(32);
+        const dummyPassword = generateSecretToken();
         const hashedPassword = await hashPassword(dummyPassword);
 
         const userQuery = this.userRepo.prepareInsert(uId, email, name, emailVerified);

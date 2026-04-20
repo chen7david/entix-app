@@ -1,32 +1,16 @@
-import { InboxOutlined, RedoOutlined, SearchOutlined } from "@ant-design/icons";
+import { InboxOutlined } from "@ant-design/icons";
 import type { TableProps } from "antd";
-import { Button, DatePicker, Input, Segmented, Select, Table, theme } from "antd";
-import dayjs from "dayjs";
-import React, { useCallback, useMemo, useState } from "react";
+import { Table, theme } from "antd";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ClientPaginationConfig, CursorPaginationConfig } from "./DataTable.types";
 import { isCursorPagination } from "./DataTable.types";
 import { DataTablePagination } from "./DataTablePagination";
+import { FilterBar, type FilterConfig } from "./FilterBar";
 import { TableEmptyState } from "./TableEmptyState";
 
 // Re-export pagination types and helpers so callers may import from either location
-export type { ClientPaginationConfig, CursorPaginationConfig };
+export type { ClientPaginationConfig, CursorPaginationConfig, FilterConfig };
 export { isCursorPagination };
-
-export type FilterConfig =
-    | {
-          type: "search" | "select" | "segmented";
-          key: string;
-          label?: string;
-          placeholder?: string;
-          options?: { label: string; value: string | number }[];
-      }
-    | {
-          type: "dateRange";
-          key: string;
-          keys: [string, string];
-          label?: string;
-          placeholder?: string;
-      };
 
 export interface DataTableConfig<T> {
     columns: TableProps<T>["columns"];
@@ -39,6 +23,14 @@ export interface DataTableConfig<T> {
     onRowClick?: (record: T) => void;
     rowKey?: string | ((record: T) => string);
     selectedRowKey?: string | number | null;
+    initialFilters?: Record<string, any>;
+    filterBar?: {
+        showReset?: boolean;
+        resetLabel?: React.ReactNode;
+        className?: string;
+        compact?: boolean;
+        resetIconOnly?: boolean;
+    };
 }
 
 function DataTableWithFiltersInternal<T extends object>({
@@ -47,7 +39,13 @@ function DataTableWithFiltersInternal<T extends object>({
     config: DataTableConfig<T>;
 }) {
     const { token } = theme.useToken();
-    const [localFilters, setLocalFilters] = useState<Record<string, any>>({});
+    const [localFilters, setLocalFilters] = useState<Record<string, any>>(
+        config.initialFilters ?? {}
+    );
+
+    useEffect(() => {
+        setLocalFilters(config.initialFilters ?? {});
+    }, [config.initialFilters]);
 
     const handleFiltersChange = useCallback(
         (newFilters: Record<string, any>) => {
@@ -57,19 +55,9 @@ function DataTableWithFiltersInternal<T extends object>({
         [config.onFiltersChange]
     );
 
-    const updateFilter = useCallback(
-        (key: string, value: any) => {
-            handleFiltersChange({
-                ...localFilters,
-                [key]: value,
-            });
-        },
-        [localFilters, handleFiltersChange]
-    );
-
     const handleReset = useCallback(() => {
-        handleFiltersChange({});
-    }, [handleFiltersChange]);
+        handleFiltersChange(config.initialFilters ?? {});
+    }, [config.initialFilters, handleFiltersChange]);
 
     const tableColumns = useMemo(() => {
         const cols = [...(config.columns || [])];
@@ -96,108 +84,23 @@ function DataTableWithFiltersInternal<T extends object>({
         return cols;
     }, [config.columns, config.actions]);
 
-    const hasFiltersSet = useMemo(() => {
-        return Object.values(localFilters).some(
-            (v) =>
-                v !== undefined &&
-                v !== "" &&
-                v !== null &&
-                (Array.isArray(v) ? v.length > 0 : true)
-        );
-    }, [localFilters]);
-
     const pagination = config.pagination;
 
     return (
         <div className="data-table-wrapper flex flex-col flex-1 min-h-0 overflow-hidden">
             {config.filters.length > 0 && (
-                <div className="flex items-center gap-3 flex-wrap mb-4 px-0.5">
-                    {config.filters.map((filter) => (
-                        <div
-                            key={filter.key}
-                            className="flex-shrink-0"
-                            style={{
-                                minWidth: filter.type === "dateRange" ? 280 : 200,
-                            }}
-                        >
-                            {filter.type === "search" && (
-                                <Input
-                                    placeholder={filter.placeholder || "Search..."}
-                                    prefix={
-                                        <SearchOutlined
-                                            style={{ color: token.colorTextDescription }}
-                                        />
-                                    }
-                                    value={localFilters[filter.key] || ""}
-                                    onChange={(e) => updateFilter(filter.key, e.target.value)}
-                                    variant="outlined"
-                                    className="rounded-lg h-[40px] transition-colors"
-                                    allowClear
-                                />
-                            )}
-                            {filter.type === "dateRange" && (
-                                <DatePicker.RangePicker
-                                    variant="outlined"
-                                    className="w-full rounded-lg h-[40px]"
-                                    value={
-                                        localFilters[filter.keys[0]] && localFilters[filter.keys[1]]
-                                            ? [
-                                                  dayjs(localFilters[filter.keys[0]]),
-                                                  dayjs(localFilters[filter.keys[1]]),
-                                              ]
-                                            : null
-                                    }
-                                    onChange={(dates) => {
-                                        const startKey = filter.keys[0];
-                                        const endKey = filter.keys[1];
-                                        handleFiltersChange({
-                                            ...localFilters,
-                                            [startKey]: dates?.[0]?.toISOString() || null,
-                                            [endKey]: dates?.[1]?.toISOString() || null,
-                                        });
-                                    }}
-                                />
-                            )}
-                            {filter.type === "select" && (
-                                <Select
-                                    variant="outlined"
-                                    placeholder={filter.placeholder || "All Statuses"}
-                                    className="w-full h-[40px]"
-                                    options={filter.options}
-                                    value={localFilters[filter.key] || undefined}
-                                    onChange={(value) => updateFilter(filter.key, value)}
-                                    allowClear
-                                />
-                            )}
-                            {filter.type === "segmented" && (
-                                <Segmented
-                                    block
-                                    options={filter.options || []}
-                                    value={
-                                        localFilters[filter.key] ||
-                                        (filter.options?.[0]?.value ?? "")
-                                    }
-                                    onChange={(value) => updateFilter(filter.key, value)}
-                                    className="rounded-lg p-0.5"
-                                />
-                            )}
-                        </div>
-                    ))}
-
-                    {hasFiltersSet && (
-                        <Button
-                            icon={<RedoOutlined />}
-                            onClick={handleReset}
-                            type="text"
-                            className="flex items-center text-sm font-medium transition-all hover:bg-black/5 dark:hover:bg-white/10 h-[40px] px-3 rounded-lg"
-                            style={{
-                                color: token.colorTextSecondary,
-                            }}
-                        >
-                            Reset
-                        </Button>
-                    )}
-                </div>
+                <FilterBar
+                    filters={config.filters}
+                    values={localFilters}
+                    initialValues={config.initialFilters}
+                    onChange={(nextFilters) => handleFiltersChange(nextFilters)}
+                    onReset={handleReset}
+                    showReset={config.filterBar?.showReset}
+                    resetLabel={config.filterBar?.resetLabel}
+                    className={config.filterBar?.className}
+                    compact={config.filterBar?.compact}
+                    resetIconOnly={config.filterBar?.resetIconOnly}
+                />
             )}
 
             <div
