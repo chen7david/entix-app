@@ -1,5 +1,6 @@
 import { API_V1, type PaginatedResponse, type TransactionFilters } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 
 export type TransactionRecord = {
@@ -54,5 +55,6 @@ export const useTransactions = (orgId?: string, filters: Partial<TransactionFilt
             prevCursor: null,
         }),
         enabled: !!orgId,
+        staleTime: QUERY_STALE_MS,
     });
 };

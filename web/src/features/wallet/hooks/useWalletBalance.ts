@@ -1,5 +1,6 @@
 import { API_V1, type WalletSummaryDTO } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 
 type WalletSummaryResponse = {
@@ -28,6 +29,7 @@ export const useWalletBalance = (
             return (await res.json()) as WalletSummaryResponse;
         },
         select: (res) => res?.data,
+        staleTime: QUERY_STALE_MS,
         enabled: ownerType === "org" ? !!id : !!id && !!orgId,
     });
 };

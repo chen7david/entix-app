@@ -9,6 +9,7 @@ import { GuestRoute, OrgGuard, ProtectedRoute } from "./components/guards";
 import { AuthProvider } from "./features/auth/context/AuthContext";
 import { useHomeRedirect } from "./features/auth/hooks/useHomeRedirect";
 import { useTimezoneInit } from "./hooks/useTimezoneInit";
+import { QUERY_STALE_MS } from "./lib/query-config";
 import { AuthLayout } from "./layouts/auth/AuthLayout";
 import { OrgAdminLayout } from "./layouts/org-admin/OrgAdminLayout";
 import { PlatformAdminLayout } from "./layouts/platform-admin/PlatformAdminLayout";
@@ -58,7 +59,7 @@ import {
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
-            staleTime: 1000 * 60 * 5, // 5 min — treat fresh data as fresh
+            staleTime: QUERY_STALE_MS,
             refetchOnWindowFocus: false, // don't restart spinners on tab switch
             retry: 1,
         },

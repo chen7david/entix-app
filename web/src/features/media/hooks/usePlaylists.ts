@@ -9,6 +9,7 @@ import type {
 import { enrichedPlaylistMediaItemSchema } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback } from "react";
@@ -34,6 +35,7 @@ export const usePlaylist = (playlistId?: string) => {
             return (await res.json()) as PlaylistDTO;
         },
         enabled: !!orgId && !!playlistId,
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -55,6 +57,7 @@ export const usePlaylistSequence = (playlistId?: string) => {
             return [...parsed].sort((a, b) => a.position - b.position);
         },
         enabled: !!orgId && !!playlistId,
+        staleTime: QUERY_STALE_MS,
     });
 };
 
@@ -81,6 +84,7 @@ export const usePlaylists = (filters?: PlaylistFilters) => {
             return (await res.json()) as PaginatedResponse<PlaylistDTO>;
         },
         enabled: !!orgId,
+        staleTime: QUERY_STALE_MS,
         placeholderData: (previousData) => previousData,
     });
 

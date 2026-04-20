@@ -1,6 +1,7 @@
 import { API_V1 } from "@shared";
 import type { MemberBillingPlanDTO } from "@shared/schemas/dto/billing-plan.dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 
@@ -22,6 +23,7 @@ export const useMemberBilling = (orgId: string, userId: string) => {
             return data as MemberBillingPlanDTO[];
         },
         enabled: !!orgId && !!userId,
+        staleTime: QUERY_STALE_MS,
     });
 
     const assignOrReplaceMutation = useMutation({

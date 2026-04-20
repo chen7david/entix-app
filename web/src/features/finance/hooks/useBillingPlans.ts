@@ -6,6 +6,7 @@ import type {
     UpdateBillingPlanInput,
 } from "@shared/schemas/dto/billing-plan.dto";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 
@@ -31,6 +32,7 @@ export const useBillingPlans = (orgId: string, query: Partial<BillingPlanPaginat
             return { data: data as BillingPlanDTO[], nextCursor: nextCursor as string | null };
         },
         enabled: !!orgId,
+        staleTime: QUERY_STALE_MS,
     });
 };
 

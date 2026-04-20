@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export type EmailEvent =
     | "sent"
@@ -47,5 +48,6 @@ export const useAdminEmails = (options?: {
             if (!res.ok) throw new Error(`Failed to fetch emails: ${res.status}`);
             return res.json();
         },
+        staleTime: QUERY_STALE_MS,
     });
 };

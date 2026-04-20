@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_STALE_ANALYTICS_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
 export type BulkMetrics = {
@@ -38,6 +39,7 @@ export const useBulkMembers = (orgId?: string) => {
             return res.json();
         },
         enabled: !!orgId,
+        staleTime: QUERY_STALE_ANALYTICS_MS,
     });
 
     const exportMembers = async () => {

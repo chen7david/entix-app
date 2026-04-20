@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_CATALOG_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 
 export type CurrencyWithStatus = {
@@ -23,8 +24,8 @@ export const useOrgCurrencies = (orgId?: string) => {
         },
         select: (res) => res?.data,
         enabled: !!orgId,
-        staleTime: 1000 * 60 * 60 * 24, // 24 hours — currencies rarely change
-        gcTime: 1000 * 60 * 60 * 24,
+        staleTime: QUERY_STALE_CATALOG_MS,
+        gcTime: QUERY_STALE_CATALOG_MS,
     });
 };
 

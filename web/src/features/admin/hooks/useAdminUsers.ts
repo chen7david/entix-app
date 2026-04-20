@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export const useAdminUsers = (
     search?: string,
@@ -27,6 +28,7 @@ export const useAdminUsers = (
                 prevCursor: string | null;
             }>;
         },
+        staleTime: QUERY_STALE_MS,
     });
 };
 

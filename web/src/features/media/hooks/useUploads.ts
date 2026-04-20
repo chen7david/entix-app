@@ -1,5 +1,6 @@
 import type { PaginatedResponse, UploadDto } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
 export type UploadFilters = {
@@ -37,6 +38,7 @@ export const useOrganizationUploads = (
             return response.json() as Promise<PaginatedResponse<UploadDto>>;
         },
         enabled: !!organizationId,
+        staleTime: QUERY_STALE_MS,
         placeholderData: (previousData) => previousData,
     });
 };

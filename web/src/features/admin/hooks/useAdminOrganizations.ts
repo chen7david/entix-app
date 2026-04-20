@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@web/src/lib/auth-client";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export const useAdminOrganizations = (
     search?: string,
@@ -35,6 +36,7 @@ export const useAdminOrganizations = (
             }>;
         },
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 };
 

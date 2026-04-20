@@ -1,5 +1,6 @@
 import { API_V1, type WalletAccountDTO } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 
 export const useAdminOrgAccounts = (organizationId?: string) => {
@@ -14,5 +15,6 @@ export const useAdminOrgAccounts = (organizationId?: string) => {
             return (await res.json()) as { data: WalletAccountDTO[] };
         },
         select: (res) => res?.data,
+        staleTime: QUERY_STALE_MS,
     });
 };

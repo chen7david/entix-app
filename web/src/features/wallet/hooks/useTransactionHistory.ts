@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 // Matches the full TransactionRecord shape expected by TransactionLedgerTable
 export type Transaction = {
@@ -79,5 +80,6 @@ export const useTransactionHistory = (
             return res.json();
         },
         enabled: ownerType === "org" ? !!id : !!id && !!orgId,
+        staleTime: QUERY_STALE_MS,
     });
 };

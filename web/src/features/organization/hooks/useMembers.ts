@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import { authClient } from "@web/src/lib/auth-client";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { useCallback, useMemo } from "react";
 import { useOrganization } from "./useOrganization";
@@ -57,6 +58,7 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
         },
         enabled: !!activeOrganization?.id && isPagedMode,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Infinite Query (Legacy / Load More)
@@ -87,6 +89,7 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
         initialPageParam: undefined,
         enabled: !!activeOrganization?.id && !isPagedMode,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Unified Result Mapping

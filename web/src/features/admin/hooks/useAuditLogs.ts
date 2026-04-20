@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 export type AuditLogFilters = {
     organizationId?: string;
@@ -38,6 +39,7 @@ export const useAdminAuditLogs = (filters: AuditLogFilters) => {
                 prevCursor: string | null;
             }>;
         },
+        staleTime: QUERY_STALE_MS,
     });
 };
 

@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 
 export const useUserProfile = (userId?: string) => {
@@ -13,6 +14,7 @@ export const useUserProfile = (userId?: string) => {
             return res.json();
         },
         enabled: !!userId,
+        staleTime: QUERY_STALE_MS,
     });
 
     const buildMutation = (method: "POST" | "PUT" | "DELETE", pathSuffix: string) => {

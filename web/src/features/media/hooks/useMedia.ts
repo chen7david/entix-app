@@ -8,6 +8,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
+import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { App } from "antd";
 import { useCallback, useMemo } from "react";
@@ -75,6 +76,7 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
         },
         enabled: !!orgId && isPagedMode,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Infinite Query (Legacy / Load More)
@@ -106,6 +108,7 @@ export const useMedia = (type?: "video" | "audio", search?: string, options?: Us
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.data.nextCursor,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Unified Result Mapping

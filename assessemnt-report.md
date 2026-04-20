@@ -252,9 +252,10 @@ Copy a new row **after** you finish a phase and gates are green:
 | 2026-04-20 | **E** | **`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, and **`MailService`** now **`extend BaseService`** with **`super()`** in constructors (API.md Rule **4** / **`assertExists`** availability). No call-site changes. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
 | 2026-04-20 | **F** | **Deferred** — no **`lib/axios.ts`**; team preference to go straight to **Hono typed client** (Phase **I**) instead of axios + migration churn. | — | *recorded* |
 | 2026-04-20 | **G** | **`web/src/routes/lazy-pages.ts`**: all route-level pages + **`FinancialManagementPage`** use **`React.lazy`**. **`App.tsx`**: **`Suspense`** fallback **`CenteredSpin`**; imports from **`components/guards`** barrel. **`components/guards/index.ts`**: documented stack (**`GuestRoute`** → **`ProtectedRoute`** → nested **`OrgGuard`** / role gates) to avoid redundant membership vs role checks. | `check:fix` ✓ · web `typecheck` + `test:run` (22) ✓ · `web` `build` ✓ | *pending your sign-off* |
+| 2026-04-20 | **H** | **`web/src/lib/query-config.ts`**: shared **`QUERY_STALE_*`** constants. **`App.tsx`** default **`staleTime`** uses **`QUERY_STALE_MS`**. Every **`useQuery`** / **`useInfiniteQuery`** in **`web/src/features/**`** now sets explicit **`staleTime`** (5 min default, 2 min analytics/metrics, 24h org currencies, 1h social types). **`useMembers` / `useMedia`** paged + infinite modes both covered. **Deferred:** migrating playlist/billing list hooks to **`useInfiniteQuery`** only (consumer audit). | web `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **H** (explicit **`staleTime`** on queries; cursor / **`useInfiniteQuery`** alignment) — §7.1 row **H** — or **Phase I** (Hono **`hc`**) if prioritizing typed client over query polish.
+**Next:** Phase **I** (Hono **`hc`** typed client) — §7.1 row **I** — or **Phase J** (error boundaries) if you want UI resilience before transport work.
 
 ---
 

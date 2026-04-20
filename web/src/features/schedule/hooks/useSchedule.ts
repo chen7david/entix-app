@@ -7,6 +7,7 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
+import { QUERY_STALE_ANALYTICS_MS, QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
 export type SessionDTO = {
@@ -77,6 +78,7 @@ export const useSchedule = (
         initialPageParam: undefined,
         enabled: !!organizationId && isAuthenticated,
         placeholderData: keepPreviousData,
+        staleTime: QUERY_STALE_MS,
     });
 
     // Safely flatten infinite scroll generic arrays mapping identically to previous UI structures natively.
@@ -284,6 +286,7 @@ export function useScheduleMetrics(organizationId?: string, startDate?: number, 
         },
         enabled: !!organizationId,
         refetchOnWindowFocus: false,
+        staleTime: QUERY_STALE_ANALYTICS_MS,
     });
 
     return {

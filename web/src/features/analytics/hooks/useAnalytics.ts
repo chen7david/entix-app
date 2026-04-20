@@ -1,5 +1,6 @@
 import { API_V1 } from "@shared";
 import { useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_ANALYTICS_MS } from "@web/src/lib/query-config";
 import { parseApiError } from "@web/src/utils/api";
 import { DateUtils } from "@web/src/utils/date";
 
@@ -48,7 +49,7 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
             return res.json();
         },
         enabled: !!organizationId,
-        staleTime: 120000,
+        staleTime: QUERY_STALE_ANALYTICS_MS,
         refetchOnMount: true,
         refetchOnWindowFocus: true,
     });
@@ -77,7 +78,7 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
             return res.json();
         },
         enabled: !!organizationId,
-        staleTime: 120000,
+        staleTime: QUERY_STALE_ANALYTICS_MS,
         refetchOnMount: true,
         refetchOnWindowFocus: true,
     });
