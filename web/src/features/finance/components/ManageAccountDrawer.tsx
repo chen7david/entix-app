@@ -5,7 +5,9 @@ import {
     SaveOutlined,
 } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
+import { TransactionAmount } from "@web/src/components/ui/TransactionAmount";
 import { useTransactionHistory } from "@web/src/features/wallet/hooks/useTransactionHistory";
+import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     App,
@@ -126,7 +128,7 @@ export const ManageAccountDrawer: React.FC<Props> = ({
         >
             <div style={{ marginBottom: 16 }}>
                 <Title level={4} style={{ margin: 0 }}>
-                    {account.name}
+                    {formatAccountDisplayName(account.name, currencyMeta?.code)}
                 </Title>
                 <Space size={4} style={{ marginTop: 4 }}>
                     <Tag color="success">ACTIVE</Tag>
@@ -214,10 +216,14 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                                                         <Text strong>
                                                             {tx.category?.name || "Transfer"}
                                                         </Text>
-                                                        <Text strong>
-                                                            {tx.currency?.symbol ?? "$"}
-                                                            {(tx.amountCents / 100).toFixed(2)}
-                                                        </Text>
+                                                        <TransactionAmount
+                                                            amountCents={tx.amountCents}
+                                                            currencySymbol={
+                                                                tx.currency?.symbol ?? "$"
+                                                            }
+                                                            currencyCode={tx.currency?.code}
+                                                            compact
+                                                        />
                                                     </div>
                                                 }
                                                 description={

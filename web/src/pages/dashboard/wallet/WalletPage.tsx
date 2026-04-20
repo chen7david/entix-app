@@ -5,6 +5,7 @@ import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
+import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { useSession } from "@web/src/lib/auth-client";
 import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
 import { useState } from "react";
@@ -145,7 +146,12 @@ export const WalletPage = () => {
                                             <Statistic
                                                 title={
                                                     <div className="flex items-center gap-2">
-                                                        <Text strong>{acc.name}</Text>
+                                                        <Text strong>
+                                                            {formatAccountDisplayName(
+                                                                acc.name,
+                                                                config?.code
+                                                            )}
+                                                        </Text>
                                                         <Tooltip
                                                             title={
                                                                 acc.isActive ? "Active" : "Inactive"

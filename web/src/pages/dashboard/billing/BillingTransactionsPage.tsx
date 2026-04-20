@@ -4,6 +4,7 @@ import {
     RollbackOutlined,
     SyncOutlined,
 } from "@ant-design/icons";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
@@ -23,7 +24,7 @@ export const BillingTransactionsPage: React.FC = () => {
     // Cursor stack: navigate forward/back by pushing/popping cursors
     const [cursorStack, setCursorStack] = useState<string[]>([]);
     const [filters, setFilters] = useState<Record<string, any>>({});
-    const [pageSize, setPageSize] = useState(20);
+    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
     const currentCursor = cursorStack[cursorStack.length - 1];
 
