@@ -1,6 +1,7 @@
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import type { AppContext } from "@api/helpers/types.helpers";
 import { auth } from "@api/lib/auth/auth";
+import { AdminAuditService } from "@api/services/admin-audit.service";
 import { AvatarService } from "@api/services/avatar.service";
 import { CacheService } from "@api/services/cache.service";
 import { DashboardService } from "@api/services/dashboard.service";
@@ -19,6 +20,7 @@ import { NotificationService } from "@api/services/notification.service";
 import { OrganizationService } from "@api/services/organization.service";
 import { PaymentQueueService } from "@api/services/payment/payment-queue.service";
 import { PlaylistService } from "@api/services/playlist.service";
+import { ReconciliationService } from "@api/services/reconciliation.service";
 import { RegistrationService } from "@api/services/registration.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
@@ -31,6 +33,7 @@ import {
     getFinancialAccountsRepository,
     getFinancialCurrenciesRepository,
     getFinancialOrgSettingsRepository,
+    getFinancialTransactionCategoriesRepository,
     getFinancialTransactionsRepository,
     getKvCacheRepository,
     getMediaRepository,
@@ -176,6 +179,19 @@ export const getSessionPaymentService = (ctx: AppContext) => {
 
 export const getPaymentQueueService = (ctx: AppContext) => {
     return new PaymentQueueService(getPaymentQueueRepository(ctx), ctx.env.QUEUE);
+};
+
+export const getAdminAuditService = (ctx: AppContext) => {
+    return new AdminAuditService(getSystemAuditRepository(ctx), ctx.env.QUEUE);
+};
+
+export const getReconciliationService = (ctx: AppContext) => {
+    return new ReconciliationService(
+        getSystemAuditRepository(ctx),
+        getFinancialAccountsRepository(ctx),
+        getFinancialTransactionCategoriesRepository(ctx),
+        getSessionPaymentService(ctx)
+    );
 };
 
 export const getCacheService = (ctx: AppContext) => {

@@ -152,15 +152,45 @@ export class SystemAuditRepository {
     }
 
     /**
-     * Acknowledges an audit event
+     * Loads a single audit row scoped by organization.
      */
-    async acknowledge(id: string, userId: string, now: Date = new Date()) {
+    async findByIdAndOrganization(
+        id: string,
+        organizationId: string
+    ): Promise<SystemAuditEvent | null> {
+        const row = await this.db.query.systemAuditEvents.findFirst({
+            where: and(
+                eq(systemAuditEvents.id, id),
+                eq(systemAuditEvents.organizationId, organizationId)
+            ),
+        });
+        return row ?? null;
+    }
+
+    /**
+     * Sets acknowledgment fields. When `organizationId` is set, the update matches both id and org.
+     */
+    async setAcknowledged(
+        id: string,
+        options: { at: Date; acknowledgedBy: string | null; organizationId?: string }
+    ) {
+        const conditions = [eq(systemAuditEvents.id, id)];
+        if (options.organizationId !== undefined) {
+            conditions.push(eq(systemAuditEvents.organizationId, options.organizationId));
+        }
         await this.db
             .update(systemAuditEvents)
             .set({
-                acknowledgedAt: now,
-                acknowledgedBy: userId,
+                acknowledgedAt: options.at,
+                acknowledgedBy: options.acknowledgedBy,
             })
-            .where(eq(systemAuditEvents.id, id));
+            .where(and(...conditions));
+    }
+
+    /**
+     * Acknowledges an audit event (by id only).
+     */
+    async acknowledge(id: string, userId: string, now: Date = new Date()) {
+        await this.setAcknowledged(id, { at: now, acknowledgedBy: userId });
     }
 }

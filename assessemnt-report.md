@@ -21,6 +21,7 @@
 | Hono client migration | **DONE** | Scoped in §5 |
 | Remediation **Phase A** (nanoid → service) | **DONE** | See §7.3 log (2026-04-19) |
 | Remediation **Phase B** (repo error purity) | **DONE** | See §7.3 log (2026-04-19) |
+| Remediation **Phase C** (handler layering) | **DONE** | See §7.3 log (2026-04-19) |
 
 ---
 
@@ -242,9 +243,10 @@ Copy a new row **after** you finish a phase and gates are green:
 |------|-------|---------|----------------------------------------------------------------|-------------|
 | 2026-04-19 | **A** | **`MemberRepository.insert`** now requires `id` (first arg); **`MemberService`** generates `nanoid()`. **`FinancialOrgSettingsRepository`**: removed `nanoid` / `findOrCreate`; added **`insertDefaults(id, orgId)`** + **`findByOrgId`** with `?? null`; **`UserFinancialService`** owns **`ensureOrgFinancialSettings()`** with `nanoid()` + **`InternalServerError`** if insert returns null. **`FinancialCurrenciesRepository.insert(id, input)`** and **`FinancialTransactionCategoriesRepository.create(id, input)`** — tests generate prefixed ids to simulate the service layer. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (240) ✓ · web `typecheck` + `test:run` (22) ✓ · `build:web` ✓ | *pending your sign-off* |
 | 2026-04-19 | **B** | **`FinanceBillingPlansRepository`**: **`updatePlan`** / **`deletePlan`** return `null` instead of throwing **`NotFoundError`** / **`ConflictError`**; **`FinanceBillingPlansService`** maps null → **`NotFoundError`**, FK **`FOREIGN KEY constraint failed`** → **`ConflictError`**. **`FinancialTransactionsRepository.insert`** returns **`LedgerInsertOutcome`** (`idempotency_conflict` / `debit_guard_failed` / success); **`FinancialBaseService.executeTransaction`** maps those to **`ConflictError`** / **`BadRequestError`**. Cursor parsing: exported **`parseTransactionCursor`**; **`OrgFinancialService`** / **`UserFinancialService`** validate cursors and throw **`BadRequestError`** before list queries; repo uses **`requireTransactionCursor`** only after service validation. | `typecheck:api` ✓ · `test:api` ✓ | *pending your sign-off* |
+| 2026-04-19 | **C** | **`AdminAuditHandler`** / **`ReconciliationHandler`** now call **`getAdminAuditService`** / **`getReconciliationService`** only (no **`getDbClient`** / repo factories in handlers). New **`AdminAuditService`** (list, acknowledge, requeue + queue send) and **`ReconciliationService`** (missed-payment list + retry orchestration). **`SystemAuditRepository`**: **`findByIdAndOrganization`**, **`setAcknowledged`** (optional org scope); **`acknowledge`** delegates to **`setAcknowledged`**. Malformed event **`metadata`** JSON → **422** (`invalid_metadata`) instead of an uncaught parse error. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
 | *(template)* | *next* | *…* | *all ✓* | *pending* |
 
-**Next:** Phase **C** (handler layering) — `assessemnt-report.md` §7.1 row **C** (`audit.handlers.ts`, `reconciliation.handlers.ts`, small services).
+**Next:** Phase **D** (handler error & response hygiene) — §7.1 row **D** (`uploads.handlers.ts`, **`new Error`** cleanup, upload list envelope + web if shape changes).
 
 ---
 
