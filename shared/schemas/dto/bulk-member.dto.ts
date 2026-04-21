@@ -120,6 +120,7 @@ export const bulkMetricsSchema = z.object({
     paymentReadiness: z.object({
         totalStudents: z.number().openapi({ example: 40 }),
         missingWalletCount: z.number().openapi({ example: 3 }),
+        missingEtdWalletCount: z.number().openapi({ example: 4 }),
         missingBillingPlanCount: z.number().openapi({ example: 5 }),
         missingBothCount: z.number().openapi({ example: 2 }),
         membersNeedingSetup: z
@@ -130,6 +131,7 @@ export const bulkMetricsSchema = z.object({
                     role: z.string(),
                     avatarUrl: z.string().nullable().optional(),
                     hasWallet: z.boolean(),
+                    hasEtdWallet: z.boolean(),
                     hasBillingPlan: z.boolean(),
                 })
             )

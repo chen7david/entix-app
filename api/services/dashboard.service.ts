@@ -34,17 +34,19 @@ export class DashboardService extends BaseService {
             name: member.name ?? "Unknown User",
             avatarUrl: member.avatarUrl ?? null,
             role: member.role,
-            hasWallet: !!member.hasWallet,
-            hasBillingPlan: !!member.hasBillingPlan,
+            hasWallet: !!member.hasCnyWallet,
+            hasEtdWallet: !!member.hasEtdWallet,
+            hasBillingPlan: !!member.hasCnyBillingPlan,
         }));
 
         const membersNeedingSetup = readinessMembers.filter(
-            (member) => !member.hasWallet || !member.hasBillingPlan
+            (member) => !member.hasWallet || !member.hasBillingPlan || !member.hasEtdWallet
         );
 
         const paymentReadiness = {
             totalStudents: readinessMembers.length,
             missingWalletCount: readinessMembers.filter((member) => !member.hasWallet).length,
+            missingEtdWalletCount: readinessMembers.filter((member) => !member.hasEtdWallet).length,
             missingBillingPlanCount: readinessMembers.filter((member) => !member.hasBillingPlan)
                 .length,
             missingBothCount: readinessMembers.filter(

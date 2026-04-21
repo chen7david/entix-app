@@ -10,7 +10,7 @@ import {
 } from "@web/src/features/analytics";
 import {
     DashboardMetricCards,
-    PaymentReadinessPanel,
+    MemberSetupIssuesPanel,
     RecentTransactionsCard,
     UpcomingBirthdaysCard,
     UpcomingSessionsCard,
@@ -129,7 +129,7 @@ export const AdminPortal: React.FC = () => {
             </Row>
 
             <div className="mt-6">
-                <PaymentReadinessPanel paymentReadiness={metrics?.paymentReadiness} />
+                <MemberSetupIssuesPanel paymentReadiness={metrics?.paymentReadiness} />
             </div>
         </div>
     );

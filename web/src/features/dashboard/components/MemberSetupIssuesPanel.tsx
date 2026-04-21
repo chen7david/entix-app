@@ -14,6 +14,7 @@ type Props = {
     paymentReadiness?: {
         totalStudents: number;
         missingWalletCount: number;
+        missingEtdWalletCount: number;
         missingBillingPlanCount: number;
         missingBothCount: number;
         membersNeedingSetup: {
@@ -22,6 +23,7 @@ type Props = {
             role: string;
             avatarUrl?: string | null;
             hasWallet: boolean;
+            hasEtdWallet: boolean;
             hasBillingPlan: boolean;
         }[];
     };
@@ -35,6 +37,7 @@ type ReadinessMember = {
     role: string;
     avatarUrl?: string | null;
     hasWallet: boolean;
+    hasEtdWallet: boolean;
     hasBillingPlan: boolean;
 };
 
@@ -101,15 +104,20 @@ const MemberSetupDrawer: React.FC<{
                         <Space direction="vertical" size="small" style={{ width: "100%" }}>
                             <Text strong>Wallet setup</Text>
                             <Text type="secondary">
-                                Required so session payments can post transactions.
+                                CNY wallet is required for session billing. ETD wallet is required
+                                for point distributions.
                             </Text>
                             <Button
-                                type={member.hasWallet ? "default" : "primary"}
+                                type={
+                                    member.hasWallet && member.hasEtdWallet ? "default" : "primary"
+                                }
                                 onClick={handleInitializeWallet}
                                 loading={initializeWallet.isPending}
-                                disabled={member.hasWallet}
+                                disabled={member.hasWallet && member.hasEtdWallet}
                             >
-                                {member.hasWallet ? "Wallet already active" : "Activate wallet"}
+                                {member.hasWallet && member.hasEtdWallet
+                                    ? "CNY + ETD wallets active"
+                                    : "Activate missing wallet(s)"}
                             </Button>
                         </Space>
                     </Card>
@@ -142,6 +150,9 @@ const MemberSetupDrawer: React.FC<{
                                             loading={updatePlan.isPending}
                                             showSearch
                                             allowClear={false}
+                                            className="w-full"
+                                            style={{ width: "100%" }}
+                                            popupMatchSelectWidth
                                         />
                                     </Space>
                                 );
@@ -154,7 +165,7 @@ const MemberSetupDrawer: React.FC<{
     );
 };
 
-export const PaymentReadinessPanel: React.FC<Props> = ({ paymentReadiness }) => {
+export const MemberSetupIssuesPanel: React.FC<Props> = ({ paymentReadiness }) => {
     const navigateOrg = useOrgNavigate();
     const [selectedMember, setSelectedMember] = useState<ReadinessMember | null>(null);
 
@@ -177,10 +188,13 @@ export const PaymentReadinessPanel: React.FC<Props> = ({ paymentReadiness }) => 
                     description={
                         <Space wrap>
                             <Tag color="gold">
-                                Missing wallet: {paymentReadiness.missingWalletCount}
+                                Missing CNY wallet: {paymentReadiness.missingWalletCount}
+                            </Tag>
+                            <Tag color="cyan">
+                                Missing ETD wallet: {paymentReadiness.missingEtdWalletCount}
                             </Tag>
                             <Tag color="purple">
-                                Missing billing plan: {paymentReadiness.missingBillingPlanCount}
+                                Missing CNY billing plan: {paymentReadiness.missingBillingPlanCount}
                             </Tag>
                             <Tag color="red">Missing both: {paymentReadiness.missingBothCount}</Tag>
                         </Space>
@@ -194,30 +208,44 @@ export const PaymentReadinessPanel: React.FC<Props> = ({ paymentReadiness }) => 
                         dataSource={preview}
                         renderItem={(member) => (
                             <List.Item>
-                                <Space
-                                    align="center"
-                                    style={{ width: "100%", justifyContent: "space-between" }}
-                                >
-                                    <Space align="center" size={10}>
-                                        <Avatar src={member.avatarUrl || undefined}>
+                                <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex min-w-0 items-center gap-2.5">
+                                        <Avatar
+                                            src={member.avatarUrl || undefined}
+                                            className="shrink-0"
+                                        >
                                             {member.name?.[0]?.toUpperCase() || "M"}
                                         </Avatar>
-                                        <Space direction="vertical" size={2}>
-                                            <Text strong>{member.name}</Text>
-                                            <Space size={6}>
+                                        <div className="min-w-0">
+                                            <Text
+                                                strong
+                                                className="block overflow-hidden text-ellipsis whitespace-nowrap"
+                                            >
+                                                {member.name}
+                                            </Text>
+                                            <Space size={6} wrap>
                                                 {!member.hasWallet && (
-                                                    <Tag color="gold">Wallet missing</Tag>
+                                                    <Tag color="gold">CNY wallet missing</Tag>
+                                                )}
+                                                {!member.hasEtdWallet && (
+                                                    <Tag color="cyan">ETD wallet missing</Tag>
                                                 )}
                                                 {!member.hasBillingPlan && (
-                                                    <Tag color="purple">Billing plan missing</Tag>
+                                                    <Tag color="purple">
+                                                        CNY billing plan missing
+                                                    </Tag>
                                                 )}
                                             </Space>
-                                        </Space>
-                                    </Space>
-                                    <Button size="small" onClick={() => setSelectedMember(member)}>
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="small"
+                                        className="w-full sm:w-auto"
+                                        onClick={() => setSelectedMember(member)}
+                                    >
                                         Resolve
                                     </Button>
-                                </Space>
+                                </div>
                             </List.Item>
                         )}
                     />

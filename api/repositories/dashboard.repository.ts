@@ -1,4 +1,5 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { FINANCIAL_CURRENCIES } from "@shared";
 import * as schema from "@shared/db/schema";
 import { and, eq, like, lt, sql } from "drizzle-orm";
 
@@ -97,20 +98,34 @@ export class DashboardRepository {
                 name: schema.authUsers.name,
                 avatarUrl: schema.authUsers.image,
                 role: schema.authMembers.role,
-                hasWallet: sql<number>`EXISTS(
+                hasCnyWallet: sql<number>`EXISTS(
                     SELECT 1
                     FROM ${schema.financialAccounts} fa
                     WHERE fa.owner_id = ${schema.authMembers.userId}
                       AND fa.owner_type = 'user'
                       AND fa.organization_id = ${organizationId}
+                      AND fa.currency_id = ${FINANCIAL_CURRENCIES.CNY}
                       AND fa.is_active = 1
                       AND fa.archived_at IS NULL
                 )`,
-                hasBillingPlan: sql<number>`EXISTS(
+                hasEtdWallet: sql<number>`EXISTS(
+                    SELECT 1
+                    FROM ${schema.financialAccounts} fa
+                    WHERE fa.owner_id = ${schema.authMembers.userId}
+                      AND fa.owner_type = 'user'
+                      AND fa.organization_id = ${organizationId}
+                      AND fa.currency_id = ${FINANCIAL_CURRENCIES.ETD}
+                      AND fa.is_active = 1
+                      AND fa.archived_at IS NULL
+                )`,
+                hasCnyBillingPlan: sql<number>`EXISTS(
                     SELECT 1
                     FROM ${schema.financeMemberBillingPlans} mbp
+                    INNER JOIN ${schema.financeBillingPlans} bp ON bp.id = mbp.billing_plan_id
                     WHERE mbp.user_id = ${schema.authMembers.userId}
                       AND mbp.organization_id = ${organizationId}
+                      AND mbp.currency_id = ${FINANCIAL_CURRENCIES.CNY}
+                      AND bp.is_active = 1
                 )`,
             })
             .from(schema.authMembers)

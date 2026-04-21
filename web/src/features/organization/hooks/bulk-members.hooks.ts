@@ -20,6 +20,7 @@ export type BulkMetrics = {
     paymentReadiness: {
         totalStudents: number;
         missingWalletCount: number;
+        missingEtdWalletCount: number;
         missingBillingPlanCount: number;
         missingBothCount: number;
         membersNeedingSetup: {
@@ -28,6 +29,7 @@ export type BulkMetrics = {
             role: string;
             avatarUrl?: string | null;
             hasWallet: boolean;
+            hasEtdWallet: boolean;
             hasBillingPlan: boolean;
         }[];
     };

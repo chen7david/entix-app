@@ -160,7 +160,10 @@ export const SessionDetailsDrawer = ({
             );
             const blockedMembers = (payload.userIds || [])
                 .map((userId) => readinessByUserId.get(userId))
-                .filter((member): member is NonNullable<typeof member> => !!member);
+                .filter(
+                    (member): member is NonNullable<typeof member> =>
+                        !!member && (!member.hasWallet || !member.hasBillingPlan)
+                );
 
             if (blockedMembers.length > 0) {
                 Modal.warning({
