@@ -1,6 +1,7 @@
 export * from "./components/DashboardCard";
 export * from "./components/DashboardMetricCards";
 export * from "./components/EngagementRiskChart";
+export * from "./components/MemberSetupIssuesPanel";
 export * from "./components/RecentLoginsCard";
 export * from "./components/RecentTransactionsCard";
 export * from "./components/TransactionsTodayCard";

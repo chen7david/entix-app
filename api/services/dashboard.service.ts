@@ -29,9 +29,41 @@ export class DashboardService extends BaseService {
             .filter((p): p is NonNullable<typeof p> => p !== null && p.daysUntil <= 30)
             .sort((a, b) => a.daysUntil - b.daysUntil);
 
+        const readinessMembers = metrics.paymentReadinessRows.map((member) => ({
+            userId: member.userId,
+            name: member.name ?? "Unknown User",
+            avatarUrl: member.avatarUrl ?? null,
+            role: member.role,
+            hasWallet: !!member.hasCnyWallet,
+            hasEtdWallet: !!member.hasEtdWallet,
+            hasBillingPlan: !!member.hasCnyBillingPlan,
+        }));
+
+        const membersNeedingSetup = readinessMembers.filter(
+            (member) => !member.hasWallet || !member.hasBillingPlan || !member.hasEtdWallet
+        );
+
+        const paymentReadiness = {
+            totalStudents: readinessMembers.length,
+            missingWalletCount: readinessMembers.filter((member) => !member.hasWallet).length,
+            missingEtdWalletCount: readinessMembers.filter((member) => !member.hasEtdWallet).length,
+            missingBillingPlanCount: readinessMembers.filter((member) => !member.hasBillingPlan)
+                .length,
+            missingBothCount: readinessMembers.filter(
+                (member) => !member.hasWallet && !member.hasBillingPlan
+            ).length,
+            membersNeedingSetup,
+        };
+
         return {
-            ...metrics,
+            totalStorage: metrics.totalStorage,
+            activeSessions: metrics.activeSessions,
+            engagementRisk: metrics.engagementRisk,
+            totalMembers: metrics.totalMembers,
+            adminCount: metrics.adminCount,
+            ownerCount: metrics.ownerCount,
             upcomingBirthdays,
+            paymentReadiness,
         };
     }
 }
