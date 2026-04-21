@@ -17,6 +17,22 @@ export type BulkMetrics = {
         birthDate: string;
         daysUntil: number;
     }[];
+    paymentReadiness: {
+        totalStudents: number;
+        missingWalletCount: number;
+        missingEtdWalletCount: number;
+        missingBillingPlanCount: number;
+        missingBothCount: number;
+        membersNeedingSetup: {
+            userId: string;
+            name: string;
+            role: string;
+            avatarUrl?: string | null;
+            hasWallet: boolean;
+            hasEtdWallet: boolean;
+            hasBillingPlan: boolean;
+        }[];
+    };
 };
 
 export type ImportResult = {

@@ -1,7 +1,13 @@
+import { AppRoutes } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import { useMembers } from "@web/src/features/organization";
+import {
+    useBulkMembers,
+    useMembers,
+    useOrganization,
+    useOrgNavigate,
+} from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Button, Drawer, Form, Modal, Space, Tabs } from "antd";
+import { App, Button, Drawer, Form, Modal, Space, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
@@ -20,6 +26,9 @@ export const SessionDetailsDrawer = ({
     onDelete,
 }: SessionDetailsDrawerProps) => {
     const { notification } = App.useApp();
+    const { activeOrganization } = useOrganization();
+    const navigateOrg = useOrgNavigate();
+    const { metrics } = useBulkMembers(activeOrganization?.id);
     const [form] = Form.useForm();
     const [memberSearch, setMemberSearch] = useState("");
     const [debouncedMemberSearch] = useDebouncedValue(memberSearch, {
@@ -142,6 +151,68 @@ export const SessionDetailsDrawer = ({
                           }
                         : undefined,
             };
+
+            const readinessByUserId = new Map(
+                (metrics?.paymentReadiness?.membersNeedingSetup || []).map((member) => [
+                    member.userId,
+                    member,
+                ])
+            );
+            const blockedMembers = (payload.userIds || [])
+                .map((userId) => readinessByUserId.get(userId))
+                .filter(
+                    (member): member is NonNullable<typeof member> =>
+                        !!member && (!member.hasWallet || !member.hasBillingPlan)
+                );
+
+            if (blockedMembers.length > 0) {
+                Modal.warning({
+                    title: "Payment setup required before scheduling",
+                    content: (
+                        <Space direction="vertical" size="small" style={{ width: "100%" }}>
+                            <Typography.Text>
+                                Some selected members are missing wallet setup or billing plans:
+                            </Typography.Text>
+                            {blockedMembers.slice(0, 6).map((member) => (
+                                <Typography.Text key={member.userId}>
+                                    • {member.name} (
+                                    {!member.hasWallet && !member.hasBillingPlan
+                                        ? "wallet + billing plan"
+                                        : !member.hasWallet
+                                          ? "wallet"
+                                          : "billing plan"}
+                                    )
+                                </Typography.Text>
+                            ))}
+                            <Space wrap>
+                                <Button
+                                    size="small"
+                                    onClick={() => navigateOrg(AppRoutes.org.admin.members)}
+                                >
+                                    Members
+                                </Button>
+                                <Button
+                                    size="small"
+                                    onClick={() =>
+                                        navigateOrg(AppRoutes.org.admin.billing.accounts)
+                                    }
+                                >
+                                    Billing Accounts
+                                </Button>
+                                <Button
+                                    size="small"
+                                    type="primary"
+                                    onClick={() => navigateOrg(AppRoutes.org.admin.billing.plans)}
+                                >
+                                    Billing Plans
+                                </Button>
+                            </Space>
+                        </Space>
+                    ),
+                    okText: "Close",
+                });
+                return;
+            }
 
             await onSave(payload);
             onClose();
