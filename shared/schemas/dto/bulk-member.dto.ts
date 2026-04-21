@@ -117,6 +117,24 @@ export const bulkMetricsSchema = z.object({
             })
         )
         .openapi({ example: [] }),
+    paymentReadiness: z.object({
+        totalStudents: z.number().openapi({ example: 40 }),
+        missingWalletCount: z.number().openapi({ example: 3 }),
+        missingBillingPlanCount: z.number().openapi({ example: 5 }),
+        missingBothCount: z.number().openapi({ example: 2 }),
+        membersNeedingSetup: z
+            .array(
+                z.object({
+                    userId: z.string(),
+                    name: z.string(),
+                    role: z.string(),
+                    avatarUrl: z.string().nullable().optional(),
+                    hasWallet: z.boolean(),
+                    hasBillingPlan: z.boolean(),
+                })
+            )
+            .openapi({ example: [] }),
+    }),
 });
 
 export type BulkMetricsDTO = z.infer<typeof bulkMetricsSchema>;

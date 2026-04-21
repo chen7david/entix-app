@@ -91,6 +91,37 @@ export class DashboardRepository {
                 )
             );
 
+        const paymentReadinessRows = await this.db
+            .select({
+                userId: schema.authMembers.userId,
+                name: schema.authUsers.name,
+                avatarUrl: schema.authUsers.image,
+                role: schema.authMembers.role,
+                hasWallet: sql<number>`EXISTS(
+                    SELECT 1
+                    FROM ${schema.financialAccounts} fa
+                    WHERE fa.owner_id = ${schema.authMembers.userId}
+                      AND fa.owner_type = 'user'
+                      AND fa.organization_id = ${organizationId}
+                      AND fa.is_active = 1
+                      AND fa.archived_at IS NULL
+                )`,
+                hasBillingPlan: sql<number>`EXISTS(
+                    SELECT 1
+                    FROM ${schema.financeMemberBillingPlans} mbp
+                    WHERE mbp.user_id = ${schema.authMembers.userId}
+                      AND mbp.organization_id = ${organizationId}
+                )`,
+            })
+            .from(schema.authMembers)
+            .innerJoin(schema.authUsers, eq(schema.authMembers.userId, schema.authUsers.id))
+            .where(
+                and(
+                    eq(schema.authMembers.organizationId, organizationId),
+                    like(schema.authMembers.role, "%student%")
+                )
+            );
+
         return {
             totalStorage,
             activeSessions,
@@ -99,6 +130,7 @@ export class DashboardRepository {
             adminCount,
             ownerCount,
             rawBirthdays,
+            paymentReadinessRows,
         };
     }
 }
