@@ -1,4 +1,4 @@
-import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
+import { CalendarOutlined, TeamOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import { TableEmptyState } from "@web/src/components/data/TableEmptyState";
 import { DateUtils } from "@web/src/utils/date";
 import { Button, List, Tag, Typography, theme } from "antd";
@@ -7,12 +7,19 @@ import type { SessionDTO } from "../../hooks/useSchedule";
 
 const { Title, Text } = Typography;
 
+function sessionCanJoinVideo(session: SessionDTO) {
+    return session.status === "scheduled" && !!session.teacherUserId;
+}
+
 type Props = {
     sessions: SessionDTO[];
     hasNextPage?: boolean;
     isFetchingNextPage?: boolean;
     onFetchNextPage: () => void;
     onEdit: (session: SessionDTO) => void;
+    onJoinSessionVideo?: (session: SessionDTO) => void | Promise<void>;
+    getSessionVideoHref?: (session: SessionDTO) => string | undefined;
+    joinMeetingPending?: boolean;
 };
 
 export const ScheduleSessionList: React.FC<Props> = ({
@@ -21,6 +28,9 @@ export const ScheduleSessionList: React.FC<Props> = ({
     isFetchingNextPage,
     onFetchNextPage,
     onEdit,
+    onJoinSessionVideo,
+    getSessionVideoHref,
+    joinMeetingPending,
 }) => {
     const { token } = theme.useToken();
 
@@ -47,6 +57,34 @@ export const ScheduleSessionList: React.FC<Props> = ({
                             border: `1px solid ${token.colorBorderSecondary}`,
                             overflow: "hidden",
                         }}
+                        actions={
+                            sessionCanJoinVideo(session) && onJoinSessionVideo
+                                ? [
+                                      <Button
+                                          key="join-video"
+                                          type="text"
+                                          size="small"
+                                          icon={<VideoCameraOutlined />}
+                                          aria-label="Open meeting"
+                                          title="Open meeting"
+                                          loading={joinMeetingPending}
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              const href = getSessionVideoHref?.(session);
+                                              if (href) {
+                                                  window.open(
+                                                      href,
+                                                      "_blank",
+                                                      "noopener,noreferrer"
+                                                  );
+                                                  return;
+                                              }
+                                              void onJoinSessionVideo(session);
+                                          }}
+                                      />,
+                                  ]
+                                : undefined
+                        }
                         onMouseEnter={(e) => {
                             e.currentTarget.style.backgroundColor = token.colorFillAlter;
                         }}

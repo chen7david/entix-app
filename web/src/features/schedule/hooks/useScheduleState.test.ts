@@ -45,6 +45,7 @@ describe("useScheduleState", () => {
             updateSessionStatus: { mutateAsync: vi.fn() },
             deleteSession: { mutateAsync: vi.fn() },
             updateAttendance: { mutateAsync: vi.fn() },
+            issueSessionMeetingToken: { isPending: false, mutateAsync: vi.fn() },
             fetchNextPage: vi.fn(),
             hasNextPage: false,
             isFetchingNextPage: false,
@@ -101,6 +102,16 @@ describe("useScheduleState", () => {
         (useSchedule as any).mockReturnValue({
             sessions: mockSessions,
             isLoading: false,
+            error: null,
+            createSession: { mutateAsync: vi.fn() },
+            updateSession: { mutateAsync: vi.fn() },
+            updateSessionStatus: { mutateAsync: vi.fn() },
+            deleteSession: { mutateAsync: vi.fn() },
+            updateAttendance: { mutateAsync: vi.fn() },
+            issueSessionMeetingToken: { isPending: false, mutateAsync: vi.fn() },
+            fetchNextPage: vi.fn(),
+            hasNextPage: false,
+            isFetchingNextPage: false,
         });
 
         const { result } = renderHook(() => useScheduleState(mockOrganizationId));

@@ -8,6 +8,7 @@ export const AppRoutes = {
         resetPassword: "/auth/reset-password",
     },
     org: {
+        meeting: (sessionId: string) => `/meeting/${sessionId}`,
         dashboard: {
             index: "/dashboard",
             profile: "/dashboard/profile",

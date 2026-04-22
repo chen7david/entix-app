@@ -16,6 +16,9 @@ export const scheduledSessions = sqliteTable(
             .references(() => authOrganizations.id, { onDelete: "cascade" }),
         title: text("title").notNull(),
         description: text("description"),
+        teacherUserId: text("teacher_user_id").references(() => authUsers.id, {
+            onDelete: "set null",
+        }),
         startTime: integer("start_time", { mode: "timestamp_ms" }).notNull(),
         durationMinutes: integer("duration_minutes").notNull(),
         status: text("status", { enum: ["scheduled", "completed", "cancelled"] })
@@ -32,6 +35,7 @@ export const scheduledSessions = sqliteTable(
     },
     (table) => [
         index("scheduled_session_organizationId_idx").on(table.organizationId),
+        index("scheduled_session_teacherUserId_idx").on(table.teacherUserId),
         index("scheduled_session_seriesId_idx").on(table.seriesId),
     ]
 );

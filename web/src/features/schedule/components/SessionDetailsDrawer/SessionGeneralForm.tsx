@@ -1,7 +1,8 @@
 import { ThunderboltOutlined } from "@ant-design/icons";
-import { createSessionSchema } from "@shared";
+import { createSessionSchema, getAvatarUrl } from "@shared";
 import {
     Alert,
+    Avatar,
     Button,
     Col,
     DatePicker,
@@ -9,6 +10,7 @@ import {
     Input,
     Row,
     Select,
+    Space,
     Switch,
     TimePicker,
     Tooltip,
@@ -29,6 +31,10 @@ type SessionGeneralFormProps = {
     ) => Promise<void>;
     isGeneratingTitle: boolean;
     onGenerateTitle: () => Promise<void>;
+    teacherOptions: { label: string; value: string; email?: string; image?: string | null }[];
+    teacherSearch: string;
+    onTeacherSearch: (value: string) => void;
+    loadingTeachers: boolean;
 };
 
 export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
@@ -37,6 +43,10 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
     onUpdateStatus,
     isGeneratingTitle,
     onGenerateTitle,
+    teacherOptions,
+    teacherSearch,
+    onTeacherSearch,
+    loadingTeachers,
 }) => {
     return (
         <>
@@ -160,6 +170,46 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                     </Form.Item>
                 </Col>
             </Row>
+
+            <Form.Item
+                name="teacherUserId"
+                label="Teacher"
+                rules={[{ required: true, message: "Teacher is required" }]}
+            >
+                <Select
+                    placeholder="Select session teacher"
+                    loading={loadingTeachers}
+                    options={teacherOptions.map((teacher) => ({
+                        label: (
+                            <Space>
+                                <Avatar
+                                    size="small"
+                                    src={
+                                        teacher.image
+                                            ? getAvatarUrl(teacher.image, "sm")
+                                            : undefined
+                                    }
+                                >
+                                    {!teacher.image && teacher.label.charAt(0).toUpperCase()}
+                                </Avatar>
+                                <span>{teacher.label}</span>
+                            </Space>
+                        ),
+                        value: teacher.value,
+                        searchLabel: `${teacher.label} ${teacher.email || ""}`.trim(),
+                        image: teacher.image,
+                        textLabel: teacher.label,
+                    }))}
+                    showSearch
+                    filterOption={false}
+                    onSearch={onTeacherSearch}
+                    searchValue={teacherSearch}
+                    onBlur={() => onTeacherSearch("")}
+                    onSelect={() => onTeacherSearch("")}
+                    allowClear
+                    optionRender={(option) => option.data.label}
+                />
+            </Form.Item>
 
             <Form.Item name="description" label="Description">
                 <Input.TextArea rows={3} placeholder="Session Context" />

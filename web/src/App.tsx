@@ -41,6 +41,7 @@ import {
     OrganizationMembersPage,
     OrganizationPlaylistsPage,
     OrganizationSchedulePage,
+    OrganizationSessionMeetingPage,
     OrganizationUploadsPage,
     PlaylistPlayerPage,
     ProfilePage,
@@ -140,6 +141,10 @@ export default function App() {
                                     </Route>
 
                                     <Route path="org/:slug" element={<OrgGuard />}>
+                                        <Route
+                                            path="meeting/:sessionId"
+                                            element={<OrganizationSessionMeetingPage />}
+                                        />
                                         <Route element={<OrgAdminLayout />}>
                                             <Route
                                                 index

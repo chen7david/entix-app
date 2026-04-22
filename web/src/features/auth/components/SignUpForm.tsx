@@ -1,6 +1,6 @@
 import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { Alert, Button, Form, Input, Space, Typography } from "antd";
+import { Alert, Button, Form, Input, Typography } from "antd";
 import type React from "react";
 import { Link } from "react-router";
 
@@ -20,15 +20,13 @@ interface SignUpFormProps {
 }
 
 export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, apiError }) => {
-    const [form] = Form.useForm();
-
     return (
         <>
             {apiError && (
                 <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
-            <Form form={form} name="signup" onFinish={onSubmit} layout="vertical" size="large">
+            <Form name="signup" onFinish={onSubmit} layout="vertical" size="large">
                 <Form.Item
                     name="name"
                     rules={[{ required: true, message: "Please input your name!" }]}
@@ -64,14 +62,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ onSubmit, isLoading, api
                 </Form.Item>
 
                 <Form.Item>
-                    <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isLoading}>
-                            Reset
-                        </Button>
-                        <Button type="primary" htmlType="submit" loading={isLoading}>
-                            Sign Up
-                        </Button>
-                    </Space.Compact>
+                    <Button type="primary" htmlType="submit" loading={isLoading} block>
+                        Sign Up
+                    </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: "center" }}>

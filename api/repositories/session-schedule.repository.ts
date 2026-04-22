@@ -77,6 +77,14 @@ export class SessionScheduleRepository {
             orderBy: orderBy,
             limit: limit + 1,
             with: {
+                teacher: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                    },
+                },
                 attendances: {
                     with: {
                         user: {
@@ -113,6 +121,14 @@ export class SessionScheduleRepository {
                 eq(schema.scheduledSessions.id, sessionId)
             ),
             with: {
+                teacher: {
+                    columns: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        image: true,
+                    },
+                },
                 attendances: {
                     with: {
                         user: {
@@ -257,6 +273,7 @@ export class SessionScheduleRepository {
         data: {
             title: string;
             description?: string | null;
+            teacherUserId?: string | null;
             startTime: Date;
             durationMinutes: number;
         }

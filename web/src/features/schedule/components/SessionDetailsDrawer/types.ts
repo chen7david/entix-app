@@ -1,6 +1,7 @@
 export type SessionSubmitPayload = {
     title: string;
     description?: string;
+    teacherUserId: string;
     startTime: number;
     durationMinutes: number;
     userIds: string[];
@@ -27,4 +28,7 @@ export type SessionDetailsDrawerProps = {
     ) => Promise<void>;
     onSaveAttendance?: (sessionId: string, attendances: any[]) => Promise<void>;
     onDelete?: (sessionId: string, deleteForward: boolean) => Promise<void>;
+    /** Opens Realtime Kit video for the current session (teacher + join window on the API). */
+    onJoinVideo?: () => void | Promise<void>;
+    joinMeetingPending?: boolean;
 };

@@ -1,13 +1,11 @@
 import { useAdminCreateOrganization } from "@web/src/features/admin";
-import { Alert, App, Button, Form, Input, Space } from "antd";
+import { Alert, App, Button, Form, Input } from "antd";
 import { useState } from "react";
 
 export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }) => {
     const { notification } = App.useApp();
     const { mutateAsync: createOrganization, isPending: isCreating } = useAdminCreateOrganization();
     const [error, setError] = useState<string | null>(null);
-    const [form] = Form.useForm();
-
     const onFinish = async (values: { name: string; slug: string }) => {
         setError(null);
         try {
@@ -29,7 +27,7 @@ export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }
     return (
         <div>
             {error && <Alert message={error} type="error" showIcon style={{ marginBottom: 16 }} />}
-            <Form form={form} layout="vertical" onFinish={onFinish}>
+            <Form layout="vertical" onFinish={onFinish}>
                 <Form.Item
                     label="Organization Name"
                     name="name"
@@ -45,14 +43,9 @@ export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }
                     <Input placeholder="enter-organization-slug" />
                 </Form.Item>
                 <Form.Item>
-                    <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isCreating}>
-                            Reset
-                        </Button>
-                        <Button type="primary" htmlType="submit" loading={isCreating}>
-                            Create Organization
-                        </Button>
-                    </Space.Compact>
+                    <Button type="primary" htmlType="submit" loading={isCreating} block>
+                        Create Organization
+                    </Button>
                 </Form.Item>
             </Form>
         </div>

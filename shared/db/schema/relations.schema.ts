@@ -33,6 +33,7 @@ export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     addresses: many(userAddresses),
     socialMedias: many(userSocialMedias),
     paymentRequests: many(paymentRequests),
+    taughtSessions: many(scheduledSessions),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -139,6 +140,10 @@ export const scheduledSessionsRelations = relations(scheduledSessions, ({ one, m
     organization: one(authOrganizations, {
         fields: [scheduledSessions.organizationId],
         references: [authOrganizations.id],
+    }),
+    teacher: one(authUsers, {
+        fields: [scheduledSessions.teacherUserId],
+        references: [authUsers.id],
     }),
     attendances: many(sessionAttendances),
     paymentRequests: many(paymentRequests, { relationName: "paymentRequest_session" }),

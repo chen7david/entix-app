@@ -1,3 +1,4 @@
+import { VideoCameraOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import {
@@ -9,7 +10,7 @@ import {
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { App, Button, Drawer, Form, Modal, Space, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
 import { SessionAttendanceManager } from "./SessionAttendanceManager";
 import { SessionDangerZone } from "./SessionDangerZone";
@@ -24,6 +25,8 @@ export const SessionDetailsDrawer = ({
     onUpdateStatus,
     onSaveAttendance,
     onDelete,
+    onJoinVideo,
+    joinMeetingPending,
 }: SessionDetailsDrawerProps) => {
     const { notification } = App.useApp();
     const { activeOrganization } = useOrganization();
@@ -34,10 +37,18 @@ export const SessionDetailsDrawer = ({
     const [debouncedMemberSearch] = useDebouncedValue(memberSearch, {
         wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
     });
+    const [teacherSearch, setTeacherSearch] = useState("");
+    const [debouncedTeacherSearch] = useDebouncedValue(teacherSearch, {
+        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
+    });
 
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
+    const { members: teacherMembers, loadingMembers: loadingTeacherMembers } = useMembers(
+        debouncedTeacherSearch,
+        { limit: 50 }
+    );
 
     const [memberCache, setMemberCache] = useState<
         Record<string, { name: string; image?: string }>
@@ -87,6 +98,7 @@ export const SessionDetailsDrawer = ({
             form.setFieldsValue({
                 title: session.title,
                 description: session.description,
+                teacherUserId: session.teacherUserId || undefined,
                 date: dayjs(session.startTime),
                 time: dayjs(session.startTime),
                 durationMinutes: session.durationMinutes,
@@ -139,6 +151,7 @@ export const SessionDetailsDrawer = ({
             const payload: SessionSubmitPayload = {
                 title: values.title,
                 description: values.description,
+                teacherUserId: values.teacherUserId,
                 startTime: startDateTime,
                 durationMinutes: values.durationMinutes,
                 userIds: values.userIds || [],
@@ -274,12 +287,60 @@ export const SessionDetailsDrawer = ({
         setIsGeneratingTitle(false);
     };
 
+    const canJoinVideo =
+        !!session &&
+        session.status === "scheduled" &&
+        !!session.teacherUserId &&
+        typeof onJoinVideo === "function";
+
+    const teacherOptions = useMemo(() => {
+        const base = (teacherMembers || []).map((member: any) => ({
+            label: member.name || member.email,
+            value: member.userId,
+            email: member.email,
+            image: member.avatarUrl,
+        }));
+
+        if (!session?.teacherUserId) return base;
+
+        const hasCurrentTeacher = base.some((option) => option.value === session.teacherUserId);
+        if (hasCurrentTeacher) return base;
+
+        const fallbackLabel =
+            session.teacher?.name || session.teacher?.email || session.teacherUserId;
+
+        return [
+            {
+                label: fallbackLabel,
+                value: session.teacherUserId,
+                email: session.teacher?.email,
+                image: session.teacher?.image ?? null,
+            },
+            ...base,
+        ];
+    }, [teacherMembers, session]);
+
     const items = [
         {
             key: "details",
             label: "Details",
             children: (
                 <div className="flex flex-col gap-6 pt-4">
+                    {canJoinVideo ? (
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<VideoCameraOutlined />}
+                            aria-label="Open meeting"
+                            title="Open meeting"
+                            loading={joinMeetingPending}
+                            onClick={(e) => {
+                                e.preventDefault();
+                                void onJoinVideo?.();
+                            }}
+                            style={{ alignSelf: "flex-start" }}
+                        />
+                    ) : null}
                     <MemberSelector
                         loading={loadingMembers}
                         members={members}
@@ -296,6 +357,10 @@ export const SessionDetailsDrawer = ({
                         onUpdateStatus={onUpdateStatus}
                         isGeneratingTitle={isGeneratingTitle}
                         onGenerateTitle={handleGenerateTitle}
+                        teacherOptions={teacherOptions}
+                        teacherSearch={teacherSearch}
+                        onTeacherSearch={setTeacherSearch}
+                        loadingTeachers={loadingTeacherMembers}
                     />
                 </div>
             ),

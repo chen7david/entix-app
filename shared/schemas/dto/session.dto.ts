@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createSessionSchema = z.object({
     title: z.string().min(1, "Title is required").max(100, "Title is too long"),
     description: z.string().optional(),
+    teacherUserId: z.string().min(1, "Teacher is required"),
     startTime: z.number().refine((val) => val > Date.now() - 60000, {
         message: "Session cannot be scheduled in the past. Please select a future time.",
     }),

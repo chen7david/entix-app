@@ -11,16 +11,33 @@ import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_ANALYTICS_MS, QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
 
+export type SessionMeetingTokenDTO = {
+    data: {
+        token: string;
+        role: "organizer" | "participant";
+        meetingId: string;
+        appId: string;
+        sessionId: string;
+    };
+};
+
 export type SessionDTO = {
     id: string;
     organizationId: string;
     title: string;
     description: string | null;
+    teacherUserId?: string | null;
     startTime: number;
     durationMinutes: number;
     status: "scheduled" | "completed" | "cancelled";
     seriesId: string | null;
     recurrenceRule: string | null;
+    teacher?: {
+        id: string;
+        name: string | null;
+        email: string;
+        image: string | null;
+    } | null;
     attendances: {
         sessionId: string;
         organizationId: string;
@@ -89,6 +106,7 @@ export const useSchedule = (
         mutationFn: async (payload: {
             title: string;
             description?: string;
+            teacherUserId: string;
             startTime: number;
             durationMinutes: number;
             userIds: string[];
@@ -122,6 +140,7 @@ export const useSchedule = (
             payload: {
                 title: string;
                 description?: string | null;
+                teacherUserId: string;
                 startTime: number;
                 durationMinutes: number;
                 userIds: string[];
@@ -245,6 +264,24 @@ export const useSchedule = (
         },
     });
 
+    const issueSessionMeetingToken = useMutation({
+        mutationFn: async ({ sessionId }: { sessionId: string }) => {
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule[
+                ":sessionId"
+            ].meeting.token.$post({
+                param: { organizationId, sessionId },
+            });
+            return hcJson<SessionMeetingTokenDTO>(res);
+        },
+        onError: (err: any) =>
+            notification.error({
+                message: "Could not start video",
+                description: err.message || "Failed to issue a meeting token",
+            }),
+    });
+
     return {
         sessions,
         isLoading,
@@ -254,6 +291,7 @@ export const useSchedule = (
         updateSessionStatus,
         deleteSession,
         updateAttendance,
+        issueSessionMeetingToken,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,

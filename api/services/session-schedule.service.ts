@@ -13,11 +13,13 @@ import { addDays, addMonths, addWeeks } from "date-fns";
 import { BaseService } from "./base.service";
 import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "./financial/finance-wallet.service";
+import type { MemberService } from "./member.service";
 import type { PaymentQueueService } from "./payment/payment-queue.service";
 
 export type CreateSessionDTO = {
     title: string;
     description?: string | null;
+    teacherUserId: string;
     startTime: number;
     durationMinutes: number;
     userIds: string[];
@@ -30,6 +32,7 @@ export type CreateSessionDTO = {
 export type UpdateSessionDTO = {
     title: string;
     description?: string | null;
+    teacherUserId: string;
     startTime: number;
     durationMinutes: number;
     userIds: string[];
@@ -43,7 +46,8 @@ export class SessionScheduleService extends BaseService {
         private readonly billingPlansService: FinanceBillingPlansService,
         private readonly walletService: FinanceWalletService,
         private readonly paymentQueueService: PaymentQueueService,
-        private readonly auditRepo: SystemAuditRepository
+        private readonly auditRepo: SystemAuditRepository,
+        private readonly memberService: MemberService
     ) {
         super();
     }
@@ -64,7 +68,32 @@ export class SessionScheduleService extends BaseService {
         }
     }
 
+    private canTeach(roleValue: string): boolean {
+        const roles = roleValue
+            .split(",")
+            .map((role) => role.trim().toLowerCase())
+            .filter(Boolean);
+        return roles.some((role) => role === "teacher" || role === "admin" || role === "owner");
+    }
+
+    private async assertValidTeacher(organizationId: string, teacherUserId: string): Promise<void> {
+        if (!teacherUserId) {
+            throw new BadRequestError("Teacher is required for scheduling");
+        }
+
+        const membership = await this.memberService.findMember(teacherUserId, organizationId);
+        if (!membership) {
+            throw new BadRequestError("Selected teacher is not a member of this organization");
+        }
+
+        if (!this.canTeach(membership.role)) {
+            throw new BadRequestError("Selected teacher must have teacher, admin, or owner role");
+        }
+    }
+
     async createSession(organizationId: string, data: CreateSessionDTO) {
+        await this.assertValidTeacher(organizationId, data.teacherUserId);
+
         const isRecurring = !!data.recurrence;
         // Recurring sessions share one `seriesId` across rows; it is not a table PK default.
         const seriesId = isRecurring ? generateOpaqueId() : null;
@@ -78,6 +107,7 @@ export class SessionScheduleService extends BaseService {
             organizationId,
             title: data.title,
             description: data.description ?? null,
+            teacherUserId: data.teacherUserId,
             startTime: new Date(
                 isRecurring && data.recurrence
                     ? this.calculateNextOccurrence(data.startTime, data.recurrence.frequency, i)
@@ -293,11 +323,13 @@ export class SessionScheduleService extends BaseService {
 
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
         const currentSession = await this.getSessionById(organizationId, sessionId);
+        await this.assertValidTeacher(organizationId, data.teacherUserId);
 
         if (!data.updateForward || !currentSession.seriesId) {
             await this.sessionRepo.updateSessionDetails(organizationId, sessionId, {
                 title: data.title,
                 description: data.description || null,
+                teacherUserId: data.teacherUserId,
                 startTime: new Date(data.startTime),
                 durationMinutes: data.durationMinutes,
             });
@@ -338,6 +370,7 @@ export class SessionScheduleService extends BaseService {
                         organizationId,
                         title: data.title,
                         description: data.description ?? null,
+                        teacherUserId: data.teacherUserId,
                         startTime: new Date(sessionStartTime),
                         durationMinutes: data.durationMinutes,
                         status: "scheduled" as const,

@@ -29,6 +29,13 @@
       "when": 1776260796878,
       "tag": "0003_true_arachne",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1776666600000,
+      "tag": "0004_session_teacher",
+      "breakpoints": true
     }
   ]
 }

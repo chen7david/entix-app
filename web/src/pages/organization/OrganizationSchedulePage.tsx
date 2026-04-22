@@ -1,4 +1,5 @@
 import { PlusOutlined } from "@ant-design/icons";
+import { AppRoutes } from "@shared";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useOrganization } from "@web/src/features/organization";
 import {
@@ -10,9 +11,11 @@ import {
 } from "@web/src/features/schedule";
 import { Button, Result, Spin } from "antd";
 import type React from "react";
+import { useLocation } from "react-router";
 
 export const OrganizationSchedulePage: React.FC = () => {
     const { activeOrganization } = useOrganization();
+    const location = useLocation();
 
     const {
         // State
@@ -46,6 +49,21 @@ export const OrganizationSchedulePage: React.FC = () => {
         fetchNextPage,
         handleReset,
     } = useScheduleState(activeOrganization?.id);
+
+    const getSessionMeetingHref = (session: { id: string; title: string }) => {
+        if (!activeOrganization?.slug) return undefined;
+        const params = new URLSearchParams({
+            title: session.title,
+            returnTo: `${location.pathname}${location.search}`,
+        });
+        return `/org/${activeOrganization.slug}${AppRoutes.org.meeting(session.id)}?${params.toString()}`;
+    };
+
+    const openSessionVideo = (session: { id: string; title: string }) => {
+        const href = getSessionMeetingHref(session);
+        if (!href) return;
+        window.open(href, "_blank", "noopener,noreferrer");
+    };
 
     if (error) {
         return (
@@ -101,6 +119,9 @@ export const OrganizationSchedulePage: React.FC = () => {
                         isFetchingNextPage={isFetchingNextPage}
                         onFetchNextPage={fetchNextPage}
                         onEdit={handleEdit}
+                        onJoinSessionVideo={openSessionVideo}
+                        getSessionVideoHref={getSessionMeetingHref}
+                        joinMeetingPending={false}
                     />
                 )}
             </div>
@@ -113,6 +134,10 @@ export const OrganizationSchedulePage: React.FC = () => {
                 onUpdateStatus={handleUpdateStatus}
                 onSaveAttendance={handleSaveAttendance}
                 onDelete={handleDelete}
+                onJoinVideo={
+                    selectedSession ? () => void openSessionVideo(selectedSession) : undefined
+                }
+                joinMeetingPending={false}
             />
         </div>
     );

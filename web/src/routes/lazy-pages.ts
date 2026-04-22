@@ -105,6 +105,10 @@ export const OrganizationSchedulePage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationSchedulePage"),
     "OrganizationSchedulePage"
 );
+export const OrganizationSessionMeetingPage = lazyNamed(
+    () => import("@web/src/pages/organization/OrganizationSessionMeetingPage"),
+    "OrganizationSessionMeetingPage"
+);
 export const OrganizationMembersPage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationMembersPage"),
     "OrganizationMembersPage"

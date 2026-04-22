@@ -271,3 +271,131 @@ Copy a new row **after** you finish a phase and gates are green:
 ---
 
 *End of report.*
+
+---
+
+## 8. Cloudflare Realtime Kit MVP plan (group meetings for sessions)
+
+### 8.1 Objective
+
+Deliver a first-class online learning MVP where each scheduled session has one teacher organizer, enrolled participants can join securely, and meeting access is controlled by org membership, session attendance, and time window.
+
+### 8.2 Standards to follow during implementation
+
+- **API standards:** all backend work MUST follow `docs/API.md`:
+  - Rule 3 (Service Isolation), Rule 4 (BaseService), Rule 7 (cursor pagination), Rule 13/15 (AppError only), Rule 23-27 (response envelopes), Rule 44 (schema -> migration -> repo -> service -> factory -> route -> handler -> tests).
+- **UI standards:** all frontend work MUST follow `docs/UI.md`:
+  - Rule 2/5/41 (hooks + `getApiClient`, no direct `/api` fetch in components), Rule 7/20 (page orchestration + domain hooks), Rule 10/13/46/49 (mobile-first responsive behavior), Rule 32/33/34/48 (error handling and notifications).
+- **Security baseline:** server-minted short-lived meeting tokens only; role claims enforced server-side; no trust in client role hints.
+
+### 8.3 Phase gate (mandatory after every phase)
+
+After each phase below, stop and run:
+
+1. `npm run check:fix`
+2. `npm run typecheck`
+3. `npm run test:api`
+4. `cd web && npm run test:run`
+5. `npm run build:web`
+
+Then execute targeted manual regression checks for changed flows before moving to the next phase.
+
+### 8.4 Phased MVP execution plan
+
+| Phase | Goal | Main changes | Regression checks (in addition to 8.3 gate) |
+|------|------|--------------|----------------------------------------------|
+| **R0 - Discovery and acceptance criteria** | Freeze MVP behavior and constraints. | Confirm organizer role model, join window, moderation scope, and audit requirements. Define explicit acceptance criteria and non-goals (no recording/transcript for MVP). | Validate no existing scheduling/billing behavior changes in local smoke. |
+| **R1 - Session domain teacher ownership** | Add teacher to session model. | Add `teacherUserId` to `scheduled_sessions` schema + migration; index by `(organizationId, teacherUserId)`; update shared DTOs and schedule route schemas to include teacher data. | Create/edit/list sessions still work; recurring sessions preserve teacher; cursor pagination unchanged. |
+| **R2 - Service/repository authorization rules** | Enforce teacher validity in backend. | In `SessionScheduleService`, validate teacher membership/role in org, enforce teacher on create/update, preserve Rule 2 by keeping repo returns nullable and throwing `AppError` in service only. | Attempt invalid teacher assignment (cross-org/non-teacher) should fail with proper `AppError`; valid assignment succeeds. |
+| **R3 - Meeting identity and token issuance API** | Introduce secure meeting bootstrap endpoint. | Add meeting service + factory + routes/handlers for token issuance: `POST /orgs/:organizationId/sessions/:sessionId/meeting/token`. Include role claim (`organizer` for teacher, `participant` for attendees), short TTL, org/session claims, and audit logs. | Teacher receives organizer token; attendee receives participant token; non-attendee denied; cross-org denied. |
+| **R4 - Cloudflare Realtime Kit room lifecycle MVP** | Wire backend to Realtime Kit primitives. | Deterministic room naming (`org:{orgId}:session:{sessionId}`), create/join semantics, optional start/end endpoints, and minimal moderation capability surface for organizer. | Verify organizer can start and participant can join same room; joining outside window is blocked. |
+| **R5 - Schedule UI teacher assignment** | Make teacher required in schedule flow. | Update session create/edit UI (`SessionDetailsDrawer`, hooks, DTO wiring) with teacher selector and validation. Keep page orchestration thin and hooks in feature domain. | Mobile layout at 390px verified; create/edit flows stable; existing attendee selection and billing setup warning still correct. |
+| **R6 - Meeting UI MVP** | Add teacher/participant join experience. | Add meeting entry CTA in schedule/session views and a meeting page/container that fetches token via hooks (`getApiClient`), then connects to Realtime Kit. Organizer controls exposed only to organizer claim. | Start/Join UX tested for teacher + participant roles; loading/error/empty states and notifications verified. |
+| **R7 - Hardening and observability** | Production readiness for MVP. | Add rate limiting for token endpoint, strict server claim checks, audit events for token issuance and moderation actions, and replay-safe behavior for start requests (idempotency key where needed). | Validate abuse paths (rapid token requests, unauthorized access) and ensure safe failures with actionable UI errors. |
+| **R8 - Test and rollout** | Controlled launch with confidence. | Add/extend unit + integration + web hook tests and Playwright smoke for teacher creates session -> starts meeting -> students join. Gate rollout behind feature flag and enable per org. | Run full regression gate plus smoke E2E on admin + teacher + student personas. |
+
+### 8.5 MVP acceptance criteria
+
+- Session cannot be created without `teacherUserId` once migration cutoff is complete.
+- Teacher joins as organizer; students join as participants.
+- Only users in the same org and session audience can obtain join tokens.
+- Meeting entry obeys session time-window policy.
+- UI remains mobile-safe (390px baseline) for scheduling and joining.
+- Existing schedule, billing, and attendance workflows continue to pass regression checks.
+
+---
+
+## 9. Realtime "Google Meet-like" full feature roadmap
+
+### 9.1 Product direction and UX decisions
+
+- **Session list action:** Use a compact icon-only meeting action (camera icon button, no text label) in session cards/rows and drawer headers.
+- **Standalone meeting app surface:** Keep meeting on a dedicated route (`/org/:slug/meeting/:sessionId`) with no admin/teaching sidebar shell.
+- **Waiting room first:** Default flow should be waiting room -> join request/admission (except organizer auto-entry).
+- **Host authority model:** Organizer (teacher/admin owner acting as host) controls admission, participant mute, remove participant, and room lock.
+- **Participant experience:** Students can request to join, see admission state, and receive clear denied/room-full messages.
+
+### 9.2 Join policy, identity, and capacity
+
+| Topic | Decision | Notes |
+|------|----------|-------|
+| **Who can join?** | Users in same org and authorized by session policy only. | Teacher auto-authorized; attendees from session roster authorized; optional future policy for invite-only guests. |
+| **Can anyone join with link?** | **No** by default. | Link alone is insufficient; server validates org + role + audience before minting/renewing token. |
+| **Waiting room visible list** | Host can see pending queue identities. | Show name, avatar, role hint, join request time, and risk flags (unknown device optional). |
+| **Let people in** | Host admits one, admits all, or denies. | Admission actions logged for audit. |
+| **Maximum participants** | Configurable per organization plan + hard safety cap. | Start with conservative default (e.g., 25-50) and enforce server-side before token issuance/room join. |
+| **Student profile pictures** | Yes, if member profile avatar exists. | Fallback initials for missing avatars. |
+
+### 9.3 Target end-state feature set
+
+1. **Waiting room and admission controls**
+   - Organizer sees pending requests in realtime.
+   - Actions: admit, deny, block re-request for session duration.
+   - Optional auto-admit policy for known attendees.
+
+2. **Live participant management**
+   - Participant roster with speaking/muted/video status.
+   - Host actions: mute participant, remove participant, disable participant camera (if SDK supports host moderation), lock room.
+   - "Request to speak" and "raise hand" queue.
+
+3. **Realtime events and moderation telemetry**
+   - Event stream for join/leave, mute toggles, admission decisions, removals, lock/unlock.
+   - Persist critical moderation actions to audit store.
+   - Surface operational metrics (concurrent participants, drop/reconnect events, denials).
+
+4. **In-meeting collaboration features (phase 2+)**
+   - Reactions/emoticons.
+   - Host overlays/widgets (scoreboard, timer, hand-count, custom teaching tools).
+   - Shared whiteboard or shared app surface if required by teaching workflows.
+
+5. **Video enhancement options (phase 3+)**
+   - Device controls and quality profiles (low/medium/high).
+   - Beauty/background filters if supported by SDK/device pipeline.
+   - Graceful fallback for low-power devices and mobile bandwidth.
+
+### 9.4 Technical implementation phases
+
+| Phase | Goal | Backend/API | Frontend/UI | Exit criteria |
+|------|------|-------------|-------------|---------------|
+| **F1 - Meeting UX baseline** | Ship icon-only entry + stable standalone page. | Keep token API and role checks; add session meeting metadata endpoint if needed. | Camera icon button in schedule; waiting room shell + join button + share link. | Users consistently reach meeting page and join with current auth policies. |
+| **F2 - Waiting room queue** | Host sees join requests and can admit/deny. | Add pending-admission state + endpoints/events (`requestJoin`, `admit`, `deny`). | Waiting room for participants; host panel with pending queue and admit/deny actions. | Host can process queue in realtime; denied users handled cleanly. |
+| **F3 - Roster and moderation** | Host can manage participants. | Add participant moderation APIs/events (`mute`, `remove`, `lockRoom`). | Participant side panel with avatars, status badges, host controls by role. | Host moderation actions apply reliably and are reflected immediately. |
+| **F4 - Capacity and policy controls** | Enforce plan-based limits and org policy. | Add org/session meeting policy settings (max participants, auto-admit, role overrides). | Settings UI in org admin + meeting indicators (room full, locked, policy message). | Capacity breaches blocked server-side with clear UI feedback. |
+| **F5 - Collaboration widgets** | Add teaching-specific in-call tools. | Add widget state sync channel and persistence where needed. | Scoreboard/timer/hand-raise/reactions modules (feature-flagged). | At least one custom widget works in realtime for host + participants. |
+| **F6 - Media quality/filter features** | Improve call quality and presentation. | Optional quality telemetry + profile APIs. | Device selector, quality presets, optional beauty/background effects if feasible. | Stable media UX on desktop/mobile across target network conditions. |
+
+### 9.5 Security and abuse controls (must-have)
+
+- Server-issued short-lived tokens only; never trust client-provided role.
+- Admission and moderation endpoints require host role and org/session checks.
+- Rate-limit token issuance and join-request spam.
+- Audit-log admission/denial/removal/mute actions with actor + target + session context.
+- Prevent replay and stale-token joins where possible (short TTL + refresh path).
+
+### 9.6 Open questions to resolve before F2
+
+1. Should admins/owners always bypass waiting room, or only designated host(s)?
+2. Should admitted students be auto-reconnected if network drops, or re-enter waiting room?
+3. Should guest/external participants ever be allowed by policy?
+4. What default participant cap should each billing tier receive?
+5. Which collaboration widget is highest priority first: hand raise, scoreboard, or timer?

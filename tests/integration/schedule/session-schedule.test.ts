@@ -16,6 +16,9 @@ describe("SessionScheduleService Architecture Bounds", () => {
         list: vi.fn().mockResolvedValue({ items: [], nextCursor: null }),
         acknowledge: vi.fn().mockResolvedValue(undefined),
     } as any;
+    const mockMemberService = {
+        findMember: vi.fn().mockResolvedValue({ role: "teacher" }),
+    } as any;
 
     beforeEach(() => {
         mockRepo = {
@@ -40,13 +43,15 @@ describe("SessionScheduleService Architecture Bounds", () => {
             mockBilling,
             mockWallet,
             mockSessionPaymentService,
-            mockAuditRepo
+            mockAuditRepo,
+            mockMemberService
         );
     });
 
     it("creates a single session effortlessly scaling Drizzle mapping", async () => {
         const payload = {
             title: "Physics 101",
+            teacherUserId: "teacher_1",
             startTime: Date.now(),
             durationMinutes: 60,
             userIds: ["usr_123"],
@@ -68,6 +73,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
     it("generates 4 recurring weekly sessions identically pinned via seriesId", async () => {
         const payload = {
             title: "Advanced Mathematics",
+            teacherUserId: "teacher_1",
             startTime: new Date("2026-03-20T10:00:00Z").getTime(),
             durationMinutes: 45,
             userIds: ["usr_abc", "usr_xyz"],
@@ -110,6 +116,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
         const payload = {
             title: "Advanced Math Revamped",
+            teacherUserId: "teacher_1",
             startTime: NEW_START_TIME,
             durationMinutes: 90,
             userIds: ["usr_abc"],
@@ -143,6 +150,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
     it("generates 3 recurring daily sessions correctly", async () => {
         const payload = {
             title: "Daily Standup",
+            teacherUserId: "teacher_1",
             startTime: new Date("2026-03-20T09:00:00Z").getTime(),
             durationMinutes: 15,
             userIds: ["usr_1"],
@@ -159,6 +167,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
     it("generates 3 recurring monthly sessions correctly skipping across month boundaries", async () => {
         const payload = {
             title: "Monthly Review",
+            teacherUserId: "teacher_1",
             startTime: new Date("2026-03-31T10:00:00Z").getTime(),
             durationMinutes: 60,
             userIds: ["usr_1"],

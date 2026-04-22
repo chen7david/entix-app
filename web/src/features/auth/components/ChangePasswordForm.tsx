@@ -1,5 +1,5 @@
 import { LockOutlined } from "@ant-design/icons";
-import { Alert, Button, Checkbox, Form, Input, Space } from "antd";
+import { Alert, Button, Checkbox, Form, Input } from "antd";
 import type React from "react";
 
 export interface ChangePasswordValues {
@@ -20,21 +20,13 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
     isLoading,
     apiError,
 }) => {
-    const [form] = Form.useForm();
-
     return (
         <>
             {apiError && (
                 <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
-            <Form
-                form={form}
-                name="changePassword"
-                onFinish={onSubmit}
-                layout="vertical"
-                size="large"
-            >
+            <Form name="changePassword" onFinish={onSubmit} layout="vertical" size="large">
                 <Form.Item
                     name="currentPassword"
                     label="Current Password"
@@ -78,14 +70,9 @@ export const ChangePasswordForm: React.FC<ChangePasswordFormProps> = ({
                 </Form.Item>
 
                 <Form.Item>
-                    <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isLoading}>
-                            Reset
-                        </Button>
-                        <Button type="primary" htmlType="submit" loading={isLoading}>
-                            Change Password
-                        </Button>
-                    </Space.Compact>
+                    <Button type="primary" htmlType="submit" loading={isLoading} block>
+                        Change Password
+                    </Button>
                 </Form.Item>
             </Form>
         </>

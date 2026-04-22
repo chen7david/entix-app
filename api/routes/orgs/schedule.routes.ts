@@ -11,6 +11,7 @@ const SessionResponseSchema = z.object({
     organizationId: z.string(),
     title: z.string(),
     description: z.string().nullable(),
+    teacherUserId: z.string().nullable().optional(),
     startTime: z.coerce.number(), // UTC ms
     durationMinutes: z.number(),
     status: z.enum(["scheduled", "completed", "cancelled"]),
@@ -187,6 +188,7 @@ export const ScheduleRoutes = {
                         schema: z.object({
                             title: z.string().min(1),
                             description: z.string().nullable().optional(),
+                            teacherUserId: z.string().min(1),
                             startTime: z.number(),
                             durationMinutes: z.number().min(15),
                             userIds: z.array(z.string()),
@@ -225,6 +227,7 @@ export const ScheduleRoutes = {
                         schema: z.object({
                             title: z.string().min(1),
                             description: z.string().nullable().optional(),
+                            teacherUserId: z.string().min(1),
                             startTime: z.number(),
                             durationMinutes: z.number().min(15),
                             userIds: z.array(z.string()),
@@ -302,6 +305,529 @@ export const ScheduleRoutes = {
             [HttpStatusCodes.OK]: {
                 content: { "application/json": { schema: z.object({ success: z.boolean() }) } },
                 description: "Attendance metrics mutated securely",
+            },
+        },
+    }),
+
+    issueSessionMeetingToken: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/token",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                token: z.string(),
+                                role: z.enum(["organizer", "participant"]),
+                                meetingId: z.string(),
+                                appId: z.string(),
+                                sessionId: z.string(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Short-lived Realtime Kit join token for this session",
+            },
+        },
+    }),
+
+    requestSessionMeetingAdmission: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/request",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                status: z.enum(["pending", "approved", "denied"]),
+                                role: z.enum(["organizer", "participant"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Create or return waiting room admission request",
+            },
+        },
+    }),
+
+    getSessionMeetingAdmissionStatus: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/status",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                status: z.enum(["not_requested", "pending", "approved", "denied"]),
+                                role: z.enum(["organizer", "participant"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Current waiting-room status for this user",
+            },
+        },
+    }),
+
+    listSessionMeetingPendingAdmissions: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/pending",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                items: z.array(
+                                    z.object({
+                                        userId: z.string(),
+                                        status: z.enum(["pending", "approved", "denied"]),
+                                        role: z.enum(["participant", "organizer"]),
+                                        requestedAt: z.number(),
+                                        displayName: z.string().nullable().optional(),
+                                        email: z.string().nullable().optional(),
+                                        image: z.string().nullable().optional(),
+                                    })
+                                ),
+                            }),
+                        }),
+                    },
+                },
+                description: "Waiting-room queue visible to organizers",
+            },
+        },
+    }),
+
+    approveSessionMeetingAdmission: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/{targetUserId}/approve",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                status: z.enum(["approved", "denied"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Approve a waiting-room participant",
+            },
+        },
+    }),
+
+    denySessionMeetingAdmission: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/{targetUserId}/deny",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                status: z.enum(["approved", "denied"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Deny a waiting-room participant",
+            },
+        },
+    }),
+
+    listSessionMeetingParticipants: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                items: z.array(
+                                    z.object({
+                                        userId: z.string(),
+                                        participantId: z.string(),
+                                        name: z.string().nullable().optional(),
+                                        image: z.string().nullable().optional(),
+                                        isOrganizer: z.boolean(),
+                                        forceMuted: z.boolean(),
+                                    })
+                                ),
+                            }),
+                        }),
+                    },
+                },
+                description: "Meeting participant roster for organizers",
+            },
+        },
+    }),
+
+    getSessionMeetingMuteStatus: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/mute-status",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                forceMuted: z.boolean(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Current user's forced-mute status",
+            },
+        },
+    }),
+
+    muteSessionMeetingParticipant: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/mute",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                forceMuted: z.boolean(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Force-mute participant",
+            },
+        },
+    }),
+
+    unmuteSessionMeetingParticipant: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/unmute",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                forceMuted: z.boolean(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Clear force-mute participant flag",
+            },
+        },
+    }),
+
+    removeSessionMeetingParticipant: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/remove",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                removed: z.boolean(),
+                                userId: z.string(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Remove participant from current meeting",
+            },
+        },
+    }),
+
+    getSessionMeetingRoomStatus: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/room",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                locked: z.boolean(),
+                                participantCount: z.number(),
+                                maxParticipants: z.number(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Meeting room lock and capacity status",
+            },
+        },
+    }),
+
+    lockSessionMeetingRoom: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/room/lock",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({ data: z.object({ locked: z.boolean() }) }),
+                    },
+                },
+                description: "Lock meeting room",
+            },
+        },
+    }),
+
+    unlockSessionMeetingRoom: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/room/unlock",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({ data: z.object({ locked: z.boolean() }) }),
+                    },
+                },
+                description: "Unlock meeting room",
+            },
+        },
+    }),
+
+    requestSessionMeetingUnmute: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/unmute-request",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                status: z.enum(["pending", "approved", "denied"]),
+                                requestedAt: z.number(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Participant requests host approval to unmute",
+            },
+        },
+    }),
+
+    getSessionMeetingUnmuteRequestStatus: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/unmute-request/status",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                status: z.enum(["none", "pending", "approved", "denied"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Current participant unmute-request status",
+            },
+        },
+    }),
+
+    listSessionMeetingUnmuteRequests: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/unmute-requests",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                items: z.array(
+                                    z.object({
+                                        userId: z.string(),
+                                        status: z.enum(["pending"]),
+                                        requestedAt: z.number(),
+                                    })
+                                ),
+                            }),
+                        }),
+                    },
+                },
+                description: "Organizer view of pending unmute requests",
+            },
+        },
+    }),
+
+    approveSessionMeetingUnmuteRequest: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/unmute-requests/{targetUserId}/approve",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                status: z.enum(["approved", "denied"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Approve participant unmute request",
+            },
+        },
+    }),
+
+    denySessionMeetingUnmuteRequest: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/unmute-requests/{targetUserId}/deny",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                status: z.enum(["approved", "denied"]),
+                            }),
+                        }),
+                    },
+                },
+                description: "Deny participant unmute request",
             },
         },
     }),

@@ -107,6 +107,7 @@ describe("useSchedule", () => {
         await result.current.createSession.mutateAsync({
             title: "New Session",
             description: "desc",
+            teacherUserId: "u_teacher",
             startTime: 123,
             durationMinutes: 45,
             userIds: ["u1"],
@@ -117,6 +118,7 @@ describe("useSchedule", () => {
             json: {
                 title: "New Session",
                 description: "desc",
+                teacherUserId: "u_teacher",
                 startTime: 123,
                 durationMinutes: 45,
                 userIds: ["u1"],

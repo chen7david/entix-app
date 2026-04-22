@@ -4,7 +4,7 @@ import { DateUtils } from "@web/src/utils/date";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router";
 import type { SessionSubmitPayload } from "../components/SessionDetailsDrawer";
-import { useSchedule, useScheduleMetrics } from "./useSchedule";
+import { type SessionDTO, useSchedule, useScheduleMetrics } from "./useSchedule";
 
 export type TimelineFilter = "All" | "Upcoming" | "Past" | "Next 5 Hours" | "Last 5 Hours";
 
@@ -59,6 +59,7 @@ export const useScheduleState = (organizationId?: string) => {
         updateSessionStatus,
         deleteSession,
         updateAttendance,
+        issueSessionMeetingToken,
         fetchNextPage,
         hasNextPage,
         isFetchingNextPage,
@@ -120,6 +121,22 @@ export const useScheduleState = (organizationId?: string) => {
         setDrawerOpen(false);
     };
 
+    const [activeVideoMeeting, setActiveVideoMeeting] = useState<{
+        token: string;
+        title: string;
+    } | null>(null);
+
+    const openSessionVideo = async (session: SessionDTO) => {
+        try {
+            const data = await issueSessionMeetingToken.mutateAsync({ sessionId: session.id });
+            setActiveVideoMeeting({ token: data.data.token, title: session.title });
+        } catch {
+            /* useSchedule mutation onError already surfaces a notification */
+        }
+    };
+
+    const closeSessionVideo = () => setActiveVideoMeeting(null);
+
     const handleSave = async (payload: SessionSubmitPayload) => {
         if (selectedSession) {
             await updateSession.mutateAsync({
@@ -146,6 +163,7 @@ export const useScheduleState = (organizationId?: string) => {
         setTimeline,
         drawerOpen,
         selectedSession,
+        activeVideoMeeting,
 
         // Data
         metrics,
@@ -174,6 +192,9 @@ export const useScheduleState = (organizationId?: string) => {
         handleSaveAttendance: async (sessionId: string, attendances: any[]) => {
             await updateAttendance.mutateAsync({ sessionId, attendances });
         },
+        openSessionVideo,
+        closeSessionVideo,
+        joinMeetingPending: issueSessionMeetingToken.isPending,
         fetchNextPage,
         handleReset,
     };

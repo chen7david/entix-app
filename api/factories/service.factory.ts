@@ -20,6 +20,7 @@ import { NotificationService } from "@api/services/notification.service";
 import { OrganizationService } from "@api/services/organization.service";
 import { PaymentQueueService } from "@api/services/payment/payment-queue.service";
 import { PlaylistService } from "@api/services/playlist.service";
+import { RealtimeKitService } from "@api/services/realtime-kit.service";
 import { ReconciliationService } from "@api/services/reconciliation.service";
 import { RegistrationService } from "@api/services/registration.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
@@ -104,8 +105,20 @@ export const getSessionScheduleService = (ctx: AppContext) => {
         getFinanceBillingPlansService(ctx),
         getFinanceWalletService(ctx),
         getPaymentQueueService(ctx),
-        getSystemAuditRepository(ctx)
+        getSystemAuditRepository(ctx),
+        getMemberService(ctx)
     );
+};
+
+export const getRealtimeKitService = (ctx: AppContext) => {
+    return new RealtimeKitService(getSessionScheduleRepository(ctx), {
+        accountId: ctx.env.CLOUDFLARE_ACCOUNT_ID,
+        appId: ctx.env.REALTIME_KIT_APP_ID ?? "",
+        apiToken: ctx.env.CLOUDFLARE_API_TOKEN,
+        presetOrganizer: ctx.env.REALTIME_KIT_PRESET_ORGANIZER ?? "Host",
+        presetParticipant: ctx.env.REALTIME_KIT_PRESET_PARTICIPANT ?? "Participant",
+        kv: ctx.env.IDEMPOTENCY_KV,
+    });
 };
 
 export const getMemberService = (ctx: AppContext) => {

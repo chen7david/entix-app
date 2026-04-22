@@ -1,5 +1,5 @@
 import { BankOutlined, LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons";
-import { Alert, Button, Form, Input, Space } from "antd";
+import { Alert, Button, Form, Input } from "antd";
 import type React from "react";
 
 export interface SignUpWithOrgValues {
@@ -20,21 +20,13 @@ export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({
     isLoading,
     apiError,
 }) => {
-    const [form] = Form.useForm();
-
     return (
         <>
             {apiError && (
                 <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
-            <Form
-                form={form}
-                name="signup-with-org"
-                onFinish={onSubmit}
-                layout="vertical"
-                size="large"
-            >
+            <Form name="signup-with-org" onFinish={onSubmit} layout="vertical" size="large">
                 <Form.Item
                     name="name"
                     label="Full Name"
@@ -74,14 +66,9 @@ export const SignUpWithOrgForm: React.FC<SignUpWithOrgFormProps> = ({
                 </Form.Item>
 
                 <Form.Item>
-                    <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isLoading}>
-                            Reset
-                        </Button>
-                        <Button type="primary" htmlType="submit" loading={isLoading}>
-                            Create User &amp; Organization
-                        </Button>
-                    </Space.Compact>
+                    <Button type="primary" htmlType="submit" loading={isLoading} block>
+                        Create User &amp; Organization
+                    </Button>
                 </Form.Item>
             </Form>
         </>

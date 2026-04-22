@@ -1,6 +1,6 @@
 import { MailOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { Alert, Button, Form, Input, Space, Typography } from "antd";
+import { Alert, Button, Form, Input, Typography } from "antd";
 import type React from "react";
 import { Link } from "react-router";
 
@@ -21,21 +21,13 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     isLoading,
     apiError,
 }) => {
-    const [form] = Form.useForm();
-
     return (
         <>
             {apiError && (
                 <Alert message={apiError} type="error" showIcon style={{ marginBottom: 24 }} />
             )}
 
-            <Form
-                form={form}
-                name="forgotPassword"
-                onFinish={onSubmit}
-                layout="vertical"
-                size="large"
-            >
+            <Form name="forgotPassword" onFinish={onSubmit} layout="vertical" size="large">
                 <Form.Item
                     name="email"
                     rules={[
@@ -47,14 +39,9 @@ export const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
                 </Form.Item>
 
                 <Form.Item>
-                    <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isLoading}>
-                            Reset
-                        </Button>
-                        <Button type="primary" htmlType="submit" loading={isLoading}>
-                            Send Reset Link
-                        </Button>
-                    </Space.Compact>
+                    <Button type="primary" htmlType="submit" loading={isLoading} block>
+                        Send Reset Link
+                    </Button>
                 </Form.Item>
 
                 <div style={{ textAlign: "center" }}>

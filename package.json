@@ -39,6 +39,7 @@
         "diff:main": "git diff main > changes.diff"
     },
     "dependencies": {
+        "@cloudflare/realtimekit-react-ui": "^1.1.2",
         "@hono/zod-openapi": "^1.1.5",
         "@scalar/hono-api-reference": "^0.9.28",
         "aws4fetch": "^1.0.20",
