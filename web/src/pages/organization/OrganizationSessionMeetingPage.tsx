@@ -1,4 +1,5 @@
 import {
+    AudioMutedOutlined,
     AudioOutlined,
     CheckOutlined,
     CloseOutlined,
@@ -18,7 +19,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useOrganization } from "@web/src/features/organization";
 import { getApiClient } from "@web/src/lib/api-client";
-import { Alert, Avatar, Button, Drawer, Input, Spin, Typography } from "antd";
+import { Alert, Avatar, Button, Drawer, Input, Spin, Tooltip, Typography } from "antd";
 import type React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router";
@@ -54,6 +55,7 @@ type ParticipantRosterItem = {
     image?: string | null;
     isOrganizer: boolean;
     forceMuted: boolean;
+    forceVideoOff?: boolean;
 };
 type ParticipantRosterResponse = { data: { items: ParticipantRosterItem[] } };
 type RoomStatusResponse = {
@@ -80,92 +82,164 @@ function LocalVideoCanvas() {
     );
 }
 
+function RemoteVideoCanvas({ participant }: { participant: any }) {
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+
+    useEffect(() => {
+        const videoEl = videoRef.current;
+        if (!videoEl || !participant?.registerVideoElement) return;
+        participant.registerVideoElement(videoEl, false);
+        return () => {
+            participant?.deregisterVideoElement?.(videoEl);
+        };
+    }, [participant]);
+
+    // biome-ignore lint/a11y/useMediaCaption: Realtime SDK stream does not expose caption track source.
+    return <video ref={videoRef} autoPlay playsInline className="h-full w-full object-cover" />;
+}
+
 function MeetingControls({
     onLeave,
     forceMuted,
+    forceVideoOff,
     unmuteRequestStatus,
     onRequestUnmute,
     onOpenPanel,
 }: {
     onLeave: () => void;
     forceMuted: boolean;
+    forceVideoOff: boolean;
     unmuteRequestStatus: "none" | "pending" | "approved" | "denied";
-    onRequestUnmute: () => void;
+    onRequestUnmute: () => void | Promise<void>;
     onOpenPanel: () => void;
 }) {
     const { meeting } = useRealtimeKitMeeting();
-    const [busy, setBusy] = useState(false);
+    const [audioLoading, setAudioLoading] = useState(false);
+    const [videoLoading, setVideoLoading] = useState(false);
+    const [leaveLoading, setLeaveLoading] = useState(false);
+    const [requestUnmuteLoading, setRequestUnmuteLoading] = useState(false);
 
     const toggleAudio = useCallback(async () => {
         if (forceMuted) return;
-        setBusy(true);
+        setAudioLoading(true);
         try {
             if (meeting.self.audioEnabled) await meeting.self.disableAudio();
             else await meeting.self.enableAudio();
         } finally {
-            setBusy(false);
+            setAudioLoading(false);
         }
     }, [meeting, forceMuted]);
 
     const toggleVideo = useCallback(async () => {
-        setBusy(true);
+        if (forceVideoOff) return;
+        setVideoLoading(true);
         try {
             if (meeting.self.videoEnabled) await meeting.self.disableVideo();
             else await meeting.self.enableVideo();
         } finally {
-            setBusy(false);
+            setVideoLoading(false);
         }
-    }, [meeting]);
+    }, [meeting, forceVideoOff]);
 
     const leave = useCallback(async () => {
-        setBusy(true);
+        setLeaveLoading(true);
         try {
             await onLeave();
         } finally {
-            setBusy(false);
+            setLeaveLoading(false);
         }
     }, [onLeave]);
 
+    const requestUnmute = useCallback(async () => {
+        setRequestUnmuteLoading(true);
+        try {
+            await onRequestUnmute();
+        } finally {
+            setRequestUnmuteLoading(false);
+        }
+    }, [onRequestUnmute]);
+
+    const videoIcon = meeting.self.videoEnabled ? (
+        <VideoCameraOutlined />
+    ) : (
+        <span className="relative inline-flex items-center justify-center">
+            <VideoCameraOutlined />
+            <span className="pointer-events-none absolute h-[2px] w-5 rotate-[-35deg] rounded bg-current" />
+        </span>
+    );
+
     return (
-        <div className="mt-3 border-t border-white/20 pt-3">
-            <div className="flex flex-wrap items-center justify-center gap-3">
-                <Button
-                    icon={<AudioOutlined />}
-                    size="large"
-                    onClick={() => void toggleAudio()}
-                    loading={busy}
-                    type={meeting.self.audioEnabled ? "primary" : "default"}
-                    disabled={forceMuted}
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 z-20 flex justify-center px-4">
+            <div className="pointer-events-auto flex flex-wrap items-center justify-center gap-2 rounded-full border border-white/20 bg-black/75 px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.45)] backdrop-blur-md">
+                <Tooltip
+                    title={meeting.self.audioEnabled ? "Mute microphone" : "Unmute microphone"}
                 >
-                    {meeting.self.audioEnabled ? "Mute" : "Unmute"}
-                </Button>
+                    <Button
+                        icon={
+                            meeting.self.audioEnabled ? <AudioOutlined /> : <AudioMutedOutlined />
+                        }
+                        shape="circle"
+                        onClick={() => void toggleAudio()}
+                        loading={audioLoading}
+                        type={meeting.self.audioEnabled ? "primary" : "default"}
+                        disabled={forceMuted}
+                        aria-label={
+                            meeting.self.audioEnabled ? "Mute microphone" : "Unmute microphone"
+                        }
+                    />
+                </Tooltip>
                 {forceMuted ? (
-                    <Button size="large" onClick={onRequestUnmute} disabled={busy}>
-                        {unmuteRequestStatus === "pending" ? "Unmute requested" : "Request unmute"}
-                    </Button>
+                    <Tooltip
+                        title={
+                            unmuteRequestStatus === "pending"
+                                ? "Unmute request pending"
+                                : "Request unmute from host"
+                        }
+                    >
+                        <Button
+                            icon={<AudioMutedOutlined />}
+                            shape="circle"
+                            onClick={() => void requestUnmute()}
+                            loading={requestUnmuteLoading}
+                            disabled={requestUnmuteLoading}
+                            aria-label={
+                                unmuteRequestStatus === "pending"
+                                    ? "Unmute request pending"
+                                    : "Request unmute from host"
+                            }
+                        />
+                    </Tooltip>
                 ) : null}
-                <Button
-                    icon={<VideoCameraOutlined />}
-                    size="large"
-                    onClick={() => void toggleVideo()}
-                    loading={busy}
-                    type={meeting.self.videoEnabled ? "primary" : "default"}
-                >
-                    {meeting.self.videoEnabled ? "Stop video" : "Start video"}
-                </Button>
-                <Button icon={<TeamOutlined />} size="large" onClick={onOpenPanel} disabled={busy}>
-                    Controls
-                </Button>
-                <Button
-                    danger
-                    type="primary"
-                    size="large"
-                    icon={<PoweroffOutlined />}
-                    onClick={() => void leave()}
-                    loading={busy}
-                >
-                    Leave
-                </Button>
+                <Tooltip title={meeting.self.videoEnabled ? "Stop camera" : "Start camera"}>
+                    <Button
+                        icon={videoIcon}
+                        shape="circle"
+                        onClick={() => void toggleVideo()}
+                        loading={videoLoading}
+                        type={meeting.self.videoEnabled ? "primary" : "default"}
+                        disabled={forceVideoOff}
+                        aria-label={meeting.self.videoEnabled ? "Stop camera" : "Start camera"}
+                    />
+                </Tooltip>
+                <Tooltip title="Open meeting controls">
+                    <Button
+                        icon={<TeamOutlined />}
+                        shape="circle"
+                        onClick={onOpenPanel}
+                        aria-label="Open meeting controls"
+                    />
+                </Tooltip>
+                <Tooltip title="Leave meeting">
+                    <Button
+                        danger
+                        type="primary"
+                        shape="circle"
+                        icon={<PoweroffOutlined />}
+                        onClick={() => void leave()}
+                        loading={leaveLoading}
+                        aria-label="Leave meeting"
+                    />
+                </Tooltip>
             </div>
         </div>
     );
@@ -190,10 +264,12 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
     const [unmuteRequests, setUnmuteRequests] = useState<UnmuteRequestItem[]>([]);
     const [panelOpen, setPanelOpen] = useState(false);
     const [selfForceMuted, setSelfForceMuted] = useState(false);
+    const [selfForceVideoOff, setSelfForceVideoOff] = useState(false);
     const [selfUnmuteRequestStatus, setSelfUnmuteRequestStatus] = useState<
         "none" | "pending" | "approved" | "denied"
     >("none");
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [stageUserId, setStageUserId] = useState<string | null>(null);
     const meetingRef = useRef(meeting);
     meetingRef.current = meeting;
 
@@ -214,6 +290,35 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
             window.setTimeout(() => setCopyState("idle"), 2000);
         }
     }, [inviteLink]);
+
+    const runtimeParticipants = useMemo(() => {
+        const participantsLike =
+            (meeting as any)?.participants ??
+            (meeting as any)?.state?.participants ??
+            (meeting as any)?.room?.participants;
+        if (!participantsLike) return [];
+        if (Array.isArray(participantsLike)) return participantsLike;
+        if (participantsLike instanceof Map) return Array.from(participantsLike.values());
+        if (typeof participantsLike === "object") return Object.values(participantsLike);
+        return [];
+    }, [meeting]);
+
+    const runtimeByUserId = useMemo(() => {
+        const map = new Map<string, any>();
+        for (const p of runtimeParticipants) {
+            const id = p?.customParticipantId ?? p?.custom_participant_id ?? p?.id;
+            if (id) map.set(String(id), p);
+        }
+        return map;
+    }, [runtimeParticipants]);
+    const selfUserId = useMemo(() => {
+        const id = (meeting as any)?.self?.customParticipantId ?? (meeting as any)?.self?.id;
+        return id ? String(id) : null;
+    }, [meeting]);
+    const connectedRemoteUserIds = useMemo(
+        () => Array.from(runtimeByUserId.keys()).filter((id) => id !== selfUserId),
+        [runtimeByUserId, selfUserId]
+    );
 
     const issueToken = useMutation({
         mutationFn: async (): Promise<MeetingTokenResponse> => {
@@ -289,7 +394,7 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
     );
 
     const fetchParticipantRoster = useCallback(async () => {
-        if (!activeOrganization?.id || !sessionId || meetingRole !== "organizer") return;
+        if (!activeOrganization?.id || !sessionId) return;
         const api = getApiClient();
         const res = await api.api.v1.orgs[":organizationId"].schedule[
             ":sessionId"
@@ -299,7 +404,7 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error?.message || "Failed to load participants");
         setParticipantRoster((data as ParticipantRosterResponse).data.items || []);
-    }, [activeOrganization?.id, sessionId, meetingRole]);
+    }, [activeOrganization?.id, sessionId]);
 
     const fetchRoomStatus = useCallback(async () => {
         if (!activeOrganization?.id || !sessionId) return;
@@ -332,7 +437,10 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
     );
 
     const moderateParticipant = useCallback(
-        async (targetUserId: string, action: "mute" | "unmute" | "remove") => {
+        async (
+            targetUserId: string,
+            action: "mute" | "unmute" | "remove" | "video-off" | "video-on"
+        ) => {
             if (!activeOrganization?.id || !sessionId) return;
             const api = getApiClient();
             const endpoint =
@@ -492,7 +600,7 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
     }, [meetingRole, waitingStatus, phase, fetchWaitingStatus, joinMeeting]);
 
     useEffect(() => {
-        if (phase !== "ready" || meetingRole !== "organizer") return;
+        if (phase !== "ready") return;
         void fetchPendingAdmissions();
         void fetchParticipantRoster();
         void fetchRoomStatus();
@@ -506,7 +614,6 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
         return () => window.clearInterval(timer);
     }, [
         phase,
-        meetingRole,
         fetchPendingAdmissions,
         fetchParticipantRoster,
         fetchRoomStatus,
@@ -537,12 +644,36 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
                 });
                 const reqData = await reqRes.json();
                 if (reqRes.ok) setSelfUnmuteRequestStatus(reqData.data.status);
+
+                const vidRes = await api.api.v1.orgs[":organizationId"].schedule[
+                    ":sessionId"
+                ].meeting.participants.self["video-status"].$get({
+                    param: { organizationId: activeOrganization.id, sessionId },
+                });
+                const vidData = await vidRes.json();
+                if (vidRes.ok) {
+                    setSelfForceVideoOff(!!vidData.data.forceVideoOff);
+                    if (vidData.data.forceVideoOff && meetingRef.current.self.videoEnabled) {
+                        await meetingRef.current.self.disableVideo();
+                    }
+                }
             } catch {
                 // best effort polling
             }
         }, 3000);
         return () => window.clearInterval(timer);
     }, [phase, meetingRole, activeOrganization?.id, sessionId]);
+
+    useEffect(() => {
+        if (phase !== "ready") return;
+        if (!stageUserId) {
+            setStageUserId("self");
+            return;
+        }
+        if (stageUserId !== "self" && !runtimeByUserId.has(stageUserId)) {
+            setStageUserId("self");
+        }
+    }, [phase, stageUserId, runtimeByUserId]);
 
     return (
         <div className="h-dvh w-full bg-black text-white">
@@ -589,13 +720,87 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
                 )}
                 <RealtimeKitProvider value={meeting} fallback={null}>
                     {meeting && phase === "ready" ? (
-                        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-white/20 bg-black p-2">
-                            <div className="h-full min-h-0 overflow-hidden rounded-md bg-black">
-                                <LocalVideoCanvas />
+                        <div className="relative flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-white/20 bg-black p-2">
+                            <div className="flex h-full min-h-0 flex-col gap-2 overflow-hidden rounded-md bg-black">
+                                <div className="relative min-h-0 flex-1 overflow-hidden rounded-md border border-white/10 bg-black">
+                                    {stageUserId && stageUserId !== "self" ? (
+                                        runtimeByUserId.has(stageUserId) ? (
+                                            <RemoteVideoCanvas
+                                                participant={runtimeByUserId.get(stageUserId)}
+                                            />
+                                        ) : (
+                                            <div className="flex h-full items-center justify-center text-white/70">
+                                                <Text style={{ color: "rgba(255,255,255,0.7)" }}>
+                                                    Waiting for participant video...
+                                                </Text>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <LocalVideoCanvas />
+                                    )}
+                                    <div className="pointer-events-none absolute left-3 top-3 rounded bg-black/50 px-2 py-1 text-xs text-white/85">
+                                        Stage:{" "}
+                                        {stageUserId && stageUserId !== "self"
+                                            ? participantRoster.find(
+                                                  (p) => p.userId === stageUserId
+                                              )?.name || stageUserId
+                                            : "You"}
+                                    </div>
+                                </div>
+                                <div className="flex h-28 shrink-0 gap-2 overflow-x-auto pb-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setStageUserId("self")}
+                                        className={`relative h-full w-40 shrink-0 overflow-hidden rounded border ${!stageUserId || stageUserId === "self" ? "border-blue-400" : "border-white/20"} bg-black`}
+                                    >
+                                        <div className="flex h-full items-center justify-center text-white/80">
+                                            <VideoCameraOutlined style={{ fontSize: 20 }} />
+                                        </div>
+                                        <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-xs text-white">
+                                            You
+                                        </span>
+                                    </button>
+                                    {connectedRemoteUserIds.map((userId) => {
+                                        const participant = runtimeByUserId.get(userId);
+                                        const rosterItem = participantRoster.find(
+                                            (p) => p.userId === userId
+                                        );
+                                        const displayName = rosterItem?.name || userId;
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={userId}
+                                                onClick={() => setStageUserId(userId)}
+                                                className={`relative h-full w-40 shrink-0 overflow-hidden rounded border ${stageUserId === userId ? "border-blue-400" : "border-white/20"} bg-black`}
+                                            >
+                                                {participant ? (
+                                                    <RemoteVideoCanvas participant={participant} />
+                                                ) : (
+                                                    <div className="flex h-full items-center justify-center">
+                                                        <Avatar
+                                                            src={rosterItem?.image ?? undefined}
+                                                        >
+                                                            {displayName.charAt(0).toUpperCase()}
+                                                        </Avatar>
+                                                    </div>
+                                                )}
+                                                <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-xs text-white">
+                                                    {displayName}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                    {connectedRemoteUserIds.length === 0 ? (
+                                        <div className="flex h-full min-w-56 items-center justify-center rounded border border-dashed border-white/20 px-3 text-xs text-white/60">
+                                            No other participant video connected yet
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
                             <MeetingControls
                                 onLeave={leaveMeetingPage}
                                 forceMuted={selfForceMuted}
+                                forceVideoOff={selfForceVideoOff}
                                 unmuteRequestStatus={selfUnmuteRequestStatus}
                                 onRequestUnmute={() => void requestUnmuteForSelf()}
                                 onOpenPanel={() => setPanelOpen(true)}
@@ -722,6 +927,21 @@ export const OrganizationSessionMeetingPage: React.FC = () => {
                                                             }
                                                         >
                                                             {item.forceMuted ? "Unmute" : "Mute"}
+                                                        </Button>
+                                                        <Button
+                                                            size="small"
+                                                            onClick={() =>
+                                                                void moderateParticipant(
+                                                                    item.userId,
+                                                                    item.forceVideoOff
+                                                                        ? "video-on"
+                                                                        : "video-off"
+                                                                )
+                                                            }
+                                                        >
+                                                            {item.forceVideoOff
+                                                                ? "Allow video"
+                                                                : "Stop video"}
                                                         </Button>
                                                         <Button
                                                             size="small"

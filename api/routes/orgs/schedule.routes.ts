@@ -1,4 +1,5 @@
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
+import { requireOrgMembership } from "@api/middleware/org-membership.middleware";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
@@ -42,6 +43,7 @@ const SessionResponseSchema = z.object({
         )
         .optional(),
 });
+const MeetingRouteMiddleware = [requireOrgMembership];
 
 export const ScheduleRoutes = {
     listSessions: createRoute({
@@ -313,7 +315,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/token",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -344,7 +346,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/request",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -372,7 +374,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/status",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -400,7 +402,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/pending",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -437,7 +439,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/{targetUserId}/approve",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -465,7 +467,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/waiting-room/{targetUserId}/deny",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -493,7 +495,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -529,7 +531,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/mute-status",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -553,11 +555,39 @@ export const ScheduleRoutes = {
         },
     }),
 
+    getSessionMeetingVideoStatus: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/video-status",
+        tags: ["Schedule"],
+        middleware: MeetingRouteMiddleware,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                forceVideoOff: z.boolean(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Current user's forced-video-off status",
+            },
+        },
+    }),
+
     muteSessionMeetingParticipant: createRoute({
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/mute",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -586,7 +616,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/unmute",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -615,7 +645,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/remove",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -640,11 +670,69 @@ export const ScheduleRoutes = {
         },
     }),
 
+    stopSessionMeetingParticipantVideo: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/video-off",
+        tags: ["Schedule"],
+        middleware: MeetingRouteMiddleware,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                forceVideoOff: z.boolean(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Force-stop participant video",
+            },
+        },
+    }),
+
+    allowSessionMeetingParticipantVideo: createRoute({
+        method: HttpMethods.POST,
+        path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/{targetUserId}/video-on",
+        tags: ["Schedule"],
+        middleware: MeetingRouteMiddleware,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                targetUserId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: z.object({
+                                userId: z.string(),
+                                forceVideoOff: z.boolean(),
+                            }),
+                        }),
+                    },
+                },
+                description: "Allow participant video again",
+            },
+        },
+    }),
+
     getSessionMeetingRoomStatus: createRoute({
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/room",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -668,7 +756,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/room/lock",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -686,7 +774,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/room/unlock",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -704,7 +792,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/unmute-request",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -728,7 +816,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/participants/self/unmute-request/status",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -750,7 +838,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/unmute-requests",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: { params: z.object({ organizationId: z.string(), sessionId: z.string() }) },
         responses: {
             [HttpStatusCodes.OK]: {
@@ -778,7 +866,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/unmute-requests/{targetUserId}/approve",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -807,7 +895,7 @@ export const ScheduleRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/schedule/{sessionId}/meeting/unmute-requests/{targetUserId}/deny",
         tags: ["Schedule"],
-        middleware: [requirePermission("schedule", ["read"])] as const,
+        middleware: MeetingRouteMiddleware,
         request: {
             params: z.object({
                 organizationId: z.string(),

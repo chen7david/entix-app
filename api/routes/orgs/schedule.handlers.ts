@@ -224,6 +224,19 @@ export class ScheduleHandlers {
         return ctx.json(result, HttpStatusCodes.OK);
     };
 
+    static getSessionMeetingVideoStatus: AppHandler<
+        typeof ScheduleRoutes.getSessionMeetingVideoStatus
+    > = async (ctx) => {
+        const { organizationId, sessionId } = ctx.req.valid("param");
+        const userId = ctx.get("userId");
+        const result = await getRealtimeKitService(ctx).getSessionMeetingParticipantVideoStatus(
+            organizationId,
+            sessionId,
+            userId
+        );
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
     static muteSessionMeetingParticipant: AppHandler<
         typeof ScheduleRoutes.muteSessionMeetingParticipant
     > = async (ctx) => {
@@ -264,6 +277,36 @@ export class ScheduleHandlers {
             sessionId,
             userId,
             targetUserId
+        );
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
+    static stopSessionMeetingParticipantVideo: AppHandler<
+        typeof ScheduleRoutes.stopSessionMeetingParticipantVideo
+    > = async (ctx) => {
+        const { organizationId, sessionId, targetUserId } = ctx.req.valid("param");
+        const userId = ctx.get("userId");
+        const result = await getRealtimeKitService(ctx).setSessionMeetingParticipantVideo(
+            organizationId,
+            sessionId,
+            userId,
+            targetUserId,
+            true
+        );
+        return ctx.json(result, HttpStatusCodes.OK);
+    };
+
+    static allowSessionMeetingParticipantVideo: AppHandler<
+        typeof ScheduleRoutes.allowSessionMeetingParticipantVideo
+    > = async (ctx) => {
+        const { organizationId, sessionId, targetUserId } = ctx.req.valid("param");
+        const userId = ctx.get("userId");
+        const result = await getRealtimeKitService(ctx).setSessionMeetingParticipantVideo(
+            organizationId,
+            sessionId,
+            userId,
+            targetUserId,
+            false
         );
         return ctx.json(result, HttpStatusCodes.OK);
     };

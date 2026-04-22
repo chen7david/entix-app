@@ -49,6 +49,10 @@ scheduleRoutes.openapi(
     ScheduleHandlers.getSessionMeetingMuteStatus
 );
 scheduleRoutes.openapi(
+    ScheduleRoutes.getSessionMeetingVideoStatus,
+    ScheduleHandlers.getSessionMeetingVideoStatus
+);
+scheduleRoutes.openapi(
     ScheduleRoutes.muteSessionMeetingParticipant,
     ScheduleHandlers.muteSessionMeetingParticipant
 );
@@ -59,6 +63,14 @@ scheduleRoutes.openapi(
 scheduleRoutes.openapi(
     ScheduleRoutes.removeSessionMeetingParticipant,
     ScheduleHandlers.removeSessionMeetingParticipant
+);
+scheduleRoutes.openapi(
+    ScheduleRoutes.stopSessionMeetingParticipantVideo,
+    ScheduleHandlers.stopSessionMeetingParticipantVideo
+);
+scheduleRoutes.openapi(
+    ScheduleRoutes.allowSessionMeetingParticipantVideo,
+    ScheduleHandlers.allowSessionMeetingParticipantVideo
 );
 scheduleRoutes.openapi(
     ScheduleRoutes.getSessionMeetingRoomStatus,

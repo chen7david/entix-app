@@ -20,6 +20,8 @@ const RTK_KEY_WAIT = (orgId: string, sessionId: string, userId: string) =>
 const RTK_KEY_WAIT_PREFIX = (orgId: string, sessionId: string) => `rtk:wait:${orgId}:${sessionId}:`;
 const RTK_KEY_MUTE = (orgId: string, sessionId: string, userId: string) =>
     `rtk:mute:${orgId}:${sessionId}:${userId}`;
+const RTK_KEY_VIDEO = (orgId: string, sessionId: string, userId: string) =>
+    `rtk:video:${orgId}:${sessionId}:${userId}`;
 const RTK_KEY_LOCK = (orgId: string, sessionId: string) => `rtk:lock:${orgId}:${sessionId}`;
 const RTK_KEY_UNMUTE_REQ = (orgId: string, sessionId: string, userId: string) =>
     `rtk:unmute:${orgId}:${sessionId}:${userId}`;
@@ -73,6 +75,7 @@ type MeetingParticipantView = {
     image?: string | null;
     isOrganizer: boolean;
     forceMuted: boolean;
+    forceVideoOff?: boolean;
 };
 type UnmuteRequestRecord = {
     userId: string;
@@ -355,9 +358,7 @@ export class RealtimeKitService extends BaseService {
         sessionId: string,
         userId: string
     ) {
-        const { role } = await this.getJoinContext(organizationId, sessionId, userId);
-        if (role !== "organizer")
-            throw new ForbiddenError("Only organizers can view participant roster");
+        await this.getJoinContext(organizationId, sessionId, userId);
 
         const session = await this.sessionRepo.findSessionById(organizationId, sessionId);
         if (!session?.teacherUserId) throw new NotFoundError("Session not found");
@@ -377,6 +378,10 @@ export class RealtimeKitService extends BaseService {
                 (await this.config.kv.get(
                     RTK_KEY_MUTE(organizationId, sessionId, memberUserId)
                 )) === "1";
+            const forceVideoOff =
+                (await this.config.kv.get(
+                    RTK_KEY_VIDEO(organizationId, sessionId, memberUserId)
+                )) === "1";
             participants.push({
                 userId: memberUserId,
                 participantId: p.id,
@@ -384,6 +389,7 @@ export class RealtimeKitService extends BaseService {
                 image: p.picture ?? null,
                 isOrganizer: memberUserId === session.teacherUserId,
                 forceMuted,
+                forceVideoOff,
             });
         }
         return { data: { items: participants } };
@@ -500,6 +506,36 @@ export class RealtimeKitService extends BaseService {
             { expirationTtl: RTK_KV_TTL_SEC }
         );
         return { data: { removed: true, userId: targetUserId } };
+    }
+
+    async setSessionMeetingParticipantVideo(
+        organizationId: string,
+        sessionId: string,
+        organizerUserId: string,
+        targetUserId: string,
+        forceVideoOff: boolean
+    ) {
+        const { role } = await this.getJoinContext(organizationId, sessionId, organizerUserId);
+        if (role !== "organizer")
+            throw new ForbiddenError("Only organizers can moderate participants");
+
+        await this.getJoinContext(organizationId, sessionId, targetUserId);
+        const key = RTK_KEY_VIDEO(organizationId, sessionId, targetUserId);
+        await this.config.kv.put(key, forceVideoOff ? "1" : "0", {
+            expirationTtl: RTK_KV_TTL_SEC,
+        });
+        return { data: { userId: targetUserId, forceVideoOff } };
+    }
+
+    async getSessionMeetingParticipantVideoStatus(
+        organizationId: string,
+        sessionId: string,
+        userId: string
+    ) {
+        await this.getJoinContext(organizationId, sessionId, userId);
+        const forceVideoOff =
+            (await this.config.kv.get(RTK_KEY_VIDEO(organizationId, sessionId, userId))) === "1";
+        return { data: { userId, forceVideoOff } };
     }
 
     async requestSessionMeetingUnmute(organizationId: string, sessionId: string, userId: string) {
