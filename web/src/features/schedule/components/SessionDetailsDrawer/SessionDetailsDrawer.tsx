@@ -356,9 +356,6 @@ export const SessionDetailsDrawer = ({
             styles={{ body: { paddingBottom: 80 } }}
             extra={
                 <Space>
-                    <Button onClick={() => form.resetFields()} disabled={isSubmitting}>
-                        Reset
-                    </Button>
                     <Button type="primary" onClick={() => form.submit()} loading={isSubmitting}>
                         {session ? "Save Changes" : "Create Session"}
                     </Button>

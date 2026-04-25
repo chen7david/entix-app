@@ -47,9 +47,6 @@ export const TransferDrawer = ({ open, onClose, orgId, accounts }: TransferDrawe
             open={open}
             extra={
                 <Space>
-                    <Button onClick={() => form.resetFields()} disabled={isPending}>
-                        Reset
-                    </Button>
                     <Button type="primary" onClick={() => form.submit()} loading={isPending}>
                         Confirm Transfer
                     </Button>

@@ -72,9 +72,6 @@ export const UserProfileForm = ({ userId }: { userId: string }) => {
             </Form.Item>
             <Form.Item className="mb-0 pt-2">
                 <Space>
-                    <Button onClick={() => form.resetFields()} disabled={upsertProfile.isPending}>
-                        Reset
-                    </Button>
                     <Button type="primary" htmlType="submit" loading={upsertProfile.isPending}>
                         Save Changes
                     </Button>

@@ -1,5 +1,5 @@
 import { LockOutlined } from "@ant-design/icons";
-import { Alert, Button, Form, Input, Space } from "antd";
+import { Alert, Button, Form, Input } from "antd";
 import type React from "react";
 
 export interface ResetPasswordValues {
@@ -62,14 +62,9 @@ export const ResetPasswordForm: React.FC<ResetPasswordFormProps> = ({
                 </Form.Item>
 
                 <Form.Item>
-                    <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isLoading}>
-                            Reset
-                        </Button>
-                        <Button type="primary" htmlType="submit" loading={isLoading}>
-                            Reset Password
-                        </Button>
-                    </Space.Compact>
+                    <Button type="primary" htmlType="submit" loading={isLoading} block>
+                        Reset Password
+                    </Button>
                 </Form.Item>
             </Form>
         </>

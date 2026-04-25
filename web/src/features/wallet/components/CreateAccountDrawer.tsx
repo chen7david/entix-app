@@ -41,9 +41,6 @@ export const CreateAccountDrawer: React.FC<Props> = ({ open, onClose, orgId }) =
             onClose={onClose}
             extra={
                 <Space>
-                    <Button onClick={() => form.resetFields()} disabled={isPending}>
-                        Reset
-                    </Button>
                     <Button type="primary" onClick={() => form.submit()} loading={isPending}>
                         Create
                     </Button>
