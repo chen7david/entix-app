@@ -1,21 +1,23 @@
-import { InfoCircleOutlined, PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { PlusCircleOutlined } from "@ant-design/icons";
+import { ACCOUNT_TYPES } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
 import {
     type DatePresetOption,
-    getPresetFromRange,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
+import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
-import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
-import { useMemo, useState } from "react";
+import { Button, Card, Col, Row, Space, Typography } from "antd";
+import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 const CUSTOM_RANGE_PRESET = "__custom";
@@ -86,12 +88,15 @@ export const WalletPage = () => {
     const {
         data: summary,
         isLoading: isLoadingBalance,
+        isFetching: isFetchingBalance,
+        dataUpdatedAt: balanceUpdatedAt,
         refetch: refetchBalance,
     } = useWalletBalance(userId, "user", orgId);
 
     const {
         data: history,
         isFetching: isFetchingHistory,
+        dataUpdatedAt: historyUpdatedAt,
         refetch: refetchHistory,
     } = useTransactionHistory(userId, "user", currentCursor, DEFAULT_PAGE_SIZE, orgId, {
         startDate: filters.startDate,
@@ -137,32 +142,37 @@ export const WalletPage = () => {
         },
     ];
 
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
         refetchBalance();
         refetchHistory();
-    };
+    }, [refetchBalance, refetchHistory]);
+
+    const lastFetchedAt = useMemo(() => {
+        if (!balanceUpdatedAt && !historyUpdatedAt) return undefined;
+        return Math.max(balanceUpdatedAt || 0, historyUpdatedAt || 0);
+    }, [balanceUpdatedAt, historyUpdatedAt]);
+
+    const freshnessControls = useDataFreshnessControls({
+        lastFetchedAt,
+        isFetching: isFetchingBalance || isFetchingHistory,
+        onRefresh: handleRefresh,
+    });
+    const savingsAccounts = useMemo(
+        () =>
+            (summary?.accounts ?? []).map((account) => ({
+                ...account,
+                accountType: ACCOUNT_TYPES.SAVINGS,
+            })),
+        [summary?.accounts]
+    );
 
     const handleFiltersChange = (newFilters: Record<string, any>) => {
-        const nextFilters = { ...newFilters };
-        const nextPreset = nextFilters.preset as string | null;
-
-        if (nextPreset && nextPreset !== filters.preset && nextPreset !== CUSTOM_RANGE_PRESET) {
-            const presetRange = getRangeFromPreset(datePresetOptions, nextPreset);
-            if (presetRange) {
-                const isoRange = toIsoRange(presetRange.start, presetRange.end);
-                nextFilters.startDate = isoRange.startDate;
-                nextFilters.endDate = isoRange.endDate;
-            }
-        }
-
-        if (nextFilters.startDate && nextFilters.endDate) {
-            const matchedPreset = getPresetFromRange(
-                datePresetOptions,
-                DateUtils.startOf("day", nextFilters.startDate),
-                DateUtils.endOf("day", nextFilters.endDate)
-            );
-            nextFilters.preset = matchedPreset ?? CUSTOM_RANGE_PRESET;
-        }
+        const nextFilters = normalizeDatePresetFilters({
+            nextFilters: newFilters,
+            previousFilters: filters,
+            presetOptions: datePresetOptions,
+            customPresetValue: CUSTOM_RANGE_PRESET,
+        });
 
         if (areWalletFiltersEqual(nextFilters, filters)) return;
 
@@ -194,13 +204,6 @@ export const WalletPage = () => {
                 <Col>
                     <Space>
                         <Button
-                            icon={<ReloadOutlined />}
-                            onClick={handleRefresh}
-                            loading={isLoadingBalance || isFetchingHistory}
-                        >
-                            Refresh
-                        </Button>
-                        <Button
                             type="primary"
                             icon={<PlusCircleOutlined />}
                             onClick={() => setIsTransferOpen(true)}
@@ -211,78 +214,34 @@ export const WalletPage = () => {
                 </Col>
             </Row>
 
+            <div style={{ marginBottom: 16 }}>
+                <DataFreshnessControls
+                    freshnessLabel={freshnessControls.freshness.label}
+                    freshnessTooltip={freshnessControls.freshness.tooltip}
+                    status={freshnessControls.freshness.status}
+                    isRefreshing={freshnessControls.isFetching}
+                    onRefresh={freshnessControls.refreshNow}
+                />
+            </div>
+
             <Row gutter={[24, 24]}>
                 <Col span={24}>
                     <Title level={4} style={{ marginBottom: 16 }}>
                         Your Accounts
                     </Title>
-                    <Row gutter={[24, 24]}>
-                        {isLoadingBalance ? (
-                            [1, 2].map((i) => (
-                                <Col xs={24} sm={12} md={8} lg={6} key={i}>
-                                    <Card loading />
-                                </Col>
-                            ))
-                        ) : summary?.accounts.length ? (
-                            summary.accounts.map((acc) => {
-                                const config =
-                                    FINANCIAL_CURRENCY_CONFIG[
-                                        acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
-                                    ];
-                                return (
-                                    <Col xs={24} sm={12} md={8} lg={6} key={acc.id}>
-                                        <Card
-                                            hoverable
-                                            style={{
-                                                borderStyle: acc.isActive ? "solid" : "dashed",
-                                                opacity: acc.isActive ? 1 : 0.6,
-                                            }}
-                                        >
-                                            <Statistic
-                                                title={
-                                                    <div className="flex items-center gap-2">
-                                                        <Text strong>
-                                                            {formatAccountDisplayName(
-                                                                acc.name,
-                                                                config?.code
-                                                            )}
-                                                        </Text>
-                                                        <Tooltip
-                                                            title={
-                                                                acc.isActive ? "Active" : "Inactive"
-                                                            }
-                                                        >
-                                                            <InfoCircleOutlined
-                                                                style={{
-                                                                    color: acc.isActive
-                                                                        ? "#52c41a"
-                                                                        : "#faad14",
-                                                                    fontSize: 12,
-                                                                }}
-                                                            />
-                                                        </Tooltip>
-                                                    </div>
-                                                }
-                                                value={acc.balanceCents / 100}
-                                                precision={2}
-                                                prefix={config?.symbol}
-                                                suffix={config?.code}
-                                                valueStyle={{ fontSize: 24, fontWeight: 600 }}
-                                            />
-                                        </Card>
-                                    </Col>
-                                );
-                            })
-                        ) : (
-                            <Col span={24}>
-                                <Card style={{ textAlign: "center", padding: "40px 0" }}>
-                                    <Text type="secondary">
-                                        No active accounts found in this organization.
-                                    </Text>
-                                </Card>
-                            </Col>
-                        )}
-                    </Row>
+                    {savingsAccounts.length ? (
+                        <OrgAccountCardGrid
+                            accounts={savingsAccounts}
+                            loading={isLoadingBalance}
+                            lowBalanceThresholdCents={10_000}
+                        />
+                    ) : (
+                        <Card style={{ textAlign: "center", padding: "40px 0" }}>
+                            <Text type="secondary">
+                                No active accounts found in this organization.
+                            </Text>
+                        </Card>
+                    )}
                 </Col>
 
                 <Col span={24}>

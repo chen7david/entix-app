@@ -7,10 +7,12 @@ import {
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import {
     type DatePresetOption,
-    getPresetFromRange,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { DateUtils } from "@web/src/utils/date";
@@ -18,7 +20,7 @@ import { Button, message, Space, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     useAcknowledgeAuditLog,
     useAdminAuditLogs,
@@ -93,10 +95,24 @@ export const AuditLogPage: React.FC = () => {
         initialFilters,
     });
 
-    const { data, isPending: isLoading } = useAdminAuditLogs({
+    const {
+        data,
+        isPending: isLoading,
+        isFetching,
+        refetch,
+        dataUpdatedAt,
+    } = useAdminAuditLogs({
         ...tableState.filters,
         cursor: tableState.currentCursor,
         limit: tableState.pageSize,
+    });
+    const handleRefresh = useCallback(() => {
+        refetch();
+    }, [refetch]);
+    const freshnessControls = useDataFreshnessControls({
+        lastFetchedAt: dataUpdatedAt,
+        isFetching,
+        onRefresh: handleRefresh,
     });
 
     const { mutate: acknowledge, isPending: isAcknowledging } = useAcknowledgeAuditLog();
@@ -242,7 +258,16 @@ export const AuditLogPage: React.FC = () => {
                 subtitle="High-fidelity monitoring of platform events, mission-critical alerts, and billing reconciliation status."
             />
 
-            <Text type="secondary">Showing {data?.items.length || 0} events</Text>
+            <div className="flex items-center justify-between">
+                <Text type="secondary">Showing {data?.items.length || 0} events</Text>
+                <DataFreshnessControls
+                    freshnessLabel={freshnessControls.freshness.label}
+                    freshnessTooltip={freshnessControls.freshness.tooltip}
+                    status={freshnessControls.freshness.status}
+                    isRefreshing={freshnessControls.isFetching}
+                    onRefresh={freshnessControls.refreshNow}
+                />
+            </div>
 
             <div className="min-h-[520px]">
                 <DataTableWithFilters
@@ -310,28 +335,12 @@ export const AuditLogPage: React.FC = () => {
                             showReset: true,
                         },
                         onFiltersChange: (next) => {
-                            const normalized = { ...next };
-                            const nextPreset = normalized.preset as string | null;
-                            if (
-                                nextPreset &&
-                                nextPreset !== CUSTOM_RANGE_PRESET &&
-                                nextPreset !== tableState.filters.preset
-                            ) {
-                                const range = getRangeFromPreset(datePresetOptions, nextPreset);
-                                if (range) {
-                                    const iso = toIsoRange(range.start, range.end);
-                                    normalized.startDate = iso.startDate;
-                                    normalized.endDate = iso.endDate;
-                                }
-                            }
-                            if (normalized.startDate && normalized.endDate) {
-                                const matched = getPresetFromRange(
-                                    datePresetOptions,
-                                    DateUtils.startOf("day", normalized.startDate),
-                                    DateUtils.endOf("day", normalized.endDate)
-                                );
-                                normalized.preset = matched ?? CUSTOM_RANGE_PRESET;
-                            }
+                            const normalized = normalizeDatePresetFilters({
+                                nextFilters: next,
+                                previousFilters: tableState.filters,
+                                presetOptions: datePresetOptions,
+                                customPresetValue: CUSTOM_RANGE_PRESET,
+                            });
 
                             tableState.onFiltersChange({
                                 severity: normalized.severity,

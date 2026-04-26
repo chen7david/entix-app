@@ -448,7 +448,6 @@ export const PlaylistManager: React.FC<{
                     </Form.Item>
                     <Form.Item className="mb-0 flex justify-end">
                         <Space>
-                            <Button onClick={() => createForm.resetFields()}>Reset</Button>
                             <Button type="primary" htmlType="submit">
                                 Create Playlist
                             </Button>
@@ -558,7 +557,6 @@ export const PlaylistManager: React.FC<{
                 destroyOnClose
                 extra={
                     <Space>
-                        <Button onClick={() => editForm.resetFields()}>Reset</Button>
                         <Button type="primary" onClick={() => editForm.submit()}>
                             Save Settings
                         </Button>

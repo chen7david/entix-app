@@ -1,10 +1,10 @@
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
 import {
     type DatePresetOption,
-    getPresetFromRange,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { useDatePresetFilterState } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import {
     AnalyticsMetricCards,
@@ -90,7 +90,12 @@ export const OrganizationAnalyticsPage = () => {
         },
     ];
 
-    const presetFromRange = getPresetFromRange(presetOptions, queryStart, queryEnd);
+    const { selectedPreset, setSelectedPreset, isoRange } = useDatePresetFilterState({
+        presetOptions,
+        startDate: queryStart,
+        endDate: queryEnd,
+        customPresetValue: CUSTOM_RANGE_PRESET,
+    });
 
     const filterConfigs: FilterConfig[] = [
         {
@@ -113,13 +118,12 @@ export const OrganizationAnalyticsPage = () => {
         },
     ];
 
-    const currentIsoRange = toIsoRange(queryStart, queryEnd);
     const defaultIsoRange = toIsoRange(defaultStart, defaultEnd);
 
     const filterValues = {
-        preset: presetFromRange ?? CUSTOM_RANGE_PRESET,
-        startDate: currentIsoRange.startDate,
-        endDate: currentIsoRange.endDate,
+        preset: selectedPreset ?? CUSTOM_RANGE_PRESET,
+        startDate: isoRange.startDate,
+        endDate: isoRange.endDate,
     };
 
     const defaultFilterValues = {
@@ -132,7 +136,11 @@ export const OrganizationAnalyticsPage = () => {
         const preset = next.preset as string | null;
         const presetRange = getRangeFromPreset(presetOptions, preset);
 
-        if (presetRange && preset !== presetFromRange) {
+        if (preset !== filterValues.preset) {
+            setSelectedPreset(preset);
+        }
+
+        if (presetRange && preset !== filterValues.preset) {
             handleRangeChange([
                 DateUtils.toLibDate(presetRange.start),
                 DateUtils.toLibDate(presetRange.end),
@@ -141,10 +149,7 @@ export const OrganizationAnalyticsPage = () => {
         }
 
         if (next.startDate && next.endDate) {
-            if (
-                next.startDate !== currentIsoRange.startDate ||
-                next.endDate !== currentIsoRange.endDate
-            ) {
+            if (next.startDate !== isoRange.startDate || next.endDate !== isoRange.endDate) {
                 handleRangeChange([
                     DateUtils.toLibDate(new Date(next.startDate)),
                     DateUtils.toLibDate(new Date(next.endDate)),

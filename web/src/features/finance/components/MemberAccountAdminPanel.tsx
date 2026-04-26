@@ -245,14 +245,6 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
                     <div style={{ marginTop: 24 }}>
                         <Space direction="vertical" size={8} style={{ width: "100%" }}>
                             <Button
-                                onClick={() => form.resetFields()}
-                                disabled={isPending}
-                                size="large"
-                                style={{ width: "100%" }}
-                            >
-                                Reset
-                            </Button>
-                            <Button
                                 type="primary"
                                 htmlType="submit"
                                 loading={isPending}

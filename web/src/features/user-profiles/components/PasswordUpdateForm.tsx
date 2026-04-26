@@ -90,9 +90,6 @@ export const PasswordUpdateForm = () => {
 
                 <Form.Item className="mb-0 text-right mt-6">
                     <Space>
-                        <Button onClick={() => form.resetFields()} disabled={loading}>
-                            Reset
-                        </Button>
                         <Button type="primary" htmlType="submit" loading={loading}>
                             Update Password
                         </Button>

@@ -520,12 +520,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         <Space>
                             <Button onClick={() => setIsCreateModalOpen(false)}>Cancel</Button>
                             <Button
-                                onClick={() => createForm.resetFields()}
-                                disabled={createMemberMutation.isPending}
-                            >
-                                Reset
-                            </Button>
-                            <Button
                                 type="primary"
                                 htmlType="submit"
                                 loading={createMemberMutation.isPending}
