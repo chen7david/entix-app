@@ -19,7 +19,8 @@ export const getEmailAndPasswordConfig = (
                 if (!ctx || !mailer) return;
 
                 const frontendUrl = getFrontendUrl(ctx);
-                const resetUrl = `${frontendUrl}/auth/reset-password?token=${token}`;
+                const encodedEmail = encodeURIComponent(user.email);
+                const resetUrl = `${frontendUrl}/auth/reset-password?token=${token}&email=${encodedEmail}`;
 
                 const emailPromise = !user.emailVerified
                     ? mailer.sendWelcomeEmailWithPasswordReset({

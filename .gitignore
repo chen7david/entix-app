@@ -43,3 +43,5 @@ lerna-debug.log*
 .vitepress/cache
 .vitepress/dist
 changes.diff
+playwright-report/
+test-results/
