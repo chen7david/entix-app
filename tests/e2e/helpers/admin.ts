@@ -14,7 +14,7 @@ async function clickVisibleRowMenuItem(page: Page, name: string) {
     const item = page.locator(".ant-dropdown:visible").getByRole("menuitem", { name }).first();
     await expect(item).toBeVisible();
     await item.evaluate((node) => {
-        (node as HTMLElement).click();
+        (node as { click: () => void }).click();
     });
 }
 
