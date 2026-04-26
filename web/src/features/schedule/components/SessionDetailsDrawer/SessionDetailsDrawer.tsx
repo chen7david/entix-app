@@ -7,7 +7,7 @@ import {
     useOrgNavigate,
 } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { App, Button, Drawer, Form, Modal, Space, Tabs, Typography } from "antd";
+import { App, Button, Drawer, Form, Space, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
@@ -25,7 +25,7 @@ export const SessionDetailsDrawer = ({
     onSaveAttendance,
     onDelete,
 }: SessionDetailsDrawerProps) => {
-    const { notification } = App.useApp();
+    const { notification, modal } = App.useApp();
     const { activeOrganization } = useOrganization();
     const navigateOrg = useOrgNavigate();
     const { metrics } = useBulkMembers(activeOrganization?.id);
@@ -166,7 +166,7 @@ export const SessionDetailsDrawer = ({
                 );
 
             if (blockedMembers.length > 0) {
-                Modal.warning({
+                modal.warning({
                     title: "Payment setup required before scheduling",
                     content: (
                         <Space direction="vertical" size="small" style={{ width: "100%" }}>
@@ -228,7 +228,7 @@ export const SessionDetailsDrawer = ({
 
     const handleFinish = (values: any) => {
         if (session?.seriesId) {
-            Modal.confirm({
+            modal.confirm({
                 title: "Update Recurring Session",
                 content:
                     "Do you want to update just this occurrence, or this and all following sessions in the series?",
