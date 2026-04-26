@@ -43,13 +43,14 @@ export const useSchedule = (
     organizationId?: string,
     startDate?: number,
     endDate?: number,
-    searchQuery?: string
+    searchQuery?: string,
+    direction: "next" | "prev" = "next"
 ) => {
     const { notification } = App.useApp();
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuth();
 
-    const queryKey = ["schedule", organizationId, startDate, endDate, searchQuery];
+    const queryKey = ["schedule", organizationId, startDate, endDate, searchQuery, direction];
 
     const {
         data: sessionsPages,
@@ -71,7 +72,7 @@ export const useSchedule = (
                     endDate,
                     cursor: pageParam,
                     search: searchQuery,
-                    direction: "next",
+                    direction,
                 },
             });
             return hcJson(res);
