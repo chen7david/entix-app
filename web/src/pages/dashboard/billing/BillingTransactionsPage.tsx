@@ -8,10 +8,10 @@ import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
 import {
     type DatePresetOption,
-    getPresetFromRange,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
@@ -142,26 +142,12 @@ export const BillingTransactionsPage: React.FC = () => {
     ];
 
     const handleFiltersChange = (newFilters: Record<string, any>) => {
-        const nextFilters = { ...newFilters };
-        const nextPreset = nextFilters.preset as string | null;
-
-        if (nextPreset && nextPreset !== filters.preset && nextPreset !== CUSTOM_RANGE_PRESET) {
-            const presetRange = getRangeFromPreset(datePresetOptions, nextPreset);
-            if (presetRange) {
-                const isoRange = toIsoRange(presetRange.start, presetRange.end);
-                nextFilters.startDate = isoRange.startDate;
-                nextFilters.endDate = isoRange.endDate;
-            }
-        }
-
-        if (nextFilters.startDate && nextFilters.endDate) {
-            const matchedPreset = getPresetFromRange(
-                datePresetOptions,
-                DateUtils.startOf("day", nextFilters.startDate),
-                DateUtils.endOf("day", nextFilters.endDate)
-            );
-            nextFilters.preset = matchedPreset ?? CUSTOM_RANGE_PRESET;
-        }
+        const nextFilters = normalizeDatePresetFilters({
+            nextFilters: newFilters,
+            previousFilters: filters,
+            presetOptions: datePresetOptions,
+            customPresetValue: CUSTOM_RANGE_PRESET,
+        });
 
         if (areBillingTransactionFiltersEqual(nextFilters, filters)) {
             return;

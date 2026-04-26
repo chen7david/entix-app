@@ -7,10 +7,10 @@ import {
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import {
     type DatePresetOption,
-    getPresetFromRange,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { DateUtils } from "@web/src/utils/date";
@@ -310,28 +310,12 @@ export const AuditLogPage: React.FC = () => {
                             showReset: true,
                         },
                         onFiltersChange: (next) => {
-                            const normalized = { ...next };
-                            const nextPreset = normalized.preset as string | null;
-                            if (
-                                nextPreset &&
-                                nextPreset !== CUSTOM_RANGE_PRESET &&
-                                nextPreset !== tableState.filters.preset
-                            ) {
-                                const range = getRangeFromPreset(datePresetOptions, nextPreset);
-                                if (range) {
-                                    const iso = toIsoRange(range.start, range.end);
-                                    normalized.startDate = iso.startDate;
-                                    normalized.endDate = iso.endDate;
-                                }
-                            }
-                            if (normalized.startDate && normalized.endDate) {
-                                const matched = getPresetFromRange(
-                                    datePresetOptions,
-                                    DateUtils.startOf("day", normalized.startDate),
-                                    DateUtils.endOf("day", normalized.endDate)
-                                );
-                                normalized.preset = matched ?? CUSTOM_RANGE_PRESET;
-                            }
+                            const normalized = normalizeDatePresetFilters({
+                                nextFilters: next,
+                                previousFilters: tableState.filters,
+                                presetOptions: datePresetOptions,
+                                customPresetValue: CUSTOM_RANGE_PRESET,
+                            });
 
                             tableState.onFiltersChange({
                                 severity: normalized.severity,
