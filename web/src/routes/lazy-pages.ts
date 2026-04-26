@@ -27,7 +27,6 @@ export const EmailVerificationPendingPage = lazyNamed(
     "EmailVerificationPendingPage"
 );
 export const SignInPage = lazyNamed(() => import("@web/src/pages/auth/SignInPage"), "SignInPage");
-export const SignUpPage = lazyNamed(() => import("@web/src/pages/auth/SignUpPage"), "SignUpPage");
 export const ForgotPasswordPage = lazyNamed(
     () => import("@web/src/pages/auth/ForgotPasswordPage"),
     "ForgotPasswordPage"
