@@ -14,6 +14,7 @@ export const getEmailAndPasswordConfig = (
         emailAndPassword: {
             enabled: true,
             requireEmailVerification,
+            revokeSessionsOnPasswordReset: true,
             async sendResetPassword({ user, token }) {
                 if (!ctx || !mailer) return;
 
