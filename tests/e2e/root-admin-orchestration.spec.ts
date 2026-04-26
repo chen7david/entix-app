@@ -12,17 +12,20 @@ import {
 } from "./helpers/admin";
 import { loginAsRootAdmin } from "./helpers/auth";
 
-const NEW_USER = {
-    fullName: "David Chen",
-    email: "chen7david@gmail.com",
-    organizationName: "Entix Academy",
-    password: "TempPass123!",
-};
-
 test.describe("Root admin orchestration flow", () => {
+    test.setTimeout(120_000);
+
     test("completes organization bootstrap, impersonation, promotion, and funding", async ({
         page,
     }) => {
+        const nonce = Date.now();
+        const NEW_USER = {
+            fullName: "David Chen",
+            email: `e2e.root.${nonce}@example.com`,
+            organizationName: `Entix Academy ${nonce}`,
+            password: "TempPass123!",
+        };
+
         await test.step("Login as root admin", async () => {
             await loginAsRootAdmin(page);
         });

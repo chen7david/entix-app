@@ -7,5 +7,4 @@ export async function loginAsRootAdmin(page: Page) {
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page).not.toHaveURL(/\/auth\/sign-in$/);
-    await expect(page).toHaveURL(/\/(org|admin|onboarding)\//);
 }

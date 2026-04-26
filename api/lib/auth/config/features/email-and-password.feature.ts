@@ -9,6 +9,7 @@ export const getEmailAndPasswordConfig = (
     mailer?: MailService
 ): Partial<BetterAuthOptions> => {
     const requireEmailVerification = (ctx?.env.SKIP_EMAIL_VERIFICATION as string) !== "true";
+    const skipEmailDelivery = (ctx?.env.SKIP_AUTH_EMAILS as string) === "true";
 
     return {
         emailAndPassword: {
@@ -17,6 +18,7 @@ export const getEmailAndPasswordConfig = (
             revokeSessionsOnPasswordReset: true,
             async sendResetPassword({ user, token }) {
                 if (!ctx || !mailer) return;
+                if (skipEmailDelivery) return;
 
                 const frontendUrl = getFrontendUrl(ctx);
                 const encodedEmail = encodeURIComponent(user.email);
