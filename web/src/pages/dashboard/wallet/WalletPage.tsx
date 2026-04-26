@@ -1,5 +1,5 @@
-import { InfoCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
-import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
+import { PlusCircleOutlined } from "@ant-design/icons";
+import { ACCOUNT_TYPES } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
 import {
@@ -10,13 +10,13 @@ import {
 import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
+import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
-import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
+import { Button, Card, Col, Row, Space, Typography } from "antd";
 import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
@@ -157,6 +157,14 @@ export const WalletPage = () => {
         isFetching: isFetchingBalance || isFetchingHistory,
         onRefresh: handleRefresh,
     });
+    const savingsAccounts = useMemo(
+        () =>
+            (summary?.accounts ?? []).map((account) => ({
+                ...account,
+                accountType: ACCOUNT_TYPES.SAVINGS,
+            })),
+        [summary?.accounts]
+    );
 
     const handleFiltersChange = (newFilters: Record<string, any>) => {
         const nextFilters = normalizeDatePresetFilters({
@@ -221,73 +229,19 @@ export const WalletPage = () => {
                     <Title level={4} style={{ marginBottom: 16 }}>
                         Your Accounts
                     </Title>
-                    <Row gutter={[24, 24]}>
-                        {isLoadingBalance ? (
-                            [1, 2].map((i) => (
-                                <Col xs={24} sm={12} md={8} lg={6} key={i}>
-                                    <Card loading />
-                                </Col>
-                            ))
-                        ) : summary?.accounts.length ? (
-                            summary.accounts.map((acc) => {
-                                const config =
-                                    FINANCIAL_CURRENCY_CONFIG[
-                                        acc.currencyId as keyof typeof FINANCIAL_CURRENCY_CONFIG
-                                    ];
-                                return (
-                                    <Col xs={24} sm={12} md={8} lg={6} key={acc.id}>
-                                        <Card
-                                            hoverable
-                                            style={{
-                                                borderStyle: acc.isActive ? "solid" : "dashed",
-                                                opacity: acc.isActive ? 1 : 0.6,
-                                            }}
-                                        >
-                                            <Statistic
-                                                title={
-                                                    <div className="flex items-center gap-2">
-                                                        <Text strong>
-                                                            {formatAccountDisplayName(
-                                                                acc.name,
-                                                                config?.code
-                                                            )}
-                                                        </Text>
-                                                        <Tooltip
-                                                            title={
-                                                                acc.isActive ? "Active" : "Inactive"
-                                                            }
-                                                        >
-                                                            <InfoCircleOutlined
-                                                                style={{
-                                                                    color: acc.isActive
-                                                                        ? "#52c41a"
-                                                                        : "#faad14",
-                                                                    fontSize: 12,
-                                                                }}
-                                                            />
-                                                        </Tooltip>
-                                                    </div>
-                                                }
-                                                value={acc.balanceCents / 100}
-                                                precision={2}
-                                                prefix={config?.symbol}
-                                                suffix={config?.code}
-                                                valueStyle={{ fontSize: 24, fontWeight: 600 }}
-                                            />
-                                        </Card>
-                                    </Col>
-                                );
-                            })
-                        ) : (
-                            <Col span={24}>
-                                <Card style={{ textAlign: "center", padding: "40px 0" }}>
-                                    <Text type="secondary">
-                                        No active accounts found in this organization.
-                                    </Text>
-                                </Card>
-                            </Col>
-                        )}
-                    </Row>
+                    {savingsAccounts.length ? (
+                        <OrgAccountCardGrid
+                            accounts={savingsAccounts}
+                            loading={isLoadingBalance}
+                            lowBalanceThresholdCents={10_000}
+                        />
+                    ) : (
+                        <Card style={{ textAlign: "center", padding: "40px 0" }}>
+                            <Text type="secondary">
+                                No active accounts found in this organization.
+                            </Text>
+                        </Card>
+                    )}
                 </Col>
 
                 <Col span={24}>
