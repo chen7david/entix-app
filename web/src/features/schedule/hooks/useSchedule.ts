@@ -43,7 +43,8 @@ export const useSchedule = (
     organizationId?: string,
     startDate?: number,
     endDate?: number,
-    searchQuery?: string
+    searchQuery?: string,
+    direction: "next" | "prev" = "next"
 ) => {
     const { notification } = App.useApp();
     const queryClient = useQueryClient();
@@ -71,7 +72,7 @@ export const useSchedule = (
                     endDate,
                     cursor: pageParam,
                     search: searchQuery,
-                    direction: "next",
+                    direction,
                 },
             });
             return hcJson(res);
