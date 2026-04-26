@@ -50,7 +50,7 @@ export const useSchedule = (
     const queryClient = useQueryClient();
     const { isAuthenticated } = useAuth();
 
-    const queryKey = ["schedule", organizationId, startDate, endDate, searchQuery];
+    const queryKey = ["schedule", organizationId, startDate, endDate, searchQuery, direction];
 
     const {
         data: sessionsPages,

@@ -31,15 +31,15 @@ export const UpcomingSessionsCard: React.FC = () => {
     }, [sessions]);
 
     const getUpcomingLabel = (startTime: number) => {
-        const now = Date.now();
-        const diff = startTime - now;
-        const hoursAhead = diff / (60 * 60 * 1000);
+        const todayStart = DateUtils.startOf("day");
+        const tomorrowStart = DateUtils.offsetStartOf(1, "day", "day");
+        const dayAfterTomorrowStart = DateUtils.offsetStartOf(2, "day", "day");
 
         // Make near-term schedule intent explicit to avoid vague relative labels.
-        if (hoursAhead >= 0 && hoursAhead < 24) {
+        if (startTime >= todayStart && startTime < tomorrowStart) {
             return `Today ${DateUtils.format(startTime, "h:mm A")}`;
         }
-        if (hoursAhead >= 24 && hoursAhead < 48) {
+        if (startTime >= tomorrowStart && startTime < dayAfterTomorrowStart) {
             return `Tomorrow ${DateUtils.format(startTime, "h:mm A")}`;
         }
         return DateUtils.fromNow(startTime);
