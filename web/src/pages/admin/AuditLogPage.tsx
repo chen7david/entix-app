@@ -5,13 +5,13 @@ import {
     WarningOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
-import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import {
     type DatePresetOption,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
@@ -95,7 +95,13 @@ export const AuditLogPage: React.FC = () => {
         initialFilters,
     });
 
-    const { data, isPending: isLoading, isFetching, refetch, dataUpdatedAt } = useAdminAuditLogs({
+    const {
+        data,
+        isPending: isLoading,
+        isFetching,
+        refetch,
+        dataUpdatedAt,
+    } = useAdminAuditLogs({
         ...tableState.filters,
         cursor: tableState.currentCursor,
         limit: tableState.pageSize,

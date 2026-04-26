@@ -1,10 +1,10 @@
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
-import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
-import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import {
     type DatePresetOption,
     getRangeFromPreset,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import {
     AttendanceTrendChart,
     SessionVolumeChart,
@@ -26,13 +26,8 @@ const { Title, Text } = Typography;
 
 export const AdminPortal: React.FC = () => {
     const { activeOrganization } = useOrganization();
-    const {
-        metrics,
-        isLoadingMetrics,
-        isFetchingMetrics,
-        metricsUpdatedAt,
-        refetchMetrics,
-    } = useBulkMembers(activeOrganization?.id);
+    const { metrics, isLoadingMetrics, isFetchingMetrics, metricsUpdatedAt, refetchMetrics } =
+        useBulkMembers(activeOrganization?.id);
 
     // Dashboard defaults to "This Month" preset
     const [range, setRange] = useState<{ start: number; end: number; label: string }>({
