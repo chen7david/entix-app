@@ -14,12 +14,36 @@ export const UpcomingSessionsCard: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const navigateOrg = useOrgNavigate();
 
-    const startDate = useMemo(() => DateUtils.startOf("day"), []);
-    const { sessions, isLoading } = useSchedule(activeOrganization?.id, startDate);
+    const startDate = useMemo(() => DateUtils.now(), []);
+    const { sessions, isLoading } = useSchedule(
+        activeOrganization?.id,
+        startDate,
+        undefined,
+        undefined,
+        "prev"
+    );
 
     const nextSessions = useMemo(() => {
-        return [...(sessions || [])].sort((a, b) => a.startTime - b.startTime).slice(0, 5);
+        return [...(sessions || [])]
+            .filter((session) => session.startTime >= Date.now())
+            .sort((a, b) => a.startTime - b.startTime)
+            .slice(0, 5);
     }, [sessions]);
+
+    const getUpcomingLabel = (startTime: number) => {
+        const todayStart = DateUtils.startOf("day");
+        const tomorrowStart = DateUtils.offsetStartOf(1, "day", "day");
+        const dayAfterTomorrowStart = DateUtils.offsetStartOf(2, "day", "day");
+
+        // Make near-term schedule intent explicit to avoid vague relative labels.
+        if (startTime >= todayStart && startTime < tomorrowStart) {
+            return `Today ${DateUtils.format(startTime, "h:mm A")}`;
+        }
+        if (startTime >= tomorrowStart && startTime < dayAfterTomorrowStart) {
+            return `Tomorrow ${DateUtils.format(startTime, "h:mm A")}`;
+        }
+        return DateUtils.fromNow(startTime);
+    };
 
     return (
         <DashboardCard
@@ -47,7 +71,7 @@ export const UpcomingSessionsCard: React.FC = () => {
                                         title={DateUtils.format(item.startTime, "MMM D, h:mm A")}
                                     >
                                         <Text type="secondary" className="text-xs cursor-default">
-                                            {DateUtils.fromNow(item.startTime)}
+                                            {getUpcomingLabel(item.startTime)}
                                         </Text>
                                     </Tooltip>
                                     <span className="text-slate-300">·</span>
