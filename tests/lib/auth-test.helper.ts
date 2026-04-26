@@ -96,13 +96,17 @@ export async function createAuthenticatedOrg(params: {
     const { app, env, password = "Password123!" } = params;
 
     const orgPayload = createMockSignUpWithOrgPayload({ password });
+    const { cookie: adminCookie } = await createSuperAdmin({ app, env });
 
     // Create org and user via signup-with-org
     const orgRes = await app.request(
         "/api/v1/auth/signup-with-org",
         {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                Cookie: adminCookie,
+            },
             body: JSON.stringify(orgPayload),
         },
         env

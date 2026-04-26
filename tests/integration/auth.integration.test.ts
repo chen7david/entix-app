@@ -5,7 +5,7 @@ import type { SignUpWithOrgResponseDTO } from "@shared/schemas/dto/auth.dto";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockSignUpWithOrgPayload } from "../factories/auth.factory";
-import { createAuthenticatedOrg } from "../lib/auth-test.helper";
+import { createAuthenticatedOrg, createSuperAdmin } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
 
@@ -18,29 +18,63 @@ describe("Auth Integration Test", () => {
         client = createTestClient(app, env);
     });
 
-    it("POST /api/v1/auth/signup-with-org should create user and organization", async () => {
+    it("POST /api/v1/auth/signup-with-org should reject unauthenticated requests", async () => {
         const payload = createMockSignUpWithOrgPayload();
         const res = await client.auth.signUpWithOrg(payload);
 
+        expect(res.status).toBe(401);
+    });
+
+    it("POST /api/v1/auth/signup-with-org should create user and organization for super admin", async () => {
+        const payload = createMockSignUpWithOrgPayload();
+        const { cookie } = await createSuperAdmin({ app, env });
+        const req = new Request("http://localhost/api/v1/auth/signup-with-org", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Cookie: cookie,
+            },
+            body: JSON.stringify(payload),
+        });
+        const res = await app.request(req, {}, env);
+
         expect(res.status).toBe(201);
         const body = (await res.json()) as SignUpWithOrgResponseDTO;
-
-        expect(body).toHaveProperty("data");
-        expect(body.data).toHaveProperty("user");
         expect(body.data.user.email).toBe(payload.email);
         expect(body.data.user.role).toBe("owner");
-
-        expect(body.data).toHaveProperty("organization");
         expect(body.data.organization.name).toBe(payload.organizationName);
     });
 
     it("POST /api/v1/auth/signup-with-org should return error for existing user", async () => {
         const payload = createMockSignUpWithOrgPayload();
+        const { cookie } = await createSuperAdmin({ app, env });
 
-        const setupRes = await client.auth.signUpWithOrg(payload);
+        const setupRes = await app.request(
+            new Request("http://localhost/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+                body: JSON.stringify(payload),
+            }),
+            {},
+            env
+        );
         expect(setupRes.status).toBe(201);
 
-        const res = await client.auth.signUpWithOrg(payload);
+        const res = await app.request(
+            new Request("http://localhost/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+                body: JSON.stringify(payload),
+            }),
+            {},
+            env
+        );
 
         expect(res.status).toBe(409);
         const body = (await res.json()) as { message: string };
@@ -50,13 +84,36 @@ describe("Auth Integration Test", () => {
     it("POST /api/v1/auth/signup-with-org should return error for existing organization", async () => {
         const payload1 = createMockSignUpWithOrgPayload();
         const payload2 = createMockSignUpWithOrgPayload();
+        const { cookie } = await createSuperAdmin({ app, env });
 
-        const setupRes = await client.auth.signUpWithOrg(payload1);
+        const setupRes = await app.request(
+            new Request("http://localhost/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+                body: JSON.stringify(payload1),
+            }),
+            {},
+            env
+        );
         expect(setupRes.status).toBe(201);
 
         payload2.email = `other.${Date.now()}.${Math.random()}@example.com`;
         payload2.organizationName = payload1.organizationName;
-        const res = await client.auth.signUpWithOrg(payload2);
+        const res = await app.request(
+            new Request("http://localhost/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+                body: JSON.stringify(payload2),
+            }),
+            {},
+            env
+        );
 
         expect(res.status).toBe(409);
         const body = (await res.json()) as { message: string };
@@ -65,6 +122,7 @@ describe("Auth Integration Test", () => {
 
     it("POST /api/v1/auth/signup-with-org should rollback user and organization atomically on setup failure", async () => {
         const payload = createMockSignUpWithOrgPayload();
+        const { cookie } = await createSuperAdmin({ app, env });
 
         await db.insert(schema.authUsers).values({
             id: "dummy-user",
@@ -106,7 +164,18 @@ describe("Auth Integration Test", () => {
                 });
             });
 
-        const res = await client.auth.signUpWithOrg(payload);
+        const res = await app.request(
+            new Request("http://localhost/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+                body: JSON.stringify(payload),
+            }),
+            {},
+            env
+        );
 
         expect(res.status).toBe(500);
         const body = (await res.json()) as { message: string };
@@ -127,8 +196,19 @@ describe("Auth Integration Test", () => {
     });
     it("POST /api/v1/auth/sign-in/email should successfully authenticate user and create session", async () => {
         const payload = createMockSignUpWithOrgPayload();
-
-        await client.auth.signUpWithOrg(payload);
+        const { cookie } = await createSuperAdmin({ app, env });
+        await app.request(
+            new Request("http://localhost/api/v1/auth/signup-with-org", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Cookie: cookie,
+                },
+                body: JSON.stringify(payload),
+            }),
+            {},
+            env
+        );
 
         const signInPayload = {
             email: payload.email,
