@@ -1,9 +1,9 @@
 import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
-import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
 import { DesktopSidebar } from "../shared/DesktopSidebar";
+import { APP_SIDEBAR_WIDTH_CSS_VAR } from "../shared/layout.constants";
 import { MobileSidebar } from "../shared/MobileSidebar";
 import { PlatformAdminSidebarContent } from "./PlatformAdminSidebarContent";
 
@@ -19,7 +19,7 @@ export const PlatformAdminLayout: React.FC = () => {
             </MobileSidebar>
             <Sider
                 className="hidden md:block"
-                width={240}
+                width={APP_SIDEBAR_WIDTH_CSS_VAR}
                 style={{ height: "100%", overflow: "hidden" }}
             >
                 <DesktopSidebar>
@@ -39,7 +39,6 @@ export const PlatformAdminLayout: React.FC = () => {
                     <div className="flex-1 flex flex-col min-h-0 p-8">
                         <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full min-h-0">
                             <RouteErrorBoundary>
-                                <ImpersonationBanner />
                                 <Outlet />
                             </RouteErrorBoundary>
                         </div>

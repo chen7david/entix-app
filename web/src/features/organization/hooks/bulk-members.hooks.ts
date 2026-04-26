@@ -47,7 +47,13 @@ export const useBulkMembers = (orgId?: string) => {
     const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
-    const { data: metrics, isLoading: isLoadingMetrics } = useQuery<BulkMetrics>({
+    const {
+        data: metrics,
+        isLoading: isLoadingMetrics,
+        isFetching: isFetchingMetrics,
+        dataUpdatedAt: metricsUpdatedAt,
+        refetch: refetchMetrics,
+    } = useQuery<BulkMetrics>({
         queryKey: ["bulkMetrics", orgId],
         queryFn: async () => {
             if (!orgId) throw new Error("Organization ID required");
@@ -112,6 +118,9 @@ export const useBulkMembers = (orgId?: string) => {
     return {
         metrics,
         isLoadingMetrics,
+        isFetchingMetrics,
+        metricsUpdatedAt,
+        refetchMetrics,
         exportMembers,
         importMembers: importMembersMutation.mutateAsync,
         isImporting: importMembersMutation.isPending,

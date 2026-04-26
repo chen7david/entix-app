@@ -231,9 +231,6 @@ export const OrganizationInvitationsPage = () => {
                     <Form.Item className="mb-0 flex justify-end">
                         <Space>
                             <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                            <Button onClick={() => form.resetFields()} disabled={isInviting}>
-                                Reset
-                            </Button>
                             <Button type="primary" htmlType="submit" loading={isInviting}>
                                 Send Invitation
                             </Button>

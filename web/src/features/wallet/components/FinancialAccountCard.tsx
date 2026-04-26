@@ -33,7 +33,7 @@ const ACCOUNT_TYPE_CONFIG: Record<
     { color: string; badgeLabel: string; displayLabel: string }
 > = {
     [ACCOUNT_TYPES.TREASURY]: {
-        color: "#059669",
+        color: "#8b5cf6",
         badgeLabel: "TREASURY",
         displayLabel: "Treasury Vault",
     },
@@ -43,7 +43,7 @@ const ACCOUNT_TYPE_CONFIG: Record<
         displayLabel: "General Fund",
     },
     [ACCOUNT_TYPES.SAVINGS]: {
-        color: "#8b5cf6",
+        color: "#059669",
         badgeLabel: "SAVINGS",
         displayLabel: "Personal Wallet",
     },
@@ -68,10 +68,10 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
         return (
             <Card
                 style={{ borderRadius: 12, height: "100%" }}
-                styles={{ body: { padding: "16px" } }}
+                styles={{ body: { padding: "14px" } }}
             >
                 {/* Header: icon + text + badge skeletons */}
-                <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+                <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
                     <Space align="center" size={10}>
                         <Skeleton.Avatar active size="small" shape="circle" />
                         <Skeleton.Input active size="small" style={{ width: 80, height: 16 }} />
@@ -80,7 +80,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                 </Flex>
 
                 {/* Body: title + balance skeletons */}
-                <div style={{ marginBottom: 20 }}>
+                <div style={{ marginBottom: 16 }}>
                     <Skeleton.Input
                         active
                         size="small"
@@ -94,8 +94,8 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                     justify="space-between"
                     align="center"
                     style={{
-                        marginTop: 16,
-                        paddingTop: 12,
+                        marginTop: 12,
+                        paddingTop: 10,
                         borderTop: `1px solid ${token.colorBorderSecondary}`,
                     }}
                 >
@@ -131,10 +131,10 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                 filter: isAvailable ? "grayscale(40%)" : "none",
                 cursor: isAvailable ? "not-allowed" : "pointer",
             }}
-            styles={{ body: { padding: "16px" } }}
+            styles={{ body: { padding: "14px" } }}
         >
             {/* Header: icon + displayLabel + TYPE badge */}
-            <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
+            <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
                 <Space align="center" size={10}>
                     {account.accountType === "funding" ? (
                         <LockOutlined style={{ color: accentColor, fontSize: 13 }} />
@@ -185,7 +185,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                         strong
                         ellipsis
                         title={account.name}
-                        style={{ fontSize: 14, display: "block", marginBottom: 4 }}
+                        style={{ fontSize: 13, display: "block", marginBottom: 2 }}
                     >
                         {formatAccountDisplayName(
                             account.name,
@@ -197,7 +197,7 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                 formatter={(value) => (
                     <span
                         style={{
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: 800,
                             color: token.colorTextHeading,
                             letterSpacing: "-0.01em",
@@ -235,8 +235,8 @@ export const FinancialAccountCard: React.FC<FinancialAccountCardProps> = ({
                 justify="space-between"
                 align="center"
                 style={{
-                    marginTop: 16,
-                    paddingTop: 12,
+                    marginTop: 12,
+                    paddingTop: 10,
                     borderTop: `1px solid ${token.colorBorderSecondary}`,
                 }}
             >

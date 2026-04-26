@@ -196,7 +196,6 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
             </Form.List>
 
             <div className="flex justify-end gap-2 mt-8">
-                <Button onClick={() => form.resetFields()}>Reset</Button>
                 <Button type="primary" htmlType="submit" loading={isLoading}>
                     {initialValues?.id ? "Update Plan" : "Create Plan"}
                 </Button>

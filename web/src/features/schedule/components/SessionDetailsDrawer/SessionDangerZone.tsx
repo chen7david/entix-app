@@ -1,4 +1,4 @@
-import { Alert, Button, Modal, Popconfirm, Typography, theme } from "antd";
+import { Alert, App, Button, Popconfirm, Typography, theme } from "antd";
 import type React from "react";
 
 const { Title, Text } = Typography;
@@ -10,12 +10,13 @@ type SessionDangerZoneProps = {
 
 export const SessionDangerZone: React.FC<SessionDangerZoneProps> = ({ session, onDelete }) => {
     const { token } = theme.useToken();
+    const { modal } = App.useApp();
 
     if (!session) return null;
 
     const handleDelete = () => {
         if (session.seriesId) {
-            Modal.confirm({
+            modal.confirm({
                 title: "Delete Recurring Session",
                 content:
                     "Do you want to delete just this occurrence, or this and all following sessions in the series?",

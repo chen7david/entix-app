@@ -250,9 +250,6 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                 destroyOnClose
                 extra={
                     <Space>
-                        <Button onClick={() => form.resetFields()} disabled={isUpdating}>
-                            Reset
-                        </Button>
                         <Button type="primary" onClick={() => form.submit()} loading={isUpdating}>
                             Save Changes
                         </Button>

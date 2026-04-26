@@ -9,10 +9,16 @@ import type React from "react";
 type Props = {
     accounts: WalletAccountDTO[];
     loading?: boolean;
-    onAccountClick: (account: FinancialAccountData) => void;
+    onAccountClick?: (account: FinancialAccountData) => void;
+    lowBalanceThresholdCents?: number;
 };
 
-export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccountClick }) => {
+export const OrgAccountCardGrid: React.FC<Props> = ({
+    accounts,
+    loading,
+    onAccountClick,
+    lowBalanceThresholdCents,
+}) => {
     if (loading && (!accounts || accounts.length === 0)) {
         return (
             <Row gutter={[16, 16]}>
@@ -33,6 +39,7 @@ export const OrgAccountCardGrid: React.FC<Props> = ({ accounts, loading, onAccou
                         account={account}
                         onClick={onAccountClick}
                         accountState={account.isActive ? "active" : "available"}
+                        lowBalanceThresholdCents={lowBalanceThresholdCents}
                     />
                 </Col>
             ))}

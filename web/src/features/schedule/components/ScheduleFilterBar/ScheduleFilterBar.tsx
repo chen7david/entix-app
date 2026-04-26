@@ -1,7 +1,13 @@
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
+import {
+    type DatePresetOption,
+    getRangeFromPreset,
+} from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { useDatePresetFilterState } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
 import type React from "react";
+import { useMemo } from "react";
 import type { TimelineFilter } from "../../hooks/useScheduleState";
 
 const CUSTOM_RANGE_PRESET = "__custom";
@@ -13,29 +19,6 @@ type FilterValues = {
     endDate: string | null;
     preset: string | null;
 };
-
-function getPresetValue(startDate?: number, endDate?: number): string | null {
-    if (startDate === DateUtils.startOf("day") && endDate === DateUtils.endOf("day"))
-        return "Today";
-    if (
-        startDate === DateUtils.offsetStartOf(1, "day", "day") &&
-        endDate === DateUtils.offsetEndOf(1, "day", "day")
-    )
-        return "Tomorrow";
-    if (
-        startDate === DateUtils.offsetStartOf(-1, "week", "week") &&
-        endDate === DateUtils.offsetEndOf(-1, "week", "week")
-    )
-        return "Last Week";
-    if (
-        startDate === DateUtils.offsetStartOf(1, "week", "week") &&
-        endDate === DateUtils.offsetEndOf(1, "week", "week")
-    )
-        return "Next Week";
-    if (startDate === DateUtils.startOf("month") && endDate === DateUtils.endOf("month"))
-        return "This Month";
-    return null;
-}
 
 type Props = {
     search: string;
@@ -60,6 +43,39 @@ export const ScheduleFilterBar: React.FC<Props> = ({
     onTimelineChange,
     onReset,
 }) => {
+    const presetOptions = useMemo<DatePresetOption[]>(
+        () => [
+            { label: "Today", start: DateUtils.startOf("day"), end: DateUtils.endOf("day") },
+            {
+                label: "Tomorrow",
+                start: DateUtils.offsetStartOf(1, "day", "day"),
+                end: DateUtils.offsetEndOf(1, "day", "day"),
+            },
+            {
+                label: "Last Week",
+                start: DateUtils.offsetStartOf(-1, "week", "week"),
+                end: DateUtils.offsetEndOf(-1, "week", "week"),
+            },
+            {
+                label: "Next Week",
+                start: DateUtils.offsetStartOf(1, "week", "week"),
+                end: DateUtils.offsetEndOf(1, "week", "week"),
+            },
+            {
+                label: "This Month",
+                start: DateUtils.startOf("month"),
+                end: DateUtils.endOf("month"),
+            },
+        ],
+        []
+    );
+    const { selectedPreset, setSelectedPreset, isoRange } = useDatePresetFilterState({
+        presetOptions,
+        startDate,
+        endDate,
+        customPresetValue: CUSTOM_RANGE_PRESET,
+    });
+
     const filters: FilterConfig[] = [
         {
             type: "search",
@@ -75,11 +91,7 @@ export const ScheduleFilterBar: React.FC<Props> = ({
             placeholder: "Custom Range",
             minWidth: 130,
             options: [
-                { label: "Today", value: "Today" },
-                { label: "Tomorrow", value: "Tomorrow" },
-                { label: "Last Week", value: "Last Week" },
-                { label: "Next Week", value: "Next Week" },
-                { label: "This Month", value: "This Month" },
+                ...presetOptions.map((preset) => ({ label: preset.label, value: preset.label })),
                 { label: "Custom Range", value: CUSTOM_RANGE_PRESET },
             ],
             allowClear: false,
@@ -109,9 +121,9 @@ export const ScheduleFilterBar: React.FC<Props> = ({
     const values: FilterValues = {
         search,
         timeline,
-        startDate: startDate ? DateUtils.toLibDate(startDate).toISOString() : null,
-        endDate: endDate ? DateUtils.toLibDate(endDate).toISOString() : null,
-        preset: getPresetValue(startDate, endDate) ?? CUSTOM_RANGE_PRESET,
+        startDate: isoRange.startDate,
+        endDate: isoRange.endDate,
+        preset: selectedPreset ?? CUSTOM_RANGE_PRESET,
     };
     const initialValues: FilterValues = {
         search: "",
@@ -123,30 +135,11 @@ export const ScheduleFilterBar: React.FC<Props> = ({
 
     const applyPreset = (preset: string | null) => {
         if (!preset || preset === CUSTOM_RANGE_PRESET) return;
-        if (preset === "Today") {
+        const presetRange = getRangeFromPreset(presetOptions, preset);
+        if (presetRange) {
             onRangeChange([
-                DateUtils.toLibDate(DateUtils.startOf("day")),
-                DateUtils.toLibDate(DateUtils.endOf("day")),
-            ]);
-        } else if (preset === "Tomorrow") {
-            onRangeChange([
-                DateUtils.toLibDate(DateUtils.offsetStartOf(1, "day", "day")),
-                DateUtils.toLibDate(DateUtils.offsetEndOf(1, "day", "day")),
-            ]);
-        } else if (preset === "Last Week") {
-            onRangeChange([
-                DateUtils.toLibDate(DateUtils.offsetStartOf(-1, "week", "week")),
-                DateUtils.toLibDate(DateUtils.offsetEndOf(-1, "week", "week")),
-            ]);
-        } else if (preset === "Next Week") {
-            onRangeChange([
-                DateUtils.toLibDate(DateUtils.offsetStartOf(1, "week", "week")),
-                DateUtils.toLibDate(DateUtils.offsetEndOf(1, "week", "week")),
-            ]);
-        } else if (preset === "This Month") {
-            onRangeChange([
-                DateUtils.toLibDate(DateUtils.startOf("month")),
-                DateUtils.toLibDate(DateUtils.endOf("month")),
+                DateUtils.toLibDate(presetRange.start),
+                DateUtils.toLibDate(presetRange.end),
             ]);
         }
     };
@@ -154,7 +147,11 @@ export const ScheduleFilterBar: React.FC<Props> = ({
     const handleChange = (next: Record<string, any>) => {
         if (next.search !== search) onSearchChange(next.search || "");
         if (next.timeline !== timeline) onTimelineChange(next.timeline as TimelineFilter);
-        if (next.preset !== values.preset) applyPreset((next.preset as string | null) ?? null);
+        if (next.preset !== values.preset) {
+            const nextPreset = (next.preset as string | null) ?? null;
+            setSelectedPreset(nextPreset);
+            applyPreset(nextPreset);
+        }
 
         if (next.startDate !== values.startDate || next.endDate !== values.endDate) {
             if (next.startDate && next.endDate) {

@@ -6,6 +6,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { CenteredSpin } from "./components/common/CenteredView";
 import { ErrorFallback } from "./components/error/ErrorFallback";
 import { GuestRoute, OrgGuard, ProtectedRoute } from "./components/guards";
+import { ImpersonationBanner } from "./components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { AuthProvider } from "./features/auth/context/AuthContext";
 import { useHomeRedirect } from "./features/auth/hooks/useHomeRedirect";
 import { useTimezoneInit } from "./hooks/useTimezoneInit";
@@ -92,6 +93,7 @@ export default function App() {
             <QueryClientProvider client={queryClient}>
                 <AuthProvider>
                     <PreferenceSync />
+                    <ImpersonationBanner />
                     <Suspense fallback={<CenteredSpin />}>
                         <div className="flex h-[calc(100dvh)] m-0 p-0">
                             <Routes>

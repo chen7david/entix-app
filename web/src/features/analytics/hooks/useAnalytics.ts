@@ -78,10 +78,16 @@ export function useAnalytics(organizationId?: string, startDate?: number, endDat
     return {
         sessionTrends: sessionsQuery.data || [],
         isLoadingSessions: sessionsQuery.isLoading,
+        isFetchingSessions: sessionsQuery.isFetching,
+        sessionsUpdatedAt: sessionsQuery.dataUpdatedAt,
+        refetchSessions: sessionsQuery.refetch,
         sessionsError: sessionsQuery.error,
 
         attendanceTrends: attendanceQuery.data || [],
         isLoadingAttendance: attendanceQuery.isLoading,
+        isFetchingAttendance: attendanceQuery.isFetching,
+        attendanceUpdatedAt: attendanceQuery.dataUpdatedAt,
+        refetchAttendance: attendanceQuery.refetch,
         attendanceError: attendanceQuery.error,
     };
 }

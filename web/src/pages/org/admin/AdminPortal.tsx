@@ -3,6 +3,8 @@ import {
     type DatePresetOption,
     getRangeFromPreset,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import {
     AttendanceTrendChart,
     SessionVolumeChart,
@@ -18,13 +20,14 @@ import {
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
 import { Col, Row, Typography } from "antd";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 
 export const AdminPortal: React.FC = () => {
     const { activeOrganization } = useOrganization();
-    const { metrics, isLoadingMetrics } = useBulkMembers(activeOrganization?.id);
+    const { metrics, isLoadingMetrics, isFetchingMetrics, metricsUpdatedAt, refetchMetrics } =
+        useBulkMembers(activeOrganization?.id);
 
     // Dashboard defaults to "This Month" preset
     const [range, setRange] = useState<{ start: number; end: number; label: string }>({
@@ -33,8 +36,35 @@ export const AdminPortal: React.FC = () => {
         label: "This Month",
     });
 
-    const { sessionTrends, isLoadingSessions, attendanceTrends, isLoadingAttendance } =
-        useAnalytics(activeOrganization?.id, range.start, range.end);
+    const {
+        sessionTrends,
+        isLoadingSessions,
+        isFetchingSessions,
+        sessionsUpdatedAt,
+        refetchSessions,
+        attendanceTrends,
+        isLoadingAttendance,
+        isFetchingAttendance,
+        attendanceUpdatedAt,
+        refetchAttendance,
+    } = useAnalytics(activeOrganization?.id, range.start, range.end);
+
+    const handleRefresh = useCallback(() => {
+        void Promise.all([refetchMetrics(), refetchSessions(), refetchAttendance()]);
+    }, [refetchAttendance, refetchMetrics, refetchSessions]);
+
+    const lastFetchedAt = useMemo(() => {
+        const values = [metricsUpdatedAt, sessionsUpdatedAt, attendanceUpdatedAt].filter(
+            (value): value is number => Boolean(value)
+        );
+        return values.length > 0 ? Math.max(...values) : undefined;
+    }, [attendanceUpdatedAt, metricsUpdatedAt, sessionsUpdatedAt]);
+
+    const freshnessControls = useDataFreshnessControls({
+        lastFetchedAt,
+        isFetching: isFetchingMetrics || isFetchingSessions || isFetchingAttendance,
+        onRefresh: handleRefresh,
+    });
 
     const dashboardPresetOptions: DatePresetOption[] = [
         {
@@ -97,6 +127,15 @@ export const AdminPortal: React.FC = () => {
                 </Col>
             </Row>
 
+            <div className="mb-4">
+                <DataFreshnessControls
+                    freshnessLabel={freshnessControls.freshness.label}
+                    freshnessTooltip={freshnessControls.freshness.tooltip}
+                    status={freshnessControls.freshness.status}
+                    isRefreshing={freshnessControls.isFetching}
+                    onRefresh={freshnessControls.refreshNow}
+                />
+            </div>
             <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
             <FilterBar
                 filters={dashboardFilters}

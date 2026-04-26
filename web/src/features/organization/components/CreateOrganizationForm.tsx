@@ -46,9 +46,6 @@ export const CreateOrganizationForm = ({ onSuccess }: { onSuccess?: () => void }
                 </Form.Item>
                 <Form.Item>
                     <Space.Compact block>
-                        <Button onClick={() => form.resetFields()} disabled={isCreating}>
-                            Reset
-                        </Button>
                         <Button type="primary" htmlType="submit" loading={isCreating}>
                             Create Organization
                         </Button>
