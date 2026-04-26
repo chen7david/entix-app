@@ -5,12 +5,14 @@ import {
     WarningOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import {
     type DatePresetOption,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { DateUtils } from "@web/src/utils/date";
@@ -18,7 +20,7 @@ import { Button, message, Space, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import dayjs from "dayjs";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     useAcknowledgeAuditLog,
     useAdminAuditLogs,
@@ -93,10 +95,18 @@ export const AuditLogPage: React.FC = () => {
         initialFilters,
     });
 
-    const { data, isPending: isLoading } = useAdminAuditLogs({
+    const { data, isPending: isLoading, isFetching, refetch, dataUpdatedAt } = useAdminAuditLogs({
         ...tableState.filters,
         cursor: tableState.currentCursor,
         limit: tableState.pageSize,
+    });
+    const handleRefresh = useCallback(() => {
+        refetch();
+    }, [refetch]);
+    const freshnessControls = useDataFreshnessControls({
+        lastFetchedAt: dataUpdatedAt,
+        isFetching,
+        onRefresh: handleRefresh,
     });
 
     const { mutate: acknowledge, isPending: isAcknowledging } = useAcknowledgeAuditLog();
@@ -242,7 +252,16 @@ export const AuditLogPage: React.FC = () => {
                 subtitle="High-fidelity monitoring of platform events, mission-critical alerts, and billing reconciliation status."
             />
 
-            <Text type="secondary">Showing {data?.items.length || 0} events</Text>
+            <div className="flex items-center justify-between">
+                <Text type="secondary">Showing {data?.items.length || 0} events</Text>
+                <DataFreshnessControls
+                    freshnessLabel={freshnessControls.freshness.label}
+                    freshnessTooltip={freshnessControls.freshness.tooltip}
+                    status={freshnessControls.freshness.status}
+                    isRefreshing={freshnessControls.isFetching}
+                    onRefresh={freshnessControls.refreshNow}
+                />
+            </div>
 
             <div className="min-h-[520px]">
                 <DataTableWithFilters

@@ -1,13 +1,15 @@
-import { InfoCircleOutlined, PlusCircleOutlined, ReloadOutlined } from "@ant-design/icons";
+import { InfoCircleOutlined, PlusCircleOutlined } from "@ant-design/icons";
 import { FINANCIAL_CURRENCY_CONFIG } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import {
     type DatePresetOption,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
@@ -15,7 +17,7 @@ import { formatAccountDisplayName } from "@web/src/lib/account-display";
 import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
 import { Button, Card, Col, Row, Space, Statistic, Tooltip, Typography } from "antd";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 const CUSTOM_RANGE_PRESET = "__custom";
@@ -86,12 +88,15 @@ export const WalletPage = () => {
     const {
         data: summary,
         isLoading: isLoadingBalance,
+        isFetching: isFetchingBalance,
+        dataUpdatedAt: balanceUpdatedAt,
         refetch: refetchBalance,
     } = useWalletBalance(userId, "user", orgId);
 
     const {
         data: history,
         isFetching: isFetchingHistory,
+        dataUpdatedAt: historyUpdatedAt,
         refetch: refetchHistory,
     } = useTransactionHistory(userId, "user", currentCursor, DEFAULT_PAGE_SIZE, orgId, {
         startDate: filters.startDate,
@@ -137,10 +142,21 @@ export const WalletPage = () => {
         },
     ];
 
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
         refetchBalance();
         refetchHistory();
-    };
+    }, [refetchBalance, refetchHistory]);
+
+    const lastFetchedAt = useMemo(() => {
+        if (!balanceUpdatedAt && !historyUpdatedAt) return undefined;
+        return Math.max(balanceUpdatedAt || 0, historyUpdatedAt || 0);
+    }, [balanceUpdatedAt, historyUpdatedAt]);
+
+    const freshnessControls = useDataFreshnessControls({
+        lastFetchedAt,
+        isFetching: isFetchingBalance || isFetchingHistory,
+        onRefresh: handleRefresh,
+    });
 
     const handleFiltersChange = (newFilters: Record<string, any>) => {
         const nextFilters = normalizeDatePresetFilters({
@@ -180,13 +196,6 @@ export const WalletPage = () => {
                 <Col>
                     <Space>
                         <Button
-                            icon={<ReloadOutlined />}
-                            onClick={handleRefresh}
-                            loading={isLoadingBalance || isFetchingHistory}
-                        >
-                            Refresh
-                        </Button>
-                        <Button
                             type="primary"
                             icon={<PlusCircleOutlined />}
                             onClick={() => setIsTransferOpen(true)}
@@ -196,6 +205,16 @@ export const WalletPage = () => {
                     </Space>
                 </Col>
             </Row>
+
+            <div style={{ marginBottom: 16 }}>
+                <DataFreshnessControls
+                    freshnessLabel={freshnessControls.freshness.label}
+                    freshnessTooltip={freshnessControls.freshness.tooltip}
+                    status={freshnessControls.freshness.status}
+                    isRefreshing={freshnessControls.isFetching}
+                    onRefresh={freshnessControls.refreshNow}
+                />
+            </div>
 
             <Row gutter={[24, 24]}>
                 <Col span={24}>

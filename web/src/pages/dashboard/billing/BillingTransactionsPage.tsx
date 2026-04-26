@@ -6,12 +6,14 @@ import {
 } from "@ant-design/icons";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import {
     type DatePresetOption,
     getRangeFromPreset,
     toIsoRange,
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
+import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
@@ -20,7 +22,7 @@ import { useOrganization } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
 import { Typography } from "antd";
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 const CUSTOM_RANGE_PRESET = "__custom";
@@ -93,7 +95,7 @@ export const BillingTransactionsPage: React.FC = () => {
 
     const currentCursor = cursorStack[cursorStack.length - 1];
 
-    const { data, isLoading } = useTransactions(orgId, {
+    const { data, isLoading, isFetching, refetch, dataUpdatedAt } = useTransactions(orgId, {
         cursor: currentCursor,
         limit: pageSize,
         startDate: filters.startDate,
@@ -103,6 +105,14 @@ export const BillingTransactionsPage: React.FC = () => {
     });
 
     const { mutate: reverse, isPending: isReversing, variables } = useReverseTransaction(orgId);
+    const handleRefresh = useCallback(() => {
+        refetch();
+    }, [refetch]);
+    const freshnessControls = useDataFreshnessControls({
+        lastFetchedAt: dataUpdatedAt,
+        isFetching,
+        onRefresh: handleRefresh,
+    });
 
     const filterConfig: FilterConfig[] = [
         {
@@ -177,6 +187,15 @@ export const BillingTransactionsPage: React.FC = () => {
                     A comprehensive, immutable record of all organizational billing transactions and
                     reversals.
                 </Text>
+                <div style={{ marginTop: 12 }}>
+                    <DataFreshnessControls
+                        freshnessLabel={freshnessControls.freshness.label}
+                        freshnessTooltip={freshnessControls.freshness.tooltip}
+                        status={freshnessControls.freshness.status}
+                        isRefreshing={freshnessControls.isFetching}
+                        onRefresh={freshnessControls.refreshNow}
+                    />
+                </div>
             </div>
 
             <SummaryCardsRow
