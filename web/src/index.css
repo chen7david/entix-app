@@ -5,6 +5,7 @@
     --bg-base: #ffffff;
     --text-base: #0f172a;
     --border-base: #e2e8f0;
+    --app-sidebar-width: 240px;
 }
 
 .dark {

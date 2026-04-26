@@ -1,10 +1,10 @@
 import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
-import { ImpersonationBanner } from "@web/src/components/navigation/ImpersonationBanner/ImpersonationBanner";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { GlobalUploadManager } from "@web/src/features/media";
 import { Layout, theme } from "antd";
 import { Outlet } from "react-router";
 import { DesktopSidebar } from "../shared/DesktopSidebar";
+import { APP_SIDEBAR_WIDTH_CSS_VAR } from "../shared/layout.constants";
 import { MobileSidebar } from "../shared/MobileSidebar";
 import { OrgAdminSidebarContent } from "./OrgAdminSidebarContent";
 
@@ -20,7 +20,7 @@ export const OrgAdminLayout: React.FC = () => {
             </MobileSidebar>
             <Sider
                 className="hidden md:block"
-                width={240}
+                width={APP_SIDEBAR_WIDTH_CSS_VAR}
                 style={{ height: "100%", overflow: "hidden" }}
             >
                 <DesktopSidebar>
@@ -40,7 +40,6 @@ export const OrgAdminLayout: React.FC = () => {
                     <div className="p-8">
                         <div className="max-w-7xl mx-auto w-full min-h-0 flex flex-col flex-1">
                             <RouteErrorBoundary>
-                                <ImpersonationBanner />
                                 <Outlet />
                             </RouteErrorBoundary>
                         </div>
