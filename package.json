@@ -30,6 +30,8 @@
         "test:e2e:debug": "PWDEBUG=1 PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed --workers=1",
         "test:e2e:reset": "npm run db:reset:dev && PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
         "test:e2e:reset:headed": "npm run db:reset:dev && PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed",
+        "test:e2e:setup": "npm run db:reset:dev && PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/environment-bootstrap.spec.ts --workers=1",
+        "test:e2e:setup:headed": "npm run db:reset:dev && PLAYWRIGHT_BROWSERS_PATH=0 playwright test tests/e2e/environment-bootstrap.spec.ts --headed --workers=1",
         "typecheck": "concurrently \"npm run typecheck:api\" \"npm run typecheck:web\" \"npm run check\"",
         "typecheck:api": "tsc --noEmit",
         "typecheck:web": "cd web && npm run typecheck",

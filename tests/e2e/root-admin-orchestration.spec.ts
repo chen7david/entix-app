@@ -5,7 +5,7 @@ import {
     creditOrganizationFromSuperAdmin,
     impersonateUserByEmail,
     logoutViaApi,
-    openOrgBillingAccountsFromImpersonation,
+    openOrgSettingsFromImpersonation,
     promoteUserToAdminByEmail,
     resendVerificationByEmail,
     stopImpersonating,
@@ -36,7 +36,7 @@ test.describe("Root admin orchestration flow", () => {
 
         await test.step("Impersonate new user and activate CNY + ETD wallets", async () => {
             await impersonateUserByEmail(page, NEW_USER.email);
-            await openOrgBillingAccountsFromImpersonation(page);
+            await openOrgSettingsFromImpersonation(page);
             await activateCurrencyIfNeeded(page, "CNY");
             await activateCurrencyIfNeeded(page, "ETD");
         });
