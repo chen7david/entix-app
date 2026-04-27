@@ -61,8 +61,8 @@ export const SignInForm: React.FC<SignInFormProps> = ({ onSubmit, isLoading, api
                 </Form.Item>
 
                 <div style={{ textAlign: "center" }}>
-                    <Text>
-                        Don't have an account? <Link to={AppRoutes.auth.signUp}>Sign up</Link>
+                    <Text type="secondary">
+                        Need access? Contact a platform administrator for an invitation.
                     </Text>
                 </div>
             </Form>

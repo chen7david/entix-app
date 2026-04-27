@@ -34,6 +34,7 @@ export default defineWorkersConfig({
             },
         },
         include: ["tests/**/*.{test,spec}.ts"],
+        exclude: ["tests/e2e/**"],
         alias: {
             "@api": resolve(__dirname, "./api"),
             "@shared": resolve(__dirname, "./shared"),

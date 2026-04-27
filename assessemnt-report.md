@@ -1,273 +1,278 @@
-# Entix-App Codebase Assessment Report
+# Onboarding State Enforcement Assessment Report
 
-**Scope:** Alignment with `docs/API.md` and `docs/UI.md`, test health, logical/code-quality issues, and implications of adopting a **typed Hono client** (RPC/`hc` or OpenAPI-generated client — referred to below as the “Hono REST client” migration).
+## Executive Summary
 
-**Audit completed:** 2026-04-19  
-**Verification run:** `npm run typecheck:api` ✓ · `web/npm run typecheck` ✓ · `npm run test:api` (240 tests) ✓ · `web/npm run test:run` (53 tests) ✓ · `web/npm run build` ✓
+This report documents an onboarding/security design problem in `entix-app`, the solution options considered, tradeoffs, and the recommended implementation.
 
----
+The core requirement is:
 
-## Progress tracker
+- A newly created user verifies email.
+- The user is auto-signed in.
+- The user must set a password before accessing normal app features.
+- This requirement must not be bypassable.
 
-| Area | Status | Summary |
-|------|--------|---------|
-| API.md — repos / services / handlers | **DONE** | Several documented violations |
-| API.md — pagination & responses | **DONE** | Mostly cursor-based; a few shape mismatches |
-| API.md — tests layout & patterns | **DONE** | Root `tests/` differs from doc tree; factories exist |
-| UI.md — fetching, HTTP, hooks location | **DONE** | **`docs/UI.md`** Rules **2, 5, 41** aligned with **`getApiClient()`** + feature hooks (Phase **K**, 2026-04-20) |
-| UI.md — pages, lazy load, structure | **DONE** | **`React.lazy`** (Phase **G**); **`docs/UI.md`** Rules **6–7, 9, 30, 57** now describe **`web/src/`**, PascalCase **`*Page.tsx`**, **`features/<domain>/hooks/`** (Phase **K**) |
-| UI.md — notifications, boundaries | **PARTIAL** | **`RouteErrorBoundary`** on **org**, **platform-admin**, and **auth** layouts (Phase **J**); mixed `App.useApp` vs static APIs |
-| UI.md — tests (ui + hooks) | **PARTIAL** | Added initial `components/ui` + `renderHook` coverage in Phase **L**; still below full mandate |
-| Hono client migration | **DONE** | Scoped in §5 |
-| Remediation **Phase A** (nanoid → service) | **DONE** | See §7.3 log (2026-04-19) |
-| Remediation **Phase B** (repo error purity) | **DONE** | See §7.3 log (2026-04-19) |
-| Remediation **Phase C** (handler layering) | **DONE** | See §7.3 log (2026-04-19) |
-| Remediation **Phase D** (handler errors / uploads) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase E** (`BaseService` alignment) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase F** (axios / shared HTTP) | **DEFERRED** | Skipped in favor of **Hono `hc` client** (Phase **I**) to avoid double migration |
-| Remediation **Phase G** (lazy routes + guard docs) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase H** (explicit `staleTime` on queries) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase I** (Hono `hc` client + `hcJson`) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase J** (layout error boundaries) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase K** (UI.md structure / hooks / pages) | **DONE** | See §7.3 log (2026-04-20) |
-| Remediation **Phase L** (web test expansion) | **DONE** | See §7.3 log (2026-04-20) |
+The final conclusion is:
+
+- This is not only a UX flow; it is an authorization policy.
+- Frontend-only gating is insufficient and bypassable.
+- Backend state enforcement is required.
+- Performance concerns should be addressed by reducing duplicate session lookups and (optionally) adding cautious caching.
 
 ---
 
-## Executive summary
+## 1) Problem Statement
 
-The backend generally follows the documented **layered architecture** (many services extend `BaseService`, cursor helpers exist, typecheck and API tests pass). However, there are **multiple explicit API.md violations** (nanoid and errors in repositories, handlers calling repositories or `db` directly, `new Error` in production paths, handler `try/catch`, and at least one response shape that does not match the documented envelope).
+### Business Goal
 
-The frontend **does not currently match UI.md** on every point: **`docs/UI.md`** is now aligned with **feature-colocated hooks** and **PascalCase pages** (Phase **K**). **App API traffic** uses **`getApiClient()`** (Phase **I**). **No `axios` usage** despite it being a dependency. **Mandated test coverage** for **`ui/`** and hooks remains **largely absent** (Phase **L**).
+Enable a smooth first-time onboarding flow:
 
-**Tests:** API test suite is broad and green. Web tests are minimal smoke/unit coverage relative to UI.md Rules 35–36. No automated audit found obvious duplicate test files; some integration areas (auth, avatar, finance) overlap in *intent* and could be consolidated in a future cleanup.
+1. User receives verification email.
+2. User clicks verification link.
+3. User is automatically logged in.
+4. User is redirected to set password.
+5. User cannot access protected account features until password is set.
 
-**Hono REST client:** Phase **I** introduced **`hono/client`** + **`hcJson`** at the web boundary; **presigned R2** flows still use raw **`fetch`**. Optional next step: **`hc<AppType>`** end-to-end once composite **`tsc -b`** constraints are acceptable or API types are published as a slim consumer package.
+### Technical Constraint
 
-**Error boundaries:** Phase **J** added **`RouteErrorBoundary`** + **`SectionErrorFallback`** (`resetKeys` on pathname) around main layout outlets so route render failures do not replace the entire app shell.
+Current backend already authenticates users with Better Auth. The new requirement introduces a second dimension:
 
----
+- Not just “authenticated vs unauthenticated”
+- Also “onboarding complete vs incomplete”
 
-## 1. API.md compliance
-
-### 1.1 Violations and risks (by rule #)
-
-| Rule | Severity | Finding |
-|------|----------|---------|
-| **1** | High | Repositories import/use **`nanoid`**: `member.repository.ts`, `financial-org-settings.repository.ts`, `financial-currencies.repository.ts`, `financial-transaction-categories.repository.ts`. IDs MUST be generated in the Service layer. |
-| **2** | ~~High~~ **Mitigated (Phase B)** | ~~Repos above~~ — billing-plan / ledger repo throws addressed in Phase **B**; revisit if new repo throws appear. |
-| **3** | ~~High~~ **Mitigated (Phase C)** | ~~Audit/reconciliation handlers~~ — routed through **`AdminAuditService`** / **`ReconciliationService`** (Phase **C**). |
-| **4** | ~~Medium~~ **Mitigated (Phase E)** | Listed services now **`extend BaseService`** and call **`super()`** in constructors (**`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, **`MailService`**). |
-| **6** | Low–Med | Many `findFirst` usages **do** use `?? null` (good). Spot-check any `findFirst` path that returns a value without coercion (grep shows many sites — verify any that return directly to services). |
-| **13–15** | ~~Medium~~ **Partial (Phase D)** | **`uploads.handlers`**, **`session-payment.service`**, **`mailer.service`**, **`entix.queue`** — generic **`Error`** replaced with **`AppError`** subclasses where touched in Phase **D**. Grep for remaining **`new Error`** under **`api/`** after merges. |
-| **14** | ~~Medium~~ **Mitigated (Phase D)** | **`uploads.handlers.ts`** — **`try/catch`** removed (Phase **D**). |
-| **14 / 45** | ~~Low~~ **Mitigated (Phase C)** | Retry **`try/catch`** moved into **`ReconciliationService`**; handler maps outcomes only. |
-| **19** | Process | Doc references **`MemberService.assertMembership`**. Code uses **`requireOrgMembership`** middleware and **`getMember`** patterns. Not necessarily wrong, but **naming and doc are out of sync**; confirm every org-scoped service path is covered by middleware + service checks. **`assertMembership` grep:** no matches. |
-| **23–27** | ~~Medium~~ **Mitigated (Phase D)** | **`listUploads`** returns explicit **`{ items, nextCursor, prevCursor }`** aligned with **`createPaginatedResponseSchema`**. **`completeUpload`** returns typed **`UploadDto`** (no **`as any`**). |
-| **28–32** | Process | Tests live under repo-root **`tests/`** with **`tests/factories/`** — conceptually aligned, but **folder layout differs** from API.md’s `tests/unit` + `tests/mocks` examples (`makeMember` vs `createMockMember` naming). |
-
-### 1.2 Positive observations (API)
-
-- **Cursor pagination helpers** (`buildCursorPagination`, `processPaginatedResult`) are used across multiple repositories (playlists, sessions, media, uploads, orgs, users, audit, etc.).
-- **No `catch (error: any)`** under `api/` (good for Rule 45).
-- **`npm run typecheck:api`** and **240 API tests** pass — refactors can be done safely with test backing.
-- Many services **do** extend **`BaseService`** and use **`assertExists`** patterns where implemented.
+Without explicit backend enforcement, a verified/authenticated user can call protected APIs directly (Postman/curl/devtools), bypassing frontend route guards.
 
 ---
 
-## 2. UI.md compliance
+## 2) Why Frontend-Only Checks Are Not Sufficient
 
-### 2.1 Major gaps
+Frontend checks alone are insecure for this requirement because:
 
-| Rule | Severity | Finding |
-|------|----------|---------|
-| **5** | ~~Medium~~ **Mitigated (Phases I + K)** | **`docs/UI.md`** Rule **5** documents **`getApiClient()`** / **`hcJson`**; legacy **`lib/axios.ts`** wording removed. **`axios`** may remain unused in **`web/package.json`**. |
-| **2, 41** | ~~Medium~~ **Mitigated (Phases I + K)** | Rules **2** and **41** updated for Hono client + feature hooks. |
-| **6, 20** | ~~Medium~~ **Mitigated (Phase K)** | **`docs/UI.md`** Rules **6** and **20**: domain hooks **`features/<domain>/hooks/`**, optional **`src/hooks/`** for cross-cutting utilities. |
-| **7, 9** | ~~Medium~~ **Mitigated (Phase K)** | **`docs/UI.md`** Rules **7** and **9**: PascalCase **`*Page.tsx`**, lazy **`routes/lazy-pages.ts`**. |
-| **30** | ~~High~~ **Mitigated (Phase G)** | Route **pages** are **`React.lazy`**-loaded via **`web/src/routes/lazy-pages.ts`** with **`Suspense`** in **`App.tsx`**. Layouts/guards stay eager. |
-| **21** | ~~Medium~~ **Mitigated (Phase H)** | Explicit **`staleTime`** on feature queries + **`QUERY_*`** helpers; **`docs/UI.md`** Rule **21** text unchanged — defaults in **`App.tsx`** still supplement per-query values. |
-| **22** | Partial | **`useInfiniteQuery`** is used for some lists (`useMembers`, `useSchedule`, `useMedia`). Many other list flows use **`useQuery` + `fetch`** — verify each list endpoint is **cursor-based** end-to-end (backend + hook). |
-| **32** | **Partial (Phase J)** | **Root `ErrorBoundary`** in **`App.tsx`** plus **`RouteErrorBoundary`** in **`OrgAdminLayout`**, **`PlatformAdminLayout`**, and **`AuthLayout`** (nested **`SectionErrorFallback`**). Doc’s “every fetching section” is **not** fully met (no per-widget boundaries). |
-| **48** | Low–Med | Many files use **`App.useApp()`** correctly; **`AuditLogPage`** uses **`message.success` / `message.error`** without checking if that path is under `App` provider (may still work if wrapped — verify). Other files may still import static APIs — grep showed widespread `notification.*` usage **from components that also use `App.useApp`** in many places (good). |
-| **35–36** | High | **`web/src/components/ui/`** has almost no components and **zero `*.test.tsx`**. Only **3** feature-level tests under `web/src/features` plus **`ForgotPasswordForm.test.tsx`**, **`App.test.tsx`**, smoke tests — **far below** “every `ui/` component” and “every hook” mandates. |
+- API calls can be made outside the browser UI.
+- SPA route redirects do not protect backend endpoints.
+- Email verification and onboarding completion are different states.
+- Future clients (mobile/scripts/integrations) may not apply the same UI logic.
 
-### 2.2 Positive observations (UI)
-
-- **React Query** is the dominant data layer; **`useEffect` + `fetch` for server data** was not flagged as a primary pattern (mutations/queries live in hooks).
-- **Jotai atoms** found (`useSidebar.ts`, `upload.store.ts`) are **module-level**, not inside components (Rule 3).
-- **Stack versions** in `web/package.json` align with UI.md spirit (React 19, Ant Design 6, Tailwind 4, React Query 5).
+Result: frontend-only checks violate the requirement “cannot bypass.”
 
 ---
 
-## 3. Tests & quality
+## 3) Chosen Domain Model: `userState`
 
-### 3.1 Current state
+A state-machine approach was adopted for flexibility and clarity.
 
-| Suite | Location | Result (2026-04-19) |
-|-------|----------|---------------------|
-| API | `tests/` (+ `api/tests/` for some service tests) | **57 files, 240 tests passed** |
-| Web | `web/src/**/*.test.*` | **20 files, 53 tests passed** |
+## States
 
-### 3.2 Gaps vs API.md (testing)
+- `UNCONFIRMED`: user exists, email not verified
+- `FORCE_PASSWORD_CHANGE`: email verified, signed in, password setup required
+- `ACTIVE`: onboarding complete, full access
+- `SUSPENDED`: blocked by admin policy
 
-- **Rule 28–32 / 37–38:** Not fully auditable line-by-line in this pass; **`createMock*` factories** exist and are reused (good direction). Some tests use **`new Error`** intentionally for simulation — acceptable in tests only.
-- **Rule 41:** Service `get*` NotFound coverage — **spot-check** as you touch services; `MemberService` tests exist (`member.service.test.ts`) but full matrix not enumerated here.
+## Core Transitions
 
-### 3.3 Gaps vs UI.md (testing)
+- `UNCONFIRMED -> FORCE_PASSWORD_CHANGE` on email verification
+- `FORCE_PASSWORD_CHANGE -> ACTIVE` after successful password reset/set
 
-- **Missing critical coverage:** Most **data hooks** (finance, media, wallet, schedule) still have **no `renderHook` tests**.
-- **`components/ui`:** Initial tests added for **`POSInput`** and **`EntityAvatar`**; broader coverage still missing.
-- **Smoke tests** exist (`pages.smoke.test.tsx`) — useful but **not** a substitute for hook/ui mandates.
-
-### 3.4 Duplication / redundancy
-
-- No obvious **copy-paste duplicate test files** found by naming. **Integration tests** for finance, sessions, playlists, avatar, auth are **separate files** with possible overlap in setup — worth a **future consolidation** pass (shared helpers already exist under `tests/lib/`).
-
-### 3.5 Other issues
-
-- **Web test stderr:** `App.test.tsx` logs **jsdom CSS parse errors** (Tailwind-injected stylesheet via dependency). Low severity but noisy CI output.
-- **Ant Design deprecation warnings** in web tests (`Statistic`, `Tag`, `Drawer`) — track for Ant 6 cleanup.
+This model is extensible for future states (`PENDING_MFA_SETUP`, `DEACTIVATED`, etc.) without schema redesign.
 
 ---
 
-## 4. Improvements (logic, hooks, simplification)
+## 4) Options Evaluated
 
-1. ~~**Single HTTP client module**~~ — **`api-client.ts`** + **`hcJson`** (Phase **I**).
-2. ~~**Align UI.md directory rules**~~ — **`docs/UI.md`** amended for **feature-colocated hooks** and PascalCase pages (Phase **K**).
-3. ~~**Lazy routes**~~ — **`lazy-pages.ts`** + **`Suspense`** (Phase **G**).
-4. **API handler cleanup:** **`uploads.handlers.ts`** — remove try/catch, replace **`new Error("Unauthorized")`** with **`AppError`/403**, normalize **list response** to **`{ data, nextCursor }`**, remove **`as any`**.
-5. **Repository purity:** move **nanoid** and **domain throws** out of repos listed in §1.1; add **service-level** constraint handling where needed.
-6. **Admin/reconciliation handlers:** introduce **small services** (e.g. `AuditAppService`, `ReconciliationService`) so handlers only call **`createXService(ctx)`** — restores Rule 3 and makes testing easier.
+## Option A: Frontend-only onboarding gate
 
----
+### Description
+- Store onboarding state and redirect user to `/set-password` in UI only.
 
-## 5. Hono REST client migration (scope, effort, regression, tests)
+### Strengths
+- Simple implementation.
+- No extra backend middleware.
 
-**Interpretation:** You likely mean adopting **Hono’s typed client** (`import { hc } from 'hono/client'`) against your **`AppType`**, or generating a client from **OpenAPI** (`@hono/zod-openapi`). Both fit “Hono REST client.”
+### Weaknesses
+- Bypassable via direct API calls.
+- Fails security requirement.
+- Inconsistent across non-web clients.
 
-### 5.1 Code scope
-
-| Layer | Change volume | Notes |
-|-------|----------------|-------|
-| **Web** | **Large** (~40+ files with `fetch` to `/api/v1/...`) | Replace with `hc(baseUrl).api...` or generated client calls. Presigned **S3/R2 `fetch` to external URLs** may stay as `fetch` (binary upload) — still align with UI.md intent for **your API** vs third-party URLs. |
-| **API (Worker)** | **Small to none** | If routes and JSON bodies are unchanged, handlers stay as-is. Optional: export **`AppType`** from `api/main.ts` for `hc<AppType>()`. |
-| **Shared** | **Medium (optional)** | Shared **Zod DTOs** already exist — ideal for **end-to-end types** with RPC style. |
-
-### 5.2 Effort estimate (engineering judgment)
-
-- **Minimal path (typed `hc` + manual path calls):** ~**2–5 days** for a focused engineer to wrap core domains + error handling, longer if **every edge endpoint** must migrate in one go.
-- **Full OpenAPI client generation + CI:** add **1–3 days** for pipeline + first-time fixes.
-
-### 5.3 Regression testing
-
-- **Must-run:** existing **`tests/integration/*.integration.test.ts`** and **`npm run test:api`** (already strong).
-- **Add after web client change:** hook-level tests with **MSW** or **mock `global.fetch` / mock client** for critical mutations (billing, wallet, auth).
-- **E2E:** If you have Playwright/Cypress (not audited here), run a **smoke path** per role (member, org admin, platform admin).
-
-### 5.4 Does migration affect tests?
-
-- **API tests:** **No**, unless you change response shapes or status codes while refactoring.
-- **Web tests:** **Yes, indirectly** — today hooks call **`fetch`**; if you inject **`hc`**, unit tests should **mock the client** or **MSW**. Any test that asserts on exact **`fetch` call count** would need updates (grep did not show extensive fetch mocking in web tests; **smoke tests** may only need **`vi.mock`** adjustments if the app entry imports change).
+### Verdict
+- Rejected for this project’s requirement.
 
 ---
 
-## 6. Resume here (continuation checklist)
+## Option B: Backend enforcement on protected routes (implemented)
 
-If continuing this audit in a future session:
+### Description
+- Add `userState` to auth user model.
+- Enforce `ACTIVE` on protected route groups (`/api/v1/orgs/*`, `/api/v1/users/*`).
+- Keep auth routes (`/api/v1/auth/*`) accessible for onboarding actions.
 
-1. [ ] Walk **every `*.handlers.ts`** for **direct `getDbClient` / repository factory** usage (sample done: audit, reconciliation).
-2. [ ] Grep all **`findFirst`** returns for missing **`?? null`**.
-3. [ ] Inventory **list route OpenAPI schemas** vs **Rule 23** response shape (`data` / `nextCursor`).
-4. [ ] Map **middleware org membership** to **every org-scoped service** entrypoint (Rule 19 parity with docs).
-5. [x] ~~Decide **doc vs code** for hooks/pages~~ — **`docs/UI.md`** updated (Phase **K**).
-6. [ ] Add **web** test matrix: top **10 hooks** by usage + **`components/ui`**.
+### Strengths
+- Enforces policy server-side.
+- Non-bypassable by client manipulation.
+- Scales to multiple clients.
 
----
+### Weaknesses
+- Adds per-request state check on protected routes.
+- Requires updates to tests/fixtures after introducing new required state field.
 
-## 7. Remediation plan (testable phases)
-
-**Working agreement:** After **each phase** below, **stop**, run the **phase gate** commands, **append a short entry to §7.4 Phase completion log**, and **wait for human review/approval** before starting the next phase.
-
-**Hono RPC client — parallel or separate?** **Prefer sequential, not parallel** with the rest of the refactors. Reason: both the API cleanup and the Hono work **touch the same boundary** (request/response shapes, errors, and how the web calls the Worker). Doing them in **one ordered pipeline** avoids double-merge conflicts and rework. Practical split:
-
-1. **First** stabilize **API contracts** (envelopes, `AppError`, handler layering) and **repository/service purity** — web can keep calling URLs the same way.
-2. **Then** introduce a **single web transport module** (axios or a thin `apiFetch` wrapper per UI.md) so hooks stop duplicating boilerplate.
-3. **Then** swap that module’s **implementation** to **`hc<AppType>()`** (Hono client) **without changing hook signatures** where possible.
-
-If two people work in parallel, only do so with a **frozen OpenAPI/response contract** for the duration of the sprint; otherwise **serial is easier**.
+### Verdict
+- Accepted and implemented.
 
 ---
 
-### 7.0 Standard gate (run before and after every phase)
+## Option C: Separate `/complete-onboarding` endpoint after password reset
 
-Use this checklist **before** editing (clean tree or committed WIP) and **after** completing the phase work.
+### Description
+- Client calls reset-password, then calls complete-onboarding to set `ACTIVE`.
 
-| Step | Command | Purpose |
-|------|---------|---------|
-| 1 | `npm run check:fix` | Biome **lint+format** auto-fix across repo; catches style issues **before** deeper edits. |
-| 2 | `npm run typecheck` | API + web TS + `biome check` (per root script). |
-| 3 | `npm run test:api` | Full API / integration Vitest suite. |
-| 4 | `cd web && npm run test:run` | Web unit/smoke tests. |
-| 5 | `npm run build:web` | Production web build (catches bundler-only issues). |
+### Strengths
+- Explicit ownership of state transition in app code.
 
-Optional but recommended for API-heavy phases: **manual smoke** of the affected flows in `wrangler dev` + `web dev` (uploads, billing, audit, etc.).
+### Weaknesses
+- Two-step client workflow can partially fail (network drop between calls).
+- Can leave user in inconsistent state (`password set` but still `FORCE_PASSWORD_CHANGE`).
 
-**Rule for risky moves (e.g. moving `nanoid` out of a repository):** Before editing, **grep all call sites** of `insert` / `prepareInsert` / affected repo methods, confirm **only services** construct IDs, add or extend a **test that would fail if the repo generated IDs**, then refactor. **100% confidence** = green **`test:api`** + **`typecheck:api`** + call-site audit documented in the phase log.
-
----
-
-### 7.1 Phase breakdown
-
-| Phase | Goal | Primary touch | Contract risk |
-|-------|------|----------------|---------------|
-| **A** | **Repository ID generation** — move **`nanoid`** (and any ID minting) from repos to **services**; repos accept `id` in inputs / `prepareInsert(id, …)` already aligned with API.md Rules **1, 10**. | `member.repository.ts`, financial org settings / currencies / categories repos + their **service callers** + tests | Medium — verify every insert path |
-| **B** | **Repository error purity** — remove **`NotFoundError` / `ConflictError` / generic `throw`** from repos; **services** interpret `null` / Drizzle errors (API.md **2, 16**). | `finance-billing-plans.repository.ts`, `financial-transactions.repository.ts` (+ services) | Medium |
-| **C** | **Handler layering** — no direct **`getDbClient` / repository factories`** in handlers; route through **new or existing services** (API.md **3**). | `audit.handlers.ts`, `reconciliation.handlers.ts`, factories, new small services | Low if responses unchanged |
-| **D** | **Handler error & response hygiene** — remove **handler `try/catch`** where it only logs/rethrows; replace **`new Error`** with **`AppError`**; normalize **upload list/complete** JSON to documented envelopes **or** document intentional deltas + update **web** consumers in same phase (API.md **13–15, 14, 23–27**). | `uploads.handlers.ts`, any remaining `new Error` in prod paths | **High** if upload list shape changes — **web hooks must ship in same phase** |
-| **E** | **Service `BaseService` alignment** (optional polish) — extend **`BaseService`** where it reduces drift (**API.md 4**). | `FinanceBillingPlansService`, import/export/mail/bucket/cache as appropriate | Low |
-| **F** | **Web transport DRY** — add **`web/src/lib/axios.ts`** (or team-approved name) per **UI.md 5**; centralize **baseURL, credentials, JSON errors**; replace **app** `fetch('/api/...')` calls **through that instance** (presigned **external** URLs may still use `fetch`). | Most `web/src/features/**/hooks/**` | Medium |
-| **G** | **Lazy-loaded routes** — **`React.lazy`** + **`Suspense`** for page imports in **`App.tsx`** (UI.md **30**). | `web/src/App.tsx`, fallbacks | Low |
-| **H** | **Explicit `staleTime`** on queries missing it; align list hooks with **cursor/`useInfiniteQuery`** where backend is cursor-only (UI.md **21–22**). | React Query hooks | Low |
-| **I** | **Hono client (`hc`)** — export **`AppType`** from API app, implement **`createApiClient()`** using `hono/client`, **replace axios calls** (or wrapper) so hooks use typed client; keep **one choke point** for regression control. | `api/main.ts` (type export), `web/src/lib/*`, hooks | Medium |
-| **J** | **Error boundaries** — route- or layout-level boundaries per **UI.md 32** (incremental: admin, org, dashboard). | Layouts / `App.tsx` | Low |
-| **K** | **Docs / structure decision** — either **move hooks** to `web/src/hooks/` or **amend UI.md** for feature-colocated hooks; same for **`.page.tsx`** naming (UI.md **6–7, 9**). | Docs and/or file moves | Low (mechanical if scripted) |
-| **L** | **Web test expansion** — `renderHook` for **critical hooks**; tests for **`components/ui/*`** (UI.md **35–36**). | `web/src/**` | None |
-
-Phases **A–D** are the highest **API.md** integrity; **F–I** are the highest **UI.md + Hono** payoff. **Re-order J/K/L** as needed (e.g. **K** early if you want less churn from moves).
+### Verdict
+- Rejected as primary approach due to partial-failure window.
 
 ---
 
-### 7.2 DRY principles during execution
+## Option D: Promote to `ACTIVE` inside `onPasswordReset` hook (implemented)
 
-- After **F** or **I**, hooks should only pass **path + body + zod parse**; no copy-pasted `if (!res.ok)`.
-- When moving **nanoid**, prefer **`prepareInsert`** + **`db.batch`** patterns already in API.md — **do not duplicate** insert logic across services; use **one service method** per aggregate.
-- Prefer **small PR-sized commits** within a phase so `git bisect` stays usable.
+### Description
+- Better Auth handles password update.
+- In `onPasswordReset`, update `userState` to `ACTIVE`.
 
----
+### Strengths
+- Removes client-coordination dependency.
+- Keeps transition server-side and idempotent.
+- Works for current onboarding path (reset-token based first password set).
 
-### 7.3 Phase completion log (append after each approved phase)
+### Weaknesses
+- Sequential in one request, not guaranteed single DB transaction.
+- Hook semantics are tied to reset-password flow design.
 
-Copy a new row **after** you finish a phase and gates are green:
-
-| Date | Phase | Summary | Gates (`check:fix`, typecheck, test:api, web test, build:web`) | Reviewer OK |
-|------|-------|---------|----------------------------------------------------------------|-------------|
-| 2026-04-19 | **A** | **`MemberRepository.insert`** now requires `id` (first arg); **`MemberService`** generates `nanoid()`. **`FinancialOrgSettingsRepository`**: removed `nanoid` / `findOrCreate`; added **`insertDefaults(id, orgId)`** + **`findByOrgId`** with `?? null`; **`UserFinancialService`** owns **`ensureOrgFinancialSettings()`** with `nanoid()` + **`InternalServerError`** if insert returns null. **`FinancialCurrenciesRepository.insert(id, input)`** and **`FinancialTransactionCategoriesRepository.create(id, input)`** — tests generate prefixed ids to simulate the service layer. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (240) ✓ · web `typecheck` + `test:run` (22) ✓ · `build:web` ✓ | *pending your sign-off* |
-| 2026-04-19 | **B** | **`FinanceBillingPlansRepository`**: **`updatePlan`** / **`deletePlan`** return `null` instead of throwing **`NotFoundError`** / **`ConflictError`**; **`FinanceBillingPlansService`** maps null → **`NotFoundError`**, FK **`FOREIGN KEY constraint failed`** → **`ConflictError`**. **`FinancialTransactionsRepository.insert`** returns **`LedgerInsertOutcome`** (`idempotency_conflict` / `debit_guard_failed` / success); **`FinancialBaseService.executeTransaction`** maps those to **`ConflictError`** / **`BadRequestError`**. Cursor parsing: exported **`parseTransactionCursor`**; **`OrgFinancialService`** / **`UserFinancialService`** validate cursors and throw **`BadRequestError`** before list queries; repo uses **`requireTransactionCursor`** only after service validation. | `typecheck:api` ✓ · `test:api` ✓ | *pending your sign-off* |
-| 2026-04-19 | **C** | **`AdminAuditHandler`** / **`ReconciliationHandler`** now call **`getAdminAuditService`** / **`getReconciliationService`** only (no **`getDbClient`** / repo factories in handlers). New **`AdminAuditService`** (list, acknowledge, requeue + queue send) and **`ReconciliationService`** (missed-payment list + retry orchestration). **`SystemAuditRepository`**: **`findByIdAndOrganization`**, **`setAcknowledged`** (optional org scope); **`acknowledge`** delegates to **`setAcknowledged`**. Malformed event **`metadata`** JSON → **422** (`invalid_metadata`) instead of an uncaught parse error. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
-| 2026-04-20 | **D** | **`OrgUploadsHandler`**: removed no-op **`try/catch`**; missing **`userId`** → **`UnauthorizedError`** (401). **`listUploads`** returns explicit **`{ items, nextCursor, prevCursor }`** with typed **`UploadDto[]`** (matches **`createPaginatedResponseSchema`** — web **`useOrganizationUploads`** unchanged). **`completeUpload`** builds a typed **`UploadDto`** (no **`as any`**). Replaced **`new Error`** with **`AppError`** subclasses: **`SessionPaymentService`** (**`UnprocessableEntityError`**, **`InternalServerError`** for batch failures), **`MailService`** (**`ServiceUnavailableError`** when Resend client missing), **`entix.queue`** unsupported payment type → **`InternalServerError`**. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ · web `typecheck` ✓ | *pending your sign-off* |
-| 2026-04-20 | **E** | **`FinanceBillingPlansService`**, **`MemberExportService`**, **`MemberImportService`**, **`BucketService`**, **`CacheService`**, and **`MailService`** now **`extend BaseService`** with **`super()`** in constructors (API.md Rule **4** / **`assertExists`** availability). No call-site changes. | `check:fix` ✓ · `typecheck:api` ✓ · `test:api` (242) ✓ | *pending your sign-off* |
-| 2026-04-20 | **F** | **Deferred** — no **`lib/axios.ts`**; team preference to go straight to **Hono typed client** (Phase **I**) instead of axios + migration churn. | — | *recorded* |
-| 2026-04-20 | **G** | **`web/src/routes/lazy-pages.ts`**: all route-level pages + **`FinancialManagementPage`** use **`React.lazy`**. **`App.tsx`**: **`Suspense`** fallback **`CenteredSpin`**; imports from **`components/guards`** barrel. **`components/guards/index.ts`**: documented stack (**`GuestRoute`** → **`ProtectedRoute`** → nested **`OrgGuard`** / role gates) to avoid redundant membership vs role checks. | `check:fix` ✓ · web `typecheck` + `test:run` (22) ✓ · `web` `build` ✓ | *pending your sign-off* |
-| 2026-04-20 | **H** | **`web/src/lib/query-config.ts`**: shared **`QUERY_STALE_*`** constants. **`App.tsx`** default **`staleTime`** uses **`QUERY_STALE_MS`**. Every **`useQuery`** / **`useInfiniteQuery`** in **`web/src/features/**`** now sets explicit **`staleTime`** (5 min default, 2 min analytics/metrics, 24h org currencies, 1h social types). **`useMembers` / `useMedia`** paged + infinite modes both covered. **Deferred:** migrating playlist/billing list hooks to **`useInfiniteQuery`** only (consumer audit). | web `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
-| 2026-04-20 | **I** | **`web/src/lib/api-client.ts`**: **`createApiClient` / `getApiClient`** with **`hono/client`** + **`credentials: "include"`**. Client chain typed as **`any`** at the root (avoids **`tsc -b`** pulling the full API graph); responses narrowed with **`hcJson<T>`** in **`web/src/lib/hc-json.ts`**. Migrated feature hooks + upload components from raw **`fetch('/api/v1/...')`** to **`getApiClient()`**; presigned R2 uploads still use **`fetch`**. **`web` build** uses **`tsc --noEmit -p tsconfig.app.json`** (not **`tsc -b`**) so the app project does not typecheck **`api/**`** with web-only TS options. Removed **`hono`** path/alias overrides that broke **`hono/utils/url`** resolution for **`@hono/zod-openapi`**. **`api/app.ts`** exports **`AppType`** for optional future strict typing. Restored **`useActivatedCurrencies`**. Wallet member paths avoid **`orgId!`**. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
-| 2026-04-20 | **J** | **`RouteErrorBoundary`** (`react-error-boundary` + **`SectionErrorFallback`**) wraps **`ImpersonationBanner`** + **`Outlet`** in **`OrgAdminLayout`** and **`PlatformAdminLayout`**, and **`Outlet`** in **`AuthLayout`**. **`resetKeys={[pathname]}`** clears errors on navigation. Root boundary in **`App.tsx`** unchanged. | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (22) ✓ · web `build` ✓ | *pending your sign-off* |
-| 2026-04-20 | **K** | **`docs/UI.md`**: Rule **5** → shared **Hono** client (**`getApiClient`**, **`hcJson`**); Rules **2, 41** → no raw **`/api`** **`fetch`** in components. Rules **6–7, 9, 20, 30, 57, 59** → **`web/src/`** tree, **`features/<domain>/hooks/`**, PascalCase **`*Page.tsx`**, lazy **`routes/lazy-pages.ts`**, updated feature-module example; Rule **36** softened to **SHOULD** with greenfield **MUST**. **No file moves** — documentation-only alignment. | — (docs) | *pending your sign-off* |
-| 2026-04-20 | **L** | Added **`components/ui`** tests: **`EntityAvatar.test.tsx`** and **`POSInput.test.tsx`**. Added hook tests **`useOrgCurrencies.test.tsx`**, **`useTransactions.test.tsx`**, **`useWalletBalance.test.tsx`**, **`useTransactionHistory.test.tsx`**, **`useTreasuryBalance.test.tsx`**, **`useCreateAccount.test.tsx`**, **`useInitializeWallet.test.tsx`**, **`useWalletTransfer.test.tsx`**, **`useRecordMediaPlay.test.tsx`**, **`useScheduleMetrics.test.tsx`**, **`useSchedule.test.tsx`**, and **`useMedia.test.tsx`** (disabled states, query params, selected/filtered data, and mutation success/error paths with mocked **`getApiClient`** + **`hcJson`**). | `check:fix` ✓ · root `typecheck` ✓ · web `test:run` (53) ✓ · web `build` ✓ | *pending your sign-off* |
-| *(template)* | *next* | *…* | *all ✓* | *pending* |
-
-**Next:** No remaining planned phases in §7.1. Optional follow-up: continue incremental test coverage in wallet/media/schedule until UI.md test mandates are fully satisfied.
+### Verdict
+- Accepted for current architecture.
 
 ---
 
-*End of report.*
+## Option E: KV cache for auth state/permissions
+
+### Description
+- Cache session/auth snapshot in KV to reduce DB reads.
+
+### Strengths
+- Lower DB load.
+- Faster repeated auth checks.
+
+### Weaknesses
+- Invalidation complexity.
+- Stale authorization risk if role/state changes are not synchronized.
+- Operational complexity and debugging overhead.
+
+### Security Risks
+- Stale `ACTIVE`/role data may grant excess access.
+- Incomplete invalidation can delay suspension/revocation.
+
+### Verdict
+- Optional optimization only; DB remains source of truth.
+- Must include strict invalidation/versioning if adopted.
+
+---
+
+## 5) Implemented Changes (Current Status)
+
+The following was implemented across Phases 1–3:
+
+- Added `shared/constants/user-states.ts`
+- Added `userState` column to `auth_users` schema with default `UNCONFIRMED`
+- Generated + applied migration locally (`0004_living_professor_monster.sql`)
+- Added `userState` to auth DTO validation
+- Added Better Auth additional field registration for `userState`
+- Added guarded transition in `databaseHooks.user.update`:
+  - `emailVerified === true` and state is `UNCONFIRMED`/`null` -> `FORCE_PASSWORD_CHANGE`
+- Updated verification link callback to `/set-password`
+- Updated `onPasswordReset`:
+  - promote non-suspended users to `ACTIVE`
+  - keep suspended users from state promotion
+- Added `requireUserState` middleware
+- Mounted `requireUserState([ACTIVE])` after `requireAuth` on protected route groups
+- Updated test helpers/factories to align with new state model
+
+---
+
+## 6) Security Assessment
+
+## Security controls gained
+
+- Server-side authorization gate based on onboarding state.
+- Prevents incomplete-onboarding users from protected business endpoints.
+- Distinguishes authentication status from business authorization state.
+
+## Residual risks
+
+- `onPasswordReset` and hash write are sequential, not provably one transaction.
+- If process fails between steps, user may need retry flow.
+- Auth route behavior for suspended users depends on hook behavior and policy choices.
+
+## Risk level
+
+- Overall: acceptable for current architecture.
+- Recommended to document behavior explicitly for support/security review.
+
+---
+
+## 7) Performance Assessment
+
+## Current behavior
+
+- Protected routes run auth middleware and user-state middleware.
+- If both call `getSession`, this can double session lookups per request.
+
+## Recommended immediate optimization
+
+- Save session once in `requireAuth` context (`ctx.set("session", session)`).
+- Reuse that in `requireUserState` (`ctx.get("session")`).
+
+This keeps backend enforcement while reducing redundant lookups.
+
+## Optional advanced optimization
+
+- Introduce short-lived KV cache for auth snapshot with:
+  - strict invalidation on logout/password reset/role changes/state changes
+  - versioning (`authVersion`/`permissionsVersion`) to prevent stale grants
+  - fail-closed fallback to DB
+
+---
+
+## 8) Testing & Validation Status
+
+Phases 1–3 were validated with:
+
+- `npm run typecheck`
+- `npm run check:fix`
+- `npm run check`
+- `npm run test:api`
+- `npm run build:web`
+
+All required gates were passed after iterative fixes.
+
+---
+
+## 9) Recommended Next Steps
+
+1. Complete Phase 4 UI flow polish:
+   - Ensure verify-email redirect to `/set-password` is clear and consistent.
+   - Handle already-active edge case gracefully.
+2. Optional Phase 3.1 performance patch:
+   - Reuse session from context to avoid duplicate `getSession()` on request.
+3. Add focused onboarding integration tests:
+   - `UNCONFIRMED -> FORCE_PASSWORD_CHANGE -> ACTIVE`
+   - forced-state user blocked on protected APIs
+   - suspended-user behavior in reset path
+4. If scaling pressure increases, design KV caching with versioned invalidation.
+
+---
+
+## Final Recommendation
+
+Keep backend `userState` enforcement as a mandatory authorization layer, and optimize performance by reusing request context session (and optionally carefully designed cache later). This provides the required non-bypassable onboarding control while keeping database load manageable.
