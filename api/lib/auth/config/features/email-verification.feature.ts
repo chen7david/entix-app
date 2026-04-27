@@ -6,6 +6,7 @@ export const getEmailVerificationConfig = (
     ctx?: AppContext,
     mailer?: MailService
 ): Partial<BetterAuthOptions> => {
+    const skipEmailDelivery = (ctx?.env.SKIP_AUTH_EMAILS as string) === "true";
     if ((ctx?.env.SKIP_EMAIL_VERIFICATION as string) === "true") {
         return {};
     }
@@ -13,9 +14,10 @@ export const getEmailVerificationConfig = (
     return {
         emailVerification: {
             sendOnSignUp: true,
-            autoSignInAfterVerification: true,
+            autoSignInAfterVerification: false,
             sendVerificationEmail: async ({ user, token }) => {
                 if (!ctx || !mailer) return;
+                if (skipEmailDelivery) return;
 
                 const verificationUrl = `${ctx.var.frontendUrl}/auth/verify-email?token=${token}`;
                 ctx.executionCtx.waitUntil(

@@ -141,7 +141,6 @@ export const scheduledSessionsRelations = relations(scheduledSessions, ({ one, m
         references: [authOrganizations.id],
     }),
     attendances: many(sessionAttendances),
-    paymentRequests: many(paymentRequests, { relationName: "paymentRequest_session" }),
 }));
 
 export const sessionAttendancesRelations = relations(sessionAttendances, ({ one }) => ({

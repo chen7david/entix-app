@@ -3,6 +3,7 @@ import {
     ResetPasswordForm,
     type ResetPasswordValues,
     useResetPassword,
+    useSignIn,
 } from "@web/src/features/auth";
 import { App, Button, Card, Result, Typography } from "antd";
 import type React from "react";
@@ -16,9 +17,11 @@ export const ResetPasswordPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const token = searchParams.get("token");
+    const email = searchParams.get("email");
     const [status, setStatus] = useState<"idle" | "success" | "invalid">("idle");
 
     const { mutate: resetPassword, isPending } = useResetPassword();
+    const { mutateAsync: signInUser } = useSignIn();
 
     useEffect(() => {
         if (!token) {
@@ -42,14 +45,46 @@ export const ResetPasswordPage: React.FC = () => {
             },
             {
                 onSuccess: () => {
-                    setStatus("success");
-                    notification.success({
-                        message: "Password Reset",
-                        description: "Your password has been reset successfully. Redirecting...",
-                    });
-                    setTimeout(() => {
-                        navigate(AppRoutes.auth.signIn);
-                    }, 3000);
+                    const finalize = async () => {
+                        try {
+                            if (!email) {
+                                setStatus("success");
+                                notification.success({
+                                    message: "Password Reset",
+                                    description:
+                                        "Password reset complete. Redirecting to sign in...",
+                                });
+                                setTimeout(() => {
+                                    navigate(AppRoutes.auth.signIn, { replace: true });
+                                }, 3000);
+                                return;
+                            }
+
+                            await signInUser({ email, password: values.newPassword });
+                            setStatus("success");
+                            notification.success({
+                                message: "Password Reset",
+                                description: "Password reset complete. You are now signed in.",
+                            });
+                            setTimeout(() => {
+                                navigate("/", { replace: true });
+                            }, 1200);
+                        } catch (error) {
+                            notification.warning({
+                                message: "Password Reset Complete",
+                                description:
+                                    error instanceof Error
+                                        ? `${error.message}. Please sign in manually.`
+                                        : "Please sign in manually.",
+                            });
+                            setStatus("success");
+                            setTimeout(() => {
+                                navigate(AppRoutes.auth.signIn, { replace: true });
+                            }, 2500);
+                        }
+                    };
+
+                    void finalize();
                 },
                 onError: (error) => {
                     notification.error({
@@ -105,14 +140,16 @@ export const ResetPasswordPage: React.FC = () => {
                 <Result
                     status="success"
                     title="Password Reset Successfully!"
-                    subTitle="Redirecting you to sign in..."
+                    subTitle="Redirecting you..."
                     extra={[
                         <Button
                             type="primary"
                             key="signin"
-                            onClick={() => navigate(AppRoutes.auth.signIn)}
+                            onClick={() =>
+                                navigate(email ? "/" : AppRoutes.auth.signIn, { replace: true })
+                            }
                         >
-                            Go to Sign In
+                            {email ? "Continue" : "Go to Sign In"}
                         </Button>,
                     ]}
                 />

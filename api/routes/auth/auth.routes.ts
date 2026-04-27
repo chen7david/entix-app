@@ -22,6 +22,7 @@ export const AuthRoutes = {
         tags: tags,
         method: HttpMethods.POST,
         path: "/auth/signup-with-org",
+        middleware: [requireAuth, requireSuperAdmin] as const,
         summary: "Sign up a new user and create an organization",
         request: {
             body: jsonContentRequired(signUpWithOrgSchema, "User and Organization details"),
@@ -33,6 +34,12 @@ export const AuthRoutes = {
             ),
             [HttpStatusCodes.BAD_REQUEST]: {
                 description: "Bad request",
+            },
+            [HttpStatusCodes.UNAUTHORIZED]: {
+                description: "Unauthorized",
+            },
+            [HttpStatusCodes.FORBIDDEN]: {
+                description: "Forbidden",
             },
             [HttpStatusCodes.INTERNAL_SERVER_ERROR]: {
                 description: "Internal server error",

@@ -51,7 +51,6 @@ import {
     SettingsPage,
     ShopPage,
     SignInPage,
-    SignUpPage,
     UnauthorizedPage,
     VerifyEmailPage,
     WalletPage,
@@ -110,7 +109,6 @@ export default function App() {
                                 <Route element={<GuestRoute />}>
                                     <Route path="/auth" element={<AuthLayout />}>
                                         <Route path="sign-in" element={<SignInPage />} />
-                                        <Route path="sign-up" element={<SignUpPage />} />
                                         <Route
                                             path="forgot-password"
                                             element={<ForgotPasswordPage />}
