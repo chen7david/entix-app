@@ -24,6 +24,7 @@ type SessionGeneralFormProps = {
     form: FormInstance;
     session: any | null;
     lessons: { label: string; value: string }[];
+    teachers: { label: string; value: string }[];
     isLoadingLessons: boolean;
     hasNextLessonPage: boolean;
     isFetchingNextLessonPage: boolean;
@@ -41,6 +42,7 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
     form,
     session,
     lessons,
+    teachers,
     isLoadingLessons,
     hasNextLessonPage,
     isFetchingNextLessonPage,
@@ -112,6 +114,24 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                             onLoadMoreLessons();
                         }
                     }}
+                />
+            </Form.Item>
+
+            <Form.Item
+                name="teacherId"
+                label="Teacher"
+                rules={[{ required: true, message: "Required" }]}
+            >
+                <Select
+                    placeholder="Select teacher"
+                    options={teachers}
+                    showSearch
+                    optionFilterProp="label"
+                    filterOption={(input, option) =>
+                        String(option?.label || "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                    }
                 />
             </Form.Item>
 

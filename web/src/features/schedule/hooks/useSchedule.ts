@@ -41,6 +41,16 @@ export type SessionDTO = {
     }[];
 };
 
+export type StudentEnrollmentSessionDTO = {
+    sessionId: string;
+    lessonTitle: string;
+    startTime: string;
+    endTime: string;
+    teacherName: string;
+    sessionStatus: "scheduled" | "completed" | "cancelled";
+    enrollmentStatus: string;
+};
+
 export const useSchedule = (
     organizationId?: string,
     startDate?: number,
@@ -294,4 +304,22 @@ export function useScheduleMetrics(organizationId?: string, startDate?: number, 
         isLoading,
         error,
     };
+}
+
+export function useMyEnrollments(organizationId?: string) {
+    const { user, isAuthenticated } = useAuth();
+
+    return useQuery({
+        queryKey: ["myEnrollments", organizationId, user?.id],
+        queryFn: async () => {
+            if (!organizationId) return [];
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].enrollments.me.$get({
+                param: { organizationId },
+            });
+            return hcJson<StudentEnrollmentSessionDTO[]>(res);
+        },
+        enabled: !!organizationId && !!user?.id && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+    });
 }

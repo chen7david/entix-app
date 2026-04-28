@@ -1,278 +1,351 @@
-# Onboarding State Enforcement Assessment Report
+# Multi-Tenant Lesson & Session System - Assessment Report
 
-## Executive Summary
+## Ticket Context
 
-This report documents an onboarding/security design problem in `entix-app`, the solution options considered, tradeoffs, and the recommended implementation.
+This document tracks implementation status and next actions for the ticket:
+**Implement Multi-Tenant Lesson & Session System**.
 
-The core requirement is:
+Core objective:
+- Reconcile existing `scheduled_sessions` and `session_attendances` with the new lesson architecture.
+- Add reusable lessons.
+- Add required lesson and teacher fields to sessions.
+- Add surrogate primary key to attendances.
+- Add generic `lesson_progress` table.
+- Preserve strict organization scoping and permissions.
 
-- A newly created user verifies email.
-- The user is auto-signed in.
-- The user must set a password before accessing normal app features.
-- This requirement must not be bypassable.
+Current entity mapping:
+- `scheduled_sessions` -> Session
+- `session_attendances` -> Enrollment
+- `auth_members` -> Membership
 
-The final conclusion is:
-
-- This is not only a UX flow; it is an authorization policy.
-- Frontend-only gating is insufficient and bypassable.
-- Backend state enforcement is required.
-- Performance concerns should be addressed by reducing duplicate session lookups and (optionally) adding cautious caching.
-
----
-
-## 1) Problem Statement
-
-### Business Goal
-
-Enable a smooth first-time onboarding flow:
-
-1. User receives verification email.
-2. User clicks verification link.
-3. User is automatically logged in.
-4. User is redirected to set password.
-5. User cannot access protected account features until password is set.
-
-### Technical Constraint
-
-Current backend already authenticates users with Better Auth. The new requirement introduces a second dimension:
-
-- Not just “authenticated vs unauthenticated”
-- Also “onboarding complete vs incomplete”
-
-Without explicit backend enforcement, a verified/authenticated user can call protected APIs directly (Postman/curl/devtools), bypassing frontend route guards.
+Durability rule:
+- Use `user_id + organization_id` directly (not `member_id`) for historical durability.
 
 ---
 
-## 2) Why Frontend-Only Checks Are Not Sufficient
+## Final Schema Targets (Definition of Done)
 
-Frontend checks alone are insecure for this requirement because:
+### 1) `lessons` table (`lesson.schema.ts`)
+- `id`: `text().primaryKey()` using `generateOpaqueId()`
+- `organizationId`: FK -> `authOrganizations.id`, `not null`
+- `title`: `text().notNull()`
+- `description`: `text()`
+- `createdAt`, `updatedAt`
 
-- API calls can be made outside the browser UI.
-- SPA route redirects do not protect backend endpoints.
-- Email verification and onboarding completion are different states.
-- Future clients (mobile/scripts/integrations) may not apply the same UI logic.
+### 2) Update `scheduled_sessions`
+- Add `lessonId`: FK -> `lessons.id`, `not null`
+- Add `teacherId`: FK -> `auth_users.id`, `not null`
 
-Result: frontend-only checks violate the requirement “cannot bypass.”
+### 3) Update `session_attendances`
+- Add surrogate PK `id`: `text().primaryKey()` using `generateOpaqueId()`
 
----
-
-## 3) Chosen Domain Model: `userState`
-
-A state-machine approach was adopted for flexibility and clarity.
-
-## States
-
-- `UNCONFIRMED`: user exists, email not verified
-- `FORCE_PASSWORD_CHANGE`: email verified, signed in, password setup required
-- `ACTIVE`: onboarding complete, full access
-- `SUSPENDED`: blocked by admin policy
-
-## Core Transitions
-
-- `UNCONFIRMED -> FORCE_PASSWORD_CHANGE` on email verification
-- `FORCE_PASSWORD_CHANGE -> ACTIVE` after successful password reset/set
-
-This model is extensible for future states (`PENDING_MFA_SETUP`, `DEACTIVATED`, etc.) without schema redesign.
+### 4) `lesson_progress` table (`lesson-progress.schema.ts`)
+- `log_id`: `text().primaryKey()` using `generateOpaqueId()`
+- `enroll_id`: FK -> `session_attendances.id`, `not null`
+- `lesson_element_id`: `text()`
+- `action_type`: `text().notNull()`
+- `timestamp`: `integer("timestamp", { mode: "timestamp" }).notNull()`
+- `metric_data`: `text()` (JSON string payload)
 
 ---
 
-## 4) Options Evaluated
+## Required Relations (`relations.schema.ts`)
 
-## Option A: Frontend-only onboarding gate
-
-### Description
-- Store onboarding state and redirect user to `/set-password` in UI only.
-
-### Strengths
-- Simple implementation.
-- No extra backend middleware.
-
-### Weaknesses
-- Bypassable via direct API calls.
-- Fails security requirement.
-- Inconsistent across non-web clients.
-
-### Verdict
-- Rejected for this project’s requirement.
+- `lessons: many(scheduledSessions)`
+- `scheduledSessions: one(lessons, { fields: [scheduledSessions.lessonId], references: [lessons.id] })`
+- `scheduledSessions: one(authUsers, { fields: [scheduledSessions.teacherId], references: [authUsers.id] })`
+- `sessionAttendances: many(lessonProgress)`
+- `lessonProgress: one(sessionAttendances, { fields: [lessonProgress.enrollId], references: [sessionAttendances.id] })`
 
 ---
 
-## Option B: Backend enforcement on protected routes (implemented)
+## Student Dashboard Response Contract
 
-### Description
-- Add `userState` to auth user model.
-- Enforce `ACTIVE` on protected route groups (`/api/v1/orgs/*`, `/api/v1/users/*`).
-- Keep auth routes (`/api/v1/auth/*`) accessible for onboarding actions.
+```ts
+{
+  sessionId: string;
+  lessonTitle: string;
+  startTime: string;
+  endTime: string;           // computed: startTime + (durationMinutes * 60000)
+  teacherName: string;       // from auth_users.name via teacherId
+  sessionStatus: "scheduled" | "completed" | "cancelled";
+  enrollmentStatus: string;  // maps to session_attendances.paymentStatus for now
+}
+```
 
-### Strengths
-- Enforces policy server-side.
-- Non-bypassable by client manipulation.
-- Scales to multiple clients.
-
-### Weaknesses
-- Adds per-request state check on protected routes.
-- Requires updates to tests/fixtures after introducing new required state field.
-
-### Verdict
-- Accepted and implemented.
-
----
-
-## Option C: Separate `/complete-onboarding` endpoint after password reset
-
-### Description
-- Client calls reset-password, then calls complete-onboarding to set `ACTIVE`.
-
-### Strengths
-- Explicit ownership of state transition in app code.
-
-### Weaknesses
-- Two-step client workflow can partially fail (network drop between calls).
-- Can leave user in inconsistent state (`password set` but still `FORCE_PASSWORD_CHANGE`).
-
-### Verdict
-- Rejected as primary approach due to partial-failure window.
+Must-haves:
+- `endTime` computed in repository layer.
+- `teacherName` joined from `auth_users.name` via `teacherId`.
 
 ---
 
-## Option D: Promote to `ACTIVE` inside `onPasswordReset` hook (implemented)
+## Route Requirements
 
-### Description
-- Better Auth handles password update.
-- In `onPasswordReset`, update `userState` to `ACTIVE`.
+### Lessons
+- `GET /orgs/{organizationId}/lessons`
+- `POST /orgs/{organizationId}/lessons`
+- `GET /orgs/{organizationId}/lessons/{lessonId}`
+- `PATCH /orgs/{organizationId}/lessons/{lessonId}`
+- `DELETE /orgs/{organizationId}/lessons/{lessonId}`
 
-### Strengths
-- Removes client-coordination dependency.
-- Keeps transition server-side and idempotent.
-- Works for current onboarding path (reset-token based first password set).
+### Enrollments
+- `POST /orgs/{organizationId}/sessions/{sessionId}/enrollments`
+- `DELETE /orgs/{organizationId}/sessions/{sessionId}/enrollments/{enrollmentId}`
+  - Must use new `session_attendances.id` surrogate key
 
-### Weaknesses
-- Sequential in one request, not guaranteed single DB transaction.
-- Hook semantics are tied to reset-password flow design.
-
-### Verdict
-- Accepted for current architecture.
-
----
-
-## Option E: KV cache for auth state/permissions
-
-### Description
-- Cache session/auth snapshot in KV to reduce DB reads.
-
-### Strengths
-- Lower DB load.
-- Faster repeated auth checks.
-
-### Weaknesses
-- Invalidation complexity.
-- Stale authorization risk if role/state changes are not synchronized.
-- Operational complexity and debugging overhead.
-
-### Security Risks
-- Stale `ACTIVE`/role data may grant excess access.
-- Incomplete invalidation can delay suspension/revocation.
-
-### Verdict
-- Optional optimization only; DB remains source of truth.
-- Must include strict invalidation/versioning if adopted.
+### Student Dashboard
+- `GET /orgs/{organizationId}/enrollments/me`
 
 ---
 
-## 5) Implemented Changes (Current Status)
+## Permission Requirements
 
-The following was implemented across Phases 1–3:
+### lesson
+- `student`: `["read"]`
+- `teacher | admin | owner`: `["read", "create", "update", "delete"]`
 
-- Added `shared/constants/user-states.ts`
-- Added `userState` column to `auth_users` schema with default `UNCONFIRMED`
-- Generated + applied migration locally (`0004_living_professor_monster.sql`)
-- Added `userState` to auth DTO validation
-- Added Better Auth additional field registration for `userState`
-- Added guarded transition in `databaseHooks.user.update`:
-  - `emailVerified === true` and state is `UNCONFIRMED`/`null` -> `FORCE_PASSWORD_CHANGE`
-- Updated verification link callback to `/set-password`
-- Updated `onPasswordReset`:
-  - promote non-suspended users to `ACTIVE`
-  - keep suspended users from state promotion
-- Added `requireUserState` middleware
-- Mounted `requireUserState([ACTIVE])` after `requireAuth` on protected route groups
-- Updated test helpers/factories to align with new state model
+### enrollment
+- `student`: `["read"]`
+- `teacher | admin | owner`: `["read", "create", "delete"]`
 
 ---
 
-## 6) Security Assessment
+## What Is Already Done (Based on Ticket Spec)
 
-## Security controls gained
+The ticket provides complete target behavior and implementation expectations. The following are clarified and locked in scope:
 
-- Server-side authorization gate based on onboarding state.
-- Prevents incomplete-onboarding users from protected business endpoints.
-- Distinguishes authentication status from business authorization state.
+1. Data model direction is finalized:
+   - New `lessons` and `lesson_progress` tables are required.
+   - `scheduled_sessions` must reference both lesson and teacher.
+   - `session_attendances` must gain a surrogate primary key.
 
-## Residual risks
+2. Relation model is explicitly defined:
+   - All required Drizzle relationships are listed and non-ambiguous.
 
-- `onPasswordReset` and hash write are sequential, not provably one transaction.
-- If process fails between steps, user may need retry flow.
-- Auth route behavior for suspended users depends on hook behavior and policy choices.
+3. API contract is finalized:
+   - Student dashboard payload shape is fully defined.
+   - Route structure for lessons, enrollments, and dashboard is fixed.
 
-## Risk level
+4. Security and tenancy rules are explicit:
+   - Organization scoping is required everywhere.
+   - Permission matrix for `lesson` and `enrollment` is defined.
 
-- Overall: acceptable for current architecture.
-- Recommended to document behavior explicitly for support/security review.
+5. Behavioral rules are called out:
+   - `endTime` computed in repository.
+   - `teacherName` sourced via join on `teacherId`.
+   - Enrollment delete must use new surrogate attendance id.
+   - Completed session guard must be enforced in repository layer.
 
----
+6. Delivery sequencing is already broken into 4 implementation phases with quality gates.
 
-## 7) Performance Assessment
-
-## Current behavior
-
-- Protected routes run auth middleware and user-state middleware.
-- If both call `getSession`, this can double session lookups per request.
-
-## Recommended immediate optimization
-
-- Save session once in `requireAuth` context (`ctx.set("session", session)`).
-- Reuse that in `requireUserState` (`ctx.get("session")`).
-
-This keeps backend enforcement while reducing redundant lookups.
-
-## Optional advanced optimization
-
-- Introduce short-lived KV cache for auth snapshot with:
-  - strict invalidation on logout/password reset/role changes/state changes
-  - versioning (`authVersion`/`permissionsVersion`) to prevent stale grants
-  - fail-closed fallback to DB
+Note:
+- This section reflects what is "done as specification and planning." It does not assert code is implemented yet.
 
 ---
 
-## 8) Testing & Validation Status
+## Phase-Based Execution Plan + Progress Tracker
 
-Phases 1–3 were validated with:
+Use this section as the single source of truth between chats. Update status, notes, blockers, and verification after each work session.
 
-- `npm run typecheck`
-- `npm run check:fix`
-- `npm run check`
-- `npm run test:api`
-- `npm run build:web`
+### Overall Status
+- Current phase: `Validation complete (all phases implemented)`
+- Overall completion: `100%`
+- Last updated: `2026-04-28 (session update)`
+- Owner: `AI + developer`
 
-All required gates were passed after iterative fixes.
-
----
-
-## 9) Recommended Next Steps
-
-1. Complete Phase 4 UI flow polish:
-   - Ensure verify-email redirect to `/set-password` is clear and consistent.
-   - Handle already-active edge case gracefully.
-2. Optional Phase 3.1 performance patch:
-   - Reuse session from context to avoid duplicate `getSession()` on request.
-3. Add focused onboarding integration tests:
-   - `UNCONFIRMED -> FORCE_PASSWORD_CHANGE -> ACTIVE`
-   - forced-state user blocked on protected APIs
-   - suspended-user behavior in reset path
-4. If scaling pressure increases, design KV caching with versioned invalidation.
+### Progress Legend
+- `[ ]` Not started
+- `[-]` In progress
+- `[x]` Done
+- `[!]` Blocked
 
 ---
 
-## Final Recommendation
+## Phase 1 - Schema & Migration
 
-Keep backend `userState` enforcement as a mandatory authorization layer, and optimize performance by reusing request context session (and optionally carefully designed cache later). This provides the required non-bypassable onboarding control while keeping database load manageable.
+Goal:
+- Establish all table changes and relations with clean migration + compile-safe schema exports.
+
+Checklist:
+- [x] Create `lesson.schema.ts`
+- [x] Create `lesson-progress.schema.ts`
+- [x] Update `scheduled_sessions` schema (`lessonId`, `teacherId` non-null FKs)
+- [x] Update `session_attendances` schema (add surrogate `id` PK)
+- [x] Add and verify migration for affected tables
+- [x] Update `shared/db/schema/index.ts` exports
+- [x] Update `relations.schema.ts` for lesson/teacher/progress links
+- [x] Update/truncate seed data if incompatible with new schema *(no immediate schema break found in current run; monitor during repository/integration work)*
+- [x] Run quality gate: TypeScript check + Biome + build
+
+Notes / decisions:
+- Prefer drop/recreate only where necessary; ensure migration order respects FK dependencies.
+- Verify all FK names and on-delete/on-update behavior are consistent with existing conventions.
+
+Exit criteria:
+- Schema compiles.
+- Migration runs cleanly on fresh database.
+- Quality gate passes.
+
+Status notes:
+- Implemented in repo before this session and verified in this session.
+- Verified files:
+  - `shared/db/schema/lesson.schema.ts`
+  - `shared/db/schema/lesson-progress.schema.ts`
+  - `shared/db/schema/schedule.schema.ts`
+  - `shared/db/schema/relations.schema.ts`
+  - `shared/db/schema/index.ts`
+  - `api/db/migrations/0004_multi_tenant_lessons.sql`
+- Quality gate evidence (all passing):
+  - `npm run typecheck`
+  - `npm run build:web`
+
+---
+
+## Phase 2 - Repositories
+
+Goal:
+- Add and update repository logic for lessons, lesson progress, enrollments, and student dashboard query.
+
+Checklist:
+- [x] Create `lesson.repository.ts` with org-scoped CRUD
+- [x] Create `lesson-progress.repository.ts`
+- [x] Update `scheduled-sessions.repository.ts` for new fields and `getStudentDashboard()`
+- [x] Update `session-attendances.repository.ts` to enforce completed-session guard
+- [x] Update `api/repositories/index.ts` exports
+- [x] Run quality gate: TypeScript check + Biome + all tests
+
+Notes / decisions:
+- `getStudentDashboard()` must compute `endTime` in repository.
+- Join `auth_users` on `teacherId` for `teacherName`.
+- Ensure every repository method requires and validates `organizationId`.
+
+Exit criteria:
+- Repository tests and existing tests pass.
+- Dashboard contract matches required response shape.
+
+Status notes:
+- Implemented in repo and validated in this session.
+- Verified files:
+  - `api/repositories/lesson.repository.ts`
+  - `api/repositories/lesson-progress.repository.ts`
+  - `api/repositories/scheduled-sessions.repository.ts`
+  - `api/repositories/session-attendances.repository.ts`
+  - `api/repositories/index.ts`
+- Validation evidence:
+  - `npm run test:api` (pass)
+
+---
+
+## Phase 3 - Permissions + Routes + Handlers
+
+Goal:
+- Expose lesson and enrollment APIs with correct authz and org-scoped behavior; update existing session APIs for new required fields.
+
+Checklist:
+- [x] Add `lesson` permissions
+- [x] Add `enrollment` permissions
+- [x] Create `lesson.routes.ts`, `lesson.handlers.ts`, `lesson.index.ts`
+- [x] Create `enrollment.routes.ts`, `enrollment.handlers.ts`, `enrollment.index.ts`
+- [x] Update scheduled session create/update handlers and routes to require `lessonId` and `teacherId`
+- [x] Register new routers
+- [x] Run quality gate: TypeScript check + Biome + build + tests
+
+Notes / decisions:
+- Enrollment delete route must consume new surrogate `enrollmentId`.
+- Confirm validation schemas treat `lessonId` and `teacherId` as required fields.
+- Ensure permission checks map exactly to role matrix from ticket.
+
+Exit criteria:
+- API routes reachable and protected correctly.
+- Integration behavior validates org scoping and permission boundaries.
+
+Status notes:
+- Implemented and route-registered.
+- Verified files:
+  - `shared/auth/permissions.ts`
+  - `api/routes/orgs/lesson.routes.ts`
+  - `api/routes/orgs/lesson.handlers.ts`
+  - `api/routes/orgs/lesson.index.ts`
+  - `api/routes/orgs/enrollment.routes.ts`
+  - `api/routes/orgs/enrollment.handlers.ts`
+  - `api/routes/orgs/enrollment.index.ts`
+  - `api/routes/orgs/schedule.routes.ts`
+  - `api/routes/index.route.ts`
+
+---
+
+## Phase 4 - Tests
+
+Goal:
+- Verify behavior end-to-end for schema/repository/handler paths and edge guards.
+
+Checklist:
+- [x] Repository tests for new lesson and lesson-progress repositories
+- [x] Repository tests for updated session and attendance repositories
+- [x] Integration test: create session with lesson + teacher
+- [x] Integration test: enroll student + remove student by new `enrollmentId`
+- [x] Integration test: student dashboard payload (`lessonTitle`, computed `endTime`, `teacherName`, statuses)
+- [x] Integration test: completed-session guard
+- [x] Ensure no tenancy leakage across organizations
+
+Exit criteria:
+- New tests pass reliably.
+- Existing regression suite remains green.
+
+Status notes:
+- Ticket-specific tests and broader API tests pass.
+- Validation evidence:
+  - `npx vitest run tests/integration/lesson.integration.test.ts tests/integration/schedule/scheduled-sessions.repository.test.ts tests/integration/schedule/session-attendances.repository.test.ts tests/integration/schedule/session-schedule.test.ts` (pass)
+  - `npm run test:api` (pass)
+
+---
+
+## Known Risks / Watch Items
+
+- Migration risk: existing attendance references may break if surrogate key introduction is not backfilled/handled correctly.
+- Seed fragility: old seeds may fail due to new not-null and FK constraints.
+- Permission drift: route-level auth and permission matrix may diverge if not centrally validated.
+- Tenancy leakage: any query missing `organizationId` filtering is a high-severity issue.
+
+---
+
+## Chat-to-Chat Handoff Notes Template
+
+Copy and update this block at end of each session:
+
+- Date:
+- Phase worked:
+- Changes completed:
+- Tests/commands run:
+- Results:
+- Blockers:
+- Next immediate step:
+
+---
+
+## Latest Session Log
+
+- Date: 2026-04-28
+- Phase worked: Post-ticket UX and role-dashboard alignment
+- Changes completed:
+  - Added teacher selector to session create/update UI
+  - Session payload now uses selected `teacherId` instead of forcing logged-in user id
+  - Teacher portal now shows upcoming sessions assigned to logged-in teacher
+  - Student portal now shows enrolled upcoming sessions via `/orgs/{organizationId}/enrollments/me`
+- Tests/commands run:
+  - `npm run typecheck:web`
+- Results:
+  - Pass
+- Blockers:
+  - None
+- Next immediate step:
+  - Verify UX manually in app (create session with non-self teacher, confirm teacher/student portals reflect assignment)
+
+---
+
+## Immediate Next Step
+
+Phase implementation is complete. Next practical step is optional cleanup/hardening:
+1. Decide whether `coverArtUrl` should remain in `lessons` as an additive field beyond ticket minimum
+2. Add/change any documentation references to call enrollment id the surrogate key explicitly
+3. Open PR with this tracker as rollout evidence

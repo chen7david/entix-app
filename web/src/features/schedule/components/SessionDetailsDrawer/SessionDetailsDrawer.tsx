@@ -52,6 +52,18 @@ export const SessionDetailsDrawer = ({
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
+    const teacherOptions = (members || [])
+        .filter((member) => {
+            const roles = String(member.role || "")
+                .split(",")
+                .map((r) => r.trim().toLowerCase())
+                .filter(Boolean);
+            return roles.includes("teacher") || roles.includes("admin") || roles.includes("owner");
+        })
+        .map((member) => ({
+            value: member.userId,
+            label: member.name || member.email || member.userId,
+        }));
 
     const [memberCache, setMemberCache] = useState<
         Record<string, { name: string; image?: string }>
@@ -101,6 +113,7 @@ export const SessionDetailsDrawer = ({
         if (open && session) {
             form.setFieldsValue({
                 lessonId: session.lessonId,
+                teacherId: session.teacherId,
                 title: session.title,
                 description: session.description,
                 date: dayjs(session.startTime),
@@ -140,12 +153,13 @@ export const SessionDetailsDrawer = ({
             setAttendanceDict({});
             form.setFieldsValue({
                 durationMinutes: 60,
+                teacherId: user?.id,
                 status: "scheduled",
                 isRecurring: false,
                 recurrenceCount: 5,
             });
         }
-    }, [open, session, form]);
+    }, [open, session, form, user?.id]);
 
     // Reset one-time initialization flag when drawer closes.
     useEffect(() => {
@@ -175,7 +189,7 @@ export const SessionDetailsDrawer = ({
 
             const payload: SessionSubmitPayload = {
                 lessonId: values.lessonId,
-                teacherId: user?.id ?? "",
+                teacherId: values.teacherId,
                 title: values.title,
                 description: values.description,
                 startTime: startDateTime,
@@ -344,6 +358,7 @@ export const SessionDetailsDrawer = ({
                             label: lesson.title,
                             value: lesson.id,
                         }))}
+                        teachers={teacherOptions}
                         isLoadingLessons={isLoadingLessons}
                         hasNextLessonPage={!!hasNextLessonPage}
                         isFetchingNextLessonPage={isFetchingNextLessonPage}

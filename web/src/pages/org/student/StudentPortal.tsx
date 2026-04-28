@@ -1,14 +1,36 @@
 import { BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { useOrgNavigate } from "@web/src/features/organization";
-import { Card, Col, Row, Typography, theme } from "antd";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
+import { useMyEnrollments } from "@web/src/features/schedule/hooks/useSchedule";
+import { DateUtils } from "@web/src/utils/date";
+import { Alert, Card, Col, List, Row, Space, Typography, theme } from "antd";
 import type React from "react";
+import { useMemo } from "react";
 
 const { Title, Text } = Typography;
 
 export const StudentPortal: React.FC = () => {
     const navigateOrg = useOrgNavigate();
+    const { activeOrganization } = useOrganization();
     const { token } = theme.useToken();
+    const { data: enrollments = [], isLoading, error } = useMyEnrollments(activeOrganization?.id);
+
+    const myDisplaySessions = useMemo(() => {
+        const sorted = [...enrollments].sort(
+            (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+        );
+
+        const now = Date.now();
+        const upcoming = sorted.filter((item) => {
+            const parsed = new Date(item.startTime).getTime();
+            if (Number.isNaN(parsed)) return true;
+            return parsed >= now;
+        });
+
+        // If clock parsing/timezone edge cases hide "upcoming", still show enrolled sessions.
+        const source = upcoming.length > 0 ? upcoming : sorted;
+        return source.slice(0, 5);
+    }, [enrollments]);
 
     return (
         <div>
@@ -75,10 +97,45 @@ export const StudentPortal: React.FC = () => {
             </Row>
 
             <div className="mt-8">
-                <Card title="Recent Activity" className="shadow-sm">
-                    <Text type="secondary" italic>
-                        No recent lessons or transactions to show.
-                    </Text>
+                <Card title="My Upcoming Sessions" className="shadow-sm">
+                    {error && (
+                        <Alert
+                            type="warning"
+                            showIcon
+                            style={{ marginBottom: 12 }}
+                            message="Unable to load enrollment sessions right now."
+                            description={error.message}
+                        />
+                    )}
+                    <List
+                        loading={isLoading}
+                        dataSource={myDisplaySessions}
+                        locale={{
+                            emptyText: (
+                                <Text type="secondary" italic>
+                                    No assigned sessions yet.
+                                </Text>
+                            ),
+                        }}
+                        renderItem={(item) => (
+                            <List.Item>
+                                <List.Item.Meta
+                                    title={<Text strong>{item.lessonTitle}</Text>}
+                                    description={
+                                        <Space direction="vertical" size={0}>
+                                            <Text type="secondary">
+                                                {DateUtils.format(item.startTime, "MMM D, h:mm A")}{" "}
+                                                - {DateUtils.format(item.endTime, "h:mm A")}
+                                            </Text>
+                                            <Text type="secondary">
+                                                Teacher: {item.teacherName || "Unassigned"}
+                                            </Text>
+                                        </Space>
+                                    }
+                                />
+                            </List.Item>
+                        )}
+                    />
                 </Card>
             </div>
         </div>

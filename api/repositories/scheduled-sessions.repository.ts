@@ -16,6 +16,19 @@ import { and, eq, sql } from "drizzle-orm";
 export class ScheduledSessionsRepository {
     constructor(private readonly db: AppDb) {}
 
+    private toIsoString(value: Date | number | string): string {
+        if (value instanceof Date) {
+            return value.toISOString();
+        }
+
+        // SQLite expressions may return epoch ms integers for computed datetime fields.
+        if (typeof value === "number") {
+            return new Date(value).toISOString();
+        }
+
+        return new Date(value).toISOString();
+    }
+
     /**
      * Finds a session by its unique ID.
      */
@@ -147,8 +160,8 @@ export class ScheduledSessionsRepository {
         return rows.map((row) => ({
             sessionId: row.sessionId,
             lessonTitle: row.lessonTitle,
-            startTime: row.startTime.toISOString(),
-            endTime: row.endTime.toISOString(),
+            startTime: this.toIsoString(row.startTime),
+            endTime: this.toIsoString(row.endTime),
             teacherName: row.teacherName ?? "",
             sessionStatus: row.sessionStatus,
             enrollmentStatus: row.enrollmentStatus,
