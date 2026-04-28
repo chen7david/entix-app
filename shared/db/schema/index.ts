@@ -6,6 +6,8 @@ export * from "./financial-org-settings.schema";
 export * from "./financial-transaction-categories.schema";
 export * from "./financial-transaction-lines.schema";
 export * from "./financial-transactions.schema";
+export * from "./lesson.schema";
+export * from "./lesson-progress.schema";
 export * from "./media.schema";
 export * from "./organization.schema";
 export * from "./payment-requests.schema";

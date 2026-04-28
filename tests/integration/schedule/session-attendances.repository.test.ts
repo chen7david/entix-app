@@ -2,6 +2,7 @@ import { SessionAttendancesRepository } from "@api/repositories/session-attendan
 import {
     authOrganizations,
     authUsers,
+    lessons,
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
@@ -15,6 +16,7 @@ describe("SessionAttendancesRepository Integration", () => {
     const orgId = "org_attend";
     const sessionId = "sess_attend";
     const userId = "user_attend";
+    const lessonId = "lesson_attend";
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -39,10 +41,20 @@ describe("SessionAttendancesRepository Integration", () => {
             .onConflictDoNothing();
 
         await db
+            .insert(lessons)
+            .values({
+                id: lessonId,
+                organizationId: orgId,
+                title: "Attendance Lesson",
+            })
+            .onConflictDoNothing();
+        await db
             .insert(scheduledSessions)
             .values({
                 id: sessionId,
                 organizationId: orgId,
+                lessonId,
+                teacherId: userId,
                 title: "Attend Session",
                 startTime: new Date(),
                 durationMinutes: 60,
@@ -201,7 +213,9 @@ describe("SessionAttendancesRepository Integration", () => {
     it("should delete an attendance record", async () => {
         await repo.upsert({ sessionId, organizationId: orgId, userId, paymentStatus: "unpaid" });
 
-        const deleted = await repo.delete(sessionId, userId);
+        const attendance = await repo.findByIds(sessionId, userId);
+        expect(attendance).toBeDefined();
+        const deleted = await repo.delete(attendance?.id ?? "", orgId);
         expect(deleted).toBe(true);
 
         const found = await repo.findByIds(sessionId, userId);

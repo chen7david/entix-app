@@ -16,6 +16,8 @@ import type { FinanceWalletService } from "./financial/finance-wallet.service";
 import type { PaymentQueueService } from "./payment/payment-queue.service";
 
 export type CreateSessionDTO = {
+    lessonId: string;
+    teacherId: string;
     title: string;
     description?: string | null;
     startTime: number;
@@ -28,6 +30,8 @@ export type CreateSessionDTO = {
 };
 
 export type UpdateSessionDTO = {
+    lessonId: string;
+    teacherId: string;
     title: string;
     description?: string | null;
     startTime: number;
@@ -76,6 +80,8 @@ export class SessionScheduleService extends BaseService {
         // Session PKs: schema `$defaultFn` on `scheduled_sessions.id`; `.returning()` supplies ids for attendances.
         const sessionsToInsert = Array.from({ length: count }).map((_, i) => ({
             organizationId,
+            lessonId: data.lessonId,
+            teacherId: data.teacherId,
             title: data.title,
             description: data.description ?? null,
             startTime: new Date(
@@ -296,6 +302,8 @@ export class SessionScheduleService extends BaseService {
 
         if (!data.updateForward || !currentSession.seriesId) {
             await this.sessionRepo.updateSessionDetails(organizationId, sessionId, {
+                lessonId: data.lessonId,
+                teacherId: data.teacherId,
                 title: data.title,
                 description: data.description || null,
                 startTime: new Date(data.startTime),
@@ -336,6 +344,8 @@ export class SessionScheduleService extends BaseService {
 
                     sessionsToInsert.push({
                         organizationId,
+                        lessonId: data.lessonId,
+                        teacherId: data.teacherId,
                         title: data.title,
                         description: data.description ?? null,
                         startTime: new Date(sessionStartTime),

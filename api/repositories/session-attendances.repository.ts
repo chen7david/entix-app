@@ -1,12 +1,14 @@
+import { BadRequestError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import {
     type NewSessionAttendance,
     type SessionAttendance,
     type SessionPaymentStatus,
+    scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
-import { and, eq, type SQL } from "drizzle-orm";
+import { and, eq, ne, type SQL } from "drizzle-orm";
 
 /**
  * Repository for session attendance database operations.
@@ -25,6 +27,20 @@ export class SessionAttendancesRepository {
                 and(
                     eq(sessionAttendances.sessionId, sessionId),
                     eq(sessionAttendances.userId, userId)
+                )
+            )
+            .limit(1);
+        return attendance ?? null;
+    }
+
+    async findById(id: string, organizationId: string): Promise<SessionAttendance | null> {
+        const [attendance] = await this.db
+            .select()
+            .from(sessionAttendances)
+            .where(
+                and(
+                    eq(sessionAttendances.id, id),
+                    eq(sessionAttendances.organizationId, organizationId)
                 )
             )
             .limit(1);
@@ -105,6 +121,8 @@ export class SessionAttendancesRepository {
      * joinedAt and organizationId are immutable after the initial insert.
      */
     async upsert(input: NewSessionAttendance): Promise<SessionAttendance> {
+        await this.assertSessionMutable(input.organizationId, input.sessionId);
+
         const [attendance] = await this.db
             .insert(sessionAttendances)
             .values(input)
@@ -129,6 +147,21 @@ export class SessionAttendancesRepository {
         userId: string,
         status: SessionPaymentStatus
     ): Promise<SessionAttendance | null> {
+        const [attendanceRecord] = await this.db
+            .select({ organizationId: sessionAttendances.organizationId })
+            .from(sessionAttendances)
+            .where(
+                and(
+                    eq(sessionAttendances.sessionId, sessionId),
+                    eq(sessionAttendances.userId, userId)
+                )
+            )
+            .limit(1);
+
+        if (attendanceRecord) {
+            await this.assertSessionMutable(attendanceRecord.organizationId, sessionId);
+        }
+
         const [attendance] = await this.db
             .update(sessionAttendances)
             .set({ paymentStatus: status })
@@ -169,16 +202,53 @@ export class SessionAttendancesRepository {
     /**
      * Deletes an attendance record. Returns true if a row was deleted.
      */
-    async delete(sessionId: string, userId: string): Promise<boolean> {
+    async delete(id: string, organizationId: string): Promise<boolean> {
+        const [attendance] = await this.db
+            .select({
+                sessionId: sessionAttendances.sessionId,
+            })
+            .from(sessionAttendances)
+            .where(
+                and(
+                    eq(sessionAttendances.id, id),
+                    eq(sessionAttendances.organizationId, organizationId)
+                )
+            )
+            .limit(1);
+
+        if (!attendance) {
+            return false;
+        }
+
+        await this.assertSessionMutable(organizationId, attendance.sessionId);
+
         const result = await this.db
             .delete(sessionAttendances)
             .where(
                 and(
-                    eq(sessionAttendances.sessionId, sessionId),
-                    eq(sessionAttendances.userId, userId)
+                    eq(sessionAttendances.id, id),
+                    eq(sessionAttendances.organizationId, organizationId)
                 )
             )
-            .returning({ sessionId: sessionAttendances.sessionId });
+            .returning({ id: sessionAttendances.id });
         return result.length > 0;
+    }
+
+    private async assertSessionMutable(organizationId: string, sessionId: string): Promise<void> {
+        const [session] = await this.db
+            .select({ id: scheduledSessions.id })
+            .from(scheduledSessions)
+            .where(
+                and(
+                    eq(scheduledSessions.organizationId, organizationId),
+                    eq(scheduledSessions.id, sessionId),
+                    ne(scheduledSessions.status, "completed")
+                )
+            )
+            .limit(1);
+
+        if (!session) {
+            throw new BadRequestError("Cannot modify enrollment for completed or missing session.");
+        }
     }
 }

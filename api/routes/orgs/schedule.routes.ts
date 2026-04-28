@@ -185,6 +185,8 @@ export const ScheduleRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
+                            lessonId: z.string(),
+                            teacherId: z.string(),
                             title: z.string().min(1),
                             description: z.string().nullable().optional(),
                             startTime: z.number(),
@@ -223,6 +225,8 @@ export const ScheduleRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
+                            lessonId: z.string(),
+                            teacherId: z.string(),
                             title: z.string().min(1),
                             description: z.string().nullable().optional(),
                             startTime: z.number(),

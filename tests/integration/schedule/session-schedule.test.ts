@@ -5,6 +5,8 @@ import { SessionScheduleService } from "../../../api/services/session-schedule.s
 describe("SessionScheduleService Architecture Bounds", () => {
     let mockRepo: any;
     let service: SessionScheduleService;
+    const lessonId = "lesson_sched_test";
+    const teacherId = "teacher_sched_test";
 
     const mockSessionPaymentService = {
         processSessionPayment: vi.fn().mockResolvedValue(undefined),
@@ -46,6 +48,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("creates a single session effortlessly scaling Drizzle mapping", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Physics 101",
             startTime: Date.now(),
             durationMinutes: 60,
@@ -67,6 +71,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("generates 4 recurring weekly sessions identically pinned via seriesId", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Advanced Mathematics",
             startTime: new Date("2026-03-20T10:00:00Z").getTime(),
             durationMinutes: 45,
@@ -109,6 +115,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
         const NEW_START_TIME = new Date("2026-03-21T11:00:00Z").getTime(); // shifting by 1 day and 1 hr
 
         const payload = {
+            lessonId,
+            teacherId,
             title: "Advanced Math Revamped",
             startTime: NEW_START_TIME,
             durationMinutes: 90,
@@ -142,6 +150,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("generates 3 recurring daily sessions correctly", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Daily Standup",
             startTime: new Date("2026-03-20T09:00:00Z").getTime(),
             durationMinutes: 15,
@@ -158,6 +168,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("generates 3 recurring monthly sessions correctly skipping across month boundaries", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Monthly Review",
             startTime: new Date("2026-03-31T10:00:00Z").getTime(),
             durationMinutes: 60,

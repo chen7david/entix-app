@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { generateOpaqueId } from "../../lib/id";
 import { authUsers } from "./auth.schema";
+import { lessons } from "./lesson.schema";
 import { authOrganizations } from "./organization.schema";
 
 export const scheduledSessions = sqliteTable(
@@ -14,6 +15,12 @@ export const scheduledSessions = sqliteTable(
         organizationId: text("organization_id")
             .notNull()
             .references(() => authOrganizations.id, { onDelete: "cascade" }),
+        lessonId: text("lesson_id")
+            .notNull()
+            .references(() => lessons.id, { onDelete: "cascade" }),
+        teacherId: text("teacher_id")
+            .notNull()
+            .references(() => authUsers.id, { onDelete: "cascade" }),
         title: text("title").notNull(),
         description: text("description"),
         startTime: integer("start_time", { mode: "timestamp_ms" }).notNull(),
@@ -32,6 +39,8 @@ export const scheduledSessions = sqliteTable(
     },
     (table) => [
         index("scheduled_session_organizationId_idx").on(table.organizationId),
+        index("scheduled_session_lessonId_idx").on(table.lessonId),
+        index("scheduled_session_teacherId_idx").on(table.teacherId),
         index("scheduled_session_seriesId_idx").on(table.seriesId),
     ]
 );
@@ -46,6 +55,9 @@ export type SessionPaymentStatus = (typeof SESSION_PAYMENT_STATUSES)[number];
 export const sessionAttendances = sqliteTable(
     "session_attendances",
     {
+        id: text("id")
+            .primaryKey()
+            .$defaultFn(() => generateOpaqueId()),
         sessionId: text("session_id")
             .notNull()
             .references(() => scheduledSessions.id, { onDelete: "cascade" }),
@@ -66,11 +78,12 @@ export const sessionAttendances = sqliteTable(
             .default("unpaid"),
     },
     (table) => [
-        primaryKey({ columns: [table.sessionId, table.userId] }),
+        uniqueIndex("session_attendance_session_user_uidx").on(table.sessionId, table.userId),
         check(
             "payment_status_check",
             sql`${table.paymentStatus} IN ('unpaid', 'paid', 'refunded')`
         ),
+        index("session_attendance_id_idx").on(table.id),
         index("session_attendance_sessionId_idx").on(table.sessionId),
         index("session_attendance_userId_idx").on(table.userId),
         index("session_attendance_orgId_idx").on(table.organizationId),
