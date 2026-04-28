@@ -7,6 +7,7 @@ import {
     DashboardOutlined,
     DollarOutlined,
     OrderedListOutlined,
+    PictureOutlined,
     PlaySquareOutlined,
     SettingOutlined,
     ShoppingOutlined,
@@ -73,12 +74,16 @@ export const SidebarMenu: React.FC = () => {
             icon: <DashboardOutlined />,
             disabled: !slug,
         },
-        {
-            label: "Lessons",
-            key: AppRoutes.org.dashboard.lessons,
-            icon: <BookOutlined />,
-            disabled: !slug,
-        },
+        ...(!isStaff
+            ? [
+                  {
+                      label: "Lessons",
+                      key: AppRoutes.org.dashboard.lessons,
+                      icon: <BookOutlined />,
+                      disabled: !slug,
+                  },
+              ]
+            : []),
         {
             label: "Shop",
             key: AppRoutes.org.dashboard.shop,
@@ -143,6 +148,11 @@ export const SidebarMenu: React.FC = () => {
                               label: "Schedule",
                               key: AppRoutes.org.teaching.schedule,
                               icon: <CalendarOutlined />,
+                          },
+                          {
+                              label: "Lessons",
+                              key: AppRoutes.org.teaching.lessons,
+                              icon: <PictureOutlined />,
                           },
                           {
                               label: "Media Library",

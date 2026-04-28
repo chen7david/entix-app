@@ -1,4 +1,11 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    keepPreviousData,
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
+import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { useAuth } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization";
 import { getApiClient } from "@web/src/lib/api-client";
@@ -11,8 +18,17 @@ export type LessonDto = {
     organizationId: string;
     title: string;
     description: string | null;
+    coverArtUrl: string | null;
     createdAt: number;
     updatedAt: number;
+};
+
+export type LessonFilters = {
+    search?: string;
+    hasCoverArt?: "all" | "with" | "without";
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
 };
 
 export type EnrollmentDashboardDto = {
@@ -25,75 +41,16 @@ export type EnrollmentDashboardDto = {
     enrollmentStatus: string;
 };
 
+type LessonListResponse = {
+    items: LessonDto[];
+    nextCursor: string | null;
+    prevCursor: string | null;
+};
+
 export function useLessons() {
     const { activeOrganization } = useOrganization();
     const { isAuthenticated, isStaff } = useAuth();
-    const queryClient = useQueryClient();
-    const { notification } = App.useApp();
     const organizationId = activeOrganization?.id;
-
-    const listQuery = useQuery({
-        queryKey: ["lessons", organizationId],
-        enabled: !!organizationId && isAuthenticated,
-        staleTime: QUERY_STALE_MS,
-        queryFn: async () => {
-            const api = getApiClient();
-            const res = await api.api.v1.orgs[":organizationId"].lessons.$get({
-                param: { organizationId },
-            });
-            return hcJson<LessonDto[]>(res);
-        },
-    });
-
-    const createLesson = useMutation({
-        mutationFn: async (payload: { title: string; description?: string | null }) => {
-            const api = getApiClient();
-            const res = await api.api.v1.orgs[":organizationId"].lessons.$post({
-                param: { organizationId },
-                json: payload,
-            });
-            return hcJson<LessonDto>(res);
-        },
-        onSuccess: () => {
-            notification.success({ message: "Lesson created" });
-            queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
-        },
-    });
-
-    const updateLesson = useMutation({
-        mutationFn: async (payload: {
-            lessonId: string;
-            title?: string;
-            description?: string | null;
-        }) => {
-            const api = getApiClient();
-            const res = await api.api.v1.orgs[":organizationId"].lessons[":lessonId"].$patch({
-                param: { organizationId, lessonId: payload.lessonId },
-                json: {
-                    title: payload.title,
-                    description: payload.description,
-                },
-            });
-            return hcJson<LessonDto>(res);
-        },
-        onSuccess: () => {
-            notification.success({ message: "Lesson updated" });
-            queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
-        },
-    });
-
-    const deleteLesson = useMutation({
-        mutationFn: async (lessonId: string) => {
-            const api = getApiClient();
-            await api.api.v1.orgs[":organizationId"].lessons[":lessonId"].$delete({
-                param: { organizationId, lessonId },
-            });
-        },
-        onSuccess: () => {
-            notification.success({ message: "Lesson deleted" });
-            queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
-        },
-    });
 
     const dashboardQuery = useQuery({
         queryKey: ["lesson-enrollments-me", organizationId],
@@ -109,12 +66,164 @@ export function useLessons() {
     });
 
     return {
-        lessons: listQuery.data ?? [],
-        isLoadingLessons: listQuery.isLoading,
-        createLesson,
-        updateLesson,
-        deleteLesson,
+        createLesson: useCreateLesson(),
+        updateLesson: useUpdateLesson(),
+        deleteLesson: useDeleteLesson(),
         myEnrollments: dashboardQuery.data ?? [],
         isLoadingMyEnrollments: dashboardQuery.isLoading,
+    };
+}
+
+export function useLessonLibrary(filters?: LessonFilters) {
+    const { activeOrganization } = useOrganization();
+    const { isAuthenticated } = useAuth();
+    const organizationId = activeOrganization?.id;
+
+    const query = useQuery({
+        queryKey: ["lessons", organizationId, filters],
+        enabled: !!organizationId && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+        placeholderData: keepPreviousData,
+        queryFn: async () => {
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].lessons.$get({
+                param: { organizationId },
+                query: {
+                    search: filters?.search,
+                    hasCoverArt:
+                        filters?.hasCoverArt && filters.hasCoverArt !== "all"
+                            ? filters.hasCoverArt
+                            : undefined,
+                    cursor: filters?.cursor,
+                    limit: filters?.limit ?? DEFAULT_PAGE_SIZE,
+                    direction: filters?.direction ?? "next",
+                },
+            });
+            return hcJson<{
+                items: LessonDto[];
+                nextCursor: string | null;
+                prevCursor: string | null;
+            }>(res);
+        },
+    });
+
+    return {
+        lessons: query.data?.items ?? [],
+        nextCursor: query.data?.nextCursor ?? null,
+        prevCursor: query.data?.prevCursor ?? null,
+        isLoadingLessons: query.isLoading,
+    };
+}
+
+export function useCreateLesson() {
+    const { activeOrganization } = useOrganization();
+    const organizationId = activeOrganization?.id;
+    const queryClient = useQueryClient();
+    const { notification } = App.useApp();
+
+    return useMutation({
+        mutationFn: async (payload: {
+            title: string;
+            description?: string | null;
+            coverArtUploadId?: string;
+        }) => {
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].lessons.$post({
+                param: { organizationId },
+                json: payload,
+            });
+            return hcJson<LessonDto>(res);
+        },
+        onSuccess: () => {
+            notification.success({ message: "Lesson created" });
+            queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
+        },
+    });
+}
+
+export function useUpdateLesson() {
+    const { activeOrganization } = useOrganization();
+    const organizationId = activeOrganization?.id;
+    const queryClient = useQueryClient();
+    const { notification } = App.useApp();
+
+    return useMutation({
+        mutationFn: async (payload: {
+            lessonId: string;
+            title?: string;
+            description?: string | null;
+            coverArtUploadId?: string;
+        }) => {
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].lessons[":lessonId"].$patch({
+                param: { organizationId, lessonId: payload.lessonId },
+                json: {
+                    title: payload.title,
+                    description: payload.description,
+                    coverArtUploadId: payload.coverArtUploadId,
+                },
+            });
+            return hcJson<LessonDto>(res);
+        },
+        onSuccess: () => {
+            notification.success({ message: "Lesson updated" });
+            queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
+        },
+    });
+}
+
+export function useDeleteLesson() {
+    const { activeOrganization } = useOrganization();
+    const organizationId = activeOrganization?.id;
+    const queryClient = useQueryClient();
+    const { notification } = App.useApp();
+
+    return useMutation({
+        mutationFn: async (lessonId: string) => {
+            const api = getApiClient();
+            await api.api.v1.orgs[":organizationId"].lessons[":lessonId"].$delete({
+                param: { organizationId, lessonId },
+            });
+        },
+        onSuccess: () => {
+            notification.success({ message: "Lesson deleted" });
+            queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
+        },
+    });
+}
+
+export function useLessonOptions(searchQuery: string) {
+    const { activeOrganization } = useOrganization();
+    const { isAuthenticated } = useAuth();
+    const organizationId = activeOrganization?.id;
+
+    const query = useInfiniteQuery({
+        queryKey: ["lesson-options", organizationId, searchQuery],
+        enabled: !!organizationId && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+        placeholderData: keepPreviousData,
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage: LessonListResponse) => lastPage.nextCursor ?? undefined,
+        queryFn: async ({ pageParam }) => {
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].lessons.$get({
+                param: { organizationId },
+                query: {
+                    limit: 25,
+                    direction: "next",
+                    cursor: pageParam,
+                    search: searchQuery || undefined,
+                },
+            });
+            return hcJson<LessonListResponse>(res);
+        },
+    });
+
+    return {
+        lessons: query.data?.pages.flatMap((page: LessonListResponse) => page.items) ?? [],
+        isLoading: query.isLoading,
+        fetchNextPage: query.fetchNextPage,
+        hasNextPage: query.hasNextPage,
+        isFetchingNextPage: query.isFetchingNextPage,
     };
 }

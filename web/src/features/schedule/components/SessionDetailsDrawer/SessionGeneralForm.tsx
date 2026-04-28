@@ -24,6 +24,11 @@ type SessionGeneralFormProps = {
     form: FormInstance;
     session: any | null;
     lessons: { label: string; value: string }[];
+    isLoadingLessons: boolean;
+    hasNextLessonPage: boolean;
+    isFetchingNextLessonPage: boolean;
+    onSearchLesson: (value: string) => void;
+    onLoadMoreLessons: () => void;
     onUpdateStatus?: (
         sessionId: string,
         status: "scheduled" | "completed" | "cancelled"
@@ -36,6 +41,11 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
     form,
     session,
     lessons,
+    isLoadingLessons,
+    hasNextLessonPage,
+    isFetchingNextLessonPage,
+    onSearchLesson,
+    onLoadMoreLessons,
     onUpdateStatus,
     isGeneratingTitle,
     onGenerateTitle,
@@ -84,7 +94,25 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                 label="Lesson"
                 rules={[{ required: true, message: "Required" }]}
             >
-                <Select placeholder="Select lesson" options={lessons} />
+                <Select
+                    placeholder="Select lesson"
+                    options={lessons}
+                    showSearch
+                    filterOption={false}
+                    optionFilterProp="label"
+                    loading={isLoadingLessons || isFetchingNextLessonPage}
+                    onSearch={onSearchLesson}
+                    onPopupScroll={(event) => {
+                        const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+                        if (
+                            scrollHeight - scrollTop <= clientHeight + 10 &&
+                            hasNextLessonPage &&
+                            !isFetchingNextLessonPage
+                        ) {
+                            onLoadMoreLessons();
+                        }
+                    }}
+                />
             </Form.Item>
 
             <Form.Item

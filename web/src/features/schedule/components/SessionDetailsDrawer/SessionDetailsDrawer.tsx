@@ -1,7 +1,7 @@
 import { AppRoutes } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useAuth } from "@web/src/features/auth";
-import { useLessons } from "@web/src/features/lessons/hooks/useLessons";
+import { useLessonOptions } from "@web/src/features/lessons/hooks/useLessons";
 import {
     useBulkMembers,
     useMembers,
@@ -11,7 +11,7 @@ import {
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { App, Button, Drawer, Form, Space, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
 import { SessionAttendanceManager } from "./SessionAttendanceManager";
 import { SessionDangerZone } from "./SessionDangerZone";
@@ -30,7 +30,17 @@ export const SessionDetailsDrawer = ({
     const { notification, modal } = App.useApp();
     const { user } = useAuth();
     const { activeOrganization } = useOrganization();
-    const { lessons, isLoadingLessons } = useLessons();
+    const [lessonSearch, setLessonSearch] = useState("");
+    const [debouncedLessonSearch] = useDebouncedValue(lessonSearch, {
+        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
+    });
+    const {
+        lessons,
+        isLoading: isLoadingLessons,
+        hasNextPage: hasNextLessonPage,
+        isFetchingNextPage: isFetchingNextLessonPage,
+        fetchNextPage: fetchNextLessonPage,
+    } = useLessonOptions(debouncedLessonSearch);
     const navigateOrg = useOrgNavigate();
     const { metrics } = useBulkMembers(activeOrganization?.id);
     const [form] = Form.useForm();
@@ -48,6 +58,7 @@ export const SessionDetailsDrawer = ({
     >({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [attendanceDict, setAttendanceDict] = useState<Record<string, AttendanceLog>>({});
+    const hasInitializedCreateFormRef = useRef(false);
 
     // Cache sync logic for member metadata persistence during search
     useEffect(() => {
@@ -85,7 +96,7 @@ export const SessionDetailsDrawer = ({
         }
     }, [open, session]);
 
-    // Form hydration
+    // Form hydration for existing sessions
     useEffect(() => {
         if (open && session) {
             form.setFieldsValue({
@@ -119,18 +130,38 @@ export const SessionDetailsDrawer = ({
                 });
             }
             setAttendanceDict(att);
-        } else if (open) {
+            return;
+        }
+
+        // Initialize create form only once per drawer open.
+        if (open && !session && !hasInitializedCreateFormRef.current) {
+            hasInitializedCreateFormRef.current = true;
             form.resetFields();
             setAttendanceDict({});
             form.setFieldsValue({
-                lessonId: lessons[0]?.id,
                 durationMinutes: 60,
                 status: "scheduled",
                 isRecurring: false,
                 recurrenceCount: 5,
             });
         }
-    }, [open, session, form, lessons]);
+    }, [open, session, form]);
+
+    // Reset one-time initialization flag when drawer closes.
+    useEffect(() => {
+        if (!open) {
+            hasInitializedCreateFormRef.current = false;
+        }
+    }, [open]);
+
+    // Late-bind default lesson once lesson options arrive (create mode only).
+    useEffect(() => {
+        if (!open || session || lessons.length === 0) return;
+        const currentLessonId = form.getFieldValue("lessonId");
+        if (!currentLessonId) {
+            form.setFieldsValue({ lessonId: lessons[0].id });
+        }
+    }, [open, session, lessons, form]);
 
     const submitForm = async (values: any, updateForward: boolean = false) => {
         try {
@@ -313,6 +344,13 @@ export const SessionDetailsDrawer = ({
                             label: lesson.title,
                             value: lesson.id,
                         }))}
+                        isLoadingLessons={isLoadingLessons}
+                        hasNextLessonPage={!!hasNextLessonPage}
+                        isFetchingNextLessonPage={isFetchingNextLessonPage}
+                        onSearchLesson={setLessonSearch}
+                        onLoadMoreLessons={() => {
+                            fetchNextLessonPage();
+                        }}
                         onUpdateStatus={onUpdateStatus}
                         isGeneratingTitle={isGeneratingTitle}
                         onGenerateTitle={handleGenerateTitle}

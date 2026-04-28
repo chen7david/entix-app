@@ -41,6 +41,7 @@ export const AppRoutes = {
         },
         teaching: {
             index: "/teaching",
+            lessons: "/teaching/lessons",
             media: "/teaching/media",
             playlists: "/teaching/playlists",
             playlistDetail: (id: string | number) => `/teaching/playlists/${id}`,

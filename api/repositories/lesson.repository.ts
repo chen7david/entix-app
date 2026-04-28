@@ -1,13 +1,74 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { wrapWildcard } from "@api/helpers/db.helpers";
+import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import type { Lesson, NewLesson } from "@shared/db/schema";
 import { lessons } from "@shared/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, or, type SQL, sql } from "drizzle-orm";
 
 export class LessonRepository {
     constructor(private readonly db: AppDb) {}
 
-    async listByOrganization(organizationId: string): Promise<Lesson[]> {
-        return this.db.select().from(lessons).where(eq(lessons.organizationId, organizationId));
+    async listByOrganization(params: {
+        organizationId: string;
+        limit?: number;
+        cursor?: string;
+        direction?: "next" | "prev";
+        search?: string;
+        hasCoverArt?: "all" | "with" | "without";
+    }) {
+        const { organizationId, limit = 20, cursor, direction = "next", search } = params;
+
+        const { where: cursorWhere, orderBy } = buildCursorPagination(
+            lessons.updatedAt,
+            lessons.id,
+            cursor,
+            direction
+        );
+
+        const conditions: SQL[] = [eq(lessons.organizationId, organizationId)];
+
+        const normalizedSearch = search?.trim().replace(/\s+/g, " ");
+        if (normalizedSearch) {
+            const searchPattern = wrapWildcard(normalizedSearch.toLowerCase());
+            const searchCondition = or(
+                sql`lower(${lessons.title}) like ${searchPattern}`,
+                sql`lower(coalesce(${lessons.description}, '')) like ${searchPattern}`
+            );
+            if (searchCondition) {
+                conditions.push(searchCondition);
+            }
+        }
+
+        if (params.hasCoverArt === "with") {
+            conditions.push(
+                sql`${lessons.coverArtUrl} is not null and ${lessons.coverArtUrl} != ''`
+            );
+        }
+        if (params.hasCoverArt === "without") {
+            conditions.push(sql`${lessons.coverArtUrl} is null or ${lessons.coverArtUrl} = ''`);
+        }
+
+        if (cursorWhere) {
+            conditions.push(cursorWhere);
+        }
+
+        const items = await this.db
+            .select()
+            .from(lessons)
+            .where(and(...conditions))
+            .orderBy(...orderBy)
+            .limit(limit + 1);
+
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (item) => ({
+                primary: item.updatedAt.getTime(),
+                secondary: item.id,
+            }),
+            cursor
+        );
     }
 
     async findById(organizationId: string, lessonId: string): Promise<Lesson | null> {

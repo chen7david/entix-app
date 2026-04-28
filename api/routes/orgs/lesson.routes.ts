@@ -1,12 +1,17 @@
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
+import {
+    createPaginatedResponseSchema,
+    PaginationQuerySchema,
+} from "@shared/schemas/pagination.schema";
 
 const LessonSchema = z.object({
     id: z.string(),
     organizationId: z.string(),
     title: z.string(),
     description: z.string().nullable(),
+    coverArtUrl: z.string().nullable(),
     createdAt: z.coerce.number(),
     updatedAt: z.coerce.number(),
 });
@@ -17,10 +22,19 @@ export const LessonRoutes = {
         path: "/orgs/{organizationId}/lessons",
         tags: ["Lessons"],
         middleware: [requirePermission("lesson", ["read"])] as const,
-        request: { params: z.object({ organizationId: z.string() }) },
+        request: {
+            params: z.object({ organizationId: z.string() }),
+            query: PaginationQuerySchema.extend({
+                hasCoverArt: z.enum(["all", "with", "without"]).optional(),
+            }),
+        },
         responses: {
             [HttpStatusCodes.OK]: {
-                content: { "application/json": { schema: z.array(LessonSchema) } },
+                content: {
+                    "application/json": {
+                        schema: createPaginatedResponseSchema(LessonSchema),
+                    },
+                },
                 description: "List lessons",
             },
         },
@@ -38,6 +52,7 @@ export const LessonRoutes = {
                         schema: z.object({
                             title: z.string().min(1),
                             description: z.string().nullable().optional(),
+                            coverArtUploadId: z.string().optional(),
                         }),
                     },
                 },
@@ -78,6 +93,7 @@ export const LessonRoutes = {
                         schema: z.object({
                             title: z.string().min(1).optional(),
                             description: z.string().nullable().optional(),
+                            coverArtUploadId: z.string().optional(),
                         }),
                     },
                 },
