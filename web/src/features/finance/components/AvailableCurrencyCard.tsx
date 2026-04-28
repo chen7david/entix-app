@@ -10,6 +10,7 @@ type Props = {
     onActivate: (id: string) => void;
     onClick?: () => void;
     loading?: boolean;
+    compact?: boolean;
 };
 
 export const AvailableCurrencyCard: React.FC<Props> = ({
@@ -17,6 +18,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
     onActivate,
     loading,
     onClick,
+    compact = false,
 }) => {
     const { token } = theme.useToken();
     const screens = Grid.useBreakpoint();
@@ -28,11 +30,11 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
                 size="small"
                 style={{
                     height: "100%",
-                    borderRadius: 12,
+                    borderRadius: compact ? 10 : 12,
                     background: token.colorFillQuaternary,
                     border: `1px dashed ${token.colorBorder}`,
                 }}
-                styles={{ body: { padding: "16px", height: "100%" } }}
+                styles={{ body: { padding: compact ? "12px" : "16px", height: "100%" } }}
             >
                 <Flex
                     vertical
@@ -61,7 +63,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
             onClick={isActivated ? onClick : undefined}
             style={{
                 height: "100%",
-                borderRadius: 12,
+                borderRadius: compact ? 10 : 12,
                 transition: "all 0.2s ease-in-out",
                 background: isActivated ? token.colorFillTertiary : token.colorFillQuaternary,
                 border: isActivated
@@ -71,7 +73,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
             }}
             styles={{
                 body: {
-                    padding: screens.md ? "16px" : "12px",
+                    padding: compact ? "10px" : screens.md ? "16px" : "12px",
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
@@ -93,12 +95,12 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        padding: "12px 0 24px",
+                        padding: compact ? "6px 0 12px" : "12px 0 24px",
                     }}
                 >
                     <div
                         style={{
-                            fontSize: 40,
+                            fontSize: compact ? 28 : 40,
                             marginBottom: 4,
                             opacity: isActivated ? 0.2 : 0.1,
                             fontWeight: 800,
@@ -109,7 +111,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
                     <Text
                         strong
                         style={{
-                            fontSize: 18,
+                            fontSize: compact ? 15 : 18,
                             color: isActivated ? token.colorText : token.colorTextSecondary,
                             marginBottom: 2,
                         }}
@@ -129,7 +131,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
                         style={{
                             borderRadius: 8,
                             fontWeight: 600,
-                            height: 44,
+                            height: compact ? 36 : 44,
                             backgroundColor: token.colorFillSecondary,
                             color: token.colorTextDisabled,
                             border: "none",
@@ -151,7 +153,7 @@ export const AvailableCurrencyCard: React.FC<Props> = ({
                         style={{
                             borderRadius: 8,
                             fontWeight: 600,
-                            height: 44,
+                            height: compact ? 36 : 44,
                             boxShadow: "0 1px 2px 0 rgba(0,0,0,0.05)",
                         }}
                     >

@@ -91,3 +91,63 @@ export function markUserEmailVerified(email: string): void {
         db.close();
     }
 }
+
+export function getMemberFundingContext(input: {
+    memberEmail: string;
+    currencyCode: "CNY" | "ETD";
+    organizationSlug: string;
+}): { organizationId: string; destinationAccountId: string; fundingAccountId: string } {
+    const dbPath = resolveLocalD1Path();
+    const db = new Database(dbPath, { readonly: true });
+    try {
+        const row = db
+            .prepare(
+                `
+                SELECT
+                    o.id AS organization_id,
+                    member_acc.id AS destination_account_id,
+                    org_funding_acc.id AS funding_account_id
+                FROM auth_users u
+                JOIN auth_members m ON m.user_id = u.id
+                JOIN auth_organizations o ON o.id = m.organization_id
+                JOIN financial_currencies c ON c.code = ?
+                LEFT JOIN financial_accounts member_acc
+                    ON member_acc.owner_id = u.id
+                    AND member_acc.owner_type = 'user'
+                    AND member_acc.organization_id = o.id
+                    AND member_acc.currency_id = c.id
+                    AND member_acc.is_active = 1
+                LEFT JOIN financial_accounts org_funding_acc
+                    ON org_funding_acc.owner_id = o.id
+                    AND org_funding_acc.owner_type = 'org'
+                    AND org_funding_acc.organization_id = o.id
+                    AND org_funding_acc.currency_id = c.id
+                    AND org_funding_acc.account_type = 'funding'
+                WHERE u.email = ?
+                  AND o.slug = ?
+                LIMIT 1
+                `
+            )
+            .get(input.currencyCode, input.memberEmail, input.organizationSlug) as
+            | {
+                  organization_id: string | null;
+                  destination_account_id: string | null;
+                  funding_account_id: string | null;
+              }
+            | undefined;
+
+        if (!row?.organization_id || !row.destination_account_id || !row.funding_account_id) {
+            throw new Error(
+                `Unable to resolve funding context for ${input.memberEmail} ${input.currencyCode} in ${input.organizationSlug}`
+            );
+        }
+
+        return {
+            organizationId: row.organization_id,
+            destinationAccountId: row.destination_account_id,
+            fundingAccountId: row.funding_account_id,
+        };
+    } finally {
+        db.close();
+    }
+}
