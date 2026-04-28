@@ -13,6 +13,7 @@ import {
     financeMemberBillingPlans,
     financialAccounts,
     financialTransactions,
+    lessons,
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
@@ -131,9 +132,16 @@ describe("Session Billing Integration", () => {
         ]);
 
         const sessionId = "sess_01";
+        await db.insert(lessons).values({
+            id: "lesson_sess_01",
+            organizationId: orgId,
+            title: "Math Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_sess_01",
+            teacherId: student1.userId,
             title: "Math Class",
             startTime: new Date(),
             durationMinutes: 60,
@@ -235,9 +243,16 @@ describe("Session Billing Integration", () => {
         });
 
         const sessionId = "sess_high_tier";
+        await db.insert(lessons).values({
+            id: "lesson_high_tier",
+            organizationId: orgId,
+            title: "Group Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_high_tier",
+            teacherId: students[0].userId,
             title: "Group Class",
             startTime: new Date(),
             durationMinutes: 60,
@@ -311,9 +326,16 @@ describe("Session Billing Integration", () => {
         });
 
         const sessionId = "sess_02";
+        await db.insert(lessons).values({
+            id: "lesson_sess_02",
+            organizationId: orgId,
+            title: "Solo Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_sess_02",
+            teacherId: student1.userId,
             title: "Solo Class",
             startTime: new Date(),
             durationMinutes: 60,
