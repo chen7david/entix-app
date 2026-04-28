@@ -81,7 +81,13 @@ export class LessonRepository {
     }
 
     async create(input: NewLesson): Promise<Lesson> {
-        const [lesson] = await this.db.insert(lessons).values(input).returning();
+        const [lesson] = await this.db
+            .insert(lessons)
+            .values({
+                ...input,
+                updatedAt: new Date(),
+            })
+            .returning();
         return lesson;
     }
 

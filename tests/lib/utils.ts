@@ -28,9 +28,13 @@ const migrations = Object.entries(migrationFiles)
     .sort(([pathA], [pathB]) => pathA.localeCompare(pathB))
     .map(([path, sql]) => {
         const name = path.split("/").pop() || path;
+        const queries = (sql as string)
+            .split("--> statement-breakpoint")
+            .map((statement) => statement.trim())
+            .filter((statement) => statement.length > 0);
         return {
             name,
-            queries: [sql as string],
+            queries,
         };
     });
 
