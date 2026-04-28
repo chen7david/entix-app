@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const createSessionSchema = z.object({
+    lessonId: z.string().min(1, "Lesson is required"),
+    teacherId: z.string().min(1, "Teacher is required"),
     title: z.string().min(1, "Title is required").max(100, "Title is too long"),
     description: z.string().optional(),
     startTime: z.number().refine((val) => val > Date.now() - 60000, {
@@ -13,7 +15,7 @@ export const createSessionSchema = z.object({
     userIds: z.array(z.string()).optional().default([]),
     recurrence: z
         .object({
-            frequency: z.enum(["weekly"]),
+            frequency: z.enum(["daily", "weekly", "biweekly", "monthly"]),
             count: z.number().min(1).max(52),
         })
         .optional(),

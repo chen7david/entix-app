@@ -23,6 +23,7 @@ const { Text } = Typography;
 type SessionGeneralFormProps = {
     form: FormInstance;
     session: any | null;
+    lessons: { label: string; value: string }[];
     onUpdateStatus?: (
         sessionId: string,
         status: "scheduled" | "completed" | "cancelled"
@@ -34,6 +35,7 @@ type SessionGeneralFormProps = {
 export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
     form,
     session,
+    lessons,
     onUpdateStatus,
     isGeneratingTitle,
     onGenerateTitle,
@@ -76,6 +78,14 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                     style={{ marginBottom: 16 }}
                 />
             )}
+
+            <Form.Item
+                name="lessonId"
+                label="Lesson"
+                rules={[{ required: true, message: "Required" }]}
+            >
+                <Select placeholder="Select lesson" options={lessons} />
+            </Form.Item>
 
             <Form.Item
                 name="title"

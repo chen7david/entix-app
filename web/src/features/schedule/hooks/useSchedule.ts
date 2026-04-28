@@ -14,6 +14,8 @@ import { App } from "antd";
 export type SessionDTO = {
     id: string;
     organizationId: string;
+    lessonId: string;
+    teacherId: string;
     title: string;
     description: string | null;
     startTime: number;
@@ -88,6 +90,8 @@ export const useSchedule = (
 
     const createSession = useMutation({
         mutationFn: async (payload: {
+            lessonId: string;
+            teacherId: string;
             title: string;
             description?: string;
             startTime: number;
@@ -121,6 +125,8 @@ export const useSchedule = (
         }: {
             sessionId: string;
             payload: {
+                lessonId: string;
+                teacherId: string;
                 title: string;
                 description?: string | null;
                 startTime: number;

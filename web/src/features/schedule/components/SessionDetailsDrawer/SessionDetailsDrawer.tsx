@@ -1,5 +1,7 @@
 import { AppRoutes } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
+import { useAuth } from "@web/src/features/auth";
+import { useLessons } from "@web/src/features/lessons/hooks/useLessons";
 import {
     useBulkMembers,
     useMembers,
@@ -26,7 +28,9 @@ export const SessionDetailsDrawer = ({
     onDelete,
 }: SessionDetailsDrawerProps) => {
     const { notification, modal } = App.useApp();
+    const { user } = useAuth();
     const { activeOrganization } = useOrganization();
+    const { lessons, isLoadingLessons } = useLessons();
     const navigateOrg = useOrgNavigate();
     const { metrics } = useBulkMembers(activeOrganization?.id);
     const [form] = Form.useForm();
@@ -85,6 +89,7 @@ export const SessionDetailsDrawer = ({
     useEffect(() => {
         if (open && session) {
             form.setFieldsValue({
+                lessonId: session.lessonId,
                 title: session.title,
                 description: session.description,
                 date: dayjs(session.startTime),
@@ -118,13 +123,14 @@ export const SessionDetailsDrawer = ({
             form.resetFields();
             setAttendanceDict({});
             form.setFieldsValue({
+                lessonId: lessons[0]?.id,
                 durationMinutes: 60,
                 status: "scheduled",
                 isRecurring: false,
                 recurrenceCount: 5,
             });
         }
-    }, [open, session, form]);
+    }, [open, session, form, lessons]);
 
     const submitForm = async (values: any, updateForward: boolean = false) => {
         try {
@@ -137,6 +143,8 @@ export const SessionDetailsDrawer = ({
                 .valueOf();
 
             const payload: SessionSubmitPayload = {
+                lessonId: values.lessonId,
+                teacherId: user?.id ?? "",
                 title: values.title,
                 description: values.description,
                 startTime: startDateTime,
@@ -210,6 +218,14 @@ export const SessionDetailsDrawer = ({
                         </Space>
                     ),
                     okText: "Close",
+                });
+                return;
+            }
+
+            if (!payload.teacherId) {
+                notification.error({
+                    message: "Missing teacher",
+                    description: "Unable to resolve current teacher identity.",
                 });
                 return;
             }
@@ -293,10 +309,19 @@ export const SessionDetailsDrawer = ({
                     <SessionGeneralForm
                         form={form}
                         session={session}
+                        lessons={lessons.map((lesson) => ({
+                            label: lesson.title,
+                            value: lesson.id,
+                        }))}
                         onUpdateStatus={onUpdateStatus}
                         isGeneratingTitle={isGeneratingTitle}
                         onGenerateTitle={handleGenerateTitle}
                     />
+                    {!isLoadingLessons && lessons.length === 0 && (
+                        <Typography.Text type="secondary">
+                            Create a lesson first before scheduling sessions.
+                        </Typography.Text>
+                    )}
                 </div>
             ),
         },
