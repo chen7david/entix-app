@@ -83,7 +83,6 @@ export const sessionAttendances = sqliteTable(
             "payment_status_check",
             sql`${table.paymentStatus} IN ('unpaid', 'paid', 'refunded')`
         ),
-        index("session_attendance_id_idx").on(table.id),
         index("session_attendance_sessionId_idx").on(table.sessionId),
         index("session_attendance_userId_idx").on(table.userId),
         index("session_attendance_orgId_idx").on(table.organizationId),

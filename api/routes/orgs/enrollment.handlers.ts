@@ -19,8 +19,8 @@ export class EnrollmentHandlers {
 
         const sessionsRepo = getScheduledSessionsRepository(ctx);
         const attendancesRepo = getSessionAttendancesRepository(ctx);
-        const session = await sessionsRepo.findById(sessionId);
-        if (!session || session.organizationId !== organizationId) {
+        const session = await sessionsRepo.findByIdInOrganization(organizationId, sessionId);
+        if (!session) {
             throw new NotFoundError("Session not found");
         }
 
@@ -42,13 +42,10 @@ export class EnrollmentHandlers {
     static deleteEnrollment: AppHandler<typeof EnrollmentRoutes.deleteEnrollment> = async (ctx) => {
         const { organizationId, sessionId, enrollmentId } = ctx.req.valid("param");
         const attendancesRepo = getSessionAttendancesRepository(ctx);
-        const attendance = await attendancesRepo.findById(enrollmentId, organizationId);
-
-        if (!attendance || attendance.sessionId !== sessionId) {
+        const deleted = await attendancesRepo.delete(enrollmentId, organizationId, sessionId);
+        if (!deleted) {
             throw new NotFoundError("Enrollment not found");
         }
-
-        await attendancesRepo.delete(enrollmentId, organizationId);
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
 

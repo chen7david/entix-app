@@ -1,4 +1,4 @@
-import { BadRequestError } from "@api/errors/app.error";
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
 import {
@@ -8,7 +8,7 @@ import {
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
-import { and, eq, ne, type SQL } from "drizzle-orm";
+import { and, eq, type SQL } from "drizzle-orm";
 
 /**
  * Repository for session attendance database operations.
@@ -202,7 +202,7 @@ export class SessionAttendancesRepository {
     /**
      * Deletes an attendance record. Returns true if a row was deleted.
      */
-    async delete(id: string, organizationId: string): Promise<boolean> {
+    async delete(id: string, organizationId: string, sessionId: string): Promise<boolean> {
         const [attendance] = await this.db
             .select({
                 sessionId: sessionAttendances.sessionId,
@@ -211,7 +211,8 @@ export class SessionAttendancesRepository {
             .where(
                 and(
                     eq(sessionAttendances.id, id),
-                    eq(sessionAttendances.organizationId, organizationId)
+                    eq(sessionAttendances.organizationId, organizationId),
+                    eq(sessionAttendances.sessionId, sessionId)
                 )
             )
             .limit(1);
@@ -227,7 +228,8 @@ export class SessionAttendancesRepository {
             .where(
                 and(
                     eq(sessionAttendances.id, id),
-                    eq(sessionAttendances.organizationId, organizationId)
+                    eq(sessionAttendances.organizationId, organizationId),
+                    eq(sessionAttendances.sessionId, sessionId)
                 )
             )
             .returning({ id: sessionAttendances.id });
@@ -236,19 +238,22 @@ export class SessionAttendancesRepository {
 
     private async assertSessionMutable(organizationId: string, sessionId: string): Promise<void> {
         const [session] = await this.db
-            .select({ id: scheduledSessions.id })
+            .select({ status: scheduledSessions.status })
             .from(scheduledSessions)
             .where(
                 and(
                     eq(scheduledSessions.organizationId, organizationId),
-                    eq(scheduledSessions.id, sessionId),
-                    ne(scheduledSessions.status, "completed")
+                    eq(scheduledSessions.id, sessionId)
                 )
             )
             .limit(1);
 
         if (!session) {
-            throw new BadRequestError("Cannot modify enrollment for completed or missing session.");
+            throw new NotFoundError("Session not found");
+        }
+
+        if (session.status === "completed") {
+            throw new ConflictError("Session is completed and cannot be modified");
         }
     }
 }

@@ -21,11 +21,7 @@ export class ScheduledSessionsRepository {
             return value.toISOString();
         }
 
-        // SQLite expressions may return epoch ms integers for computed datetime fields.
-        if (typeof value === "number") {
-            return new Date(value).toISOString();
-        }
-
+        // SQLite expressions (for computed fields like endTime) return epoch ms integers.
         return new Date(value).toISOString();
     }
 
@@ -37,6 +33,23 @@ export class ScheduledSessionsRepository {
             .select()
             .from(scheduledSessions)
             .where(eq(scheduledSessions.id, id))
+            .limit(1);
+        return session ?? null;
+    }
+
+    async findByIdInOrganization(
+        organizationId: string,
+        id: string
+    ): Promise<ScheduledSession | null> {
+        const [session] = await this.db
+            .select()
+            .from(scheduledSessions)
+            .where(
+                and(
+                    eq(scheduledSessions.organizationId, organizationId),
+                    eq(scheduledSessions.id, id)
+                )
+            )
             .limit(1);
         return session ?? null;
     }
@@ -141,7 +154,7 @@ export class ScheduledSessionsRepository {
                 sessionId: scheduledSessions.id,
                 lessonTitle: lessons.title,
                 startTime: scheduledSessions.startTime,
-                endTime: sql<Date>`${scheduledSessions.startTime} + (${scheduledSessions.durationMinutes} * 60000)`,
+                endTime: sql<number>`${scheduledSessions.startTime} + (${scheduledSessions.durationMinutes} * 60000)`,
                 teacherName: authUsers.name,
                 sessionStatus: scheduledSessions.status,
                 enrollmentStatus: sessionAttendances.paymentStatus,

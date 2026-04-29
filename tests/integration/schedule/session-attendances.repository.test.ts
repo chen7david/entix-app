@@ -1,3 +1,4 @@
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import {
     authOrganizations,
@@ -6,6 +7,7 @@ import {
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { TestDb } from "../../lib/utils";
 import { createTestDb } from "../../lib/utils";
@@ -215,10 +217,37 @@ describe("SessionAttendancesRepository Integration", () => {
 
         const attendance = await repo.findByIds(sessionId, userId);
         expect(attendance).toBeDefined();
-        const deleted = await repo.delete(attendance?.id ?? "", orgId);
+        const deleted = await repo.delete(attendance?.id ?? "", orgId, sessionId);
         expect(deleted).toBe(true);
 
         const found = await repo.findByIds(sessionId, userId);
         expect(found).toBeNull();
+    });
+
+    it("throws NotFoundError when session does not exist in org", async () => {
+        await expect(
+            repo.upsert({
+                sessionId: "missing_session",
+                organizationId: orgId,
+                userId,
+                paymentStatus: "unpaid",
+            })
+        ).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("throws ConflictError when session is completed", async () => {
+        await db
+            .update(scheduledSessions)
+            .set({ status: "completed" })
+            .where(eq(scheduledSessions.id, sessionId));
+
+        await expect(
+            repo.upsert({
+                sessionId,
+                organizationId: orgId,
+                userId,
+                paymentStatus: "unpaid",
+            })
+        ).rejects.toBeInstanceOf(ConflictError);
     });
 });

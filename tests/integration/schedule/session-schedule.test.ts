@@ -4,6 +4,7 @@ import { SessionScheduleService } from "../../../api/services/session-schedule.s
 
 describe("SessionScheduleService Architecture Bounds", () => {
     let mockRepo: any;
+    let mockMemberRepo: any;
     let service: SessionScheduleService;
     const lessonId = "lesson_sched_test";
     const teacherId = "teacher_sched_test";
@@ -35,10 +36,16 @@ describe("SessionScheduleService Architecture Bounds", () => {
             deleteAllSessionAttendances: vi.fn(),
             deleteFollowingSessions: vi.fn(),
         };
+        mockMemberRepo = {
+            find: vi.fn().mockResolvedValue({
+                role: "teacher",
+            }),
+        };
         const mockBilling = {} as any;
         const mockWallet = {} as any;
         service = new SessionScheduleService(
             mockRepo,
+            mockMemberRepo,
             mockBilling,
             mockWallet,
             mockSessionPaymentService,
@@ -60,6 +67,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
         expect(result).toHaveLength(1);
         expect(mockRepo.createSessions).toHaveBeenCalledTimes(1);
         expect(mockRepo.addAttendances).toHaveBeenCalledTimes(1);
+        expect(mockMemberRepo.find).toHaveBeenCalledWith("teacher_sched_test", "org_1");
         expect(mockRepo.addAttendances).toHaveBeenCalledWith([
             {
                 sessionId: result[0].id,
@@ -184,5 +192,35 @@ describe("SessionScheduleService Architecture Bounds", () => {
         expect(result[0].startTime.toISOString()).toContain("03-31");
         expect(result[1].startTime.toISOString()).toContain("04-30"); // April logic
         expect(result[2].startTime.toISOString()).toContain("05-31");
+    });
+
+    it("rejects assigning a teacher outside the organization", async () => {
+        mockMemberRepo.find.mockResolvedValueOnce(null);
+
+        await expect(
+            service.createSession("org_1", {
+                lessonId,
+                teacherId,
+                title: "Invalid teacher",
+                startTime: Date.now() + 60_000,
+                durationMinutes: 60,
+                userIds: [],
+            })
+        ).rejects.toThrow("Teacher must be a member of the organization.");
+    });
+
+    it("rejects assigning a member without staff role", async () => {
+        mockMemberRepo.find.mockResolvedValueOnce({ role: "student" });
+
+        await expect(
+            service.createSession("org_1", {
+                lessonId,
+                teacherId,
+                title: "Invalid role",
+                startTime: Date.now() + 60_000,
+                durationMinutes: 60,
+                userIds: [],
+            })
+        ).rejects.toThrow("Assigned teacher must have teacher, admin, or owner role.");
     });
 });

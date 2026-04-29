@@ -93,10 +93,6 @@ export class LessonHandlers {
                 payload.coverArtUploadId,
                 organizationId
             );
-
-            if (currentLesson.coverArtUrl) {
-                await uploadService.deleteUploadByUrlGlobalSafely(currentLesson.coverArtUrl);
-            }
         }
 
         const lesson = await repo.update(organizationId, lessonId, {
@@ -106,6 +102,10 @@ export class LessonHandlers {
         });
         if (!lesson) {
             throw new NotFoundError("Lesson not found");
+        }
+
+        if (coverArtUrl !== undefined && currentLesson.coverArtUrl) {
+            await uploadService.deleteUploadByUrlGlobalSafely(currentLesson.coverArtUrl);
         }
         return ctx.json(
             {
@@ -126,13 +126,13 @@ export class LessonHandlers {
             throw new NotFoundError("Lesson not found");
         }
 
-        if (lesson.coverArtUrl) {
-            await uploadService.deleteUploadByUrlGlobalSafely(lesson.coverArtUrl);
-        }
-
         const deleted = await repo.delete(organizationId, lessonId);
         if (!deleted) {
             throw new NotFoundError("Lesson not found");
+        }
+
+        if (lesson.coverArtUrl) {
+            await uploadService.deleteUploadByUrlGlobalSafely(lesson.coverArtUrl);
         }
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };

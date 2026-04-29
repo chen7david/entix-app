@@ -43,6 +43,13 @@
       "when": 1777399800000,
       "tag": "0005_lessons_cover_art",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1777429200000,
+      "tag": "0006_drop_redundant_session_attendance_id_idx",
+      "breakpoints": true
     }
   ]
 }
