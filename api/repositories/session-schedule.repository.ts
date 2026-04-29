@@ -255,6 +255,8 @@ export class SessionScheduleRepository {
         organizationId: string,
         sessionId: string,
         data: {
+            lessonId: string;
+            teacherId: string;
             title: string;
             description?: string | null;
             startTime: Date;

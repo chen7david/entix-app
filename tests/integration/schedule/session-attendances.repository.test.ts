@@ -1,10 +1,13 @@
+import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import {
     authOrganizations,
     authUsers,
+    lessons,
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
+import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { TestDb } from "../../lib/utils";
 import { createTestDb } from "../../lib/utils";
@@ -15,6 +18,7 @@ describe("SessionAttendancesRepository Integration", () => {
     const orgId = "org_attend";
     const sessionId = "sess_attend";
     const userId = "user_attend";
+    const lessonId = "lesson_attend";
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -39,10 +43,20 @@ describe("SessionAttendancesRepository Integration", () => {
             .onConflictDoNothing();
 
         await db
+            .insert(lessons)
+            .values({
+                id: lessonId,
+                organizationId: orgId,
+                title: "Attendance Lesson",
+            })
+            .onConflictDoNothing();
+        await db
             .insert(scheduledSessions)
             .values({
                 id: sessionId,
                 organizationId: orgId,
+                lessonId,
+                teacherId: userId,
                 title: "Attend Session",
                 startTime: new Date(),
                 durationMinutes: 60,
@@ -201,10 +215,39 @@ describe("SessionAttendancesRepository Integration", () => {
     it("should delete an attendance record", async () => {
         await repo.upsert({ sessionId, organizationId: orgId, userId, paymentStatus: "unpaid" });
 
-        const deleted = await repo.delete(sessionId, userId);
+        const attendance = await repo.findByIds(sessionId, userId);
+        expect(attendance).toBeDefined();
+        const deleted = await repo.delete(attendance?.id ?? "", orgId, sessionId);
         expect(deleted).toBe(true);
 
         const found = await repo.findByIds(sessionId, userId);
         expect(found).toBeNull();
+    });
+
+    it("throws NotFoundError when session does not exist in org", async () => {
+        await expect(
+            repo.upsert({
+                sessionId: "missing_session",
+                organizationId: orgId,
+                userId,
+                paymentStatus: "unpaid",
+            })
+        ).rejects.toBeInstanceOf(NotFoundError);
+    });
+
+    it("throws ConflictError when session is completed", async () => {
+        await db
+            .update(scheduledSessions)
+            .set({ status: "completed" })
+            .where(eq(scheduledSessions.id, sessionId));
+
+        await expect(
+            repo.upsert({
+                sessionId,
+                organizationId: orgId,
+                userId,
+                paymentStatus: "unpaid",
+            })
+        ).rejects.toBeInstanceOf(ConflictError);
     });
 });

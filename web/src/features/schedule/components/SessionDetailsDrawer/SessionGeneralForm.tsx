@@ -23,6 +23,13 @@ const { Text } = Typography;
 type SessionGeneralFormProps = {
     form: FormInstance;
     session: any | null;
+    lessons: { label: string; value: string }[];
+    teachers: { label: string; value: string }[];
+    isLoadingLessons: boolean;
+    hasNextLessonPage: boolean;
+    isFetchingNextLessonPage: boolean;
+    onSearchLesson: (value: string) => void;
+    onLoadMoreLessons: () => void;
     onUpdateStatus?: (
         sessionId: string,
         status: "scheduled" | "completed" | "cancelled"
@@ -34,6 +41,13 @@ type SessionGeneralFormProps = {
 export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
     form,
     session,
+    lessons,
+    teachers,
+    isLoadingLessons,
+    hasNextLessonPage,
+    isFetchingNextLessonPage,
+    onSearchLesson,
+    onLoadMoreLessons,
     onUpdateStatus,
     isGeneratingTitle,
     onGenerateTitle,
@@ -76,6 +90,50 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                     style={{ marginBottom: 16 }}
                 />
             )}
+
+            <Form.Item
+                name="lessonId"
+                label="Lesson"
+                rules={[{ required: true, message: "Required" }]}
+            >
+                <Select
+                    placeholder="Select lesson"
+                    options={lessons}
+                    showSearch
+                    filterOption={false}
+                    optionFilterProp="label"
+                    loading={isLoadingLessons || isFetchingNextLessonPage}
+                    onSearch={onSearchLesson}
+                    onPopupScroll={(event) => {
+                        const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+                        if (
+                            scrollHeight - scrollTop <= clientHeight + 10 &&
+                            hasNextLessonPage &&
+                            !isFetchingNextLessonPage
+                        ) {
+                            onLoadMoreLessons();
+                        }
+                    }}
+                />
+            </Form.Item>
+
+            <Form.Item
+                name="teacherId"
+                label="Teacher"
+                rules={[{ required: true, message: "Required" }]}
+            >
+                <Select
+                    placeholder="Select teacher"
+                    options={teachers}
+                    showSearch
+                    optionFilterProp="label"
+                    filterOption={(input, option) =>
+                        String(option?.label || "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                    }
+                />
+            </Form.Item>
 
             <Form.Item
                 name="title"

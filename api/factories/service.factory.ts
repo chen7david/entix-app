@@ -101,6 +101,7 @@ export const getPlaylistService = (ctx: AppContext) => {
 export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(
         getSessionScheduleRepository(ctx),
+        getMemberRepository(ctx),
         getFinanceBillingPlansService(ctx),
         getFinanceWalletService(ctx),
         getPaymentQueueService(ctx),

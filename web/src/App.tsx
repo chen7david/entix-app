@@ -260,6 +260,10 @@ export default function App() {
                                                         element={<OrganizationSchedulePage />}
                                                     />
                                                     <Route
+                                                        path="lessons"
+                                                        element={<LessonsPage />}
+                                                    />
+                                                    <Route
                                                         path="media"
                                                         element={<OrganizationMediaPage />}
                                                     />

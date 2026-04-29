@@ -22,6 +22,7 @@ import {
     financeBillingPlans,
     financeMemberBillingPlans,
     financialAccounts,
+    lessons,
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
@@ -82,6 +83,7 @@ describe("Hierarchical Overdraft Resolution", () => {
         const accId = generateAccountId();
         const destId = generateAccountId();
         const sessId = generateOpaqueId();
+        const lessonId = generateOpaqueId();
 
         // 1. Create a plan with 500 overdraft
         await db.insert(financeBillingPlans).values({
@@ -135,9 +137,16 @@ describe("Hierarchical Overdraft Resolution", () => {
         });
 
         // 5. Create the session (required for attendance FK)
+        await db.insert(lessons).values({
+            id: lessonId,
+            organizationId: orgId,
+            title: "Overdraft Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessId,
             organizationId: orgId,
+            lessonId,
+            teacherId: userId,
             title: "Test Session",
             startTime: new Date(),
             durationMinutes: 60,

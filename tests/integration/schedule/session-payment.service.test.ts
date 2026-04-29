@@ -12,6 +12,7 @@ import {
     authOrganizations,
     authUsers,
     financialAccounts,
+    lessons,
     paymentRequests,
     scheduledSessions,
     sessionAttendances,
@@ -29,6 +30,7 @@ describe("SessionPaymentService Integration", () => {
     const orgId = "org_svc_test";
     const studentId = "student_svc_test";
     const sessionId = "sess_svc_test";
+    const lessonId = "lesson_svc_test";
     const currencyId = FINANCIAL_CURRENCIES.USD;
     const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT;
 
@@ -65,10 +67,20 @@ describe("SessionPaymentService Integration", () => {
             })
             .onConflictDoNothing();
         await db
+            .insert(lessons)
+            .values({
+                id: lessonId,
+                organizationId: orgId,
+                title: "Svc Lesson",
+            })
+            .onConflictDoNothing();
+        await db
             .insert(scheduledSessions)
             .values({
                 id: sessionId,
                 organizationId: orgId,
+                lessonId,
+                teacherId: studentId,
                 title: "Svc Session",
                 startTime: new Date(),
                 durationMinutes: 60,
@@ -241,6 +253,7 @@ describe("SessionPaymentService Integration", () => {
         const isolatedOrgId = "org_phase2_limit";
         const isolatedUserId = "user_phase2_limit";
         const isolatedSessionId = "sess_phase2_limit";
+        const isolatedLessonId = "lesson_phase2_limit";
         const isolatedStudentAccountId = "acc_student_phase2";
         const isolatedOrgAccountId = "acc_org_phase2";
 
@@ -258,9 +271,16 @@ describe("SessionPaymentService Integration", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
         });
+        await db.insert(lessons).values({
+            id: isolatedLessonId,
+            organizationId: isolatedOrgId,
+            title: "Phase2 Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: isolatedSessionId,
             organizationId: isolatedOrgId,
+            lessonId: isolatedLessonId,
+            teacherId: isolatedUserId,
             title: "Phase2 Session",
             startTime: new Date(),
             durationMinutes: 60,

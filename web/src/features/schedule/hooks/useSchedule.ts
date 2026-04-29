@@ -14,6 +14,8 @@ import { App } from "antd";
 export type SessionDTO = {
     id: string;
     organizationId: string;
+    lessonId: string;
+    teacherId: string;
     title: string;
     description: string | null;
     startTime: number;
@@ -37,6 +39,16 @@ export type SessionDTO = {
             image: string | null;
         };
     }[];
+};
+
+export type StudentEnrollmentSessionDTO = {
+    sessionId: string;
+    lessonTitle: string;
+    startTime: string;
+    endTime: string;
+    teacherName: string;
+    sessionStatus: "scheduled" | "completed" | "cancelled";
+    enrollmentStatus: string;
 };
 
 export const useSchedule = (
@@ -88,6 +100,8 @@ export const useSchedule = (
 
     const createSession = useMutation({
         mutationFn: async (payload: {
+            lessonId: string;
+            teacherId: string;
             title: string;
             description?: string;
             startTime: number;
@@ -121,6 +135,8 @@ export const useSchedule = (
         }: {
             sessionId: string;
             payload: {
+                lessonId: string;
+                teacherId: string;
                 title: string;
                 description?: string | null;
                 startTime: number;
@@ -288,4 +304,22 @@ export function useScheduleMetrics(organizationId?: string, startDate?: number, 
         isLoading,
         error,
     };
+}
+
+export function useMyEnrollments(organizationId?: string) {
+    const { user, isAuthenticated } = useAuth();
+
+    return useQuery({
+        queryKey: ["myEnrollments", organizationId, user?.id],
+        queryFn: async () => {
+            if (!organizationId) return [];
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].enrollments.me.$get({
+                param: { organizationId },
+            });
+            return hcJson<StudentEnrollmentSessionDTO[]>(res);
+        },
+        enabled: !!organizationId && !!user?.id && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+    });
 }
