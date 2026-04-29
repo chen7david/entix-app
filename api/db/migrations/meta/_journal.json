@@ -50,6 +50,13 @@
       "when": 1777429200000,
       "tag": "0006_drop_redundant_session_attendance_id_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1777471219080,
+      "tag": "0007_red_king_bedlam",
+      "breakpoints": true
     }
   ]
 }

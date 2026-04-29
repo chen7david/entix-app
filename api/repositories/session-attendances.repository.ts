@@ -57,6 +57,21 @@ export class SessionAttendancesRepository {
             .where(eq(sessionAttendances.sessionId, sessionId));
     }
 
+    async getBySessionAndOrg(
+        organizationId: string,
+        sessionId: string
+    ): Promise<SessionAttendance[]> {
+        return this.db
+            .select()
+            .from(sessionAttendances)
+            .where(
+                and(
+                    eq(sessionAttendances.organizationId, organizationId),
+                    eq(sessionAttendances.sessionId, sessionId)
+                )
+            );
+    }
+
     /**
      * Lists attendance records with cursor pagination.
      * Default sort: joinedAt DESC, userId DESC.

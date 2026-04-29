@@ -7,7 +7,10 @@ import { FinancialTransactionsRepository } from "@api/repositories/financial/fin
 import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import { AiService } from "@api/services/ai.service";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
+import { VocabularyProcessingService } from "@api/services/vocabulary-processing.service";
 import { generateAuditId } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
@@ -23,6 +26,14 @@ export type EntixQueueMessage =
     | {
           type: "billing.process-payment";
           paymentRequestId: string;
+      }
+    | {
+          type: "vocabulary.process-text";
+          vocabularyId: string;
+      }
+    | {
+          type: "vocabulary.process-audio";
+          vocabularyId: string;
       };
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -51,6 +62,20 @@ export const EntixQueueHandler = {
                     >,
                     env,
                     executionCtx
+                );
+            case "vocabulary.process-text":
+                return handleVocabularyProcessText(
+                    message as Message<
+                        Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>
+                    >,
+                    env
+                );
+            case "vocabulary.process-audio":
+                return handleVocabularyProcessAudio(
+                    message as Message<
+                        Extract<EntixQueueMessage, { type: "vocabulary.process-audio" }>
+                    >,
+                    env
                 );
 
             default: {
@@ -139,6 +164,48 @@ async function handleBillingProcess(
         }
 
         // Infrastructure failure — retry is appropriate
+        message.retry();
+    }
+}
+
+async function handleVocabularyProcessText(
+    message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>>,
+    env: CloudflareBindings
+): Promise<void> {
+    const db = drizzle(env.DB, { schema });
+    const vocabularyRepo = new VocabularyBankRepository(db);
+    const aiService = new AiService({
+        ai: env.AI,
+        model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    });
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE);
+
+    try {
+        await processor.processText(message.body.vocabularyId);
+        message.ack();
+    } catch (error) {
+        console.error("[Queue:VocabularyText] Unhandled failure:", error);
+        message.retry();
+    }
+}
+
+async function handleVocabularyProcessAudio(
+    message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-audio" }>>,
+    env: CloudflareBindings
+): Promise<void> {
+    const db = drizzle(env.DB, { schema });
+    const vocabularyRepo = new VocabularyBankRepository(db);
+    const aiService = new AiService({
+        ai: env.AI,
+        model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    });
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE);
+
+    try {
+        await processor.processAudio(message.body.vocabularyId);
+        message.ack();
+    } catch (error) {
+        console.error("[Queue:VocabularyAudio] Unhandled failure:", error);
         message.retry();
     }
 }
