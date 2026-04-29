@@ -50,6 +50,9 @@
                         "max_retries": 3
                     }
                 ]
+            },
+            "ai": {
+                "binding": "AI"
             }
         },
         "staging": {
@@ -97,6 +100,9 @@
                         "max_retries": 3
                     }
                 ]
+            },
+            "ai": {
+                "binding": "AI"
             }
         },
         "production": {
@@ -142,6 +148,9 @@
                         "max_retries": 3
                     }
                 ]
+            },
+            "ai": {
+                "binding": "AI"
             }
         }
     }
