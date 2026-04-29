@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1776181084749,
-      "tag": "0000_genesis_schema",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1776181084750,
-      "tag": "0001_genesis_seed",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "6",
-      "when": 1776248020588,
-      "tag": "0002_add_idempotency_key",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "6",
-      "when": 1776260796878,
-      "tag": "0003_true_arachne",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "6",
-      "when": 1777393200000,
-      "tag": "0004_multi_tenant_lessons",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "6",
-      "when": 1777399800000,
-      "tag": "0005_lessons_cover_art",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "6",
-      "when": 1777429200000,
-      "tag": "0006_drop_redundant_session_attendance_id_idx",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "6",
-      "when": 1777471219080,
-      "tag": "0007_red_king_bedlam",
+      "when": 1777486782795,
+      "tag": "0000_stormy_frightful_four",
       "breakpoints": true
     }
   ]
