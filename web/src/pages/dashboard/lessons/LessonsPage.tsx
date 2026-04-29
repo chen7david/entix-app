@@ -329,6 +329,12 @@ export const LessonsPage: React.FC = () => {
                                     }
                                     onUploadSuccess={async (uploadId) => {
                                         editForm.setFieldsValue({ coverArtUploadId: uploadId });
+                                        if (!editingLesson) return;
+                                        const updatedLesson = await updateLesson.mutateAsync({
+                                            lessonId: editingLesson.id,
+                                            coverArtUploadId: uploadId,
+                                        });
+                                        setEditingLesson(updatedLesson);
                                     }}
                                     aspectRatio={1}
                                 />

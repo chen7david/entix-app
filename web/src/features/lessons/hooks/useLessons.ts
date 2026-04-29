@@ -138,6 +138,12 @@ export function useCreateLesson() {
             notification.success({ message: "Lesson created" });
             queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
         },
+        onError: (error: Error) => {
+            notification.error({
+                message: "Failed to create lesson",
+                description: error.message,
+            });
+        },
     });
 }
 
@@ -168,6 +174,12 @@ export function useUpdateLesson() {
         onSuccess: () => {
             notification.success({ message: "Lesson updated" });
             queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
+        },
+        onError: (error: Error) => {
+            notification.error({
+                message: "Failed to update lesson",
+                description: error.message,
+            });
         },
     });
 }

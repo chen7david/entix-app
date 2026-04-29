@@ -94,11 +94,14 @@ export class LessonRepository {
     async update(
         organizationId: string,
         lessonId: string,
-        input: Partial<Pick<NewLesson, "title" | "description">>
+        input: Partial<Pick<NewLesson, "title" | "description" | "coverArtUrl">>
     ): Promise<Lesson | null> {
+        const updatePayload = Object.fromEntries(
+            Object.entries(input).filter(([, value]) => value !== undefined)
+        );
         const [lesson] = await this.db
             .update(lessons)
-            .set({ ...input, updatedAt: new Date() })
+            .set({ ...updatePayload, updatedAt: new Date() })
             .where(and(eq(lessons.organizationId, organizationId), eq(lessons.id, lessonId)))
             .returning();
         return lesson ?? null;
