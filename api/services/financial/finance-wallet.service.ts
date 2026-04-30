@@ -1,7 +1,14 @@
 import { NotFoundError } from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
+import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
+import type { FinancialOrgSettingsRepository } from "@api/repositories/financial/financial-org-settings.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { ACCOUNT_TYPES, FINANCIAL_CATEGORIES } from "@shared";
+import {
+    ACCOUNT_TYPES,
+    FINANCIAL_CATEGORIES,
+    FINANCIAL_CURRENCIES,
+    generateAccountId,
+} from "@shared";
 import { FinancialBaseService } from "./financial-base.service";
 
 /**
@@ -10,9 +17,58 @@ import { FinancialBaseService } from "./financial-base.service";
 export class FinanceWalletService extends FinancialBaseService {
     constructor(
         protected readonly accountsRepo: FinancialAccountsRepository,
-        protected readonly transactionsRepo: FinancialTransactionsRepository
+        protected readonly transactionsRepo: FinancialTransactionsRepository,
+        private readonly currenciesRepo: FinancialCurrenciesRepository,
+        private readonly orgSettingsRepo: FinancialOrgSettingsRepository
     ) {
         super(accountsRepo, transactionsRepo);
+    }
+
+    async provisionWalletIfNotExists(userId: string, orgId: string) {
+        const settings = await this.orgSettingsRepo.findByOrgId(orgId);
+        const fallbackCurrencies: string[] = [FINANCIAL_CURRENCIES.ETD, FINANCIAL_CURRENCIES.CNY];
+        let currenciesToProvision: string[] = fallbackCurrencies;
+        if (settings) {
+            try {
+                const parsed = JSON.parse(settings.autoProvisionCurrencies) as string[];
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    currenciesToProvision = parsed;
+                }
+            } catch {
+                currenciesToProvision = fallbackCurrencies;
+            }
+        }
+
+        const allCurrencies = await this.currenciesRepo.findAllActive();
+        const defaultNameByCurrency = new Map(
+            allCurrencies.map((currency) => [currency.id, currency.defaultAccountName])
+        );
+
+        let created = 0;
+        for (const currencyId of currenciesToProvision) {
+            const exists = await this.accountsRepo.existsByOwnerAndCurrency(
+                userId,
+                "user",
+                currencyId,
+                orgId
+            );
+            if (exists) continue;
+
+            await this.accountsRepo.insert({
+                id: generateAccountId(),
+                name: defaultNameByCurrency.get(currencyId) ?? "Wallet",
+                currencyId,
+                ownerId: userId,
+                ownerType: "user",
+                organizationId: orgId,
+                accountType: ACCOUNT_TYPES.SAVINGS,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            });
+            created++;
+        }
+
+        return { created };
     }
     /**
      * Gets a specific wallet account for a user in a given currency.

@@ -71,6 +71,14 @@ export class FinanceBillingPlansService extends BaseService {
         });
     }
 
+    async getActivePlanForOrg(orgId: string, planId: string) {
+        const plan = await this.repo.findById(planId);
+        if (!plan || plan.organizationId !== orgId || !plan.isActive) {
+            throw new NotFoundError("Default billing plan not found or inactive for this org");
+        }
+        return plan;
+    }
+
     /**
      * Lists organization-level billing plans with pagination and search.
      */

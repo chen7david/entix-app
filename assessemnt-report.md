@@ -1,206 +1,153 @@
-# Vocabulary Pipeline Implementation Plan
+# Bulk Import + Billing Guardrails Plan
 
-## Decision Resolutions Summary
+## Requested Changes (Consolidated)
 
-| Question | Decision | Impact |
-| --- | --- | --- |
-| Q1 | Raw URL strings in `vocabulary_bank` (no uploads/media FK) | Audio URLs are AI-generated, not user uploads, so direct URL fields are correct |
-| Q2 | Unique on text only; fixed EN -> ZH scope for now | Add `UNIQUE(text)` and avoid language columns until multi-language expansion |
-| Q3 | Attendance required before assigning vocabulary | `student_vocabulary.attendance_id` must FK to `session_attendances.id` |
-| Q4 | Queue pipeline included in this ticket | Add `vocabulary.process-text` and `vocabulary.process-audio` queue types |
-| Q5 | `org_id` denormalization is intentional | Keep for scoped queries; enforce consistency in service layer |
-| Q6 | Teacher creates vocabulary; student cannot | Protect write routes with `requirePermission("vocabulary", ["create"])` |
+1. Add a pre-import review/edit step before final bulk import submit.
+2. In that review step, allow choosing a default billing plan for the batch.
+3. Block bulk import submission when the organization has zero billing plans.
+4. Auto-initialize wallets for imported/linked users during import.
+5. Show a dashboard warning banner when billing plans count is zero.
 
-## Phase 1 - Database Schema
+## Schema Feasibility Evidence
 
-### 1.1 Create `shared/db/schema/vocabulary-bank.schema.ts`
-- Define `vocabulary_bank` table with:
-  - `id`, `text`, `zhTranslation`, `pinyin`, `enAudioUrl`, `zhAudioUrl`, `status`, `createdAt`, `updatedAt`
-- Add `VOCABULARY_BANK_STATUSES` enum values:
-  - `new`, `processing_text`, `text_ready`, `processing_audio`, `active`, `review`
-- Add indexes and constraints:
-  - `UNIQUE(text)` as race-condition guard
-  - index on `status` for queue processors
-- Use `integer(..., { mode: "timestamp_ms" })` timestamps.
-- `updatedAt` must include both:
-  - `.default(sql\`(cast(unixepoch('subsecond') * 1000 as integer))\`)`
-  - `.$onUpdate(() => new Date())`
+All requested features are implementable with the current schema (no migrations required):
 
-### 1.2 Create `shared/db/schema/student-vocabulary.schema.ts`
-- Define `student_vocabulary` table with:
-  - `userId` FK -> `authUsers.id`
-  - `orgId` FK -> `authOrganizations.id`
-  - `vocabularyId` FK -> `vocabulary_bank.id`
-  - `attendanceId` FK -> `session_attendances.id` (required enforcement)
-  - `createdAt`
-- Add unique key:
-  - `(userId, vocabularyId, attendanceId)`
-- Add indexes on:
-  - `userId`, `orgId`, `vocabularyId`, `attendanceId`
-- `updatedAt` is intentionally omitted because this is append-only assignment history.
+- Default billing plan assignment -> `finance_billing_plans`, `finance_member_billing_plans` (exists)
+- Block import if 0 billing plans -> `finance_billing_plans` (count query)
+- Auto-initialize wallets -> `financial_accounts`, `financial_org_settings` (exists)
+- Dashboard billing plan count warning -> `finance_billing_plans` (read-only query)
+- Per-row import result summary -> response DTO only (in-memory)
 
-### 1.3 Update `shared/db/schema/index.ts`
-- Export:
-  - `./vocabulary-bank.schema`
-  - `./student-vocabulary.schema`
-- Also add pre-existing missing export:
-  - `./financial-session-payment-events.schema`
+## Scope Classification (UI vs Backend/DB)
 
-### 1.4 Update `shared/db/schema/relations.schema.ts`
-- Add relations:
-  - `vocabularyBankRelations` -> `many(studentVocabulary)`
-  - `studentVocabularyRelations` -> user, organization, vocabulary, attendance
-- Extend existing relations:
-  - `sessionAttendancesRelations` add `studentVocabularies`
-  - `authUsersRelations` add `studentVocabularies`
+- `Pre-import review/edit step` -> UI + API contract update
+- `Default billing plan selector` -> UI + backend assignment logic
+- `Block import when no billing plan` -> UI guard + backend validation guard
+- `Auto-initialize wallets on import` -> backend service logic (no schema change expected)
+- `Dashboard warning banner (0 billing plans)` -> UI + read endpoint usage
 
-### 1.5 Generate migration
-- Run Drizzle migration generation.
-- Verify migration contains:
-  - `vocabulary_bank` table + `UNIQUE(text)` + status index
-  - `student_vocabulary` table + required FKs + indexes + composite unique constraint
-- Note: missing export fix is schema-only and needs no migration.
+### Are these pure UI changes?
 
-## Phase 2 - Repositories
+No. This is not pure UI.
 
-### 2.1 Create `api/repositories/vocabulary-bank.repository.ts`
-- Add methods:
-  - `findOrCreate(text)` with atomic insert-then-read flow:
-    - `INSERT INTO vocabulary_bank (...) VALUES (...) ON CONFLICT(text) DO NOTHING;`
-    - `SELECT * FROM vocabulary_bank WHERE text = ?;`
-    - both statements must run in the same logical operation to avoid race-prone ad hoc implementations
-  - Normalize input before insert:
-    - `trim()`
-    - `toLowerCase()`
-  - Persist normalized text so `UNIQUE(text)` reliably deduplicates case and spacing variants
-  - `findById(id)`
-  - `updateStatus(id, status, fields?)`
-  - `getByStatus(status, limit?)`
-  - `getReviewItems()`
+Expected split:
+- UI work: review step, selector, disable/guard states, banners, CTA links.
+- Backend work: import payload/options handling, wallet provisioning during import, billing plan assignment during import, server-side validation to prevent bypass.
+- DB migration: not required for this feature set.
 
-### 2.2 Create `api/repositories/student-vocabulary.repository.ts`
-- Add methods:
-  - `add(input)` for explicit single-assign endpoint:
-    - catch DB unique constraint violation
-    - re-throw `ConflictError` (409) using existing app error classes
-  - `addIfMissing(input)` for bulk/session fan-out path:
-    - insert with conflict-safe no-op semantics
-    - return existing row on duplicate instead of throwing
-    - this keeps create fan-out idempotent across retries/re-runs
-  - `getByAttendance(userId, attendanceId)`
-  - `getAllForStudent(userId, orgId)`
-  - `getByAttendanceWithVocab(userId, attendanceId)` with join to `vocabulary_bank`
-  - `getAllForStudentWithVocab(userId, orgId)` for full-history responses with vocabulary details
+## Implementation Plan
 
-### 2.3 Update `api/factories/repository.factory.ts`
-- Register:
-  - `getVocabularyBankRepository(ctx)`
-  - `getStudentVocabularyRepository(ctx)`
+## Phase 1 - Product Rules and Validation
 
-## Phase 3 - AI Processing Service and Queue Integration
+1. Define import policy:
+   - Require default billing plan for bulk import.
+   - Wallet initialization runs only for newly created/linked members.
+   - Wallet initialization is enforced ON for newly created/linked members (not toggleable).
+   - Add explicit conflict behavior for existing plans:
+     - `billingPlanConflict: "replace" | "skip"`
+   - Default `billingPlanConflict` to `"replace"` (UI preselected).
+   - Define `"skip"` semantics explicitly:
+     - skip billing plan assignment step only
+     - continue user/member import and wallet initialization for that row
+2. Define partial-failure behavior:
+   - Import continues per row.
+   - Per-row errors returned (identity conflict, wallet init error, billing assign error).
+   - Summary includes created/linked/walletInitialized/billingAssigned/failed.
 
-### 3.1 Create `api/services/vocabulary-processing.service.ts`
-- Add `VocabularyProcessingService` with:
-  - `processText(vocabularyId)`:
-    - `new` -> `processing_text` -> parse translation/pinyin -> `text_ready`
-    - use strict JSON output strategy (JSON-mode/structured output if supported by `AiService`; otherwise strict prompt contract)
-    - immediately enqueue `vocabulary.process-audio` on successful transition to `text_ready`
-    - fallback to `review` on failure
-  - `processAudio(vocabularyId)`:
-    - `text_ready` -> `processing_audio` -> generate EN/ZH audio -> `active`
-    - fallback to `review` on failure
-- Keep `generateTts` as temporary stub until provider integration lands.
-- Define explicit TTS contract now:
-  - `generateTts(text: string, lang: "en" | "zh"): Promise<string>`
-  - return value is a publicly fetchable audio URL.
-- Known gap (follow-on ticket):
-  - define stuck-job recovery for items left in `processing_text` (for example admin retry/requeue tooling or dead-letter recovery flow)
+## Phase 2 - Backend Changes
 
-### 3.2 Update `api/queues/entix.queue.ts`
-- Extend queue union with:
-  - `{ type: "vocabulary.process-text"; vocabularyId: string }`
-  - `{ type: "vocabulary.process-audio"; vocabularyId: string }`
-- Add switch handlers:
-  - `handleVocabularyProcessText(...)`
-  - `handleVocabularyProcessAudio(...)`
-- Follow existing ack/retry semantics:
-  - `ack` on success
-  - `retry` for transient infrastructure errors
+1. Add idempotent wallet provisioning method (first-class prerequisite):
+   - `provisionWalletIfNotExists(userId, orgId)` in financial service layer.
+   - Read currencies from `financial_org_settings.auto_provision_currencies`.
+   - If org settings row is missing, fallback to default currencies:
+     - `["fcur_etd", "fcur_cny"]`
+   - Create missing wallets only; do not throw on existing wallets.
+2. Extend bulk import request DTO (or route input) with import options:
+   - `defaultBillingPlanId: string` (required once policy is enabled)
+   - `billingPlanConflict: "replace" | "skip"` (required; no implicit overwrite behavior)
+   - remove `initializeWallets` option (wallet init enforced by policy)
+3. Add upfront guards before row processing (fail fast):
+   - Validate `defaultBillingPlanId` exists, belongs to org, and is active.
+4. Update `MemberImportService`:
+   - Inject needed services:
+     - user wallet provisioning (idempotent behavior)
+     - billing plan assignment service
+   - After user/member creation/linking succeeds:
+     - initialize wallets (enforced for newly created/linked members)
+     - assign default billing plan
+5. Keep operations idempotent:
+   - Wallet init should skip existing wallets without failing import.
+   - Billing assignment should replace/skip according to `billingPlanConflict`.
+6. Extend import response summary:
+   - Include `walletInitialized` and `billingAssigned` counters.
+7. Update `BulkMemberHandler.importMembers` to pass import options to `MemberImportService`.
 
-## Phase 4 - API Routes and Handlers
+### Backend Implementation Notes (Schema-Driven)
 
-### 4.1 Create `api/routes/orgs/vocabulary.routes.ts`
-- Add routes:
-  - `POST /orgs/{orgId}/vocabulary` (`vocabulary:create`) with optional `sessionId` in request body
-    - `sessionId` is transient request context only (fan-out target source) and is never persisted on `vocabulary_bank`
-  - `GET /orgs/{orgId}/vocabulary/review` (`vocabulary:read`)
-  - `GET /orgs/{orgId}/sessions/{sessionId}/vocabulary` (`vocabulary:read`)
-  - `POST /orgs/{orgId}/sessions/{sessionId}/vocabulary/{vocabId}/assign` (`vocabulary:create`) with explicit student `userId` in request body
+1. `finance_member_billing_plans` uniqueness (`user_id`, `organization_id`, `currency_id`) plus existing `upsertMemberPlan` behavior means assignment is naturally idempotent and replacement-capable.
+2. Wallet provisioning must read currency set from `financial_org_settings.auto_provision_currencies` (JSON array), not hardcode currencies.
+3. `financial_accounts` uniqueness protects data integrity, but service logic should avoid conflict-driven control flow. Add an idempotent wallet provision method (existence-check/upsert pattern) in financial service layer.
+4. `MemberImportService` currently injects only user/member/profile/social repositories; implement required service injections for:
+   - billing plan assignment
+   - wallet provisioning
 
-### 4.2 Create `api/routes/orgs/vocabulary.handlers.ts`
-- Repository call ownership note:
-  - `SessionAttendanceRepository.getAttendancesBySession(orgId, sessionId)` is used by `createVocabulary` fan-out source lookup.
-  - `StudentVocabularyRepository.getBySessionWithVocab(orgId, sessionId)` is used by `listSessionVocabulary` read responses.
-- `createVocabulary`:
-  - `findOrCreate(text)` then enqueue `vocabulary.process-text` when status is `new`
-  - if `sessionId` is provided:
-    - fetch session attendances for `(orgId, sessionId)`
-    - fan-out assignment via `addIfMissing` to every attendee in `student_vocabulary`
-  - if `sessionId` is omitted:
-    - create/reuse bank entry only (supports pre-building vocabulary bank)
-  - return `{ vocabulary, assignedCount }`
-- `listReviewVocabulary`:
-  - return `getReviewItems()`
-- `listSessionVocabulary`:
-  - call `getBySessionWithVocab(orgId, sessionId)`
-  - return assignment rows joined with vocabulary details
-- `assignVocabularyToStudent`:
-  - preflight `findById(vocabId)`; return not-found error if missing
-  - validate attendance belongs to org/session
-  - require explicit `userId` target from request body
-  - insert student vocabulary record using explicit-path `add()`
-  - map unique collision to `ConflictError` (explicit path only)
+## Phase 3 - UI Changes (Bulk Import Flow)
 
-### 4.3 Create `api/routes/orgs/vocabulary.index.ts`
-- Wire route group and register in `api/routes/index.route.ts`.
+1. Add a review page/modal step before final submit:
+   - Show parsed row count + pre-validation summary.
+   - Show settings section:
+     - default billing plan select
+     - billing conflict behavior selector (`replace` or `skip`)
+   - Default control states:
+     - billing plan selector: no default (explicit user selection required)
+     - conflict selector: default to `replace`
+2. Fetch billing plans for org:
+   - If zero plans:
+     - show blocking message
+     - disable final import action
+     - show CTA to create billing plan
+3. Submit import with selected options to backend.
+4. Show import result summary with granular outcomes.
 
-### 4.4 Org-scope note for review queue
-- `vocabulary_bank` is global, so `listReviewVocabulary` currently returns global review items.
-- Keep route under `/orgs/{orgId}/...` for permission context, but document that result is not org-filtered in this phase.
+## Phase 4 - Dashboard Warning
 
-## Phase 5 - Final Wiring and Bug Fix
+1. On org dashboard, fetch billing plan count (or reuse existing plans query).
+2. If count is zero:
+   - render warning banner at top area
+   - include CTA button to billing plan creation page
+3. Keep banner visible until at least one billing plan exists.
 
-- Register vocabulary route group in `api/routes/index.route.ts`.
-- Ensure `shared/db/schema/index.ts` exports `financial-session-payment-events.schema` (pre-existing fix).
-- Add `VocabularyProcessingService` getter to `api/factories/service.factory.ts`.
-- Add RBAC resource entries for `vocabulary` where permission registry is defined:
-  - actions: `read`, `create`, `update`, `delete`
-  - mirror existing registration style used by resources such as `lesson` and `schedule`.
-- Confirm queue reuse:
-  - `vocabulary.*` messages use existing `QUEUE` / Entix queue binding
-  - no new Wrangler queue binding required unless queue architecture changes.
-- Add or confirm repository dependency for fan-out:
-  - `SessionAttendanceRepository.getAttendancesBySession(orgId, sessionId)` (or equivalent existing method) must be available for `createVocabulary` attendee fan-out.
+## Phase 5 - Testing
 
-## Implementation Order
+1. Backend tests:
+   - import blocked when no plans
+   - import fails for invalid/default plan from other org
+   - `billingPlanConflict: "replace"` overwrites existing member plan
+   - `billingPlanConflict: "skip"` preserves existing member plan
+   - wallet already exists -> import row succeeds (idempotent wallet path)
+   - `auto_provision_currencies` with multiple currencies provisions each missing wallet
+   - wallet init called for successful rows
+   - billing plan assignment applied for successful rows
+   - result summary counts (`walletInitialized`, `billingAssigned`, `failed`) accurate on partial failure
+2. UI tests:
+   - review step requires selecting plan
+   - review step requires choosing billing conflict behavior
+   - import button disabled at zero plans
+   - dashboard banner appears/disappears based on plan count
+3. E2E:
+   - successful import with wallet + billing assignment
+   - blocked flow with zero plans and CTA path
 
-`Phase 1 -> Phase 2 -> Phase 3 -> Phase 4 -> Phase 5`
+## Risks / Decisions to Confirm
 
-- Phase 1 is blocking.
-- Phase 2 depends on Phase 1.
-- Phases 3 and 4 can run in parallel after Phase 2.
-- Phase 5 is final integration and wiring.
+1. None open. Decisions locked:
+   - `billingPlanConflict` default: `replace`
+   - wallet initialization: enforced ON for newly linked/created members
 
-## Acceptance Criteria
+## Rough Effort
 
-- Schema enforces attendance-based assignment.
-- Vocabulary deduplication is guaranteed by DB uniqueness.
-- Text normalization (`trim` + `toLowerCase`) is applied before all `findOrCreate` writes.
-- Queue pipeline supports text and audio stages.
-- `processText` automatically enqueues `vocabulary.process-audio` on success.
-- Teacher-only create/assign permissions are enforced.
-- Assignment endpoint requires explicit target `userId`.
-- Review state captures failed AI/TTS processing.
-- Explicit single-assign duplicate returns `409 Conflict` (never raw DB error / 500).
-- Bulk create fan-out is idempotent: duplicate attendee assignments are no-op/return-existing, not request-fatal.
-- New routes, repositories, and service wiring compile and pass checks.
+- Backend: medium (service wiring + validation + idempotency handling)
+- UI: medium (review step + guards + dashboard banner)
+- QA/tests: medium
+
+Estimated total: 1-2 days of focused implementation including tests.

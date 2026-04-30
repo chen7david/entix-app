@@ -2,6 +2,7 @@ import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.hel
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
+    bulkImportRequestSchema,
     bulkImportResponseSchema,
     bulkMemberItemSchema,
     bulkMetricsSchema,
@@ -47,7 +48,7 @@ export const BulkMemberRoutes = {
         middleware: [requirePermission("member", ["bulk-import"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
-            body: jsonContent(z.array(bulkMemberItemSchema), "Array of members to import"),
+            body: jsonContent(bulkImportRequestSchema, "Bulk import payload"),
         },
         responses: {
             [HttpStatusCodes.OK]: jsonContent(bulkImportResponseSchema, "Import summary results"),

@@ -5,24 +5,35 @@ import type { UserProfileRepository } from "@api/repositories/user-profile.repos
 import { generateOpaqueId } from "@shared";
 import type { OrgRole } from "@shared/auth/permissions";
 import type * as schema from "@shared/db/schema";
-import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
+import type { BulkImportOptionsDTO, BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 import { BaseService } from "./base.service";
+import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
+import type { FinanceWalletService } from "./financial/finance-wallet.service";
 
 export class MemberImportService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private memberRepo: MemberRepository,
         private profileRepo: UserProfileRepository,
-        private socialRepo: SocialMediaRepository
+        private socialRepo: SocialMediaRepository,
+        private billingPlansService: FinanceBillingPlansService,
+        private walletService: FinanceWalletService
     ) {
         super();
     }
 
-    async importMembers(organizationId: string, members: BulkMemberItemDTO[]) {
+    async importMembers(
+        organizationId: string,
+        members: BulkMemberItemDTO[],
+        importOptions: BulkImportOptionsDTO
+    ) {
+        const { defaultBillingPlanId, billingPlanConflict } = importOptions;
         const results = {
             total: members.length,
             created: 0,
             linked: 0,
+            walletInitialized: 0,
+            billingAssigned: 0,
             failed: 0,
             errors: [] as string[],
         };
@@ -32,6 +43,11 @@ export class MemberImportService extends BaseService {
         // Each user is flushed via `executeBatch`: member/user rows reference ids in the same batch.
         // `MemberRepository.prepareInsertQuery` therefore takes explicit ids (see schema default on simple `insert` only).
         try {
+            const defaultPlan = await this.billingPlansService.getActivePlanForOrg(
+                organizationId,
+                defaultBillingPlanId
+            );
+
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             const preValidatedMembers = members.map((m) => ({
                 ...m,
@@ -114,6 +130,7 @@ export class MemberImportService extends BaseService {
 
                 const targetUserId = input.id || userByEmailId || generateOpaqueId();
                 const isNewUser = !userByEmailId && (!input.id || !userMapById.has(input.id));
+                const wasAlreadyLinked = memberSet.has(targetUserId);
                 const userBatch: any[] = [];
 
                 if (isNewUser) {
@@ -258,6 +275,36 @@ export class MemberImportService extends BaseService {
                 if (userBatch.length > 0) {
                     await this.userRepo.executeBatch(userBatch);
                 }
+
+                if (!wasAlreadyLinked) {
+                    const walletProvisionResult =
+                        await this.walletService.provisionWalletIfNotExists(
+                            targetUserId,
+                            organizationId
+                        );
+                    if (walletProvisionResult.created > 0) {
+                        results.walletInitialized++;
+                    }
+                }
+
+                if (billingPlanConflict === "skip") {
+                    const existingPlan = await this.billingPlansService
+                        .listMemberPlans(targetUserId, organizationId, { limit: 1 })
+                        .then((res) =>
+                            res.items.find(
+                                (assignment) => assignment.currencyId === defaultPlan.currencyId
+                            )
+                        );
+                    if (existingPlan) {
+                        continue;
+                    }
+                }
+
+                await this.billingPlansService.assignPlan(organizationId, {
+                    userId: targetUserId,
+                    planId: defaultBillingPlanId,
+                });
+                results.billingAssigned++;
             }
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : String(err);
