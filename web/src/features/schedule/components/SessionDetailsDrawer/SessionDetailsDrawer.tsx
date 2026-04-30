@@ -5,7 +5,7 @@ import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { App, Button, Drawer, Form, Space, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
 import { SessionAttendanceManager } from "./SessionAttendanceManager";
 import { SessionDangerZone } from "./SessionDangerZone";
@@ -54,7 +54,42 @@ export const SessionDetailsDrawer = ({
         .map((member) => ({
             value: member.userId,
             label: member.name || member.email || member.userId,
+            image: member.avatarUrl,
         }));
+    const selectedTeacherId = Form.useWatch("teacherId", form);
+    const mergedTeacherOptions = useMemo(
+        () => {
+            const selectedTeacherFromSession =
+                session?.teacherId && session?.teacher
+                    ? {
+                          value: session.teacherId,
+                          label:
+                              session.teacher.name ||
+                              session.teacher.email ||
+                              session.teacher.id ||
+                              session.teacherId,
+                          image: session.teacher.image ?? undefined,
+                      }
+                    : null;
+            const selectedTeacherFromUser =
+                user?.id && selectedTeacherId === user.id
+                    ? {
+                          value: user.id,
+                          label: user.name || user.email || user.id,
+                          image: user.image ?? undefined,
+                      }
+                    : null;
+            return [
+                ...(selectedTeacherFromSession ? [selectedTeacherFromSession] : []),
+                ...(selectedTeacherFromUser ? [selectedTeacherFromUser] : []),
+                ...teacherOptions,
+            ].filter(
+                (option, index, arr) =>
+                    arr.findIndex((item) => item.value === option.value) === index
+            );
+        },
+        [session, user, selectedTeacherId, teacherOptions]
+    );
 
     const [memberCache, setMemberCache] = useState<
         Record<string, { name: string; image?: string }>
@@ -86,6 +121,16 @@ export const SessionDetailsDrawer = ({
         if (open && session?.attendances) {
             setMemberCache((prev) => {
                 const next = { ...prev };
+                if (session.teacherId) {
+                    next[session.teacherId] = {
+                        name:
+                            session.teacher?.name ||
+                            session.teacher?.email ||
+                            session.teacher?.id ||
+                            session.teacherId,
+                        image: session.teacher?.image ?? undefined,
+                    };
+                }
                 session.attendances.forEach((p: any) => {
                     if (p.userId) {
                         next[p.userId] = {
@@ -287,7 +332,7 @@ export const SessionDetailsDrawer = ({
                             label: lesson.title,
                             value: lesson.id,
                         }))}
-                        teachers={teacherOptions}
+                        teachers={mergedTeacherOptions}
                         isLoadingLessons={isLoadingLessons}
                         hasNextLessonPage={!!hasNextLessonPage}
                         isFetchingNextLessonPage={isFetchingNextLessonPage}

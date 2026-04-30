@@ -370,7 +370,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                                 onClick={() => setIsCreateModalOpen(true)}
                                 size="large"
                                 className="h-11 font-semibold transition-all duration-200"
-                                disabled={!hasActiveBillingPlans}
                             >
                                 Create New Member
                             </Button>
@@ -532,8 +531,11 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
 
                     <Form.Item shouldUpdate={(prev, next) => prev.role !== next.role} noStyle>
                         {({ getFieldValue }) => {
-                            const roleValue = String(getFieldValue("role") || "").toLowerCase();
-                            const requiresBillingPlan = roleValue.includes("student");
+                            const roleList = String(getFieldValue("role") || "")
+                                .split(",")
+                                .map((item) => item.trim().toLowerCase())
+                                .filter(Boolean);
+                            const requiresBillingPlan = roleList.includes("student");
                             if (!requiresBillingPlan) {
                                 return null;
                             }
