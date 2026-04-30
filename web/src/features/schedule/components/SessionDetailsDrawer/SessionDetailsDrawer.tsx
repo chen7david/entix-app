@@ -57,39 +57,35 @@ export const SessionDetailsDrawer = ({
             image: member.avatarUrl,
         }));
     const selectedTeacherId = Form.useWatch("teacherId", form);
-    const mergedTeacherOptions = useMemo(
-        () => {
-            const selectedTeacherFromSession =
-                session?.teacherId && session?.teacher
-                    ? {
-                          value: session.teacherId,
-                          label:
-                              session.teacher.name ||
-                              session.teacher.email ||
-                              session.teacher.id ||
-                              session.teacherId,
-                          image: session.teacher.image ?? undefined,
-                      }
-                    : null;
-            const selectedTeacherFromUser =
-                user?.id && selectedTeacherId === user.id
-                    ? {
-                          value: user.id,
-                          label: user.name || user.email || user.id,
-                          image: user.image ?? undefined,
-                      }
-                    : null;
-            return [
-                ...(selectedTeacherFromSession ? [selectedTeacherFromSession] : []),
-                ...(selectedTeacherFromUser ? [selectedTeacherFromUser] : []),
-                ...teacherOptions,
-            ].filter(
-                (option, index, arr) =>
-                    arr.findIndex((item) => item.value === option.value) === index
-            );
-        },
-        [session, user, selectedTeacherId, teacherOptions]
-    );
+    const mergedTeacherOptions = useMemo(() => {
+        const selectedTeacherFromSession =
+            session?.teacherId && session?.teacher
+                ? {
+                      value: session.teacherId,
+                      label:
+                          session.teacher.name ||
+                          session.teacher.email ||
+                          session.teacher.id ||
+                          session.teacherId,
+                      image: session.teacher.image ?? undefined,
+                  }
+                : null;
+        const selectedTeacherFromUser =
+            user?.id && selectedTeacherId === user.id
+                ? {
+                      value: user.id,
+                      label: user.name || user.email || user.id,
+                      image: user.image ?? undefined,
+                  }
+                : null;
+        return [
+            ...(selectedTeacherFromSession ? [selectedTeacherFromSession] : []),
+            ...(selectedTeacherFromUser ? [selectedTeacherFromUser] : []),
+            ...teacherOptions,
+        ].filter(
+            (option, index, arr) => arr.findIndex((item) => item.value === option.value) === index
+        );
+    }, [session, user, selectedTeacherId, teacherOptions]);
 
     const [memberCache, setMemberCache] = useState<
         Record<string, { name: string; image?: string }>
