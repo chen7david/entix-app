@@ -9,6 +9,17 @@ if [ $? -ne 0 ]; then
 fi
 echo "✅ Biome check passed."
 
+# Validate migration metadata consistency when schema/migrations change
+if git diff --cached --name-only | rg -q "^(api/db/migrations/|shared/db/schema/)"; then
+  echo "🧱 Schema/migrations changed — validating migration metadata..."
+  npm run check:migrations
+  if [ $? -ne 0 ]; then
+    echo "❌ Migration metadata check failed — run npm run check:migrations."
+    exit 1
+  fi
+  echo "✅ Migration metadata check passed."
+fi
+
 # Regenerate worker-configuration.d.ts if wrangler.toml is staged
 if git diff --cached --name-only | grep -q "wrangler.toml"; then
   echo "🔧 wrangler.toml changed — regenerating worker-configuration.d.ts..."

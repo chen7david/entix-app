@@ -1,9 +1,13 @@
 import { enqueueMissedPayments } from "./handlers/missed-payments.scheduled";
+import { retryStuckVocabularyProcessing } from "./handlers/vocabulary-retry.scheduled";
 
 // cron expression → handler
 // Configure cron triggers in wrangler.json under "triggers": { "crons": ["* * * * *"] }
 const SCHEDULED_HANDLERS: Record<string, (env: CloudflareBindings) => Promise<void>> = {
-    "* * * * *": enqueueMissedPayments, // every minute — adjust to your cron
+    "* * * * *": async (env) => {
+        await enqueueMissedPayments(env);
+        await retryStuckVocabularyProcessing(env);
+    },
 };
 
 export async function routeScheduled(

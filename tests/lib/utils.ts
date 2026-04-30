@@ -39,9 +39,18 @@ const migrations = Object.entries(migrationFiles)
     });
 
 export async function createTestDb() {
-    if (migrations.length > 0) {
+    const schemaReady = await env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
+    )
+        .bind("financial_currencies")
+        .first();
+
+    if (!schemaReady && migrations.length > 0) {
         await applyD1Migrations(env.DB, migrations);
     }
+
+    await clearTestDbData();
+
     const db = drizzle(env.DB, { schema });
 
     // Seed all mandatory financial currencies from the global constant
@@ -128,4 +137,17 @@ export async function createTestDb() {
     }
 
     return db;
+}
+
+async function clearTestDbData() {
+    await env.DB.exec("PRAGMA foreign_keys=OFF;");
+    const tableQuery = await env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"
+    ).all<{ name: string }>();
+
+    for (const table of tableQuery.results ?? []) {
+        await env.DB.exec(`DELETE FROM "${table.name}"`);
+    }
+
+    await env.DB.exec("PRAGMA foreign_keys=ON;");
 }

@@ -17,8 +17,10 @@ import { authInvitations, authMembers, authOrganizations } from "./organization.
 import { paymentRequests } from "./payment-requests.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
+import { studentVocabulary } from "./student-vocabulary.schema";
 import { systemAuditEvents } from "./system-audit-events.schema";
 import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
+import { vocabularyBank } from "./vocabulary-bank.schema";
 
 export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     sessions: many(authSessions),
@@ -35,6 +37,7 @@ export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     addresses: many(userAddresses),
     socialMedias: many(userSocialMedias),
     paymentRequests: many(paymentRequests),
+    studentVocabularies: many(studentVocabulary),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -61,6 +64,7 @@ export const authOrganizationsRelations = relations(authOrganizations, ({ many }
     lessons: many(lessons),
     auditEvents: many(systemAuditEvents),
     paymentRequests: many(paymentRequests),
+    studentVocabularies: many(studentVocabulary),
 }));
 
 export const authMembersRelations = relations(authMembers, ({ one }) => ({
@@ -168,6 +172,7 @@ export const sessionAttendancesRelations = relations(sessionAttendances, ({ one,
         references: [authUsers.id],
     }),
     lessonProgress: many(lessonProgress),
+    studentVocabularies: many(studentVocabulary),
 }));
 
 export const lessonsRelations = relations(lessons, ({ one, many }) => ({
@@ -376,5 +381,28 @@ export const systemAuditEventsRelations = relations(systemAuditEvents, ({ one })
     acknowledgedByUser: one(authUsers, {
         fields: [systemAuditEvents.acknowledgedBy],
         references: [authUsers.id],
+    }),
+}));
+
+export const vocabularyBankRelations = relations(vocabularyBank, ({ many }) => ({
+    studentVocabularies: many(studentVocabulary),
+}));
+
+export const studentVocabularyRelations = relations(studentVocabulary, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [studentVocabulary.userId],
+        references: [authUsers.id],
+    }),
+    organization: one(authOrganizations, {
+        fields: [studentVocabulary.orgId],
+        references: [authOrganizations.id],
+    }),
+    vocabulary: one(vocabularyBank, {
+        fields: [studentVocabulary.vocabularyId],
+        references: [vocabularyBank.id],
+    }),
+    attendance: one(sessionAttendances, {
+        fields: [studentVocabulary.attendanceId],
+        references: [sessionAttendances.id],
     }),
 }));

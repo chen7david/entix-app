@@ -43,6 +43,7 @@ export class FinanceHandler {
 
         const txId = await getOrgFinancialService(ctx).executeTransfer({
             organizationId,
+            idempotencyKey: ctx.req.header("Idempotency-Key"),
             ...body,
         });
 

@@ -1,4 +1,4 @@
-import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
+import { BookOutlined, CalendarOutlined, TeamOutlined } from "@ant-design/icons";
 import { TableEmptyState } from "@web/src/components/data/TableEmptyState";
 import { DateUtils } from "@web/src/utils/date";
 import { Button, List, Tag, Typography, theme } from "antd";
@@ -13,6 +13,7 @@ type Props = {
     isFetchingNextPage?: boolean;
     onFetchNextPage: () => void;
     onEdit: (session: SessionDTO) => void;
+    onOpenVocabulary?: (session: SessionDTO) => void;
 };
 
 export const ScheduleSessionList: React.FC<Props> = ({
@@ -21,6 +22,7 @@ export const ScheduleSessionList: React.FC<Props> = ({
     isFetchingNextPage,
     onFetchNextPage,
     onEdit,
+    onOpenVocabulary,
 }) => {
     const { token } = theme.useToken();
 
@@ -55,7 +57,7 @@ export const ScheduleSessionList: React.FC<Props> = ({
                         }}
                         onClick={() => onEdit(session)}
                     >
-                        <div className="p-4 w-full flex items-center">
+                        <div className="p-4 w-full flex items-center gap-3">
                             <div
                                 style={{
                                     width: 60,
@@ -117,6 +119,17 @@ export const ScheduleSessionList: React.FC<Props> = ({
                                     </Text>
                                 </div>
                             </div>
+                            {onOpenVocabulary && (
+                                <Button
+                                    icon={<BookOutlined />}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        onOpenVocabulary(session);
+                                    }}
+                                >
+                                    Vocabulary
+                                </Button>
+                            )}
                         </div>
                     </List.Item>
                 )}

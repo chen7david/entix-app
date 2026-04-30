@@ -18,10 +18,12 @@ import { ScheduledSessionsRepository } from "@api/repositories/scheduled-session
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import { SocialMediaRepository } from "@api/repositories/social-media.repository";
+import { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
 import { UserRepository } from "@api/repositories/user.repository";
 import { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import { getDbClient } from "./db.factory";
 
 export const getFinancialAccountsRepository = (ctx: AppContext) => {
@@ -108,8 +110,16 @@ export const getSessionAttendancesRepository = (ctx: AppContext) => {
     return new SessionAttendancesRepository(getDbClient(ctx));
 };
 
+export const getStudentVocabularyRepository = (ctx: AppContext) => {
+    return new StudentVocabularyRepository(getDbClient(ctx));
+};
+
 export const getPaymentQueueRepository = (ctx: AppContext) => {
     return new PaymentQueueRepository(getDbClient(ctx));
+};
+
+export const getVocabularyBankRepository = (ctx: AppContext) => {
+    return new VocabularyBankRepository(getDbClient(ctx));
 };
 
 export const getSystemAuditRepository = (ctx: AppContext) => {

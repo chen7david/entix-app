@@ -1,5 +1,6 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
+import { hashPassword } from "better-auth/crypto";
 import Database from "better-sqlite3";
 
 const D1_DIR = ".wrangler/state/v3/d1/miniflare-D1DatabaseObject";
@@ -87,6 +88,64 @@ export function markUserEmailVerified(email: string): void {
             WHERE email = ?
             `
         ).run(email);
+    } finally {
+        db.close();
+    }
+}
+
+export function promoteUserToPlatformAdmin(email: string): void {
+    const dbPath = resolveLocalD1Path();
+    const db = new Database(dbPath);
+    try {
+        const result = db
+            .prepare(
+                `
+                UPDATE auth_users
+                SET role = 'admin', email_verified = 1
+                WHERE email = ?
+                `
+            )
+            .run(email);
+        if (result.changes === 0) {
+            throw new Error(`Cannot promote user: ${email} not found`);
+        }
+    } finally {
+        db.close();
+    }
+}
+
+export async function resetRootAdminCredential(password: string): Promise<void> {
+    const dbPath = resolveLocalD1Path();
+    const db = new Database(dbPath);
+    const hashed = await hashPassword(password);
+
+    try {
+        const userResult = db
+            .prepare(
+                `
+                UPDATE auth_users
+                SET role = 'admin', email_verified = 1
+                WHERE email = 'root@admin.com'
+                `
+            )
+            .run();
+        if (userResult.changes === 0) {
+            throw new Error("Cannot reset root admin credential: root@admin.com not found");
+        }
+
+        const accountResult = db
+            .prepare(
+                `
+                UPDATE auth_accounts
+                SET password = ?, updated_at = ?
+                WHERE account_id = 'root@admin.com' AND provider_id = 'credential'
+                `
+            )
+            .run(hashed, Date.now());
+
+        if (accountResult.changes === 0) {
+            throw new Error("Cannot reset root admin credential: auth account not found");
+        }
     } finally {
         db.close();
     }

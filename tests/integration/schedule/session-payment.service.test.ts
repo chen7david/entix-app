@@ -32,6 +32,7 @@ describe("SessionPaymentService Integration", () => {
     const sessionId = "sess_svc_test";
     const lessonId = "lesson_svc_test";
     const currencyId = FINANCIAL_CURRENCIES.USD;
+    const manualOverrideCurrencyId = FINANCIAL_CURRENCIES.ETD;
     const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT;
 
     let studentAccountId: string;
@@ -126,6 +127,21 @@ describe("SessionPaymentService Integration", () => {
                 balanceCents: 0,
                 isActive: true,
                 accountType: "funding",
+            })
+            .onConflictDoNothing();
+
+        await db
+            .insert(financialAccounts)
+            .values({
+                id: `facc_system_adjustment_${manualOverrideCurrencyId}`,
+                ownerId: "system",
+                ownerType: "org",
+                organizationId: null,
+                currencyId: manualOverrideCurrencyId,
+                name: "System Adjustment",
+                balanceCents: 0,
+                isActive: true,
+                accountType: "system",
             })
             .onConflictDoNothing();
     });

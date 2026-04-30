@@ -4,6 +4,19 @@ import type { AppHandler } from "@api/helpers/types.helpers";
 import type { ScheduleRoutes } from "./schedule.routes";
 
 export class ScheduleHandlers {
+    static getSessionById: AppHandler<typeof ScheduleRoutes.getSessionById> = async (ctx) => {
+        const { organizationId, sessionId } = ctx.req.valid("param");
+        const service = getSessionScheduleService(ctx);
+        const session = await service.getSessionById(organizationId, sessionId);
+        return ctx.json(
+            {
+                ...session,
+                startTime: new Date(session.startTime).getTime(),
+            } as any,
+            HttpStatusCodes.OK
+        );
+    };
+
     static listSessions: AppHandler<typeof ScheduleRoutes.listSessions> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const queryParams = ctx.req.valid("query");

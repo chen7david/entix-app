@@ -5,6 +5,7 @@ import { ScheduleRoutes } from "./schedule.routes";
 
 export const scheduleRoutes = new OpenAPIHono<AppEnv>();
 
+scheduleRoutes.openapi(ScheduleRoutes.getSessionById, ScheduleHandlers.getSessionById);
 scheduleRoutes.openapi(ScheduleRoutes.listSessions, ScheduleHandlers.listSessions);
 scheduleRoutes.openapi(ScheduleRoutes.getScheduleMetrics, ScheduleHandlers.getScheduleMetrics);
 scheduleRoutes.openapi(ScheduleRoutes.getAnalyticsSessions, ScheduleHandlers.getAnalyticsSessions);
