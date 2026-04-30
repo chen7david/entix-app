@@ -5,18 +5,29 @@ import type { AiService } from "./ai.service";
 type VocabularyTranslation = {
     zh_translation: string;
     pinyin: string;
+    needs_language_review?: boolean;
+};
+
+export type VocabularyProcessingDeps = {
+    /** Pipeline / infra failures only — content-quality review uses status `review` via AI flag. */
+    logPipelineFailure: (
+        phase: "text" | "audio",
+        vocabularyId: string,
+        error: unknown
+    ) => Promise<void>;
 };
 
 export class VocabularyProcessingService {
     constructor(
         private readonly vocabRepo: VocabularyBankRepository,
         private readonly aiService: AiService,
-        private readonly queue: Queue<EntixQueueMessage>
+        private readonly queue: Queue<EntixQueueMessage>,
+        private readonly deps?: VocabularyProcessingDeps
     ) {}
 
     async processText(vocabularyId: string): Promise<void> {
         const item = await this.vocabRepo.findById(vocabularyId);
-        if (!item || item.status !== "new") {
+        if (!item || (item.status !== "new" && item.status !== "processing_text")) {
             return;
         }
 
@@ -25,7 +36,9 @@ export class VocabularyProcessingService {
         try {
             const prompt = [
                 "Translate the following English phrase to Mandarin Chinese.",
-                "Return strict JSON only with keys: zh_translation, pinyin.",
+                "Return strict JSON only with keys: zh_translation, pinyin, needs_language_review.",
+                "needs_language_review must be true only if the English phrase is likely misspelled, ungrammatical, or not sensible as study vocabulary.",
+                "If needs_language_review is true, still output your best-effort zh_translation and pinyin if possible.",
                 `English phrase: "${item.text}"`,
             ].join("\n");
 
@@ -35,6 +48,15 @@ export class VocabularyProcessingService {
             });
 
             const parsed = parseVocabularyTranslation(result.text);
+
+            if (parsed.needs_language_review) {
+                await this.vocabRepo.updateStatus(vocabularyId, "review", {
+                    zhTranslation: parsed.zh_translation,
+                    pinyin: parsed.pinyin,
+                });
+                return;
+            }
+
             await this.vocabRepo.updateStatus(vocabularyId, "text_ready", {
                 zhTranslation: parsed.zh_translation,
                 pinyin: parsed.pinyin,
@@ -44,14 +66,15 @@ export class VocabularyProcessingService {
                 type: "vocabulary.process-audio",
                 vocabularyId,
             });
-        } catch {
-            await this.vocabRepo.updateStatus(vocabularyId, "review");
+        } catch (error: unknown) {
+            await this.deps?.logPipelineFailure("text", vocabularyId, error);
+            // Leave status as processing_text for cron/queue retry; do not use `review`.
         }
     }
 
     async processAudio(vocabularyId: string): Promise<void> {
         const item = await this.vocabRepo.findById(vocabularyId);
-        if (!item || item.status !== "text_ready") {
+        if (!item || (item.status !== "text_ready" && item.status !== "processing_audio")) {
             return;
         }
 
@@ -65,8 +88,9 @@ export class VocabularyProcessingService {
                 enAudioUrl,
                 zhAudioUrl,
             });
-        } catch {
-            await this.vocabRepo.updateStatus(vocabularyId, "review");
+        } catch (error: unknown) {
+            await this.deps?.logPipelineFailure("audio", vocabularyId, error);
+            // Leave status as processing_audio for cron/queue retry; do not use `review`.
         }
     }
 
@@ -75,14 +99,21 @@ export class VocabularyProcessingService {
     }
 }
 
-function parseVocabularyTranslation(raw: string): VocabularyTranslation {
+function parseVocabularyTranslation(
+    raw: string
+): VocabularyTranslation & { needs_language_review: boolean } {
     const trimmed = raw.trim();
 
     const objectCandidate = trimmed.startsWith("{")
         ? trimmed
         : trimmed.slice(trimmed.indexOf("{"), trimmed.lastIndexOf("}") + 1);
 
-    const parsed = JSON.parse(objectCandidate) as Partial<VocabularyTranslation>;
+    const parsed = JSON.parse(objectCandidate) as Partial<VocabularyTranslation> & {
+        needs_language_review?: boolean;
+    };
+    const nlr = parsed.needs_language_review as boolean | string | undefined;
+    const needs_language_review = nlr === true || nlr === "true";
+
     if (
         typeof parsed.zh_translation !== "string" ||
         parsed.zh_translation.length === 0 ||
@@ -95,5 +126,6 @@ function parseVocabularyTranslation(raw: string): VocabularyTranslation {
     return {
         zh_translation: parsed.zh_translation,
         pinyin: parsed.pinyin,
+        needs_language_review,
     };
 }

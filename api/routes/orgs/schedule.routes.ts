@@ -43,6 +43,29 @@ const SessionResponseSchema = z.object({
 });
 
 export const ScheduleRoutes = {
+    getSessionById: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/schedule/{sessionId}",
+        tags: ["Schedule"],
+        middleware: [requirePermission("schedule", ["read"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: SessionResponseSchema,
+                    },
+                },
+                description: "Session details with attendance roster",
+            },
+        },
+    }),
+
     listSessions: createRoute({
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/schedule",

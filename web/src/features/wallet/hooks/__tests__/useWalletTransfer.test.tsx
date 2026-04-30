@@ -79,9 +79,67 @@ describe("useWalletTransfer", () => {
 
         await result.current.mutateAsync(input);
 
-        expect(postTransfer).toHaveBeenCalledWith({
-            param: { organizationId: "org_1" },
-            json: input,
+        expect(postTransfer).toHaveBeenCalledWith(
+            {
+                param: { organizationId: "org_1" },
+                json: {
+                    categoryId: "fcat_internal_transfer",
+                    sourceAccountId: "acc_from",
+                    destinationAccountId: "acc_to",
+                    currencyId: "cur_1",
+                    amountCents: 500,
+                    description: "Top-up",
+                },
+            },
+            undefined
+        );
+    });
+
+    it("sends Idempotency-Key header when idempotencyKey is set", async () => {
+        const postTransfer = vi.fn().mockResolvedValue({ ok: true });
+        mockGetApiClient.mockReturnValue({
+            api: {
+                v1: {
+                    orgs: {
+                        ":organizationId": {
+                            finance: {
+                                transfer: {
+                                    $post: postTransfer,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         });
+        mockHcJson.mockResolvedValue({ id: "tx_1" });
+
+        const wrapper = createWrapper();
+        const { result } = renderHook(() => useWalletTransfer("org_1"), { wrapper });
+
+        const input: TransferInput = {
+            categoryId: "fcat_internal_transfer",
+            sourceAccountId: "acc_from",
+            destinationAccountId: "acc_to",
+            currencyId: "cur_1",
+            amountCents: 500,
+            idempotencyKey: "idem-1",
+        };
+
+        await result.current.mutateAsync(input);
+
+        expect(postTransfer).toHaveBeenCalledWith(
+            {
+                param: { organizationId: "org_1" },
+                json: {
+                    categoryId: "fcat_internal_transfer",
+                    sourceAccountId: "acc_from",
+                    destinationAccountId: "acc_to",
+                    currencyId: "cur_1",
+                    amountCents: 500,
+                },
+            },
+            { headers: { "Idempotency-Key": "idem-1" } }
+        );
     });
 });

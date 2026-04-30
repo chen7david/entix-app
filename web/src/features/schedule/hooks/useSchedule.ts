@@ -323,3 +323,21 @@ export function useMyEnrollments(organizationId?: string) {
         staleTime: QUERY_STALE_MS,
     });
 }
+
+export function useSessionById(organizationId?: string, sessionId?: string) {
+    const { isAuthenticated } = useAuth();
+
+    return useQuery({
+        queryKey: ["scheduleSession", organizationId, sessionId],
+        queryFn: async () => {
+            if (!organizationId || !sessionId) return null;
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].schedule[":sessionId"].$get({
+                param: { organizationId, sessionId },
+            });
+            return hcJson<SessionDTO>(res);
+        },
+        enabled: !!organizationId && !!sessionId && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+    });
+}

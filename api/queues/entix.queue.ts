@@ -11,7 +11,7 @@ import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repo
 import { AiService } from "@api/services/ai.service";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { VocabularyProcessingService } from "@api/services/vocabulary-processing.service";
-import { generateAuditId } from "@shared";
+import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
 
@@ -174,11 +174,27 @@ async function handleVocabularyProcessText(
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
     const vocabularyRepo = new VocabularyBankRepository(db);
+    const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
         ai: env.AI,
         model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     });
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE);
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE, {
+        logPipelineFailure: async (_phase, vocabularyId, error) => {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            await auditRepo.insert({
+                id: generateAuditId(),
+                organizationId: PLATFORM_ORGANIZATION_ID,
+                eventType: "vocabulary.pipeline_failed",
+                severity: "warning",
+                actorType: "system",
+                subjectType: "vocabulary_bank",
+                subjectId: vocabularyId,
+                message: `Vocabulary text pipeline failed: ${errMsg}`,
+                metadata: JSON.stringify({ phase: "text", vocabularyId }),
+            });
+        },
+    });
 
     try {
         await processor.processText(message.body.vocabularyId);
@@ -195,11 +211,27 @@ async function handleVocabularyProcessAudio(
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
     const vocabularyRepo = new VocabularyBankRepository(db);
+    const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
         ai: env.AI,
         model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     });
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE);
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE, {
+        logPipelineFailure: async (_phase, vocabularyId, error) => {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            await auditRepo.insert({
+                id: generateAuditId(),
+                organizationId: PLATFORM_ORGANIZATION_ID,
+                eventType: "vocabulary.pipeline_failed",
+                severity: "warning",
+                actorType: "system",
+                subjectType: "vocabulary_bank",
+                subjectId: vocabularyId,
+                message: `Vocabulary audio pipeline failed: ${errMsg}`,
+                metadata: JSON.stringify({ phase: "audio", vocabularyId }),
+            });
+        },
+    });
 
     try {
         await processor.processAudio(message.body.vocabularyId);

@@ -6,7 +6,8 @@
     "scripts": {
         "prepare": "husky || true",
         "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
-        "dev:api": "wrangler dev --env development --port 3000",
+        "dev:e2e": "concurrently --kill-others-on-fail \"npm run dev:api -- --local\" \"npm run dev:web\"",
+        "dev:api": "wrangler dev --env development --port 3000 --local",
         "dev:web": "cd web && npm run dev",
         "build:web": "cd web && npm install && npm run build && cd .. && npm run build:docs",
         "dev:docs": "vitepress dev docs",
@@ -26,7 +27,7 @@
         "test:api": "vitest run",
         "test:web": "cd web && npm install --prefer-offline && npm run test:run",
         "test:e2e:install": "PLAYWRIGHT_BROWSERS_PATH=0 playwright install chromium",
-        "test:e2e": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
+        "test:e2e": "npm run db:reset:dev && PLAYWRIGHT_BROWSERS_PATH=0 playwright test",
         "test:e2e:headed": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed",
         "test:e2e:debug": "PWDEBUG=1 PLAYWRIGHT_BROWSERS_PATH=0 playwright test --headed --workers=1",
         "test:e2e:reset": "npm run db:reset:dev && PLAYWRIGHT_BROWSERS_PATH=0 playwright test",

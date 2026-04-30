@@ -4,6 +4,7 @@ import {
     jsonContent,
     jsonContentRequired,
 } from "@api/helpers/http.helpers";
+import { idempotencyMiddleware } from "@api/middleware/idempotency.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
     activateCurrencyRequestSchema,
@@ -87,6 +88,7 @@ export const FinanceRoutes = {
         tags,
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/finance/transfer",
+        middleware: [idempotencyMiddleware] as const,
         summary: "Execute an internal transfer between accounts",
         request: {
             params: z.object({ organizationId: z.string() }),

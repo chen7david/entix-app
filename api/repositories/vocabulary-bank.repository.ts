@@ -1,7 +1,7 @@
 import type { AppDb } from "@api/factories/db.factory";
 import type { VocabularyBankItem, VocabularyBankStatus } from "@shared/db/schema";
 import { vocabularyBank } from "@shared/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, lt, or } from "drizzle-orm";
 
 export class VocabularyBankRepository {
     constructor(private readonly db: AppDb) {}
@@ -66,5 +66,25 @@ export class VocabularyBankRepository {
 
     async getReviewItems(): Promise<VocabularyBankItem[]> {
         return this.getByStatus("review");
+    }
+
+    /**
+     * Items stuck in text/audio processing (e.g. transient AI/TTS failure).
+     * Caller should re-enqueue queue messages for retry.
+     */
+    async findStaleProcessing(olderThan: Date, limit = 40): Promise<VocabularyBankItem[]> {
+        return this.db
+            .select()
+            .from(vocabularyBank)
+            .where(
+                and(
+                    or(
+                        eq(vocabularyBank.status, "processing_text"),
+                        eq(vocabularyBank.status, "processing_audio")
+                    ),
+                    lt(vocabularyBank.updatedAt, olderThan)
+                )
+            )
+            .limit(limit);
     }
 }

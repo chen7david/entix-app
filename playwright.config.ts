@@ -13,7 +13,7 @@ export default defineConfig({
     retries: 0,
     reporter: [["list"], ["html", { open: "never" }]],
     use: {
-        baseURL: "http://127.0.0.1:8000",
+        baseURL: "http://localhost:8000",
         launchOptions: {
             slowMo,
         },
@@ -22,9 +22,9 @@ export default defineConfig({
         video: "retain-on-failure",
     },
     webServer: {
-        command: "SKIP_AUTH_EMAILS=true npm run dev",
-        url: "http://127.0.0.1:8000/auth/sign-in",
-        reuseExistingServer: true,
+        command: "SKIP_AUTH_EMAILS=true npm run dev:e2e",
+        url: "http://localhost:8000/auth/sign-in",
+        reuseExistingServer: false,
         timeout: 120_000,
     },
     projects: [
