@@ -76,6 +76,7 @@ export const getRegistrationService = (ctx: AppContext) => {
         getOrganizationRepository(ctx),
         getMemberRepository(ctx),
         getUserFinancialService(ctx),
+        getFinanceBillingPlansService(ctx),
         getUserService(ctx),
         ctx.var.frontendUrl,
         ctx.var.logger

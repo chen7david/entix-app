@@ -89,8 +89,36 @@ export class SessionScheduleService extends BaseService {
         }
     }
 
+    private async assertStudentsAssignable(
+        organizationId: string,
+        userIds: string[]
+    ): Promise<void> {
+        if (userIds.length === 0) return;
+        const members = await this.memberRepo.findByUserIds(organizationId, userIds);
+        const memberByUserId = new Map(members.map((member) => [member.userId, member]));
+
+        for (const userId of userIds) {
+            const membership = memberByUserId.get(userId);
+            if (!membership) {
+                throw new BadRequestError(
+                    `Selected attendee ${userId} is not a member of the organization.`
+                );
+            }
+            const roles = membership.role
+                .split(",")
+                .map((role) => role.trim().toLowerCase())
+                .filter(Boolean);
+            if (!roles.includes("student")) {
+                throw new BadRequestError(
+                    "Only members with student role can be added as session attendees."
+                );
+            }
+        }
+    }
+
     async createSession(organizationId: string, data: CreateSessionDTO) {
         await this.assertTeacherAssignable(organizationId, data.teacherId);
+        await this.assertStudentsAssignable(organizationId, data.userIds);
 
         const isRecurring = !!data.recurrence;
         // Recurring sessions share one `seriesId` across rows; it is not a table PK default.
@@ -322,6 +350,7 @@ export class SessionScheduleService extends BaseService {
 
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
         await this.assertTeacherAssignable(organizationId, data.teacherId);
+        await this.assertStudentsAssignable(organizationId, data.userIds);
 
         const currentSession = await this.getSessionById(organizationId, sessionId);
 

@@ -40,6 +40,11 @@ describe("SessionScheduleService Architecture Bounds", () => {
             find: vi.fn().mockResolvedValue({
                 role: "teacher",
             }),
+            findByUserIds: vi
+                .fn()
+                .mockImplementation((_organizationId: string, userIds: string[]) =>
+                    Promise.resolve(userIds.map((userId) => ({ userId, role: "student" })))
+                ),
         };
         const mockBilling = {} as any;
         const mockWallet = {} as any;
