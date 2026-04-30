@@ -141,6 +141,21 @@ export const bulkMetricsSchema = z.object({
 
 export type BulkMetricsDTO = z.infer<typeof bulkMetricsSchema>;
 
+export const billingPlanConflictSchema = z.enum(["replace", "skip"]);
+export type BillingPlanConflict = z.infer<typeof billingPlanConflictSchema>;
+
+export const bulkImportOptionsSchema = z.object({
+    defaultBillingPlanId: z.string().min(1),
+    billingPlanConflict: billingPlanConflictSchema.default("replace"),
+});
+export type BulkImportOptionsDTO = z.infer<typeof bulkImportOptionsSchema>;
+
+export const bulkImportRequestSchema = z.object({
+    members: z.array(bulkMemberItemSchema),
+    importOptions: bulkImportOptionsSchema,
+});
+export type BulkImportRequestDTO = z.infer<typeof bulkImportRequestSchema>;
+
 /**
  * Schema for import summary response
  */
@@ -148,6 +163,8 @@ export const bulkImportResponseSchema = z.object({
     total: z.number().openapi({ example: 10 }),
     created: z.number().openapi({ example: 8 }),
     linked: z.number().openapi({ example: 2 }),
+    walletInitialized: z.number().openapi({ example: 8 }),
+    billingAssigned: z.number().openapi({ example: 8 }),
     failed: z.number().openapi({ example: 0 }),
     errors: z.array(z.string()).openapi({ example: [] }),
 });

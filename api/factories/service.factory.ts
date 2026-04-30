@@ -126,7 +126,9 @@ export const getMemberImportService = (ctx: AppContext) => {
         getUserRepository(ctx),
         getMemberRepository(ctx),
         getUserProfileRepository(ctx),
-        getSocialMediaRepository(ctx)
+        getSocialMediaRepository(ctx),
+        getFinanceBillingPlansService(ctx),
+        getFinanceWalletService(ctx)
     );
 };
 
@@ -161,7 +163,9 @@ export const getFinanceBillingPlansService = (ctx: AppContext) => {
 export const getFinanceWalletService = (ctx: AppContext) => {
     return new FinanceWalletService(
         getFinancialAccountsRepository(ctx),
-        getFinancialTransactionsRepository(ctx)
+        getFinancialTransactionsRepository(ctx),
+        getFinancialCurrenciesRepository(ctx),
+        getFinancialOrgSettingsRepository(ctx)
     );
 };
 

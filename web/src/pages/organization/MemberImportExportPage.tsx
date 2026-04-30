@@ -6,6 +6,7 @@ import {
     UploadOutlined,
 } from "@ant-design/icons";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import {
     Alert,
@@ -13,6 +14,9 @@ import {
     Card,
     Collapse,
     Divider,
+    Modal,
+    Radio,
+    Select,
     Space,
     Statistic,
     Typography,
@@ -20,6 +24,7 @@ import {
     Upload,
 } from "antd";
 import type React from "react";
+import { useMemo, useState } from "react";
 
 const { Paragraph, Text } = Typography;
 const { Dragger } = Upload;
@@ -31,6 +36,25 @@ export const MemberImportExportPage: React.FC = () => {
     const { exportMembers, importMembers, isImporting, importResult } = useBulkMembers(
         activeOrganization?.id
     );
+    const [parsedMembers, setParsedMembers] = useState<any[] | null>(null);
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [selectedBillingPlanId, setSelectedBillingPlanId] = useState<string | undefined>();
+    const [billingPlanConflict, setBillingPlanConflict] = useState<"replace" | "skip">("replace");
+    const { data: billingPlansQuery } = useBillingPlans(activeOrganization?.id ?? "", {
+        limit: 100,
+    });
+    const billingPlans = billingPlansQuery?.data ?? [];
+    const hasBillingPlans = billingPlans.length > 0;
+    const billingPlanOptions = useMemo(
+        () =>
+            billingPlans
+                .filter((plan) => plan.isActive)
+                .map((plan) => ({
+                    label: `${plan.name} (${plan.currencyId})`,
+                    value: plan.id,
+                })),
+        [billingPlans]
+    );
 
     const handleUpload = (file: File) => {
         const reader = new FileReader();
@@ -40,7 +64,10 @@ export const MemberImportExportPage: React.FC = () => {
                 if (!Array.isArray(json)) {
                     throw new Error("JSON must be an array of members");
                 }
-                await importMembers(json);
+                setParsedMembers(json);
+                setSelectedBillingPlanId(undefined);
+                setBillingPlanConflict("replace");
+                setIsReviewOpen(true);
             } catch (err) {
                 console.error(err);
                 // AntD message handled by hook manually or via try/catch here if needed
@@ -48,6 +75,19 @@ export const MemberImportExportPage: React.FC = () => {
         };
         reader.readAsText(file);
         return false; // Prevent auto-upload by AntD
+    };
+
+    const handleConfirmImport = async () => {
+        if (!parsedMembers || !selectedBillingPlanId) return;
+        await importMembers({
+            members: parsedMembers,
+            importOptions: {
+                defaultBillingPlanId: selectedBillingPlanId,
+                billingPlanConflict,
+            },
+        });
+        setIsReviewOpen(false);
+        setParsedMembers(null);
     };
 
     const importExample = [
@@ -130,6 +170,15 @@ export const MemberImportExportPage: React.FC = () => {
                 </Card>
 
                 <Card title="Import Data" className="shadow-sm">
+                    {!hasBillingPlans && (
+                        <Alert
+                            type="warning"
+                            showIcon
+                            className="mb-3"
+                            message="No billing plans found"
+                            description="Create at least one billing plan before importing members."
+                        />
+                    )}
                     <Paragraph>
                         Upload a JSON file to bulk-add or update members.{" "}
                         <Text strong>No automated emails will be sent.</Text>
@@ -138,7 +187,7 @@ export const MemberImportExportPage: React.FC = () => {
                         accept=".json"
                         beforeUpload={handleUpload}
                         showUploadList={false}
-                        disabled={isImporting}
+                        disabled={isImporting || !hasBillingPlans}
                     >
                         <Paragraph className="ant-upload-drag-icon">
                             <UploadOutlined className="text-blue-500" />
@@ -252,6 +301,16 @@ export const MemberImportExportPage: React.FC = () => {
                                 valueStyle={{ color: "#108ee9", fontSize: token.fontSizeXL }}
                             />
                             <Statistic
+                                title="Wallets Init"
+                                value={importResult.walletInitialized}
+                                valueStyle={{ color: "#08979c", fontSize: token.fontSizeXL }}
+                            />
+                            <Statistic
+                                title="Billing Assigned"
+                                value={importResult.billingAssigned}
+                                valueStyle={{ color: "#722ed1", fontSize: token.fontSizeXL }}
+                            />
+                            <Statistic
                                 title="Failed"
                                 value={importResult.failed}
                                 valueStyle={{ color: "#cf1322", fontSize: token.fontSizeXL }}
@@ -275,6 +334,50 @@ export const MemberImportExportPage: React.FC = () => {
                     </Space>
                 </Card>
             )}
+
+            <Modal
+                title="Review Import Settings"
+                open={isReviewOpen}
+                onCancel={() => setIsReviewOpen(false)}
+                onOk={handleConfirmImport}
+                okText="Start Import"
+                okButtonProps={{
+                    loading: isImporting,
+                    disabled: !selectedBillingPlanId || !hasBillingPlans || !parsedMembers?.length,
+                }}
+            >
+                <Space direction="vertical" className="w-full" size="middle">
+                    <Alert
+                        type="info"
+                        showIcon
+                        message={`Rows ready: ${parsedMembers?.length ?? 0}`}
+                        description="Review and confirm these settings before import."
+                    />
+                    <div>
+                        <Text strong>Default billing plan</Text>
+                        <Select
+                            className="w-full mt-2"
+                            placeholder="Select billing plan"
+                            value={selectedBillingPlanId}
+                            options={billingPlanOptions}
+                            onChange={setSelectedBillingPlanId}
+                        />
+                    </div>
+                    <div>
+                        <Text strong>If member already has a billing plan</Text>
+                        <Radio.Group
+                            className="mt-2"
+                            value={billingPlanConflict}
+                            onChange={(event) => setBillingPlanConflict(event.target.value)}
+                        >
+                            <Space direction="vertical">
+                                <Radio value="replace">Replace existing plan (recommended)</Radio>
+                                <Radio value="skip">Keep existing plan</Radio>
+                            </Space>
+                        </Radio.Group>
+                    </div>
+                </Space>
+            </Modal>
         </div>
     );
 };

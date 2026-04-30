@@ -22,8 +22,12 @@ export class BulkMemberHandler {
 
     static importMembers: AppHandler<typeof BulkMemberRoutes.importMembers> = async (ctx) => {
         const organizationId = ctx.req.valid("param").organizationId;
-        const members = ctx.req.valid("json");
-        const results = await getMemberImportService(ctx).importMembers(organizationId, members);
+        const payload = ctx.req.valid("json");
+        const results = await getMemberImportService(ctx).importMembers(
+            organizationId,
+            payload.members,
+            payload.importOptions
+        );
         return ctx.json(results, HttpStatusCodes.OK);
     };
 }
