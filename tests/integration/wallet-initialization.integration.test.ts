@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
 import * as schema from "@shared/db/schema";
+import { drizzle } from "drizzle-orm/d1";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
@@ -20,7 +21,7 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
     });
 
     it("should return existing wallets in summary and prevent duplicate initialization", async () => {
-        const db = await createTestDb();
+        const db = drizzle(env.DB, { schema });
         const client = createTestClient(app, env, authCookie);
 
         // 1. Manually insert a wallet to simulate 'hidden' state
@@ -102,7 +103,7 @@ describe("Wallet Initialization & Visibility Diagnostics", () => {
     });
 
     it("should allow an org owner/admin to view another member's' wallet summary", async () => {
-        const db = await createTestDb();
+        const db = drizzle(env.DB, { schema });
         const client = createTestClient(app, env, authCookie);
 
         // 1. Setup: Create another user in the same org

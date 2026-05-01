@@ -1,6 +1,7 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
 import * as schema from "@shared/db/schema";
+import { drizzle } from "drizzle-orm/d1";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createSuperAdmin, getAuthCookie } from "../lib/auth-test.helper";
 import { createTestClient } from "../lib/test-client";
@@ -16,7 +17,7 @@ describe("Admin Verification Resend Integration", () => {
     it("POST /api/v1/auth/admin/resend-verification should succeed for super admin", async () => {
         // 1. Setup: Create a regular user who is UNVERIFIED
         const targetEmail = "unverified@example.com";
-        const db = await createTestDb();
+        const db = drizzle(env.DB, { schema });
 
         // Mock the service method to avoid Better Auth "email not enabled" errors in test env
         const { NotificationService } = await import("@api/services/notification.service");

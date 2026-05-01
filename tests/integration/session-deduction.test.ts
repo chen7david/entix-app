@@ -289,7 +289,7 @@ describe("Session Billing Integration", () => {
         }
     });
 
-    it("should throw NotFoundError if headcount is below the lowest tier", async () => {
+    it("should gracefully skip billing when headcount is below the lowest tier", async () => {
         const planId = generateBillingPlanId();
         await db.insert(financeBillingPlans).values({
             id: planId,
@@ -347,15 +347,15 @@ describe("Session Billing Integration", () => {
             absent: false,
         });
 
-        // 1 student present. Plan lowest tier is 5. Should fail.
+        // 1 student present. Plan lowest tier is 5. Completion should still succeed.
         const response = await client.orgs.schedule.updateStatus(orgId, sessionId, {
             status: "completed",
         });
-        // We do not drainQueue if the endpoint itself returns a 4xx error and doesn't enqueue.
-        expect(response.status).toBe(HttpStatusCodes.NOT_FOUND);
-        const body = (await response.json()) as any;
-        expect(body.error).toContain("has no tier for session size: 1");
-        expect(body.error).toContain("Minimum required: 5");
+        expect(response.status).toBe(HttpStatusCodes.OK);
+
+        // No payment should be recorded for an unbillable attendance.
+        const txRows = await db.select().from(financialTransactions);
+        expect(txRows.length).toBe(0);
     });
 
     it("should preserve assignedAt and allow silent replacement (Upsert)", async () => {

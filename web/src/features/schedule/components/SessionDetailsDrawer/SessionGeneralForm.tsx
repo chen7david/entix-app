@@ -1,7 +1,8 @@
 import { ThunderboltOutlined } from "@ant-design/icons";
-import { createSessionSchema } from "@shared";
+import { createSessionSchema, getAvatarUrl } from "@shared";
 import {
     Alert,
+    Avatar,
     Button,
     Col,
     DatePicker,
@@ -9,6 +10,7 @@ import {
     Input,
     Row,
     Select,
+    Space,
     Switch,
     TimePicker,
     Tooltip,
@@ -24,7 +26,7 @@ type SessionGeneralFormProps = {
     form: FormInstance;
     session: any | null;
     lessons: { label: string; value: string }[];
-    teachers: { label: string; value: string }[];
+    teachers: { label: string; value: string; image?: string | null }[];
     isLoadingLessons: boolean;
     hasNextLessonPage: boolean;
     isFetchingNextLessonPage: boolean;
@@ -132,6 +134,22 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                             .toLowerCase()
                             .includes(input.toLowerCase())
                     }
+                    optionRender={(option) => (
+                        <Space>
+                            <Avatar
+                                size="small"
+                                src={
+                                    option.data.image
+                                        ? getAvatarUrl(option.data.image, "sm")
+                                        : undefined
+                                }
+                            >
+                                {!option.data.image &&
+                                    option.label?.toString().charAt(0).toUpperCase()}
+                            </Avatar>
+                            {option.label}
+                        </Space>
+                    )}
                 />
             </Form.Item>
 

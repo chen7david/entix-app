@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseJson } from "../lib/api-request.helper";
 import {
     createAuthenticatedOrg,
@@ -13,6 +13,10 @@ import { createTestDb } from "../lib/utils";
 describe("Uploads Integration", () => {
     beforeEach(async () => {
         await createTestDb();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe("Authentication and Authorization", () => {

@@ -59,10 +59,10 @@ export const TeacherPortal: React.FC = () => {
                                         <Button
                                             type="primary"
                                             onClick={() =>
-                                                navigateOrg(AppRoutes.org.teaching.schedule)
+                                                navigateOrg(AppRoutes.org.teaching.sessions)
                                             }
                                         >
-                                            Go to Schedule
+                                            Go to Sessions
                                         </Button>
                                     </Space>
                                 ),
