@@ -1,12 +1,20 @@
 import journalMeta from "../migrations/meta/_journal.json";
 import { JournalSchema } from "./meta.schemas";
 
-const parsedJournal = JournalSchema.parse(journalMeta);
-const journalCount = parsedJournal.entries.length;
+const parsedJournal = JournalSchema.safeParse(journalMeta);
+const journalCount = parsedJournal.success ? parsedJournal.data.entries.length : 0;
+const journalParseError = parsedJournal.success ? null : parsedJournal.error.message;
 
 let checkPromise: Promise<void> | null = null;
 
 export async function checkRuntimeMigrationDrift(db: D1Database) {
+    if (journalParseError) {
+        console.warn("[Migration Drift] Invalid journal metadata, skipping drift check", {
+            error: journalParseError,
+        });
+        return;
+    }
+
     let rows: Array<{ hash?: string | null; tag?: string | null }> = [];
     try {
         const result = await db
