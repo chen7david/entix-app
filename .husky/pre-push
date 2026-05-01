@@ -8,3 +8,11 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 echo "✅ Type check passed."
+
+echo "⏳ Running migration integrity gate..."
+npm run check:migrations:all
+if [ $? -ne 0 ]; then
+  echo "❌ Migration integrity gate failed — fix migration issues before pushing."
+  exit 1
+fi
+echo "✅ Migration integrity gate passed."
