@@ -160,12 +160,36 @@ export type BulkImportRequestDTO = z.infer<typeof bulkImportRequestSchema>;
  * Schema for import summary response
  */
 export const bulkImportResponseSchema = z.object({
-    total: z.number().openapi({ example: 10 }),
-    created: z.number().openapi({ example: 8 }),
-    linked: z.number().openapi({ example: 2 }),
-    walletInitialized: z.number().openapi({ example: 8 }),
-    billingAssigned: z.number().openapi({ example: 8 }),
-    failed: z.number().openapi({ example: 0 }),
+    total: z.number().openapi({
+        example: 10,
+        description: "Total input rows received for this import run.",
+    }),
+    created: z.number().openapi({
+        example: 8,
+        description: "Rows that created a new user record.",
+    }),
+    linked: z.number().openapi({
+        example: 2,
+        description: "Rows that created a new organization membership link.",
+    }),
+    walletInitialized: z.number().openapi({
+        example: 8,
+        description:
+            "Rows where one or more new wallet accounts were created. Existing wallets count as 0 even if provisioning checks ran.",
+    }),
+    billingAssigned: z.number().openapi({
+        example: 8,
+        description: "Rows where the default billing plan assignment was created or replaced.",
+    }),
+    billingSkipped: z.number().openapi({
+        example: 1,
+        description:
+            "Rows skipped due to `billingPlanConflict=skip` with an existing assignment in the same currency.",
+    }),
+    failed: z.number().openapi({
+        example: 0,
+        description: "Rows that failed during import processing.",
+    }),
     errors: z.array(z.string()).openapi({ example: [] }),
 });
 

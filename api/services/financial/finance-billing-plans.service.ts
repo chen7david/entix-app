@@ -133,6 +133,11 @@ export class FinanceBillingPlansService extends BaseService {
         };
     }
 
+    async hasAssignedPlanInCurrency(userId: string, orgId: string, currencyId: string) {
+        const assignment = await this.repo.getMemberPlanByCurrency(userId, orgId, currencyId);
+        return Boolean(assignment);
+    }
+
     /**
      * Resolves the rate for a student in a specific currency based on participant count.
      * Logic: Closest Lower Tier.

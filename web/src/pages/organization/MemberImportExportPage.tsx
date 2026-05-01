@@ -289,6 +289,14 @@ export const MemberImportExportPage: React.FC = () => {
                                 value={importResult.total}
                                 valueStyle={{ fontSize: token.fontSizeXL }}
                             />
+                        </div>
+                        <Text type="secondary">
+                            Membership and financial setup counters are independent and may not sum
+                            to total processed rows.
+                        </Text>
+                        <Divider style={{ margin: "8px 0" }} />
+                        <Text strong>Membership</Text>
+                        <div className="flex gap-4">
                             <Statistic
                                 title="Created"
                                 value={importResult.created}
@@ -301,6 +309,19 @@ export const MemberImportExportPage: React.FC = () => {
                                 valueStyle={{ color: "#108ee9", fontSize: token.fontSizeXL }}
                             />
                             <Statistic
+                                title="Failed"
+                                value={importResult.failed}
+                                valueStyle={{ color: "#cf1322", fontSize: token.fontSizeXL }}
+                                prefix={<ExclamationCircleOutlined />}
+                            />
+                        </div>
+                        <Text strong>Financial Setup</Text>
+                        <Text type="secondary">
+                            Wallets Init counts newly created wallets only. Existing wallets count
+                            as 0 even when provisioning checks run.
+                        </Text>
+                        <div className="flex gap-4">
+                            <Statistic
                                 title="Wallets Init"
                                 value={importResult.walletInitialized}
                                 valueStyle={{ color: "#08979c", fontSize: token.fontSizeXL }}
@@ -311,10 +332,9 @@ export const MemberImportExportPage: React.FC = () => {
                                 valueStyle={{ color: "#722ed1", fontSize: token.fontSizeXL }}
                             />
                             <Statistic
-                                title="Failed"
-                                value={importResult.failed}
-                                valueStyle={{ color: "#cf1322", fontSize: token.fontSizeXL }}
-                                prefix={<ExclamationCircleOutlined />}
+                                title="Billing Skipped"
+                                value={importResult.billingSkipped}
+                                valueStyle={{ color: "#d48806", fontSize: token.fontSizeXL }}
                             />
                         </div>
 

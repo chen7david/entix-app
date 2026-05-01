@@ -41,6 +41,7 @@ export type ImportResult = {
     linked: number;
     walletInitialized: number;
     billingAssigned: number;
+    billingSkipped: number;
     failed: number;
     errors: string[];
 };

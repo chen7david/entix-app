@@ -141,9 +141,7 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     const { data: billingPlansData } = useBillingPlans(activeOrganization?.id || "", {
         limit: 100,
     });
-    const activeBillingPlans = (billingPlansData?.data ?? []).filter(
-        (plan) => plan.isActive && plan.currencyId === "fcur_cny"
-    );
+    const activeBillingPlans = (billingPlansData?.data ?? []).filter((plan) => plan.isActive);
     const hasActiveBillingPlans = activeBillingPlans.length > 0;
     const removeAvatarMutation = useRemoveAvatar();
     const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(
@@ -555,7 +553,7 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                                     extra={
                                         hasActiveBillingPlans
                                             ? undefined
-                                            : "Create an active CNY billing plan before creating students."
+                                            : "Create an active billing plan before creating students."
                                     }
                                 >
                                     <Select

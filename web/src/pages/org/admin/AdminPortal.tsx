@@ -38,9 +38,7 @@ export const AdminPortal: React.FC = () => {
             limit: 50,
         }
     );
-    const hasActiveCnyBillingPlan = (billingPlansResult?.data ?? []).some(
-        (plan) => plan.isActive && plan.currencyId === "fcur_cny"
-    );
+    const hasActiveBillingPlan = (billingPlansResult?.data ?? []).some((plan) => plan.isActive);
 
     // Dashboard defaults to "This Month" preset
     const [range, setRange] = useState<{ start: number; end: number; label: string }>({
@@ -149,16 +147,15 @@ export const AdminPortal: React.FC = () => {
                     onRefresh={freshnessControls.refreshNow}
                 />
             </div>
-            {!isBillingPlansLoading && !hasActiveCnyBillingPlan && (
+            {!isBillingPlansLoading && !hasActiveBillingPlan && (
                 <Alert
                     type="warning"
                     showIcon
                     style={{ marginBottom: 24 }}
-                    message="No active CNY billing plan configured"
+                    message="No active billing plan configured"
                     description={
                         <>
-                            Students cannot be billed until at least one active CNY billing plan
-                            exists.{" "}
+                            Students cannot be billed until at least one active billing plan exists.{" "}
                             <Button
                                 type="link"
                                 className="p-0 h-auto align-baseline"
