@@ -55,8 +55,6 @@ function main() {
 
     const afterSql = listSql(MIGRATIONS_DIR);
     const newSqlFiles = afterSql.filter((file) => !beforeSql.includes(file));
-    const afterSnapshots = listSnapshots(META_DIR);
-    const newSnapshotFiles = afterSnapshots.filter((file) => !beforeSnapshots.includes(file));
 
     restoreGeneratedArtifacts(beforeSql, beforeSnapshots, beforeJournal);
 

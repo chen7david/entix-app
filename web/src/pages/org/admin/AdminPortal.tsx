@@ -32,10 +32,15 @@ export const AdminPortal: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const { metrics, isLoadingMetrics, isFetchingMetrics, metricsUpdatedAt, refetchMetrics } =
         useBulkMembers(activeOrganization?.id);
-    const { data: billingPlansResult } = useBillingPlans(activeOrganization?.id ?? "", {
-        limit: 1,
-    });
-    const hasBillingPlans = (billingPlansResult?.data?.length ?? 0) > 0;
+    const { data: billingPlansResult, isLoading: isBillingPlansLoading } = useBillingPlans(
+        activeOrganization?.id ?? "",
+        {
+            limit: 50,
+        }
+    );
+    const hasActiveCnyBillingPlan = (billingPlansResult?.data ?? []).some(
+        (plan) => plan.isActive && plan.currencyId === "fcur_cny"
+    );
 
     // Dashboard defaults to "This Month" preset
     const [range, setRange] = useState<{ start: number; end: number; label: string }>({
@@ -144,15 +149,16 @@ export const AdminPortal: React.FC = () => {
                     onRefresh={freshnessControls.refreshNow}
                 />
             </div>
-            {!hasBillingPlans && (
+            {!isBillingPlansLoading && !hasActiveCnyBillingPlan && (
                 <Alert
                     type="warning"
                     showIcon
-                    className="mb-4"
-                    message="No billing plans configured"
+                    style={{ marginBottom: 24 }}
+                    message="No active CNY billing plan configured"
                     description={
                         <>
-                            Students cannot be billed until at least one billing plan exists.{" "}
+                            Students cannot be billed until at least one active CNY billing plan
+                            exists.{" "}
                             <Button
                                 type="link"
                                 className="p-0 h-auto align-baseline"
@@ -165,7 +171,9 @@ export const AdminPortal: React.FC = () => {
                     }
                 />
             )}
-            <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
+            <div style={{ marginTop: 8 }}>
+                <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
+            </div>
             <FilterBar
                 filters={dashboardFilters}
                 values={{ preset: range.label }}
