@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "f8be7ed5-f3c9-4a7f-8673-3f232d2ba11a",
+  "id": "af2dd6aa-19c4-4785-bd72-6c7585e5a5ef",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_accounts": {
@@ -1073,6 +1073,211 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
+    "financial_session_payment_events": {
+      "name": "financial_session_payment_events",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event_type": {
+          "name": "event_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "transaction_id": {
+          "name": "transaction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "performed_by": {
+          "name": "performed_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "note": {
+          "name": "note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "uq_spe_session_user_transaction": {
+          "name": "uq_spe_session_user_transaction",
+          "columns": [
+            "session_id",
+            "user_id",
+            "transaction_id"
+          ],
+          "isUnique": true,
+          "where": "\"financial_session_payment_events\".\"transaction_id\" IS NOT NULL"
+        },
+        "uq_spe_session_user_manual": {
+          "name": "uq_spe_session_user_manual",
+          "columns": [
+            "session_id",
+            "user_id",
+            "event_type"
+          ],
+          "isUnique": true,
+          "where": "\"financial_session_payment_events\".\"transaction_id\" IS NULL"
+        },
+        "idx_spe_session_id": {
+          "name": "idx_spe_session_id",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "idx_spe_user_id": {
+          "name": "idx_spe_user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "idx_spe_org_id": {
+          "name": "idx_spe_org_id",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "idx_spe_created_at": {
+          "name": "idx_spe_created_at",
+          "columns": [
+            "created_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "financial_session_payment_events_session_id_scheduled_sessions_id_fk": {
+          "name": "financial_session_payment_events_session_id_scheduled_sessions_id_fk",
+          "tableFrom": "financial_session_payment_events",
+          "tableTo": "scheduled_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "financial_session_payment_events_user_id_auth_users_id_fk": {
+          "name": "financial_session_payment_events_user_id_auth_users_id_fk",
+          "tableFrom": "financial_session_payment_events",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "financial_session_payment_events_organization_id_auth_organizations_id_fk": {
+          "name": "financial_session_payment_events_organization_id_auth_organizations_id_fk",
+          "tableFrom": "financial_session_payment_events",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "financial_session_payment_events_transaction_id_financial_transactions_id_fk": {
+          "name": "financial_session_payment_events_transaction_id_financial_transactions_id_fk",
+          "tableFrom": "financial_session_payment_events",
+          "tableTo": "financial_transactions",
+          "columnsFrom": [
+            "transaction_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "financial_session_payment_events_performed_by_auth_users_id_fk": {
+          "name": "financial_session_payment_events_performed_by_auth_users_id_fk",
+          "tableFrom": "financial_session_payment_events",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "performed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "event_type_check": {
+          "name": "event_type_check",
+          "value": "\"financial_session_payment_events\".\"event_type\" IN ('paid', 'refunded', 'manual_paid', 'manual_reset')"
+        },
+        "manual_override_note_required": {
+          "name": "manual_override_note_required",
+          "value": "\"financial_session_payment_events\".\"event_type\" NOT IN ('manual_paid', 'manual_reset') OR \"financial_session_payment_events\".\"note\" IS NOT NULL"
+        }
+      }
+    },
     "financial_transaction_categories": {
       "name": "financial_transaction_categories",
       "columns": {
@@ -1324,6 +1529,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -1334,6 +1546,14 @@
         }
       },
       "indexes": {
+        "idx_tx_idem": {
+          "name": "idx_tx_idem",
+          "columns": [
+            "organization_id",
+            "idempotency_key"
+          ],
+          "isUnique": true
+        },
         "idx_fin_tx_org_id": {
           "name": "idx_fin_tx_org_id",
           "columns": [
@@ -1447,6 +1667,162 @@
           "value": "\"financial_transactions\".\"source_account_id\" != \"financial_transactions\".\"destination_account_id\""
         }
       }
+    },
+    "lessons": {
+      "name": "lessons",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cover_art_url": {
+          "name": "cover_art_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "lessons_organization_id_idx": {
+          "name": "lessons_organization_id_idx",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lessons_organization_id_auth_organizations_id_fk": {
+          "name": "lessons_organization_id_auth_organizations_id_fk",
+          "tableFrom": "lessons",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "lesson_progress": {
+      "name": "lesson_progress",
+      "columns": {
+        "log_id": {
+          "name": "log_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "enroll_id": {
+          "name": "enroll_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lesson_element_id": {
+          "name": "lesson_element_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "action_type": {
+          "name": "action_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "metric_data": {
+          "name": "metric_data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "lesson_progress_enroll_id_idx": {
+          "name": "lesson_progress_enroll_id_idx",
+          "columns": [
+            "enroll_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lesson_progress_enroll_id_session_attendances_id_fk": {
+          "name": "lesson_progress_enroll_id_session_attendances_id_fk",
+          "tableFrom": "lesson_progress",
+          "tableTo": "session_attendances",
+          "columnsFrom": [
+            "enroll_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "media": {
       "name": "media",
@@ -2633,6 +3009,20 @@
           "notNull": true,
           "autoincrement": false
         },
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "teacher_id": {
+          "name": "teacher_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "title": {
           "name": "title",
           "type": "text",
@@ -2707,6 +3097,20 @@
           ],
           "isUnique": false
         },
+        "scheduled_session_lessonId_idx": {
+          "name": "scheduled_session_lessonId_idx",
+          "columns": [
+            "lesson_id"
+          ],
+          "isUnique": false
+        },
+        "scheduled_session_teacherId_idx": {
+          "name": "scheduled_session_teacherId_idx",
+          "columns": [
+            "teacher_id"
+          ],
+          "isUnique": false
+        },
         "scheduled_session_seriesId_idx": {
           "name": "scheduled_session_seriesId_idx",
           "columns": [
@@ -2728,6 +3132,32 @@
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
+        },
+        "scheduled_sessions_lesson_id_lessons_id_fk": {
+          "name": "scheduled_sessions_lesson_id_lessons_id_fk",
+          "tableFrom": "scheduled_sessions",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "scheduled_sessions_teacher_id_auth_users_id_fk": {
+          "name": "scheduled_sessions_teacher_id_auth_users_id_fk",
+          "tableFrom": "scheduled_sessions",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "teacher_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2737,6 +3167,13 @@
     "session_attendances": {
       "name": "session_attendances",
       "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
         "session_id": {
           "name": "session_id",
           "type": "text",
@@ -2798,6 +3235,14 @@
         }
       },
       "indexes": {
+        "session_attendance_session_user_uidx": {
+          "name": "session_attendance_session_user_uidx",
+          "columns": [
+            "session_id",
+            "user_id"
+          ],
+          "isUnique": true
+        },
         "session_attendance_sessionId_idx": {
           "name": "session_attendance_sessionId_idx",
           "columns": [
@@ -2861,15 +3306,7 @@
           "onUpdate": "no action"
         }
       },
-      "compositePrimaryKeys": {
-        "session_attendances_session_id_user_id_pk": {
-          "columns": [
-            "session_id",
-            "user_id"
-          ],
-          "name": "session_attendances_session_id_user_id_pk"
-        }
-      },
+      "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {
         "payment_status_check": {
@@ -3006,6 +3443,150 @@
             "id"
           ],
           "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "student_vocabulary": {
+      "name": "student_vocabulary",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "org_id": {
+          "name": "org_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vocabulary_id": {
+          "name": "vocabulary_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attendance_id": {
+          "name": "attendance_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "student_vocab_user_vocab_attendance_uidx": {
+          "name": "student_vocab_user_vocab_attendance_uidx",
+          "columns": [
+            "user_id",
+            "vocabulary_id",
+            "attendance_id"
+          ],
+          "isUnique": true
+        },
+        "student_vocab_userId_idx": {
+          "name": "student_vocab_userId_idx",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "student_vocab_orgId_idx": {
+          "name": "student_vocab_orgId_idx",
+          "columns": [
+            "org_id"
+          ],
+          "isUnique": false
+        },
+        "student_vocab_vocabularyId_idx": {
+          "name": "student_vocab_vocabularyId_idx",
+          "columns": [
+            "vocabulary_id"
+          ],
+          "isUnique": false
+        },
+        "student_vocab_attendanceId_idx": {
+          "name": "student_vocab_attendanceId_idx",
+          "columns": [
+            "attendance_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "student_vocabulary_user_id_auth_users_id_fk": {
+          "name": "student_vocabulary_user_id_auth_users_id_fk",
+          "tableFrom": "student_vocabulary",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "student_vocabulary_org_id_auth_organizations_id_fk": {
+          "name": "student_vocabulary_org_id_auth_organizations_id_fk",
+          "tableFrom": "student_vocabulary",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "org_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "student_vocabulary_vocabulary_id_vocabulary_bank_id_fk": {
+          "name": "student_vocabulary_vocabulary_id_vocabulary_bank_id_fk",
+          "tableFrom": "student_vocabulary",
+          "tableTo": "vocabulary_bank",
+          "columnsFrom": [
+            "vocabulary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "student_vocabulary_attendance_id_session_attendances_id_fk": {
+          "name": "student_vocabulary_attendance_id_session_attendances_id_fk",
+          "tableFrom": "student_vocabulary",
+          "tableTo": "session_attendances",
+          "columnsFrom": [
+            "attendance_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -3485,6 +4066,97 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "vocabulary_bank": {
+      "name": "vocabulary_bank",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "zh_translation": {
+          "name": "zh_translation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "pinyin": {
+          "name": "pinyin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "en_audio_url": {
+          "name": "en_audio_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "zh_audio_url": {
+          "name": "zh_audio_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'new'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "vocabulary_bank_text_uidx": {
+          "name": "vocabulary_bank_text_uidx",
+          "columns": [
+            "text"
+          ],
+          "isUnique": true
+        },
+        "vocabulary_bank_status_idx": {
+          "name": "vocabulary_bank_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}

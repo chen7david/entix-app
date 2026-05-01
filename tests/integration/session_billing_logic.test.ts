@@ -14,6 +14,7 @@ import {
     financeMemberBillingPlans,
     financialAccounts,
     financialTransactions,
+    lessons,
     scheduledSessions,
     sessionAttendances,
     systemAuditEvents,
@@ -90,9 +91,17 @@ describe("Session Billing Logic Verification", () => {
 
     const runSession = async (student: any, duration: number) => {
         const sid = generateOpaqueId();
+        const lessonId = generateOpaqueId();
+        await db.insert(lessons).values({
+            id: lessonId,
+            organizationId: orgId,
+            title: "Test Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sid,
             organizationId: orgId,
+            lessonId,
+            teacherId: student.userId,
             title: "Test Session",
             startTime: new Date(),
             durationMinutes: duration,
@@ -128,9 +137,16 @@ describe("Session Billing Logic Verification", () => {
         const student = await setupStudent("idempotent@test.com", 10000, 0);
 
         const sessionId = "sess_01";
+        await db.insert(lessons).values({
+            id: "lesson_sess_01",
+            organizationId: orgId,
+            title: "Session 01 Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_sess_01",
+            teacherId: student.userId,
             title: "Session 01",
             startTime: new Date(),
             durationMinutes: 60,

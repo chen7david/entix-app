@@ -26,6 +26,7 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
+import { VocabularyService } from "@api/services/vocabulary.service";
 import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
@@ -44,9 +45,11 @@ import {
     getSessionAttendancesRepository,
     getSessionScheduleRepository,
     getSocialMediaRepository,
+    getStudentVocabularyRepository,
     getSystemAuditRepository,
     getUserProfileRepository,
     getUserRepository,
+    getVocabularyBankRepository,
 } from "./repository.factory";
 import { getUploadService } from "./upload.factory";
 
@@ -76,6 +79,7 @@ export const getRegistrationService = (ctx: AppContext) => {
         getOrganizationRepository(ctx),
         getMemberRepository(ctx),
         getUserFinancialService(ctx),
+        getFinanceBillingPlansService(ctx),
         getUserService(ctx),
         ctx.var.frontendUrl,
         ctx.var.logger
@@ -101,6 +105,7 @@ export const getPlaylistService = (ctx: AppContext) => {
 export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(
         getSessionScheduleRepository(ctx),
+        getMemberRepository(ctx),
         getFinanceBillingPlansService(ctx),
         getFinanceWalletService(ctx),
         getPaymentQueueService(ctx),
@@ -125,7 +130,9 @@ export const getMemberImportService = (ctx: AppContext) => {
         getUserRepository(ctx),
         getMemberRepository(ctx),
         getUserProfileRepository(ctx),
-        getSocialMediaRepository(ctx)
+        getSocialMediaRepository(ctx),
+        getFinanceBillingPlansService(ctx),
+        getFinanceWalletService(ctx)
     );
 };
 
@@ -160,7 +167,9 @@ export const getFinanceBillingPlansService = (ctx: AppContext) => {
 export const getFinanceWalletService = (ctx: AppContext) => {
     return new FinanceWalletService(
         getFinancialAccountsRepository(ctx),
-        getFinancialTransactionsRepository(ctx)
+        getFinancialTransactionsRepository(ctx),
+        getFinancialCurrenciesRepository(ctx),
+        getFinancialOrgSettingsRepository(ctx)
     );
 };
 
@@ -196,4 +205,13 @@ export const getReconciliationService = (ctx: AppContext) => {
 
 export const getCacheService = (ctx: AppContext) => {
     return new CacheService(getKvCacheRepository(ctx));
+};
+
+export const getVocabularyService = (ctx: AppContext) => {
+    return new VocabularyService(
+        getVocabularyBankRepository(ctx),
+        getSessionAttendancesRepository(ctx),
+        getStudentVocabularyRepository(ctx),
+        ctx.env.QUEUE
+    );
 };

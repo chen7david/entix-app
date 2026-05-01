@@ -14,6 +14,7 @@ import {
     financialAccounts,
     financialTransactionLines,
     financialTransactions,
+    lessons,
     paymentRequests,
     scheduledSessions,
     sessionAttendances,
@@ -94,9 +95,16 @@ describe("Ghost Transaction Prevention", () => {
             currencyId: FINANCIAL_CURRENCIES.CNY,
         });
 
+        await db.insert(lessons).values({
+            id: "lesson_ghost",
+            organizationId: orgId,
+            title: "Ghost Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: "sess_ghost",
             organizationId: orgId,
+            lessonId: "lesson_ghost",
+            teacherId: student.userId,
             title: "Ghost Test Session",
             startTime: new Date(),
             durationMinutes: 60,
@@ -213,9 +221,16 @@ describe("Ghost Transaction Prevention", () => {
             currencyId: FINANCIAL_CURRENCIES.CNY,
         });
 
+        await db.insert(lessons).values({
+            id: "lesson_success",
+            organizationId: orgId,
+            title: "Success Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: "sess_success",
             organizationId: orgId,
+            lessonId: "lesson_success",
+            teacherId: student.userId,
             title: "Success Test Session",
             startTime: new Date(),
             durationMinutes: 60,

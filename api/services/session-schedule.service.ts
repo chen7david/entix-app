@@ -1,4 +1,5 @@
-import { BadRequestError } from "@api/errors/app.error";
+import { BadRequestError, NotFoundError } from "@api/errors/app.error";
+import type { MemberRepository } from "@api/repositories/member.repository";
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import {
@@ -16,6 +17,8 @@ import type { FinanceWalletService } from "./financial/finance-wallet.service";
 import type { PaymentQueueService } from "./payment/payment-queue.service";
 
 export type CreateSessionDTO = {
+    lessonId: string;
+    teacherId: string;
     title: string;
     description?: string | null;
     startTime: number;
@@ -28,6 +31,8 @@ export type CreateSessionDTO = {
 };
 
 export type UpdateSessionDTO = {
+    lessonId: string;
+    teacherId: string;
     title: string;
     description?: string | null;
     startTime: number;
@@ -40,6 +45,7 @@ export type UpdateSessionDTO = {
 export class SessionScheduleService extends BaseService {
     constructor(
         private readonly sessionRepo: SessionScheduleRepository,
+        private readonly memberRepo: MemberRepository,
         private readonly billingPlansService: FinanceBillingPlansService,
         private readonly walletService: FinanceWalletService,
         private readonly paymentQueueService: PaymentQueueService,
@@ -64,7 +70,56 @@ export class SessionScheduleService extends BaseService {
         }
     }
 
+    private async assertTeacherAssignable(
+        organizationId: string,
+        teacherId: string
+    ): Promise<void> {
+        const membership = await this.memberRepo.find(teacherId, organizationId);
+        if (!membership) {
+            throw new BadRequestError("Teacher must be a member of the organization.");
+        }
+
+        const roles = membership.role
+            .split(",")
+            .map((role) => role.trim().toLowerCase())
+            .filter(Boolean);
+
+        if (!roles.includes("teacher") && !roles.includes("admin") && !roles.includes("owner")) {
+            throw new BadRequestError("Assigned teacher must have teacher, admin, or owner role.");
+        }
+    }
+
+    private async assertStudentsAssignable(
+        organizationId: string,
+        userIds: string[]
+    ): Promise<void> {
+        if (userIds.length === 0) return;
+        const members = await this.memberRepo.findByUserIds(organizationId, userIds);
+        const memberByUserId = new Map(members.map((member) => [member.userId, member]));
+
+        for (const userId of userIds) {
+            const membership = memberByUserId.get(userId);
+            if (!membership) {
+                throw new BadRequestError(
+                    `Selected attendee ${userId} is not a member of the organization.`
+                );
+            }
+            const roles = membership.role
+                .split(",")
+                .map((role) => role.trim().toLowerCase())
+                .filter(Boolean);
+            if (!roles.includes("student")) {
+                throw new BadRequestError(
+                    "Only members with student role can be added as session attendees."
+                );
+            }
+        }
+    }
+
     async createSession(organizationId: string, data: CreateSessionDTO) {
+        await this.assertTeacherAssignable(organizationId, data.teacherId);
+        await this.assertStudentsAssignable(organizationId, data.userIds);
+
         const isRecurring = !!data.recurrence;
         // Recurring sessions share one `seriesId` across rows; it is not a table PK default.
         const seriesId = isRecurring ? generateOpaqueId() : null;
@@ -76,6 +131,8 @@ export class SessionScheduleService extends BaseService {
         // Session PKs: schema `$defaultFn` on `scheduled_sessions.id`; `.returning()` supplies ids for attendances.
         const sessionsToInsert = Array.from({ length: count }).map((_, i) => ({
             organizationId,
+            lessonId: data.lessonId,
+            teacherId: data.teacherId,
             title: data.title,
             description: data.description ?? null,
             startTime: new Date(
@@ -205,22 +262,13 @@ export class SessionScheduleService extends BaseService {
                     continue;
                 }
 
-                const rate = await this.billingPlansService.resolveBillingPlanRate(
-                    attendance.userId,
+                await this.chargeAttendance(
                     organizationId,
+                    session,
+                    attendance.userId,
                     currencyId,
                     activeParticipantCount
                 );
-
-                if (rate > 0) {
-                    await this.chargeAttendance(
-                        organizationId,
-                        session,
-                        attendance.userId,
-                        rate,
-                        activeParticipantCount
-                    );
-                }
             }
         }
 
@@ -235,15 +283,25 @@ export class SessionScheduleService extends BaseService {
         organizationId: string,
         session: { id: string; title: string; durationMinutes: number; startTime: Date },
         userId: string,
-        rateCentsPerMinute: number,
+        currencyId: string,
         participantCount: number
     ) {
-        const amountCents = calculateClassChargeCents(rateCentsPerMinute, session.durationMinutes, {
-            roundToNearestDollar: true,
-        });
-        const currencyId = FINANCIAL_CURRENCIES.CNY;
-
+        let amountCents: number | null = null;
         try {
+            const rateCentsPerMinute = await this.billingPlansService.resolveBillingPlanRate(
+                userId,
+                organizationId,
+                currencyId,
+                participantCount
+            );
+            if (rateCentsPerMinute === 0) {
+                return;
+            }
+
+            amountCents = calculateClassChargeCents(rateCentsPerMinute, session.durationMinutes, {
+                roundToNearestDollar: true,
+            });
+
             // 1. Resolve source and destination accounts
             const account = await this.walletService.getWallet(userId, organizationId, currencyId);
             const orgFunding = await this.walletService.getOrgFunding(organizationId, currencyId);
@@ -268,7 +326,7 @@ export class SessionScheduleService extends BaseService {
                 note: `Session Fee: ${session.title} (${rateCentsPerMinute} cents/min x ${session.durationMinutes} min, ${participantCount} students)`,
             });
         } catch (error) {
-            if (error instanceof BadRequestError) {
+            if (error instanceof BadRequestError || error instanceof NotFoundError) {
                 // Business failure (e.g., wallet not found)
                 await this.auditRepo.insert({
                     id: generateAuditId(),
@@ -292,10 +350,15 @@ export class SessionScheduleService extends BaseService {
     }
 
     async updateSession(organizationId: string, sessionId: string, data: UpdateSessionDTO) {
+        await this.assertTeacherAssignable(organizationId, data.teacherId);
+        await this.assertStudentsAssignable(organizationId, data.userIds);
+
         const currentSession = await this.getSessionById(organizationId, sessionId);
 
         if (!data.updateForward || !currentSession.seriesId) {
             await this.sessionRepo.updateSessionDetails(organizationId, sessionId, {
+                lessonId: data.lessonId,
+                teacherId: data.teacherId,
                 title: data.title,
                 description: data.description || null,
                 startTime: new Date(data.startTime),
@@ -336,6 +399,8 @@ export class SessionScheduleService extends BaseService {
 
                     sessionsToInsert.push({
                         organizationId,
+                        lessonId: data.lessonId,
+                        teacherId: data.teacherId,
                         title: data.title,
                         description: data.description ?? null,
                         startTime: new Date(sessionStartTime),

@@ -1,3 +1,4 @@
+import { AppRoutes } from "@shared";
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
 import {
     type DatePresetOption,
@@ -17,17 +18,27 @@ import {
     UpcomingBirthdaysCard,
     UpcomingSessionsCard,
 } from "@web/src/features/dashboard";
+import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
+import { useOrgNavigate } from "@web/src/features/organization/hooks/useOrgNavigate";
 import { DateUtils } from "@web/src/utils/date";
-import { Col, Row, Typography } from "antd";
+import { Alert, Button, Col, Row, Typography } from "antd";
 import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 
 export const AdminPortal: React.FC = () => {
     const { activeOrganization } = useOrganization();
+    const navigateOrg = useOrgNavigate();
     const { metrics, isLoadingMetrics, isFetchingMetrics, metricsUpdatedAt, refetchMetrics } =
         useBulkMembers(activeOrganization?.id);
+    const { data: billingPlansResult, isLoading: isBillingPlansLoading } = useBillingPlans(
+        activeOrganization?.id ?? "",
+        {
+            limit: 50,
+        }
+    );
+    const hasActiveBillingPlan = (billingPlansResult?.data ?? []).some((plan) => plan.isActive);
 
     // Dashboard defaults to "This Month" preset
     const [range, setRange] = useState<{ start: number; end: number; label: string }>({
@@ -136,7 +147,30 @@ export const AdminPortal: React.FC = () => {
                     onRefresh={freshnessControls.refreshNow}
                 />
             </div>
-            <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
+            {!isBillingPlansLoading && !hasActiveBillingPlan && (
+                <Alert
+                    type="warning"
+                    showIcon
+                    style={{ marginBottom: 24 }}
+                    message="No active billing plan configured"
+                    description={
+                        <>
+                            Students cannot be billed until at least one active billing plan exists.{" "}
+                            <Button
+                                type="link"
+                                className="p-0 h-auto align-baseline"
+                                onClick={() => navigateOrg(AppRoutes.org.admin.billing.plans)}
+                            >
+                                Create billing plan
+                            </Button>
+                            .
+                        </>
+                    }
+                />
+            )}
+            <div style={{ marginTop: 8 }}>
+                <DashboardMetricCards metrics={metrics} loading={isLoadingMetrics} />
+            </div>
             <FilterBar
                 filters={dashboardFilters}
                 values={{ preset: range.label }}

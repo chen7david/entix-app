@@ -48,6 +48,7 @@ import {
     ResetPasswordPage,
     SelectOrganizationPage,
     SessionsPage,
+    SessionVocabularyPage,
     SettingsPage,
     ShopPage,
     SignInPage,
@@ -253,11 +254,21 @@ export default function App() {
                                                 <Route path="teaching">
                                                     <Route
                                                         index
-                                                        element={<Navigate to="schedule" replace />}
+                                                        element={<Navigate to="sessions" replace />}
+                                                    />
+                                                    <Route
+                                                        path="sessions"
+                                                        element={<OrganizationSchedulePage />}
                                                     />
                                                     <Route
                                                         path="schedule"
-                                                        element={<OrganizationSchedulePage />}
+                                                        element={
+                                                            <Navigate to="../sessions" replace />
+                                                        }
+                                                    />
+                                                    <Route
+                                                        path="lessons"
+                                                        element={<LessonsPage />}
                                                     />
                                                     <Route
                                                         path="media"
@@ -274,6 +285,10 @@ export default function App() {
                                                     <Route
                                                         path="students"
                                                         element={<OrganizationMembersPage />}
+                                                    />
+                                                    <Route
+                                                        path="sessions/:sessionId/vocabulary"
+                                                        element={<SessionVocabularyPage />}
                                                     />
                                                 </Route>
                                             </Route>

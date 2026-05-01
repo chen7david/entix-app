@@ -1,9 +1,18 @@
 import { expect, type Page } from "@playwright/test";
-import { markUserEmailVerified, seedPasswordResetToken } from "./db";
+import { markUserEmailVerified, resetRootAdminCredential, seedPasswordResetToken } from "./db";
+
+let rootCredentialReady = false;
+const rootEmail = "root@admin.com";
+const rootPassword = "r00tme";
+
+async function ensureRootAdminCredential() {
+    if (rootCredentialReady) return;
+    await resetRootAdminCredential(rootPassword);
+    rootCredentialReady = true;
+}
 
 export async function loginAsRootAdmin(page: Page) {
-    const rootEmail = "root@admin.com";
-    const rootPassword = "r00tme";
+    await ensureRootAdminCredential();
 
     const signIn = async () => {
         await page.goto("/auth/sign-in");

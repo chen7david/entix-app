@@ -4,13 +4,13 @@
 
 -- 1. Organizations (Platform & Test Org)
 INSERT OR IGNORE INTO `auth_organizations` (`id`, `name`, `slug`, `created_at`)
-VALUES 
+VALUES
   ('platform', 'Platform', 'platform', (cast(unixepoch() * 1000 as integer))),
   ('A6xj7krOIJ3n9uHiipspC', 'Test Org', 'testorg', (cast(unixepoch() * 1000 as integer)));
 
 -- 2. Financial Currencies
 INSERT OR IGNORE INTO `financial_currencies` (`id`, `code`, `name`, `symbol`, `default_account_name`, `created_at`)
-VALUES 
+VALUES
   ('fcur_usd', 'USD', 'US Dollar', '$', 'Savings (USD)', (cast(unixepoch() * 1000 as integer))),
   ('fcur_cny', 'CNY', 'Chinese Yuan', '¥', 'Savings (CNY)', (cast(unixepoch() * 1000 as integer))),
   ('fcur_etd', 'ETD', 'Entix Dollar', 'E$', 'Points (ETD)', (cast(unixepoch() * 1000 as integer))),
@@ -21,7 +21,7 @@ VALUES
 
 -- 3. Financial Transaction Categories
 INSERT OR IGNORE INTO `financial_transaction_categories` (`id`, `name`, `is_expense`, `is_revenue`, `created_at`)
-VALUES 
+VALUES
   ('fcat_cash_deposit', 'Cash Deposit', 0, 1, (cast(unixepoch() * 1000 as integer))),
   ('fcat_store_purchase', 'Store Purchase', 1, 0, (cast(unixepoch() * 1000 as integer))),
   ('fcat_service_fee', 'Service Fee', 1, 0, (cast(unixepoch() * 1000 as integer))),
@@ -32,7 +32,7 @@ VALUES
 
 -- 4. Social Media Types
 INSERT OR IGNORE INTO `social_media_types` (`id`, `name`, `description`, `created_at`, `updated_at`)
-VALUES 
+VALUES
   ('smt_wechat', 'WeChat', 'WeChat', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('smt_whatsapp', 'WhatsApp', 'WhatsApp', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('smt_telegram', 'Telegram', 'Telegram', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
@@ -51,7 +51,7 @@ VALUES
 
 -- 5. Platform Treasury Accounts (1,000,000 units = 100,000,000 cents)
 INSERT OR IGNORE INTO `financial_accounts` (`id`, `owner_id`, `owner_type`, `currency_id`, `organization_id`, `name`, `balance_cents`, `overdraft_limit_cents`, `is_active`, `account_type`, `created_at`, `updated_at`)
-VALUES 
+VALUES
   ('facc_treasury_fcur_usd', 'platform', 'org', 'fcur_usd', 'platform', 'Platform Treasury — USD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_cny', 'platform', 'org', 'fcur_cny', 'platform', 'Platform Treasury — CNY', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_treasury_fcur_etd', 'platform', 'org', 'fcur_etd', 'platform', 'Platform Treasury — ETD', 100000000, 0, 1, 'treasury', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
@@ -62,7 +62,7 @@ VALUES
 
 -- 6. System Adjustment Accounts (offset accounts with large float balance)
 INSERT OR IGNORE INTO `financial_accounts` (`id`, `owner_id`, `owner_type`, `currency_id`, `organization_id`, `name`, `balance_cents`, `overdraft_limit_cents`, `is_active`, `account_type`, `created_at`, `updated_at`)
-VALUES 
+VALUES
   ('facc_system_adjustment_fcur_usd', 'platform', 'org', 'fcur_usd', 'platform', 'System Adjustment — USD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_cny', 'platform', 'org', 'fcur_cny', 'platform', 'System Adjustment — CNY', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
   ('facc_system_adjustment_fcur_etd', 'platform', 'org', 'fcur_etd', 'platform', 'System Adjustment — ETD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer))),
@@ -72,7 +72,7 @@ VALUES
   ('facc_system_adjustment_fcur_aud', 'platform', 'org', 'fcur_aud', 'platform', 'System Adjustment — AUD', 100000000000000, 0, 1, 'system', (cast(unixepoch() * 1000 as integer)), (cast(unixepoch() * 1000 as integer)));
 
 -- 7. Root Admin User
--- ⚠️ email_verified = 1, do not send email to this address
+-- email_verified = 1, do not send email to this address
 INSERT OR IGNORE INTO `auth_users` (`id`, `xid`, `name`, `email`, `email_verified`, `role`, `created_at`, `updated_at`)
 VALUES (
   'TiD38FfFP9TXbiDAdin6hi5oZjJzu3UK',
@@ -86,7 +86,7 @@ VALUES (
 );
 
 -- 8. Root Admin Credential (r00tme)
--- ⚠️ Password hash for 'r00tme'. Safe across BETTER_AUTH_SECRET rotations.
+-- Password hash for 'r00tme'. Safe across BETTER_AUTH_SECRET rotations.
 INSERT OR IGNORE INTO `auth_accounts` (`id`, `account_id`, `provider_id`, `user_id`, `password`, `created_at`, `updated_at`)
 VALUES (
   'AgQUkeQr8EQVxrJy02ypz7qCMpBWhslp',

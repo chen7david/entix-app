@@ -10,9 +10,12 @@ import {
 } from "@web/src/features/schedule";
 import { Button, Result, Spin } from "antd";
 import type React from "react";
+import { useNavigate, useParams } from "react-router";
 
 export const OrganizationSchedulePage: React.FC = () => {
     const { activeOrganization } = useOrganization();
+    const navigate = useNavigate();
+    const { slug } = useParams<{ slug: string }>();
 
     const {
         // State
@@ -101,6 +104,10 @@ export const OrganizationSchedulePage: React.FC = () => {
                         isFetchingNextPage={isFetchingNextPage}
                         onFetchNextPage={fetchNextPage}
                         onEdit={handleEdit}
+                        onOpenVocabulary={(session) => {
+                            if (!slug) return;
+                            navigate(`/org/${slug}/teaching/sessions/${session.id}/vocabulary`);
+                        }}
                     />
                 )}
             </div>

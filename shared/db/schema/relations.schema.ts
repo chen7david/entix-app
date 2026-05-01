@@ -10,13 +10,17 @@ import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { financialTransactionLines } from "./financial-transaction-lines.schema";
 import { financialTransactions } from "./financial-transactions.schema";
+import { lessons } from "./lesson.schema";
+import { lessonProgress } from "./lesson-progress.schema";
 import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
 import { paymentRequests } from "./payment-requests.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
+import { studentVocabulary } from "./student-vocabulary.schema";
 import { systemAuditEvents } from "./system-audit-events.schema";
 import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
+import { vocabularyBank } from "./vocabulary-bank.schema";
 
 export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     sessions: many(authSessions),
@@ -33,6 +37,7 @@ export const authUsersRelations = relations(authUsers, ({ one, many }) => ({
     addresses: many(userAddresses),
     socialMedias: many(userSocialMedias),
     paymentRequests: many(paymentRequests),
+    studentVocabularies: many(studentVocabulary),
 }));
 
 export const authSessionsRelations = relations(authSessions, ({ one }) => ({
@@ -56,8 +61,10 @@ export const authOrganizationsRelations = relations(authOrganizations, ({ many }
     media: many(media),
     playlists: many(playlists),
     scheduledSessions: many(scheduledSessions),
+    lessons: many(lessons),
     auditEvents: many(systemAuditEvents),
     paymentRequests: many(paymentRequests),
+    studentVocabularies: many(studentVocabulary),
 }));
 
 export const authMembersRelations = relations(authMembers, ({ one }) => ({
@@ -140,10 +147,18 @@ export const scheduledSessionsRelations = relations(scheduledSessions, ({ one, m
         fields: [scheduledSessions.organizationId],
         references: [authOrganizations.id],
     }),
+    lesson: one(lessons, {
+        fields: [scheduledSessions.lessonId],
+        references: [lessons.id],
+    }),
+    teacher: one(authUsers, {
+        fields: [scheduledSessions.teacherId],
+        references: [authUsers.id],
+    }),
     attendances: many(sessionAttendances),
 }));
 
-export const sessionAttendancesRelations = relations(sessionAttendances, ({ one }) => ({
+export const sessionAttendancesRelations = relations(sessionAttendances, ({ one, many }) => ({
     session: one(scheduledSessions, {
         fields: [sessionAttendances.sessionId],
         references: [scheduledSessions.id],
@@ -155,6 +170,23 @@ export const sessionAttendancesRelations = relations(sessionAttendances, ({ one 
     user: one(authUsers, {
         fields: [sessionAttendances.userId],
         references: [authUsers.id],
+    }),
+    lessonProgress: many(lessonProgress),
+    studentVocabularies: many(studentVocabulary),
+}));
+
+export const lessonsRelations = relations(lessons, ({ one, many }) => ({
+    organization: one(authOrganizations, {
+        fields: [lessons.organizationId],
+        references: [authOrganizations.id],
+    }),
+    scheduledSessions: many(scheduledSessions),
+}));
+
+export const lessonProgressRelations = relations(lessonProgress, ({ one }) => ({
+    enrollment: one(sessionAttendances, {
+        fields: [lessonProgress.enrollId],
+        references: [sessionAttendances.id],
     }),
 }));
 
@@ -349,5 +381,28 @@ export const systemAuditEventsRelations = relations(systemAuditEvents, ({ one })
     acknowledgedByUser: one(authUsers, {
         fields: [systemAuditEvents.acknowledgedBy],
         references: [authUsers.id],
+    }),
+}));
+
+export const vocabularyBankRelations = relations(vocabularyBank, ({ many }) => ({
+    studentVocabularies: many(studentVocabulary),
+}));
+
+export const studentVocabularyRelations = relations(studentVocabulary, ({ one }) => ({
+    user: one(authUsers, {
+        fields: [studentVocabulary.userId],
+        references: [authUsers.id],
+    }),
+    organization: one(authOrganizations, {
+        fields: [studentVocabulary.organizationId],
+        references: [authOrganizations.id],
+    }),
+    vocabulary: one(vocabularyBank, {
+        fields: [studentVocabulary.vocabularyId],
+        references: [vocabularyBank.id],
+    }),
+    attendance: one(sessionAttendances, {
+        fields: [studentVocabulary.attendanceId],
+        references: [sessionAttendances.id],
     }),
 }));

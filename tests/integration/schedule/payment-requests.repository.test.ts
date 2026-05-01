@@ -5,6 +5,7 @@ import {
     authUsers,
     financialAccounts,
     financialTransactions,
+    lessons,
     scheduledSessions,
 } from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -17,6 +18,7 @@ describe("PaymentRequestsRepository Integration", () => {
     const orgId = "org_pay_req";
     const sessionId = "sess_pay_req";
     const userId = "user_pay_req";
+    const lessonId = "lesson_pay_req";
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -46,10 +48,21 @@ describe("PaymentRequestsRepository Integration", () => {
             .onConflictDoNothing();
 
         await db
+            .insert(lessons)
+            .values({
+                id: lessonId,
+                organizationId: orgId,
+                title: "Payments Lesson",
+            })
+            .onConflictDoNothing();
+
+        await db
             .insert(scheduledSessions)
             .values({
                 id: sessionId,
                 organizationId: orgId,
+                lessonId,
+                teacherId: userId,
                 title: "Pay Request Session",
                 startTime: new Date(),
                 durationMinutes: 60,

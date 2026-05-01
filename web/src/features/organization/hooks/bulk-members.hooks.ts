@@ -39,8 +39,19 @@ export type ImportResult = {
     total: number;
     created: number;
     linked: number;
+    walletInitialized: number;
+    billingAssigned: number;
+    billingSkipped: number;
     failed: number;
     errors: string[];
+};
+
+export type BulkImportPayload = {
+    members: any[];
+    importOptions: {
+        defaultBillingPlanId: string;
+        billingPlanConflict: "replace" | "skip";
+    };
 };
 
 export const useBulkMembers = (orgId?: string) => {
@@ -99,8 +110,8 @@ export const useBulkMembers = (orgId?: string) => {
         }
     };
 
-    const importMembersMutation = useMutation<ImportResult, Error, any[]>({
-        mutationFn: async (data: any[]) => {
+    const importMembersMutation = useMutation<ImportResult, Error, BulkImportPayload>({
+        mutationFn: async (data: BulkImportPayload) => {
             if (!orgId) throw new Error("Organization ID required");
             const api = getApiClient();
             const res = await api.api.v1.orgs[":organizationId"].bulk.import.$post({
