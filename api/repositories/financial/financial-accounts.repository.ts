@@ -225,8 +225,7 @@ export class FinancialAccountsRepository {
                     eq(financialAccounts.ownerId, ownerId),
                     eq(financialAccounts.ownerType, ownerType),
                     eq(financialAccounts.currencyId, currencyId),
-                    eq(financialAccounts.organizationId, organizationId),
-                    eq(financialAccounts.isActive, true)
+                    eq(financialAccounts.organizationId, organizationId)
                 )
             )
             .limit(1);

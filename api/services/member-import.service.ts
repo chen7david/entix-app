@@ -5,24 +5,36 @@ import type { UserProfileRepository } from "@api/repositories/user-profile.repos
 import { generateOpaqueId } from "@shared";
 import type { OrgRole } from "@shared/auth/permissions";
 import type * as schema from "@shared/db/schema";
-import type { BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
+import type { BulkImportOptionsDTO, BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
 import { BaseService } from "./base.service";
+import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
+import type { FinanceWalletService } from "./financial/finance-wallet.service";
 
 export class MemberImportService extends BaseService {
     constructor(
         private userRepo: UserRepository,
         private memberRepo: MemberRepository,
         private profileRepo: UserProfileRepository,
-        private socialRepo: SocialMediaRepository
+        private socialRepo: SocialMediaRepository,
+        private billingPlansService: FinanceBillingPlansService,
+        private walletService: FinanceWalletService
     ) {
         super();
     }
 
-    async importMembers(organizationId: string, members: BulkMemberItemDTO[]) {
+    async importMembers(
+        organizationId: string,
+        members: BulkMemberItemDTO[],
+        importOptions: BulkImportOptionsDTO
+    ) {
+        const { defaultBillingPlanId, billingPlanConflict } = importOptions;
         const results = {
             total: members.length,
             created: 0,
             linked: 0,
+            walletInitialized: 0,
+            billingAssigned: 0,
+            billingSkipped: 0,
             failed: 0,
             errors: [] as string[],
         };
@@ -86,183 +98,240 @@ export class MemberImportService extends BaseService {
             const socialTypeMap = new Map(
                 socialTypes.map((t: schema.SocialMediaType) => [t.name.toLowerCase(), t.id])
             );
+            const defaultPlan = await this.billingPlansService.getActivePlanForOrg(
+                organizationId,
+                defaultBillingPlanId
+            );
 
             const enforcedRole: OrgRole = "student";
             const IMPORTABLE_ROLES = ["student", "teacher", "admin"] as const;
 
             // Process users one by one to ensure identity consistency
             for (const input of validMembers) {
-                const userByEmailId = userMapByEmail.get(input.email);
+                try {
+                    const userByEmailId = userMapByEmail.get(input.email);
 
-                // Identity Resolution & Consistency Check
-                if (input.id) {
-                    if (userByEmailId && userByEmailId !== input.id) {
-                        results.failed++;
-                        results.errors.push(
-                            `Identity Conflict: Email ${input.email} belongs to user ${userByEmailId}, but payload provided id ${input.id}`
-                        );
-                        continue;
+                    // Identity Resolution & Consistency Check
+                    if (input.id) {
+                        if (userByEmailId && userByEmailId !== input.id) {
+                            results.failed++;
+                            results.errors.push(
+                                `Identity Conflict: Email ${input.email} belongs to user ${userByEmailId}, but payload provided id ${input.id}`
+                            );
+                            continue;
+                        }
+                        if (
+                            userMapById.has(input.id) &&
+                            userMapById.get(input.id) !== input.email
+                        ) {
+                            results.failed++;
+                            results.errors.push(
+                                `Identity Conflict: ID ${input.id} belongs to email ${userMapById.get(input.id)}, but payload provided email ${input.email}`
+                            );
+                            continue;
+                        }
                     }
-                    if (userMapById.has(input.id) && userMapById.get(input.id) !== input.email) {
-                        results.failed++;
-                        results.errors.push(
-                            `Identity Conflict: ID ${input.id} belongs to email ${userMapById.get(input.id)}, but payload provided email ${input.email}`
-                        );
-                        continue;
-                    }
-                }
 
-                const targetUserId = input.id || userByEmailId || generateOpaqueId();
-                const isNewUser = !userByEmailId && (!input.id || !userMapById.has(input.id));
-                const userBatch: any[] = [];
+                    const targetUserId = input.id || userByEmailId || generateOpaqueId();
+                    const isNewUser = !userByEmailId && (!input.id || !userMapById.has(input.id));
+                    const wasAlreadyLinked = memberSet.has(targetUserId);
+                    const shouldLinkMember = isNewUser || !memberSet.has(targetUserId);
+                    const userBatch: any[] = [];
+                    let pendingCreated = 0;
+                    let pendingLinked = 0;
 
-                if (isNewUser) {
-                    userMapByEmail.set(input.email, targetUserId);
-                    userMapById.set(targetUserId, input.email);
-                    userBatch.push(
-                        this.userRepo.prepareUpsert({
-                            id: targetUserId,
-                            email: input.email,
-                            name: input.name,
-                            image: input.avatarUrl,
-                            emailVerified: true,
-                            role: "user",
-                            createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
-                            updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
-                        })
-                    );
-                    results.created++;
-                } else {
-                    userBatch.push(
-                        this.userRepo.prepareUpdate(targetUserId, {
-                            name: input.name,
-                            image: input.avatarUrl,
-                            updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
-                        })
-                    );
-                }
-
-                // Security: Default to student, only allow upgrades to teacher/admin via import.
-                // Owner role must be granted manually via UI/DB for maximum security.
-                const roleFromInput = input.role as any;
-                const roleToUse = IMPORTABLE_ROLES.includes(roleFromInput)
-                    ? (roleFromInput as OrgRole)
-                    : enforcedRole;
-
-                if (isNewUser || !memberSet.has(targetUserId)) {
-                    userBatch.push(
-                        this.memberRepo.prepareInsertQuery(
-                            generateOpaqueId(),
-                            organizationId,
-                            targetUserId,
-                            roleToUse
-                        )
-                    );
-                    results.linked++;
-                    memberSet.add(targetUserId);
-
-                    userBatch.push(
-                        this.userRepo.prepareAccountInsertRaw({
-                            id: generateOpaqueId(),
-                            userId: targetUserId,
-                            accountId: targetUserId,
-                            providerId: "credential",
-                            password: null,
-                            createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
-                            updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
-                        })
-                    );
-                }
-
-                if (input.profile) {
-                    userBatch.push(
-                        this.profileRepo.prepareUpsert({
-                            id: input.profile.id || generateOpaqueId(),
-                            userId: targetUserId,
-                            firstName: input.profile.firstName,
-                            lastName: input.profile.lastName,
-                            displayName: input.profile.displayName ?? null,
-                            sex: input.profile.sex,
-                            birthDate: input.profile.birthDate
-                                ? new Date(input.profile.birthDate)
-                                : null,
-                            createdAt: input.profile.createdAt
-                                ? new Date(input.profile.createdAt)
-                                : new Date(),
-                            updatedAt: input.profile.updatedAt
-                                ? new Date(input.profile.updatedAt)
-                                : new Date(),
-                        })
-                    );
-                }
-
-                if (input.phones && input.phones.length > 0) {
-                    userBatch.push(this.profileRepo.preparePhoneDelete(targetUserId));
-                    for (const p of input.phones) {
+                    if (isNewUser) {
                         userBatch.push(
-                            this.profileRepo.preparePhoneInsert({
-                                id: p.id || generateOpaqueId(),
-                                userId: targetUserId,
-                                countryCode: p.countryCode,
-                                number: p.number,
-                                extension: p.extension ?? null,
-                                label: p.label,
-                                isPrimary: p.isPrimary ?? false,
-                                createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
-                                updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
+                            this.userRepo.prepareUpsert({
+                                id: targetUserId,
+                                email: input.email,
+                                name: input.name,
+                                image: input.avatarUrl,
+                                emailVerified: true,
+                                role: "user",
+                                createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
+                                updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
+                            })
+                        );
+                        pendingCreated = 1;
+                    } else {
+                        userBatch.push(
+                            this.userRepo.prepareUpdate(targetUserId, {
+                                name: input.name,
+                                image: input.avatarUrl,
+                                updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             })
                         );
                     }
-                }
 
-                if (input.addresses && input.addresses.length > 0) {
-                    userBatch.push(this.profileRepo.prepareAddressDelete(targetUserId));
-                    for (const a of input.addresses) {
+                    // Security: Default to student, only allow upgrades to teacher/admin via import.
+                    // Owner role must be granted manually via UI/DB for maximum security.
+                    const roleFromInput = input.role as any;
+                    const roleToUse = IMPORTABLE_ROLES.includes(roleFromInput)
+                        ? (roleFromInput as OrgRole)
+                        : enforcedRole;
+
+                    if (shouldLinkMember) {
                         userBatch.push(
-                            this.profileRepo.prepareAddressInsert({
-                                id: a.id || generateOpaqueId(),
+                            this.memberRepo.prepareInsertQuery(
+                                generateOpaqueId(),
+                                organizationId,
+                                targetUserId,
+                                roleToUse
+                            )
+                        );
+                        pendingLinked = 1;
+
+                        userBatch.push(
+                            this.userRepo.prepareAccountInsertRaw({
+                                id: generateOpaqueId(),
                                 userId: targetUserId,
-                                country: a.country,
-                                state: a.state,
-                                city: a.city,
-                                zip: a.zip,
-                                address: a.address,
-                                label: a.label,
-                                isPrimary: a.isPrimary ?? false,
-                                createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
-                                updatedAt: a.updatedAt ? new Date(a.updatedAt) : new Date(),
+                                accountId: targetUserId,
+                                providerId: "credential",
+                                password: null,
+                                createdAt: input.createdAt ? new Date(input.createdAt) : new Date(),
+                                updatedAt: input.updatedAt ? new Date(input.updatedAt) : new Date(),
                             })
                         );
                     }
-                }
 
-                if (input.socials && input.socials.length > 0) {
-                    userBatch.push(this.profileRepo.prepareSocialMediaDelete(targetUserId));
-                    for (const s of input.socials) {
-                        const typeId = socialTypeMap.get(s.type.toLowerCase());
-                        if (typeId) {
+                    if (input.profile) {
+                        userBatch.push(
+                            this.profileRepo.prepareUpsert({
+                                id: input.profile.id || generateOpaqueId(),
+                                userId: targetUserId,
+                                firstName: input.profile.firstName,
+                                lastName: input.profile.lastName,
+                                displayName: input.profile.displayName ?? null,
+                                sex: input.profile.sex,
+                                birthDate: input.profile.birthDate
+                                    ? new Date(input.profile.birthDate)
+                                    : null,
+                                createdAt: input.profile.createdAt
+                                    ? new Date(input.profile.createdAt)
+                                    : new Date(),
+                                updatedAt: input.profile.updatedAt
+                                    ? new Date(input.profile.updatedAt)
+                                    : new Date(),
+                            })
+                        );
+                    }
+
+                    if (input.phones && input.phones.length > 0) {
+                        userBatch.push(this.profileRepo.preparePhoneDelete(targetUserId));
+                        for (const p of input.phones) {
                             userBatch.push(
-                                this.profileRepo.prepareSocialMediaInsert({
-                                    id: s.id || generateOpaqueId(),
+                                this.profileRepo.preparePhoneInsert({
+                                    id: p.id || generateOpaqueId(),
                                     userId: targetUserId,
-                                    socialMediaTypeId: typeId as string,
-                                    urlOrHandle: s.urlOrHandle,
-                                    createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
-                                    updatedAt: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+                                    countryCode: p.countryCode,
+                                    number: p.number,
+                                    extension: p.extension ?? null,
+                                    label: p.label,
+                                    isPrimary: p.isPrimary ?? false,
+                                    createdAt: p.createdAt ? new Date(p.createdAt) : new Date(),
+                                    updatedAt: p.updatedAt ? new Date(p.updatedAt) : new Date(),
                                 })
                             );
                         }
                     }
-                }
 
-                if (userBatch.length > 0) {
-                    await this.userRepo.executeBatch(userBatch);
+                    if (input.addresses && input.addresses.length > 0) {
+                        userBatch.push(this.profileRepo.prepareAddressDelete(targetUserId));
+                        for (const a of input.addresses) {
+                            userBatch.push(
+                                this.profileRepo.prepareAddressInsert({
+                                    id: a.id || generateOpaqueId(),
+                                    userId: targetUserId,
+                                    country: a.country,
+                                    state: a.state,
+                                    city: a.city,
+                                    zip: a.zip,
+                                    address: a.address,
+                                    label: a.label,
+                                    isPrimary: a.isPrimary ?? false,
+                                    createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
+                                    updatedAt: a.updatedAt ? new Date(a.updatedAt) : new Date(),
+                                })
+                            );
+                        }
+                    }
+
+                    if (input.socials && input.socials.length > 0) {
+                        userBatch.push(this.profileRepo.prepareSocialMediaDelete(targetUserId));
+                        for (const s of input.socials) {
+                            const typeId = socialTypeMap.get(s.type.toLowerCase());
+                            if (typeId) {
+                                userBatch.push(
+                                    this.profileRepo.prepareSocialMediaInsert({
+                                        id: s.id || generateOpaqueId(),
+                                        userId: targetUserId,
+                                        socialMediaTypeId: typeId as string,
+                                        urlOrHandle: s.urlOrHandle,
+                                        createdAt: s.createdAt ? new Date(s.createdAt) : new Date(),
+                                        updatedAt: s.updatedAt ? new Date(s.updatedAt) : new Date(),
+                                    })
+                                );
+                            }
+                        }
+                    }
+
+                    if (userBatch.length > 0) {
+                        await this.userRepo.executeBatch(userBatch);
+
+                        if (isNewUser) {
+                            userMapByEmail.set(input.email, targetUserId);
+                            userMapById.set(targetUserId, input.email);
+                        }
+                        if (shouldLinkMember) {
+                            memberSet.add(targetUserId);
+                        }
+                        results.created += pendingCreated;
+                        results.linked += pendingLinked;
+                    }
+
+                    if (!wasAlreadyLinked) {
+                        // `wasAlreadyLinked` is intentionally captured before this row's writes.
+                        // This prevents duplicate payload rows for the same user from provisioning
+                        // wallets more than once in a single import run.
+                        const walletProvisionResult =
+                            await this.walletService.provisionWalletIfNotExists(
+                                targetUserId,
+                                organizationId
+                            );
+                        if (walletProvisionResult.created > 0) {
+                            results.walletInitialized++;
+                        }
+                    }
+
+                    if (billingPlanConflict === "skip") {
+                        const hasExistingCurrencyAssignment =
+                            await this.billingPlansService.hasAssignedPlanInCurrency(
+                                targetUserId,
+                                organizationId,
+                                defaultPlan.currencyId
+                            );
+                        if (hasExistingCurrencyAssignment) {
+                            results.billingSkipped++;
+                            continue;
+                        }
+                    }
+
+                    await this.billingPlansService.assignPlan(organizationId, {
+                        userId: targetUserId,
+                        planId: defaultBillingPlanId,
+                    });
+                    results.billingAssigned++;
+                } catch (err: unknown) {
+                    results.failed++;
+                    const errorMessage = err instanceof Error ? err.message : String(err);
+                    results.errors.push(`Failed to import member ${input.email}: ${errorMessage}`);
                 }
             }
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             results.errors.push(
-                `Import halted by critical error: ${errorMessage}. Partial data may have been committed for successfully processed users.`
+                `Import halted by critical preflight error: ${errorMessage}. No additional members were processed after this failure point.`
             );
         }
 

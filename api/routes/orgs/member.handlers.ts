@@ -5,12 +5,12 @@ import type { MemberRoutes } from "./member.routes";
 
 export class MemberHandler {
     static createMember: AppHandler<typeof MemberRoutes.createMember> = async (ctx) => {
-        const { email, name, role } = ctx.req.valid("json");
+        const { email, name, role, defaultBillingPlanId } = ctx.req.valid("json");
         const currentUserId = ctx.get("userId");
         const organizationId = ctx.get("organizationId");
 
         ctx.var.logger.info(
-            { currentUserId, organizationId, email, name, role },
+            { currentUserId, organizationId, email, name, role, defaultBillingPlanId },
             "Creating new member"
         );
 
@@ -21,7 +21,8 @@ export class MemberHandler {
             email,
             name,
             organizationId,
-            role
+            role,
+            defaultBillingPlanId
         );
 
         const resetUrl = `${ctx.var.frontendUrl}/auth/reset-password`;

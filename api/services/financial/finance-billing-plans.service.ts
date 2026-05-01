@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError, NotFoundError } from "@api/errors/app.error";
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import {
     generateBillingPlanId,
@@ -55,10 +55,7 @@ export class FinanceBillingPlansService extends BaseService {
     async assignPlan(orgId: string, input: AssignBillingPlanInput, assignedBy?: string) {
         const { userId, planId } = input;
 
-        const plan = await this.repo.findById(planId);
-        if (!plan || plan.organizationId !== orgId) {
-            throw new NotFoundError("Billing plan not found");
-        }
+        const plan = await this.getActivePlanForOrg(orgId, planId);
 
         const id = generateMemberBillingPlanId();
         return this.repo.upsertMemberPlan({
@@ -69,6 +66,17 @@ export class FinanceBillingPlansService extends BaseService {
             currencyId: plan.currencyId,
             assignedBy: assignedBy ?? null,
         });
+    }
+
+    async getActivePlanForOrg(orgId: string, planId: string) {
+        const plan = await this.repo.findById(planId);
+        if (!plan || plan.organizationId !== orgId) {
+            throw new NotFoundError("Billing plan not found");
+        }
+        if (!plan.isActive) {
+            throw new BadRequestError("Billing plan is not active");
+        }
+        return plan;
     }
 
     /**
@@ -123,6 +131,11 @@ export class FinanceBillingPlansService extends BaseService {
         return assignment.plan as BillingPlan & {
             rates: (typeof financeBillingPlanRates.$inferSelect)[];
         };
+    }
+
+    async hasAssignedPlanInCurrency(userId: string, orgId: string, currencyId: string) {
+        const assignment = await this.repo.getMemberPlanByCurrency(userId, orgId, currencyId);
+        return Boolean(assignment);
     }
 
     /**

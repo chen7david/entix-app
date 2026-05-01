@@ -1,3 +1,4 @@
+import { runRuntimeMigrationDriftCheckOnce } from "@api/db/migration-guard/runtime-check";
 import { getCorsOrigins } from "@api/helpers/cors.helpers";
 import type { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
 import { envValidatorMiddleware } from "@api/middleware/env-validator.middleware";
@@ -48,6 +49,10 @@ export const createApp = () => {
 
     app.use(logger());
     app.use("*", envValidatorMiddleware());
+    app.use("*", async (ctx, next) => {
+        await runRuntimeMigrationDriftCheckOnce(ctx.env.DB);
+        await next();
+    });
 
     app.notFound(notFoundHandler);
     app.onError(globalErrorHandler);

@@ -33,7 +33,10 @@ export default defineWorkersConfig({
                 },
             },
         },
-        include: ["tests/**/*.{test,spec}.ts"],
+        include: [
+            "tests/**/*.{test,spec}.ts",
+            "api/db/migration-guard/__tests__/**/*.{test,spec}.ts",
+        ],
         exclude: ["tests/e2e/**"],
         alias: {
             "@api": resolve(__dirname, "./api"),
