@@ -9,9 +9,6 @@ describe("VocabularyProcessingService", () => {
     let aiService: {
         generate: ReturnType<typeof vi.fn>;
     };
-    let queue: {
-        send: ReturnType<typeof vi.fn>;
-    };
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -22,12 +19,9 @@ describe("VocabularyProcessingService", () => {
         aiService = {
             generate: vi.fn(),
         };
-        queue = {
-            send: vi.fn(),
-        };
     });
 
-    it("processText transitions new -> processing_text -> text_ready and enqueues audio", async () => {
+    it("processText transitions new -> text_ready -> active in text-only mode", async () => {
         vocabRepo.findById.mockResolvedValueOnce({
             id: "vocab_1",
             text: "hello",
@@ -45,7 +39,7 @@ describe("VocabularyProcessingService", () => {
         const service = new VocabularyProcessingService(
             vocabRepo as never,
             aiService as never,
-            queue as never
+            undefined
         );
         await service.processText("vocab_1");
 
@@ -54,10 +48,7 @@ describe("VocabularyProcessingService", () => {
             zhTranslation: "ni hao",
             pinyin: "ni hao",
         });
-        expect(queue.send).toHaveBeenCalledWith({
-            type: "vocabulary.process-audio",
-            vocabularyId: "vocab_1",
-        });
+        expect(vocabRepo.updateStatus).toHaveBeenLastCalledWith("vocab_1", "active");
     });
 
     it("processText sets review only when AI flags language quality (not on parse failure)", async () => {
@@ -78,7 +69,7 @@ describe("VocabularyProcessingService", () => {
         const service = new VocabularyProcessingService(
             vocabRepo as never,
             aiService as never,
-            queue as never
+            undefined
         );
         await service.processText("vocab_1");
 
@@ -87,7 +78,7 @@ describe("VocabularyProcessingService", () => {
             zhTranslation: "x",
             pinyin: "x",
         });
-        expect(queue.send).not.toHaveBeenCalled();
+        expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
     });
 
     it("processText keeps processing_text and logs pipeline failure on infra/parse errors (not review)", async () => {
@@ -100,14 +91,9 @@ describe("VocabularyProcessingService", () => {
 
         const logPipelineFailure = vi.fn();
 
-        const service = new VocabularyProcessingService(
-            vocabRepo as never,
-            aiService as never,
-            queue as never,
-            {
-                logPipelineFailure,
-            }
-        );
+        const service = new VocabularyProcessingService(vocabRepo as never, aiService as never, {
+            logPipelineFailure,
+        });
 
         await service.processText("vocab_1");
 
@@ -119,5 +105,22 @@ describe("VocabularyProcessingService", () => {
 
         expect(logPipelineFailure).toHaveBeenCalledTimes(1);
         expect(logPipelineFailure).toHaveBeenCalledWith("text", "vocab_1", expect.any(Error));
+    });
+
+    it("processAudio transitions text_ready items directly to active while TTS is unavailable", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            zhTranslation: "ni hao",
+            status: "text_ready",
+        });
+
+        const service = new VocabularyProcessingService(vocabRepo as never, aiService as never, {
+            logPipelineFailure: vi.fn(),
+        });
+        await service.processAudio("vocab_1");
+
+        expect(vocabRepo.updateStatus).toHaveBeenCalledTimes(1);
+        expect(vocabRepo.updateStatus).toHaveBeenCalledWith("vocab_1", "active");
     });
 });

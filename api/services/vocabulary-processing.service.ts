@@ -1,5 +1,4 @@
 import { InternalServerError } from "@api/errors/app.error";
-import type { EntixQueueMessage } from "@api/queues/entix.queue";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import type { AiService } from "./ai.service";
 
@@ -22,7 +21,6 @@ export class VocabularyProcessingService {
     constructor(
         private readonly vocabRepo: VocabularyBankRepository,
         private readonly aiService: AiService,
-        private readonly queue: Queue<EntixQueueMessage>,
         private readonly deps?: VocabularyProcessingDeps
     ) {}
 
@@ -63,10 +61,8 @@ export class VocabularyProcessingService {
                 pinyin: parsed.pinyin,
             });
 
-            await this.queue.send({
-                type: "vocabulary.process-audio",
-                vocabularyId,
-            });
+            // TTS provider is not wired yet, so transition directly to active text-only entries.
+            await this.vocabRepo.updateStatus(vocabularyId, "active");
         } catch (error: unknown) {
             await this.deps?.logPipelineFailure("text", vocabularyId, error);
             // Leave status as processing_text for cron/queue retry; do not use `review`.
@@ -79,24 +75,8 @@ export class VocabularyProcessingService {
             return;
         }
 
-        await this.vocabRepo.updateStatus(vocabularyId, "processing_audio");
-
-        try {
-            const enAudioUrl = await this.generateTts(item.text, "en");
-            const zhAudioUrl = await this.generateTts(item.zhTranslation ?? item.text, "zh");
-
-            await this.vocabRepo.updateStatus(vocabularyId, "active", {
-                enAudioUrl,
-                zhAudioUrl,
-            });
-        } catch (error: unknown) {
-            await this.deps?.logPipelineFailure("audio", vocabularyId, error);
-            // Leave status as processing_audio for cron/queue retry; do not use `review`.
-        }
-    }
-
-    private async generateTts(_text: string, _lang: "en" | "zh"): Promise<string> {
-        throw new InternalServerError("TTS provider not implemented");
+        // Temporary text-only mode: processAudio should not fail jobs while TTS is unavailable.
+        await this.vocabRepo.updateStatus(vocabularyId, "active");
     }
 }
 

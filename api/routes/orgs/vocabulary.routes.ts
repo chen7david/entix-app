@@ -50,7 +50,7 @@ export const VocabularyRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            text: z.string().min(1),
+                            text: z.string().trim().min(1, "Vocabulary text cannot be blank"),
                             sessionId: z.string().optional(),
                         }),
                     },

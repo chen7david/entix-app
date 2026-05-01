@@ -179,7 +179,7 @@ async function handleVocabularyProcessText(
         ai: env.AI,
         model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     });
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE, {
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, {
         logPipelineFailure: async (_phase, vocabularyId, error) => {
             const errMsg = error instanceof Error ? error.message : String(error);
             await auditRepo.insert({
@@ -216,7 +216,7 @@ async function handleVocabularyProcessAudio(
         ai: env.AI,
         model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
     });
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, env.QUEUE, {
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, {
         logPipelineFailure: async (_phase, vocabularyId, error) => {
             const errMsg = error instanceof Error ? error.message : String(error);
             await auditRepo.insert({
