@@ -3,20 +3,17 @@ import type { WalletAccountDTO } from "@shared";
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
 import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
-import { useActivateCurrency } from "@web/src/features/finance/hooks/useActivateCurrency";
-import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
 import { useOrganization } from "@web/src/features/organization";
 import { CreateAccountDrawer } from "@web/src/features/wallet/components/CreateAccountDrawer";
 import type { FinancialAccountData } from "@web/src/features/wallet/components/FinancialAccountCard";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
-import { Button, Card, Col, Flex, Row, Tag, Typography } from "antd";
+import { Button, Col, Flex, Row, Tag, Typography } from "antd";
 import type React from "react";
 import { useMemo, useState } from "react";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 export const BillingAccountsPage: React.FC = () => {
     const { activeOrganization } = useOrganization();
@@ -30,10 +27,12 @@ export const BillingAccountsPage: React.FC = () => {
         accountType: "all",
     });
 
-    const { data: currenciesData, isLoading: isLoadingCurrencies } = useOrgCurrencies(orgId);
-    const { mutate: activate, isPending: isActivating } = useActivateCurrency(orgId);
     const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(orgId, "org");
     const accounts = balanceData?.accounts ?? [];
+    const currencyCount = useMemo(
+        () => new Set(accounts.map((account) => account.currencyId)).size,
+        [accounts]
+    );
 
     const filterConfig: FilterConfig[] = [
         {
@@ -114,7 +113,7 @@ export const BillingAccountsPage: React.FC = () => {
 
             <div className="flex flex-col gap-8">
                 <SummaryCardsRow
-                    loading={isLoadingBalance || isLoadingCurrencies}
+                    loading={isLoadingBalance}
                     items={[
                         {
                             key: "total",
@@ -135,7 +134,7 @@ export const BillingAccountsPage: React.FC = () => {
                         {
                             key: "currencies",
                             label: "Currencies In Use",
-                            value: currenciesData?.filter((c) => c.isActivated).length || 0,
+                            value: currencyCount,
                             icon: <GlobalOutlined />,
                             color: "#8b5cf6",
                         },
@@ -174,28 +173,6 @@ export const BillingAccountsPage: React.FC = () => {
                             loading={isLoadingBalance}
                             onAccountClick={handleAccountClick}
                         />
-                    </Col>
-
-                    <Col span={24}>
-                        <Card
-                            title="Currency Management"
-                            styles={{ body: { padding: 24 } }}
-                            className="rounded-xl"
-                        >
-                            <Text
-                                strong
-                                type="secondary"
-                                className="text-[11px] uppercase tracking-widest block mb-4"
-                            >
-                                Supported Currencies
-                            </Text>
-                            <CurrencyActivationGrid
-                                currencies={currenciesData ?? []}
-                                onAccountClick={handleAccountClick}
-                                onActivate={activate}
-                                activating={isActivating || isLoadingCurrencies}
-                            />
-                        </Card>
                     </Col>
                 </Row>
             </div>
