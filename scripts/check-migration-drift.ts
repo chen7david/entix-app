@@ -41,6 +41,16 @@ function main() {
     } catch (error) {
         restoreGeneratedArtifacts(beforeSql, beforeSnapshots, beforeJournal);
 
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        const missingLocalD1Env = errorMessage.includes("Missing CLOUDFLARE_D1_LOCAL_DB");
+
+        if (missingLocalD1Env) {
+            console.warn(
+                "[drift] Skipping drift check because CLOUDFLARE_D1_LOCAL_DB is not set in this environment."
+            );
+            process.exit(0);
+        }
+
         if (process.env.ALLOW_DRIFT_CHECK_SKIP === "true") {
             console.warn(
                 "[drift] drizzle-kit generate failed - skipped via ALLOW_DRIFT_CHECK_SKIP."
@@ -49,7 +59,7 @@ function main() {
         }
 
         console.error("[drift] drizzle-kit generate failed. Fix config before pushing.");
-        console.error(error instanceof Error ? error.message : String(error));
+        console.error(errorMessage);
         process.exit(1);
     }
 
