@@ -8,6 +8,13 @@
       "when": 1777486782795,
       "tag": "0000_stormy_frightful_four",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1777695240000,
+      "tag": "0001_fix_student_vocabulary_org_column",
+      "breakpoints": true
     }
   ]
 }
