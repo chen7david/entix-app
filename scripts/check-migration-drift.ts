@@ -32,9 +32,7 @@ function main() {
     const afterSql = listSql(MIGRATIONS_DIR);
     const newSqlFiles = afterSql.filter((file) => !beforeSql.includes(file));
     const afterSnapshots = listSnapshots(META_DIR);
-    const newSnapshotFiles = afterSnapshots.filter(
-        (file) => !beforeSnapshots.includes(file)
-    );
+    const newSnapshotFiles = afterSnapshots.filter((file) => !beforeSnapshots.includes(file));
 
     for (const file of newSqlFiles) {
         rmSync(path.join(MIGRATIONS_DIR, file), { force: true });

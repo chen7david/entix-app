@@ -1,9 +1,5 @@
 import type { z } from "zod";
-import {
-    JournalSchema,
-    MigrationTagSchema,
-    SnapshotSchema,
-} from "./meta.schemas";
+import { type JournalSchema, MigrationTagSchema, type SnapshotSchema } from "./meta.schemas";
 
 export interface MigrationContext {
     journal: z.infer<typeof JournalSchema>;
@@ -102,9 +98,7 @@ export const policies: Policy[] = [
     {
         name: "SQL filenames follow Drizzle naming convention",
         run: ({ sqlFiles }) => {
-            const bad = sqlFiles.filter(
-                (file) => !MigrationTagSchema.safeParse(file).success
-            );
+            const bad = sqlFiles.filter((file) => !MigrationTagSchema.safeParse(file).success);
             return {
                 passed: bad.length === 0,
                 message: bad.length ? `Invalid names: ${bad.join(", ")}` : "OK",

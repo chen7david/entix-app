@@ -1,3 +1,4 @@
+import { runRuntimeMigrationDriftCheckOnce } from "@api/db/migration-guard/runtime-check";
 import { getCorsOrigins } from "@api/helpers/cors.helpers";
 import type { AppEnv, MountRoutes } from "@api/helpers/types.helpers";
 import { envValidatorMiddleware } from "@api/middleware/env-validator.middleware";
@@ -5,7 +6,6 @@ import { frontendUrlMiddleware } from "@api/middleware/frontend-url.middleware";
 import { globalErrorHandler } from "@api/middleware/global-error.middleware";
 import { logger } from "@api/middleware/logger.middleware";
 import { notFoundHandler } from "@api/middleware/not-found.middleware";
-import { runRuntimeMigrationDriftCheckOnce } from "@api/db/migration-guard/runtime-check";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
 

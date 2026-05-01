@@ -1,13 +1,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import {
-    type MigrationContext,
-    policies,
-} from "../api/db/migration-guard/policies";
-import {
-    JournalSchema,
-    SnapshotSchema,
-} from "../api/db/migration-guard/meta.schemas";
+import { JournalSchema, SnapshotSchema } from "../api/db/migration-guard/meta.schemas";
+import { type MigrationContext, policies } from "../api/db/migration-guard/policies";
 
 const MIGRATIONS_DIR = "./api/db/migrations";
 const META_DIR = path.join(MIGRATIONS_DIR, "meta");
@@ -22,9 +16,7 @@ const parseSnapshotIdx = (fileName: string) => {
 };
 
 function buildContext(): MigrationContext {
-    const journal = JournalSchema.parse(
-        JSON.parse(readFileSync(JOURNAL_PATH, "utf-8"))
-    );
+    const journal = JournalSchema.parse(JSON.parse(readFileSync(JOURNAL_PATH, "utf-8")));
 
     const sqlFiles = readdirSync(MIGRATIONS_DIR)
         .filter((file) => file.endsWith(".sql"))

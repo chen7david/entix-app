@@ -1,7 +1,4 @@
-import {
-    type MigrationContext,
-    policies,
-} from "@api/db/migration-guard/policies";
+import { type MigrationContext, policies } from "@api/db/migration-guard/policies";
 import { describe, expect, it } from "vitest";
 
 const baseCtx: MigrationContext = {
@@ -51,9 +48,7 @@ describe("migration policies", () => {
 
     it("fails when journal count does not match SQL count", () => {
         const ctx: MigrationContext = { ...baseCtx, sqlFiles: ["0000_init"] };
-        const result = getPolicy(
-            "Journal entry count matches SQL file count"
-        ).run(ctx);
+        const result = getPolicy("Journal entry count matches SQL file count").run(ctx);
         expect(result.passed).toBe(false);
     });
 
@@ -63,9 +58,7 @@ describe("migration policies", () => {
             snapshotIdxOnDisk: [0],
             snapshots: ["0000_init"],
         };
-        const result = getPolicy(
-            "Journal entry count matches snapshot count"
-        ).run(ctx);
+        const result = getPolicy("Journal entry count matches snapshot count").run(ctx);
         expect(result.passed).toBe(false);
     });
 
@@ -101,9 +94,7 @@ describe("migration policies", () => {
 
     it("fails when snapshot file is not on disk for all entries", () => {
         const ctx: MigrationContext = { ...baseCtx, snapshots: ["0000_init"] };
-        const result = getPolicy(
-            "Snapshot files exist on disk for all journal entries"
-        ).run(ctx);
+        const result = getPolicy("Snapshot files exist on disk for all journal entries").run(ctx);
         expect(result.passed).toBe(false);
     });
 
@@ -136,9 +127,7 @@ describe("migration policies", () => {
             ...baseCtx,
             sqlFiles: ["bad-name", "0001_add_users"],
         };
-        const result = getPolicy(
-            "SQL filenames follow Drizzle naming convention"
-        ).run(ctx);
+        const result = getPolicy("SQL filenames follow Drizzle naming convention").run(ctx);
         expect(result.passed).toBe(false);
     });
 });
