@@ -1,4 +1,5 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { buildCursorPagination, encodeCursor } from "@api/helpers/pagination.helpers";
 import type { VocabularyBankItem, VocabularyBankStatus } from "@shared/db/schema";
 import { vocabularyBank } from "@shared/db/schema";
 import { and, eq, lt, or } from "drizzle-orm";
@@ -6,7 +7,7 @@ import { and, eq, lt, or } from "drizzle-orm";
 export class VocabularyBankRepository {
     constructor(private readonly db: AppDb) {}
 
-    async findOrCreate(text: string): Promise<VocabularyBankItem> {
+    async findOrCreate(text: string): Promise<VocabularyBankItem | null> {
         const normalizedText = text.trim().toLowerCase();
 
         await this.db
@@ -23,11 +24,7 @@ export class VocabularyBankRepository {
             .where(eq(vocabularyBank.text, normalizedText))
             .limit(1);
 
-        if (!item) {
-            throw new Error(`Vocabulary bank item not found after upsert: "${normalizedText}"`);
-        }
-
-        return item;
+        return item ?? null;
     }
 
     async findById(id: string): Promise<VocabularyBankItem | null> {
@@ -64,8 +61,39 @@ export class VocabularyBankRepository {
             .limit(limit);
     }
 
-    async getReviewItems(): Promise<VocabularyBankItem[]> {
-        return this.getByStatus("review");
+    async getReviewItems(
+        params: {
+            limit?: number;
+            direction?: "next" | "prev";
+            cursorUpdatedAt?: number;
+            cursorId?: string;
+        } = {}
+    ) {
+        const { limit = 50, direction = "next", cursorUpdatedAt, cursorId } = params;
+        const cursor =
+            cursorUpdatedAt !== undefined
+                ? encodeCursor({
+                      primary: cursorUpdatedAt,
+                      ...(cursorId ? { secondary: cursorId } : {}),
+                  })
+                : undefined;
+        const pagination = buildCursorPagination(
+            vocabularyBank.updatedAt,
+            vocabularyBank.id,
+            cursor,
+            direction
+        );
+        const conditions = [eq(vocabularyBank.status, "review")];
+        if (pagination.where) {
+            conditions.push(pagination.where);
+        }
+
+        return this.db
+            .select()
+            .from(vocabularyBank)
+            .where(and(...conditions))
+            .orderBy(...pagination.orderBy)
+            .limit(limit);
     }
 
     /**

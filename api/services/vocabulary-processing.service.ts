@@ -1,3 +1,4 @@
+import { InternalServerError } from "@api/errors/app.error";
 import type { EntixQueueMessage } from "@api/queues/entix.queue";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import type { AiService } from "./ai.service";
@@ -95,7 +96,7 @@ export class VocabularyProcessingService {
     }
 
     private async generateTts(_text: string, _lang: "en" | "zh"): Promise<string> {
-        throw new Error("TTS provider not implemented");
+        throw new InternalServerError("TTS provider not implemented");
     }
 }
 
@@ -120,7 +121,7 @@ function parseVocabularyTranslation(
         typeof parsed.pinyin !== "string" ||
         parsed.pinyin.length === 0
     ) {
-        throw new Error("Invalid translation payload from AI");
+        throw new InternalServerError("Invalid translation payload from AI");
     }
 
     return {

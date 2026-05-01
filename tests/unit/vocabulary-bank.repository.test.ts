@@ -1,9 +1,10 @@
+import type { AppDb } from "@api/factories/db.factory";
 import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("VocabularyBankRepository", () => {
     let repo: VocabularyBankRepository;
-    let db: any;
+    let db: unknown;
     let insertValues: ReturnType<typeof vi.fn>;
     let selectWhereLimit: ReturnType<typeof vi.fn>;
     let selectLimit: ReturnType<typeof vi.fn>;
@@ -37,7 +38,7 @@ describe("VocabularyBankRepository", () => {
                 set: updateSet,
             })),
         };
-        repo = new VocabularyBankRepository(db);
+        repo = new VocabularyBankRepository(db as AppDb);
     });
 
     it("findOrCreate inserts a new row when text does not exist", async () => {
@@ -46,6 +47,9 @@ describe("VocabularyBankRepository", () => {
         selectWhereLimit.mockResolvedValue([{ id: "v_1", text: "hello", status: "new" }]);
 
         const item = await repo.findOrCreate("hello");
+        if (!item) {
+            return expect.unreachable("Expected vocabulary item");
+        }
         expect(insertValues).toHaveBeenCalledWith({ text: "hello", status: "new" });
         expect(item.text).toBe("hello");
         expect(item.status).toBe("new");
@@ -57,6 +61,9 @@ describe("VocabularyBankRepository", () => {
         selectWhereLimit.mockResolvedValue([{ id: "v_existing", text: "hello", status: "active" }]);
 
         const second = await repo.findOrCreate(" Hello ");
+        if (!second) {
+            return expect.unreachable("Expected vocabulary item");
+        }
         expect(insertValues).toHaveBeenCalledWith({ text: "hello", status: "new" });
         expect(second.id).toBe("v_existing");
         expect(second.text).toBe("hello");

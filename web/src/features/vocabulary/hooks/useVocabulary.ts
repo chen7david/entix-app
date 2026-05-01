@@ -28,10 +28,16 @@ export type VocabularyItemDTO = {
 export type SessionVocabularyItemDTO = {
     id: string;
     userId: string;
-    orgId: string;
+    organizationId: string;
     attendanceId: string;
     createdAt: number;
     vocabulary: VocabularyItemDTO;
+};
+
+type SessionVocabularyListDTO = {
+    data: SessionVocabularyItemDTO[];
+    nextCursor: string | null;
+    prevCursor: string | null;
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -51,14 +57,20 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
     const sessionVocabularyQuery = useQuery({
         queryKey,
         queryFn: async () => {
-            if (!organizationId || !sessionId) return [];
+            if (!organizationId || !sessionId) {
+                return {
+                    data: [],
+                    nextCursor: null,
+                    prevCursor: null,
+                } satisfies SessionVocabularyListDTO;
+            }
             const api = getApiClient();
             const res = await api.api.v1.orgs[":organizationId"].sessions[
                 ":sessionId"
             ].vocabulary.$get({
                 param: { organizationId, sessionId },
             });
-            return hcJson<SessionVocabularyItemDTO[]>(res);
+            return hcJson<SessionVocabularyListDTO>(res);
         },
         enabled: !!organizationId && !!sessionId && isAuthenticated,
         staleTime: QUERY_STALE_MS,
@@ -72,14 +84,17 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
                 param: { organizationId },
                 json: payload,
             });
-            return hcJson<{ vocabulary: VocabularyItemDTO; assignedCount: number }>(res);
+            const body = await hcJson<{
+                data: { vocabulary: VocabularyItemDTO; targetCount: number };
+            }>(res);
+            return body.data;
         },
         onSuccess: (data) => {
             notification.success({
                 message: "Vocabulary added",
                 description:
-                    data.assignedCount > 0
-                        ? `Assigned to ${data.assignedCount} student(s)`
+                    data.targetCount > 0
+                        ? `Attempted assignment to ${data.targetCount} student(s)`
                         : "Saved to vocabulary bank",
             });
             queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
@@ -101,14 +116,17 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
                 param: { organizationId, sessionId, vocabId: payload.vocabId },
                 json: { userId: payload.userId, attendanceId: payload.attendanceId },
             });
-            return hcJson<{
-                id: string;
-                userId: string;
-                orgId: string;
-                vocabularyId: string;
-                attendanceId: string;
-                createdAt: number;
+            const body = await hcJson<{
+                data: {
+                    id: string;
+                    userId: string;
+                    organizationId: string;
+                    vocabularyId: string;
+                    attendanceId: string;
+                    createdAt: number;
+                };
             }>(res);
+            return body.data;
         },
         onSuccess: () => {
             notification.success({ message: "Vocabulary assigned" });
@@ -126,7 +144,9 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
     });
 
     return {
-        items: sessionVocabularyQuery.data ?? [],
+        items: sessionVocabularyQuery.data?.data ?? [],
+        nextCursor: sessionVocabularyQuery.data?.nextCursor ?? null,
+        prevCursor: sessionVocabularyQuery.data?.prevCursor ?? null,
         isLoading: sessionVocabularyQuery.isLoading,
         error: sessionVocabularyQuery.error,
         createVocabularyMutation,

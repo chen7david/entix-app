@@ -293,7 +293,9 @@ export class MemberImportService extends BaseService {
                     if (!wasAlreadyLinked) {
                         // `wasAlreadyLinked` is intentionally captured before this row's writes.
                         // This prevents duplicate payload rows for the same user from provisioning
-                        // wallets more than once in a single import run.
+                        // wallets more than once in a single import run. Even when `shouldLinkMember`
+                        // is false, we still run this once for first-seen users in this import to keep
+                        // wallet provisioning idempotent for already-linked historical members.
                         const walletProvisionResult =
                             await this.walletService.provisionWalletIfNotExists(
                                 targetUserId,

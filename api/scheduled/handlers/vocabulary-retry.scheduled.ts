@@ -5,7 +5,8 @@ import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
 
-const STALE_AFTER_MS = 3 * 60 * 1000;
+// Workers AI + queue backpressure can delay processing; avoid premature retries.
+const STALE_AFTER_MS = 15 * 60 * 1000;
 
 /**
  * Re-enqueues vocabulary pipeline work that failed transiently and remained in

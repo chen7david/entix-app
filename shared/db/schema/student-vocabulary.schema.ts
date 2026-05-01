@@ -15,7 +15,7 @@ export const studentVocabulary = sqliteTable(
         userId: text("user_id")
             .notNull()
             .references(() => authUsers.id, { onDelete: "cascade" }),
-        orgId: text("org_id")
+        organizationId: text("organization_id")
             .notNull()
             .references(() => authOrganizations.id, { onDelete: "cascade" }),
         vocabularyId: text("vocabulary_id")
@@ -35,7 +35,7 @@ export const studentVocabulary = sqliteTable(
             table.attendanceId
         ),
         index("student_vocab_userId_idx").on(table.userId),
-        index("student_vocab_orgId_idx").on(table.orgId),
+        index("student_vocab_organizationId_idx").on(table.organizationId),
         index("student_vocab_vocabularyId_idx").on(table.vocabularyId),
         index("student_vocab_attendanceId_idx").on(table.attendanceId),
     ]

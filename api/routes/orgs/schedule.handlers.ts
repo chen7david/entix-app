@@ -12,7 +12,7 @@ export class ScheduleHandlers {
             {
                 ...session,
                 startTime: new Date(session.startTime).getTime(),
-            } as any,
+            },
             HttpStatusCodes.OK
         );
     };

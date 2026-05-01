@@ -2,125 +2,98 @@ import { ConflictError, NotFoundError } from "@api/errors/app.error";
 import { VocabularyHandlers } from "@api/routes/orgs/vocabulary.handlers";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-let mockVocabularyRepo: {
-    findOrCreate: ReturnType<typeof vi.fn>;
-    findById: ReturnType<typeof vi.fn>;
+let mockVocabularyService: {
+    createVocabulary: ReturnType<typeof vi.fn>;
+    listReviewVocabulary: ReturnType<typeof vi.fn>;
+    listSessionVocabulary: ReturnType<typeof vi.fn>;
+    assignVocabularyToStudent: ReturnType<typeof vi.fn>;
 };
+type CreateVocabularyCtx = Parameters<typeof VocabularyHandlers.createVocabulary>[0];
+type AssignVocabularyCtx = Parameters<typeof VocabularyHandlers.assignVocabularyToStudent>[0];
 
-let mockAttendancesRepo: {
-    getBySessionAndOrg: ReturnType<typeof vi.fn>;
-    findById: ReturnType<typeof vi.fn>;
-};
-
-let mockStudentVocabRepo: {
-    addIfMissing: ReturnType<typeof vi.fn>;
-    add: ReturnType<typeof vi.fn>;
-};
-
-vi.mock("@api/factories/repository.factory", () => ({
-    getVocabularyBankRepository: () => mockVocabularyRepo,
-    getSessionAttendancesRepository: () => mockAttendancesRepo,
-    getStudentVocabularyRepository: () => mockStudentVocabRepo,
+vi.mock("@api/factories/service.factory", () => ({
+    getVocabularyService: () => mockVocabularyService,
 }));
 
 describe("VocabularyHandlers", () => {
     beforeEach(() => {
-        vi.clearAllMocks();
-        mockVocabularyRepo = {
-            findOrCreate: vi.fn(),
-            findById: vi.fn(),
-        };
-        mockAttendancesRepo = {
-            getBySessionAndOrg: vi.fn(),
-            findById: vi.fn(),
-        };
-        mockStudentVocabRepo = {
-            addIfMissing: vi.fn(),
-            add: vi.fn(),
+        vi.resetAllMocks();
+        mockVocabularyService = {
+            createVocabulary: vi.fn(),
+            listReviewVocabulary: vi.fn(),
+            listSessionVocabulary: vi.fn(),
+            assignVocabularyToStudent: vi.fn(),
         };
     });
 
     it("createVocabulary without sessionId creates bank entry only", async () => {
-        mockVocabularyRepo.findOrCreate.mockResolvedValueOnce(
-            makeVocabularyItem({ status: "new" })
-        );
-        const send = vi.fn();
+        mockVocabularyService.createVocabulary.mockResolvedValueOnce({
+            item: makeVocabularyItem({ status: "new" }),
+            targetCount: 0,
+        });
         const json = vi.fn();
 
-        const ctx = makeCtx(
-            { organizationId: "org_1" },
-            { text: "hello" },
-            { QUEUE: { send } },
-            json
+        const ctx = makeCtx({ organizationId: "org_1" }, { text: "hello" }, {}, json);
+
+        await VocabularyHandlers.createVocabulary(
+            ctx as unknown as CreateVocabularyCtx,
+            undefined as never
         );
 
-        await VocabularyHandlers.createVocabulary(ctx as any, undefined as never);
-
-        expect(mockAttendancesRepo.getBySessionAndOrg).not.toHaveBeenCalled();
-        expect(mockStudentVocabRepo.addIfMissing).not.toHaveBeenCalled();
         expect(json).toHaveBeenCalledWith(
-            expect.objectContaining({ assignedCount: 0 }),
+            expect.objectContaining({
+                data: expect.objectContaining({ targetCount: 0 }),
+            }),
             expect.any(Number)
         );
     });
 
     it("createVocabulary with sessionId fans out and is idempotent-safe", async () => {
-        mockVocabularyRepo.findOrCreate.mockResolvedValue(makeVocabularyItem({ status: "active" }));
-        mockAttendancesRepo.getBySessionAndOrg.mockResolvedValue([
-            { id: "att_1", userId: "student_1" },
-            { id: "att_2", userId: "student_2" },
-        ]);
-        mockStudentVocabRepo.addIfMissing.mockResolvedValue({ id: "sv_1" });
-
-        const send = vi.fn();
+        mockVocabularyService.createVocabulary.mockResolvedValue({
+            item: makeVocabularyItem({ status: "active" }),
+            targetCount: 2,
+        });
         const json = vi.fn();
         const ctx = makeCtx(
             { organizationId: "org_1" },
             { text: "hello", sessionId: "session_1" },
-            { QUEUE: { send } },
+            {},
             json
         );
 
-        await VocabularyHandlers.createVocabulary(ctx as any, undefined as never);
+        await VocabularyHandlers.createVocabulary(
+            ctx as unknown as CreateVocabularyCtx,
+            undefined as never
+        );
 
-        expect(mockAttendancesRepo.getBySessionAndOrg).toHaveBeenCalledWith("org_1", "session_1");
-        expect(mockStudentVocabRepo.addIfMissing).toHaveBeenCalledTimes(2);
         expect(json).toHaveBeenCalledWith(
-            expect.objectContaining({ assignedCount: 2 }),
+            expect.objectContaining({
+                data: expect.objectContaining({ targetCount: 2 }),
+            }),
             expect.any(Number)
         );
-        expect(send).not.toHaveBeenCalled();
     });
 
-    it("createVocabulary enqueues process-text only when status is new", async () => {
-        const send = vi.fn();
-        const json = vi.fn();
-        const ctx = makeCtx(
-            { organizationId: "org_1" },
-            { text: "hello" },
-            { QUEUE: { send } },
-            json
-        );
-
-        mockVocabularyRepo.findOrCreate.mockResolvedValueOnce(
-            makeVocabularyItem({ status: "new" })
-        );
-        await VocabularyHandlers.createVocabulary(ctx as any, undefined as never);
-        expect(send).toHaveBeenCalledWith({
-            type: "vocabulary.process-text",
-            vocabularyId: "vocab_1",
+    it("createVocabulary handler calls service with organization and payload", async () => {
+        mockVocabularyService.createVocabulary.mockResolvedValue({
+            item: makeVocabularyItem({ status: "new" }),
+            targetCount: 0,
         });
-
-        send.mockClear();
-        mockVocabularyRepo.findOrCreate.mockResolvedValueOnce(
-            makeVocabularyItem({ status: "active" })
+        const json = vi.fn();
+        const ctx = makeCtx({ organizationId: "org_1" }, { text: "hello" }, {}, json);
+        await VocabularyHandlers.createVocabulary(
+            ctx as unknown as CreateVocabularyCtx,
+            undefined as never
         );
-        await VocabularyHandlers.createVocabulary(ctx as any, undefined as never);
-        expect(send).not.toHaveBeenCalled();
+        expect(mockVocabularyService.createVocabulary).toHaveBeenCalledWith("org_1", {
+            text: "hello",
+        });
     });
 
     it("assignVocabularyToStudent returns 404 when vocabulary does not exist", async () => {
-        mockVocabularyRepo.findById.mockResolvedValueOnce(null);
+        mockVocabularyService.assignVocabularyToStudent.mockRejectedValueOnce(
+            new NotFoundError("Vocabulary item not found")
+        );
         const ctx = makeCtx(
             { organizationId: "org_1", sessionId: "session_1", vocabId: "missing" },
             { userId: "student_1", attendanceId: "att_1" },
@@ -129,18 +102,17 @@ describe("VocabularyHandlers", () => {
         );
 
         await expect(
-            VocabularyHandlers.assignVocabularyToStudent(ctx as any, undefined as never)
+            VocabularyHandlers.assignVocabularyToStudent(
+                ctx as unknown as AssignVocabularyCtx,
+                undefined as never
+            )
         ).rejects.toBeInstanceOf(NotFoundError);
     });
 
     it("assignVocabularyToStudent returns 409 on duplicate assignment", async () => {
-        mockVocabularyRepo.findById.mockResolvedValueOnce(makeVocabularyItem());
-        mockAttendancesRepo.findById.mockResolvedValueOnce({
-            id: "att_1",
-            sessionId: "session_1",
-            userId: "student_1",
-        });
-        mockStudentVocabRepo.add.mockResolvedValueOnce(null);
+        mockVocabularyService.assignVocabularyToStudent.mockRejectedValueOnce(
+            new ConflictError("duplicate")
+        );
 
         const ctx = makeCtx(
             { organizationId: "org_1", sessionId: "session_1", vocabId: "vocab_1" },
@@ -150,7 +122,10 @@ describe("VocabularyHandlers", () => {
         );
 
         await expect(
-            VocabularyHandlers.assignVocabularyToStudent(ctx as any, undefined as never)
+            VocabularyHandlers.assignVocabularyToStudent(
+                ctx as unknown as AssignVocabularyCtx,
+                undefined as never
+            )
         ).rejects.toBeInstanceOf(ConflictError);
     });
 });

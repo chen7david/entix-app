@@ -394,7 +394,7 @@ export const studentVocabularyRelations = relations(studentVocabulary, ({ one })
         references: [authUsers.id],
     }),
     organization: one(authOrganizations, {
-        fields: [studentVocabulary.orgId],
+        fields: [studentVocabulary.organizationId],
         references: [authOrganizations.id],
     }),
     vocabulary: one(vocabularyBank, {

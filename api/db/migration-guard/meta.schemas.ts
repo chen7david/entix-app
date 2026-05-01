@@ -22,9 +22,9 @@ export const SnapshotSchema = z
         version: z.string(),
         dialect: z.string(),
         tables: z.record(z.string(), z.unknown()),
-        prevId: z.string().optional(),
+        prevId: z.string(),
         prevSnapshot: z.string().optional(),
     })
-    .refine((value) => Boolean(value.prevId ?? value.prevSnapshot), {
-        message: "Snapshot must include prevId or prevSnapshot",
+    .refine((value) => Boolean(value.prevId), {
+        message: "Snapshot must include prevId",
     });

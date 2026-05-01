@@ -1,9 +1,10 @@
+import type { AppDb } from "@api/factories/db.factory";
 import { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("StudentVocabularyRepository", () => {
     let repo: StudentVocabularyRepository;
-    let db: any;
+    let db: unknown;
     let insertReturning: ReturnType<typeof vi.fn>;
     let selectLimit: ReturnType<typeof vi.fn>;
 
@@ -25,7 +26,7 @@ describe("StudentVocabularyRepository", () => {
                 })),
             })),
         };
-        repo = new StudentVocabularyRepository(db as any);
+        repo = new StudentVocabularyRepository(db as AppDb);
     });
 
     it("add inserts and returns a new record", async () => {
@@ -34,7 +35,7 @@ describe("StudentVocabularyRepository", () => {
         ]);
         const record = await repo.add({
             userId: "student_1",
-            orgId: "org_vocab",
+            organizationId: "org_vocab",
             vocabularyId: "vocab_1",
             attendanceId: "att_1",
         });
@@ -49,7 +50,7 @@ describe("StudentVocabularyRepository", () => {
 
         const duplicate = await repo.add({
             userId: "student_1",
-            orgId: "org_vocab",
+            organizationId: "org_vocab",
             vocabularyId: "vocab_1",
             attendanceId: "att_1",
         });
@@ -62,7 +63,7 @@ describe("StudentVocabularyRepository", () => {
         await expect(
             repo.add({
                 userId: "student_1",
-                orgId: "org_vocab",
+                organizationId: "org_vocab",
                 vocabularyId: "vocab_1",
                 attendanceId: "att_1",
             })
@@ -83,17 +84,20 @@ describe("StudentVocabularyRepository", () => {
 
         const first = await repo.addIfMissing({
             userId: "student_1",
-            orgId: "org_vocab",
+            organizationId: "org_vocab",
             vocabularyId: "vocab_1",
             attendanceId: "att_1",
         });
         const second = await repo.addIfMissing({
             userId: "student_1",
-            orgId: "org_vocab",
+            organizationId: "org_vocab",
             vocabularyId: "vocab_1",
             attendanceId: "att_1",
         });
 
+        if (!first || !second) {
+            return expect.unreachable("Expected records");
+        }
         expect(second.id).toBe(first.id);
     });
 
@@ -108,17 +112,20 @@ describe("StudentVocabularyRepository", () => {
 
         const a = await repo.addIfMissing({
             userId: "student_1",
-            orgId: "org_vocab",
+            organizationId: "org_vocab",
             vocabularyId: "vocab_1",
             attendanceId: "att_1",
         });
         const b = await repo.addIfMissing({
             userId: "student_2",
-            orgId: "org_vocab",
+            organizationId: "org_vocab",
             vocabularyId: "vocab_1",
             attendanceId: "att_2",
         });
 
+        if (!a || !b) {
+            return expect.unreachable("Expected records");
+        }
         expect(a.id).not.toBe(b.id);
     });
 });

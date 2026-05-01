@@ -10,7 +10,7 @@ function makeItem(assignmentId: string, vocabId: string, word: string): SessionV
     return {
         id: assignmentId,
         userId: `user-${assignmentId}`,
-        orgId: "org-1",
+        organizationId: "org-1",
         attendanceId: `att-${assignmentId}`,
         createdAt: now,
         vocabulary: {

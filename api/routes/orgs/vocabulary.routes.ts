@@ -1,6 +1,7 @@
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
+import { PaginationQuerySchema } from "@shared/schemas/pagination.schema";
 
 const VocabularyBankSchema = z.object({
     id: z.string(),
@@ -24,11 +25,18 @@ const VocabularyBankSchema = z.object({
 const StudentVocabularyWithVocabSchema = z.object({
     id: z.string(),
     userId: z.string(),
-    orgId: z.string(),
+    organizationId: z.string(),
     attendanceId: z.string(),
     createdAt: z.coerce.number(),
     vocabulary: VocabularyBankSchema,
 });
+
+const PaginatedDataSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+    z.object({
+        data: z.array(itemSchema),
+        nextCursor: z.string().nullable(),
+        prevCursor: z.string().nullable(),
+    });
 
 export const VocabularyRoutes = {
     createVocabulary: createRoute({
@@ -54,8 +62,10 @@ export const VocabularyRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            vocabulary: VocabularyBankSchema,
-                            assignedCount: z.number().int().nonnegative(),
+                            data: z.object({
+                                vocabulary: VocabularyBankSchema,
+                                targetCount: z.number().int().nonnegative(),
+                            }),
                         }),
                     },
                 },
@@ -70,10 +80,15 @@ export const VocabularyRoutes = {
         middleware: [requirePermission("vocabulary", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
+            query: PaginationQuerySchema,
         },
         responses: {
             [HttpStatusCodes.OK]: {
-                content: { "application/json": { schema: z.array(VocabularyBankSchema) } },
+                content: {
+                    "application/json": {
+                        schema: PaginatedDataSchema(VocabularyBankSchema),
+                    },
+                },
                 description: "List review vocabulary items",
             },
         },
@@ -85,11 +100,14 @@ export const VocabularyRoutes = {
         middleware: [requirePermission("vocabulary", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string(), sessionId: z.string() }),
+            query: PaginationQuerySchema,
         },
         responses: {
             [HttpStatusCodes.OK]: {
                 content: {
-                    "application/json": { schema: z.array(StudentVocabularyWithVocabSchema) },
+                    "application/json": {
+                        schema: PaginatedDataSchema(StudentVocabularyWithVocabSchema),
+                    },
                 },
                 description: "List vocabulary assigned in a session",
             },
@@ -122,12 +140,14 @@ export const VocabularyRoutes = {
                 content: {
                     "application/json": {
                         schema: z.object({
-                            id: z.string(),
-                            userId: z.string(),
-                            orgId: z.string(),
-                            vocabularyId: z.string(),
-                            attendanceId: z.string(),
-                            createdAt: z.coerce.number(),
+                            data: z.object({
+                                id: z.string(),
+                                userId: z.string(),
+                                organizationId: z.string(),
+                                vocabularyId: z.string(),
+                                attendanceId: z.string(),
+                                createdAt: z.coerce.number(),
+                            }),
                         }),
                     },
                 },

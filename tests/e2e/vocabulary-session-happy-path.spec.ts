@@ -5,7 +5,7 @@ import { loginAsRootAdmin } from "./helpers/auth";
 type SessionVocabularyItem = {
     id: string;
     userId: string;
-    orgId: string;
+    organizationId: string;
     attendanceId: string;
     createdAt: number;
     vocabulary: {
@@ -58,7 +58,11 @@ test.describe("Session vocabulary happy path", () => {
             if (route.request().method() !== "GET") {
                 return route.continue();
             }
-            return jsonResponse(route, sessionVocabulary);
+            return jsonResponse(route, {
+                data: sessionVocabulary,
+                nextCursor: null,
+                prevCursor: null,
+            });
         });
 
         await page.route("**/api/v1/orgs/*/vocabulary", async (route) => {
@@ -71,7 +75,7 @@ test.describe("Session vocabulary happy path", () => {
             const item: SessionVocabularyItem = {
                 id: `assignment-${now}`,
                 userId: "test-user-1",
-                orgId: "test-org-1",
+                organizationId: "test-org-1",
                 attendanceId: "attendance-1",
                 createdAt: now,
                 vocabulary: {
@@ -88,7 +92,7 @@ test.describe("Session vocabulary happy path", () => {
             };
             sessionVocabulary = [item, ...sessionVocabulary];
 
-            return jsonResponse(route, { vocabulary: item.vocabulary, assignedCount: 1 });
+            return jsonResponse(route, { data: { vocabulary: item.vocabulary, targetCount: 1 } });
         });
 
         await loginAsRootAdmin(page);
@@ -106,7 +110,7 @@ test.describe("Session vocabulary happy path", () => {
         await page.getByRole("button", { name: "Add" }).click();
 
         await expect(page.getByText("Vocabulary added")).toBeVisible();
-        await expect(page.getByText("Assigned to 1 student(s)")).toBeVisible();
+        await expect(page.getByText("Attempted assignment to 1 student(s)")).toBeVisible();
         await expect(page.locator("tr", { hasText: newWord })).toBeVisible();
         await expect(page.locator("tr", { hasText: newWord }).getByText("New")).toBeVisible();
 

@@ -26,6 +26,7 @@ import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
+import { VocabularyService } from "@api/services/vocabulary.service";
 import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
@@ -44,9 +45,11 @@ import {
     getSessionAttendancesRepository,
     getSessionScheduleRepository,
     getSocialMediaRepository,
+    getStudentVocabularyRepository,
     getSystemAuditRepository,
     getUserProfileRepository,
     getUserRepository,
+    getVocabularyBankRepository,
 } from "./repository.factory";
 import { getUploadService } from "./upload.factory";
 
@@ -202,4 +205,13 @@ export const getReconciliationService = (ctx: AppContext) => {
 
 export const getCacheService = (ctx: AppContext) => {
     return new CacheService(getKvCacheRepository(ctx));
+};
+
+export const getVocabularyService = (ctx: AppContext) => {
+    return new VocabularyService(
+        getVocabularyBankRepository(ctx),
+        getSessionAttendancesRepository(ctx),
+        getStudentVocabularyRepository(ctx),
+        ctx.env.QUEUE
+    );
 };

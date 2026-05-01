@@ -126,10 +126,10 @@ export class RegistrationService extends BaseService {
         if (isStudentMember && !defaultBillingPlanId) {
             throw new BadRequestError("Default billing plan is required when creating students");
         }
-        if (isStudentMember && defaultBillingPlanId) {
+        if (isStudentMember) {
             await this.billingPlansService.getActivePlanForOrg(
                 organizationId,
-                defaultBillingPlanId
+                defaultBillingPlanId as string
             );
         }
 
@@ -156,10 +156,10 @@ export class RegistrationService extends BaseService {
         // Auto-provision personal accounts for the user (Ticket 5 refactor)
         await this.userFinancialService.provisionUserAccounts(uId, organizationId);
 
-        if (isStudentMember && defaultBillingPlanId) {
+        if (isStudentMember) {
             await this.billingPlansService.assignPlan(organizationId, {
                 userId: uId,
-                planId: defaultBillingPlanId,
+                planId: defaultBillingPlanId as string,
             });
         }
 
