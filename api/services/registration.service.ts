@@ -1,4 +1,4 @@
-import { ConflictError, InternalServerError } from "@api/errors/app.error";
+import { BadRequestError, ConflictError, InternalServerError } from "@api/errors/app.error";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { OrganizationRepository } from "@api/repositories/organization.repository";
 import type { UserRepository } from "@api/repositories/user.repository";
@@ -6,6 +6,7 @@ import { generateOpaqueId, generateSecretToken } from "@shared";
 import { hashPassword } from "better-auth/crypto";
 import type { PinoLogger } from "hono-pino";
 import { BaseService } from "./base.service";
+import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { UserFinancialService } from "./financial/user-financial.service";
 import type { UserService } from "./user.service";
 
@@ -22,6 +23,7 @@ export class RegistrationService extends BaseService {
         private readonly orgRepo: OrganizationRepository,
         private readonly memberRepo: MemberRepository,
         private readonly userFinancialService: UserFinancialService,
+        private readonly billingPlansService: FinanceBillingPlansService,
         private readonly userService: UserService,
         private readonly frontendUrl: string,
         private readonly logger: PinoLogger
@@ -104,10 +106,31 @@ export class RegistrationService extends BaseService {
         }
     }
 
-    async createUserAndMember(email: string, name: string, organizationId: string, role: string) {
+    async createUserAndMember(
+        email: string,
+        name: string,
+        organizationId: string,
+        role: string,
+        defaultBillingPlanId?: string
+    ) {
         const existingUser = await this.userRepo.findByEmail(email);
         if (existingUser) {
             throw new ConflictError("User with this email already exists");
+        }
+
+        const roleList = role
+            .split(",")
+            .map((item) => item.trim().toLowerCase())
+            .filter(Boolean);
+        const isStudentMember = roleList.includes("student");
+        if (isStudentMember && !defaultBillingPlanId) {
+            throw new BadRequestError("Default billing plan is required when creating students");
+        }
+        if (isStudentMember && defaultBillingPlanId) {
+            await this.billingPlansService.getActivePlanForOrg(
+                organizationId,
+                defaultBillingPlanId
+            );
         }
 
         // Same-transaction batch (user + credential account + member): explicit ids for FK wiring.
@@ -132,6 +155,13 @@ export class RegistrationService extends BaseService {
 
         // Auto-provision personal accounts for the user (Ticket 5 refactor)
         await this.userFinancialService.provisionUserAccounts(uId, organizationId);
+
+        if (isStudentMember && defaultBillingPlanId) {
+            await this.billingPlansService.assignPlan(organizationId, {
+                userId: uId,
+                planId: defaultBillingPlanId,
+            });
+        }
 
         // 🚀 Orchestrate Email (Fire-and-forget per Rule 14)
         const resetUrl = `${this.frontendUrl}/auth/reset-password`;

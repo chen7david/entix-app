@@ -20,6 +20,7 @@ import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { MemberBillingSection } from "@web/src/features/finance/components/MemberBillingSection";
+import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { AvatarUpload } from "@web/src/features/media";
 import {
     useBulkMembers,
@@ -137,6 +138,13 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     const canManage = propCanManage ?? isAdminOrOwner;
 
     const createMemberMutation = useCreateMember(activeOrganization?.id || "");
+    const { data: billingPlansData } = useBillingPlans(activeOrganization?.id || "", {
+        limit: 100,
+    });
+    const activeBillingPlans = (billingPlansData?.data ?? []).filter(
+        (plan) => plan.isActive && plan.currencyId === "fcur_cny"
+    );
+    const hasActiveBillingPlans = activeBillingPlans.length > 0;
     const removeAvatarMutation = useRemoveAvatar();
     const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(
         activeOrganization?.id || ""
@@ -144,7 +152,14 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
 
     const handleCreateMember = async (values: any) => {
         try {
-            await createMemberMutation.mutateAsync(values);
+            const roleValue = String(values.role || "").toLowerCase();
+            const payload = {
+                ...values,
+                defaultBillingPlanId: roleValue.includes("student")
+                    ? values.defaultBillingPlanId
+                    : undefined,
+            };
+            await createMemberMutation.mutateAsync(payload);
             setIsCreateModalOpen(false);
             createForm.resetFields();
         } catch {
@@ -514,6 +529,46 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         rules={[createSchemaFieldRule(createMemberSchema.pick({ role: true }))]}
                     >
                         <Select options={ORG_ROLE_OPTIONS} />
+                    </Form.Item>
+
+                    <Form.Item shouldUpdate={(prev, next) => prev.role !== next.role} noStyle>
+                        {({ getFieldValue }) => {
+                            const roleList = String(getFieldValue("role") || "")
+                                .split(",")
+                                .map((item) => item.trim().toLowerCase())
+                                .filter(Boolean);
+                            const requiresBillingPlan = roleList.includes("student");
+                            if (!requiresBillingPlan) {
+                                return null;
+                            }
+                            return (
+                                <Form.Item
+                                    name="defaultBillingPlanId"
+                                    label="Default Billing Plan"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                "Billing plan is required when creating students",
+                                        },
+                                    ]}
+                                    extra={
+                                        hasActiveBillingPlans
+                                            ? undefined
+                                            : "Create an active CNY billing plan before creating students."
+                                    }
+                                >
+                                    <Select
+                                        placeholder="Select billing plan"
+                                        options={activeBillingPlans.map((plan) => ({
+                                            value: plan.id,
+                                            label: `${plan.name} (${plan.currencyId})`,
+                                        }))}
+                                        disabled={!hasActiveBillingPlans}
+                                    />
+                                </Form.Item>
+                            );
+                        }}
                     </Form.Item>
 
                     <Form.Item className="mb-0 flex justify-end">

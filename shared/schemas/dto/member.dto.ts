@@ -18,6 +18,10 @@ export const createMemberSchema = z.object({
     email: z.email().openapi({ example: "newmember@example.com" }),
     name: z.string().min(1).openapi({ example: "John Doe" }),
     role: z.string().openapi({ example: "student, admin" }),
+    defaultBillingPlanId: z
+        .string()
+        .optional()
+        .openapi({ example: "bp_123", description: "Required when creating student members" }),
 });
 
 export type CreateMemberDTO = z.infer<typeof createMemberSchema>;
