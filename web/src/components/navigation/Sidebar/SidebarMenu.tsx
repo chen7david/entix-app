@@ -145,8 +145,8 @@ export const SidebarMenu: React.FC = () => {
                       icon: <BookOutlined />,
                       children: [
                           {
-                              label: "Schedule",
-                              key: AppRoutes.org.teaching.schedule,
+                              label: "Sessions",
+                              key: AppRoutes.org.teaching.sessions,
                               icon: <CalendarOutlined />,
                           },
                           {
