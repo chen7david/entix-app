@@ -65,6 +65,15 @@
 | 45  | Narrow Error Catching       | Error Handling         |
 | 46  | When to Update API.md       | Documentation          |
 | 47  | Typecheck Gate              | Verification           |
+| 48  | Migration Generation Is Tool-Only | Feature Workflow |
+| 49  | No `any` Type               | Code Quality           |
+| 50  | No Wildcard Imports         | Code Quality           |
+| 51  | Deep Module Design          | Code Quality           |
+| 52  | Code Clarity Standards      | Code Quality           |
+| 53  | Verification Gate           | Code Quality           |
+| 54  | No Magic Strings            | Code Quality           |
+| 55  | Reuse-First Mandate         | Code Quality           |
+| 56  | Test Setup Helpers          | Test Best Practices    |
 
 ---
 
@@ -552,7 +561,7 @@ If a generated migration is wrong:
 
 ## 📝 Documentation
 
-### Rule 45 — When to Update API.md
+### Rule 46 — When to Update API.md
 Update this document immediately when any of the following occur:
 - A new architectural pattern is introduced (new base class, helper, convention).
 - A naming rule is refined or a rule is deprecated.
@@ -565,6 +574,165 @@ Do NOT update for:
 
 Rule numbers are **permanent reference handles** and MUST NOT be renumbered.
 Retired rules MUST be marked `[DEPRECATED]` — never deleted.
+
+---
+
+## 🧹 Code Quality Standards
+
+### Rule 49 — No `any` Type [MANDATORY]
+Using `any` anywhere in the codebase is **strictly prohibited**. It bypasses TypeScript's
+type system entirely and is treated as a bug, not a style choice.
+
+- Use `unknown` and narrow with `instanceof` or type guards.
+- Use generics when flexibility is required.
+- The sole exception is `// @ts-expect-error` — **must** include an inline comment explaining
+  exactly why the error is expected. `@ts-ignore` is prohibited.
+- `@typescript-eslint/no-explicit-any` is enforced in CI via Biome.
+
+```ts
+// ❌ Prohibited
+function process(data: any) { return data.value; }
+
+// ✅ Correct
+function process(data: unknown) {
+    if (typeof data === 'object' && data !== null && 'value' in data) {
+        return (data as { value: string }).value;
+    }
+}
+```
+
+### Rule 50 — No Wildcard Imports [MANDATORY]
+Never use `import * as X from '...'`. Always use named imports.
+
+Wildcard imports defeat tree-shaking, pollute the local namespace, and obscure
+what a module actually depends on.
+
+```ts
+// ❌ Prohibited
+import * as schema from '../db/schema';
+
+// ✅ Correct
+import { members, organizations } from '../db/schema';
+```
+
+- **Exception**: external type-only namespace imports where the library requires it.
+  Add `// wildcard required by <library>` inline.
+
+### Rule 51 — Deep Module Design
+Modules MUST expose a small, stable public interface while hiding implementation complexity.
+
+- Prefer fewer, richer functions over many thin, leaky helpers.
+- Export only what callers need. Keep internals unexported.
+- Cross-module interaction goes through the public barrel (`index.ts`), never via
+  deep internal paths (e.g., `../../repositories/member.repository`).
+- If a caller must know implementation details to use a module correctly, the
+  abstraction is too shallow — redesign the interface.
+
+### Rule 52 — Code Clarity Standards
+- **Function length**: ≤ 40 lines. Extract when exceeded.
+- **File length**: ≤ 300 lines. Split when exceeded.
+- **Nesting depth**: ≤ 3 levels. Extract deeply nested logic into named functions.
+- **One responsibility per function**: a function that does two things is two functions.
+- **Meaningful names**: no single-letter variables except loop indices. Name for what
+  the value *is*, not what it *contains*.
+- **No commented-out code**: use `git` for history. Dead code must be deleted.
+- **No magic numbers**: extract literals into named constants.
+
+### Rule 54 — No Magic Strings [MANDATORY]
+Never use raw string literals where a named constant can be used. Magic strings are
+untraceable, un-refactorable, and invisible to TypeScript's type checker.
+
+- Define string constants in a co-located `*.constants.ts` file.
+- Use `as const` objects or `enum` for closed sets of values (roles, statuses, event names).
+- Route path segments, error codes, query key prefixes, and database column values are
+  all candidates for constants.
+
+```ts
+// ❌ Prohibited
+if (member.role === 'admin') { ... }
+await repo.findByStatus('active');
+
+// ✅ Correct
+import { MemberRole, MemberStatus } from './member.constants';
+if (member.role === MemberRole.Admin) { ... }
+await repo.findByStatus(MemberStatus.Active);
+
+// member.constants.ts
+export const MemberRole = {
+    Admin:   'admin',
+    Student: 'student',
+    Staff:   'staff',
+} as const;
+export type MemberRole = typeof MemberRole[keyof typeof MemberRole];
+```
+
+### Rule 55 — Reuse-First Mandate [MANDATORY]
+Before writing any new function, helper, repository method, service method, or utility,
+you MUST first search the existing codebase for equivalent functionality.
+
+- Search `shared/`, `api/lib/`, `api/services/`, and relevant repositories before
+  creating a new abstraction.
+- If similar functionality exists but differs slightly, extend or generalize the existing
+  implementation — do not duplicate it.
+- Creating a second implementation of existing logic is always a bug, never a feature.
+- When in doubt: `grep` first, implement second.
+
+```ts
+// Before writing a new date helper, check:
+// shared/lib/date.ts, shared/lib/format.ts, api/lib/*.ts
+// If a matching helper exists — import it. Do not re-implement.
+```
+
+### Rule 56 — Test Setup Helpers [MANDATORY]
+All non-trivial test setup MUST be extracted into named helper functions.
+Tests should read like specifications, not setup scripts.
+
+- Extract repeated or multi-step arrange logic into a `setup*` or `make*` helper
+  defined at the top of the describe block or in a shared test utility file.
+- Helper functions MUST be named for what they produce, not how they work.
+- A reader should understand what a test does by reading only the `it` body.
+
+```ts
+// ❌ Prohibited — arrange logic obscures the test intent
+it('should prevent duplicate membership', async () => {
+    const repo = makeMemberRepoMock();
+    const service = new MemberService(repo);
+    const member = makeMember({ userId: 'u1', organizationId: 'o1' });
+    repo.existsByUserId.mockResolvedValue(true);
+    await expect(service.addMember('u1', 'o1')).rejects.toThrow(ConflictError);
+});
+
+// ✅ Correct — setup is hidden in a named helper
+function setupMemberService(overrides?: Partial<MemberServiceSetup>) {
+    const repo = makeMemberRepoMock();
+    const service = new MemberService(repo);
+    return { repo, service, ...overrides };
+}
+
+it('should prevent duplicate membership', async () => {
+    const { repo, service } = setupMemberService();
+    repo.existsByUserId.mockResolvedValue(true);
+    await expect(service.addMember('u1', 'o1')).rejects.toThrow(ConflictError);
+});
+```
+
+### Rule 53 — Verification Gate [MANDATORY]
+After every implementation phase, run the full verification suite **before moving
+to the next phase**. A phase is not complete until all three pass.
+
+```bash
+# 1. Type safety
+npm run typecheck:api
+
+# 2. Unit tests
+npm run test
+
+# 3. Lint & format
+npm run biome:check
+```
+
+Never skip the gate between phases. Accumulated type errors and lint violations
+are exponentially harder to fix at PR time.
 
 ---
 
@@ -585,13 +753,22 @@ Before submitting any generated code, verify every item:
 - [ ] Auth accessed only inside Services via `auth.api.*`
 - [ ] Atomic multi-insert operations use `db.batch()` with `prepareInsert`
 - [ ] Tests written before PR is opened (Rule 42)
-- [ ] `npm run typecheck:api` passes with zero errors
+- [ ] No `any` types anywhere — use `unknown` + narrowing (Rule 49)
+- [ ] No wildcard imports (`import * as`) (Rule 50)
+- [ ] Modules export minimal public surface; internals are unexported (Rule 51)
+- [ ] Functions ≤ 40 lines, files ≤ 300 lines (Rule 52)
+- [ ] No magic strings — all string literals extracted to named constants (Rule 54)
+- [ ] Existing helpers/functions searched before creating new ones (Rule 55)
+- [ ] Non-trivial test setup extracted into named helper functions (Rule 56)
+- [ ] Verification gate passed: `typecheck:api`, `test`, and `biome:check` all green (Rule 53)
 
-### Rule 46 — Typecheck Gate
+---
+
+### Rule 47 — Typecheck Gate
 All generated or refactored code MUST pass `npm run typecheck:api` with zero errors
 before a PR is opened. Type errors are bugs.
 
 ---
 
 *API.md — Entix-App Backend Architecture Reference*
-*Version: 1.2.1 (Last Updated: 2026-04-29)*
+*Version: 1.4.0 (Last Updated: 2026-05-01)*
