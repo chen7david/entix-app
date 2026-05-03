@@ -92,7 +92,9 @@ describe("AiService", () => {
     });
 
     it("response_format: still accepts legacy { response: string } shape", async () => {
-        const run = vi.fn().mockResolvedValue({ response: '{"zh_translation":"x","pinyin":"y","needs_language_review":false}' });
+        const run = vi.fn().mockResolvedValue({
+            response: '{"zh_translation":"x","pinyin":"y","needs_language_review":false}',
+        });
         const service = new AiService({
             ai: { run } as unknown as Ai,
             model: "@cf/meta/llama-3.1-8b-instruct-fp8",
@@ -102,7 +104,21 @@ describe("AiService", () => {
             responseFormat: { type: "json_object" },
         });
 
-        expect(result.text).toBe('{"zh_translation":"x","pinyin":"y","needs_language_review":false}');
+        expect(result.text).toBe(
+            '{"zh_translation":"x","pinyin":"y","needs_language_review":false}'
+        );
+    });
+
+    it("response_format: throws when response is neither string nor object", async () => {
+        const run = vi.fn().mockResolvedValue(null);
+        const service = new AiService({
+            ai: { run } as unknown as Ai,
+            model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+        });
+
+        await expect(
+            service.generate("hello", { responseFormat: { type: "json_object" } })
+        ).rejects.toBeInstanceOf(ServiceUnavailableError);
     });
 
     it("returns stream output for streaming calls", async () => {
