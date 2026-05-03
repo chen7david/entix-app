@@ -84,6 +84,9 @@
 | 66 | Deep Component Design     | 12. Code Quality  |
 | 67 | Code Clarity Standards    | 12. Code Quality  |
 | 68 | Frontend Verification Gate| 12. Code Quality  |
+| 69 | No Magic Strings          | 12. Code Quality  |
+| 70 | Reuse-First / Existing Components | 12. Code Quality |
+| 71 | Test Setup Helpers        | 12. Code Quality  |
 
 ---
 
@@ -724,6 +727,80 @@ Components and hooks MUST expose a minimal, stable interface while hiding intern
 - **No commented-out code**: use `git` for history. Dead code must be deleted.
 - **No magic strings/numbers**: extract into named constants in `*.constants.ts`.
 
+### Rule 69 — No Magic Strings [MANDATORY]
+Never use raw string literals where a named constant can be used.
+Magic strings are untraceable, un-refactorable, and invisible to TypeScript.
+
+- Define string constants in a co-located `*.constants.ts` file.
+- Use `as const` objects for closed sets: status values, tab keys, query key segments,
+  route paths, event names, localStorage keys.
+- Query keys MUST use constants, not inline string tuples.
+
+```ts
+// ❌ Prohibited
+const { data } = useQuery({ queryKey: ['members', orgId], ... });
+if (member.role === 'admin') { ... }
+
+// ✅ Correct
+import { MemberQueryKey, MemberRole } from '../member.constants';
+const { data } = useQuery({ queryKey: [MemberQueryKey.List, orgId], ... });
+if (member.role === MemberRole.Admin) { ... }
+
+// member.constants.ts
+export const MemberQueryKey = { List: 'members', Detail: 'member' } as const;
+export const MemberRole = { Admin: 'admin', Student: 'student' } as const;
+export type MemberRole = typeof MemberRole[keyof typeof MemberRole];
+```
+
+### Rule 70 — Reuse-First / Existing Components [MANDATORY]
+Before building any new component, hook, helper, or utility, you MUST first search
+the existing codebase for equivalent functionality.
+
+- Check `components/ui/` for shared UI primitives before building a new one.
+- Check `features/<domain>/hooks/` for existing query/mutation hooks.
+- Check `src/lib/` and `shared/` for existing helpers before writing a new one.
+- If a similar component or hook exists but differs slightly, extend it via props —
+  do not duplicate it.
+- Building a second version of existing functionality is always a bug, never a feature.
+
+```ts
+// Before building a new modal, check:
+// components/ui/ConfirmModal.tsx, components/ui/DrawerForm.tsx
+// If a matching component exists — use it. Extend via props if needed.
+
+// Before building a new formatCurrency helper, check:
+// src/lib/format-currency.ts, shared/lib/format.ts
+```
+
+### Rule 71 — Test Setup Helpers [MANDATORY]
+All non-trivial test setup MUST be extracted into named helper functions.
+Tests should read like specifications, not setup scripts.
+
+- Extract repeated or multi-step render/arrange logic into a `render*` or `setup*`
+  helper defined at the top of the describe block or in a shared test utility file.
+- Helper functions MUST be named for what they produce, not how they work.
+- A reader should understand what a test does by reading only the `it`/`test` body.
+
+```ts
+// ❌ Prohibited — setup noise buries the assertion
+it('should disable the submit button while loading', () => {
+    const member = makeMember();
+    render(<MemberForm member={member} isLoading={true} onSubmit={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+});
+
+// ✅ Correct — intent is immediately clear
+function renderMemberForm(props?: Partial<MemberFormProps>) {
+    const defaults = { member: makeMember(), isLoading: false, onSubmit: vi.fn() };
+    return render(<MemberForm {...defaults} {...props} />);
+}
+
+it('should disable the submit button while loading', () => {
+    renderMemberForm({ isLoading: true });
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+});
+```
+
 ### Rule 68 — Frontend Verification Gate [MANDATORY]
 After every implementation phase, run the full frontend verification suite **before
 moving to the next phase**. A phase is not complete until all three pass.
@@ -755,4 +832,4 @@ When a new architectural pattern is established or an existing rule is refined, 
 ---
 
 *UI.md — Entix-App Frontend Standards*
-*Version: 1.3.0 (Last Updated: 2026-05-01)*
+*Version: 1.4.0 (Last Updated: 2026-05-01)*
