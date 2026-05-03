@@ -8,6 +8,8 @@ import { BaseService } from "./base.service";
 
 type CursorDirection = "next" | "prev";
 
+const RETRIABLE_STATUSES = new Set(["new", "processing_text"]);
+
 export class VocabularyService extends BaseService {
     constructor(
         private readonly vocabularyRepo: VocabularyBankRepository,
@@ -24,7 +26,7 @@ export class VocabularyService extends BaseService {
             throw new InternalServerError("Failed to create or load vocabulary item");
         }
 
-        if (item.status === "new") {
+        if (RETRIABLE_STATUSES.has(item.status)) {
             await this.queue.send({
                 type: "vocabulary.process-text",
                 vocabularyId: item.id,

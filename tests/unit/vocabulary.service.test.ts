@@ -31,7 +31,7 @@ describe("VocabularyService", () => {
         );
     });
 
-    it("createVocabulary enqueues text processing only for new status", async () => {
+    it("createVocabulary enqueues text processing for new and processing_text statuses", async () => {
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem(),
             id: "vocab_1",
@@ -42,6 +42,19 @@ describe("VocabularyService", () => {
         expect(queue.send).toHaveBeenCalledWith({
             type: "vocabulary.process-text",
             vocabularyId: "vocab_1",
+        });
+
+        queue.send.mockClear();
+        vocabularyRepo.findOrCreate.mockResolvedValueOnce({
+            ...makeVocabularyItem({ text: "stuck", status: "processing_text" }),
+            id: "vocab_stuck",
+            status: "processing_text",
+        });
+
+        await service.createVocabulary("org_1", { text: "stuck" });
+        expect(queue.send).toHaveBeenCalledWith({
+            type: "vocabulary.process-text",
+            vocabularyId: "vocab_stuck",
         });
 
         queue.send.mockClear();
