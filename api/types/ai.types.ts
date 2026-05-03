@@ -30,7 +30,20 @@ export type AiGenerateOptions = {
     temperature?: number;
     /** Top-p nucleus sampling (0-1). */
     topP?: number;
+    /** Optional structured output mode supported by Workers AI compatible APIs. */
+    responseFormat?: AiResponseFormat;
 };
+
+export type AiJsonSchema = {
+    type: "object";
+    properties: Record<string, unknown>;
+    required?: string[];
+    additionalProperties?: boolean;
+};
+
+export type AiResponseFormat =
+    | { type: "json_object" }
+    | { type: "json_schema"; json_schema: AiJsonSchema };
 
 /**
  * Internal snake_case params passed directly to `ai.run()`.
@@ -40,6 +53,7 @@ export type AiRunParams = {
     max_tokens: number;
     temperature: number;
     top_p: number;
+    response_format?: AiResponseFormat;
 };
 
 /** Normalized response from non-streaming calls. */

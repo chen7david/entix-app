@@ -12,6 +12,11 @@ export function resolveAiRunParams(
         max_tokens: overrides.maxTokens ?? defaults.maxTokens,
         temperature: overrides.temperature ?? defaults.temperature,
         top_p: overrides.topP ?? defaults.topP,
+        ...(overrides.responseFormat
+            ? { response_format: overrides.responseFormat }
+            : defaults.responseFormat
+              ? { response_format: defaults.responseFormat }
+              : {}),
     };
 }
 

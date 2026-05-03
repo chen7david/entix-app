@@ -35,6 +35,7 @@ export class AiService extends BaseService {
             maxTokens: config.defaults?.maxTokens ?? 256,
             temperature: config.defaults?.temperature ?? 0.7,
             topP: config.defaults?.topP ?? 1,
+            responseFormat: config.defaults?.responseFormat,
         };
     }
 

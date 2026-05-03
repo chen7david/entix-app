@@ -178,6 +178,8 @@ async function handleVocabularyProcessText(
     const aiService = new AiService({
         ai: env.AI,
         model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        systemPrompt:
+            "You are a translation API. Respond with raw JSON only. No markdown, no code fences, no explanation. Your entire response must be a single valid JSON object.",
     });
     const processor = new VocabularyProcessingService(vocabularyRepo, aiService, {
         logPipelineFailure: async (_phase, vocabularyId, error) => {

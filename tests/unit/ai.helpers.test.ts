@@ -15,6 +15,38 @@ describe("ai.helpers", () => {
         });
     });
 
+    it("forwards response_format when provided", () => {
+        const params = resolveAiRunParams(
+            {
+                responseFormat: {
+                    type: "json_schema",
+                    json_schema: {
+                        type: "object",
+                        properties: { foo: { type: "string" } },
+                        required: ["foo"],
+                        additionalProperties: false,
+                    },
+                },
+            },
+            { maxTokens: 256, temperature: 0.7, topP: 1, responseFormat: undefined }
+        );
+
+        expect(params).toEqual({
+            max_tokens: 256,
+            temperature: 0.7,
+            top_p: 1,
+            response_format: {
+                type: "json_schema",
+                json_schema: {
+                    type: "object",
+                    properties: { foo: { type: "string" } },
+                    required: ["foo"],
+                    additionalProperties: false,
+                },
+            },
+        });
+    });
+
     it("prepends system prompt when present", () => {
         const messages = buildMessages([{ role: "user", content: "hello" }], "system rules");
         expect(messages[0]).toEqual({ role: "system", content: "system rules" });
