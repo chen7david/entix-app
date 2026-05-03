@@ -32,15 +32,12 @@ export class AiService extends BaseService {
         this.ai = config.ai;
         this.model = config.model;
         this.systemPrompt = config.systemPrompt;
-        const base: AiGenerateDefaultsResolved = {
+        this.defaults = {
             maxTokens: config.defaults?.maxTokens ?? 256,
             temperature: config.defaults?.temperature ?? 0.7,
             topP: config.defaults?.topP ?? 1,
+            responseFormat: config.defaults?.responseFormat,
         };
-        this.defaults =
-            config.defaults?.responseFormat !== undefined
-                ? { ...base, responseFormat: config.defaults.responseFormat }
-                : base;
     }
 
     async generate(prompt: string, options: AiGenerateOptions = {}): Promise<AiGenerateResult> {
@@ -80,6 +77,22 @@ export class AiService extends BaseService {
                 `Workers AI run failed for model "${this.model}": ${
                     error instanceof Error ? error.message : String(error)
                 }`
+            );
+        }
+
+        if (params.response_format) {
+            const extracted = extractAiText(response);
+            if (extracted !== null) {
+                return { text: extracted, generatedAt: new Date().toISOString() };
+            }
+            if (typeof response === "object" && response !== null) {
+                return {
+                    text: JSON.stringify(response),
+                    generatedAt: new Date().toISOString(),
+                };
+            }
+            throw new ServiceUnavailableError(
+                `Workers AI returned no JSON content for model "${this.model}".`
             );
         }
 

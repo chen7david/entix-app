@@ -49,6 +49,62 @@ describe("AiService", () => {
         await expect(service.generate("hello")).rejects.toBeInstanceOf(ServiceUnavailableError);
     });
 
+    it("response_format json_schema: serializes parsed object responses to text", async () => {
+        const payload = { zh_translation: "你好", pinyin: "nǐ hǎo", needs_language_review: false };
+        const run = vi.fn().mockResolvedValue(payload);
+        const service = new AiService({
+            ai: { run } as unknown as Ai,
+            model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+            defaults: { maxTokens: 64, temperature: 0.2, topP: 0.9 },
+        });
+
+        const result = await service.generate("hello", {
+            responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                    type: "object",
+                    properties: {
+                        zh_translation: { type: "string" },
+                        pinyin: { type: "string" },
+                        needs_language_review: { type: "boolean" },
+                    },
+                    required: ["zh_translation", "pinyin", "needs_language_review"],
+                    additionalProperties: false,
+                },
+            },
+        });
+
+        expect(result.text).toBe(JSON.stringify(payload));
+        const [, callPayload] = run.mock.calls[0] as [string, { response_format?: unknown }];
+        expect(callPayload.response_format).toEqual({
+            type: "json_schema",
+            json_schema: {
+                type: "object",
+                properties: {
+                    zh_translation: { type: "string" },
+                    pinyin: { type: "string" },
+                    needs_language_review: { type: "boolean" },
+                },
+                required: ["zh_translation", "pinyin", "needs_language_review"],
+                additionalProperties: false,
+            },
+        });
+    });
+
+    it("response_format: still accepts legacy { response: string } shape", async () => {
+        const run = vi.fn().mockResolvedValue({ response: '{"zh_translation":"x","pinyin":"y","needs_language_review":false}' });
+        const service = new AiService({
+            ai: { run } as unknown as Ai,
+            model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+        });
+
+        const result = await service.generate("hello", {
+            responseFormat: { type: "json_object" },
+        });
+
+        expect(result.text).toBe('{"zh_translation":"x","pinyin":"y","needs_language_review":false}');
+    });
+
     it("returns stream output for streaming calls", async () => {
         const stream = new ReadableStream({
             start(controller) {
