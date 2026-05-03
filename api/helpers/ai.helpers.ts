@@ -1,4 +1,9 @@
-import type { AiGenerateOptions, AiMessage, AiRunParams } from "@api/types/ai.types";
+import type {
+    AiGenerateDefaultsResolved,
+    AiGenerateOptions,
+    AiMessage,
+    AiRunParams,
+} from "@api/types/ai.types";
 
 /**
  * Resolves per-call option overrides against service-level defaults.
@@ -6,7 +11,7 @@ import type { AiGenerateOptions, AiMessage, AiRunParams } from "@api/types/ai.ty
  */
 export function resolveAiRunParams(
     overrides: AiGenerateOptions,
-    defaults: Required<AiGenerateOptions>
+    defaults: AiGenerateDefaultsResolved
 ): AiRunParams {
     return {
         max_tokens: overrides.maxTokens ?? defaults.maxTokens,

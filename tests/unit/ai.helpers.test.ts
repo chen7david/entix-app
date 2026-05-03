@@ -28,7 +28,7 @@ describe("ai.helpers", () => {
                     },
                 },
             },
-            { maxTokens: 256, temperature: 0.7, topP: 1, responseFormat: undefined }
+            { maxTokens: 256, temperature: 0.7, topP: 1 }
         );
 
         expect(params).toEqual({

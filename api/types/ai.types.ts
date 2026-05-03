@@ -34,6 +34,15 @@ export type AiGenerateOptions = {
     responseFormat?: AiResponseFormat;
 };
 
+/**
+ * Resolved AiService defaults: sampling params are always set; structured output remains optional.
+ * (Avoids `Required<AiGenerateOptions>`, which would incorrectly require `responseFormat`.)
+ */
+export type AiGenerateDefaultsResolved = Required<
+    Pick<AiGenerateOptions, "maxTokens" | "temperature" | "topP">
+> &
+    Pick<AiGenerateOptions, "responseFormat">;
+
 export type AiJsonSchema = {
     type: "object";
     properties: Record<string, unknown>;

@@ -1,6 +1,7 @@
 import { InternalServerError, ServiceUnavailableError } from "@api/errors/app.error";
 import { buildMessages, extractAiText, resolveAiRunParams } from "@api/helpers/ai.helpers";
 import type {
+    AiGenerateDefaultsResolved,
     AiGenerateOptions,
     AiGenerateResult,
     AiMessage,
@@ -16,7 +17,7 @@ export class AiService extends BaseService {
     private readonly ai: Ai;
     private readonly model: AiTextModel;
     private readonly systemPrompt: string | undefined;
-    private readonly defaults: Required<AiGenerateOptions>;
+    private readonly defaults: AiGenerateDefaultsResolved;
 
     constructor(config: AiServiceConfig) {
         super();
@@ -31,12 +32,15 @@ export class AiService extends BaseService {
         this.ai = config.ai;
         this.model = config.model;
         this.systemPrompt = config.systemPrompt;
-        this.defaults = {
+        const base: AiGenerateDefaultsResolved = {
             maxTokens: config.defaults?.maxTokens ?? 256,
             temperature: config.defaults?.temperature ?? 0.7,
             topP: config.defaults?.topP ?? 1,
-            responseFormat: config.defaults?.responseFormat,
         };
+        this.defaults =
+            config.defaults?.responseFormat !== undefined
+                ? { ...base, responseFormat: config.defaults.responseFormat }
+                : base;
     }
 
     async generate(prompt: string, options: AiGenerateOptions = {}): Promise<AiGenerateResult> {
