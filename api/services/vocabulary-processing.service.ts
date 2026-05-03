@@ -65,7 +65,7 @@ export class VocabularyProcessingService {
             await this.vocabRepo.updateStatus(vocabularyId, "active");
         } catch (error: unknown) {
             await this.deps?.logPipelineFailure("text", vocabularyId, error);
-            // Leave status as processing_text for cron/queue retry; do not use `review`.
+            throw error;
         }
     }
 

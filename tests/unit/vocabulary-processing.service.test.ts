@@ -81,7 +81,7 @@ describe("VocabularyProcessingService", () => {
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
     });
 
-    it("processText keeps processing_text and logs pipeline failure on infra/parse errors (not review)", async () => {
+    it("processText leaves processing_text, logs pipeline failure, and rethrows on infra/parse errors (not review)", async () => {
         vocabRepo.findById.mockResolvedValueOnce({
             id: "vocab_1",
             text: "hello",
@@ -95,7 +95,7 @@ describe("VocabularyProcessingService", () => {
             logPipelineFailure,
         });
 
-        await service.processText("vocab_1");
+        await expect(service.processText("vocab_1")).rejects.toBeInstanceOf(Error);
 
         expect(vocabRepo.updateStatus).toHaveBeenCalledTimes(1);
         expect(vocabRepo.updateStatus).toHaveBeenNthCalledWith(1, "vocab_1", "processing_text");
