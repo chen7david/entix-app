@@ -1,11 +1,23 @@
 import { InternalServerError } from "@api/errors/app.error";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import type { AiJsonSchema } from "@api/types/ai.types";
 import type { AiService } from "./ai.service";
 
 type VocabularyTranslation = {
     zh_translation: string;
     pinyin: string;
     needs_language_review?: boolean;
+};
+
+const VOCABULARY_TRANSLATION_SCHEMA: AiJsonSchema = {
+    type: "object",
+    properties: {
+        zh_translation: { type: "string" },
+        pinyin: { type: "string" },
+        needs_language_review: { type: "boolean" },
+    },
+    required: ["zh_translation", "pinyin", "needs_language_review"],
+    additionalProperties: false,
 };
 
 export type VocabularyProcessingDeps = {
@@ -34,16 +46,18 @@ export class VocabularyProcessingService {
 
         try {
             const prompt = [
-                "Translate the following English phrase to Mandarin Chinese.",
-                "Return strict JSON only with keys: zh_translation, pinyin, needs_language_review.",
-                "needs_language_review must be true only if the English phrase is likely misspelled, ungrammatical, or not sensible as study vocabulary.",
-                "If needs_language_review is true, still output your best-effort zh_translation and pinyin if possible.",
+                "Translate this English phrase to Mandarin Chinese.",
+                "Set needs_language_review to true only if the phrase is misspelled, ungrammatical, or unsuitable study vocabulary.",
                 `English phrase: "${item.text}"`,
             ].join("\n");
 
             const result = await this.aiService.generate(prompt, {
                 temperature: 0.1,
-                maxTokens: 256,
+                maxTokens: 512,
+                responseFormat: {
+                    type: "json_schema",
+                    json_schema: VOCABULARY_TRANSLATION_SCHEMA,
+                },
             });
 
             const parsed = parseVocabularyTranslation(result.text);
@@ -80,26 +94,24 @@ export class VocabularyProcessingService {
     }
 }
 
+/**
+ * Runtime type guard for model output.
+ * With response_format json_schema enabled, this is defensive validation rather than extraction.
+ */
 function parseVocabularyTranslation(
     raw: string
 ): VocabularyTranslation & { needs_language_review: boolean } {
-    const trimmed = raw.trim();
-
-    const objectCandidate = trimmed.startsWith("{")
-        ? trimmed
-        : trimmed.slice(trimmed.indexOf("{"), trimmed.lastIndexOf("}") + 1);
-
-    const parsed = JSON.parse(objectCandidate) as Partial<VocabularyTranslation> & {
-        needs_language_review?: boolean;
+    const parsed = JSON.parse(raw) as Partial<VocabularyTranslation> & {
+        needs_language_review?: unknown;
     };
-    const nlr = parsed.needs_language_review as boolean | string | undefined;
-    const needs_language_review = nlr === true || nlr === "true";
+    const needs_language_review = parsed.needs_language_review;
 
     if (
         typeof parsed.zh_translation !== "string" ||
         parsed.zh_translation.length === 0 ||
         typeof parsed.pinyin !== "string" ||
-        parsed.pinyin.length === 0
+        parsed.pinyin.length === 0 ||
+        typeof needs_language_review !== "boolean"
     ) {
         throw new InternalServerError("Invalid translation payload from AI");
     }

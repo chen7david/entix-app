@@ -20,6 +20,9 @@ describe("Vocabulary Integration Test", () => {
             where: eq(schema.authUsers.email, ownerEmail),
         });
         expect(owner).toBeDefined();
+        if (!owner) {
+            throw new Error("Expected organization owner to exist in authUsers");
+        }
 
         const [lesson] = await db
             .insert(schema.lessons)
@@ -38,7 +41,7 @@ describe("Vocabulary Integration Test", () => {
             .values({
                 organizationId: orgId,
                 lessonId: lesson.id,
-                teacherId: owner!.id,
+                teacherId: owner.id,
                 title: "Vocabulary Session",
                 startTime: new Date(),
                 durationMinutes: 60,
@@ -53,7 +56,7 @@ describe("Vocabulary Integration Test", () => {
             .values({
                 sessionId: session.id,
                 organizationId: orgId,
-                userId: owner!.id,
+                userId: owner.id,
                 joinedAt: new Date(),
                 absent: false,
                 paymentStatus: "unpaid",
@@ -71,7 +74,7 @@ describe("Vocabulary Integration Test", () => {
             .returning();
 
         await db.insert(schema.studentVocabulary).values({
-            userId: owner!.id,
+            userId: owner.id,
             organizationId: orgId,
             vocabularyId: vocab.id,
             attendanceId: attendance.id,

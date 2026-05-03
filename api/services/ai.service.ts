@@ -1,6 +1,7 @@
 import { InternalServerError, ServiceUnavailableError } from "@api/errors/app.error";
 import { buildMessages, extractAiText, resolveAiRunParams } from "@api/helpers/ai.helpers";
 import type {
+    AiGenerateDefaultsResolved,
     AiGenerateOptions,
     AiGenerateResult,
     AiMessage,
@@ -16,7 +17,7 @@ export class AiService extends BaseService {
     private readonly ai: Ai;
     private readonly model: AiTextModel;
     private readonly systemPrompt: string | undefined;
-    private readonly defaults: Required<AiGenerateOptions>;
+    private readonly defaults: AiGenerateDefaultsResolved;
 
     constructor(config: AiServiceConfig) {
         super();
@@ -35,6 +36,7 @@ export class AiService extends BaseService {
             maxTokens: config.defaults?.maxTokens ?? 256,
             temperature: config.defaults?.temperature ?? 0.7,
             topP: config.defaults?.topP ?? 1,
+            responseFormat: config.defaults?.responseFormat,
         };
     }
 
@@ -75,6 +77,22 @@ export class AiService extends BaseService {
                 `Workers AI run failed for model "${this.model}": ${
                     error instanceof Error ? error.message : String(error)
                 }`
+            );
+        }
+
+        if (params.response_format) {
+            const extracted = extractAiText(response);
+            if (extracted !== null) {
+                return { text: extracted, generatedAt: new Date().toISOString() };
+            }
+            if (typeof response === "object" && response !== null) {
+                return {
+                    text: JSON.stringify(response),
+                    generatedAt: new Date().toISOString(),
+                };
+            }
+            throw new ServiceUnavailableError(
+                `Workers AI returned no JSON content for model "${this.model}".`
             );
         }
 

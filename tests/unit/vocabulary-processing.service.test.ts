@@ -43,6 +43,23 @@ describe("VocabularyProcessingService", () => {
         );
         await service.processText("vocab_1");
 
+        expect(aiService.generate).toHaveBeenCalledWith(expect.stringContaining("English phrase"), {
+            temperature: 0.1,
+            maxTokens: 512,
+            responseFormat: {
+                type: "json_schema",
+                json_schema: {
+                    type: "object",
+                    properties: {
+                        zh_translation: { type: "string" },
+                        pinyin: { type: "string" },
+                        needs_language_review: { type: "boolean" },
+                    },
+                    required: ["zh_translation", "pinyin", "needs_language_review"],
+                    additionalProperties: false,
+                },
+            },
+        });
         expect(vocabRepo.updateStatus).toHaveBeenNthCalledWith(1, "vocab_1", "processing_text");
         expect(vocabRepo.updateStatus).toHaveBeenNthCalledWith(2, "vocab_1", "text_ready", {
             zhTranslation: "ni hao",
