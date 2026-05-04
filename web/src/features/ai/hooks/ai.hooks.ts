@@ -16,6 +16,10 @@ export type VocabAiTestResult = {
         zh_translation: string;
         pinyin: string;
         needs_language_review: boolean;
+        ipa_us: string;
+        syllables_en: string;
+        syllables_ipa: string;
+        definition_simple: string;
     };
     raw: string;
     repair?: {

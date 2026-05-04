@@ -5,8 +5,12 @@ import { createRouter } from "@api/lib/app.lib";
 import type { AiService } from "@api/services/ai.service";
 import type { AiJsonSchema } from "@api/types/ai.types";
 
-const DEFAULT_SYSTEM_PROMPT =
-    "You are a translation API. Respond with raw JSON only. No markdown, no code fences, no explanation. Your entire response must be a single valid JSON object. Always provide a non-empty Simplified Chinese value for zh_translation.";
+const DEFAULT_SYSTEM_PROMPT = [
+    "You are a vocabulary enrichment API.",
+    "Respond with raw JSON only. NO markdown, NO code fences, NO explanation. Just the JSON object.",
+    "Exactly these keys: zh_translation, pinyin, needs_language_review, ipa_us, syllables_en, syllables_ipa, definition_simple.",
+    "All fields must be non-empty strings, except needs_language_review which is boolean.",
+].join("\n");
 
 const VOCAB_TRANSLATION_SCHEMA: AiJsonSchema = {
     type: "object",
@@ -14,8 +18,20 @@ const VOCAB_TRANSLATION_SCHEMA: AiJsonSchema = {
         zh_translation: { type: "string" },
         pinyin: { type: "string" },
         needs_language_review: { type: "boolean" },
+        ipa_us: { type: "string" },
+        syllables_en: { type: "string" },
+        syllables_ipa: { type: "string" },
+        definition_simple: { type: "string" },
     },
-    required: ["zh_translation", "pinyin", "needs_language_review"],
+    required: [
+        "zh_translation",
+        "pinyin",
+        "needs_language_review",
+        "ipa_us",
+        "syllables_en",
+        "syllables_ipa",
+        "definition_simple",
+    ],
     additionalProperties: false,
 };
 
@@ -39,6 +55,10 @@ type ParsedTranslation = {
     zh_translation: string;
     pinyin: string;
     needs_language_review: boolean;
+    ipa_us: string;
+    syllables_en: string;
+    syllables_ipa: string;
+    definition_simple: string;
 };
 
 type ParseFailure = {
@@ -71,10 +91,13 @@ const _vocabAiTestRouter = createRouter()
 
         const prompt = [
             "Translate this English phrase to Mandarin Chinese.",
-            "Return zh_translation in Simplified Chinese characters (not English, not empty).",
-            "If uncertain, still provide your best non-empty translation and set needs_language_review=true.",
-            "Set needs_language_review to true only if the phrase is misspelled, ungrammatical, or unsuitable study vocabulary.",
-            `English phrase: "${phrase}"`,
+            "Return zh_translation in Simplified Chinese characters (not English, never empty).",
+            "If uncertain about translation quality, still provide your best translation and set needs_language_review to true.",
+            "Return ipa_us as the American English IPA transcription of the phrase.",
+            "Return syllables_en as the phrase with hyphen-separated syllables within each word, spaces preserved between words.",
+            "Return syllables_ipa as the IPA transcription with hyphen-separated syllables within each word, spaces preserved between words.",
+            "Return definition_simple as a 1-sentence definition a 7-year-old can understand.",
+            `English phrase: ${phrase}`,
         ].join("\n");
 
         const result = await ai.generate(prompt);
@@ -183,6 +206,10 @@ async function tryRepairMissingPinyin(input: {
     )
         return null;
     if (typeof candidate.needs_language_review !== "boolean") return null;
+    if (typeof candidate.ipa_us !== "string") return null;
+    if (typeof candidate.syllables_en !== "string") return null;
+    if (typeof candidate.syllables_ipa !== "string") return null;
+    if (typeof candidate.definition_simple !== "string") return null;
     if (typeof candidate.pinyin === "string" && candidate.pinyin.trim().length > 0) return null;
 
     const repairPrompt = [
@@ -207,6 +234,10 @@ async function tryRepairMissingPinyin(input: {
             zh_translation: candidate.zh_translation,
             pinyin,
             needs_language_review: candidate.needs_language_review,
+            ipa_us: candidate.ipa_us,
+            syllables_en: candidate.syllables_en,
+            syllables_ipa: candidate.syllables_ipa,
+            definition_simple: candidate.definition_simple,
         },
         repairRaw: repairResult.text,
     };
@@ -244,6 +275,11 @@ function parseTranslationResponse(raw: string): ParsedTranslation | ParseFailure
     const zh = candidate.zh_translation;
     const pinyin = candidate.pinyin;
     const review = candidate.needs_language_review;
+    const ipaUs = candidate.ipa_us;
+    const syllablesEn = candidate.syllables_en;
+    const syllablesIpa = candidate.syllables_ipa;
+    const definitionSimple = candidate.definition_simple;
+
     const fieldErrors: string[] = [];
 
     if (typeof zh !== "string") fieldErrors.push("`zh_translation` must be a string");
@@ -253,6 +289,20 @@ function parseTranslationResponse(raw: string): ParsedTranslation | ParseFailure
     else if (pinyin.trim().length === 0) fieldErrors.push("`pinyin` must be non-empty");
 
     if (typeof review !== "boolean") fieldErrors.push("`needs_language_review` must be a boolean");
+
+    if (typeof ipaUs !== "string") fieldErrors.push("ipa_us must be a string");
+    else if (ipaUs.trim().length === 0) fieldErrors.push("ipa_us must be non-empty");
+
+    if (typeof syllablesEn !== "string") fieldErrors.push("syllables_en must be a string");
+    else if (syllablesEn.trim().length === 0) fieldErrors.push("syllables_en must be non-empty");
+
+    if (typeof syllablesIpa !== "string") fieldErrors.push("syllables_ipa must be a string");
+    else if (syllablesIpa.trim().length === 0) fieldErrors.push("syllables_ipa must be non-empty");
+
+    if (typeof definitionSimple !== "string")
+        fieldErrors.push("definition_simple must be a string");
+    else if (definitionSimple.trim().length === 0)
+        fieldErrors.push("definition_simple must be non-empty");
 
     if (fieldErrors.length > 0) {
         return {
@@ -266,6 +316,10 @@ function parseTranslationResponse(raw: string): ParsedTranslation | ParseFailure
         zh_translation: zh as string,
         pinyin: pinyin as string,
         needs_language_review: review as boolean,
+        ipa_us: ipaUs as string,
+        syllables_en: syllablesEn as string,
+        syllables_ipa: syllablesIpa as string,
+        definition_simple: definitionSimple as string,
     };
 }
 
@@ -296,5 +350,13 @@ function unwrapCandidateObject(input: unknown): Record<string, unknown> | null {
 }
 
 function isTranslationShape(value: Record<string, unknown>): boolean {
-    return "zh_translation" in value || "pinyin" in value || "needs_language_review" in value;
+    return (
+        "zh_translation" in value &&
+        "pinyin" in value &&
+        "needs_language_review" in value &&
+        "ipa_us" in value &&
+        "syllables_en" in value &&
+        "syllables_ipa" in value &&
+        "definition_simple" in value
+    );
 }

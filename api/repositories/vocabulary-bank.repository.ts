@@ -1,8 +1,16 @@
 import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, encodeCursor } from "@api/helpers/pagination.helpers";
-import type { VocabularyBankItem, VocabularyBankStatus } from "@shared/db/schema";
-import { vocabularyBank } from "@shared/db/schema";
+import {
+    type VocabularyBankItem,
+    type VocabularyBankStatus,
+    vocabularyBank,
+} from "@shared/db/schema";
 import { and, eq, lt, or } from "drizzle-orm";
+
+export type VocabularyBankUpdateInput = Omit<
+    typeof vocabularyBank.$inferInsert,
+    "id" | "createdAt" | "updatedAt"
+>;
 
 export class VocabularyBankRepository {
     constructor(private readonly db: AppDb) {}
@@ -37,20 +45,21 @@ export class VocabularyBankRepository {
         return item ?? null;
     }
 
-    async updateStatus(
+    async update(
         id: string,
-        status: VocabularyBankStatus,
-        fields?: Partial<
-            Pick<VocabularyBankItem, "zhTranslation" | "pinyin" | "enAudioUrl" | "zhAudioUrl">
-        >
+        data: Partial<VocabularyBankUpdateInput>
     ): Promise<VocabularyBankItem | null> {
         const [item] = await this.db
             .update(vocabularyBank)
-            .set({ status, ...fields, updatedAt: new Date() })
+            .set({ ...data, updatedAt: new Date() })
             .where(eq(vocabularyBank.id, id))
             .returning();
 
         return item ?? null;
+    }
+
+    async updateStatus(id: string, status: VocabularyBankStatus): Promise<VocabularyBankItem | null> {
+        return this.update(id, { status });
     }
 
     async getByStatus(status: VocabularyBankStatus, limit = 50): Promise<VocabularyBankItem[]> {

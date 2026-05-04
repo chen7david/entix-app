@@ -52,7 +52,10 @@
                     {
                         "queue": "entix-queue-dev",
                         "dead_letter_queue": "entix-dlq-dev",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
             }
@@ -98,7 +101,10 @@
                     {
                         "queue": "entix-app-local",
                         "dead_letter_queue": "entix-app-local-dlq",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
             }
@@ -150,7 +156,10 @@
                     {
                         "queue": "entix-queue-staging",
                         "dead_letter_queue": "entix-dlq-staging",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
             }
@@ -200,7 +209,10 @@
                     {
                         "queue": "entix-queue-production",
                         "dead_letter_queue": "entix-dlq-production",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
             }

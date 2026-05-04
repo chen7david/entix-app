@@ -79,6 +79,16 @@ export class AiService extends BaseService {
         messages: AiMessage[],
         requestParams: Record<string, unknown>
     ): Promise<unknown> {
+        const body = {
+            model: this.model,
+            messages,
+            stream: false,
+            ...requestParams,
+        };
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 55000); // 55s
+
         try {
             const res = await fetch(this.endpoint, {
                 method: "POST",
@@ -86,13 +96,10 @@ export class AiService extends BaseService {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${this.apiKey}`,
                 },
-                body: JSON.stringify({
-                    model: this.model,
-                    messages,
-                    stream: false,
-                    ...requestParams,
-                }),
+                body: JSON.stringify(body),
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
 
             const payload = await res.json().catch(() => null);
 
@@ -108,9 +115,15 @@ export class AiService extends BaseService {
 
             return payload;
         } catch (error: unknown) {
+            clearTimeout(timeoutId);
             if (error instanceof InternalServerError) throw error;
 
             const message = error instanceof Error ? error.message : String(error);
+            if (message.includes("abort")) {
+                throw new ServiceUnavailableError(
+                    `Open WebUI request timed out (55s) for model "${this.model}".`
+                );
+            }
             throw new InternalServerError(
                 `Open WebUI request failed for model "${this.model}": ${message}`
             );
