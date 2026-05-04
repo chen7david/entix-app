@@ -19,22 +19,22 @@ import { drizzle } from "drizzle-orm/d1";
 
 export type EntixQueueMessage =
     | {
-          type: "billing.retry-missed-payment";
-          eventId: string;
-          organizationId: string;
-      }
+        type: "billing.retry-missed-payment";
+        eventId: string;
+        organizationId: string;
+    }
     | {
-          type: "billing.process-payment";
-          paymentRequestId: string;
-      }
+        type: "billing.process-payment";
+        paymentRequestId: string;
+    }
     | {
-          type: "vocabulary.process-text";
-          vocabularyId: string;
-      }
+        type: "vocabulary.process-text";
+        vocabularyId: string;
+    }
     | {
-          type: "vocabulary.process-audio";
-          vocabularyId: string;
-      };
+        type: "vocabulary.process-audio";
+        vocabularyId: string;
+    };
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
@@ -177,9 +177,9 @@ async function handleVocabularyProcessText(
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
-        apiKey: String(envVars.OPEN_WEB_UI_API_KEY ?? ""),
+        apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
         endpoint: String(
-            envVars.OPEN_WEB_UI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
+            envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
         ),
         defaultModel: String(envVars.OPEN_WEB_UI_MODEL ?? "gemma4:e4b"),
         systemPrompt: [
@@ -224,9 +224,9 @@ async function handleVocabularyProcessAudio(
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
-        apiKey: String(envVars.OPEN_WEB_UI_API_KEY ?? ""),
+        apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
         endpoint: String(
-            envVars.OPEN_WEB_UI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
+            envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
         ),
         defaultModel: String(envVars.OPEN_WEB_UI_MODEL ?? "gemma4:e4b"),
         systemPrompt: [
