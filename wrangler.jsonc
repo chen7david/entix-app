@@ -24,6 +24,8 @@
                 "R2_BUCKET_NAME": "entix-app-development",
                 "R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
                 "PUBLIC_CDN_URL": "https://development-cdn.entix.org",
+                "OPENWEBUI_MODEL": "gemma4:e4b",
+                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
                 "SKIP_EMAIL_VERIFICATION": "false"
             },
             "d1_databases": [
@@ -50,12 +52,61 @@
                     {
                         "queue": "entix-queue-dev",
                         "dead_letter_queue": "entix-dlq-dev",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
+            }
+        },
+        "local:remote": {
+            "name": "entix-app-local-remote",
+            "preview_urls": true,
+            "triggers": {
+                "crons": ["* * * * *"]
             },
-            "ai": {
-                "binding": "AI"
+            "vars": {
+                "FRONTEND_URL": "http://localhost:8000",
+                "CORS_ORIGINS": "http://localhost:8000",
+                "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
+                "R2_BUCKET_NAME": "entix-app-development",
+                "R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
+                "PUBLIC_CDN_URL": "https://development-cdn.entix.org",
+                "OPENWEBUI_MODEL": "gemma4:e4b",
+                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
+                "SKIP_EMAIL_VERIFICATION": "false"
+            },
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "entix-app-local",
+                    "database_id": "602e799b-3322-45f3-b2b0-ed231cf58ba5",
+                    "migrations_dir": "api/db/migrations"
+                }
+            ],
+            "kv_namespaces": [
+                {
+                    "binding": "IDEMPOTENCY_KV",
+                    "id": "59236dac3436497d91c827c03292b73f",
+                    "preview_id": "59236dac3436497d91c827c03292b73f"
+                }
+            ],
+            "queues": {
+                "producers": [
+                    { "binding": "QUEUE", "queue": "entix-app-local" },
+                    { "binding": "DLQ", "queue": "entix-app-local-dlq" }
+                ],
+                "consumers": [
+                    {
+                        "queue": "entix-app-local",
+                        "dead_letter_queue": "entix-app-local-dlq",
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
+                    }
+                ]
             }
         },
         "staging": {
@@ -68,6 +119,8 @@
                 "FRONTEND_URL": "https://staging.entix.org",
                 "CORS_ORIGINS": "https://staging.entix.org",
                 "PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
+                "OPENWEBUI_MODEL": "gemma4:e4b",
+                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
                 "SKIP_EMAIL_VERIFICATION": "false",
                 "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
                 "R2_BUCKET_NAME": "entix-app-staging",
@@ -103,12 +156,12 @@
                     {
                         "queue": "entix-queue-staging",
                         "dead_letter_queue": "entix-dlq-staging",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
-            },
-            "ai": {
-                "binding": "AI"
             }
         },
         "production": {
@@ -120,6 +173,8 @@
                 "FRONTEND_URL": "https://entix.org",
                 "CORS_ORIGINS": "https://entix.org",
                 "PUBLIC_CDN_URL": "https://cdn.entix.org",
+                "OPENWEBUI_MODEL": "gemma4:e4b",
+                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
                 "SKIP_EMAIL_VERIFICATION": "false",
                 "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
                 "R2_BUCKET_NAME": "entix-app-production",
@@ -154,12 +209,12 @@
                     {
                         "queue": "entix-queue-production",
                         "dead_letter_queue": "entix-dlq-production",
-                        "max_retries": 3
+                        "max_retries": 3,
+                        "max_concurrency": 1,
+                        "max_batch_size": 5,
+                        "max_batch_timeout": 5
                     }
                 ]
-            },
-            "ai": {
-                "binding": "AI"
             }
         }
     }

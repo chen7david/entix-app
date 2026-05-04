@@ -54,6 +54,7 @@ import {
     SignInPage,
     UnauthorizedPage,
     VerifyEmailPage,
+    VocabAiTesterPage,
     WalletPage,
 } from "./routes/lazy-pages";
 
@@ -317,6 +318,10 @@ export default function App() {
                                             <Route
                                                 path="admin/audit-logs"
                                                 element={<AuditLogPage />}
+                                            />
+                                            <Route
+                                                path="admin/vocab-ai-test"
+                                                element={<VocabAiTesterPage />}
                                             />
                                         </Route>
                                     </Route>

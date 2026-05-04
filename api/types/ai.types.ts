@@ -1,14 +1,5 @@
-/**
- * Catalogue of supported Cloudflare Workers AI text-generation models.
- * Add new entries here as Cloudflare expands the model list.
- * @see https://developers.cloudflare.com/workers-ai/models/
- */
-export type AiTextModel =
-    | "@cf/meta/llama-3.1-8b-instruct-fp8"
-    | "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
-    | "@cf/mistral/mistral-7b-instruct-v0.1"
-    | "@cf/google/gemma-7b-it-lora"
-    | "@cf/microsoft/phi-2";
+/** Model identifier for OpenAI-compatible providers (Open WebUI). */
+export type AiTextModel = string;
 
 /** Role for a message turn in a chat conversation. */
 export type AiMessageRole = "system" | "user" | "assistant";
@@ -75,10 +66,12 @@ export type AiGenerateResult = {
 
 /** Full config for AiService construction. */
 export type AiServiceConfig = {
-    /** Workers AI binding from the Cloudflare environment (`ctx.env.AI`). */
-    ai: Ai;
-    /** Model to run inference against. */
-    model: AiTextModel;
+    /** Open WebUI API key. */
+    apiKey: string;
+    /** OpenAI-compatible endpoint URL (chat completions). */
+    endpoint: string;
+    /** Default model to run inference against. */
+    defaultModel: AiTextModel;
     /** Optional system prompt prepended to every request. */
     systemPrompt?: string;
     /** Service-level generation defaults applied to every call unless overridden. */

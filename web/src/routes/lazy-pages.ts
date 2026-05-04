@@ -166,6 +166,10 @@ export const AuditLogPage = lazyNamed(
     () => import("@web/src/pages/admin/AuditLogPage"),
     "AuditLogPage"
 );
+export const VocabAiTesterPage = lazyNamed(
+    () => import("@web/src/pages/admin/temp/VocabAiTesterPage"),
+    "VocabAiTesterPage"
+);
 
 // —— Errors (auth layout shell) ——
 export const UnauthorizedPage = lazyNamed(
