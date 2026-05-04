@@ -24,13 +24,13 @@ export class AiService extends BaseService {
         super();
 
         if (!config.apiKey || config.apiKey.trim().length === 0) {
-            throw new InternalServerError("OPEN_WEB_UI_API_KEY is not configured.");
+            throw new InternalServerError("OPENWEBUI_API_KEY is not configured.");
         }
         if (!config.defaultModel || config.defaultModel.trim().length === 0) {
-            throw new InternalServerError("OPEN_WEB_UI_MODEL is not configured.");
+            throw new InternalServerError("OPENWEBUI_MODEL is not configured.");
         }
         if (!config.endpoint || config.endpoint.trim().length === 0) {
-            throw new InternalServerError("OPEN_WEB_UI_ENDPOINT is not configured.");
+            throw new InternalServerError("OPENWEBUI_ENDPOINT is not configured.");
         }
 
         this.apiKey = config.apiKey;
