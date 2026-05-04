@@ -57,7 +57,7 @@ export class AiService extends BaseService {
 
     async stream(prompt: string, options: AiGenerateOptions = {}): Promise<ReadableStream> {
         const messages = buildMessages([{ role: "user", content: prompt }], this.systemPrompt);
-        return this.runStream(messages, options);
+        return await this.runStream(messages, options);
     }
 
     getModel(): AiTextModel {

@@ -2,6 +2,8 @@ import { BadRequestError } from "@api/errors/app.error";
 import { createAiService } from "@api/factories/ai.factory";
 import type { AppOpenApi } from "@api/helpers/types.helpers";
 import { createRouter } from "@api/lib/app.lib";
+import { requireAuth } from "@api/middleware/auth.middleware";
+import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
 import type { AiService } from "@api/services/ai.service";
 import type { AiJsonSchema } from "@api/types/ai.types";
 
@@ -68,7 +70,7 @@ type ParseFailure = {
 };
 
 const _vocabAiTestRouter = createRouter()
-    .post("/vocab-ai-test", async (c) => {
+    .post("/vocab-ai-test", requireAuth, requireSuperAdmin, async (c) => {
         const payload = (await c.req.json()) as VocabAiTestRequest;
         const phrase = String(payload.phrase ?? "").trim();
         if (!phrase) throw new BadRequestError("`phrase` is required");
@@ -152,7 +154,7 @@ const _vocabAiTestRouter = createRouter()
             },
         });
     })
-    .post("/vocab-ai-test/openwebui-models", async (c) => {
+    .post("/vocab-ai-test/openwebui-models", requireAuth, requireSuperAdmin, async (c) => {
         const ai = createAiService(c, {});
         const models = await ai.fetchModels();
         return c.json({ data: { models } });

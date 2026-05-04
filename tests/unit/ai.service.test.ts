@@ -164,6 +164,8 @@ describe("AiService", () => {
 
     it("streaming throws until enabled", async () => {
         const service = buildService();
-        await expect(service.stream("hello")).rejects.toBeInstanceOf(ServiceUnavailableError);
+        await expect(service.stream("hello")).rejects.toThrow(
+            "Streaming is not enabled for Open WebUI integration."
+        );
     });
 });

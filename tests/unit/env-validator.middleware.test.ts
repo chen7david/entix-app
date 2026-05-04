@@ -25,6 +25,8 @@ const validEnv: any = {
     R2_SECRET_ACCESS_KEY: "mock_r2_secret_key",
     R2_BUCKET_NAME: "mock-bucket",
     PUBLIC_CDN_URL: "https://cdn.example.com",
+    OPENWEBUI_API_KEY: "test-openwebui-key",
+    OPENWEBUI_MODEL: "test-model",
 };
 
 describe("envValidatorMiddleware", () => {

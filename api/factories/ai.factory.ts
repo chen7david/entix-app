@@ -13,9 +13,9 @@ export function createAiService(
     }
 ): AiService {
     const env = ctx.env as unknown as Record<string, string | undefined>;
-    const apiKey = (env.OPEN_WEB_UI_API_KEY ?? "").trim();
-    const defaultModel = (env.OPEN_WEB_UI_MODEL ?? AI_MODELS.DEFAULT).trim();
-    const endpoint = (env.OPEN_WEB_UI_ENDPOINT ?? AI_ENDPOINTS.DEFAULT).trim();
+    const apiKey = (env.OPENWEBUI_API_KEY ?? "").trim();
+    const defaultModel = (env.OPENWEBUI_MODEL ?? AI_MODELS.DEFAULT).trim();
+    const endpoint = (env.OPENWEBUI_ENDPOINT ?? AI_ENDPOINTS.DEFAULT).trim();
 
     return new AiService({
         apiKey,
