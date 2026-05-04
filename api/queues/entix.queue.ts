@@ -178,10 +178,8 @@ async function handleVocabularyProcessText(
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
         apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
-        endpoint: String(
-            envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
-        ),
-        defaultModel: String(envVars.OPEN_WEB_UI_MODEL ?? "gemma4:e4b"),
+        endpoint: String(envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"),
+        defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
         systemPrompt: [
             "You are a vocabulary enrichment API.",
             "Respond with raw JSON only. NO markdown, NO code fences, NO explanation. Just the JSON object.",
@@ -225,10 +223,8 @@ async function handleVocabularyProcessAudio(
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
         apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
-        endpoint: String(
-            envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
-        ),
-        defaultModel: String(envVars.OPEN_WEB_UI_MODEL ?? "gemma4:e4b"),
+        endpoint: String(envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"),
+        defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
         systemPrompt: [
             "You are a vocabulary enrichment API.",
             "Respond with raw JSON only. NO markdown, NO code fences, NO explanation. Just the JSON object.",
