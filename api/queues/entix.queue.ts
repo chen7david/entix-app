@@ -173,11 +173,15 @@ async function handleVocabularyProcessText(
     env: CloudflareBindings
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
+    const envVars = env as unknown as Record<string, unknown>;
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
-        ai: env.AI,
-        model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        apiKey: String(envVars.OPEN_WEB_UI_API_KEY ?? ""),
+        endpoint: String(
+            envVars.OPEN_WEB_UI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
+        ),
+        defaultModel: String(envVars.OPEN_WEB_UI_MODEL ?? "gemma:4eb4"),
         systemPrompt:
             "You are a translation API. Respond with raw JSON only. No markdown, no code fences, no explanation. Your entire response must be a single valid JSON object.",
     });
@@ -212,11 +216,15 @@ async function handleVocabularyProcessAudio(
     env: CloudflareBindings
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
+    const envVars = env as unknown as Record<string, unknown>;
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
-        ai: env.AI,
-        model: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+        apiKey: String(envVars.OPEN_WEB_UI_API_KEY ?? ""),
+        endpoint: String(
+            envVars.OPEN_WEB_UI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"
+        ),
+        defaultModel: String(envVars.OPEN_WEB_UI_MODEL ?? "gemma:4eb4"),
     });
     const processor = new VocabularyProcessingService(vocabularyRepo, aiService, {
         logPipelineFailure: async (_phase, vocabularyId, error) => {

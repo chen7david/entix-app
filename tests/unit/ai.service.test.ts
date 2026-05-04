@@ -3,12 +3,11 @@ import { AiService } from "@api/services/ai.service";
 import type { AiServiceConfig } from "@api/types/ai.types";
 import { describe, expect, it, vi } from "vitest";
 
-type MockRun = ReturnType<typeof vi.fn>;
-
-function buildService(runImpl: MockRun): AiService {
+function buildService(): AiService {
     const config: AiServiceConfig = {
-        ai: { run: runImpl } as unknown as Ai,
-        model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+        apiKey: "test-key",
+        endpoint: "https://ai.entix.org/api/chat/completions",
+        defaultModel: "gemma:4eb4",
         systemPrompt: "system",
         defaults: { maxTokens: 64, temperature: 0.2, topP: 0.9 },
     };
@@ -17,44 +16,66 @@ function buildService(runImpl: MockRun): AiService {
 }
 
 describe("AiService", () => {
-    it("throws when AI binding is missing", () => {
+    it("throws when API key is missing", () => {
         expect(
             () =>
                 new AiService({
-                    ai: undefined as unknown as Ai,
-                    model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+                    apiKey: "",
+                    endpoint: "https://ai.entix.org/api/chat/completions",
+                    defaultModel: "gemma:4eb4",
                 })
         ).toThrow(InternalServerError);
     });
 
     it("generates text and prepends system prompt", async () => {
-        const run = vi.fn().mockResolvedValue({ response: "ok" });
-        const service = buildService(run);
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response(
+                JSON.stringify({
+                    choices: [{ message: { content: "ok" } }],
+                }),
+                { status: 200, headers: { "Content-Type": "application/json" } }
+            )
+        );
+        const service = buildService();
 
         const result = await service.generate("hello");
 
         expect(result.text).toBe("ok");
-        expect(service.getModel()).toBe("@cf/meta/llama-3.1-8b-instruct-fp8");
+        expect(service.getModel()).toBe("gemma:4eb4");
 
-        expect(run).toHaveBeenCalledTimes(1);
-        const [, payload] = run.mock.calls[0] as [string, { messages: Array<{ role: string }> }];
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        const payload = JSON.parse(String(init.body)) as { messages: Array<{ role: string }> };
         expect(payload.messages[0].role).toBe("system");
         expect(payload.messages[1].role).toBe("user");
+        fetchMock.mockRestore();
     });
 
     it("throws service unavailable when response text is missing", async () => {
-        const run = vi.fn().mockResolvedValue({});
-        const service = buildService(run);
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response(JSON.stringify({}), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            })
+        );
+        const service = buildService();
 
         await expect(service.generate("hello")).rejects.toBeInstanceOf(ServiceUnavailableError);
+        fetchMock.mockRestore();
     });
 
     it("response_format json_schema: serializes parsed object responses to text", async () => {
         const payload = { zh_translation: "你好", pinyin: "nǐ hǎo", needs_language_review: false };
-        const run = vi.fn().mockResolvedValue(payload);
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response(JSON.stringify(payload), {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            })
+        );
         const service = new AiService({
-            ai: { run } as unknown as Ai,
-            model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+            apiKey: "test-key",
+            endpoint: "https://ai.entix.org/api/chat/completions",
+            defaultModel: "gemma:4eb4",
             defaults: { maxTokens: 64, temperature: 0.2, topP: 0.9 },
         });
 
@@ -75,29 +96,41 @@ describe("AiService", () => {
         });
 
         expect(result.text).toBe(JSON.stringify(payload));
-        const [, callPayload] = run.mock.calls[0] as [string, { response_format?: unknown }];
+        const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+        const callPayload = JSON.parse(String(init.body)) as { response_format?: unknown };
         expect(callPayload.response_format).toEqual({
             type: "json_schema",
             json_schema: {
-                type: "object",
-                properties: {
-                    zh_translation: { type: "string" },
-                    pinyin: { type: "string" },
-                    needs_language_review: { type: "boolean" },
+                name: "structured_output",
+                schema: {
+                    type: "object",
+                    properties: {
+                        zh_translation: { type: "string" },
+                        pinyin: { type: "string" },
+                        needs_language_review: { type: "boolean" },
+                    },
+                    required: ["zh_translation", "pinyin", "needs_language_review"],
+                    additionalProperties: false,
                 },
-                required: ["zh_translation", "pinyin", "needs_language_review"],
-                additionalProperties: false,
+                strict: true,
             },
         });
+        fetchMock.mockRestore();
     });
 
     it("response_format: still accepts legacy { response: string } shape", async () => {
-        const run = vi.fn().mockResolvedValue({
-            response: '{"zh_translation":"x","pinyin":"y","needs_language_review":false}',
-        });
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response(
+                JSON.stringify({
+                    response: '{"zh_translation":"x","pinyin":"y","needs_language_review":false}',
+                }),
+                { status: 200, headers: { "Content-Type": "application/json" } }
+            )
+        );
         const service = new AiService({
-            ai: { run } as unknown as Ai,
-            model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+            apiKey: "test-key",
+            endpoint: "https://ai.entix.org/api/chat/completions",
+            defaultModel: "gemma:4eb4",
         });
 
         const result = await service.generate("hello", {
@@ -107,30 +140,30 @@ describe("AiService", () => {
         expect(result.text).toBe(
             '{"zh_translation":"x","pinyin":"y","needs_language_review":false}'
         );
+        fetchMock.mockRestore();
     });
 
     it("response_format: throws when response is neither string nor object", async () => {
-        const run = vi.fn().mockResolvedValue(null);
+        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+            new Response("null", {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+            })
+        );
         const service = new AiService({
-            ai: { run } as unknown as Ai,
-            model: "@cf/meta/llama-3.1-8b-instruct-fp8",
+            apiKey: "test-key",
+            endpoint: "https://ai.entix.org/api/chat/completions",
+            defaultModel: "gemma:4eb4",
         });
 
         await expect(
             service.generate("hello", { responseFormat: { type: "json_object" } })
         ).rejects.toBeInstanceOf(ServiceUnavailableError);
+        fetchMock.mockRestore();
     });
 
-    it("returns stream output for streaming calls", async () => {
-        const stream = new ReadableStream({
-            start(controller) {
-                controller.close();
-            },
-        });
-        const run = vi.fn().mockResolvedValue(stream);
-        const service = buildService(run);
-
-        const output = await service.stream("hello");
-        expect(output).toBe(stream);
+    it("streaming throws until enabled", async () => {
+        const service = buildService();
+        await expect(service.stream("hello")).rejects.toBeInstanceOf(ServiceUnavailableError);
     });
 });

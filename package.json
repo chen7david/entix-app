@@ -6,8 +6,10 @@
     "scripts": {
         "prepare": "husky || true",
         "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+        "dev:ai": "concurrently \"npm run dev:api:remote\" \"npm run dev:web\"",
         "dev:e2e": "concurrently --kill-others-on-fail \"npm run dev:api -- --local\" \"npm run dev:web\"",
         "dev:api": "wrangler dev --env development --port 3000 --local",
+        "dev:api:remote": "wrangler dev --env development --port 3000",
         "dev:web": "cd web && npm run dev",
         "build:web": "cd web && npm install && npm run build && cd .. && npm run build:docs",
         "dev:docs": "vitepress dev docs",

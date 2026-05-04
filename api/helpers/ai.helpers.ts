@@ -38,8 +38,8 @@ export function buildMessages(messages: AiMessage[], systemPrompt?: string): AiM
 }
 
 /**
- * Safely extracts text from a Workers AI response.
- * Returns null when no usable text is present.
+ * Safely extracts text from common AI provider responses.
+ * Supports Workers-style `{ response: string }` and OpenAI-compatible chat responses.
  */
 export function extractAiText(response: unknown): string | null {
     if (response instanceof ReadableStream) {
@@ -50,10 +50,22 @@ export function extractAiText(response: unknown): string | null {
         return null;
     }
 
-    const candidate = response as { response?: unknown };
-    if (typeof candidate.response !== "string" || candidate.response.length === 0) {
-        return null;
+    const candidate = response as { response?: unknown; choices?: unknown };
+    if (typeof candidate.response === "string" && candidate.response.length > 0) {
+        return candidate.response;
     }
 
-    return candidate.response;
+    if (Array.isArray(candidate.choices) && candidate.choices.length > 0) {
+        const first = candidate.choices[0];
+        if (typeof first === "object" && first !== null) {
+            const message = (first as Record<string, unknown>).message;
+            if (typeof message === "object" && message !== null) {
+                const content = (message as Record<string, unknown>).content;
+                if (typeof content === "string" && content.length > 0) {
+                    return content;
+                }
+            }
+        }
+    }
+    return null;
 }

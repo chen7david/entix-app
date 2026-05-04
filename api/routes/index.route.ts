@@ -17,6 +17,7 @@ import { uploadRoutes } from "./orgs/uploads.index";
 import { vocabularyRoutes } from "./orgs/vocabulary.index";
 import { socialMediaRoutes } from "./social-media/social-media.index";
 import { userRoutes } from "./users/users.index";
+import { vocabAiTestRoutes } from "./vocab-ai-test.index";
 
 export const routes = [
     adminAuditRoutes,
@@ -38,4 +39,5 @@ export const routes = [
     memberWalletRoutes,
     socialMediaRoutes,
     internalReconciliationRoutes,
+    vocabAiTestRoutes,
 ];
