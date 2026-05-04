@@ -19,22 +19,22 @@ import { drizzle } from "drizzle-orm/d1";
 
 export type EntixQueueMessage =
     | {
-        type: "billing.retry-missed-payment";
-        eventId: string;
-        organizationId: string;
-    }
+          type: "billing.retry-missed-payment";
+          eventId: string;
+          organizationId: string;
+      }
     | {
-        type: "billing.process-payment";
-        paymentRequestId: string;
-    }
+          type: "billing.process-payment";
+          paymentRequestId: string;
+      }
     | {
-        type: "vocabulary.process-text";
-        vocabularyId: string;
-    }
+          type: "vocabulary.process-text";
+          vocabularyId: string;
+      }
     | {
-        type: "vocabulary.process-audio";
-        vocabularyId: string;
-    };
+          type: "vocabulary.process-audio";
+          vocabularyId: string;
+      };
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
