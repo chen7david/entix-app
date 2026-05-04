@@ -58,7 +58,10 @@ export class VocabularyBankRepository {
         return item ?? null;
     }
 
-    async updateStatus(id: string, status: VocabularyBankStatus): Promise<VocabularyBankItem | null> {
+    async updateStatus(
+        id: string,
+        status: VocabularyBankStatus
+    ): Promise<VocabularyBankItem | null> {
         return this.update(id, { status });
     }
 
