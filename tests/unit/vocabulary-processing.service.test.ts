@@ -93,10 +93,13 @@ describe("VocabularyProcessingService", () => {
         await service.processText("vocab_1");
 
         expect(vocabRepo.updateStatus).toHaveBeenNthCalledWith(1, "vocab_1", "processing_text");
-        expect(vocabRepo.update).toHaveBeenCalledWith("vocab_1", expect.objectContaining({
-            status: "review",
-            needsLanguageReview: true,
-        }));
+        expect(vocabRepo.update).toHaveBeenCalledWith(
+            "vocab_1",
+            expect.objectContaining({
+                status: "review",
+                needsLanguageReview: true,
+            })
+        );
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
     });
 
