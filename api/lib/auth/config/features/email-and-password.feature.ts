@@ -36,7 +36,11 @@ export const getEmailAndPasswordConfig = (
                           resetUrl,
                       });
 
-                ctx.executionCtx.waitUntil(emailPromise);
+                if (ctx.executionCtx?.waitUntil) {
+                    ctx.executionCtx.waitUntil(emailPromise);
+                } else {
+                    await emailPromise;
+                }
             },
             async onPasswordReset({ user }) {
                 if (!ctx) return;

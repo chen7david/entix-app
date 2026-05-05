@@ -5,7 +5,7 @@ import {
     type VocabularyBankStatus,
     vocabularyBank,
 } from "@shared/db/schema";
-import { and, eq, like, lt, or } from "drizzle-orm";
+import { and, eq, lt, or, sql } from "drizzle-orm";
 
 export type VocabularyBankUpdateInput = Omit<
     typeof vocabularyBank.$inferInsert,
@@ -16,12 +16,12 @@ export class VocabularyBankRepository {
     constructor(private readonly db: AppDb) {}
 
     async findOrCreate(text: string): Promise<VocabularyBankItem | null> {
-        const normalizedText = text.trim().toLowerCase();
+        const trimmedText = text.trim();
 
         await this.db
             .insert(vocabularyBank)
             .values({
-                text: normalizedText,
+                text: trimmedText,
                 status: "new",
             })
             .onConflictDoNothing();
@@ -29,7 +29,7 @@ export class VocabularyBankRepository {
         const [item] = await this.db
             .select()
             .from(vocabularyBank)
-            .where(eq(vocabularyBank.text, normalizedText))
+            .where(eq(vocabularyBank.text, trimmedText))
             .limit(1);
 
         return item ?? null;
@@ -40,6 +40,16 @@ export class VocabularyBankRepository {
             .select()
             .from(vocabularyBank)
             .where(eq(vocabularyBank.id, id))
+            .limit(1);
+
+        return item ?? null;
+    }
+
+    async findByText(text: string): Promise<VocabularyBankItem | null> {
+        const [item] = await this.db
+            .select()
+            .from(vocabularyBank)
+            .where(eq(vocabularyBank.text, text))
             .limit(1);
 
         return item ?? null;
@@ -151,7 +161,9 @@ export class VocabularyBankRepository {
         );
         const conditions = [];
         if (search) {
-            conditions.push(like(vocabularyBank.text, `%${search.trim().toLowerCase()}%`));
+            conditions.push(
+                sql`LOWER(${vocabularyBank.text}) LIKE ${`%${search.trim().toLowerCase()}%`}`
+            );
         }
         if (pagination.where) {
             conditions.push(pagination.where);

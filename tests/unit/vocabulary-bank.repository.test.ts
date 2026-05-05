@@ -55,18 +55,18 @@ describe("VocabularyBankRepository", () => {
         expect(item.status).toBe("new");
     });
 
-    it("findOrCreate returns existing row on duplicate normalized text", async () => {
+    it("findOrCreate returns existing row on duplicate text (trimmed)", async () => {
         const onConflictDoNothing = vi.fn(async () => {});
         insertValues.mockReturnValue({ onConflictDoNothing });
-        selectWhereLimit.mockResolvedValue([{ id: "v_existing", text: "hello", status: "active" }]);
+        selectWhereLimit.mockResolvedValue([{ id: "v_existing", text: "Hello", status: "active" }]);
 
         const second = await repo.findOrCreate(" Hello ");
         if (!second) {
             return expect.unreachable("Expected vocabulary item");
         }
-        expect(insertValues).toHaveBeenCalledWith({ text: "hello", status: "new" });
+        expect(insertValues).toHaveBeenCalledWith({ text: "Hello", status: "new" });
         expect(second.id).toBe("v_existing");
-        expect(second.text).toBe("hello");
+        expect(second.text).toBe("Hello");
     });
 
     it("updateStatus transitions state and updates updatedAt", async () => {

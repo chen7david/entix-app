@@ -1,4 +1,4 @@
-import { List, Space, Tag, Typography } from "antd";
+import { List, Space, Tag, Typography, theme } from "antd";
 import type { VocabAiTestResult } from "../../hooks/ai.hooks";
 
 const { Text } = Typography;
@@ -17,6 +17,8 @@ type Props = {
 };
 
 export function VocabAiHistoryList({ items, selectedItem, onSelect, onClear }: Props) {
+    const { token } = theme.useToken();
+
     if (items.length === 0) return null;
 
     return (
@@ -34,13 +36,18 @@ export function VocabAiHistoryList({ items, selectedItem, onSelect, onClear }: P
                         onClick={() => onSelect(item)}
                         style={{
                             cursor: "pointer",
-                            background: selectedItem === item ? "#f0f7ff" : "transparent",
+                            background:
+                                selectedItem === item ? token.colorPrimaryBg : "transparent",
                             transition: "background 0.2s",
                         }}
                     >
                         <Space style={{ width: "100%", justifyContent: "space-between" }}>
                             <Space>
-                                <span style={{ color: item.result ? "#52c41a" : "#ff4d4f" }}>
+                                <span
+                                    style={{
+                                        color: item.result ? token.colorSuccess : token.colorError,
+                                    }}
+                                >
                                     ●
                                 </span>
                                 <Text>{item.phrase}</Text>

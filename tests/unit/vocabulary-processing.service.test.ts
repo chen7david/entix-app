@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 describe("VocabularyProcessingService", () => {
     let vocabRepo: {
         findById: ReturnType<typeof vi.fn>;
+        findByText: ReturnType<typeof vi.fn>;
         update: ReturnType<typeof vi.fn>;
         updateStatus: ReturnType<typeof vi.fn>;
     };
@@ -15,6 +16,7 @@ describe("VocabularyProcessingService", () => {
         vi.clearAllMocks();
         vocabRepo = {
             findById: vi.fn(),
+            findByText: vi.fn(),
             update: vi.fn(),
             updateStatus: vi.fn(),
         };
@@ -24,8 +26,8 @@ describe("VocabularyProcessingService", () => {
     });
 
     const MOCK_SUCCESS_RESULT = {
-        zh_translation: "ni hao",
-        pinyin: "ni hao",
+        normalized_text: "hello",
+        zh_translation: "你好",
         needs_language_review: false,
         ipa_us: "/hello/",
         syllables_en: "hel-lo",
@@ -60,8 +62,8 @@ describe("VocabularyProcessingService", () => {
         expect(vocabRepo.updateStatus).toHaveBeenNthCalledWith(1, "vocab_1", "processing_text");
         expect(vocabRepo.update).toHaveBeenCalledWith("vocab_1", {
             status: "text_ready",
-            zhTranslation: "ni hao",
-            pinyin: "ni hao",
+            zhTranslation: "你好",
+            pinyin: "nǐ hǎo",
             needsLanguageReview: false,
             ipaUs: "/hello/",
             syllablesEn: "hel-lo",
