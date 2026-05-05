@@ -219,7 +219,6 @@ export const getVocabularyService = (ctx: AppContext) => {
 };
 
 export const getTtsService = (ctx: AppContext): TtsService => {
-    const raw = ctx.env.GOOGLE_TTS_CREDENTIALS;
-    const credentials = parseGoogleTtsCredentials(raw);
+    const credentials = parseGoogleTtsCredentials(ctx.env as unknown as Record<string, unknown>);
     return new TtsService(credentials, getBucketClient(ctx));
 };

@@ -180,8 +180,10 @@ async function handleVocabularyProcessText(
     const db = drizzle(env.DB, { schema });
     const envVars = env as unknown as Record<string, unknown>;
     const vocabularyId = message.body.vocabularyId;
-    if (!envVars.GOOGLE_TTS_CREDENTIALS) {
-        throw new InternalServerError("GOOGLE_TTS_CREDENTIALS secret is not configured");
+    if (!envVars.GCP_CLIENT_EMAIL || !envVars.GCP_PRIVATE_KEY || !envVars.GCP_PROJECT_ID) {
+        console.error("[Queue] GCP secrets not configured — acking to prevent retry storm");
+        message.ack();
+        return;
     }
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
@@ -191,7 +193,7 @@ async function handleVocabularyProcessText(
         defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
-    const credentials = parseGoogleTtsCredentials(String(envVars.GOOGLE_TTS_CREDENTIALS));
+    const credentials = parseGoogleTtsCredentials(envVars);
     const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
 
     const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
@@ -236,8 +238,10 @@ async function handleVocabularyProcessAudio(
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
     const envVars = env as unknown as Record<string, unknown>;
-    if (!envVars.GOOGLE_TTS_CREDENTIALS) {
-        throw new InternalServerError("GOOGLE_TTS_CREDENTIALS secret is not configured");
+    if (!envVars.GCP_CLIENT_EMAIL || !envVars.GCP_PRIVATE_KEY || !envVars.GCP_PROJECT_ID) {
+        console.error("[Queue] GCP secrets not configured — acking to prevent retry storm");
+        message.ack();
+        return;
     }
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
@@ -245,14 +249,9 @@ async function handleVocabularyProcessAudio(
         apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
         endpoint: String(envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"),
         defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
-        systemPrompt: [
-            "You are a vocabulary enrichment API.",
-            "Respond with raw JSON only. NO markdown, NO code fences, NO explanation. Just the JSON object.",
-            "Exactly these keys: zh_translation, pinyin, needs_language_review, ipa_us, syllables_en, syllables_ipa, definition_simple.",
-            "All fields must be non-empty strings, except needs_language_review which is boolean.",
-        ].join("\n"),
+        systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
-    const credentials = parseGoogleTtsCredentials(String(envVars.GOOGLE_TTS_CREDENTIALS));
+    const credentials = parseGoogleTtsCredentials(envVars);
     const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
     const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
         logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
