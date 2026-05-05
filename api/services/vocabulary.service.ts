@@ -9,7 +9,7 @@ import { BaseService } from "./base.service";
 
 type CursorDirection = "next" | "prev";
 
-const RETRIABLE_STATUSES = new Set(["new", "processing_text"]);
+const RETRIABLE_STATUSES = new Set(["new", "processing_text", "text_ready", "processing_audio"]);
 
 export class VocabularyService extends BaseService {
     constructor(
@@ -28,10 +28,17 @@ export class VocabularyService extends BaseService {
         }
 
         if (RETRIABLE_STATUSES.has(item.status)) {
-            await this.queue.send({
-                type: "vocabulary.process-text",
-                vocabularyId: item.id,
-            });
+            await this.queue.send(
+                item.status === "text_ready" || item.status === "processing_audio"
+                    ? {
+                          type: "vocabulary.process-audio",
+                          vocabularyId: item.id,
+                      }
+                    : {
+                          type: "vocabulary.process-text",
+                          vocabularyId: item.id,
+                      }
+            );
         }
 
         let targetCount = 0;

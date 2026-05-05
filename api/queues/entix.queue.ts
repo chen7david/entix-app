@@ -179,6 +179,7 @@ async function handleVocabularyProcessText(
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
     const envVars = env as unknown as Record<string, unknown>;
+    const vocabularyId = message.body.vocabularyId;
     if (!envVars.GOOGLE_TTS_CREDENTIALS) {
         throw new InternalServerError("GOOGLE_TTS_CREDENTIALS secret is not configured");
     }
@@ -211,7 +212,17 @@ async function handleVocabularyProcessText(
     });
 
     try {
-        await processor.processText(message.body.vocabularyId);
+        await processor.processText(vocabularyId);
+        // Pragmatic read-back: `processText` returns void, but it may end in `text_ready`
+        // (happy path) or other states (e.g. `review`). We only enqueue audio when the
+        // terminal status is `text_ready` to avoid no-op/double-dispatch.
+        const updated = await vocabularyRepo.findById(vocabularyId);
+        if (updated?.status === "text_ready") {
+            await env.QUEUE.send({
+                type: "vocabulary.process-audio",
+                vocabularyId,
+            });
+        }
         message.ack();
     } catch (error) {
         console.error("[Queue:VocabularyText] Unhandled failure:", error);

@@ -13,7 +13,7 @@ const GoogleTtsCredentialsSchema = z.object({
         .string()
         .min(1)
         .transform((key) => key.replace(/\\n/g, "\n")),
-    client_email: z.string().email(),
+    client_email: z.email(),
     token_uri: z.string().url().default("https://oauth2.googleapis.com/token"),
 });
 
@@ -170,7 +170,7 @@ export class TtsService extends BaseService {
             privateKey,
             new TextEncoder().encode(signingInput)
         );
-        const jwt = `${signingInput}.${base64UrlEncode(arrayBufferToBase64(signature))}`;
+        const jwt = `${signingInput}.${base64UrlEncode(signature)}`;
 
         const tokenResponse = await fetch(this.credentials.token_uri, {
             method: "POST",
@@ -222,10 +222,6 @@ function base64UrlEncode(input: string | ArrayBuffer): string {
         typeof input === "string" ? new TextEncoder().encode(input) : new Uint8Array(input);
     const base64 = uint8ArrayToBase64(bytes);
     return base64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-    return uint8ArrayToBase64(new Uint8Array(buffer));
 }
 
 function base64ToArrayBuffer(base64: string): ArrayBuffer {
