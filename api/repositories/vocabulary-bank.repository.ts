@@ -5,7 +5,7 @@ import {
     type VocabularyBankStatus,
     vocabularyBank,
 } from "@shared/db/schema";
-import { and, eq, like, lt, or } from "drizzle-orm";
+import { and, eq, lt, or, sql } from "drizzle-orm";
 
 export type VocabularyBankUpdateInput = Omit<
     typeof vocabularyBank.$inferInsert,
