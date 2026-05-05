@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 describe("VocabularyProcessingService", () => {
     let vocabRepo: {
         findById: ReturnType<typeof vi.fn>;
+        findByText: ReturnType<typeof vi.fn>;
         update: ReturnType<typeof vi.fn>;
         updateStatus: ReturnType<typeof vi.fn>;
     };
@@ -15,6 +16,7 @@ describe("VocabularyProcessingService", () => {
         vi.clearAllMocks();
         vocabRepo = {
             findById: vi.fn(),
+            findByText: vi.fn(),
             update: vi.fn(),
             updateStatus: vi.fn(),
         };
@@ -24,6 +26,7 @@ describe("VocabularyProcessingService", () => {
     });
 
     const MOCK_SUCCESS_RESULT = {
+        normalized_text: "hello",
         zh_translation: "ni hao",
         pinyin: "ni hao",
         needs_language_review: false,

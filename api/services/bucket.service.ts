@@ -87,6 +87,12 @@ export class BucketService extends BaseService {
             aws: { signQuery: true },
         });
 
+        if (!signedRequest) {
+            throw new InternalServerError(
+                "Failed to generate presigned upload URL: AWS client signing failed"
+            );
+        }
+
         return signedRequest.url;
     }
 
