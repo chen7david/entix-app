@@ -22,7 +22,10 @@ export type GoogleTtsCredentials = z.infer<typeof GoogleTtsCredentialsSchema>;
 export function parseGoogleTtsCredentials(raw: string): GoogleTtsCredentials {
     let parsed: unknown;
     try {
-        parsed = JSON.parse(raw);
+        // Wrangler local .dev.vars can inject real newlines into JSON string values.
+        // Re-escape line breaks so JSON.parse can safely parse credential payloads.
+        const sanitized = raw.replace(/\r?\n/g, "\\n");
+        parsed = JSON.parse(sanitized);
     } catch {
         throw new InternalServerError(
             "GOOGLE_TTS_CREDENTIALS is not valid JSON — check the Cloudflare secret value"
@@ -196,9 +199,12 @@ export class TtsService extends BaseService {
 
 async function importRsaPrivateKey(pem: string): Promise<CryptoKey> {
     const pemBody = pem
-        .replace(/-----BEGIN PRIVATE KEY-----/, "")
-        .replace(/-----END PRIVATE KEY-----/, "")
-        .replace(/\s+/g, "");
+        .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+        .replace(/-----END PRIVATE KEY-----/g, "")
+        .replace(/\\n/g, "")
+        .replace(/\n/g, "")
+        .replace(/\r/g, "")
+        .replace(/\s/g, "");
 
     const der = base64ToArrayBuffer(pemBody);
 
