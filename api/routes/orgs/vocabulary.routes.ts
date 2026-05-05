@@ -155,4 +155,22 @@ export const VocabularyRoutes = {
             },
         },
     }),
+    removeSessionVocabulary: createRoute({
+        method: HttpMethods.DELETE,
+        path: "/orgs/{organizationId}/sessions/{sessionId}/vocabulary/{studentVocabId}",
+        tags: ["Vocabulary"],
+        middleware: [requirePermission("vocabulary", ["delete"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                studentVocabId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.NO_CONTENT]: {
+                description: "Vocabulary removed from session wordlist",
+            },
+        },
+    }),
 };

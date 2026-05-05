@@ -102,4 +102,12 @@ export class VocabularyHandlers {
             HttpStatusCodes.CREATED
         );
     };
+
+    static removeSessionVocabulary: AppHandler<typeof VocabularyRoutes.removeSessionVocabulary> =
+        async (ctx) => {
+            const { organizationId, studentVocabId } = ctx.req.valid("param");
+            const service = getVocabularyService(ctx);
+            await service.removeSessionVocabulary({ organizationId, studentVocabId });
+            return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+        };
 }

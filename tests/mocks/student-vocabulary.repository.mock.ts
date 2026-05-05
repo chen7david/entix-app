@@ -3,11 +3,15 @@ import type { Mocked } from "vitest";
 import { vi } from "vitest";
 
 export type StudentVocabularyRepoMock = Mocked<
-    Pick<StudentVocabularyRepository, "addIfMissing" | "add" | "getBySessionWithVocab">
+    Pick<
+        StudentVocabularyRepository,
+        "addIfMissing" | "add" | "getBySessionWithVocab" | "removeById"
+    >
 >;
 
 export const makeStudentVocabularyRepoMock = (): StudentVocabularyRepoMock => ({
     addIfMissing: vi.fn(),
     add: vi.fn(),
     getBySessionWithVocab: vi.fn(),
+    removeById: vi.fn(),
 });

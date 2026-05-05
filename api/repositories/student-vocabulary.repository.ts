@@ -168,4 +168,17 @@ export class StudentVocabularyRepository {
             .orderBy(...pagination.orderBy)
             .limit(limit + 1);
     }
+
+    async removeById(id: string, organizationId: string): Promise<boolean> {
+        const result = await this.db
+            .delete(studentVocabulary)
+            .where(
+                and(
+                    eq(studentVocabulary.id, id),
+                    eq(studentVocabulary.organizationId, organizationId)
+                )
+            )
+            .returning();
+        return result.length > 0;
+    }
 }

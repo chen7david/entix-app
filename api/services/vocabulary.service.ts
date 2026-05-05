@@ -142,4 +142,15 @@ export class VocabularyService extends BaseService {
 
         return record;
     }
+
+    async removeSessionVocabulary(input: {
+        organizationId: string;
+        studentVocabId: string;
+    }): Promise<void> {
+        const { organizationId, studentVocabId } = input;
+        const deleted = await this.studentVocabRepo.removeById(studentVocabId, organizationId);
+        if (!deleted) {
+            throw new NotFoundError("Vocabulary assignment not found");
+        }
+    }
 }

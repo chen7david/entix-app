@@ -208,6 +208,32 @@ describe("VocabularyService", () => {
         expect(result.items).toHaveLength(2);
         expect(result.nextCursor).not.toBeNull();
     });
+
+    describe("removeSessionVocabulary", () => {
+        it("successfully removes assignment", async () => {
+            studentVocabRepo.removeById.mockResolvedValueOnce(true);
+
+            await expect(
+                service.removeSessionVocabulary({
+                    organizationId: "org_1",
+                    studentVocabId: "sv_1",
+                })
+            ).resolves.not.toThrow();
+
+            expect(studentVocabRepo.removeById).toHaveBeenCalledWith("sv_1", "org_1");
+        });
+
+        it("throws NotFoundError when assignment does not exist", async () => {
+            studentVocabRepo.removeById.mockResolvedValueOnce(false);
+
+            await expect(
+                service.removeSessionVocabulary({
+                    organizationId: "org_1",
+                    studentVocabId: "missing",
+                })
+            ).rejects.toBeInstanceOf(NotFoundError);
+        });
+    });
 });
 
 function makeVocabularyItem(
