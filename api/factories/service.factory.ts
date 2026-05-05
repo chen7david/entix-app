@@ -24,9 +24,11 @@ import { ReconciliationService } from "@api/services/reconciliation.service";
 import { RegistrationService } from "@api/services/registration.service";
 import { SessionScheduleService } from "@api/services/session-schedule.service";
 import { SocialMediaService } from "@api/services/social-media.service";
+import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
 import { UserService } from "@api/services/user.service";
 import { UserProfileService } from "@api/services/user-profile.service";
 import { VocabularyService } from "@api/services/vocabulary.service";
+import { getBucketClient } from "./bucket.factory";
 import { getDbClient } from "./db.factory";
 import {
     getDashboardRepository,
@@ -214,4 +216,10 @@ export const getVocabularyService = (ctx: AppContext) => {
         getStudentVocabularyRepository(ctx),
         ctx.env.QUEUE
     );
+};
+
+export const getTtsService = (ctx: AppContext): TtsService => {
+    const raw = ctx.env.GOOGLE_TTS_CREDENTIALS;
+    const credentials = parseGoogleTtsCredentials(raw);
+    return new TtsService(credentials, getBucketClient(ctx));
 };

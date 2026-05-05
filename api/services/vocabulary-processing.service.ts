@@ -3,6 +3,7 @@ import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank
 import type { AiJsonSchema } from "@api/types/ai.types";
 import { pinyin } from "pinyin-pro";
 import type { AiService } from "./ai.service";
+import type { TtsService } from "./tts.service";
 
 export type VocabularyTranslation = {
     normalized_text: string;
@@ -65,6 +66,7 @@ export class VocabularyProcessingService {
     constructor(
         private readonly vocabRepo: VocabularyBankRepository,
         private readonly aiService: AiService,
+        private readonly ttsService: TtsService,
         private readonly deps?: VocabularyProcessingDeps
     ) {}
 
@@ -128,9 +130,6 @@ export class VocabularyProcessingService {
                 ...updateData,
                 status: "text_ready",
             });
-
-            // TTS provider is not wired yet, so transition directly to active text-only entries.
-            await this.vocabRepo.updateStatus(vocabularyId, "active");
         } catch (error: unknown) {
             await this.deps?.logPipelineFailure("text", vocabularyId, error);
             throw error;
@@ -143,8 +142,31 @@ export class VocabularyProcessingService {
             return;
         }
 
-        // Temporary text-only mode: processAudio should not fail jobs while TTS is unavailable.
-        await this.vocabRepo.updateStatus(vocabularyId, "active");
+        if (!item.zhTranslation) {
+            throw new InternalServerError("Cannot process audio: zhTranslation is missing");
+        }
+        if (!item.text?.trim()) {
+            throw new InternalServerError("Cannot process audio: text is missing or empty");
+        }
+
+        await this.vocabRepo.updateStatus(vocabularyId, "processing_audio");
+
+        try {
+            const { enAudioUrl, zhAudioUrl } = await this.ttsService.generateAndUpload(
+                vocabularyId,
+                item.text,
+                item.zhTranslation
+            );
+
+            await this.vocabRepo.update(vocabularyId, {
+                enAudioUrl,
+                zhAudioUrl,
+                status: "active",
+            });
+        } catch (error: unknown) {
+            await this.deps?.logPipelineFailure("audio", vocabularyId, error);
+            throw error;
+        }
     }
 }
 
