@@ -1,5 +1,4 @@
 import { ConflictError, NotFoundError } from "@api/errors/app.error";
-import type { EntixQueueMessage } from "@api/queues/entix.queue";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
@@ -13,7 +12,6 @@ describe("VocabularyService", () => {
     let vocabularyRepo: ReturnType<typeof makeVocabularyBankRepoMock>;
     let attendancesRepo: ReturnType<typeof makeSessionAttendancesRepoMock>;
     let studentVocabRepo: ReturnType<typeof makeStudentVocabularyRepoMock>;
-    let queue: { send: ReturnType<typeof vi.fn> };
     let service: VocabularyService;
 
     beforeEach(() => {
@@ -21,17 +19,15 @@ describe("VocabularyService", () => {
         vocabularyRepo = makeVocabularyBankRepoMock();
         attendancesRepo = makeSessionAttendancesRepoMock();
         studentVocabRepo = makeStudentVocabularyRepoMock();
-        queue = { send: vi.fn() };
 
         service = new VocabularyService(
             vocabularyRepo as unknown as VocabularyBankRepository,
             attendancesRepo as unknown as SessionAttendancesRepository,
-            studentVocabRepo as unknown as StudentVocabularyRepository,
-            queue as unknown as Queue<EntixQueueMessage>
+            studentVocabRepo as unknown as StudentVocabularyRepository
         );
     });
 
-    it("createVocabulary enqueues the correct pipeline stage for retriable statuses", async () => {
+    it("createVocabulary does not enqueue queue jobs (cron-driven pipeline)", async () => {
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem(),
             id: "vocab_1",
@@ -39,12 +35,6 @@ describe("VocabularyService", () => {
         });
 
         await service.createVocabulary("org_1", { text: "hello" });
-        expect(queue.send).toHaveBeenCalledWith({
-            type: "vocabulary.process-text",
-            vocabularyId: "vocab_1",
-        });
-
-        queue.send.mockClear();
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem({ text: "stuck", status: "processing_text" }),
             id: "vocab_stuck",
@@ -52,12 +42,6 @@ describe("VocabularyService", () => {
         });
 
         await service.createVocabulary("org_1", { text: "stuck" });
-        expect(queue.send).toHaveBeenCalledWith({
-            type: "vocabulary.process-text",
-            vocabularyId: "vocab_stuck",
-        });
-
-        queue.send.mockClear();
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem({ text: "ready", status: "text_ready" }),
             id: "vocab_ready",
@@ -65,12 +49,6 @@ describe("VocabularyService", () => {
         });
 
         await service.createVocabulary("org_1", { text: "ready" });
-        expect(queue.send).toHaveBeenCalledWith({
-            type: "vocabulary.process-audio",
-            vocabularyId: "vocab_ready",
-        });
-
-        queue.send.mockClear();
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem({ text: "audio", status: "processing_audio" }),
             id: "vocab_audio",
@@ -78,12 +56,6 @@ describe("VocabularyService", () => {
         });
 
         await service.createVocabulary("org_1", { text: "audio" });
-        expect(queue.send).toHaveBeenCalledWith({
-            type: "vocabulary.process-audio",
-            vocabularyId: "vocab_audio",
-        });
-
-        queue.send.mockClear();
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem({ text: "world" }),
             id: "vocab_2",
@@ -91,7 +63,6 @@ describe("VocabularyService", () => {
         });
 
         await service.createVocabulary("org_1", { text: "world" });
-        expect(queue.send).not.toHaveBeenCalled();
     });
 
     it("createVocabulary with session fan-out treats addIfMissing null as idempotent", async () => {
