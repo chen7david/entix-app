@@ -4,6 +4,7 @@ import type { AiJsonSchema } from "@api/types/ai.types";
 import type { AiService } from "./ai.service";
 
 type VocabularyTranslation = {
+    normalized_text: string;
     zh_translation: string;
     pinyin: string;
     needs_language_review: boolean;
@@ -16,6 +17,11 @@ type VocabularyTranslation = {
 const VOCABULARY_TRANSLATION_SCHEMA: AiJsonSchema = {
     type: "object",
     properties: {
+        normalized_text: {
+            type: "string",
+            description:
+                "The canonical/normalized form of the input. Capitalize proper nouns (e.g. 'China', 'iPhone'), lowercase common nouns/verbs (e.g. 'apple', 'run').",
+        },
         zh_translation: { type: "string" },
         pinyin: { type: "string" },
         needs_language_review: { type: "boolean" },
@@ -25,6 +31,7 @@ const VOCABULARY_TRANSLATION_SCHEMA: AiJsonSchema = {
         definition_simple: { type: "string" },
     },
     required: [
+        "normalized_text",
         "zh_translation",
         "pinyin",
         "needs_language_review",
@@ -62,13 +69,14 @@ export class VocabularyProcessingService {
 
         try {
             const prompt = [
-                "Translate this English phrase to Mandarin Chinese.",
-                "Return zh_translation in Simplified Chinese characters (not English, never empty).",
-                "If uncertain about translation quality, still provide your best translation and set needs_language_review to true.",
-                "Return ipa_us as the American English IPA transcription of the phrase.",
-                "Return syllables_en as the phrase with hyphen-separated syllables within each word, spaces preserved between words.",
-                "Return syllables_ipa as the IPA transcription with hyphen-separated syllables within each word, spaces preserved between words.",
-                "Return definition_simple as a 1-sentence definition a 7-year-old can understand.",
+                "Translate this English phrase to Mandarin Chinese and provide linguistic metadata.",
+                "1. Return 'normalized_text' as the canonical form: capitalize proper nouns (e.g. 'China', 'iPhone'), lowercase common nouns/verbs (e.g. 'apple', 'run').",
+                "2. Return 'zh_translation' in Simplified Chinese characters (not English, never empty).",
+                "3. If uncertain about translation quality, still provide your best translation and set needs_language_review to true.",
+                "4. Return 'ipa_us' as the American English IPA transcription of the phrase.",
+                "5. Return 'syllables_en' as the phrase with hyphen-separated syllables within each word, spaces preserved between words.",
+                "6. Return 'syllables_ipa' as the IPA transcription with hyphen-separated syllables within each word, spaces preserved between words.",
+                "7. Return 'definition_simple' as a 1-sentence definition a 7-year-old can understand.",
                 `English phrase: "${item.text}"`,
             ].join("\n");
 
@@ -83,22 +91,8 @@ export class VocabularyProcessingService {
 
             const parsed = parseVocabularyTranslation(result.text);
 
-            if (parsed.needs_language_review) {
-                await this.vocabRepo.update(vocabularyId, {
-                    status: "review",
-                    zhTranslation: parsed.zh_translation,
-                    pinyin: parsed.pinyin,
-                    needsLanguageReview: parsed.needs_language_review,
-                    ipaUs: parsed.ipa_us,
-                    syllablesEn: parsed.syllables_en,
-                    syllablesIpa: parsed.syllables_ipa,
-                    definitionSimple: parsed.definition_simple,
-                });
-                return;
-            }
-
-            await this.vocabRepo.update(vocabularyId, {
-                status: "text_ready",
+            // Update with AI results, including the canonical casing
+            const updateData: any = {
                 zhTranslation: parsed.zh_translation,
                 pinyin: parsed.pinyin,
                 needsLanguageReview: parsed.needs_language_review,
@@ -106,6 +100,27 @@ export class VocabularyProcessingService {
                 syllablesEn: parsed.syllables_en,
                 syllablesIpa: parsed.syllables_ipa,
                 definitionSimple: parsed.definition_simple,
+            };
+
+            // Only update text casing if it changed and doesn't conflict with another entry
+            if (parsed.normalized_text !== item.text) {
+                const existing = await this.vocabRepo.findByText(parsed.normalized_text);
+                if (!existing) {
+                    updateData.text = parsed.normalized_text;
+                }
+            }
+
+            if (parsed.needs_language_review) {
+                await this.vocabRepo.update(vocabularyId, {
+                    ...updateData,
+                    status: "review",
+                });
+                return;
+            }
+
+            await this.vocabRepo.update(vocabularyId, {
+                ...updateData,
+                status: "text_ready",
             });
 
             // TTS provider is not wired yet, so transition directly to active text-only entries.
@@ -135,6 +150,8 @@ function parseVocabularyTranslation(raw: string): VocabularyTranslation {
     const parsed = JSON.parse(raw) as Partial<VocabularyTranslation>;
 
     if (
+        typeof parsed.normalized_text !== "string" ||
+        parsed.normalized_text.length === 0 ||
         typeof parsed.zh_translation !== "string" ||
         parsed.zh_translation.length === 0 ||
         typeof parsed.pinyin !== "string" ||
@@ -153,6 +170,7 @@ function parseVocabularyTranslation(raw: string): VocabularyTranslation {
     }
 
     return {
+        normalized_text: parsed.normalized_text,
         zh_translation: parsed.zh_translation,
         pinyin: parsed.pinyin,
         needs_language_review: parsed.needs_language_review,
