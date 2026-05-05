@@ -1,46 +1,31 @@
 import { InternalServerError } from "@api/errors/app.error";
-import { z } from "zod";
 import { BaseService } from "./base.service";
 import type { BucketService } from "./bucket.service";
 
 // ─── Part 1: Google Service Account Credentials Parser ───────────────────────
 
-const GoogleTtsCredentialsSchema = z.object({
-    type: z.literal("service_account"),
-    project_id: z.string().min(1),
-    private_key_id: z.string().min(1),
-    private_key: z
-        .string()
-        .min(1)
-        .transform((key) => key.replace(/\\n/g, "\n")),
-    client_email: z.email(),
-    token_uri: z.string().url().default("https://oauth2.googleapis.com/token"),
-});
+export type GoogleTtsCredentials = {
+    clientEmail: string;
+    projectId: string;
+    privateKey: string;
+    tokenUri: string;
+};
 
-export type GoogleTtsCredentials = z.infer<typeof GoogleTtsCredentialsSchema>;
+export function parseGoogleTtsCredentials(env: Record<string, unknown>): GoogleTtsCredentials {
+    const clientEmail = String(env.GCP_CLIENT_EMAIL ?? "").trim();
+    const projectId = String(env.GCP_PROJECT_ID ?? "").trim();
+    const privateKey = String(env.GCP_PRIVATE_KEY ?? "").replace(/\\n/g, "\n");
 
-export function parseGoogleTtsCredentials(raw: string): GoogleTtsCredentials {
-    let parsed: unknown;
-    try {
-        // Wrangler local .dev.vars can inject real newlines into JSON string values.
-        // Re-escape line breaks so JSON.parse can safely parse credential payloads.
-        const sanitized = raw.replace(/\r?\n/g, "\\n");
-        parsed = JSON.parse(sanitized);
-    } catch {
-        throw new InternalServerError(
-            "GOOGLE_TTS_CREDENTIALS is not valid JSON — check the Cloudflare secret value"
-        );
-    }
+    if (!clientEmail) throw new InternalServerError("GCP_CLIENT_EMAIL is not configured");
+    if (!projectId) throw new InternalServerError("GCP_PROJECT_ID is not configured");
+    if (!privateKey) throw new InternalServerError("GCP_PRIVATE_KEY is not configured");
 
-    const result = GoogleTtsCredentialsSchema.safeParse(parsed);
-    if (!result.success) {
-        const issues = result.error.issues
-            .map((i) => `${i.path.join(".")}: ${i.message}`)
-            .join("; ");
-        throw new InternalServerError(`GOOGLE_TTS_CREDENTIALS schema invalid: ${issues}`);
-    }
-
-    return result.data;
+    return {
+        clientEmail,
+        projectId,
+        privateKey,
+        tokenUri: "https://oauth2.googleapis.com/token",
+    };
 }
 
 // ─── Part 2: TTS Service ─────────────────────────────────────────────────────
@@ -155,16 +140,16 @@ export class TtsService extends BaseService {
         const header = base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }));
         const claim = base64UrlEncode(
             JSON.stringify({
-                iss: this.credentials.client_email,
+                iss: this.credentials.clientEmail,
                 scope,
-                aud: this.credentials.token_uri,
+                aud: this.credentials.tokenUri,
                 iat: now,
                 exp: now + 3600,
             })
         );
 
         const signingInput = `${header}.${claim}`;
-        const privateKey = await importRsaPrivateKey(this.credentials.private_key);
+        const privateKey = await importRsaPrivateKey(this.credentials.privateKey);
         const signature = await crypto.subtle.sign(
             { name: "RSASSA-PKCS1-v1_5" },
             privateKey,
@@ -172,7 +157,7 @@ export class TtsService extends BaseService {
         );
         const jwt = `${signingInput}.${base64UrlEncode(signature)}`;
 
-        const tokenResponse = await fetch(this.credentials.token_uri, {
+        const tokenResponse = await fetch(this.credentials.tokenUri, {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
