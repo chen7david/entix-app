@@ -1,4 +1,4 @@
-import { App, Badge, Button, Card, List, Space, Table, Tabs, Tag, Typography } from "antd";
+import { App, Badge, Button, Card, List, Space, Table, Tabs, Tag, Typography, theme } from "antd";
 import type { VocabAiTestResult } from "../../hooks/ai.hooks";
 
 const { Text, Paragraph } = Typography;
@@ -10,6 +10,7 @@ type Props = {
 
 export function VocabAiResultCard({ result, elapsed }: Props) {
     const { message } = App.useApp();
+    const { token } = theme.useToken();
 
     const handleCopy = () => {
         void navigator.clipboard.writeText(result.raw);
@@ -136,12 +137,13 @@ export function VocabAiResultCard({ result, elapsed }: Props) {
                         children: (
                             <pre
                                 style={{
-                                    background: "#f5f5f5",
+                                    background: token.colorFillAlter,
                                     padding: 12,
                                     borderRadius: 4,
                                     fontSize: 12,
                                     maxHeight: 300,
                                     overflow: "auto",
+                                    color: token.colorText,
                                 }}
                             >
                                 {JSON.stringify(JSON.parse(result.raw), null, 2)}
@@ -159,7 +161,12 @@ export function VocabAiResultCard({ result, elapsed }: Props) {
                                 <Paragraph>
                                     <Text strong>Prompt:</Text>
                                     <pre
-                                        style={{ fontSize: 12, background: "#f5f5f5", padding: 8 }}
+                                        style={{
+                                            fontSize: 12,
+                                            background: token.colorFillAlter,
+                                            padding: 8,
+                                            color: token.colorText,
+                                        }}
                                     >
                                         {result.prompt}
                                     </pre>
