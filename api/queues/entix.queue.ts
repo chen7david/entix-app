@@ -1,5 +1,6 @@
 import app from "@api/app";
 import { BadRequestError, InternalServerError } from "@api/errors/app.error";
+import { getBucketClientFromEnv } from "@api/factories/bucket.factory";
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
@@ -10,7 +11,11 @@ import { SystemAuditRepository } from "@api/repositories/system-audit.repository
 import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import { AiService } from "@api/services/ai.service";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { VocabularyProcessingService } from "@api/services/vocabulary-processing.service";
+import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
+import {
+    VOCABULARY_TRANSLATION_INSTRUCTIONS,
+    VocabularyProcessingService,
+} from "@api/services/vocabulary-processing.service";
 import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
@@ -174,21 +179,23 @@ async function handleVocabularyProcessText(
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
     const envVars = env as unknown as Record<string, unknown>;
+    const vocabularyId = message.body.vocabularyId;
+    if (!envVars.GOOGLE_TTS_CREDENTIALS) {
+        throw new InternalServerError("GOOGLE_TTS_CREDENTIALS secret is not configured");
+    }
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
         apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
         endpoint: String(envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"),
         defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
-        systemPrompt: [
-            "You are a vocabulary enrichment API.",
-            "Respond with raw JSON only. NO markdown, NO code fences, NO explanation. Just the JSON object.",
-            "Exactly these keys: zh_translation, pinyin, needs_language_review, ipa_us, syllables_en, syllables_ipa, definition_simple.",
-            "All fields must be non-empty strings, except needs_language_review which is boolean.",
-        ].join("\n"),
+        systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, {
-        logPipelineFailure: async (_phase, vocabularyId, error) => {
+    const credentials = parseGoogleTtsCredentials(String(envVars.GOOGLE_TTS_CREDENTIALS));
+    const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
+
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
+        logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
             const errMsg = error instanceof Error ? error.message : String(error);
             await auditRepo.insert({
                 id: generateAuditId(),
@@ -205,7 +212,17 @@ async function handleVocabularyProcessText(
     });
 
     try {
-        await processor.processText(message.body.vocabularyId);
+        await processor.processText(vocabularyId);
+        // Pragmatic read-back: `processText` returns void, but it may end in `text_ready`
+        // (happy path) or other states (e.g. `review`). We only enqueue audio when the
+        // terminal status is `text_ready` to avoid no-op/double-dispatch.
+        const updated = await vocabularyRepo.findById(vocabularyId);
+        if (updated?.status === "text_ready") {
+            await env.QUEUE.send({
+                type: "vocabulary.process-audio",
+                vocabularyId,
+            });
+        }
         message.ack();
     } catch (error) {
         console.error("[Queue:VocabularyText] Unhandled failure:", error);
@@ -219,6 +236,9 @@ async function handleVocabularyProcessAudio(
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
     const envVars = env as unknown as Record<string, unknown>;
+    if (!envVars.GOOGLE_TTS_CREDENTIALS) {
+        throw new InternalServerError("GOOGLE_TTS_CREDENTIALS secret is not configured");
+    }
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
@@ -232,8 +252,10 @@ async function handleVocabularyProcessAudio(
             "All fields must be non-empty strings, except needs_language_review which is boolean.",
         ].join("\n"),
     });
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, {
-        logPipelineFailure: async (_phase, vocabularyId, error) => {
+    const credentials = parseGoogleTtsCredentials(String(envVars.GOOGLE_TTS_CREDENTIALS));
+    const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
+        logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
             const errMsg = error instanceof Error ? error.message : String(error);
             await auditRepo.insert({
                 id: generateAuditId(),

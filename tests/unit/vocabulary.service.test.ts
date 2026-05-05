@@ -31,7 +31,7 @@ describe("VocabularyService", () => {
         );
     });
 
-    it("createVocabulary enqueues text processing for new and processing_text statuses", async () => {
+    it("createVocabulary enqueues the correct pipeline stage for retriable statuses", async () => {
         vocabularyRepo.findOrCreate.mockResolvedValueOnce({
             ...makeVocabularyItem(),
             id: "vocab_1",
@@ -55,6 +55,32 @@ describe("VocabularyService", () => {
         expect(queue.send).toHaveBeenCalledWith({
             type: "vocabulary.process-text",
             vocabularyId: "vocab_stuck",
+        });
+
+        queue.send.mockClear();
+        vocabularyRepo.findOrCreate.mockResolvedValueOnce({
+            ...makeVocabularyItem({ text: "ready", status: "text_ready" }),
+            id: "vocab_ready",
+            status: "text_ready",
+        });
+
+        await service.createVocabulary("org_1", { text: "ready" });
+        expect(queue.send).toHaveBeenCalledWith({
+            type: "vocabulary.process-audio",
+            vocabularyId: "vocab_ready",
+        });
+
+        queue.send.mockClear();
+        vocabularyRepo.findOrCreate.mockResolvedValueOnce({
+            ...makeVocabularyItem({ text: "audio", status: "processing_audio" }),
+            id: "vocab_audio",
+            status: "processing_audio",
+        });
+
+        await service.createVocabulary("org_1", { text: "audio" });
+        expect(queue.send).toHaveBeenCalledWith({
+            type: "vocabulary.process-audio",
+            vocabularyId: "vocab_audio",
         });
 
         queue.send.mockClear();

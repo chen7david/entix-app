@@ -1,5 +1,6 @@
 import { BadRequestError } from "@api/errors/app.error";
 import { createAiService } from "@api/factories/ai.factory";
+import { getTtsService } from "@api/factories/service.factory";
 import type { AppOpenApi } from "@api/helpers/types.helpers";
 import { createRouter } from "@api/lib/app.lib";
 import { requireAuth } from "@api/middleware/auth.middleware";
@@ -22,6 +23,11 @@ type VocabAiTestRequest = {
     systemPrompt?: unknown;
     temperature?: unknown;
     maxTokens?: unknown;
+};
+
+type VocabAiAudioTestRequest = {
+    enText?: unknown;
+    zhText?: unknown;
 };
 
 type ParsedTranslation = VocabularyTranslation & { pinyin: string };
@@ -89,6 +95,32 @@ const _vocabAiTestRouter = createRouter()
         const ai = createAiService(c, {});
         const models = await ai.fetchModels();
         return c.json({ data: { models } });
+    })
+    .post("/vocab-ai-test/audio", requireAuth, requireSuperAdmin, async (c) => {
+        const payload = (await c.req.json()) as VocabAiAudioTestRequest;
+        const enText = String(payload.enText ?? "").trim();
+        const zhText = String(payload.zhText ?? "").trim();
+
+        if (!enText) throw new BadRequestError("`enText` is required");
+        if (!zhText) throw new BadRequestError("`zhText` is required");
+
+        const testId = await buildAudioTestId(enText);
+        const ttsService = getTtsService(c);
+        const { enAudioUrl, zhAudioUrl } = await ttsService.generateAndUpload(
+            testId,
+            enText,
+            zhText
+        );
+
+        return c.json({
+            data: {
+                testId,
+                enText,
+                zhText,
+                enAudioUrl,
+                zhAudioUrl,
+            },
+        });
     });
 
 /** Cast: plain `.post()` narrows to `Hono`; `mountRoutes` expects `OpenAPIHono` (TEMP route). */
@@ -233,4 +265,14 @@ function isTranslationShape(value: Record<string, unknown>): boolean {
         "syllables_ipa" in value &&
         "definition_simple" in value
     );
+}
+
+async function buildAudioTestId(text: string): Promise<string> {
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    const bytes = new Uint8Array(digest);
+    let hex = "";
+    for (const byte of bytes) {
+        hex += byte.toString(16).padStart(2, "0");
+    }
+    return `test-${hex.slice(0, 16)}`;
 }

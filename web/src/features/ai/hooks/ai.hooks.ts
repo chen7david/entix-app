@@ -13,6 +13,7 @@ export type VocabAiTestResult = {
     model: string;
     prompt: string;
     result: {
+        normalized_text: string;
         zh_translation: string;
         pinyin: string;
         needs_language_review: boolean;
@@ -28,6 +29,19 @@ export type VocabAiTestResult = {
         raw: string;
     };
     generatedAt: string;
+};
+
+export type VocabAiAudioTestParams = {
+    enText: string;
+    zhText: string;
+};
+
+export type VocabAiAudioTestResult = {
+    testId: string;
+    enText: string;
+    zhText: string;
+    enAudioUrl: string;
+    zhAudioUrl: string;
 };
 
 export type VocabAiTestError = {
@@ -64,5 +78,19 @@ export function useOpenWebUiModels() {
             return payload.data.models;
         },
         staleTime: 1000 * 60 * 5, // 5 minutes
+    });
+}
+
+export function useVocabAiAudioTest() {
+    const client = getApiClient();
+
+    return useMutation({
+        mutationFn: async (params: VocabAiAudioTestParams) => {
+            const res = await client.api.v1["vocab-ai-test"].audio.$post({
+                json: params,
+            });
+            const payload = await hcJson<{ data: VocabAiAudioTestResult }>(res);
+            return payload.data;
+        },
     });
 }

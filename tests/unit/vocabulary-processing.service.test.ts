@@ -11,6 +11,9 @@ describe("VocabularyProcessingService", () => {
     let aiService: {
         generate: ReturnType<typeof vi.fn>;
     };
+    let ttsService: {
+        generateAndUpload: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(() => {
         vi.clearAllMocks();
@@ -22,6 +25,9 @@ describe("VocabularyProcessingService", () => {
         };
         aiService = {
             generate: vi.fn(),
+        };
+        ttsService = {
+            generateAndUpload: vi.fn(),
         };
     });
 
@@ -35,7 +41,7 @@ describe("VocabularyProcessingService", () => {
         definition_simple: "A greeting",
     };
 
-    it("processText transitions new -> text_ready -> active in text-only mode", async () => {
+    it("processText transitions new -> text_ready", async () => {
         vocabRepo.findById.mockResolvedValueOnce({
             id: "vocab_1",
             text: "hello",
@@ -50,6 +56,7 @@ describe("VocabularyProcessingService", () => {
         const service = new VocabularyProcessingService(
             vocabRepo as never,
             aiService as never,
+            ttsService as never,
             undefined
         );
         await service.processText("vocab_1");
@@ -70,7 +77,7 @@ describe("VocabularyProcessingService", () => {
             syllablesIpa: "hel-lo",
             definitionSimple: "A greeting",
         });
-        expect(vocabRepo.updateStatus).toHaveBeenLastCalledWith("vocab_1", "active");
+        expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
     });
 
     it("processText sets review only when AI flags language quality", async () => {
@@ -90,6 +97,7 @@ describe("VocabularyProcessingService", () => {
         const service = new VocabularyProcessingService(
             vocabRepo as never,
             aiService as never,
+            ttsService as never,
             undefined
         );
         await service.processText("vocab_1");
@@ -115,9 +123,14 @@ describe("VocabularyProcessingService", () => {
 
         const logPipelineFailure = vi.fn();
 
-        const service = new VocabularyProcessingService(vocabRepo as never, aiService as never, {
-            logPipelineFailure,
-        });
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            {
+                logPipelineFailure,
+            }
+        );
 
         await expect(service.processText("vocab_1")).rejects.toBeInstanceOf(Error);
 
@@ -128,20 +141,103 @@ describe("VocabularyProcessingService", () => {
         expect(logPipelineFailure).toHaveBeenCalledTimes(1);
     });
 
-    it("processAudio transitions text_ready items directly to active while TTS is unavailable", async () => {
+    it("processAudio uploads audio and transitions text_ready -> active", async () => {
         vocabRepo.findById.mockResolvedValueOnce({
             id: "vocab_1",
             text: "hello",
-            zhTranslation: "ni hao",
+            zhTranslation: "你好",
             status: "text_ready",
         });
-
-        const service = new VocabularyProcessingService(vocabRepo as never, aiService as never, {
-            logPipelineFailure: vi.fn(),
+        ttsService.generateAndUpload.mockResolvedValueOnce({
+            enAudioUrl: "https://cdn.example.com/en.mp3",
+            zhAudioUrl: "https://cdn.example.com/zh.mp3",
         });
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            {
+                logPipelineFailure: vi.fn(),
+            }
+        );
         await service.processAudio("vocab_1");
 
         expect(vocabRepo.updateStatus).toHaveBeenCalledTimes(1);
-        expect(vocabRepo.updateStatus).toHaveBeenCalledWith("vocab_1", "active");
+        expect(vocabRepo.updateStatus).toHaveBeenCalledWith("vocab_1", "processing_audio");
+        expect(ttsService.generateAndUpload).toHaveBeenCalledWith("vocab_1", "hello", "你好");
+        expect(vocabRepo.update).toHaveBeenCalledWith("vocab_1", {
+            enAudioUrl: "https://cdn.example.com/en.mp3",
+            zhAudioUrl: "https://cdn.example.com/zh.mp3",
+            status: "active",
+        });
+    });
+
+    it("processAudio logs pipeline failure and rethrows when TTS upload fails", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            zhTranslation: "你好",
+            status: "text_ready",
+        });
+        const ttsError = new Error("tts failed");
+        ttsService.generateAndUpload.mockRejectedValueOnce(ttsError);
+        const logPipelineFailure = vi.fn();
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            {
+                logPipelineFailure,
+            }
+        );
+
+        await expect(service.processAudio("vocab_1")).rejects.toThrow("tts failed");
+        expect(vocabRepo.updateStatus).toHaveBeenCalledWith("vocab_1", "processing_audio");
+        expect(logPipelineFailure).toHaveBeenCalledWith("audio", "vocab_1", ttsError);
+        expect(vocabRepo.update).not.toHaveBeenCalled();
+    });
+
+    it("processAudio throws when zhTranslation is missing", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            zhTranslation: null,
+            status: "text_ready",
+        });
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            undefined
+        );
+
+        await expect(service.processAudio("vocab_1")).rejects.toThrow(
+            "Cannot process audio: zhTranslation is missing"
+        );
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
+    });
+
+    it("processAudio throws when text is missing", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "",
+            zhTranslation: "你好",
+            status: "text_ready",
+        });
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            undefined
+        );
+
+        await expect(service.processAudio("vocab_1")).rejects.toThrow(
+            "Cannot process audio: text is missing or empty"
+        );
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 });
