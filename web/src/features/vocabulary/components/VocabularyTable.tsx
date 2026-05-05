@@ -165,8 +165,11 @@ export function VocabularyTable({
     return (
         <Table
             rowKey={(row) => {
-                const vocabId = "vocabulary" in row ? row.vocabulary.id : row.id;
-                return groupByWord ? vocabId : row.id;
+                const vocabId =
+                    "vocabulary" in row
+                        ? (row as SessionVocabularyItemDTO).vocabulary.id
+                        : (row as VocabularyItemDTO).id;
+                return groupByWord ? vocabId : (row as { id: string }).id;
             }}
             columns={columns}
             dataSource={dataSource}

@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    type InfiniteData,
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import { getApiClient } from "@web/src/lib/api-client";
 import { hcJson } from "@web/src/lib/hc-json";
@@ -278,23 +284,29 @@ export const useVocabularyBank = (organizationId?: string, search?: string) => {
     const { notification } = App.useApp();
     const queryClient = useQueryClient();
 
-    const vocabularyBankQuery = useInfiniteQuery({
+    const vocabularyBankQuery = useInfiniteQuery<
+        VocabularyBankListDTO,
+        Error,
+        InfiniteData<VocabularyBankListDTO>,
+        (string | undefined | null)[],
+        string | undefined
+    >({
         queryKey: ["vocabulary-bank", organizationId, search],
-        queryFn: async ({ pageParam }) => {
+        queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
             if (!organizationId) throw new Error("Organization required");
             const api = getApiClient();
             const res = await api.api.v1.orgs[":organizationId"].vocabulary.bank.$get({
                 param: { organizationId },
                 query: {
                     limit: "20",
-                    cursor: pageParam as string | undefined,
+                    cursor: pageParam,
                     search,
                 },
             });
             if (!res.ok) throw new Error("Failed to fetch vocabulary bank");
             return res.json() as Promise<VocabularyBankListDTO>;
         },
-        initialPageParam: undefined,
+        initialPageParam: undefined as string | undefined,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
         enabled: !!organizationId,
     });
@@ -412,7 +424,9 @@ export const useVocabularyBank = (organizationId?: string, search?: string) => {
     });
 
     const items = useMemo(
-        () => vocabularyBankQuery.data?.pages.flatMap((page) => page.data) ?? [],
+        () =>
+            vocabularyBankQuery.data?.pages.flatMap((page: VocabularyBankListDTO) => page.data) ??
+            [],
         [vocabularyBankQuery.data]
     );
 
