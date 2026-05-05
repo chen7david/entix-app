@@ -5,7 +5,11 @@ import { vi } from "vitest";
 export type StudentVocabularyRepoMock = Mocked<
     Pick<
         StudentVocabularyRepository,
-        "addIfMissing" | "add" | "getBySessionWithVocab" | "removeById"
+        | "addIfMissing"
+        | "add"
+        | "getBySessionWithVocab"
+        | "removeById"
+        | "removeByVocabAndAttendances"
     >
 >;
 
@@ -14,4 +18,5 @@ export const makeStudentVocabularyRepoMock = (): StudentVocabularyRepoMock => ({
     add: vi.fn(),
     getBySessionWithVocab: vi.fn(),
     removeById: vi.fn(),
+    removeByVocabAndAttendances: vi.fn(),
 });

@@ -10,4 +10,8 @@ export const vocabularyRoutes = createRouter()
         VocabularyRoutes.assignVocabularyToStudent,
         VocabularyHandlers.assignVocabularyToStudent
     )
-    .openapi(VocabularyRoutes.removeSessionVocabulary, VocabularyHandlers.removeSessionVocabulary);
+    .openapi(VocabularyRoutes.removeSessionVocabulary, VocabularyHandlers.removeSessionVocabulary)
+    .openapi(
+        VocabularyRoutes.removeVocabularyFromSession,
+        VocabularyHandlers.removeVocabularyFromSession
+    );

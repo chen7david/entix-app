@@ -153,4 +153,25 @@ export class VocabularyService extends BaseService {
             throw new NotFoundError("Vocabulary assignment not found");
         }
     }
+
+    async removeVocabularyFromSession(input: {
+        organizationId: string;
+        sessionId: string;
+        vocabId: string;
+    }): Promise<void> {
+        const { organizationId, sessionId, vocabId } = input;
+        const attendances = await this.attendancesRepo.getBySessionAndOrg(
+            organizationId,
+            sessionId
+        );
+        const attendanceIds = attendances.map((a) => a.id);
+
+        if (attendanceIds.length === 0) return;
+
+        await this.studentVocabRepo.removeByVocabAndAttendances(
+            organizationId,
+            vocabId,
+            attendanceIds
+        );
+    }
 }

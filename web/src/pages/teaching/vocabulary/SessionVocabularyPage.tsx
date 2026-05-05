@@ -47,10 +47,14 @@ export function SessionVocabularyPage() {
     const queryClient = useQueryClient();
 
     const sessionQuery = useSessionById(organizationId, sessionId);
-    const { items, isLoading, error, createVocabularyMutation } = useVocabulary(
-        organizationId,
-        sessionId
-    );
+    const {
+        items,
+        isLoading,
+        error,
+        createVocabularyMutation,
+        removeSessionVocabularyMutation,
+        removeVocabularyFromSessionMutation,
+    } = useVocabulary(organizationId, sessionId);
     const orgWalletQuery = useWalletBalance(organizationId, "org");
 
     const studentWalletQueries = useQueries({
@@ -581,7 +585,17 @@ export function SessionVocabularyPage() {
             </Card>
 
             <Card size="small" title={`Words for this session (${uniqueWordCount} unique)`}>
-                <VocabularyTable items={items} loading={isLoading} groupByWord />
+                <VocabularyTable
+                    items={items}
+                    loading={isLoading}
+                    groupByWord
+                    onDelete={(id) => removeSessionVocabularyMutation.mutate(id)}
+                    onDeleteBatch={(id) => removeVocabularyFromSessionMutation.mutate(id)}
+                    isDeleting={
+                        removeSessionVocabularyMutation.isPending ||
+                        removeVocabularyFromSessionMutation.isPending
+                    }
+                />
             </Card>
         </div>
     );

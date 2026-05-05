@@ -173,4 +173,22 @@ export const VocabularyRoutes = {
             },
         },
     }),
+    removeVocabularyFromSession: createRoute({
+        method: HttpMethods.DELETE,
+        path: "/orgs/{organizationId}/sessions/{sessionId}/vocabulary/bank/{vocabId}",
+        tags: ["Vocabulary"],
+        middleware: [requirePermission("vocabulary", ["delete"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                sessionId: z.string(),
+                vocabId: z.string(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.NO_CONTENT]: {
+                description: "Vocabulary removed from all students in this session",
+            },
+        },
+    }),
 };

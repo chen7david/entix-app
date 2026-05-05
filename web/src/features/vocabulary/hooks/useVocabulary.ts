@@ -143,6 +143,56 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
         },
     });
 
+    const removeSessionVocabularyMutation = useMutation({
+        mutationFn: async (studentVocabId: string) => {
+            if (!organizationId || !sessionId) throw new Error("Organization and session required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].sessions[":sessionId"].vocabulary[
+                ":studentVocabId"
+            ].$delete({
+                param: { organizationId, sessionId, studentVocabId },
+            });
+            if (!res.ok) {
+                const body = await res.json();
+                throw new Error(body.message || "Failed to remove vocabulary");
+            }
+        },
+        onSuccess: () => {
+            notification.success({ message: "Vocabulary removed" });
+            queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+        },
+        onError: (error: unknown) =>
+            notification.error({
+                message: "Removal failed",
+                description: getErrorMessage(error, "Unable to remove vocabulary"),
+            }),
+    });
+
+    const removeVocabularyFromSessionMutation = useMutation({
+        mutationFn: async (vocabId: string) => {
+            if (!organizationId || !sessionId) throw new Error("Organization and session required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].sessions[
+                ":sessionId"
+            ].vocabulary.bank[":vocabId"].$delete({
+                param: { organizationId, sessionId, vocabId },
+            });
+            if (!res.ok) {
+                const body = await res.json();
+                throw new Error(body.message || "Failed to remove vocabulary from session");
+            }
+        },
+        onSuccess: () => {
+            notification.success({ message: "Vocabulary removed for all students" });
+            queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+        },
+        onError: (error: unknown) =>
+            notification.error({
+                message: "Removal failed",
+                description: getErrorMessage(error, "Unable to remove vocabulary"),
+            }),
+    });
+
     return {
         items: sessionVocabularyQuery.data?.data ?? [],
         nextCursor: sessionVocabularyQuery.data?.nextCursor ?? null,
@@ -151,5 +201,7 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
         error: sessionVocabularyQuery.error,
         createVocabularyMutation,
         assignVocabularyMutation,
+        removeSessionVocabularyMutation,
+        removeVocabularyFromSessionMutation,
     };
 };

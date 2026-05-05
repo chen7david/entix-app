@@ -234,6 +234,41 @@ describe("VocabularyService", () => {
             ).rejects.toBeInstanceOf(NotFoundError);
         });
     });
+
+    describe("removeVocabularyFromSession", () => {
+        it("successfully removes vocabulary for all students in session", async () => {
+            attendancesRepo.getBySessionAndOrg.mockResolvedValueOnce([
+                makeAttendance({ id: "att_1", userId: "u1" }),
+                makeAttendance({ id: "att_2", userId: "u2" }),
+            ]);
+            studentVocabRepo.removeByVocabAndAttendances.mockResolvedValueOnce(2);
+
+            await service.removeVocabularyFromSession({
+                organizationId: "org_1",
+                sessionId: "session_1",
+                vocabId: "v1",
+            });
+
+            expect(attendancesRepo.getBySessionAndOrg).toHaveBeenCalledWith("org_1", "session_1");
+            expect(studentVocabRepo.removeByVocabAndAttendances).toHaveBeenCalledWith(
+                "org_1",
+                "v1",
+                ["att_1", "att_2"]
+            );
+        });
+
+        it("does nothing if no attendances found", async () => {
+            attendancesRepo.getBySessionAndOrg.mockResolvedValueOnce([]);
+
+            await service.removeVocabularyFromSession({
+                organizationId: "org_1",
+                sessionId: "session_1",
+                vocabId: "v1",
+            });
+
+            expect(studentVocabRepo.removeByVocabAndAttendances).not.toHaveBeenCalled();
+        });
+    });
 });
 
 function makeVocabularyItem(

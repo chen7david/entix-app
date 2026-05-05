@@ -110,4 +110,13 @@ export class VocabularyHandlers {
             await service.removeSessionVocabulary({ organizationId, studentVocabId });
             return ctx.body(null, HttpStatusCodes.NO_CONTENT);
         };
+
+    static removeVocabularyFromSession: AppHandler<
+        typeof VocabularyRoutes.removeVocabularyFromSession
+    > = async (ctx) => {
+        const { organizationId, sessionId, vocabId } = ctx.req.valid("param");
+        const service = getVocabularyService(ctx);
+        await service.removeVocabularyFromSession({ organizationId, sessionId, vocabId });
+        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
 }
