@@ -213,8 +213,7 @@ export const getVocabularyService = (ctx: AppContext) => {
     return new VocabularyService(
         getVocabularyBankRepository(ctx),
         getSessionAttendancesRepository(ctx),
-        getStudentVocabularyRepository(ctx),
-        ctx.env.QUEUE
+        getStudentVocabularyRepository(ctx)
     );
 };
 

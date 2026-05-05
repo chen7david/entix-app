@@ -1,6 +1,5 @@
 import { ConflictError, InternalServerError, NotFoundError } from "@api/errors/app.error";
 import { decodeCursor, processPaginatedResult } from "@api/helpers/pagination.helpers";
-import type { EntixQueueMessage } from "@api/queues/entix.queue";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
@@ -9,14 +8,11 @@ import { BaseService } from "./base.service";
 
 type CursorDirection = "next" | "prev";
 
-const RETRIABLE_STATUSES = new Set(["new", "processing_text", "text_ready", "processing_audio"]);
-
 export class VocabularyService extends BaseService {
     constructor(
         private readonly vocabularyRepo: VocabularyBankRepository,
         private readonly attendancesRepo: SessionAttendancesRepository,
-        private readonly studentVocabRepo: StudentVocabularyRepository,
-        private readonly queue: Queue<EntixQueueMessage>
+        private readonly studentVocabRepo: StudentVocabularyRepository
     ) {
         super();
     }
@@ -25,20 +21,6 @@ export class VocabularyService extends BaseService {
         const item = await this.vocabularyRepo.findOrCreate(payload.text);
         if (!item) {
             throw new InternalServerError("Failed to create or load vocabulary item");
-        }
-
-        if (RETRIABLE_STATUSES.has(item.status)) {
-            await this.queue.send(
-                item.status === "text_ready" || item.status === "processing_audio"
-                    ? {
-                          type: "vocabulary.process-audio",
-                          vocabularyId: item.id,
-                      }
-                    : {
-                          type: "vocabulary.process-text",
-                          vocabularyId: item.id,
-                      }
-            );
         }
 
         let targetCount = 0;

@@ -119,6 +119,18 @@ export class VocabularyBankRepository {
     }
 
     /**
+     * Words in `new` or `text_ready` — ready to be dispatched immediately.
+     * No time threshold needed; cron drives these forward on every tick.
+     */
+    async findPendingDispatch(limit = 40): Promise<VocabularyBankItem[]> {
+        return this.db
+            .select()
+            .from(vocabularyBank)
+            .where(or(eq(vocabularyBank.status, "new"), eq(vocabularyBank.status, "text_ready")))
+            .limit(limit);
+    }
+
+    /**
      * Items stuck in text/audio processing (e.g. transient AI/TTS failure).
      * Caller should re-enqueue queue messages for retry.
      */
