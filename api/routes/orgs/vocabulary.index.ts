@@ -9,4 +9,12 @@ export const vocabularyRoutes = createRouter()
     .openapi(
         VocabularyRoutes.assignVocabularyToStudent,
         VocabularyHandlers.assignVocabularyToStudent
-    );
+    )
+    .openapi(VocabularyRoutes.removeSessionVocabulary, VocabularyHandlers.removeSessionVocabulary)
+    .openapi(
+        VocabularyRoutes.removeVocabularyFromSession,
+        VocabularyHandlers.removeVocabularyFromSession
+    )
+    .openapi(VocabularyRoutes.listVocabularyBank, VocabularyHandlers.listVocabularyBank)
+    .openapi(VocabularyRoutes.updateVocabularyBank, VocabularyHandlers.updateVocabularyBank)
+    .openapi(VocabularyRoutes.deleteVocabularyBank, VocabularyHandlers.deleteVocabularyBank);

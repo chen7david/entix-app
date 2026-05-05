@@ -108,6 +108,9 @@ export const SessionVocabularyPage = lazyNamed(
     () => import("@web/src/pages/teaching/vocabulary/SessionVocabularyPage"),
     "SessionVocabularyPage"
 );
+export const GlobalVocabularyPage = lazyDefault(
+    () => import("@web/src/pages/teaching/vocabulary/GlobalVocabularyPage")
+);
 export const OrganizationMembersPage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationMembersPage"),
     "OrganizationMembersPage"

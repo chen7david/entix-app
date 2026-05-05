@@ -4,6 +4,7 @@ import type { EntixQueueMessage } from "@api/queues/entix.queue";
 import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import type { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import type { VocabularyBankItem } from "@shared/db/schema";
 import { BaseService } from "./base.service";
 
 type CursorDirection = "next" | "prev";
@@ -141,5 +142,79 @@ export class VocabularyService extends BaseService {
         }
 
         return record;
+    }
+
+    async removeSessionVocabulary(input: {
+        organizationId: string;
+        studentVocabId: string;
+    }): Promise<void> {
+        const { organizationId, studentVocabId } = input;
+        const deleted = await this.studentVocabRepo.removeById(studentVocabId, organizationId);
+        if (!deleted) {
+            throw new NotFoundError("Vocabulary assignment not found");
+        }
+    }
+
+    async removeVocabularyFromSession(input: {
+        organizationId: string;
+        sessionId: string;
+        vocabId: string;
+    }): Promise<void> {
+        const { organizationId, sessionId, vocabId } = input;
+        const attendances = await this.attendancesRepo.getBySessionAndOrg(
+            organizationId,
+            sessionId
+        );
+        const attendanceIds = attendances.map((a) => a.id);
+
+        if (attendanceIds.length === 0) return;
+
+        await this.studentVocabRepo.removeByVocabAndAttendances(
+            organizationId,
+            vocabId,
+            attendanceIds
+        );
+    }
+
+    async listVocabularyBank(params: {
+        limit: number;
+        cursor?: string;
+        direction?: CursorDirection;
+        search?: string;
+    }) {
+        const { limit, cursor, direction = "next", search } = params;
+        const decoded = cursor ? decodeCursor(cursor) : null;
+        const items = await this.vocabularyRepo.listAll({
+            limit: limit + 1,
+            direction,
+            cursorUpdatedAt: typeof decoded?.primary === "number" ? decoded.primary : undefined,
+            cursorId: typeof decoded?.secondary === "string" ? decoded.secondary : undefined,
+            search,
+        });
+        return processPaginatedResult(
+            items,
+            limit,
+            direction,
+            (item) => ({ primary: item.updatedAt.getTime(), secondary: item.id }),
+            cursor
+        );
+    }
+
+    async updateVocabularyBank(
+        id: string,
+        data: Partial<VocabularyBankItem>
+    ): Promise<VocabularyBankItem> {
+        const item = await this.vocabularyRepo.update(id, data);
+        if (!item) {
+            throw new NotFoundError("Vocabulary item not found");
+        }
+        return item;
+    }
+
+    async deleteVocabularyBank(id: string): Promise<void> {
+        const deleted = await this.vocabularyRepo.delete(id);
+        if (!deleted) {
+            throw new NotFoundError("Vocabulary item not found");
+        }
     }
 }

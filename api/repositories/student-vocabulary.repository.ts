@@ -2,7 +2,7 @@ import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, encodeCursor } from "@api/helpers/pagination.helpers";
 import type { NewStudentVocabulary, StudentVocabulary } from "@shared/db/schema";
 import { sessionAttendances, studentVocabulary, vocabularyBank } from "@shared/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 function isUniqueConstraintError(error: unknown): boolean {
     if (!(error instanceof Error)) {
@@ -167,5 +167,37 @@ export class StudentVocabularyRepository {
             .where(and(...conditions))
             .orderBy(...pagination.orderBy)
             .limit(limit + 1);
+    }
+
+    async removeById(id: string, organizationId: string): Promise<boolean> {
+        const result = await this.db
+            .delete(studentVocabulary)
+            .where(
+                and(
+                    eq(studentVocabulary.id, id),
+                    eq(studentVocabulary.organizationId, organizationId)
+                )
+            )
+            .returning();
+        return result.length > 0;
+    }
+
+    async removeByVocabAndAttendances(
+        organizationId: string,
+        vocabularyId: string,
+        attendanceIds: string[]
+    ): Promise<number> {
+        if (attendanceIds.length === 0) return 0;
+        const result = await this.db
+            .delete(studentVocabulary)
+            .where(
+                and(
+                    eq(studentVocabulary.organizationId, organizationId),
+                    eq(studentVocabulary.vocabularyId, vocabularyId),
+                    inArray(studentVocabulary.attendanceId, attendanceIds)
+                )
+            )
+            .returning();
+        return result.length;
     }
 }

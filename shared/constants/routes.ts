@@ -48,6 +48,7 @@ export const AppRoutes = {
             sessions: "/teaching/sessions",
             schedule: "/teaching/sessions",
             students: "/teaching/students",
+            vocabulary: "/teaching/vocabulary",
         },
     },
     admin: {

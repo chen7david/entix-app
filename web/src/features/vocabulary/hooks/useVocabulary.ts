@@ -1,9 +1,16 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    type InfiniteData,
+    useInfiniteQuery,
+    useMutation,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import { getApiClient } from "@web/src/lib/api-client";
 import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { App } from "antd";
+import { useMemo } from "react";
 
 export type VocabularyStatus =
     | "new"
@@ -18,6 +25,10 @@ export type VocabularyItemDTO = {
     text: string;
     zhTranslation: string | null;
     pinyin: string | null;
+    ipaUs: string | null;
+    syllablesEn: string | null;
+    syllablesIpa: string | null;
+    definitionSimple: string | null;
     enAudioUrl: string | null;
     zhAudioUrl: string | null;
     status: VocabularyStatus;
@@ -36,6 +47,12 @@ export type SessionVocabularyItemDTO = {
 
 type SessionVocabularyListDTO = {
     data: SessionVocabularyItemDTO[];
+    nextCursor: string | null;
+    prevCursor: string | null;
+};
+
+type VocabularyBankListDTO = {
+    data: VocabularyItemDTO[];
     nextCursor: string | null;
     prevCursor: string | null;
 };
@@ -89,6 +106,51 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
             }>(res);
             return body.data;
         },
+        onMutate: async (newVocab) => {
+            if (!organizationId) return;
+
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({
+                queryKey: ["vocabulary-bank-library", organizationId],
+            });
+
+            // Snapshot previous value
+            const previousData = queryClient.getQueriesData({
+                queryKey: ["vocabulary-bank-library", organizationId],
+            });
+
+            // Optimistically update the "first page" (queries without search/cursor)
+            queryClient.setQueriesData(
+                { queryKey: ["vocabulary-bank-library", organizationId] },
+                (old: any) => {
+                    // Only update if it's the first page (no cursor) and no active search
+                    if (!old?.data || old.prevCursor) return old;
+
+                    const tempItem: VocabularyItemDTO = {
+                        id: `temp-${Date.now()}`,
+                        text: newVocab.text,
+                        status: "new",
+                        zhTranslation: null,
+                        pinyin: null,
+                        ipaUs: null,
+                        syllablesEn: null,
+                        syllablesIpa: null,
+                        definitionSimple: null,
+                        enAudioUrl: null,
+                        zhAudioUrl: null,
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                    };
+
+                    return {
+                        ...old,
+                        data: [tempItem, ...old.data],
+                    };
+                }
+            );
+
+            return { previousData };
+        },
         onSuccess: (data) => {
             notification.success({
                 message: "Vocabulary added",
@@ -97,13 +159,25 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
                         ? `Attempted assignment to ${data.targetCount} student(s)`
                         : "Saved to vocabulary bank",
             });
+
+            // Invalidate to get clean state, but also update cache for immediate feedback
+            queryClient.invalidateQueries({
+                queryKey: ["vocabulary-bank-library", organizationId],
+            });
             queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
         },
-        onError: (error: unknown) =>
+        onError: (error: unknown, _, context) => {
+            // Rollback on error
+            if (context?.previousData) {
+                for (const [queryKey, data] of context.previousData) {
+                    queryClient.setQueryData(queryKey, data);
+                }
+            }
             notification.error({
                 message: "Failed to add vocabulary",
                 description: getErrorMessage(error, "Unable to add vocabulary"),
-            }),
+            });
+        },
     });
 
     const assignVocabularyMutation = useMutation({
@@ -143,6 +217,56 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
         },
     });
 
+    const removeSessionVocabularyMutation = useMutation({
+        mutationFn: async (studentVocabId: string) => {
+            if (!organizationId || !sessionId) throw new Error("Organization and session required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].sessions[":sessionId"].vocabulary[
+                ":studentVocabId"
+            ].$delete({
+                param: { organizationId, sessionId, studentVocabId },
+            });
+            if (!res.ok) {
+                const body = await res.json();
+                throw new Error(body.message || "Failed to remove vocabulary");
+            }
+        },
+        onSuccess: () => {
+            notification.success({ message: "Vocabulary removed" });
+            queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+        },
+        onError: (error: unknown) =>
+            notification.error({
+                message: "Removal failed",
+                description: getErrorMessage(error, "Unable to remove vocabulary"),
+            }),
+    });
+
+    const removeVocabularyFromSessionMutation = useMutation({
+        mutationFn: async (vocabId: string) => {
+            if (!organizationId || !sessionId) throw new Error("Organization and session required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].sessions[
+                ":sessionId"
+            ].vocabulary.bank[":vocabId"].$delete({
+                param: { organizationId, sessionId, vocabId },
+            });
+            if (!res.ok) {
+                const body = await res.json();
+                throw new Error(body.message || "Failed to remove vocabulary from session");
+            }
+        },
+        onSuccess: () => {
+            notification.success({ message: "Vocabulary removed for all students" });
+            queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+        },
+        onError: (error: unknown) =>
+            notification.error({
+                message: "Removal failed",
+                description: getErrorMessage(error, "Unable to remove vocabulary"),
+            }),
+    });
+
     return {
         items: sessionVocabularyQuery.data?.data ?? [],
         nextCursor: sessionVocabularyQuery.data?.nextCursor ?? null,
@@ -151,5 +275,209 @@ export const useVocabulary = (organizationId?: string, sessionId?: string) => {
         error: sessionVocabularyQuery.error,
         createVocabularyMutation,
         assignVocabularyMutation,
+        removeSessionVocabularyMutation,
+        removeVocabularyFromSessionMutation,
+    };
+};
+
+export const useVocabularyBank = (organizationId?: string, search?: string) => {
+    const { notification } = App.useApp();
+    const queryClient = useQueryClient();
+
+    const vocabularyBankQuery = useInfiniteQuery<
+        VocabularyBankListDTO,
+        Error,
+        InfiniteData<VocabularyBankListDTO>,
+        (string | undefined | null)[],
+        string | undefined
+    >({
+        queryKey: ["vocabulary-bank", organizationId, search],
+        queryFn: async ({ pageParam }: { pageParam: string | undefined }) => {
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].vocabulary.bank.$get({
+                param: { organizationId },
+                query: {
+                    limit: "20",
+                    cursor: pageParam,
+                    search,
+                },
+            });
+            if (!res.ok) throw new Error("Failed to fetch vocabulary bank");
+            return res.json() as Promise<VocabularyBankListDTO>;
+        },
+        initialPageParam: undefined as string | undefined,
+        getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        enabled: !!organizationId,
+    });
+
+    const updateVocabularyBankMutation = useMutation({
+        mutationFn: async ({
+            vocabId,
+            data,
+        }: {
+            vocabId: string;
+            data: Partial<VocabularyItemDTO>;
+        }) => {
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].vocabulary.bank[":vocabId"].$patch(
+                {
+                    param: { organizationId, vocabId },
+                    json: data,
+                }
+            );
+            if (!res.ok) {
+                const body = await res.json();
+                throw new Error(body.message || "Failed to update vocabulary item");
+            }
+            const body = await hcJson<{ data: VocabularyItemDTO }>(res);
+            return body.data;
+        },
+        onMutate: async (variables) => {
+            const { vocabId, data } = variables;
+            // Cancel outgoing refetches
+            await queryClient.cancelQueries({
+                queryKey: ["vocabulary-bank-library", organizationId],
+            });
+            await queryClient.cancelQueries({ queryKey: ["vocabulary", organizationId] });
+
+            // Snapshot previous values
+            const previousBankData = queryClient.getQueryData([
+                "vocabulary-bank-library",
+                organizationId,
+            ]);
+            const previousSessionData = queryClient.getQueryData(["vocabulary", organizationId]);
+
+            // Optimistically update all matching queries in the bank library
+            queryClient.setQueriesData(
+                { queryKey: ["vocabulary-bank-library", organizationId] },
+                (old: any) => {
+                    if (!old?.data) return old;
+                    return {
+                        ...old,
+                        data: old.data.map((item: VocabularyItemDTO) =>
+                            item.id === vocabId ? { ...item, ...data } : item
+                        ),
+                    };
+                }
+            );
+
+            return { previousBankData, previousSessionData };
+        },
+        onSuccess: (updatedItem) => {
+            notification.success({ message: "Vocabulary item updated" });
+            // Final sync with real data
+            queryClient.setQueriesData(
+                { queryKey: ["vocabulary-bank-library", organizationId] },
+                (old: any) => {
+                    if (!old?.data) return old;
+                    return {
+                        ...old,
+                        data: old.data.map((item: VocabularyItemDTO) =>
+                            item.id === updatedItem.id ? updatedItem : item
+                        ),
+                    };
+                }
+            );
+            queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+        },
+        onError: (error: unknown, __, context) => {
+            // Rollback on error
+            if (context?.previousBankData) {
+                queryClient.setQueriesData(
+                    { queryKey: ["vocabulary-bank-library", organizationId] },
+                    context.previousBankData
+                );
+            }
+            notification.error({
+                message: "Update failed",
+                description: getErrorMessage(error, "Unable to update vocabulary"),
+            });
+        },
+    });
+
+    const deleteVocabularyBankMutation = useMutation({
+        mutationFn: async (vocabId: string) => {
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].vocabulary.bank[
+                ":vocabId"
+            ].$delete({
+                param: { organizationId, vocabId },
+            });
+            if (!res.ok) {
+                const body = await res.json();
+                throw new Error(body.message || "Failed to delete vocabulary item");
+            }
+        },
+        onSuccess: () => {
+            notification.success({ message: "Vocabulary item deleted from bank" });
+            queryClient.invalidateQueries({ queryKey: ["vocabulary-bank", organizationId] });
+            queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+        },
+        onError: (error: unknown) =>
+            notification.error({
+                message: "Deletion failed",
+                description: getErrorMessage(error, "Unable to delete vocabulary item"),
+            }),
+    });
+
+    const items = useMemo(
+        () =>
+            vocabularyBankQuery.data?.pages.flatMap((page: VocabularyBankListDTO) => page.data) ??
+            [],
+        [vocabularyBankQuery.data]
+    );
+
+    return {
+        items,
+        isLoading: vocabularyBankQuery.isLoading,
+        isFetchingNextPage: vocabularyBankQuery.isFetchingNextPage,
+        hasNextPage: vocabularyBankQuery.hasNextPage,
+        fetchNextPage: vocabularyBankQuery.fetchNextPage,
+        error: vocabularyBankQuery.error,
+        updateVocabularyBankMutation,
+        deleteVocabularyBankMutation,
+    };
+};
+
+export const useVocabularyBankLibrary = (params: {
+    organizationId?: string;
+    search?: string;
+    cursor?: string;
+    limit?: number;
+    direction?: "next" | "prev";
+}) => {
+    const { isAuthenticated } = useAuth();
+    const { organizationId, search, cursor, limit, direction } = params;
+
+    const query = useQuery({
+        queryKey: ["vocabulary-bank-library", organizationId, search, cursor, limit, direction],
+        enabled: !!organizationId && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+        queryFn: async () => {
+            if (!organizationId) throw new Error("Organization required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].vocabulary.bank.$get({
+                param: { organizationId },
+                query: {
+                    limit: (limit || 10).toString(),
+                    cursor,
+                    direction,
+                    search,
+                },
+            });
+            if (!res.ok) throw new Error("Failed to fetch vocabulary bank");
+            return hcJson<VocabularyBankListDTO>(res);
+        },
+    });
+
+    return {
+        items: query.data?.data ?? [],
+        nextCursor: query.data?.nextCursor ?? null,
+        prevCursor: query.data?.prevCursor ?? null,
+        isLoading: query.isLoading,
+        error: query.error,
     };
 };

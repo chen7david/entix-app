@@ -5,7 +5,7 @@ import {
     type VocabularyBankStatus,
     vocabularyBank,
 } from "@shared/db/schema";
-import { and, eq, lt, or } from "drizzle-orm";
+import { and, eq, like, lt, or } from "drizzle-orm";
 
 export type VocabularyBankUpdateInput = Omit<
     typeof vocabularyBank.$inferInsert,
@@ -126,5 +126,50 @@ export class VocabularyBankRepository {
                 )
             )
             .limit(limit);
+    }
+
+    async listAll(params: {
+        limit: number;
+        direction: "next" | "prev";
+        cursorUpdatedAt?: number;
+        cursorId?: string;
+        search?: string;
+    }) {
+        const { limit, direction, cursorUpdatedAt, cursorId, search } = params;
+        const cursor =
+            cursorUpdatedAt !== undefined
+                ? encodeCursor({
+                      primary: cursorUpdatedAt,
+                      ...(cursorId ? { secondary: cursorId } : {}),
+                  })
+                : undefined;
+        const pagination = buildCursorPagination(
+            vocabularyBank.updatedAt,
+            vocabularyBank.id,
+            cursor,
+            direction
+        );
+        const conditions = [];
+        if (search) {
+            conditions.push(like(vocabularyBank.text, `%${search.trim().toLowerCase()}%`));
+        }
+        if (pagination.where) {
+            conditions.push(pagination.where);
+        }
+
+        return this.db
+            .select()
+            .from(vocabularyBank)
+            .where(conditions.length > 0 ? and(...conditions) : undefined)
+            .orderBy(...pagination.orderBy)
+            .limit(limit);
+    }
+
+    async delete(id: string): Promise<boolean> {
+        const result = await this.db
+            .delete(vocabularyBank)
+            .where(eq(vocabularyBank.id, id))
+            .returning();
+        return result.length > 0;
     }
 }
