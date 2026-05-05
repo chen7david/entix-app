@@ -28,6 +28,7 @@ import {
     ForgotPasswordPage,
     GlobalOrganizationsPage,
     GlobalUsersPage,
+    GlobalVocabularyPage,
     HomePage,
     LessonsPage,
     MemberImportExportPage,
@@ -286,6 +287,10 @@ export default function App() {
                                                     <Route
                                                         path="students"
                                                         element={<OrganizationMembersPage />}
+                                                    />
+                                                    <Route
+                                                        path="vocabulary"
+                                                        element={<GlobalVocabularyPage />}
                                                     />
                                                     <Route
                                                         path="sessions/:sessionId/vocabulary"

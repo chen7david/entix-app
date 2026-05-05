@@ -119,4 +119,52 @@ export class VocabularyHandlers {
         await service.removeVocabularyFromSession({ organizationId, sessionId, vocabId });
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
+
+    static listVocabularyBank: AppHandler<typeof VocabularyRoutes.listVocabularyBank> = async (
+        ctx
+    ) => {
+        const { limit, cursor, direction, search } = ctx.req.valid("query");
+        const service = getVocabularyService(ctx);
+        const result = await service.listVocabularyBank({ limit, cursor, direction, search });
+        return ctx.json(
+            {
+                data: result.items.map((item) => ({
+                    ...item,
+                    createdAt: item.createdAt.getTime(),
+                    updatedAt: item.updatedAt.getTime(),
+                })),
+                nextCursor: result.nextCursor,
+                prevCursor: result.prevCursor,
+            },
+            HttpStatusCodes.OK
+        );
+    };
+
+    static updateVocabularyBank: AppHandler<typeof VocabularyRoutes.updateVocabularyBank> = async (
+        ctx
+    ) => {
+        const { vocabId } = ctx.req.valid("param");
+        const data = ctx.req.valid("json");
+        const service = getVocabularyService(ctx);
+        const item = await service.updateVocabularyBank(vocabId, data);
+        return ctx.json(
+            {
+                data: {
+                    ...item,
+                    createdAt: item.createdAt.getTime(),
+                    updatedAt: item.updatedAt.getTime(),
+                },
+            },
+            HttpStatusCodes.OK
+        );
+    };
+
+    static deleteVocabularyBank: AppHandler<typeof VocabularyRoutes.deleteVocabularyBank> = async (
+        ctx
+    ) => {
+        const { vocabId } = ctx.req.valid("param");
+        const service = getVocabularyService(ctx);
+        await service.deleteVocabularyBank(vocabId);
+        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
 }

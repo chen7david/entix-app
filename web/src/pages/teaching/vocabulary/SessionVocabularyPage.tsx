@@ -188,18 +188,27 @@ export function SessionVocabularyPage() {
         {
             title: "Student",
             key: "student",
+            fixed: "left",
+            width: 200,
             render: (_, row) => (
-                <Space align="start" size={12}>
+                <Space align="center" size={8}>
                     <Avatar
-                        size={40}
+                        size={32}
                         src={row.image ? getAvatarUrl(row.image, "sm") : undefined}
                         icon={!row.image && <UserOutlined />}
+                        className="flex-shrink-0"
                     />
-                    <div>
-                        <Text strong>{row.name}</Text>
-                        <div>
-                            <Text type="secondary">{row.email}</Text>
-                        </div>
+                    <div className="flex flex-col overflow-hidden" style={{ maxWidth: 140 }}>
+                        <Text strong ellipsis={{ tooltip: row.name }}>
+                            {row.name}
+                        </Text>
+                        <Text
+                            type="secondary"
+                            ellipsis={{ tooltip: row.email }}
+                            style={{ fontSize: "12px" }}
+                        >
+                            {row.email}
+                        </Text>
                     </div>
                 </Space>
             ),
@@ -214,6 +223,7 @@ export function SessionVocabularyPage() {
                 </Space>
             ),
             key: "currentPoints",
+            width: 130,
             render: (_, row) => (
                 <Tooltip title="ETD wallet balance for this student in this org.">
                     <Text>{row.currentPoints.toFixed(2)}</Text>
@@ -223,6 +233,7 @@ export function SessionVocabularyPage() {
         {
             title: "Pending",
             key: "pending",
+            width: 100,
             render: (_, row) => (
                 <Tag
                     color={
@@ -236,6 +247,7 @@ export function SessionVocabularyPage() {
         {
             title: "Preview",
             key: "preview",
+            width: 100,
             render: (_, row) => (
                 <Text strong>{(row.currentPoints + row.stagedDelta).toFixed(2)}</Text>
             ),
@@ -251,6 +263,8 @@ export function SessionVocabularyPage() {
             ),
             key: "adjust",
             align: "right",
+            width: 130,
+            fixed: "right",
             render: (_, row) => (
                 <Space>
                     <Tooltip title={`Remove ${POINTS_DRAFT_STEP} point(s) from pending`}>
@@ -561,6 +575,7 @@ export function SessionVocabularyPage() {
                         columns={studentColumns}
                         dataSource={studentRows}
                         pagination={false}
+                        scroll={{ x: 800 }}
                         loading={
                             sessionQuery.isLoading || studentWalletQueries.some((q) => q.isLoading)
                         }

@@ -1,7 +1,10 @@
-import { DeleteOutlined } from "@ant-design/icons";
-import type { SessionVocabularyItemDTO } from "@web/src/features/vocabulary/hooks/useVocabulary";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import type {
+    SessionVocabularyItemDTO,
+    VocabularyItemDTO,
+} from "@web/src/features/vocabulary/hooks/useVocabulary";
 import { dedupeSessionVocabularyByWord } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
-import { Button, Empty, Popconfirm, Table, Tag, Typography } from "antd";
+import { Button, Empty, Popconfirm, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
 import { VocabularyStatusBadge } from "./VocabularyStatusBadge";
@@ -16,41 +19,71 @@ export function VocabularyTable({
     groupByWord = false,
     onDelete,
     onDeleteBatch,
+    onEdit,
     isDeleting = false,
 }: {
-    items: SessionVocabularyItemDTO[];
+    items: SessionVocabularyItemDTO[] | VocabularyItemDTO[];
     loading: boolean;
     groupByWord?: boolean;
-    onDelete?: (studentVocabId: string) => void;
+    onDelete?: (id: string) => void;
     onDeleteBatch?: (vocabId: string) => void;
+    onEdit?: (item: VocabularyItemDTO) => void;
     isDeleting?: boolean;
 }) {
     const dataSource = useMemo(() => {
-        if (!groupByWord) return items as DisplayRow[];
-        return dedupeSessionVocabularyByWord(items);
+        const baseItems = (items || []).filter(Boolean);
+        if (!groupByWord) return baseItems as DisplayRow[];
+        // Only dedupe if the items are SessionVocabularyItemDTO (they have a .vocabulary property)
+        const firstItem = baseItems[0];
+        if (firstItem && "vocabulary" in firstItem) {
+            return dedupeSessionVocabularyByWord(baseItems as SessionVocabularyItemDTO[]);
+        }
+        return baseItems as DisplayRow[];
     }, [items, groupByWord]);
 
     const columns = useMemo(() => {
+        const getVocab = (record: DisplayRow) =>
+            record && "vocabulary" in record
+                ? record.vocabulary
+                : (record as unknown as VocabularyItemDTO);
+
         const baseColumns: ColumnsType<DisplayRow> = [
             {
                 title: "Word",
                 key: "text",
-                render: (_, record) => <Text strong>{record.vocabulary.text}</Text>,
+                width: 150,
+                render: (_, record) => <Text strong>{getVocab(record).text}</Text>,
             },
             {
                 title: "Translation",
                 key: "zhTranslation",
-                render: (_, record) => record.vocabulary.zhTranslation || "—",
+                width: 150,
+                render: (_, record) => getVocab(record).zhTranslation || "—",
             },
             {
                 title: "Pinyin",
                 key: "pinyin",
-                render: (_, record) => record.vocabulary.pinyin || "—",
+                width: 150,
+                render: (_, record) => getVocab(record).pinyin || "—",
+            },
+            {
+                title: "IPA",
+                key: "ipaUs",
+                width: 120,
+                render: (_, record) => getVocab(record).ipaUs || "—",
+            },
+            {
+                title: "Definition",
+                key: "definitionSimple",
+                width: 300,
+                ellipsis: true,
+                render: (_, record) => getVocab(record).definitionSimple || "—",
             },
             {
                 title: "Status",
                 key: "status",
-                render: (_, record) => <VocabularyStatusBadge status={record.vocabulary.status} />,
+                width: 120,
+                render: (_, record) => <VocabularyStatusBadge status={getVocab(record).status} />,
             },
         ];
 
@@ -72,52 +105,69 @@ export function VocabularyTable({
 
         const showDelete = groupByWord ? !!onDeleteBatch : !!onDelete;
 
-        if (showDelete) {
+        if (showDelete || onEdit) {
             result = [
                 ...result,
                 {
                     title: "Action",
                     key: "action",
-                    width: 80,
+                    width: 120,
                     align: "center",
                     fixed: "right",
-                    render: (_, record) => (
-                        <Popconfirm
-                            title="Remove from session?"
-                            description={
-                                groupByWord
-                                    ? `This will remove "${record.vocabulary.text}" from the wordlist of ALL students in this session.`
-                                    : `This will remove "${record.vocabulary.text}" from this student's list for this session.`
-                            }
-                            onConfirm={() => {
-                                if (groupByWord && onDeleteBatch) {
-                                    onDeleteBatch(record.vocabulary.id);
-                                } else if (!groupByWord && onDelete) {
-                                    onDelete(record.id);
-                                }
-                            }}
-                            okText="Yes"
-                            cancelText="No"
-                            okButtonProps={{ danger: true, loading: isDeleting }}
-                        >
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                disabled={isDeleting}
-                            />
-                        </Popconfirm>
-                    ),
+                    render: (_, record) => {
+                        const vocab = getVocab(record);
+                        return (
+                            <Space size={4}>
+                                {onEdit && (
+                                    <Button
+                                        type="text"
+                                        icon={<EditOutlined />}
+                                        onClick={() => onEdit(vocab)}
+                                    />
+                                )}
+                                {showDelete && (
+                                    <Popconfirm
+                                        title="Remove from session?"
+                                        description={
+                                            groupByWord
+                                                ? `This will remove "${vocab.text}" from the wordlist of ALL students in this session.`
+                                                : `This will remove "${vocab.text}" from this student's list for this session.`
+                                        }
+                                        onConfirm={() => {
+                                            if (groupByWord && onDeleteBatch) {
+                                                onDeleteBatch(vocab.id);
+                                            } else if (!groupByWord && onDelete) {
+                                                onDelete(record.id);
+                                            }
+                                        }}
+                                        okText="Yes"
+                                        cancelText="No"
+                                        okButtonProps={{ danger: true, loading: isDeleting }}
+                                    >
+                                        <Button
+                                            type="text"
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            disabled={isDeleting}
+                                        />
+                                    </Popconfirm>
+                                )}
+                            </Space>
+                        );
+                    },
                 },
             ];
         }
 
         return result;
-    }, [groupByWord, onDelete, onDeleteBatch, isDeleting]);
+    }, [groupByWord, onDelete, onDeleteBatch, onEdit, isDeleting]);
 
     return (
         <Table
-            rowKey={(row) => (groupByWord ? row.vocabulary.id : row.id)}
+            rowKey={(row) => {
+                const vocabId = "vocabulary" in row ? row.vocabulary.id : row.id;
+                return groupByWord ? vocabId : row.id;
+            }}
             columns={columns}
             dataSource={dataSource}
             loading={loading}

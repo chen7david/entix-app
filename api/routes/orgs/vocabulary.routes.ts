@@ -8,6 +8,10 @@ const VocabularyBankSchema = z.object({
     text: z.string(),
     zhTranslation: z.string().nullable(),
     pinyin: z.string().nullable(),
+    ipaUs: z.string().nullable(),
+    syllablesEn: z.string().nullable(),
+    syllablesIpa: z.string().nullable(),
+    definitionSimple: z.string().nullable(),
     enAudioUrl: z.string().nullable(),
     zhAudioUrl: z.string().nullable(),
     status: z.enum([
@@ -20,6 +24,18 @@ const VocabularyBankSchema = z.object({
     ]),
     createdAt: z.coerce.number(),
     updatedAt: z.coerce.number(),
+});
+
+const UpdateVocabularyBankSchema = z.object({
+    zhTranslation: z.string().nullable().optional(),
+    pinyin: z.string().nullable().optional(),
+    ipaUs: z.string().nullable().optional(),
+    syllablesEn: z.string().nullable().optional(),
+    syllablesIpa: z.string().nullable().optional(),
+    definitionSimple: z.string().nullable().optional(),
+    status: z
+        .enum(["new", "processing_text", "text_ready", "processing_audio", "active", "review"])
+        .optional(),
 });
 
 const StudentVocabularyWithVocabSchema = z.object({
@@ -188,6 +204,70 @@ export const VocabularyRoutes = {
         responses: {
             [HttpStatusCodes.NO_CONTENT]: {
                 description: "Vocabulary removed from all students in this session",
+            },
+        },
+    }),
+    listVocabularyBank: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/vocabulary/bank",
+        tags: ["Vocabulary"],
+        middleware: [requirePermission("vocabulary", ["read"])] as const,
+        request: {
+            params: z.object({ organizationId: z.string() }),
+            query: PaginationQuerySchema.extend({
+                search: z.string().optional(),
+            }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: PaginatedDataSchema(VocabularyBankSchema),
+                    },
+                },
+                description: "List all vocabulary items in the bank",
+            },
+        },
+    }),
+    updateVocabularyBank: createRoute({
+        method: HttpMethods.PATCH,
+        path: "/orgs/{organizationId}/vocabulary/bank/{vocabId}",
+        tags: ["Vocabulary"],
+        middleware: [requirePermission("vocabulary", ["update"])] as const,
+        request: {
+            params: z.object({ organizationId: z.string(), vocabId: z.string() }),
+            body: {
+                content: {
+                    "application/json": {
+                        schema: UpdateVocabularyBankSchema,
+                    },
+                },
+            },
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({
+                            data: VocabularyBankSchema,
+                        }),
+                    },
+                },
+                description: "Vocabulary bank item updated",
+            },
+        },
+    }),
+    deleteVocabularyBank: createRoute({
+        method: HttpMethods.DELETE,
+        path: "/orgs/{organizationId}/vocabulary/bank/{vocabId}",
+        tags: ["Vocabulary"],
+        middleware: [requirePermission("vocabulary", ["delete"])] as const,
+        request: {
+            params: z.object({ organizationId: z.string(), vocabId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.NO_CONTENT]: {
+                description: "Vocabulary bank item deleted",
             },
         },
     }),

@@ -169,6 +169,11 @@ export const SidebarMenu: React.FC = () => {
                               key: AppRoutes.org.teaching.students,
                               icon: <TeamOutlined />,
                           },
+                          {
+                              label: "Vocabulary",
+                              key: AppRoutes.org.teaching.vocabulary,
+                              icon: <OrderedListOutlined />,
+                          },
                       ],
                   },
                   ...(isAdminOrOwner
