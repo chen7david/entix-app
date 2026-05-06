@@ -27,6 +27,7 @@ import {
     useCreateMember,
     useMembers,
     useOrganization,
+    useOrgRole,
 } from "@web/src/features/organization";
 import {
     MemberRolesForm,
@@ -133,7 +134,8 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
         }
     }, [cursorStack]);
 
-    const { user, isAdminOrOwner } = useAuth();
+    const { user } = useAuth();
+    const { isAdminOrOwner } = useOrgRole();
     const currentUserId = user?.id;
     const canManage = propCanManage ?? isAdminOrOwner;
 

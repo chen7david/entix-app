@@ -1,4 +1,5 @@
 import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
+import { RolePickerModal } from "@web/src/components/navigation/RolePickerModal";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { GlobalUploadManager } from "@web/src/features/media";
 import { Layout, theme } from "antd";
@@ -47,6 +48,7 @@ export const OrgAdminLayout: React.FC = () => {
                 </Content>
             </Layout>
             <GlobalUploadManager />
+            <RolePickerModal />
         </Layout>
     );
 };

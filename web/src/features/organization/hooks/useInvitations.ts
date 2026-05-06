@@ -26,11 +26,15 @@ export const useInvitations = () => {
 
     const { mutateAsync: inviteMemberMutation, isPending: isInviting } = useMutation({
         mutationFn: async ({ email, role }: { email: string; role: string }) => {
-            return await authClient.organization.inviteMember({
+            const { data, error } = await authClient.organization.inviteMember({
                 email,
                 role: role as OrgRole,
                 organizationId: activeOrganization?.id,
             });
+            if (error) {
+                throw new Error(error.message ?? "Failed to invite member");
+            }
+            return data;
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["organizationInvitations"] });
@@ -40,7 +44,13 @@ export const useInvitations = () => {
     const { mutateAsync: cancelInvitationMutation, isPending: isCancelingInvitation } = useMutation(
         {
             mutationFn: async (invitationId: string) => {
-                return await authClient.organization.cancelInvitation({ invitationId });
+                const { data, error } = await authClient.organization.cancelInvitation({
+                    invitationId,
+                });
+                if (error) {
+                    throw new Error(error.message ?? "Failed to cancel invitation");
+                }
+                return data;
             },
             onSuccess: async () => {
                 await queryClient.invalidateQueries({ queryKey: ["organizationInvitations"] });
@@ -51,19 +61,23 @@ export const useInvitations = () => {
     const { mutateAsync: acceptInvitationMutation, isPending: isAcceptingInvitation } = useMutation(
         {
             mutationFn: async (invitationId: string) => {
-                return await authClient.organization.acceptInvitation({ invitationId });
+                const { data, error } = await authClient.organization.acceptInvitation({
+                    invitationId,
+                });
+                if (error) {
+                    throw new Error(error.message ?? "Failed to accept invitation");
+                }
+                return data;
             },
             onSuccess: async (result) => {
-                if (result.data) {
-                    // Invalidate queries to refresh organization list and active org
-                    await queryClient.invalidateQueries({ queryKey: ["organizations"] });
-                    await queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+                // Invalidate queries to refresh organization list and active org
+                await queryClient.invalidateQueries({ queryKey: ["organizations"] });
+                await queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
 
-                    // Set the accepted organization as active
-                    // We use the setActive from useOrganization to ensure consistency
-                    if (result.data.invitation?.organizationId) {
-                        await setActive(result.data.invitation.organizationId);
-                    }
+                // Set the accepted organization as active
+                // We use the setActive from useOrganization to ensure consistency
+                if (result?.invitation?.organizationId) {
+                    await setActive(result.invitation.organizationId);
                 }
             },
         }

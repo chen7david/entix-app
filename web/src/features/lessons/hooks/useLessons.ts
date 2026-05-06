@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { useAuth } from "@web/src/features/auth";
-import { useOrganization } from "@web/src/features/organization";
+import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { getApiClient } from "@web/src/lib/api-client";
 import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
@@ -49,7 +49,8 @@ type LessonListResponse = {
 
 export function useLessons() {
     const { activeOrganization } = useOrganization();
-    const { isAuthenticated, isStaff } = useAuth();
+    const { isAuthenticated } = useAuth();
+    const { isStaff } = useOrgRole();
     const organizationId = activeOrganization?.id;
 
     const dashboardQuery = useQuery({

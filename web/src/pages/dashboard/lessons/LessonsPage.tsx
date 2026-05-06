@@ -3,7 +3,6 @@ import { getAssetUrl } from "@shared";
 import type { CursorPaginationConfig } from "@web/src/components/data/DataTableWithFilters";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { useAuth } from "@web/src/features/auth";
 import {
     type LessonDto,
     useCreateLesson,
@@ -13,7 +12,7 @@ import {
     useUpdateLesson,
 } from "@web/src/features/lessons/hooks/useLessons";
 import { CoverArtUploader } from "@web/src/features/media";
-import { useOrganization } from "@web/src/features/organization";
+import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     Avatar,
@@ -35,7 +34,7 @@ import { useMemo, useState } from "react";
 const { Text } = Typography;
 
 export const LessonsPage: React.FC = () => {
-    const { isStaff } = useAuth();
+    const { isStaff } = useOrgRole();
     const { activeOrganization } = useOrganization();
     const { myEnrollments, isLoadingMyEnrollments } = useLessons();
     const createLesson = useCreateLesson();

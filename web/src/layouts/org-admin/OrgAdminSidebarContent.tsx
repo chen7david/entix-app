@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
-import { useOrganization } from "@web/src/features/organization";
+import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { useWalletBalance } from "@web/src/features/wallet";
 import { useSession } from "@web/src/lib/auth-client";
 import {
@@ -32,7 +32,8 @@ import { SidebarOrgSwitcher } from "../../components/navigation/Sidebar/SidebarO
 const { Text } = Typography;
 
 export const OrgAdminSidebarContent: React.FC = () => {
-    const { user, isLoading: isAuthLoading, isSuperAdmin, isAdminOrOwner } = useAuth();
+    const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
+    const { isAdminOrOwner } = useOrgRole();
     const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();

@@ -4,7 +4,7 @@ import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, getAvatarUrl } from "@share
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useOrgContext } from "@web/src/context/OrgContext";
-import { useAuth } from "@web/src/features/auth";
+import { useOrgRole } from "@web/src/features/organization";
 import { useSessionById } from "@web/src/features/schedule";
 import { AddVocabularyForm, useVocabulary, VocabularyTable } from "@web/src/features/vocabulary";
 import {
@@ -40,7 +40,7 @@ type StudentRow = {
 export function SessionVocabularyPage() {
     const { activeOrganization } = useOrgContext();
     const { notification } = App.useApp();
-    const { isAdminOrOwner } = useAuth();
+    const { isAdminOrOwner } = useOrgRole();
     const navigate = useNavigate();
     const { slug, sessionId } = useParams<{ slug: string; sessionId: string }>();
     const organizationId = activeOrganization?.id;
