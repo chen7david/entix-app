@@ -1,4 +1,4 @@
-import { type OrgRole } from "@web/src/features/auth";
+import type { OrgRole } from "@web/src/features/auth";
 import { useMemo } from "react";
 import { useActiveRole } from "./useActiveRole";
 

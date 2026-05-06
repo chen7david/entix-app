@@ -1,7 +1,7 @@
 import { BookOutlined, CrownOutlined, SafetyOutlined, UserOutlined } from "@ant-design/icons";
+import { useActiveRole } from "@web/src/features/organization";
 import { Button, Modal, Typography } from "antd";
 import type React from "react";
-import { useActiveRole } from "@web/src/features/organization";
 
 const { Text } = Typography;
 

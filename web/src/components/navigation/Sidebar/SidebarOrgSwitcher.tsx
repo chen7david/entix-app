@@ -1,7 +1,7 @@
 import { CheckOutlined, PlusOutlined, SwapOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { useActiveRole, useOrganization } from "@web/src/features/organization";
-import { Popover, theme, Typography } from "antd";
+import { Popover, Typography, theme } from "antd";
 import type React from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
@@ -171,7 +171,11 @@ export const SidebarOrgSwitcher: React.FC = () => {
                                 }}
                             >
                                 <Text
-                                    style={{ flex: 1, fontSize: 13, fontWeight: isActiveRole ? 600 : 400 }}
+                                    style={{
+                                        flex: 1,
+                                        fontSize: 13,
+                                        fontWeight: isActiveRole ? 600 : 400,
+                                    }}
                                     type={isActiveRole ? undefined : "secondary"}
                                     ellipsis
                                 >
@@ -179,7 +183,9 @@ export const SidebarOrgSwitcher: React.FC = () => {
                                     {role.slice(1)}
                                 </Text>
                                 {isActiveRole && (
-                                    <CheckOutlined style={{ color: token.colorPrimary, fontSize: 12 }} />
+                                    <CheckOutlined
+                                        style={{ color: token.colorPrimary, fontSize: 12 }}
+                                    />
                                 )}
                             </div>
                         );
