@@ -1,16 +1,15 @@
 import { SettingOutlined } from "@ant-design/icons";
-import { useAuth } from "@web/src/features/auth";
 import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
 import { useActivateCurrency } from "@web/src/features/finance/hooks/useActivateCurrency";
 import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
-import { useOrganization } from "@web/src/features/organization";
+import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { ThemeSelector, TimezoneSelector } from "@web/src/features/user-profiles";
 import { Card, Col, Row, Space, Typography } from "antd";
 
 const { Title, Text } = Typography;
 
 export const SettingsPage = () => {
-    const { isAdminOrOwner } = useAuth();
+    const { isAdminOrOwner } = useOrgRole();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
     const { data: currenciesData, isLoading: isLoadingCurrencies } = useOrgCurrencies(orgId);

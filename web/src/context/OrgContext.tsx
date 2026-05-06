@@ -4,6 +4,8 @@ interface OrgContextType {
     activeOrganization: any | null;
     loading: boolean;
     error: Error | null;
+    activeRole: string | null;
+    setActiveRole: (role: string | null) => void;
 }
 
 export const OrgContext = createContext<OrgContextType | undefined>(undefined);

@@ -124,10 +124,14 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
 
     const { mutateAsync: updateMemberRoleMutation, isPending: isUpdatingRole } = useMutation({
         mutationFn: async ({ memberId, roles }: { memberId: string; roles: string[] }) => {
-            return await authClient.organization.updateMemberRole({
+            const { data, error } = await authClient.organization.updateMemberRole({
                 memberId,
                 role: roles.join(","),
             });
+            if (error) {
+                throw new Error(error.message ?? "Failed to update member roles");
+            }
+            return data;
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
@@ -136,7 +140,13 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
 
     const { mutateAsync: removeMemberMutation, isPending: isRemovingMember } = useMutation({
         mutationFn: async ({ memberId }: { memberId: string }) => {
-            return await authClient.organization.removeMember({ memberIdOrEmail: memberId });
+            const { data, error } = await authClient.organization.removeMember({
+                memberIdOrEmail: memberId,
+            });
+            if (error) {
+                throw new Error(error.message ?? "Failed to remove member");
+            }
+            return data;
         },
         onSuccess: async () => {
             await queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });

@@ -5,4 +5,6 @@ export * from "./hooks/useCreateMember";
 export * from "./hooks/useInvitations";
 export * from "./hooks/useMembers";
 export * from "./hooks/useOrganization";
+export * from "./hooks/useActiveRole";
+export * from "./hooks/useOrgRole";
 export * from "./hooks/useOrgNavigate";

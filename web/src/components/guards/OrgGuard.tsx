@@ -8,7 +8,7 @@ import { authClient } from "@web/src/lib/auth-client";
 import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 import { Button } from "antd";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useNavigate, useParams } from "react-router";
 
 /**
@@ -32,6 +32,10 @@ export const OrgGuard: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(true); // pessimistic default — block until first sync
+    const [activeRole, setActiveRoleState] = useState<string | null>(() =>
+        slug ? localStorage.getItem(`activeRole:${slug}`) : null
+    );
+    const prevSlugRef = useRef(slug);
     const lastSyncedOrgIdRef = useRef<string | null>(null);
     const auth = useAuth();
 
@@ -42,6 +46,32 @@ export const OrgGuard: React.FC = () => {
     const orgListSettled = orgsLoaded && !orgsFetching;
     const activeOrganization =
         orgListSettled && slug ? organizations.find((o) => o.slug === slug) || null : null;
+
+    useEffect(() => {
+        if (slug === prevSlugRef.current) {
+            return;
+        }
+        prevSlugRef.current = slug;
+        if (!slug) {
+            setActiveRoleState(null);
+            return;
+        }
+        setActiveRoleState(localStorage.getItem(`activeRole:${slug}`));
+    }, [slug]);
+
+    const setActiveRole = useCallback(
+        (role: string | null) => {
+            if (!slug) return;
+            const key = `activeRole:${slug}`;
+            if (role) {
+                localStorage.setItem(key, role);
+            } else {
+                localStorage.removeItem(key);
+            }
+            setActiveRoleState(role);
+        },
+        [slug]
+    );
 
     // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (in this tab)
     useEffect(() => {
@@ -126,7 +156,9 @@ export const OrgGuard: React.FC = () => {
 
     // Provider — URL is the single source of truth for active org
     return (
-        <OrgProvider value={{ activeOrganization, loading: false, error: null }}>
+        <OrgProvider
+            value={{ activeOrganization, loading: false, error: null, activeRole, setActiveRole }}
+        >
             <Outlet />
         </OrgProvider>
     );

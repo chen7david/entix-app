@@ -4,6 +4,7 @@
 import { AppRoutes } from "@shared";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
 import { type OrgRole, type UserRole, useAuth } from "@web/src/features/auth";
+import { useOrgRole } from "@web/src/features/organization";
 import type React from "react";
 import { Navigate, Outlet, useLocation } from "react-router";
 
@@ -19,6 +20,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     redirectPath = AppRoutes.auth.signIn,
 }) => {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const { activeRole, loadingRoles, needsRoleSelection } = useOrgRole();
     const location = useLocation();
 
     if (isLoading) {
@@ -36,8 +38,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
 
     // Check organization roles
-    if (allowedOrgRoles && user && (!user.orgRole || !allowedOrgRoles.includes(user.orgRole))) {
-        return <Navigate to={AppRoutes.unauthorized} replace />;
+    if (allowedOrgRoles && user) {
+        // This route is expected to run under OrgGuard, where OrgContext provides activeRole.
+        if (loadingRoles || needsRoleSelection) {
+            return <CenteredSpin />;
+        }
+
+        const roleToCheck = activeRole as OrgRole | null;
+
+        if (!roleToCheck || !allowedOrgRoles.includes(roleToCheck)) {
+            return <Navigate to={AppRoutes.unauthorized} replace />;
+        }
     }
 
     return <Outlet />;

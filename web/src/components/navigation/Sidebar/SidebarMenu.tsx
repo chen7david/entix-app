@@ -19,8 +19,7 @@ import {
     YoutubeOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { useAuth } from "@web/src/features/auth";
-import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
+import { useOrganization, useOrgNavigate, useOrgRole } from "@web/src/features/organization";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Menu, type MenuProps } from "antd";
 import type React from "react";
@@ -31,7 +30,7 @@ export const SidebarMenu: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
     const { close } = useSidebar();
-    const { isAdminOrOwner, isStaff } = useAuth();
+    const { isAdminOrOwner, isStaff } = useOrgRole();
 
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
