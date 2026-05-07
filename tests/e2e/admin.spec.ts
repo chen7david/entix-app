@@ -1,13 +1,12 @@
 import { expect, test } from "@playwright/test";
 
-const BASE = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173";
 const ADMIN_EMAIL = process.env.TEST_ADMIN_EMAIL ?? "admin@test.com";
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD ?? "password";
 const ORG_SLUG = process.env.TEST_ORG_SLUG ?? "test-org";
 
 test.describe("Admin flows", () => {
     test.beforeEach(async ({ page }) => {
-        await page.goto(`${BASE}/auth/sign-in`);
+        await page.goto("/auth/sign-in");
         await page.getByLabel(/email/i).fill(ADMIN_EMAIL);
         await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
         await page.getByRole("button", { name: /sign in/i }).click();
@@ -22,32 +21,32 @@ test.describe("Admin flows", () => {
     });
 
     test("analytics page loads from admin index redirect", async ({ page }) => {
-        await page.goto(`${BASE}/org/${ORG_SLUG}/admin`);
+        await page.goto(`/org/${ORG_SLUG}/admin`);
         await expect(page).toHaveURL(/\/admin\/analytics$/);
     });
 
     test("members page loads", async ({ page }) => {
-        await page.goto(`${BASE}/org/${ORG_SLUG}/admin/members`);
+        await page.goto(`/org/${ORG_SLUG}/admin/members`);
         await expect(page).toHaveURL(/\/admin\/members$/);
     });
 
     test("invitations page loads", async ({ page }) => {
-        await page.goto(`${BASE}/org/${ORG_SLUG}/admin/invitations`);
+        await page.goto(`/org/${ORG_SLUG}/admin/invitations`);
         await expect(page).toHaveURL(/\/admin\/invitations$/);
     });
 
     test("billing accounts page loads", async ({ page }) => {
-        await page.goto(`${BASE}/org/${ORG_SLUG}/admin/billing/accounts`);
+        await page.goto(`/org/${ORG_SLUG}/admin/billing/accounts`);
         await expect(page).toHaveURL(/\/billing\/accounts$/);
     });
 
     test("enrollment stub page loads", async ({ page }) => {
-        await page.goto(`${BASE}/org/${ORG_SLUG}/admin/enrollment`);
+        await page.goto(`/org/${ORG_SLUG}/admin/enrollment`);
         await expect(page.getByText(/Enrollment Management/i)).toBeVisible();
     });
 
     test("member detail stub page loads", async ({ page }) => {
-        await page.goto(`${BASE}/org/${ORG_SLUG}/admin/members/test-id`);
+        await page.goto(`/org/${ORG_SLUG}/admin/members/test-id`);
         await expect(page.getByText(/Member Detail/i)).toBeVisible();
     });
 });

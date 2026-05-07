@@ -110,7 +110,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
         updateMemberRoles,
         removeMember,
         checkPermission,
-        userRoles: currentUserRoles,
         nextCursor,
         hasNextPage,
     } = useMembers(debouncedSearch, {
@@ -351,32 +350,17 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                 title="Members"
                 subtitle="Manage organization members and roles."
                 actions={
-                    <div className="flex flex-wrap items-center gap-4">
-                        {currentUserRoles && currentUserRoles.length > 0 ? (
-                            <Space>
-                                {currentUserRoles.map((r: string) => (
-                                    <Tag key={r} color="purple" className="text-sm px-3 py-1">
-                                        You are: {r.toUpperCase()}
-                                    </Tag>
-                                ))}
-                            </Space>
-                        ) : (
-                            <Tag color="red" className="text-sm px-3 py-1">
-                                Role: Unknown (ID: {currentUserId?.slice(0, 8)})
-                            </Tag>
-                        )}
-                        {canManage && (
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={() => setIsCreateModalOpen(true)}
-                                size="large"
-                                className="h-11 font-semibold transition-all duration-200"
-                            >
-                                Create New Member
-                            </Button>
-                        )}
-                    </div>
+                    canManage ? (
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setIsCreateModalOpen(true)}
+                            size="large"
+                            className="h-11 font-semibold transition-all duration-200"
+                        >
+                            Create New Member
+                        </Button>
+                    ) : undefined
                 }
             />
 
