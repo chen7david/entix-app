@@ -1,4 +1,5 @@
 import { RouteErrorBoundary } from "@web/src/components/error/RouteErrorBoundary";
+import { MobileBottomNav } from "@web/src/components/navigation/MobileBottomNav/MobileBottomNav";
 import { RolePickerModal } from "@web/src/components/navigation/RolePickerModal";
 import { Toolbar } from "@web/src/components/navigation/Toolbar/Toolbar";
 import { GlobalUploadManager } from "@web/src/features/media";
@@ -38,7 +39,7 @@ export const OrgAdminLayout: React.FC = () => {
                     }}
                 >
                     <Toolbar />
-                    <div className="p-8">
+                    <div className="p-4 md:p-8 pb-20 md:pb-8">
                         <div className="max-w-7xl mx-auto w-full min-h-0 flex flex-col flex-1">
                             <RouteErrorBoundary>
                                 <Outlet />
@@ -47,6 +48,7 @@ export const OrgAdminLayout: React.FC = () => {
                     </div>
                 </Content>
             </Layout>
+            <MobileBottomNav />
             <GlobalUploadManager />
             <RolePickerModal />
         </Layout>
