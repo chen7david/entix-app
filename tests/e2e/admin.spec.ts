@@ -12,7 +12,7 @@ test.describe("Admin flows", () => {
         await page.getByLabel(/password/i).fill(ADMIN_PASSWORD);
         await page.getByRole("button", { name: /sign in/i }).click();
         await page.waitForURL(
-            (url) => url.pathname.replace(/\/$/, "") === `/org/${ORG_SLUG}/dashboard`,
+            (url) => url.pathname.replace(/\/$/, "") === `/org/${ORG_SLUG}/dashboard`
         );
     });
 

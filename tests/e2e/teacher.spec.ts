@@ -12,7 +12,7 @@ test.describe("Teacher flows", () => {
         await page.getByLabel(/password/i).fill(TEACHER_PASSWORD);
         await page.getByRole("button", { name: /sign in/i }).click();
         await page.waitForURL(
-            (url) => url.pathname.replace(/\/$/, "") === `/org/${ORG_SLUG}/dashboard`,
+            (url) => url.pathname.replace(/\/$/, "") === `/org/${ORG_SLUG}/dashboard`
         );
     });
 

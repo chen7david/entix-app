@@ -189,7 +189,9 @@ export default function App() {
                                                 <Route path="admin">
                                                     <Route
                                                         index
-                                                        element={<Navigate to="analytics" replace />}
+                                                        element={
+                                                            <Navigate to="analytics" replace />
+                                                        }
                                                     />
                                                     <Route
                                                         path="media"

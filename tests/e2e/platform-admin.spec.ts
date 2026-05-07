@@ -14,9 +14,7 @@ test.describe("Platform admin flows", () => {
     });
 
     test("platform admin dashboard loads", async ({ page }) => {
-        await expect(page).toHaveURL(
-            (url) => url.pathname.replace(/\/$/, "") === "/admin"
-        );
+        await expect(page).toHaveURL((url) => url.pathname.replace(/\/$/, "") === "/admin");
         await expect(page.getByRole("heading")).toBeVisible();
     });
 
