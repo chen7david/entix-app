@@ -24,7 +24,7 @@ import { Outlet, useNavigate, useParams } from "react-router";
  *  1. Resolve org from URL slug against the cached org list.
  *  2. If org resolves and we haven't already synced this org id, call setActive()
  *     and refreshAuth() so that nested ProtectedRoutes see the correct orgRole.
- *  3. Persist the slug as a sessionStorage breadcrumb for useHomeRedirect.
+ *  3. Persist the slug as a localStorage breadcrumb for useHomeRedirect.
  *  4. Render children only after sync completes (isSyncing barrier).
  */
 export const OrgGuard: React.FC = () => {
@@ -73,10 +73,10 @@ export const OrgGuard: React.FC = () => {
         [slug]
     );
 
-    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (in this tab)
+    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (after refresh)
     useEffect(() => {
         if (!activeOrganization?.slug) return;
-        sessionStorage.setItem(STORAGE_KEYS.lastOrgSlug, activeOrganization.slug);
+        localStorage.setItem(STORAGE_KEYS.lastOrgSlug, activeOrganization.slug);
     }, [activeOrganization?.slug]);
 
     // 4. Sync server session to the URL-picked org.
