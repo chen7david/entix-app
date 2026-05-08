@@ -75,6 +75,25 @@ export function useLessons() {
     };
 }
 
+/** Fetch a single lesson by id (session exposes lessonId only — use this for titles). */
+export function useLessonById(organizationId: string | undefined, lessonId: string | undefined) {
+    const { isAuthenticated } = useAuth();
+
+    return useQuery({
+        queryKey: ["lesson", organizationId, lessonId],
+        enabled: !!organizationId && !!lessonId && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+        queryFn: async () => {
+            if (!organizationId || !lessonId) throw new Error("Organization and lesson required");
+            const api = getApiClient();
+            const res = await api.api.v1.orgs[":organizationId"].lessons[":lessonId"].$get({
+                param: { organizationId, lessonId },
+            });
+            return hcJson<LessonDto>(res);
+        },
+    });
+}
+
 export function useLessonLibrary(filters?: LessonFilters) {
     const { activeOrganization } = useOrganization();
     const { isAuthenticated } = useAuth();

@@ -182,6 +182,8 @@ export const BillingAccountsPage: React.FC = () => {
                 onClose={() => setIsManageDrawerOpen(false)}
                 account={selectedAccount}
                 orgId={orgId}
+                orgName={activeOrganization?.name}
+                logoUrl={activeOrganization?.logo}
                 size="default"
             />
             <CreateAccountDrawer
