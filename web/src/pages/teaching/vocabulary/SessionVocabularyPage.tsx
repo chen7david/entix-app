@@ -4,6 +4,7 @@ import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, getAvatarUrl } from "@share
 import { useQueries, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useOrgContext } from "@web/src/context/OrgContext";
+import { useLessonById } from "@web/src/features/lessons/hooks/useLessons";
 import { useOrgRole } from "@web/src/features/organization";
 import { useSessionById } from "@web/src/features/schedule";
 import { AddVocabularyForm, useVocabulary, VocabularyTable } from "@web/src/features/vocabulary";
@@ -14,11 +15,15 @@ import {
     POINTS_DRAFT_STEP,
     saveSessionPointsDraft,
 } from "@web/src/features/vocabulary/utils/sessionPointsDraft";
-import { countUniqueVocabularyWords } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
+import {
+    countUniqueVocabularyWords,
+    dedupeSessionVocabularyByWord,
+} from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
 import { useWalletTransfer } from "@web/src/features/wallet/hooks/useWalletTransfer";
 import { getApiClient } from "@web/src/lib/api-client";
 import { hcJson } from "@web/src/lib/hc-json";
+import { WordListPrintButton } from "@web/src/reports";
 import { App, Avatar, Button, Card, Result, Space, Table, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -47,6 +52,7 @@ export function SessionVocabularyPage() {
     const queryClient = useQueryClient();
 
     const sessionQuery = useSessionById(organizationId, sessionId);
+    const lessonQuery = useLessonById(organizationId, sessionQuery.data?.lessonId);
     const {
         items,
         isLoading,
@@ -599,7 +605,30 @@ export function SessionVocabularyPage() {
                 </Space>
             </Card>
 
-            <Card size="small" title={`Words for this session (${uniqueWordCount} unique)`}>
+            <Card
+                size="small"
+                title={`Words for this session (${uniqueWordCount} unique)`}
+                extra={
+                    organizationId && sessionQuery.data ? (
+                        <WordListPrintButton
+                            data={{
+                                sessionName: sessionQuery.data.title,
+                                lessonName:
+                                    lessonQuery.data?.title ?? sessionQuery.data.lessonId ?? "—",
+                                words: dedupeSessionVocabularyByWord(items).map(
+                                    (row) => row.vocabulary
+                                ),
+                                meta: {
+                                    title: "Vocabulary Word List",
+                                    orgName: activeOrganization?.name ?? "Organization",
+                                    logoUrl: activeOrganization?.logo ?? undefined,
+                                    generatedAt: new Date(),
+                                },
+                            }}
+                        />
+                    ) : null
+                }
+            >
                 <VocabularyTable
                     items={items}
                     loading={isLoading}

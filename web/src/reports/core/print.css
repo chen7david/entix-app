@@ -1,0 +1,152 @@
+/**
+ * Print stylesheet for the reports module.
+ *
+ * `!important` is used liberally and intentionally: the host app ships a
+ * Tailwind reset, Ant Design CSS, and a Vidstack global stylesheet, all of
+ * which would otherwise cascade into the print mount and break the document.
+ * The whole point of this file is to defeat that cascade.
+ *
+ * biome-ignore-all lint/complexity/noImportantStyles: print isolation requires it
+ */
+
+#print-root {
+    display: none;
+}
+
+/* Hard-reset properties that could mirror or rotate the document — applied
+ * in screen and print contexts so the printed output is identical regardless
+ * of any rtl/transform inherited from the host app. */
+#print-root,
+#print-root * {
+    direction: ltr !important;
+    unicode-bidi: isolate;
+    transform: none !important;
+    writing-mode: horizontal-tb !important;
+}
+
+@media print {
+    #root {
+        display: none !important;
+    }
+
+    /* Reset body itself for print so nothing cascades into #print-root. */
+    body {
+        direction: ltr !important;
+        transform: none !important;
+        writing-mode: horizontal-tb !important;
+    }
+
+    /* Ant Design portals mount on body outside #root — hide them so print preview is clean */
+    .ant-drawer-root,
+    .ant-modal-root,
+    .ant-tooltip,
+    .ant-popover,
+    .ant-dropdown,
+    .ant-notification,
+    .ant-message {
+        display: none !important;
+    }
+
+    /* Belt-and-suspenders: hide every direct child of body except the print mount */
+    body > *:not(#print-root) {
+        display: none !important;
+    }
+    #print-root {
+        display: block !important;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 18mm 15mm 20mm 15mm;
+
+        @bottom-right {
+            content: "Page " counter(page) " of " counter(pages);
+            font-size: 9pt;
+            color: #666;
+        }
+    }
+
+    body,
+    .doc-body {
+        font-family: "Inter", "Roboto", "Noto Sans", Arial, sans-serif;
+        font-size: 11pt;
+        line-height: 1.5;
+        color: #1a1a1a;
+    }
+
+    .doc-section {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .doc-table-row {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .doc-page-break {
+        break-before: page;
+        page-break-before: always;
+    }
+    .doc-no-break-after {
+        break-after: avoid;
+        page-break-after: avoid;
+    }
+
+    p,
+    li,
+    td,
+    th {
+        orphans: 3;
+        widows: 3;
+    }
+
+    .doc-layout {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .doc-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .doc-table thead {
+        display: table-header-group;
+    }
+    .doc-table tfoot {
+        display: table-footer-group;
+    }
+    .doc-table td,
+    .doc-table th {
+        font-size: 10pt;
+        padding: 5pt 8pt;
+    }
+    .doc-table th {
+        background-color: #f0f0f0 !important;
+        font-weight: 600;
+        text-align: left;
+    }
+    .doc-table tbody tr:nth-child(even) td {
+        background-color: #f8f8f8 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    .doc-table td,
+    .doc-table th {
+        border: 0.5pt solid #d0d0d0;
+    }
+
+    /* Strip decoration only inside the print document — leaving the rest
+     * of the page (which is hidden anyway) untouched. Scoped so specificity
+     * matches the other #print-root rules above. */
+    #print-root *,
+    body > #print-root * {
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+    a {
+        text-decoration: none;
+        color: inherit;
+    }
+}

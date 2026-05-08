@@ -8,6 +8,7 @@ import { FINANCIAL_CURRENCY_CONFIG, type WalletAccountDTO } from "@shared";
 import { TransactionAmount } from "@web/src/components/ui/TransactionAmount";
 import { useTransactionHistory } from "@web/src/features/wallet/hooks/useTransactionHistory";
 import { formatAccountDisplayName } from "@web/src/lib/account-display";
+import { StatementPrintDrawer } from "@web/src/reports";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
     App,
@@ -26,7 +27,7 @@ import {
     theme,
 } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useArchiveAccount, useUpdateAccount } from "../hooks/useAccountManagement";
 import { StudentFundingTab } from "./StudentFundingTab";
 
@@ -37,6 +38,8 @@ type Props = {
     onClose: () => void;
     account: WalletAccountDTO | null;
     orgId?: string;
+    orgName?: string;
+    logoUrl?: string | null;
     size?: "default" | "large";
 };
 
@@ -45,6 +48,8 @@ export const ManageAccountDrawer: React.FC<Props> = ({
     onClose,
     account,
     orgId,
+    orgName,
+    logoUrl,
     size = "default",
 }) => {
     const { notification } = App.useApp();
@@ -62,15 +67,6 @@ export const ManageAccountDrawer: React.FC<Props> = ({
         undefined,
         { accountId: account?.id }
     );
-
-    useEffect(() => {
-        if (open) {
-            setActiveTab("student-funding");
-        }
-        if (account) {
-            form.setFieldsValue({ name: account.name });
-        }
-    }, [open, account, form]);
 
     const handleUpdate = async (values: { name: string }) => {
         if (!account) return;
@@ -119,6 +115,14 @@ export const ManageAccountDrawer: React.FC<Props> = ({
             size={size}
             onClose={onClose}
             open={open}
+            afterOpenChange={(visible) => {
+                if (visible) {
+                    setActiveTab("student-funding");
+                    if (account) {
+                        form.setFieldsValue({ name: account.name });
+                    }
+                }
+            }}
             styles={{
                 body: { paddingBottom: 80 },
                 wrapper: {
@@ -126,17 +130,36 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                 },
             }}
         >
-            <div style={{ marginBottom: 16 }}>
-                <Title level={4} style={{ margin: 0 }}>
-                    {formatAccountDisplayName(account.name, currencyMeta?.code)}
-                </Title>
-                <Space size={4} style={{ marginTop: 4 }}>
-                    <Tag color="success">ACTIVE</Tag>
-                    {account.accountType === "funding" && <Tag color="purple">FUNDING</Tag>}
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                        {currencyMeta?.code} • {account.id.split("_").pop()}
-                    </Text>
-                </Space>
+            <div
+                style={{
+                    marginBottom: 16,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    gap: 16,
+                    flexWrap: "wrap",
+                }}
+            >
+                <div style={{ flex: "1 1 auto", minWidth: 200 }}>
+                    <Title level={4} style={{ margin: 0 }}>
+                        {formatAccountDisplayName(account.name, currencyMeta?.code)}
+                    </Title>
+                    <Space size={4} style={{ marginTop: 4 }}>
+                        <Tag color="success">ACTIVE</Tag>
+                        {account.accountType === "funding" && <Tag color="purple">FUNDING</Tag>}
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                            {currencyMeta?.code} • {account.id.split("_").pop()}
+                        </Text>
+                    </Space>
+                </div>
+                {orgId ? (
+                    <StatementPrintDrawer
+                        account={account}
+                        orgId={orgId}
+                        orgName={orgName ?? "Organization"}
+                        logoUrl={logoUrl ?? undefined}
+                    />
+                ) : null}
             </div>
 
             <Tabs
