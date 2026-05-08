@@ -1,4 +1,6 @@
 import { Button, Form, Input } from "antd";
+import type { InputRef } from "antd/es/input";
+import { useRef } from "react";
 
 export function AddVocabularyForm({
     onSubmit,
@@ -8,10 +10,16 @@ export function AddVocabularyForm({
     isSubmitting: boolean;
 }) {
     const [form] = Form.useForm<{ text: string }>();
+    const inputRef = useRef<InputRef>(null);
 
     const handleFinish = async (values: { text: string }) => {
         await onSubmit(values.text.trim());
-        form.resetFields();
+        /** Avoid `resetFields()` — it drops focus. Clear value only so the user
+         * can immediately type the next word without clicking back into the field. */
+        form.setFieldsValue({ text: "" });
+        requestAnimationFrame(() => {
+            inputRef.current?.focus({ preventScroll: true });
+        });
     };
 
     return (
@@ -29,7 +37,7 @@ export function AddVocabularyForm({
                     { min: 1, message: "Vocabulary text cannot be empty" },
                 ]}
             >
-                <Input placeholder="Enter vocabulary text" allowClear />
+                <Input ref={inputRef} placeholder="Enter vocabulary text" allowClear />
             </Form.Item>
             <Form.Item className="mb-2">
                 <Button type="primary" htmlType="submit" loading={isSubmitting}>
