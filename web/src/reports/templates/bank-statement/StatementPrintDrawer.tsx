@@ -90,7 +90,11 @@ export function StatementPrintDrawer({
      * balance-at-date endpoint; flag that to the user. */
     const isCurrentPeriod = dayjs(dateRange[1]).isSame(dayjs(), "day");
 
-    const canPrint = isExhausted && !isFetching;
+    /** Allow printing either once the range has been fully exhausted or once
+     * we've deliberately stopped paginating at the hard cap. In the truncated
+     * case the UI already communicates that only the first N transactions
+     * will be printed. */
+    const canPrint = (isExhausted || truncated) && !isFetching;
 
     const handlePrint = () => {
         if (!canPrint) return;
