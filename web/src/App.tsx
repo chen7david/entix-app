@@ -163,19 +163,31 @@ export default function App() {
                                                     path="change-password"
                                                     element={<ChangePasswordPage />}
                                                 />
-                                                <Route path="lessons" element={<LessonsPage />} />
-                                                <Route path="shop" element={<ShopPage />} />
-                                                <Route path="wallet" element={<WalletPage />} />
-                                                <Route path="movies" element={<MoviesPage />} />
-                                                <Route path="orders" element={<OrdersPage />} />
+                                                {/* Student-only: matches sidebar (learning + finance); staff use /teaching/* */}
                                                 <Route
-                                                    path="my-schedule"
-                                                    element={<StudentSchedulePage />}
-                                                />
-                                                <Route
-                                                    path="vocabulary"
-                                                    element={<StudentVocabularyPage />}
-                                                />
+                                                    element={
+                                                        <ProtectedRoute
+                                                            allowedOrgRoles={["student"]}
+                                                        />
+                                                    }
+                                                >
+                                                    <Route
+                                                        path="lessons"
+                                                        element={<LessonsPage />}
+                                                    />
+                                                    <Route path="shop" element={<ShopPage />} />
+                                                    <Route path="wallet" element={<WalletPage />} />
+                                                    <Route path="movies" element={<MoviesPage />} />
+                                                    <Route path="orders" element={<OrdersPage />} />
+                                                    <Route
+                                                        path="my-schedule"
+                                                        element={<StudentSchedulePage />}
+                                                    />
+                                                    <Route
+                                                        path="vocabulary"
+                                                        element={<StudentVocabularyPage />}
+                                                    />
+                                                </Route>
                                             </Route>
 
                                             {/* ── ADMIN: restricted to true organization managers ── */}
