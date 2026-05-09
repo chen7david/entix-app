@@ -6,6 +6,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineWorkersConfig({
     test: {
+        /** Integration hooks (D1 + auth) occasionally exceed Vitest’s default 10s under load. */
+        hookTimeout: 30_000,
         setupFiles: ["./tests/setup.ts"],
         poolOptions: {
             workers: {

@@ -137,6 +137,14 @@
         border: 0.5pt solid #d0d0d0;
     }
 
+    /* IPA glyphs and combining marks — stack ahead of Arial so printed word lists resolve tone marks reliably. */
+    #print-root .ipa,
+    body > #print-root .ipa {
+        font-family:
+            "Charis SIL", "Doulos SIL", "Gentium Plus", "Noto Sans IPA", Arial, sans-serif !important;
+        color: #444 !important;
+    }
+
     /* Strip decoration only inside the print document — leaving the rest
      * of the page (which is hidden anyway) untouched. Scoped so specificity
      * matches the other #print-root rules above. */

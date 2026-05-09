@@ -26,9 +26,17 @@ export const VOCABULARY_TRANSLATION_SCHEMA: AiJsonSchema = {
         },
         zh_translation: { type: "string" },
         needs_language_review: { type: "boolean" },
-        ipa_us: { type: "string" },
+        ipa_us: {
+            type: "string",
+            description:
+                "American English IPA transcription of the phrase, no surrounding slashes (e.g. ˈmɪl.jən).",
+        },
         syllables_en: { type: "string" },
-        syllables_ipa: { type: "string" },
+        syllables_ipa: {
+            type: "string",
+            description:
+                "IPA with hyphen-separated syllables within each word, spaces preserved between words, no surrounding slashes (e.g. ˈmɪl-jən).",
+        },
         definition_simple: { type: "string" },
     },
     required: [
@@ -57,9 +65,9 @@ export const VOCABULARY_TRANSLATION_INSTRUCTIONS = [
     "1. Return 'normalized_text' as the canonical form: capitalize proper nouns (e.g. 'China', 'iPhone'), lowercase common nouns/verbs (e.g. 'apple', 'run').",
     "2. Return 'zh_translation' in Simplified Chinese characters (not English, never empty).",
     "3. If uncertain about translation quality, still provide your best translation and set 'needs_language_review' to true.",
-    "4. Return 'ipa_us' as the American English IPA transcription of the phrase.",
+    "4. Return 'ipa_us' as the American English IPA transcription, without surrounding slashes (e.g. ˈmɪl.jən not /ˈmɪl.jən/).",
     "5. Return 'syllables_en' as the phrase with hyphen-separated syllables within each word, spaces preserved between words.",
-    "6. Return 'syllables_ipa' as the IPA transcription with hyphen-separated syllables within each word, spaces preserved between words.",
+    "6. Return 'syllables_ipa' as the IPA transcription with hyphen-separated syllables within each word, spaces preserved between words, without surrounding slashes.",
     "7. Return 'definition_simple' as a 1-sentence definition a 7-year-old can understand.",
 ].join("\n");
 
@@ -260,6 +268,14 @@ export class VocabularyProcessingService {
  * Runtime type guard for model output.
  * With response_format json_schema enabled, this is defensive validation rather than extraction.
  */
+/** Defensive unwrap when the model echoes IPA with orthographic slashes (any leading/trailing slash, not only a matched pair). */
+function stripIpaSlashes(s: string): string {
+    return s
+        .trim()
+        .replace(/^\/+|\/+$/g, "")
+        .trim();
+}
+
 function parseVocabularyTranslation(raw: string, fallbackText?: string): VocabularyTranslation {
     const parsed = JSON.parse(raw) as Partial<VocabularyTranslation>;
 
@@ -272,14 +288,19 @@ function parseVocabularyTranslation(raw: string, fallbackText?: string): Vocabul
         parsed.zh_translation.length === 0 ||
         typeof parsed.needs_language_review !== "boolean" ||
         typeof parsed.ipa_us !== "string" ||
-        parsed.ipa_us.length === 0 ||
         typeof parsed.syllables_en !== "string" ||
         parsed.syllables_en.length === 0 ||
         typeof parsed.syllables_ipa !== "string" ||
-        parsed.syllables_ipa.length === 0 ||
         typeof parsed.definition_simple !== "string" ||
         parsed.definition_simple.length === 0
     ) {
+        throw new InternalServerError("Invalid translation payload from AI");
+    }
+
+    const ipa_us = stripIpaSlashes(parsed.ipa_us);
+    const syllables_ipa = stripIpaSlashes(parsed.syllables_ipa);
+
+    if (ipa_us.length === 0 || syllables_ipa.length === 0) {
         throw new InternalServerError("Invalid translation payload from AI");
     }
 
@@ -287,9 +308,9 @@ function parseVocabularyTranslation(raw: string, fallbackText?: string): Vocabul
         normalized_text,
         zh_translation: parsed.zh_translation,
         needs_language_review: parsed.needs_language_review,
-        ipa_us: parsed.ipa_us,
+        ipa_us,
         syllables_en: parsed.syllables_en,
-        syllables_ipa: parsed.syllables_ipa,
+        syllables_ipa,
         definition_simple: parsed.definition_simple,
     };
 }

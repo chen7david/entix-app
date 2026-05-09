@@ -3,6 +3,7 @@ import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useOrganization } from "@web/src/features/organization";
+import { IpaBracketed } from "@web/src/features/vocabulary/components/IpaBracketed";
 import { VocabularyEditDrawer } from "@web/src/features/vocabulary/components/VocabularyEditDrawer";
 import { VocabularyStatusBadge } from "@web/src/features/vocabulary/components/VocabularyStatusBadge";
 import {
@@ -116,7 +117,7 @@ export default function GlobalVocabularyPage() {
             dataIndex: "ipaUs",
             key: "ipaUs",
             width: 120,
-            render: (text: string) => text || "—",
+            render: (text: string | null | undefined) => <IpaBracketed value={text} />,
         },
         {
             title: "Definition",
