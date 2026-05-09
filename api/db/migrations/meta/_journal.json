@@ -57,13 +57,6 @@
       "when": 1778346419963,
       "tag": "0007_vocabulary_bank_queued_dispatch_statuses",
       "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "6",
-      "when": 1778351153840,
-      "tag": "0008_financial_transaction_categories_updated_at",
-      "breakpoints": true
     }
   ]
 }

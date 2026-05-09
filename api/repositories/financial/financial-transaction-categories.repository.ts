@@ -21,14 +21,12 @@ export class FinancialTransactionCategoriesRepository {
         id: string,
         input: NewFinancialTransactionCategory
     ): Promise<FinancialTransactionCategory | null> {
-        const now = new Date();
         const [category] = await this.db
             .insert(financialTransactionCategories)
             .values({
                 ...input,
                 id,
                 archivedAt: null,
-                updatedAt: now,
             })
             .returning();
 
@@ -65,7 +63,7 @@ export class FinancialTransactionCategoriesRepository {
         const now = new Date();
         const [category] = await this.db
             .update(financialTransactionCategories)
-            .set({ archivedAt: now, updatedAt: now })
+            .set({ archivedAt: now })
             .where(eq(financialTransactionCategories.id, id))
             .returning();
 
