@@ -272,7 +272,7 @@ export class VocabularyProcessingService {
 function stripIpaSlashes(s: string): string {
     return s
         .trim()
-        .replace(/^\/|\/$/g, "")
+        .replace(/^\/+|\/+$/g, "")
         .trim();
 }
 

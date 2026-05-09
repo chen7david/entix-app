@@ -143,6 +143,39 @@ describe("VocabularyProcessingService", () => {
         );
     });
 
+    it("processText strips repeated leading/trailing IPA slashes in one pass", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "thunder",
+            status: "new",
+        });
+        aiService.generate.mockResolvedValueOnce({
+            text: JSON.stringify({
+                ...MOCK_SUCCESS_RESULT,
+                ipa_us: "//ˈθʌndər//",
+                syllables_ipa: "///ˈθʌn-dər///",
+            }),
+        });
+        vocabRepo.update.mockResolvedValue({});
+        vocabRepo.updateStatus.mockResolvedValue({});
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            undefined
+        );
+        await service.processText("vocab_1");
+
+        expect(vocabRepo.update).toHaveBeenCalledWith(
+            "vocab_1",
+            expect.objectContaining({
+                ipaUs: "ˈθʌndər",
+                syllablesIpa: "ˈθʌn-dər",
+            })
+        );
+    });
+
     it("processText sets review only when AI flags language quality", async () => {
         vocabRepo.findById.mockResolvedValueOnce({
             id: "vocab_1",
