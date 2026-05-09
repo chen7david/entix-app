@@ -66,7 +66,7 @@ describe("VocabularyProcessingService", () => {
         needs_language_review: false,
         ipa_us: "/hello/",
         syllables_en: "hel-lo",
-        syllables_ipa: "hel-lo",
+        syllables_ipa: "/hel-lo/",
         definition_simple: "A greeting",
     };
 
@@ -101,13 +101,46 @@ describe("VocabularyProcessingService", () => {
             zhTranslation: "你好",
             pinyin: "nǐ hǎo",
             needsLanguageReview: false,
-            ipaUs: "/hello/",
+            ipaUs: "hello",
             syllablesEn: "hel-lo",
             syllablesIpa: "hel-lo",
             definitionSimple: "A greeting",
         });
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
         expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
+    });
+
+    it("processText strips asymmetric IPA slashes on ipa_us and syllables_ipa", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            status: "new",
+        });
+        aiService.generate.mockResolvedValueOnce({
+            text: JSON.stringify({
+                ...MOCK_SUCCESS_RESULT,
+                ipa_us: "/hello",
+                syllables_ipa: "hel-lo/",
+            }),
+        });
+        vocabRepo.update.mockResolvedValue({});
+        vocabRepo.updateStatus.mockResolvedValue({});
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            undefined
+        );
+        await service.processText("vocab_1");
+
+        expect(vocabRepo.update).toHaveBeenCalledWith(
+            "vocab_1",
+            expect.objectContaining({
+                ipaUs: "hello",
+                syllablesIpa: "hel-lo",
+            })
+        );
     });
 
     it("processText sets review only when AI flags language quality", async () => {

@@ -12,6 +12,7 @@ import { dedupeSessionVocabularyByWord } from "@web/src/features/vocabulary/util
 import { Button, Empty, Popconfirm, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
+import { IpaBracketed } from "./IpaBracketed";
 import { VocabAudioCell } from "./VocabAudioCell";
 import { VocabularyStatusBadge } from "./VocabularyStatusBadge";
 
@@ -106,7 +107,7 @@ export function VocabularyTable({
                 title: "IPA",
                 key: "ipaUs",
                 width: 120,
-                render: (_, record) => getVocab(record).ipaUs || "—",
+                render: (_, record) => <IpaBracketed value={getVocab(record).ipaUs} />,
             },
             {
                 title: "Definition",

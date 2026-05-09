@@ -1,3 +1,4 @@
+import { IpaBracketed } from "@web/src/features/vocabulary/components/IpaBracketed";
 import type { VocabularyItemDTO } from "@web/src/features/vocabulary/hooks/useVocabulary";
 
 interface WordListRowProps {
@@ -14,7 +15,7 @@ export function WordListRow({ word, index }: WordListRowProps) {
              * between the visible text and the browser's hit-test layer, which
              * made selection land in apparently empty space. */}
             <td style={{ width: "18%", fontFamily: "Arial, sans-serif", color: "#444" }}>
-                {word.ipaUs ?? ""}
+                <IpaBracketed value={word.ipaUs} />
             </td>
             <td style={{ width: "38%", color: "#222" }}>{word.definitionSimple ?? ""}</td>
             <td style={{ width: "18%" }}>{word.zhTranslation ?? ""}</td>

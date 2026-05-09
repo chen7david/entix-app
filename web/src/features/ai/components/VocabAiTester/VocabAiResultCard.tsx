@@ -1,3 +1,4 @@
+import { IpaBracketed } from "@web/src/features/vocabulary/components/IpaBracketed";
 import { App, Badge, Button, Card, List, Space, Table, Tabs, Tag, Typography, theme } from "antd";
 import type { VocabAiTestResult } from "../../hooks/ai.hooks";
 
@@ -20,9 +21,12 @@ export function VocabAiResultCard({ result, elapsed }: Props) {
     const formattedItems = [
         { label: "zh_translation", value: result.result.zh_translation, strong: true },
         { label: "pinyin", value: result.result.pinyin },
-        { label: "ipa_us", value: result.result.ipa_us },
+        { label: "ipa_us", value: <IpaBracketed value={result.result.ipa_us} /> },
         { label: "syllables_en", value: result.result.syllables_en },
-        { label: "syllables_ipa", value: result.result.syllables_ipa },
+        {
+            label: "syllables_ipa",
+            value: <IpaBracketed value={result.result.syllables_ipa} />,
+        },
         { label: "definition_simple", value: result.result.definition_simple },
         {
             label: "needs_language_review",
