@@ -1,4 +1,5 @@
 import { BadRequestError, NotFoundError } from "@api/errors/app.error";
+import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
 import type { MemberRepository } from "@api/repositories/member.repository";
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
@@ -11,7 +12,6 @@ import {
     IdempotencyKeys,
 } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
-import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
 import { BaseService } from "./base.service";
 import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "./financial/finance-wallet.service";
