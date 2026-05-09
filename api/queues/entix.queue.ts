@@ -180,11 +180,6 @@ async function handleVocabularyProcessText(
     const db = drizzle(env.DB, { schema });
     const envVars = env as unknown as Record<string, unknown>;
     const vocabularyId = message.body.vocabularyId;
-    if (!envVars.GCP_CLIENT_EMAIL || !envVars.GCP_PRIVATE_KEY || !envVars.GCP_PROJECT_ID) {
-        console.error("[Queue] GCP secrets not configured — acking to prevent retry storm");
-        message.ack();
-        return;
-    }
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
     const aiService = new AiService({
@@ -193,8 +188,12 @@ async function handleVocabularyProcessText(
         defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
-    const credentials = parseGoogleTtsCredentials(envVars);
-    const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
+    // Text processing does not synthesize audio; avoid gating this path on TTS credentials.
+    const ttsService = {
+        generateAndUpload: async () => {
+            throw new InternalServerError("TTS is not available in text processing");
+        },
+    } as unknown as TtsService;
 
     const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
         logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {

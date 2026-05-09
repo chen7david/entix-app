@@ -1,5 +1,6 @@
-import { BadRequestError, NotFoundError } from "@api/errors/app.error";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.error";
 import {
+    getMemberRepository,
     getScheduledSessionsRepository,
     getSessionAttendancesRepository,
 } from "@api/factories/repository.factory";
@@ -19,9 +20,18 @@ export class EnrollmentHandlers {
 
         const sessionsRepo = getScheduledSessionsRepository(ctx);
         const attendancesRepo = getSessionAttendancesRepository(ctx);
+        const membersRepo = getMemberRepository(ctx);
         const session = await sessionsRepo.findByIdInOrganization(organizationId, sessionId);
         if (!session) {
             throw new NotFoundError("Session not found");
+        }
+        const membership = await membersRepo.find(userId, organizationId);
+        const roles = membership?.role
+            .split(",")
+            .map((role) => role.trim().toLowerCase())
+            .filter(Boolean);
+        if (!membership || !roles?.includes("student")) {
+            throw new ForbiddenError("User is not a student in this organization");
         }
 
         const enrollment = await attendancesRepo.upsert({
