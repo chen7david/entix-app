@@ -1,4 +1,4 @@
--- D1/SQLite: ADD COLUMN rejects non-constant defaults (unixepoch()); rebuild required.
+-- Drizzle-kit emits ALTER ADD unixepoch DEFAULT; D1 rejects that. Same end state as `0008_*` snapshot; CHECK columns unqualified so CREATE + RENAME stay valid SQLite.
 PRAGMA foreign_keys=OFF;--> statement-breakpoint
 CREATE TABLE `__new_financial_transaction_categories` (
 	`id` text PRIMARY KEY NOT NULL,

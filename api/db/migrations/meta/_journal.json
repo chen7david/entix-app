@@ -61,7 +61,7 @@
     {
       "idx": 8,
       "version": "6",
-      "when": 1778347072610,
+      "when": 1778351153840,
       "tag": "0008_financial_transaction_categories_updated_at",
       "breakpoints": true
     }
