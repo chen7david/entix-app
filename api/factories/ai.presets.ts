@@ -3,10 +3,10 @@ import { QUIZ_SYSTEM_PROMPT } from "@api/ai/prompts/quiz.prompt";
 import { SUMMARY_SYSTEM_PROMPT } from "@api/ai/prompts/summary.prompt";
 import { AI_MODELS } from "@api/constants/ai.constants";
 import type { AppContext } from "@api/helpers/types.helpers";
-import type { AiService } from "@api/services/ai.service";
+import type { AiTextProvider } from "@api/types/ai.types";
 import { createAiService } from "./ai.factory";
 
-export function createLessonAiService(ctx: AppContext): AiService {
+export function createLessonAiService(ctx: AppContext): AiTextProvider {
     return createAiService(ctx, {
         defaultModel: AI_MODELS.LESSON,
         systemPrompt: LESSON_SYSTEM_PROMPT,
@@ -14,7 +14,7 @@ export function createLessonAiService(ctx: AppContext): AiService {
     });
 }
 
-export function createQuizAiService(ctx: AppContext): AiService {
+export function createQuizAiService(ctx: AppContext): AiTextProvider {
     return createAiService(ctx, {
         defaultModel: AI_MODELS.QUIZ,
         systemPrompt: QUIZ_SYSTEM_PROMPT,
@@ -22,7 +22,7 @@ export function createQuizAiService(ctx: AppContext): AiService {
     });
 }
 
-export function createSummaryAiService(ctx: AppContext): AiService {
+export function createSummaryAiService(ctx: AppContext): AiTextProvider {
     return createAiService(ctx, {
         defaultModel: AI_MODELS.SUMMARY,
         systemPrompt: SUMMARY_SYSTEM_PROMPT,

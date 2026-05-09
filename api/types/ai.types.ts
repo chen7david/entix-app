@@ -1,4 +1,4 @@
-/** Model identifier for OpenAI-compatible providers (Open WebUI). */
+/** Gemini model id passed to `models/{id}:generateContent`. */
 export type AiTextModel = string;
 
 /** Role for a message turn in a chat conversation. */
@@ -64,13 +64,20 @@ export type AiGenerateResult = {
     generatedAt: string;
 };
 
-/** Full config for AiService construction. */
+/** Shared surface implemented by {@link AiService}. */
+export type AiTextProvider = {
+    generate(prompt: string, options?: AiGenerateOptions): Promise<AiGenerateResult>;
+    chat(messages: AiMessage[], options?: AiGenerateOptions): Promise<AiGenerateResult>;
+    getModel(): AiTextModel;
+    stream(prompt: string, options?: AiGenerateOptions): Promise<ReadableStream>;
+    fetchModels(): Promise<string[]>;
+};
+
+/** Full config for AiService construction (Google AI Studio). */
 export type AiServiceConfig = {
-    /** Open WebUI API key. */
+    /** Google AI Studio / Gemini API key. */
     apiKey: string;
-    /** OpenAI-compatible endpoint URL (chat completions). */
-    endpoint: string;
-    /** Default model to run inference against. */
+    /** Default model id (e.g. `gemini-2.5-flash`). */
     defaultModel: AiTextModel;
     /** Optional system prompt prepended to every request. */
     systemPrompt?: string;
