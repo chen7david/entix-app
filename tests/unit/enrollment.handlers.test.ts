@@ -38,7 +38,10 @@ describe("EnrollmentHandlers.createEnrollment", () => {
         );
 
         await expect(
-            EnrollmentHandlers.createEnrollment(ctx as unknown as CreateEnrollmentCtx, undefined as never)
+            EnrollmentHandlers.createEnrollment(
+                ctx as unknown as CreateEnrollmentCtx,
+                undefined as never
+            )
         ).rejects.toBeInstanceOf(ForbiddenError);
         expect(mocks.upsert).not.toHaveBeenCalled();
     });
@@ -90,7 +93,10 @@ describe("EnrollmentHandlers.createEnrollment", () => {
         );
 
         await expect(
-            EnrollmentHandlers.createEnrollment(ctx as unknown as CreateEnrollmentCtx, undefined as never)
+            EnrollmentHandlers.createEnrollment(
+                ctx as unknown as CreateEnrollmentCtx,
+                undefined as never
+            )
         ).rejects.toBeInstanceOf(NotFoundError);
     });
 });
