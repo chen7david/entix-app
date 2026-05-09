@@ -1,9 +1,11 @@
 import { InternalServerError } from "@api/errors/app.error";
+import type { UploadRepository } from "@api/repositories/upload.repository";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import type { AiJsonSchema } from "@api/types/ai.types";
+import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { pinyin } from "pinyin-pro";
 import type { AiService } from "./ai.service";
-import type { TtsService } from "./tts.service";
+import type { TtsAudioResult, TtsService } from "./tts.service";
 
 export type VocabularyTranslation = {
     normalized_text: string;
@@ -67,7 +69,9 @@ export class VocabularyProcessingService {
         private readonly vocabRepo: VocabularyBankRepository,
         private readonly aiService: AiService,
         private readonly ttsService: TtsService,
-        private readonly deps?: VocabularyProcessingDeps
+        /** Omit only in narrow tests; production queue handlers should always supply audit logging. */
+        private readonly deps?: VocabularyProcessingDeps,
+        private readonly uploadRepo?: UploadRepository
     ) {}
 
     async processText(vocabularyId: string): Promise<void> {
@@ -131,7 +135,7 @@ export class VocabularyProcessingService {
                 status: "text_ready",
             });
         } catch (error: unknown) {
-            await this.deps?.logPipelineFailure("text", vocabularyId, error);
+            await this.emitPipelineFailure("text", vocabularyId, error);
             throw error;
         }
     }
@@ -152,21 +156,104 @@ export class VocabularyProcessingService {
         await this.vocabRepo.updateStatus(vocabularyId, "processing_audio");
 
         try {
-            const { enAudioUrl, zhAudioUrl } = await this.ttsService.generateAndUpload(
+            const ttsResult: TtsAudioResult = await this.ttsService.generateAndUpload(
                 vocabularyId,
                 item.text,
                 item.zhTranslation
             );
 
+            if (this.uploadRepo) {
+                const organizationId = PLATFORM_ORGANIZATION_ID;
+                try {
+                    await Promise.all([
+                        this.ensureVocabularyAudioUploadRecord({
+                            organizationId,
+                            bucketKey: ttsResult.enBucketKey,
+                            url: ttsResult.enAudioUrl,
+                            originalName: `vocabulary-${vocabularyId}-en.mp3`,
+                            fileSize: ttsResult.enBytes,
+                        }),
+                        this.ensureVocabularyAudioUploadRecord({
+                            organizationId,
+                            bucketKey: ttsResult.zhBucketKey,
+                            url: ttsResult.zhAudioUrl,
+                            originalName: `vocabulary-${vocabularyId}-zh.mp3`,
+                            fileSize: ttsResult.zhBytes,
+                        }),
+                    ]);
+                } catch (registryError: unknown) {
+                    console.error(
+                        "[VocabularyProcessingService] Uploads registry failed after TTS; deleting bucket objects then rethrowing:",
+                        registryError
+                    );
+                    await this.ttsService
+                        .deleteUploadedAudio(ttsResult)
+                        .catch((cleanupErr: unknown) => {
+                            console.error(
+                                "[VocabularyProcessingService] Failed to delete orphaned TTS objects after uploads registry error:",
+                                cleanupErr
+                            );
+                        });
+                    throw registryError;
+                }
+            } else {
+                console.warn(
+                    "[VocabularyProcessingService] uploadRepo not configured — TTS audio is not registered in uploads (Files & Uploads)."
+                );
+            }
+
             await this.vocabRepo.update(vocabularyId, {
-                enAudioUrl,
-                zhAudioUrl,
+                enAudioUrl: ttsResult.enAudioUrl,
+                zhAudioUrl: ttsResult.zhAudioUrl,
                 status: "active",
             });
         } catch (error: unknown) {
-            await this.deps?.logPipelineFailure("audio", vocabularyId, error);
+            await this.emitPipelineFailure("audio", vocabularyId, error);
             throw error;
         }
+    }
+
+    private async emitPipelineFailure(
+        phase: "text" | "audio",
+        vocabularyId: string,
+        error: unknown
+    ): Promise<void> {
+        if (this.deps?.logPipelineFailure) {
+            await this.deps.logPipelineFailure(phase, vocabularyId, error);
+            return;
+        }
+        console.warn(
+            `[VocabularyProcessingService] Pipeline failure (${phase}) with no logPipelineFailure hook configured:`,
+            error
+        );
+    }
+
+    /** Vocabulary bank rows are platform-global; uploads are attributed to the platform org. */
+    private async ensureVocabularyAudioUploadRecord(input: {
+        organizationId: string;
+        bucketKey: string;
+        /** Public CDN URL (matches `en_audio_url` / `zh_audio_url` on vocabulary_bank). */
+        url: string;
+        originalName: string;
+        fileSize: number;
+    }): Promise<void> {
+        if (!this.uploadRepo) return;
+        const existing = await this.uploadRepo.findUploadByBucketKey(
+            input.bucketKey,
+            input.organizationId
+        );
+        if (existing) return;
+        await this.uploadRepo.create({
+            id: crypto.randomUUID(),
+            organizationId: input.organizationId,
+            originalName: input.originalName,
+            bucketKey: input.bucketKey,
+            url: input.url,
+            fileSize: input.fileSize,
+            contentType: "audio/mpeg",
+            uploadedBy: null,
+            status: "completed",
+        });
     }
 }
 

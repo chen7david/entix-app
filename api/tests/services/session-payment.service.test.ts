@@ -49,7 +49,10 @@ describe("SessionPaymentService", () => {
             });
 
             const expectedKey = `session_payment:${sessionId}:${userId}`;
-            const record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
+            const record = await paymentRequestsRepo.findByOrganizationAndIdempotencyKey(
+                organizationId,
+                expectedKey
+            );
 
             expect(record).not.toBeNull();
             expect(record?.referenceType).toBe("session");
@@ -90,7 +93,10 @@ describe("SessionPaymentService", () => {
                 performedBy: userId,
             });
             const expectedKey = `session_payment:${sessionId}:${userId}`;
-            const record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
+            const record = await paymentRequestsRepo.findByOrganizationAndIdempotencyKey(
+                organizationId,
+                expectedKey
+            );
             expect(record?.id).toMatch(/^pr_/);
         });
 
@@ -127,7 +133,10 @@ describe("SessionPaymentService", () => {
             );
 
             const expectedKey = `session_payment:${sessionId}:${userId}`;
-            let record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
+            let record = await paymentRequestsRepo.findByOrganizationAndIdempotencyKey(
+                organizationId,
+                expectedKey
+            );
             expect(record?.status).toBe("failed");
             expect(record?.failureReason).toBe("Simulated failure");
 
@@ -135,7 +144,10 @@ describe("SessionPaymentService", () => {
             mockTransactions.insert = vi.fn().mockResolvedValueOnce(undefined);
             await failingService.processSessionPayment(payload);
 
-            record = await paymentRequestsRepo.findByIdempotencyKey(expectedKey);
+            record = await paymentRequestsRepo.findByOrganizationAndIdempotencyKey(
+                organizationId,
+                expectedKey
+            );
             expect(record?.status).toBe("completed");
         });
     });

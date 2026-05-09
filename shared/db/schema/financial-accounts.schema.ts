@@ -30,6 +30,14 @@ export const financialAccounts = sqliteTable(
             .$type<"savings" | "funding" | "treasury" | "system">()
             .notNull()
             .default(ACCOUNT_TYPES.SAVINGS),
+        /**
+         * Nullable: NULL means no explicit per-account cap on this row's CHECK; session debits
+         * resolve the effective limit in `resolveOverdraftLimit` (`shared/utils/billing.ts`):
+         * account `overdraftLimitCents` when set, else plan default, else 0.
+         *
+         * DB CHECK `overdraft_limit_non_negative` uses `>= 0`; in SQL, that expression evaluates to
+         * UNKNOWN for NULL, so the row passes — NULL is intentionally "no cap on this column," not a violation.
+         */
         overdraftLimitCents: integer("overdraft_limit_cents"),
     },
     (t) => [

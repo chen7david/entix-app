@@ -3,6 +3,7 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 import { generateOpaqueId } from "../../lib/id";
 import { authUsers } from "./auth.schema"; // Import correctly explicitly
 
+/** Slug is unique via column `.unique()` only (single index; see Drizzle migration `drop_duplicate_org_slug_index`). */
 export const authOrganizations = sqliteTable(
     "auth_organizations",
     {
@@ -13,7 +14,7 @@ export const authOrganizations = sqliteTable(
         createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
         metadata: text("metadata"),
     },
-    (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)]
+    (_table) => []
 );
 
 export type AuthOrganization = typeof authOrganizations.$inferSelect;

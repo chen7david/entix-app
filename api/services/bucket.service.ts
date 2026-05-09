@@ -63,12 +63,15 @@ export class BucketService extends BaseService {
             );
         }
 
+        const bytes =
+            data instanceof Blob ? data.size : data instanceof ArrayBuffer ? data.byteLength : 0;
+
         return {
             asset_id: crypto.randomUUID(),
             public_id: key,
             version: Date.now(),
             format: contentType.split("/")[1] || "bin",
-            bytes: data instanceof Blob ? data.size : 0, // Simplified for brevity
+            bytes,
             secure_url: `${this.config.publicUrl}/${key}`,
             created_at: new Date().toISOString(),
         };

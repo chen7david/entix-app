@@ -37,9 +37,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to={AppRoutes.unauthorized} replace />;
     }
 
-    // Check organization roles
-    if (allowedOrgRoles && user) {
-        // This route is expected to run under OrgGuard, where OrgContext provides activeRole.
+    // Check organization roles (must run under OrgGuard so useOrgRole resolves activeRole).
+    if (allowedOrgRoles?.length) {
+        if (!user) {
+            return <Navigate to={AppRoutes.unauthorized} replace />;
+        }
         if (loadingRoles || needsRoleSelection) {
             return <CenteredSpin />;
         }

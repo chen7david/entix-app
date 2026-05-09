@@ -163,7 +163,7 @@ export default function App() {
                                                     path="change-password"
                                                     element={<ChangePasswordPage />}
                                                 />
-                                                {/* Student-only: matches sidebar (learning + finance); staff use /teaching/* */}
+                                                {/* Student-only (org role `student`, not Better Auth resource "member"): staff hitting /dashboard/wallet|shop|… are redirected server-side in the router. */}
                                                 <Route
                                                     element={
                                                         <ProtectedRoute

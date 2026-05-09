@@ -35,6 +35,10 @@ const TTS_ENDPOINT = "https://texttospeech.googleapis.com/v1/text:synthesize";
 export type TtsAudioResult = {
     enAudioUrl: string;
     zhAudioUrl: string;
+    enBucketKey: string;
+    zhBucketKey: string;
+    enBytes: number;
+    zhBytes: number;
 };
 
 type SynthesiseInput = {
@@ -89,7 +93,22 @@ export class TtsService extends BaseService {
         return {
             enAudioUrl: enUpload.secure_url,
             zhAudioUrl: zhUpload.secure_url,
+            enBucketKey: enUpload.public_id,
+            zhBucketKey: zhUpload.public_id,
+            enBytes: enUpload.bytes,
+            zhBytes: zhUpload.bytes,
         };
+    }
+
+    /**
+     * Removes synthesized mp3 objects from object storage (e.g. after upload-registry failure).
+     * Safe to call after partial failure; {@link BucketService.delete} tolerates 404.
+     */
+    async deleteUploadedAudio(ttsResult: TtsAudioResult): Promise<void> {
+        await Promise.all([
+            this.bucketService.delete(ttsResult.enBucketKey),
+            this.bucketService.delete(ttsResult.zhBucketKey),
+        ]);
     }
 
     private async synthesise(token: string, input: SynthesiseInput): Promise<ArrayBuffer> {

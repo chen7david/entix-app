@@ -244,4 +244,54 @@ describe("ProtectedRoute", () => {
 
         expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
     });
+
+    it("should deny staff access to student-only org routes (e.g. wallet)", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: "teacher",
+            userRoles: ["teacher"],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: true,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: true,
+        });
+        vi.mocked(useAuth).mockReturnValue({
+            user: {
+                id: "1",
+                email: "teacher@example.com",
+                name: "Teacher",
+                globalRole: "user",
+                emailVerified: true,
+                orgRole: "teacher",
+                activeMemberId: "m1",
+                activeOrganizationId: "o1",
+            },
+            isAuthenticated: true,
+            isLoading: false,
+            isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: true,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: true,
+            refreshAuth: vi.fn() as any,
+        });
+
+        render(
+            <MemoryRouter initialEntries={["/org/acme/dashboard/wallet"]}>
+                <Routes>
+                    <Route element={<ProtectedRoute allowedOrgRoles={["student"]} />}>
+                        <Route path="/org/acme/dashboard/wallet" element={<MockDashboard />} />
+                    </Route>
+                    <Route path={AppRoutes.unauthorized} element={<MockUnauthorized />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
+    });
 });

@@ -12,7 +12,7 @@ export type CreateUploadInput = {
     fileSize: number;
     contentType: string;
     organizationId: string;
-    uploadedBy: string;
+    uploadedBy: string | null;
     status: "pending" | "completed" | "failed";
 };
 
@@ -31,7 +31,14 @@ export class UploadRepository {
     constructor(private db: AppDb) {}
 
     async create(input: CreateUploadInput): Promise<schema.Upload> {
-        const [upload] = await this.db.insert(schema.uploads).values(input).returning();
+        const [upload] = await this.db
+            .insert(schema.uploads)
+            .values({
+                ...input,
+                // SQLite distinguishes NULL from omitted; never persist undefined.
+                uploadedBy: input.uploadedBy ?? null,
+            })
+            .returning();
         return upload;
     }
 
@@ -49,6 +56,19 @@ export class UploadRepository {
         const upload = await this.db.query.uploads.findFirst({
             where: and(
                 eq(schema.uploads.url, url),
+                eq(schema.uploads.organizationId, organizationId)
+            ),
+        });
+        return upload ?? null;
+    }
+
+    async findUploadByBucketKey(
+        bucketKey: string,
+        organizationId: string
+    ): Promise<schema.Upload | null> {
+        const upload = await this.db.query.uploads.findFirst({
+            where: and(
+                eq(schema.uploads.bucketKey, bucketKey),
                 eq(schema.uploads.organizationId, organizationId)
             ),
         });

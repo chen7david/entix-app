@@ -22,6 +22,34 @@
       "when": 1777921385926,
       "tag": "0002_nostalgic_korath",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1778285763909,
+      "tag": "0003_uploads_uploaded_by_nullable",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1778285963867,
+      "tag": "0004_uploads_org_bucket_key_unique",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1778286676379,
+      "tag": "0005_drop_duplicate_org_slug_index",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1778287243592,
+      "tag": "0006_payment_requests_org_idempotency_uploads_fk_set_null",
+      "breakpoints": true
     }
   ]
 }

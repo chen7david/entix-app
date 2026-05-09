@@ -20,7 +20,10 @@ export type SessionPaymentEventType = (typeof SESSION_PAYMENT_EVENT_TYPES)[numbe
  * POLICY:
  * 1. Transactional events (paid/refunded) are linked to a financial_transaction.
  * 2. Manual overrides (manual_paid/manual_reset) are logically "free" and have no transaction.
- * 3. Only ONE manual override is permitted per user/session pair to avoid accounting ambiguity.
+ * 3. `uq_spe_session_user_manual` is per (session, user, eventType): at most one `manual_paid` and one
+ *    `manual_reset` each. A second `manual_reset` for the same pair is rejected by SQLite — if product
+ *    needs multiple reset cycles, use a supersede pattern (e.g. new row types) or relax this index intentionally.
+ *    TODO: track product decision / migration path when admins need multiple resets (issue or roadmap).
  */
 export const financialSessionPaymentEvents = sqliteTable(
     "financial_session_payment_events",
@@ -67,9 +70,7 @@ export const financialSessionPaymentEvents = sqliteTable(
             .on(t.sessionId, t.userId, t.transactionId)
             .where(sql`${t.transactionId} IS NOT NULL`),
 
-        // Prevents duplicate manual events per student per session.
-        // This index ensures only ONE manual record can exist for a sessionId+userId pair
-        // if transactionId is NULL.
+        // At most one row per (session, user, eventType) when transactionId IS NULL.
         uniqueIndex("uq_spe_session_user_manual")
             .on(t.sessionId, t.userId, t.eventType)
             .where(sql`${t.transactionId} IS NULL`),
