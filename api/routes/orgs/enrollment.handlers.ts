@@ -4,6 +4,7 @@ import {
     getScheduledSessionsRepository,
     getSessionAttendancesRepository,
 } from "@api/factories/repository.factory";
+import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { EnrollmentRoutes } from "./enrollment.routes";
@@ -26,11 +27,8 @@ export class EnrollmentHandlers {
             throw new NotFoundError("Session not found");
         }
         const membership = await membersRepo.find(userId, organizationId);
-        const roles = membership?.role
-            .split(",")
-            .map((role) => role.trim().toLowerCase())
-            .filter(Boolean);
-        if (!membership || !roles?.includes("student")) {
+        const roles = parseAuthMemberRoles(membership?.role);
+        if (!membership || !roles.includes("student")) {
             throw new ForbiddenError("User is not a student in this organization");
         }
 

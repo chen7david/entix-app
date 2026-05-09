@@ -46,6 +46,25 @@ describe("EnrollmentHandlers.createEnrollment", () => {
         expect(mocks.upsert).not.toHaveBeenCalled();
     });
 
+    it("returns 403 when target user is not a member of the organization", async () => {
+        mocks.findSessionByIdInOrganization.mockResolvedValue({ id: "session_1" });
+        mocks.findMember.mockResolvedValue(null);
+
+        const ctx = makeCtx(
+            { organizationId: "org_1", sessionId: "session_1" },
+            { userId: "user_other_org" },
+            vi.fn()
+        );
+
+        await expect(
+            EnrollmentHandlers.createEnrollment(
+                ctx as unknown as CreateEnrollmentCtx,
+                undefined as never
+            )
+        ).rejects.toBeInstanceOf(ForbiddenError);
+        expect(mocks.upsert).not.toHaveBeenCalled();
+    });
+
     it("creates enrollment for valid student member", async () => {
         const joinedAt = new Date();
         mocks.findSessionByIdInOrganization.mockResolvedValue({ id: "session_1" });

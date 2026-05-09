@@ -11,6 +11,7 @@ import {
     IdempotencyKeys,
 } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
+import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
 import { BaseService } from "./base.service";
 import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "./financial/finance-wallet.service";
@@ -79,10 +80,7 @@ export class SessionScheduleService extends BaseService {
             throw new BadRequestError("Teacher must be a member of the organization.");
         }
 
-        const roles = membership.role
-            .split(",")
-            .map((role) => role.trim().toLowerCase())
-            .filter(Boolean);
+        const roles = parseAuthMemberRoles(membership.role);
 
         if (!roles.includes("teacher") && !roles.includes("admin") && !roles.includes("owner")) {
             throw new BadRequestError("Assigned teacher must have teacher, admin, or owner role.");
@@ -104,10 +102,7 @@ export class SessionScheduleService extends BaseService {
                     `Selected attendee ${userId} is not a member of the organization.`
                 );
             }
-            const roles = membership.role
-                .split(",")
-                .map((role) => role.trim().toLowerCase())
-                .filter(Boolean);
+            const roles = parseAuthMemberRoles(membership.role);
             if (!roles.includes("student")) {
                 throw new BadRequestError(
                     "Only members with student role can be added as session attendees."

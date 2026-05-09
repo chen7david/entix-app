@@ -23,15 +23,6 @@ vi.mock("@api/services/ai.service", () => ({
     AiService: class {},
 }));
 
-vi.mock("@api/services/tts.service", () => ({
-    parseGoogleTtsCredentials: vi.fn(() => ({})),
-    TtsService: class {},
-}));
-
-vi.mock("@api/factories/bucket.factory", () => ({
-    getBucketClientFromEnv: vi.fn(() => ({})),
-}));
-
 vi.mock("@api/services/vocabulary-processing.service", () => ({
     VOCABULARY_TRANSLATION_INSTRUCTIONS: "translate",
     VocabularyProcessingService: class {

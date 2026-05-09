@@ -78,6 +78,7 @@ describe("VocabularyProcessingService", () => {
             definitionSimple: "A greeting",
         });
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 
     it("processText sets review only when AI flags language quality", async () => {
@@ -111,6 +112,7 @@ describe("VocabularyProcessingService", () => {
             })
         );
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 
     it("processText leaves processing_text, logs pipeline failure, and rethrows on parse errors", async () => {
@@ -139,6 +141,7 @@ describe("VocabularyProcessingService", () => {
 
         expect(vocabRepo.update).not.toHaveBeenCalled();
         expect(logPipelineFailure).toHaveBeenCalledTimes(1);
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 
     it("processAudio uploads audio and transitions text_ready -> active", async () => {

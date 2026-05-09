@@ -188,7 +188,7 @@ async function handleVocabularyProcessText(
         defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
-    // Text processing does not synthesize audio; avoid gating this path on TTS credentials.
+    // Text processing never calls TTS. If it did, `processText` catches, runs logPipelineFailure, then rethrows — so the queue still hits retry().
     const ttsService = {
         generateAndUpload: async () => {
             throw new InternalServerError("TTS is not available in text processing");
