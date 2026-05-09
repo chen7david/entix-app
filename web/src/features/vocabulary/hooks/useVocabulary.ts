@@ -14,8 +14,10 @@ import { useMemo } from "react";
 
 export type VocabularyStatus =
     | "new"
+    | "queued_text"
     | "processing_text"
     | "text_ready"
+    | "queued_audio"
     | "processing_audio"
     | "active"
     | "review";
@@ -415,6 +417,9 @@ export const useVocabularyBank = (organizationId?: string, search?: string) => {
             notification.success({ message: "Vocabulary item deleted from bank" });
             queryClient.invalidateQueries({ queryKey: ["vocabulary-bank", organizationId] });
             queryClient.invalidateQueries({ queryKey: ["vocabulary", organizationId] });
+            queryClient.invalidateQueries({
+                queryKey: ["vocabulary-bank-library", organizationId],
+            });
         },
         onError: (error: unknown) =>
             notification.error({

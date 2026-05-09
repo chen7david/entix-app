@@ -16,8 +16,10 @@ const VocabularyBankSchema = z.object({
     zhAudioUrl: z.string().nullable(),
     status: z.enum([
         "new",
+        "queued_text",
         "processing_text",
         "text_ready",
+        "queued_audio",
         "processing_audio",
         "active",
         "review",
@@ -33,9 +35,8 @@ const UpdateVocabularyBankSchema = z.object({
     syllablesEn: z.string().nullable().optional(),
     syllablesIpa: z.string().nullable().optional(),
     definitionSimple: z.string().nullable().optional(),
-    status: z
-        .enum(["new", "processing_text", "text_ready", "processing_audio", "active", "review"])
-        .optional(),
+    // Pipeline-internal states (`queued_*`, `processing_*`) are not settable via API — only cron/workers advance those.
+    status: z.enum(["new", "text_ready", "active", "review"]).optional(),
 });
 
 const StudentVocabularyWithVocabSchema = z.object({

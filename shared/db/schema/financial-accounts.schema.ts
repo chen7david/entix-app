@@ -19,6 +19,7 @@ export const financialAccounts = sqliteTable(
         name: text("name").notNull(),
         balanceCents: integer("balance_cents").notNull().default(0),
         isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+        /** Matches legacy `DEFAULT NULL` in SQLite; dropping it would churn full-table rebuild migrations for no runtime gain. */
         archivedAt: integer("archived_at", { mode: "timestamp_ms" }).default(sql`NULL`),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()

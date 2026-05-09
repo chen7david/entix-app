@@ -76,7 +76,7 @@ export class VocabularyProcessingService {
 
     async processText(vocabularyId: string): Promise<void> {
         const item = await this.vocabRepo.findById(vocabularyId);
-        if (!item || (item.status !== "new" && item.status !== "processing_text")) {
+        if (!item || !["new", "queued_text", "processing_text"].includes(item.status)) {
             return;
         }
 
@@ -142,7 +142,7 @@ export class VocabularyProcessingService {
 
     async processAudio(vocabularyId: string): Promise<void> {
         const item = await this.vocabRepo.findById(vocabularyId);
-        if (!item || (item.status !== "text_ready" && item.status !== "processing_audio")) {
+        if (!item || !["text_ready", "queued_audio", "processing_audio"].includes(item.status)) {
             return;
         }
 

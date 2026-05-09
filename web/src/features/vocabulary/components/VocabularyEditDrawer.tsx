@@ -69,10 +69,13 @@ export function VocabularyEditDrawer({
                     <Form.Item name="ipaUs" label="IPA (US)">
                         <Input placeholder="Optional" />
                     </Form.Item>
-                    <Form.Item name="status" label="Status">
+                    <Form.Item
+                        name="status"
+                        label="Status"
+                        extra="Queued/processing statuses are pipeline-only (see badge). Cron re-dispatches stale work—manual PATCH allows only these four values."
+                    >
                         <Select>
                             <Select.Option value="new">New</Select.Option>
-                            <Select.Option value="processing_text">Processing Text</Select.Option>
                             <Select.Option value="text_ready">Text Ready</Select.Option>
                             <Select.Option value="active">Active</Select.Option>
                             <Select.Option value="review">Review</Select.Option>

@@ -12,6 +12,10 @@ export const financialTransactionCategories = sqliteTable(
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+        updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+            .notNull()
+            .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+            .$onUpdate(() => new Date()),
     },
     (t) => [
         // Prevent both being true at the same time to ensure categorical clarity.
@@ -23,5 +27,5 @@ export const financialTransactionCategories = sqliteTable(
 export type FinancialTransactionCategory = typeof financialTransactionCategories.$inferSelect;
 export type NewFinancialTransactionCategory = Omit<
     typeof financialTransactionCategories.$inferInsert,
-    "id" | "createdAt"
+    "id" | "createdAt" | "updatedAt"
 >;

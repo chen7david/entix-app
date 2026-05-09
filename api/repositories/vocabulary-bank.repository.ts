@@ -131,8 +131,34 @@ export class VocabularyBankRepository {
     }
 
     /**
-     * Items stuck in text/audio processing (e.g. transient AI/TTS failure).
-     * Caller should re-enqueue queue messages for retry.
+     * Atomically transitions `new` → `queued_text` or `text_ready` → `queued_audio`.
+     * Returns null if status no longer matches (another tick claimed first).
+     */
+    async claimForDispatch(
+        id: string,
+        fromStatus: "new" | "text_ready"
+    ): Promise<VocabularyBankItem | null> {
+        const toStatus: VocabularyBankStatus =
+            fromStatus === "new" ? "queued_text" : "queued_audio";
+        const [claimed] = await this.db
+            .update(vocabularyBank)
+            .set({ status: toStatus, updatedAt: new Date() })
+            .where(and(eq(vocabularyBank.id, id), eq(vocabularyBank.status, fromStatus)))
+            .returning();
+        return claimed ?? null;
+    }
+
+    /**
+     * Rows the dispatcher should retry without another DB claim (`processing_*` and `queued_*`).
+     *
+     * - `processing_*`: worker started but stalled (crash, hung job, infra) — historically the main case.
+     * - `queued_*`: cron claimed (`new`→`queued_text`, `text_ready`→`queued_audio`) but the consumer never
+     *   advanced status — e.g. queue send succeeded but delivery failed, worker never ran, or `QUEUE.send`
+     *   failed after the claim. These were never reliably "mid-flight" work; treat like lost dispatch.
+     *
+     * Matches `updatedAt < olderThan` (callers should pass the same cutoff as
+     * `VOCABULARY_PIPELINE_STALE_AFTER_MS` in `driveVocabularyPipeline`).
+     * Caller should re-enqueue queue messages without `claimForDispatch` (already out of `new`/`text_ready`).
      */
     async findStaleProcessing(olderThan: Date, limit = 40): Promise<VocabularyBankItem[]> {
         return this.db
@@ -142,7 +168,9 @@ export class VocabularyBankRepository {
                 and(
                     or(
                         eq(vocabularyBank.status, "processing_text"),
-                        eq(vocabularyBank.status, "processing_audio")
+                        eq(vocabularyBank.status, "processing_audio"),
+                        eq(vocabularyBank.status, "queued_text"),
+                        eq(vocabularyBank.status, "queued_audio")
                     ),
                     lt(vocabularyBank.updatedAt, olderThan)
                 )

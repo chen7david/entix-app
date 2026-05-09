@@ -21,12 +21,14 @@ export class FinancialTransactionCategoriesRepository {
         id: string,
         input: NewFinancialTransactionCategory
     ): Promise<FinancialTransactionCategory | null> {
+        const now = new Date();
         const [category] = await this.db
             .insert(financialTransactionCategories)
             .values({
                 ...input,
                 id,
                 archivedAt: null,
+                updatedAt: now,
             })
             .returning();
 
@@ -60,9 +62,10 @@ export class FinancialTransactionCategoriesRepository {
      * @throws Error if the category is not found.
      */
     async archive(id: string): Promise<FinancialTransactionCategory> {
+        const now = new Date();
         const [category] = await this.db
             .update(financialTransactionCategories)
-            .set({ archivedAt: new Date() })
+            .set({ archivedAt: now, updatedAt: now })
             .where(eq(financialTransactionCategories.id, id))
             .returning();
 
