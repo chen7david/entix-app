@@ -150,8 +150,10 @@ function makeVocabularyItem(overrides?: Partial<{ id: string; status: string }>)
         zhAudioUrl: null,
         status: (overrides?.status ?? "new") as
             | "new"
+            | "queued_text"
             | "processing_text"
             | "text_ready"
+            | "queued_audio"
             | "processing_audio"
             | "active"
             | "review",

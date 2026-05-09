@@ -272,7 +272,15 @@ function makeVocabularyItem(
     overrides: Partial<{
         id: string;
         text: string;
-        status: "new" | "processing_text" | "text_ready" | "processing_audio" | "active" | "review";
+        status:
+            | "new"
+            | "queued_text"
+            | "processing_text"
+            | "text_ready"
+            | "queued_audio"
+            | "processing_audio"
+            | "active"
+            | "review";
         createdAt: Date;
         updatedAt: Date;
     }> = {}

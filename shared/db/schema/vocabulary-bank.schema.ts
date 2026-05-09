@@ -1,11 +1,13 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { generateOpaqueId } from "../../lib/id";
 
 export const VOCABULARY_BANK_STATUSES = [
     "new",
+    "queued_text",
     "processing_text",
     "text_ready",
+    "queued_audio",
     "processing_audio",
     "active",
     "review",
@@ -33,6 +35,10 @@ export const vocabularyBank = sqliteTable(
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .notNull(),
+        /**
+         * DB default applies on INSERT only (SQLite). Repository `.update()` / `.set()` must still pass
+         * `updatedAt` where we rely on fresh timestamps; Drizzle `$onUpdate` does not create a DB trigger.
+         */
         updatedAt: integer("updated_at", { mode: "timestamp_ms" })
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
             .$onUpdate(() => new Date())
@@ -41,6 +47,10 @@ export const vocabularyBank = sqliteTable(
     (table) => [
         uniqueIndex("vocabulary_bank_text_uidx").on(table.text),
         index("vocabulary_bank_status_idx").on(table.status),
+        check(
+            "vb_status_check",
+            sql`${table.status} IN ('new', 'queued_text', 'processing_text', 'text_ready', 'queued_audio', 'processing_audio', 'active', 'review')`
+        ),
     ]
 );
 

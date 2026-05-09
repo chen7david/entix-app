@@ -9,8 +9,11 @@ import { idempotencyMiddleware } from "@api/middleware/idempotency.middleware";
 import { requireSuperAdmin } from "@api/middleware/require-super-admin.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
+    activateCurrencyRequestSchema,
     adminCreditRequestSchema,
     adminDebitRequestSchema,
+    createFinancialAccountResponseSchema,
+    currencyListWithStatusResponseSchema,
     listFinancialAccountsResponseSchema,
     transactionResultSchema,
     walletAccountDTOSchema,
@@ -62,6 +65,39 @@ export const AdminFinanceRoutes = {
             [HttpStatusCodes.OK]: jsonContent(
                 listFinancialAccountsResponseSchema,
                 "Organization accounts fetched successfully"
+            ),
+        },
+    }),
+    getOrgCurrencyStatus: createRoute({
+        tags,
+        method: HttpMethods.GET,
+        path: "/admin/finance/orgs/{organizationId}/currencies",
+        middleware: [requireAuth, requireSuperAdmin] as const,
+        summary: "Super admin: get platform currencies with org activation status",
+        request: {
+            params: z.object({ organizationId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                currencyListWithStatusResponseSchema,
+                "Currency status fetched"
+            ),
+        },
+    }),
+    activateOrgCurrency: createRoute({
+        tags,
+        method: HttpMethods.POST,
+        path: "/admin/finance/orgs/{organizationId}/currencies/activate",
+        middleware: [requireAuth, requireSuperAdmin] as const,
+        summary: "Super admin: activate a currency for any organization",
+        request: {
+            params: z.object({ organizationId: z.string() }),
+            body: jsonContentRequired(activateCurrencyRequestSchema, "Currency to activate"),
+        },
+        responses: {
+            [HttpStatusCodes.CREATED]: jsonContent(
+                z.object({ data: createFinancialAccountResponseSchema }),
+                "Currency activated - General Fund account created"
             ),
         },
     }),

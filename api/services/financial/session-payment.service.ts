@@ -73,7 +73,10 @@ export class SessionPaymentService extends BaseService {
     }): Promise<{ transactionId: string; paymentRequestId: string; auditId: string }> {
         const idempotencyKey = IdempotencyKeys.sessionPayment(input.sessionId, input.userId);
 
-        const existing = await this.paymentRequestsRepo.findByIdempotencyKey(idempotencyKey);
+        const existing = await this.paymentRequestsRepo.findByOrganizationAndIdempotencyKey(
+            input.organizationId,
+            idempotencyKey
+        );
         if (existing?.status === "completed") {
             throw new ConflictError(
                 `Payment already processed for session ${input.sessionId} and user ${input.userId}.`
@@ -260,7 +263,10 @@ export class SessionPaymentService extends BaseService {
     }) {
         const idempotencyKey = `manual_override:${input.sessionId}:${input.userId}`;
 
-        const existing = await this.paymentRequestsRepo.findByIdempotencyKey(idempotencyKey);
+        const existing = await this.paymentRequestsRepo.findByOrganizationAndIdempotencyKey(
+            input.organizationId,
+            idempotencyKey
+        );
         if (existing) {
             throw new ConflictError(
                 "A manual override already exists for this session-user pair. Multiple manual overrides are prohibited."

@@ -15,7 +15,15 @@ type SessionVocabularyItem = {
         pinyin: string | null;
         enAudioUrl: string | null;
         zhAudioUrl: string | null;
-        status: "new" | "processing_text" | "text_ready" | "processing_audio" | "active" | "review";
+        status:
+            | "new"
+            | "queued_text"
+            | "processing_text"
+            | "text_ready"
+            | "queued_audio"
+            | "processing_audio"
+            | "active"
+            | "review";
         createdAt: number;
         updatedAt: number;
     };

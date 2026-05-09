@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+    index,
+    integer,
+    primaryKey,
+    sqliteTable,
+    text,
+    uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 import { generateMediaId } from "../../lib/id";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
@@ -21,9 +28,8 @@ export const uploads = sqliteTable(
         organizationId: text("organization_id")
             .notNull()
             .references(() => authOrganizations.id, { onDelete: "cascade" }),
-        uploadedBy: text("uploaded_by")
-            .notNull()
-            .references(() => authUsers.id, { onDelete: "cascade" }),
+        /** Null when the file is system-generated (e.g. vocabulary TTS), not tied to a user upload. */
+        uploadedBy: text("uploaded_by").references(() => authUsers.id, { onDelete: "set null" }),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
@@ -35,6 +41,7 @@ export const uploads = sqliteTable(
     (table) => [
         index("upload_organizationId_idx").on(table.organizationId), // Renamed index
         index("upload_uploadedBy_idx").on(table.uploadedBy), // Renamed index
+        uniqueIndex("upload_org_bucket_key_uidx").on(table.organizationId, table.bucketKey),
     ]
 );
 

@@ -1,6 +1,7 @@
 import {
     ApartmentOutlined,
     CalendarOutlined,
+    DollarOutlined,
     MoreOutlined,
     PlusOutlined,
     UserAddOutlined,
@@ -10,7 +11,11 @@ import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { useAdminCreateUserWithOrg, useAdminOrganizations } from "@web/src/features/admin";
+import {
+    AdminOrgCurrencyPanel,
+    useAdminCreateUserWithOrg,
+    useAdminOrganizations,
+} from "@web/src/features/admin";
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
 import { CreateOrganizationForm } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
@@ -47,6 +52,8 @@ export const GlobalOrganizationsPage: React.FC = () => {
 
     const [isCreateOrgModalOpen, setIsCreateOrgModalOpen] = useState(false);
     const [isCreateUserWithOrgModalOpen, setIsCreateUserWithOrgModalOpen] = useState(false);
+    const [currencyOrgId, setCurrencyOrgId] = useState<string | null>(null);
+    const [currencyOrgName, setCurrencyOrgName] = useState("");
 
     const handleNext = () => {
         if (orgData?.nextCursor) {
@@ -208,18 +215,31 @@ export const GlobalOrganizationsPage: React.FC = () => {
                                 setCursorStack([]);
                             },
                         },
-                        actions: () => {
+                        actions: (record: any) => {
                             const items: MenuProps["items"] = [
                                 { key: "view", label: "View Details" },
                             ];
                             return (
-                                <Dropdown menu={{ items }} trigger={["click"]}>
+                                <div className="flex items-center gap-2 justify-end">
                                     <Button
-                                        type="text"
-                                        icon={<MoreOutlined />}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </Dropdown>
+                                        size="small"
+                                        icon={<DollarOutlined />}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setCurrencyOrgId(record.id);
+                                            setCurrencyOrgName(record.name ?? "");
+                                        }}
+                                    >
+                                        Currencies
+                                    </Button>
+                                    <Dropdown menu={{ items }} trigger={["click"]}>
+                                        <Button
+                                            type="text"
+                                            icon={<MoreOutlined />}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </Dropdown>
+                                </div>
                             );
                         },
                     }}
@@ -260,6 +280,20 @@ export const GlobalOrganizationsPage: React.FC = () => {
                     onSubmit={handleCreateUserWithOrg}
                     isLoading={isCreatingUserWithOrg}
                 />
+            </Modal>
+
+            <Modal
+                title={`Manage Currencies - ${currencyOrgName}`}
+                open={!!currencyOrgId}
+                onCancel={() => {
+                    setCurrencyOrgId(null);
+                    setCurrencyOrgName("");
+                }}
+                footer={null}
+                width={760}
+                destroyOnClose
+            >
+                {currencyOrgId && <AdminOrgCurrencyPanel orgId={currencyOrgId} />}
             </Modal>
         </div>
     );

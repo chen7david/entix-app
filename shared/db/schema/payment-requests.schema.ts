@@ -24,7 +24,8 @@ export type PaymentRequestStatus = (typeof PAYMENT_REQUEST_STATUSES)[number];
  *
  * DESIGN:
  * - Created before any financial work begins (intent-first).
- * - idempotency_key prevents duplicate processing (format: `{type}:{referenceId}:{userId}`).
+ * - idempotency_key is unique per organization (composite unique on organization_id + idempotency_key).
+ *   Convention: `{type}:{referenceId}:{userId}` — caller-generated strings may collide across orgs if not scoped in DB.
  * - status tracks the lifecycle: pending → processing → completed | failed | cancelled.
  * - On success, transaction_id is populated and status set to 'completed'.
  * - attempt_count enables retry tracking without additional tables.
@@ -97,7 +98,7 @@ export const paymentRequests = sqliteTable(
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
     },
     (t) => [
-        uniqueIndex("uq_payment_request_idempotency_key").on(t.idempotencyKey),
+        uniqueIndex("uq_payment_request_idempotency_key").on(t.organizationId, t.idempotencyKey),
         index("idx_pr_organization_id").on(t.organizationId),
         index("idx_pr_status").on(t.status),
         index("idx_pr_reference").on(t.referenceType, t.referenceId),
@@ -109,6 +110,10 @@ export const paymentRequests = sqliteTable(
         ),
         check("pr_amount_non_negative", sql`${t.amountCents} >= 0`),
         check("pr_attempt_count_non_negative", sql`${t.attemptCount} >= 0`),
+        check(
+            "pr_session_payment_user_required",
+            sql`${t.type} != 'session_payment' OR ${t.userId} IS NOT NULL`
+        ),
     ]
 );
 

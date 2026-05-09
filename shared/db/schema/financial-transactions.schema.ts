@@ -41,6 +41,11 @@ export const financialTransactions = sqliteTable(
         description: text("description"),
         metadata: text("metadata", { mode: "json" }).$type<TransactionMetadata>(),
         transactionDate: integer("transaction_date", { mode: "timestamp_ms" }).notNull(),
+        /**
+         * Nullable at rest for legacy/raw SQL; **service-layer inserts must always set a key**
+         * (`FinancialBaseService` defaults missing keys to `generateOpaqueId()` so the unique index applies).
+         * SQLite UNIQUE treats NULL as distinct — rows with NULL would not dedupe; callers bypassing the service must still supply keys.
+         */
         idempotencyKey: text("idempotency_key"),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()

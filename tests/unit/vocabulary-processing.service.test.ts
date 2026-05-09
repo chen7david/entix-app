@@ -1,5 +1,24 @@
+import type { TtsAudioResult } from "@api/services/tts.service";
 import { VocabularyProcessingService } from "@api/services/vocabulary-processing.service";
+import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const VOCAB_AUDIO_TEST_ID = "vocab_1";
+
+function makeTtsAudioFixture(vocabularyId: string): TtsAudioResult {
+    const folder = `vocabulary/audio/${vocabularyId}`;
+    return {
+        enAudioUrl: "https://cdn.example.com/en.mp3",
+        zhAudioUrl: "https://cdn.example.com/zh.mp3",
+        enBucketKey: `${folder}/en.mp3`,
+        zhBucketKey: `${folder}/zh.mp3`,
+        enBytes: 100,
+        zhBytes: 220,
+    };
+}
+
+/** Aligns bucket keys with `TtsService` folder layout for {@link VOCAB_AUDIO_TEST_ID}. */
+const TTS_FIX_DEFAULT = makeTtsAudioFixture(VOCAB_AUDIO_TEST_ID);
 
 describe("VocabularyProcessingService", () => {
     let vocabRepo: {
@@ -13,6 +32,11 @@ describe("VocabularyProcessingService", () => {
     };
     let ttsService: {
         generateAndUpload: ReturnType<typeof vi.fn>;
+        deleteUploadedAudio: ReturnType<typeof vi.fn>;
+    };
+    let uploadRepo: {
+        findUploadByBucketKey: ReturnType<typeof vi.fn>;
+        create: ReturnType<typeof vi.fn>;
     };
 
     beforeEach(() => {
@@ -28,6 +52,11 @@ describe("VocabularyProcessingService", () => {
         };
         ttsService = {
             generateAndUpload: vi.fn(),
+            deleteUploadedAudio: vi.fn().mockResolvedValue(undefined),
+        };
+        uploadRepo = {
+            findUploadByBucketKey: vi.fn().mockResolvedValue(null),
+            create: vi.fn().mockResolvedValue({}),
         };
     });
 
@@ -78,6 +107,7 @@ describe("VocabularyProcessingService", () => {
             definitionSimple: "A greeting",
         });
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 
     it("processText sets review only when AI flags language quality", async () => {
@@ -111,6 +141,7 @@ describe("VocabularyProcessingService", () => {
             })
         );
         expect(vocabRepo.updateStatus).not.toHaveBeenCalledWith("vocab_1", "active");
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 
     it("processText leaves processing_text, logs pipeline failure, and rethrows on parse errors", async () => {
@@ -139,19 +170,18 @@ describe("VocabularyProcessingService", () => {
 
         expect(vocabRepo.update).not.toHaveBeenCalled();
         expect(logPipelineFailure).toHaveBeenCalledTimes(1);
+        expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
     });
 
     it("processAudio uploads audio and transitions text_ready -> active", async () => {
+        const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
         vocabRepo.findById.mockResolvedValueOnce({
             id: "vocab_1",
             text: "hello",
             zhTranslation: "你好",
             status: "text_ready",
         });
-        ttsService.generateAndUpload.mockResolvedValueOnce({
-            enAudioUrl: "https://cdn.example.com/en.mp3",
-            zhAudioUrl: "https://cdn.example.com/zh.mp3",
-        });
+        ttsService.generateAndUpload.mockResolvedValueOnce({ ...TTS_FIX_DEFAULT });
 
         const service = new VocabularyProcessingService(
             vocabRepo as never,
@@ -163,6 +193,9 @@ describe("VocabularyProcessingService", () => {
         );
         await service.processAudio("vocab_1");
 
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("uploadRepo not configured"));
+        warnSpy.mockRestore();
+
         expect(vocabRepo.updateStatus).toHaveBeenCalledTimes(1);
         expect(vocabRepo.updateStatus).toHaveBeenCalledWith("vocab_1", "processing_audio");
         expect(ttsService.generateAndUpload).toHaveBeenCalledWith("vocab_1", "hello", "你好");
@@ -171,6 +204,102 @@ describe("VocabularyProcessingService", () => {
             zhAudioUrl: "https://cdn.example.com/zh.mp3",
             status: "active",
         });
+        expect(uploadRepo.findUploadByBucketKey).not.toHaveBeenCalled();
+        expect(uploadRepo.create).not.toHaveBeenCalled();
+    });
+
+    it("processAudio registers uploads when uploadRepo is provided", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            zhTranslation: "你好",
+            status: "text_ready",
+        });
+        ttsService.generateAndUpload.mockResolvedValueOnce({ ...TTS_FIX_DEFAULT });
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            { logPipelineFailure: vi.fn() },
+            uploadRepo as never
+        );
+        await service.processAudio("vocab_1");
+
+        expect(uploadRepo.findUploadByBucketKey).toHaveBeenCalledWith(
+            "vocabulary/audio/vocab_1/en.mp3",
+            PLATFORM_ORGANIZATION_ID
+        );
+        expect(uploadRepo.findUploadByBucketKey).toHaveBeenCalledWith(
+            "vocabulary/audio/vocab_1/zh.mp3",
+            PLATFORM_ORGANIZATION_ID
+        );
+        expect(uploadRepo.create).toHaveBeenCalledTimes(2);
+        expect(uploadRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                organizationId: PLATFORM_ORGANIZATION_ID,
+                uploadedBy: null,
+                bucketKey: "vocabulary/audio/vocab_1/en.mp3",
+                url: "https://cdn.example.com/en.mp3",
+                originalName: "vocabulary-vocab_1-en.mp3",
+                fileSize: TTS_FIX_DEFAULT.enBytes,
+                contentType: "audio/mpeg",
+                status: "completed",
+            })
+        );
+        expect(uploadRepo.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                bucketKey: "vocabulary/audio/vocab_1/zh.mp3",
+                url: "https://cdn.example.com/zh.mp3",
+                fileSize: TTS_FIX_DEFAULT.zhBytes,
+            })
+        );
+    });
+
+    it("processAudio skips upload create when records already exist", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            zhTranslation: "你好",
+            status: "text_ready",
+        });
+        ttsService.generateAndUpload.mockResolvedValueOnce({ ...TTS_FIX_DEFAULT });
+        uploadRepo.findUploadByBucketKey.mockResolvedValue({ id: "u1" });
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            { logPipelineFailure: vi.fn() },
+            uploadRepo as never
+        );
+        await service.processAudio("vocab_1");
+
+        expect(uploadRepo.create).not.toHaveBeenCalled();
+    });
+
+    it("processAudio deletes synthesized audio from storage when uploads registry insert fails", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: VOCAB_AUDIO_TEST_ID,
+            text: "hello",
+            zhTranslation: "你好",
+            status: "text_ready",
+        });
+        const fixture = makeTtsAudioFixture(VOCAB_AUDIO_TEST_ID);
+        ttsService.generateAndUpload.mockResolvedValueOnce(fixture);
+        uploadRepo.create.mockRejectedValueOnce(new Error("insert failed"));
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            { logPipelineFailure: vi.fn() },
+            uploadRepo as never
+        );
+
+        await expect(service.processAudio(VOCAB_AUDIO_TEST_ID)).rejects.toThrow("insert failed");
+        expect(ttsService.deleteUploadedAudio).toHaveBeenCalledWith(fixture);
+        expect(vocabRepo.update).not.toHaveBeenCalled();
     });
 
     it("processAudio logs pipeline failure and rethrows when TTS upload fails", async () => {

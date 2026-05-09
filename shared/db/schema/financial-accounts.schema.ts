@@ -19,6 +19,7 @@ export const financialAccounts = sqliteTable(
         name: text("name").notNull(),
         balanceCents: integer("balance_cents").notNull().default(0),
         isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+        /** Matches legacy `DEFAULT NULL` in SQLite; dropping it would churn full-table rebuild migrations for no runtime gain. */
         archivedAt: integer("archived_at", { mode: "timestamp_ms" }).default(sql`NULL`),
         createdAt: integer("created_at", { mode: "timestamp_ms" })
             .notNull()
@@ -30,6 +31,14 @@ export const financialAccounts = sqliteTable(
             .$type<"savings" | "funding" | "treasury" | "system">()
             .notNull()
             .default(ACCOUNT_TYPES.SAVINGS),
+        /**
+         * Nullable: NULL means no explicit per-account cap on this row's CHECK; session debits
+         * resolve the effective limit in `resolveOverdraftLimit` (`shared/utils/billing.ts`):
+         * account `overdraftLimitCents` when set, else plan default, else 0.
+         *
+         * DB CHECK `overdraft_limit_non_negative` uses `>= 0`; in SQL, that expression evaluates to
+         * UNKNOWN for NULL, so the row passes — NULL is intentionally "no cap on this column," not a violation.
+         */
         overdraftLimitCents: integer("overdraft_limit_cents"),
     },
     (t) => [
