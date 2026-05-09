@@ -1,20 +1,10 @@
 import { SettingOutlined } from "@ant-design/icons";
-import { CurrencyActivationGrid } from "@web/src/features/finance/components/CurrencyActivationGrid";
-import { useActivateCurrency } from "@web/src/features/finance/hooks/useActivateCurrency";
-import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
-import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { ThemeSelector, TimezoneSelector } from "@web/src/features/user-profiles";
 import { Card, Col, Row, Space, Typography } from "antd";
 
 const { Title, Text } = Typography;
 
 export const SettingsPage = () => {
-    const { isAdminOrOwner } = useOrgRole();
-    const { activeOrganization } = useOrganization();
-    const orgId = activeOrganization?.id;
-    const { data: currenciesData, isLoading: isLoadingCurrencies } = useOrgCurrencies(orgId);
-    const { mutate: activate, isPending: isActivating } = useActivateCurrency(orgId);
-
     return (
         <div>
             <div className="max-w-5xl">
@@ -53,42 +43,6 @@ export const SettingsPage = () => {
                                 <ThemeSelector />
                             </Col>
                         </Row>
-                    </Card>
-
-                    <Card className="shadow-sm">
-                        <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-                            <SettingOutlined
-                                style={{ fontSize: 20, marginRight: 12, color: "#7c3aed" }}
-                            />
-                            <Title level={4} style={{ margin: 0 }}>
-                                Organization Settings
-                            </Title>
-                        </div>
-                        <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>
-                            Manage billing-related organization configuration, including supported
-                            currencies and wallet activation.
-                        </Text>
-                        {isAdminOrOwner ? (
-                            <div>
-                                <Text
-                                    strong
-                                    type="secondary"
-                                    className="text-[11px] uppercase tracking-widest block mb-4"
-                                >
-                                    Currency Management
-                                </Text>
-                                <CurrencyActivationGrid
-                                    currencies={currenciesData ?? []}
-                                    onActivate={activate}
-                                    activating={isActivating || isLoadingCurrencies}
-                                    compact
-                                />
-                            </div>
-                        ) : (
-                            <Text type="secondary">
-                                You need organization admin access to update organization settings.
-                            </Text>
-                        )}
                     </Card>
                 </Space>
             </div>
