@@ -1,5 +1,6 @@
 import app from "@api/app";
 import { BadRequestError, InternalServerError } from "@api/errors/app.error";
+import { createAiServiceFromEnv } from "@api/factories/ai.factory";
 import { getBucketClientFromEnv } from "@api/factories/bucket.factory";
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
@@ -10,7 +11,6 @@ import { SessionAttendancesRepository } from "@api/repositories/session-attendan
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { UploadRepository } from "@api/repositories/upload.repository";
 import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
-import { AiService } from "@api/services/ai.service";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
 import {
@@ -179,14 +179,10 @@ async function handleVocabularyProcessText(
     env: CloudflareBindings
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
-    const envVars = env as unknown as Record<string, unknown>;
     const vocabularyId = message.body.vocabularyId;
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = new AiService({
-        apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
-        endpoint: String(envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"),
-        defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
+    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
     // Text processing never calls TTS. If it did, `processText` catches, runs logPipelineFailure, then rethrows — so the queue still hits retry().
@@ -228,8 +224,12 @@ async function handleVocabularyProcessAudio(
     env: CloudflareBindings
 ): Promise<void> {
     const db = drizzle(env.DB, { schema });
-    const envVars = env as unknown as Record<string, unknown>;
-    if (!envVars.GCP_CLIENT_EMAIL || !envVars.GCP_PRIVATE_KEY || !envVars.GCP_PROJECT_ID) {
+    const envBindings = env as unknown as Record<string, unknown>;
+    if (
+        !envBindings.GCP_CLIENT_EMAIL ||
+        !envBindings.GCP_PRIVATE_KEY ||
+        !envBindings.GCP_PROJECT_ID
+    ) {
         console.error("[Queue] GCP secrets not configured — acking to prevent retry storm");
         message.ack();
         return;
@@ -237,13 +237,10 @@ async function handleVocabularyProcessAudio(
     const vocabularyRepo = new VocabularyBankRepository(db);
     const uploadRepo = new UploadRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = new AiService({
-        apiKey: String(envVars.OPENWEBUI_API_KEY ?? ""),
-        endpoint: String(envVars.OPENWEBUI_ENDPOINT ?? "https://ai.entix.org/api/chat/completions"),
-        defaultModel: String(envVars.OPENWEBUI_MODEL ?? "gemma4:e4b"),
+    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
-    const credentials = parseGoogleTtsCredentials(envVars);
+    const credentials = parseGoogleTtsCredentials(env as unknown as Record<string, unknown>);
     const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
     const processor = new VocabularyProcessingService(
         vocabularyRepo,

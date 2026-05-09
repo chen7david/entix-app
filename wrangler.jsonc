@@ -24,8 +24,7 @@
                 "R2_BUCKET_NAME": "entix-app-development",
                 "R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
                 "PUBLIC_CDN_URL": "https://development-cdn.entix.org",
-                "OPENWEBUI_MODEL": "gemma4:e4b",
-                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
+                "GEMINI_MODEL": "gemini-2.5-flash",
                 "SKIP_EMAIL_VERIFICATION": "false"
             },
             "d1_databases": [
@@ -73,8 +72,7 @@
                 "R2_BUCKET_NAME": "entix-app-development",
                 "R2_ACCESS_KEY_ID": "6406113103710221186f7c17fc8b08d2",
                 "PUBLIC_CDN_URL": "https://development-cdn.entix.org",
-                "OPENWEBUI_MODEL": "gemma4:e4b",
-                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
+                "GEMINI_MODEL": "gemini-2.5-flash",
                 "SKIP_EMAIL_VERIFICATION": "false"
             },
             "d1_databases": [
@@ -119,8 +117,7 @@
                 "FRONTEND_URL": "https://staging.entix.org",
                 "CORS_ORIGINS": "https://staging.entix.org",
                 "PUBLIC_CDN_URL": "https://staging-cdn.entix.org",
-                "OPENWEBUI_MODEL": "gemma4:e4b",
-                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
+                "GEMINI_MODEL": "gemini-2.5-flash",
                 "SKIP_EMAIL_VERIFICATION": "false",
                 "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
                 "R2_BUCKET_NAME": "entix-app-staging",
@@ -173,8 +170,7 @@
                 "FRONTEND_URL": "https://entix.org",
                 "CORS_ORIGINS": "https://entix.org",
                 "PUBLIC_CDN_URL": "https://cdn.entix.org",
-                "OPENWEBUI_MODEL": "gemma4:e4b",
-                "OPENWEBUI_ENDPOINT": "https://ai.entix.org/api/chat/completions",
+                "GEMINI_MODEL": "gemini-2.5-flash",
                 "SKIP_EMAIL_VERIFICATION": "false",
                 "CLOUDFLARE_ACCOUNT_ID": "a90c8dde75df1c270fddd905362a3f04",
                 "R2_BUCKET_NAME": "entix-app-production",

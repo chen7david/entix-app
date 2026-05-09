@@ -1,10 +1,9 @@
 import { InternalServerError } from "@api/errors/app.error";
 import type { UploadRepository } from "@api/repositories/upload.repository";
 import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
-import type { AiJsonSchema } from "@api/types/ai.types";
+import type { AiJsonSchema, AiTextProvider } from "@api/types/ai.types";
 import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { pinyin } from "pinyin-pro";
-import type { AiService } from "./ai.service";
 import type { TtsAudioResult, TtsService } from "./tts.service";
 
 export type VocabularyTranslation = {
@@ -67,7 +66,7 @@ export const VOCABULARY_TRANSLATION_INSTRUCTIONS = [
 export class VocabularyProcessingService {
     constructor(
         private readonly vocabRepo: VocabularyBankRepository,
-        private readonly aiService: AiService,
+        private readonly aiService: AiTextProvider,
         private readonly ttsService: TtsService,
         /** Omit only in narrow tests; production queue handlers should always supply audit logging. */
         private readonly deps?: VocabularyProcessingDeps,

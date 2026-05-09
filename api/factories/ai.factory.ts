@@ -1,28 +1,42 @@
-import { AI_ENDPOINTS, AI_MODELS } from "@api/constants/ai.constants";
+import { AI_MODELS } from "@api/constants/ai.constants";
 import type { AppContext } from "@api/helpers/types.helpers";
 import { AiService } from "@api/services/ai.service";
-import type { AiGenerateOptions, AiServiceConfig, AiTextModel } from "@api/types/ai.types";
+import type {
+    AiGenerateOptions,
+    AiServiceConfig,
+    AiTextModel,
+    AiTextProvider,
+} from "@api/types/ai.types";
 
-/**
- * Core AI factory. Keeps Open WebUI env injection in one place.
- */
-export function createAiService(
-    ctx: AppContext,
-    config: Omit<AiServiceConfig, "apiKey" | "endpoint" | "defaultModel"> & {
+/** Worker env → {@link AiService} (shared by HTTP routes and queue consumers). */
+export function createAiServiceFromEnv(
+    envLike: Record<string, string | undefined>,
+    config: Omit<AiServiceConfig, "apiKey" | "defaultModel"> & {
         defaultModel?: AiTextModel;
-    }
-): AiService {
-    const env = ctx.env as unknown as Record<string, string | undefined>;
-    const apiKey = (env.OPENWEBUI_API_KEY ?? "").trim();
-    const defaultModel = (env.OPENWEBUI_MODEL ?? AI_MODELS.DEFAULT).trim();
-    const endpoint = (env.OPENWEBUI_ENDPOINT ?? AI_ENDPOINTS.DEFAULT).trim();
+    } = {}
+): AiTextProvider {
+    const apiKey = (envLike.GEMINI_API_KEY ?? "").trim();
+    const defaultModel = (config.defaultModel ?? envLike.GEMINI_MODEL ?? AI_MODELS.DEFAULT).trim();
 
     return new AiService({
         apiKey,
-        endpoint,
-        defaultModel: config.defaultModel ?? defaultModel,
-        ...config,
+        defaultModel,
+        systemPrompt: config.systemPrompt,
+        defaults: config.defaults,
     });
+}
+
+/**
+ * Core AI factory. Resolves Google AI Studio secrets and model from Worker env.
+ */
+export function createAiService(
+    ctx: AppContext,
+    config: Omit<AiServiceConfig, "apiKey" | "defaultModel"> & {
+        defaultModel?: AiTextModel;
+    }
+): AiTextProvider {
+    const env = ctx.env as unknown as Record<string, string | undefined>;
+    return createAiServiceFromEnv(env, config);
 }
 
 /**
@@ -32,6 +46,6 @@ export function createAiServiceForModel(
     ctx: AppContext,
     model: AiTextModel,
     opts?: { systemPrompt?: string; defaults?: AiGenerateOptions }
-): AiService {
+): AiTextProvider {
     return createAiService(ctx, { defaultModel: model, ...opts });
 }
