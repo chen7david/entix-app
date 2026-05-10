@@ -10,7 +10,10 @@ import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { financialTransactionLines } from "./financial-transaction-lines.schema";
 import { financialTransactions } from "./financial-transactions.schema";
+import { lessonObjectives } from "./lesson-objectives.schema";
+import { lessonPlaylists } from "./lesson-playlists.schema";
 import { lessons } from "./lesson.schema";
+import { lessonVocabulary } from "./lesson-vocabulary.schema";
 import { lessonProgress } from "./lesson-progress.schema";
 import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
@@ -129,6 +132,7 @@ export const playlistsRelations = relations(playlists, ({ one, many }) => ({
         references: [authUsers.id],
     }),
     playlistMedia: many(playlistMedia),
+    lessonPlaylists: many(lessonPlaylists),
 }));
 
 export const playlistMediaRelations = relations(playlistMedia, ({ one }) => ({
@@ -180,6 +184,9 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
         fields: [lessons.organizationId],
         references: [authOrganizations.id],
     }),
+    objectives: many(lessonObjectives),
+    playlists: many(lessonPlaylists),
+    vocabularyItems: many(lessonVocabulary),
     scheduledSessions: many(scheduledSessions),
 }));
 
@@ -385,7 +392,37 @@ export const systemAuditEventsRelations = relations(systemAuditEvents, ({ one })
 }));
 
 export const vocabularyBankRelations = relations(vocabularyBank, ({ many }) => ({
+    lessonVocabulary: many(lessonVocabulary),
     studentVocabularies: many(studentVocabulary),
+}));
+
+export const lessonObjectivesRelations = relations(lessonObjectives, ({ one }) => ({
+    lesson: one(lessons, {
+        fields: [lessonObjectives.lessonId],
+        references: [lessons.id],
+    }),
+}));
+
+export const lessonPlaylistsRelations = relations(lessonPlaylists, ({ one }) => ({
+    lesson: one(lessons, {
+        fields: [lessonPlaylists.lessonId],
+        references: [lessons.id],
+    }),
+    playlist: one(playlists, {
+        fields: [lessonPlaylists.playlistId],
+        references: [playlists.id],
+    }),
+}));
+
+export const lessonVocabularyRelations = relations(lessonVocabulary, ({ one }) => ({
+    lesson: one(lessons, {
+        fields: [lessonVocabulary.lessonId],
+        references: [lessons.id],
+    }),
+    vocabulary: one(vocabularyBank, {
+        fields: [lessonVocabulary.vocabularyId],
+        references: [vocabularyBank.id],
+    }),
 }));
 
 export const studentVocabularyRelations = relations(studentVocabulary, ({ one }) => ({
