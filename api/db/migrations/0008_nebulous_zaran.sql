@@ -45,14 +45,14 @@ CREATE TABLE `__new_lessons` (
 	`title` text NOT NULL,
 	`description` text,
 	`cover_art_url` text,
-	`cefr_level` text,
+	`cefr_level` text DEFAULT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer NOT NULL,
 	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
 	CONSTRAINT "cefr_level_check" CHECK("__new_lessons"."cefr_level" IS NULL OR "__new_lessons"."cefr_level" IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2'))
 );
 --> statement-breakpoint
-INSERT INTO `__new_lessons`("id", "organization_id", "title", "description", "cover_art_url", "cefr_level", "created_at", "updated_at") SELECT "id", "organization_id", "title", "description", "cover_art_url", "cefr_level", "created_at", "updated_at" FROM `lessons`;--> statement-breakpoint
+INSERT INTO `__new_lessons`("id", "organization_id", "title", "description", "cover_art_url", "cefr_level", "created_at", "updated_at") SELECT "id", "organization_id", "title", "description", "cover_art_url", NULL AS "cefr_level", "created_at", "updated_at" FROM `lessons`;--> statement-breakpoint
 DROP TABLE `lessons`;--> statement-breakpoint
 ALTER TABLE `__new_lessons` RENAME TO `lessons`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint
