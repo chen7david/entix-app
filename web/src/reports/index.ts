@@ -26,7 +26,9 @@ export {
 export { WordListDocument } from "./templates/word-list/WordListDocument";
 export { WordListPrintButton } from "./templates/word-list/WordListPrintButton";
 export type {
+    LessonWordListDocumentData,
     PrintableVocabularyStatus,
+    SessionWordListDocumentData,
     WordListDocumentData,
 } from "./templates/word-list/word-list.types";
 export {

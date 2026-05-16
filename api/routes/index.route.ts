@@ -8,6 +8,7 @@ import { internalReconciliationRoutes } from "./internal/reconciliation.index";
 import { enrollmentRoutes } from "./orgs/enrollment.index";
 import { financeRoutes } from "./orgs/finance.index";
 import { lessonRoutes } from "./orgs/lesson.index";
+import { lessonContentRoutes } from "./orgs/lesson-content.index";
 import { mediaRoutes } from "./orgs/media.index";
 import { memberWalletRoutes } from "./orgs/member-wallet.index";
 import { memberRoutes } from "./orgs/members.index";
@@ -25,6 +26,7 @@ export const routes = [
     authRoutes,
     memberRoutes,
     lessonRoutes,
+    lessonContentRoutes,
     enrollmentRoutes,
     emailInsightsRoutes,
     adminOrgsRoutes,

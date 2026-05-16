@@ -230,6 +230,25 @@ export const VocabularyRoutes = {
             },
         },
     }),
+    getVocabularyBank: createRoute({
+        method: HttpMethods.GET,
+        path: "/orgs/{organizationId}/vocabulary/bank/{vocabId}",
+        tags: ["Vocabulary"],
+        middleware: [requirePermission("vocabulary", ["read"])] as const,
+        request: {
+            params: z.object({ organizationId: z.string(), vocabId: z.string() }),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: {
+                content: {
+                    "application/json": {
+                        schema: z.object({ data: VocabularyBankSchema }),
+                    },
+                },
+                description: "Vocabulary bank item by id",
+            },
+        },
+    }),
     updateVocabularyBank: createRoute({
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/vocabulary/bank/{vocabId}",

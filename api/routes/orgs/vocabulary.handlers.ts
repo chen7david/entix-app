@@ -1,3 +1,4 @@
+import { NotFoundError } from "@api/errors/app.error";
 import { getVocabularyService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
@@ -118,6 +119,28 @@ export class VocabularyHandlers {
         const service = getVocabularyService(ctx);
         await service.removeVocabularyFromSession({ organizationId, sessionId, vocabId });
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
+
+    static getVocabularyBank: AppHandler<typeof VocabularyRoutes.getVocabularyBank> = async (
+        ctx
+    ) => {
+        const { vocabId } = ctx.req.valid("param");
+        const service = getVocabularyService(ctx);
+        const item = await service.getVocabularyBankItem(vocabId);
+        if (!item) {
+            throw new NotFoundError("Vocabulary item not found");
+        }
+
+        return ctx.json(
+            {
+                data: {
+                    ...item,
+                    createdAt: item.createdAt.getTime(),
+                    updatedAt: item.updatedAt.getTime(),
+                },
+            },
+            HttpStatusCodes.OK
+        );
     };
 
     static listVocabularyBank: AppHandler<typeof VocabularyRoutes.listVocabularyBank> = async (

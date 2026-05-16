@@ -12,21 +12,31 @@ interface WordListPrintButtonProps {
     data: WordListDocumentData;
     /** Overrides delay before print dialog (default 200ms). */
     printDelayMs?: number;
+    /** When true, the print action is blocked (e.g. vocabulary rows still loading). */
+    disabled?: boolean;
+}
+
+function wordListPrintFileName(data: WordListDocumentData): string {
+    if (data.kind === "session") {
+        return buildPrintFileName(data.sessionName, data.lessonName);
+    }
+    return buildPrintFileName(data.lessonTitle, "Vocabulary");
 }
 
 export function WordListPrintButton({
     data,
     printDelayMs = DEFAULT_WORD_LIST_PRINT_DELAY_MS,
+    disabled = false,
 }: WordListPrintButtonProps) {
     const { print } = usePrintDocument();
 
     const handlePrint = () => {
-        const fileName = buildPrintFileName(data.sessionName, data.lessonName);
+        const fileName = wordListPrintFileName(data);
         print(<WordListDocument data={data} />, printDelayMs, fileName);
     };
 
     return (
-        <Button size="small" icon={<PrinterOutlined />} onClick={handlePrint}>
+        <Button size="small" icon={<PrinterOutlined />} onClick={handlePrint} disabled={disabled}>
             Print Word List
         </Button>
     );

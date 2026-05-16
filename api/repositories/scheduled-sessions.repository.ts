@@ -141,6 +141,7 @@ export class ScheduledSessionsRepository {
     async getStudentDashboard(params: { organizationId: string; userId: string }): Promise<
         {
             sessionId: string;
+            lessonId: string;
             lessonTitle: string;
             startTime: string;
             endTime: string;
@@ -152,6 +153,7 @@ export class ScheduledSessionsRepository {
         const rows = await this.db
             .select({
                 sessionId: scheduledSessions.id,
+                lessonId: scheduledSessions.lessonId,
                 lessonTitle: lessons.title,
                 startTime: scheduledSessions.startTime,
                 endTime: sql<number>`${scheduledSessions.startTime} + (${scheduledSessions.durationMinutes} * 60000)`,
@@ -172,6 +174,7 @@ export class ScheduledSessionsRepository {
 
         return rows.map((row) => ({
             sessionId: row.sessionId,
+            lessonId: row.lessonId,
             lessonTitle: row.lessonTitle,
             startTime: this.toIsoString(row.startTime),
             endTime: this.toIsoString(row.endTime),

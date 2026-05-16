@@ -55,6 +55,8 @@ export function VocabularyTable({
     onDeleteBatch,
     onEdit,
     isDeleting = false,
+    hideStudentCountColumn = false,
+    vocabularyTableContext = "session",
 }: {
     items: SessionVocabularyItemDTO[] | VocabularyItemDTO[];
     loading: boolean;
@@ -63,6 +65,10 @@ export function VocabularyTable({
     onDeleteBatch?: (vocabId: string) => void;
     onEdit?: (item: VocabularyItemDTO) => void;
     isDeleting?: boolean;
+    /** When `groupByWord` is true, omit the Students column (e.g. lesson vocabulary). */
+    hideStudentCountColumn?: boolean;
+    /** `lesson` uses unlink copy instead of session-wide removal text. */
+    vocabularyTableContext?: "session" | "lesson";
 }) {
     const { play, playingUrl } = useVocabAudio();
     const audioContextValue = useMemo(() => ({ play, playingUrl }), [play, playingUrl]);
@@ -126,7 +132,7 @@ export function VocabularyTable({
 
         let result = baseColumns;
 
-        if (groupByWord) {
+        if (groupByWord && !hideStudentCountColumn) {
             const studentsColumn: ColumnsType<DisplayRow>[number] = {
                 title: "Students",
                 key: "students",
@@ -164,11 +170,17 @@ export function VocabularyTable({
                                 )}
                                 {showDelete && (
                                     <Popconfirm
-                                        title="Remove from session?"
+                                        title={
+                                            vocabularyTableContext === "lesson"
+                                                ? "Remove from this lesson?"
+                                                : "Remove from session?"
+                                        }
                                         description={
-                                            groupByWord
-                                                ? `This will remove "${vocab.text}" from the wordlist of ALL students in this session.`
-                                                : `This will remove "${vocab.text}" from this student's list for this session.`
+                                            vocabularyTableContext === "lesson" && groupByWord
+                                                ? `This will unlink "${vocab.text}" from this lesson. The word remains in the organization vocabulary bank.`
+                                                : groupByWord
+                                                  ? `This will remove "${vocab.text}" from the wordlist of ALL students in this session.`
+                                                  : `This will remove "${vocab.text}" from this student's list for this session.`
                                         }
                                         onConfirm={() => {
                                             if (groupByWord && onDeleteBatch) {
@@ -197,7 +209,15 @@ export function VocabularyTable({
         }
 
         return result;
-    }, [groupByWord, onDelete, onDeleteBatch, onEdit, isDeleting]);
+    }, [
+        groupByWord,
+        hideStudentCountColumn,
+        vocabularyTableContext,
+        onDelete,
+        onDeleteBatch,
+        onEdit,
+        isDeleting,
+    ]);
 
     return (
         <VocabAudioProvider value={audioContextValue}>

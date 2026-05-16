@@ -165,6 +165,10 @@ export class VocabularyService extends BaseService {
         );
     }
 
+    async getVocabularyBankItem(vocabId: string): Promise<VocabularyBankItem | null> {
+        return this.vocabularyRepo.findById(vocabId);
+    }
+
     async listVocabularyBank(params: {
         limit: number;
         cursor?: string;

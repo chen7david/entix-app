@@ -1,10 +1,13 @@
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
+import { CEFR_LEVELS } from "@shared/constants/cefr";
 import {
     createPaginatedResponseSchema,
     PaginationQuerySchema,
 } from "@shared/schemas/pagination.schema";
+
+const lessonCefrLevelSchema = z.enum(CEFR_LEVELS);
 
 const LessonSchema = z.object({
     id: z.string(),
@@ -12,6 +15,7 @@ const LessonSchema = z.object({
     title: z.string(),
     description: z.string().nullable(),
     coverArtUrl: z.string().nullable(),
+    cefrLevel: lessonCefrLevelSchema.nullable(),
     createdAt: z.coerce.number(),
     updatedAt: z.coerce.number(),
 });
@@ -53,6 +57,7 @@ export const LessonRoutes = {
                             title: z.string().min(1),
                             description: z.string().nullable().optional(),
                             coverArtUploadId: z.string().optional(),
+                            cefrLevel: lessonCefrLevelSchema.nullable().optional(),
                         }),
                     },
                 },
@@ -94,6 +99,7 @@ export const LessonRoutes = {
                             title: z.string().min(1).optional(),
                             description: z.string().nullable().optional(),
                             coverArtUploadId: z.string().optional(),
+                            cefrLevel: lessonCefrLevelSchema.nullable().optional(),
                         }),
                     },
                 },

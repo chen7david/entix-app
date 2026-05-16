@@ -33,7 +33,7 @@ export const SidebarOrgSwitcher: React.FC = () => {
         }
         setActiveRole(role);
         setOpen(false);
-        navigate(`/org/${activeOrganization.slug}${AppRoutes.org.dashboard.index}`);
+        /** `setActiveRole` (OrgGuard) already redirects to org dashboard for the new role. */
     };
 
     const handleManageOrgs = () => {

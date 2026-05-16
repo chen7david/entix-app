@@ -94,7 +94,7 @@ export class LessonRepository {
     async update(
         organizationId: string,
         lessonId: string,
-        input: Partial<Pick<NewLesson, "title" | "description" | "coverArtUrl">>
+        input: Partial<Pick<NewLesson, "title" | "description" | "coverArtUrl" | "cefrLevel">>
     ): Promise<Lesson | null> {
         const updatePayload = Object.fromEntries(
             Object.entries(input).filter(([, value]) => value !== undefined)

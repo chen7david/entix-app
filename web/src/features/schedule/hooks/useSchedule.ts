@@ -43,6 +43,7 @@ export type SessionDTO = {
 
 export type StudentEnrollmentSessionDTO = {
     sessionId: string;
+    lessonId: string;
     lessonTitle: string;
     startTime: string;
     endTime: string;

@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 import { Button } from "antd";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Outlet, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 
 /**
  * OrgGuard - Organization context guard and provider.
@@ -29,14 +29,17 @@ import { Outlet, useNavigate, useParams } from "react-router";
  */
 export const OrgGuard: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
+    const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(true); // pessimistic default — block until first sync
+    const [isRoleSwitching, setIsRoleSwitching] = useState(false);
     const [activeRole, setActiveRoleState] = useState<string | null>(() =>
         slug ? localStorage.getItem(`activeRole:${slug}`) : null
     );
     const prevSlugRef = useRef(slug);
     const lastSyncedOrgIdRef = useRef<string | null>(null);
+    const roleSwitchTargetRef = useRef<string | null>(null);
     const auth = useAuth();
 
     // 1. Fetch the user's org list (cached; shared centrally via useOrganization)
@@ -59,19 +62,40 @@ export const OrgGuard: React.FC = () => {
         setActiveRoleState(localStorage.getItem(`activeRole:${slug}`));
     }, [slug]);
 
-    const setActiveRole = useCallback(
-        (role: string | null) => {
-            if (!slug) return;
-            const key = `activeRole:${slug}`;
-            if (role) {
-                localStorage.setItem(key, role);
-            } else {
-                localStorage.removeItem(key);
-            }
+    const setActiveRole = useCallback((role: string | null) => {
+        if (!slug) return;
+        const key = `activeRole:${slug}`;
+        if (role) {
+            roleSwitchTargetRef.current = role;
+            setIsRoleSwitching(true);
+            localStorage.setItem(key, role);
             setActiveRoleState(role);
-        },
-        [slug]
-    );
+        } else {
+            roleSwitchTargetRef.current = null;
+            setIsRoleSwitching(false);
+            localStorage.removeItem(key);
+            setActiveRoleState(null);
+        }
+    }, [slug]);
+
+    // Navigate only after React has committed the new active role so nested
+    // ProtectedRoute checks do not briefly see the new role on the old URL.
+    useEffect(() => {
+        if (!isRoleSwitching || !slug || !roleSwitchTargetRef.current) return;
+        if (activeRole !== roleSwitchTargetRef.current) return;
+
+        navigate(`/org/${slug}${AppRoutes.org.dashboard.index}`, { replace: true });
+    }, [isRoleSwitching, activeRole, slug, navigate]);
+
+    const orgDashboardPath = slug ? `/org/${slug}${AppRoutes.org.dashboard.index}` : null;
+
+    useEffect(() => {
+        if (!isRoleSwitching || !orgDashboardPath) return;
+        if (location.pathname !== orgDashboardPath) return;
+
+        roleSwitchTargetRef.current = null;
+        setIsRoleSwitching(false);
+    }, [isRoleSwitching, location.pathname, orgDashboardPath]);
 
     // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (after refresh)
     useEffect(() => {
@@ -130,8 +154,8 @@ export const OrgGuard: React.FC = () => {
         };
     }, [activeOrganization?.id, orgsLoaded, orgsFetching, auth.refreshAuth, queryClient]);
 
-    // Block children while resolving the org list or syncing the server session
-    if (!orgsLoaded || orgsFetching || isSyncing) {
+    // Block children while resolving the org list, syncing the server session, or switching role
+    if (!orgsLoaded || orgsFetching || isSyncing || isRoleSwitching) {
         return <CenteredSpin />;
     }
 

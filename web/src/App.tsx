@@ -31,6 +31,9 @@ import {
     GlobalUsersPage,
     GlobalVocabularyPage,
     HomePage,
+    LessonDetailPage,
+    LessonPreviewRedirect,
+    LessonStudyPage,
     LessonsPage,
     MemberDetailPage,
     MemberImportExportPage,
@@ -171,9 +174,16 @@ export default function App() {
                                                         />
                                                     }
                                                 >
+                                                    <Route path="lessons">
+                                                        <Route index element={<LessonsPage />} />
+                                                        <Route
+                                                            path=":lessonId"
+                                                            element={<LessonStudyPage />}
+                                                        />
+                                                    </Route>
                                                     <Route
-                                                        path="lessons"
-                                                        element={<LessonsPage />}
+                                                        path="playlists/:playlistId"
+                                                        element={<PlaylistPlayerPage />}
                                                     />
                                                     <Route path="shop" element={<ShopPage />} />
                                                     <Route path="wallet" element={<WalletPage />} />
@@ -304,6 +314,14 @@ export default function App() {
                                                     <Route
                                                         path="lessons"
                                                         element={<LessonsPage />}
+                                                    />
+                                                    <Route
+                                                        path="lessons/:lessonId/preview"
+                                                        element={<LessonPreviewRedirect />}
+                                                    />
+                                                    <Route
+                                                        path="lessons/:lessonId"
+                                                        element={<LessonDetailPage />}
                                                     />
                                                     <Route
                                                         path="media"

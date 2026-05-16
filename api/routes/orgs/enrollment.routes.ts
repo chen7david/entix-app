@@ -16,6 +16,7 @@ const EnrollmentSchema = z.object({
 
 const StudentDashboardSchema = z.object({
     sessionId: z.string(),
+    lessonId: z.string(),
     lessonTitle: z.string(),
     startTime: z.string(),
     endTime: z.string(),

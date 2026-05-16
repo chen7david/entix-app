@@ -1,3 +1,4 @@
+import type { CefrLevel } from "@shared/constants/cefr";
 import {
     keepPreviousData,
     useInfiniteQuery,
@@ -19,6 +20,7 @@ export type LessonDto = {
     title: string;
     description: string | null;
     coverArtUrl: string | null;
+    cefrLevel: CefrLevel | null;
     createdAt: number;
     updatedAt: number;
 };
@@ -33,6 +35,7 @@ export type LessonFilters = {
 
 export type EnrollmentDashboardDto = {
     sessionId: string;
+    lessonId: string;
     lessonTitle: string;
     startTime: string;
     endTime: string;
@@ -146,6 +149,7 @@ export function useCreateLesson() {
             title: string;
             description?: string | null;
             coverArtUploadId?: string;
+            cefrLevel?: CefrLevel | null;
         }) => {
             const api = getApiClient();
             const res = await api.api.v1.orgs[":organizationId"].lessons.$post({
@@ -179,6 +183,7 @@ export function useUpdateLesson() {
             title?: string;
             description?: string | null;
             coverArtUploadId?: string;
+            cefrLevel?: CefrLevel | null;
         }) => {
             const api = getApiClient();
             const res = await api.api.v1.orgs[":organizationId"].lessons[":lessonId"].$patch({
@@ -187,13 +192,17 @@ export function useUpdateLesson() {
                     title: payload.title,
                     description: payload.description,
                     coverArtUploadId: payload.coverArtUploadId,
+                    cefrLevel: payload.cefrLevel,
                 },
             });
             return hcJson<LessonDto>(res);
         },
-        onSuccess: () => {
+        onSuccess: (_data, vars) => {
             notification.success({ message: "Lesson updated" });
             queryClient.invalidateQueries({ queryKey: ["lessons", organizationId] });
+            queryClient.invalidateQueries({
+                queryKey: ["lesson", organizationId, vars.lessonId],
+            });
         },
         onError: (error: Error) => {
             notification.error({
