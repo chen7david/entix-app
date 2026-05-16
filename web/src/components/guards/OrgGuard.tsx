@@ -62,21 +62,24 @@ export const OrgGuard: React.FC = () => {
         setActiveRoleState(localStorage.getItem(`activeRole:${slug}`));
     }, [slug]);
 
-    const setActiveRole = useCallback((role: string | null) => {
-        if (!slug) return;
-        const key = `activeRole:${slug}`;
-        if (role) {
-            roleSwitchTargetRef.current = role;
-            setIsRoleSwitching(true);
-            localStorage.setItem(key, role);
-            setActiveRoleState(role);
-        } else {
-            roleSwitchTargetRef.current = null;
-            setIsRoleSwitching(false);
-            localStorage.removeItem(key);
-            setActiveRoleState(null);
-        }
-    }, [slug]);
+    const setActiveRole = useCallback(
+        (role: string | null) => {
+            if (!slug) return;
+            const key = `activeRole:${slug}`;
+            if (role) {
+                roleSwitchTargetRef.current = role;
+                setIsRoleSwitching(true);
+                localStorage.setItem(key, role);
+                setActiveRoleState(role);
+            } else {
+                roleSwitchTargetRef.current = null;
+                setIsRoleSwitching(false);
+                localStorage.removeItem(key);
+                setActiveRoleState(null);
+            }
+        },
+        [slug]
+    );
 
     // Navigate only after React has committed the new active role so nested
     // ProtectedRoute checks do not briefly see the new role on the old URL.

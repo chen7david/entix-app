@@ -13,7 +13,10 @@ export function LessonStudyPage(): React.ReactElement | null {
     return (
         <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
             <div className="mb-4">
-                <Link to={`/org/${slug}/dashboard/lessons`} className="text-slate-500 hover:text-indigo-600 text-sm">
+                <Link
+                    to={`/org/${slug}/dashboard/lessons`}
+                    className="text-slate-500 hover:text-indigo-600 text-sm"
+                >
                     ← My lessons
                 </Link>
             </div>

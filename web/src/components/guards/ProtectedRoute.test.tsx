@@ -287,7 +287,10 @@ describe("ProtectedRoute", () => {
                     <Route element={<ProtectedRoute allowedOrgRoles={["student"]} />}>
                         <Route path="/org/:slug/dashboard/wallet" element={<MockDashboard />} />
                     </Route>
-                    <Route path="/org/:slug/dashboard" element={<div data-testid="org-dashboard" />} />
+                    <Route
+                        path="/org/:slug/dashboard"
+                        element={<div data-testid="org-dashboard" />}
+                    />
                     <Route path={AppRoutes.unauthorized} element={<MockUnauthorized />} />
                 </Routes>
             </MemoryRouter>

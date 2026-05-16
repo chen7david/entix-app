@@ -17,7 +17,19 @@ import type {
 import { dedupeSessionVocabularyByWord } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
 import { hcJson } from "@web/src/lib/hc-json";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
-import { Button, Card, Col, Empty, Row, Skeleton, Space, Tag, Tooltip, Typography, theme } from "antd";
+import {
+    Button,
+    Card,
+    Col,
+    Empty,
+    Row,
+    Skeleton,
+    Space,
+    Tag,
+    Tooltip,
+    Typography,
+    theme,
+} from "antd";
 import type React from "react";
 import { useMemo } from "react";
 import { Link } from "react-router";

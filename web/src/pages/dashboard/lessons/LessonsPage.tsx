@@ -282,7 +282,6 @@ export const LessonsPage: React.FC = () => {
                             )}
                         </Form>
                     </Drawer>
-
                 </Space>
             ) : (
                 <Card title="My Lesson Sessions">

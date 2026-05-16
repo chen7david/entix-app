@@ -18,12 +18,12 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { getAssetUrl } from "@shared";
 import { CEFR_LEVELS, type CefrLevel } from "@shared/constants/cefr";
+import { useQueries } from "@tanstack/react-query";
+import { AddObjectiveForm } from "@web/src/features/lessons/components/AddObjectiveForm";
 import {
     LessonStudyContent,
     type LessonStudyEditSection,
 } from "@web/src/features/lessons/components/LessonStudyContent";
-import { useQueries } from "@tanstack/react-query";
-import { AddObjectiveForm } from "@web/src/features/lessons/components/AddObjectiveForm";
 import {
     type LessonPlaylistRowDto,
     type ObjectiveDto,
@@ -753,8 +753,8 @@ export function LessonDetailPage(): React.ReactElement | null {
                         onSubmit={handleAddLessonWord}
                     />
                     <Typography.Text type="secondary" className="block">
-                        Tap English or Chinese for audio when available. Removing a word only unlinks
-                        it from this lesson.
+                        Tap English or Chinese for audio when available. Removing a word only
+                        unlinks it from this lesson.
                     </Typography.Text>
                     <VocabularyTable
                         items={lessonVocabTableItems}
@@ -773,7 +773,6 @@ export function LessonDetailPage(): React.ReactElement | null {
                     />
                 </Space>
             </Drawer>
-
 
             <Drawer
                 title="Edit objective"
