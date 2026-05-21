@@ -6,12 +6,14 @@ import { DateUtils } from "@web/src/utils/date";
 import { Alert, Card, Col, List, Row, Space, Typography, theme } from "antd";
 import type React from "react";
 import { useMemo } from "react";
+import { Link } from "react-router";
 
 const { Title, Text } = Typography;
 
 export const StudentPortal: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const { activeOrganization } = useOrganization();
+    const orgSlug = activeOrganization?.slug;
     const { token } = theme.useToken();
     const { data: enrollments = [], isLoading, error } = useMyEnrollments(activeOrganization?.id);
 
@@ -120,7 +122,20 @@ export const StudentPortal: React.FC = () => {
                         renderItem={(item) => (
                             <List.Item>
                                 <List.Item.Meta
-                                    title={<Text strong>{item.lessonTitle}</Text>}
+                                    title={
+                                        orgSlug ? (
+                                            <Link
+                                                to={`/org/${orgSlug}/dashboard/lessons/${item.lessonId}`}
+                                                className="text-inherit"
+                                            >
+                                                <Text strong className="hover:text-indigo-600">
+                                                    {item.lessonTitle}
+                                                </Text>
+                                            </Link>
+                                        ) : (
+                                            <Text strong>{item.lessonTitle}</Text>
+                                        )
+                                    }
                                     description={
                                         <Space direction="vertical" size={0}>
                                             <Text type="secondary">

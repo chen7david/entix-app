@@ -8,6 +8,7 @@ import { FinancialTransactionCategoriesRepository } from "@api/repositories/fina
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { CloudflareKvCacheRepository } from "@api/repositories/kv-cache.repository";
 import { LessonRepository } from "@api/repositories/lesson.repository";
+import { LessonContentRepository } from "@api/repositories/lesson-content.repository";
 import { LessonProgressRepository } from "@api/repositories/lesson-progress.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
@@ -84,6 +85,10 @@ export const getMediaRepository = (ctx: AppContext) => {
 
 export const getLessonRepository = (ctx: AppContext) => {
     return new LessonRepository(getDbClient(ctx));
+};
+
+export const getLessonContentRepository = (ctx: AppContext) => {
+    return new LessonContentRepository(getDbClient(ctx));
 };
 
 export const getLessonProgressRepository = (ctx: AppContext) => {

@@ -69,6 +69,18 @@ export const LessonsPage = lazyNamed(
     () => import("@web/src/pages/dashboard/lessons/LessonsPage"),
     "LessonsPage"
 );
+export const LessonDetailPage = lazyNamed(
+    () => import("@web/src/pages/org/teacher/lessons/LessonDetailPage"),
+    "LessonDetailPage"
+);
+export const LessonPreviewRedirect = lazyNamed(
+    () => import("@web/src/pages/org/teacher/lessons/LessonPreviewRedirect"),
+    "LessonPreviewRedirect"
+);
+export const LessonStudyPage = lazyNamed(
+    () => import("@web/src/pages/dashboard/lesson-study/LessonStudyPage"),
+    "LessonStudyPage"
+);
 export const ShopPage = lazyNamed(
     () => import("@web/src/pages/dashboard/shop/ShopPage"),
     "ShopPage"

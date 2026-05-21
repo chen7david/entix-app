@@ -33,6 +33,7 @@ describe("LessonHandlers.updateLesson", () => {
             title: "Lesson",
             description: null,
             coverArtUrl: "https://old-cover",
+            cefrLevel: null,
             createdAt: new Date(),
             updatedAt: new Date(),
         });
@@ -68,6 +69,7 @@ describe("LessonHandlers.deleteLesson", () => {
             title: "Lesson",
             description: null,
             coverArtUrl: "https://old-cover",
+            cefrLevel: null,
             createdAt: new Date(),
             updatedAt: new Date(),
         });

@@ -3,7 +3,18 @@ import { getLessonRepository } from "@api/factories/repository.factory";
 import { getUploadService } from "@api/factories/upload.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
+import type { CefrLevel } from "@shared/constants/cefr";
+import type { Lesson } from "@shared/db/schema";
 import type { LessonRoutes } from "./lesson.routes";
+
+function serializeLesson(lesson: Lesson) {
+    return {
+        ...lesson,
+        cefrLevel: lesson.cefrLevel as CefrLevel | null,
+        createdAt: lesson.createdAt.getTime(),
+        updatedAt: lesson.updatedAt.getTime(),
+    };
+}
 
 export class LessonHandlers {
     static listLessons: AppHandler<typeof LessonRoutes.listLessons> = async (ctx) => {
@@ -22,11 +33,7 @@ export class LessonHandlers {
         return ctx.json(
             {
                 ...result,
-                items: result.items.map((lesson) => ({
-                    ...lesson,
-                    createdAt: lesson.createdAt.getTime(),
-                    updatedAt: lesson.updatedAt.getTime(),
-                })),
+                items: result.items.map(serializeLesson),
             },
             HttpStatusCodes.OK
         );
@@ -49,15 +56,9 @@ export class LessonHandlers {
             title: payload.title,
             description: payload.description ?? null,
             coverArtUrl,
+            cefrLevel: payload.cefrLevel ?? null,
         });
-        return ctx.json(
-            {
-                ...lesson,
-                createdAt: lesson.createdAt.getTime(),
-                updatedAt: lesson.updatedAt.getTime(),
-            },
-            HttpStatusCodes.CREATED
-        );
+        return ctx.json(serializeLesson(lesson), HttpStatusCodes.CREATED);
     };
 
     static getLesson: AppHandler<typeof LessonRoutes.getLesson> = async (ctx) => {
@@ -67,14 +68,7 @@ export class LessonHandlers {
         if (!lesson) {
             throw new NotFoundError("Lesson not found");
         }
-        return ctx.json(
-            {
-                ...lesson,
-                createdAt: lesson.createdAt.getTime(),
-                updatedAt: lesson.updatedAt.getTime(),
-            },
-            HttpStatusCodes.OK
-        );
+        return ctx.json(serializeLesson(lesson), HttpStatusCodes.OK);
     };
 
     static updateLesson: AppHandler<typeof LessonRoutes.updateLesson> = async (ctx) => {
@@ -99,6 +93,7 @@ export class LessonHandlers {
             title: payload.title,
             description: payload.description,
             ...(coverArtUrl !== undefined ? { coverArtUrl } : {}),
+            ...(payload.cefrLevel !== undefined ? { cefrLevel: payload.cefrLevel } : {}),
         });
         if (!lesson) {
             throw new NotFoundError("Lesson not found");
@@ -107,14 +102,7 @@ export class LessonHandlers {
         if (coverArtUrl !== undefined && currentLesson.coverArtUrl) {
             await uploadService.deleteUploadByUrlGlobalSafely(currentLesson.coverArtUrl);
         }
-        return ctx.json(
-            {
-                ...lesson,
-                createdAt: lesson.createdAt.getTime(),
-                updatedAt: lesson.updatedAt.getTime(),
-            },
-            HttpStatusCodes.OK
-        );
+        return ctx.json(serializeLesson(lesson), HttpStatusCodes.OK);
     };
 
     static deleteLesson: AppHandler<typeof LessonRoutes.deleteLesson> = async (ctx) => {

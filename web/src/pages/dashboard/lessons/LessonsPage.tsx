@@ -1,5 +1,6 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined, PlusOutlined } from "@ant-design/icons";
 import { getAssetUrl } from "@shared";
+import { CEFR_LEVELS } from "@shared/constants/cefr";
 import type { CursorPaginationConfig } from "@web/src/components/data/DataTableWithFilters";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
@@ -9,7 +10,6 @@ import {
     useDeleteLesson,
     useLessonLibrary,
     useLessons,
-    useUpdateLesson,
 } from "@web/src/features/lessons/hooks/useLessons";
 import { CoverArtUploader } from "@web/src/features/media";
 import { useOrganization, useOrgRole } from "@web/src/features/organization";
@@ -22,6 +22,7 @@ import {
     Form,
     Input,
     Popconfirm,
+    Select,
     Space,
     Table,
     Tag,
@@ -30,15 +31,20 @@ import {
 } from "antd";
 import type React from "react";
 import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
 
 const { Text } = Typography;
 
 export const LessonsPage: React.FC = () => {
+    const navigate = useNavigate();
     const { isStaff } = useOrgRole();
     const { activeOrganization } = useOrganization();
+    const orgSlug = activeOrganization?.slug;
+
+    const lessonDetailHref = (lessonId: string) =>
+        orgSlug ? `/org/${orgSlug}/teaching/lessons/${lessonId}` : null;
     const { myEnrollments, isLoadingMyEnrollments } = useLessons();
     const createLesson = useCreateLesson();
-    const updateLesson = useUpdateLesson();
     const deleteLesson = useDeleteLesson();
     const [filters, setFilters] = useState<{ search?: string }>({});
     const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -53,9 +59,7 @@ export const LessonsPage: React.FC = () => {
     });
 
     const [createForm] = Form.useForm();
-    const [editForm] = Form.useForm();
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
-    const [editingLesson, setEditingLesson] = useState<LessonDto | null>(null);
     const initialTableFilters = useMemo(() => ({}), []);
 
     const handleCreate = async () => {
@@ -64,22 +68,10 @@ export const LessonsPage: React.FC = () => {
             title: values.title,
             description: values.description,
             coverArtUploadId: values.coverArtUploadId,
+            cefrLevel: values.cefrLevel ?? null,
         });
         createForm.resetFields();
         setIsCreateDrawerOpen(false);
-    };
-
-    const handleUpdate = async () => {
-        if (!editingLesson) return;
-        const values = await editForm.validateFields();
-        await updateLesson.mutateAsync({
-            lessonId: editingLesson.id,
-            title: values.title,
-            description: values.description,
-            coverArtUploadId: values.coverArtUploadId,
-        });
-        setEditingLesson(null);
-        editForm.resetFields();
     };
 
     const tablePagination: CursorPaginationConfig = {
@@ -166,6 +158,18 @@ export const LessonsPage: React.FC = () => {
                                         width: 260,
                                     },
                                     {
+                                        title: "CEFR",
+                                        dataIndex: "cefrLevel",
+                                        key: "cefrLevel",
+                                        width: 88,
+                                        render: (value: string | null) =>
+                                            value ? (
+                                                <Tag>{value}</Tag>
+                                            ) : (
+                                                <Text type="secondary">—</Text>
+                                            ),
+                                    },
+                                    {
                                         title: "Description",
                                         dataIndex: "description",
                                         key: "description",
@@ -189,22 +193,23 @@ export const LessonsPage: React.FC = () => {
                                         placeholder: "Search lessons...",
                                     },
                                 ],
+                                onRowClick: (record) => {
+                                    const href = lessonDetailHref(record.id);
+                                    if (href) navigate(href);
+                                },
                                 actions: (record: LessonDto) => (
                                     <Space>
-                                        <Tooltip title="Edit lesson">
-                                            <Button
-                                                type="text"
-                                                icon={<EditOutlined />}
-                                                onClick={() => {
-                                                    setEditingLesson(record);
-                                                    editForm.setFieldsValue({
-                                                        title: record.title,
-                                                        description: record.description,
-                                                        coverArtUploadId: undefined,
-                                                    });
-                                                }}
-                                            />
-                                        </Tooltip>
+                                        {lessonDetailHref(record.id) ? (
+                                            <Tooltip title="Edit lesson">
+                                                <Button
+                                                    type="text"
+                                                    icon={<EditOutlined />}
+                                                    onClick={() =>
+                                                        navigate(lessonDetailHref(record.id)!)
+                                                    }
+                                                />
+                                            </Tooltip>
+                                        ) : null}
                                         <Popconfirm
                                             title="Delete lesson?"
                                             onConfirm={() => deleteLesson.mutate(record.id)}
@@ -266,6 +271,16 @@ export const LessonsPage: React.FC = () => {
                                     placeholder="Optional lesson description"
                                 />
                             </Form.Item>
+                            <Form.Item name="cefrLevel" label="CEFR level">
+                                <Select
+                                    allowClear
+                                    placeholder="Not set"
+                                    options={CEFR_LEVELS.map((level) => ({
+                                        value: level,
+                                        label: level,
+                                    }))}
+                                />
+                            </Form.Item>
                             <Form.Item name="coverArtUploadId" hidden>
                                 <Input />
                             </Form.Item>
@@ -274,66 +289,6 @@ export const LessonsPage: React.FC = () => {
                                     organizationId={activeOrganization.id}
                                     onUploadSuccess={async (uploadId) => {
                                         createForm.setFieldsValue({ coverArtUploadId: uploadId });
-                                    }}
-                                    aspectRatio={1}
-                                />
-                            )}
-                        </Form>
-                    </Drawer>
-
-                    <Drawer
-                        title="Edit Lesson"
-                        placement="right"
-                        width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
-                        open={!!editingLesson}
-                        destroyOnClose
-                        onClose={() => {
-                            setEditingLesson(null);
-                            editForm.resetFields();
-                        }}
-                        extra={
-                            <Button
-                                type="primary"
-                                onClick={() => editForm.submit()}
-                                loading={updateLesson.isPending}
-                            >
-                                Save Changes
-                            </Button>
-                        }
-                    >
-                        <Form form={editForm} layout="vertical" onFinish={handleUpdate}>
-                            <Form.Item
-                                name="title"
-                                label="Title"
-                                rules={[{ required: true, message: "Lesson title is required" }]}
-                            >
-                                <Input placeholder="Lesson title" />
-                            </Form.Item>
-                            <Form.Item name="description" label="Description">
-                                <Input.TextArea
-                                    rows={4}
-                                    placeholder="Optional lesson description"
-                                />
-                            </Form.Item>
-                            <Form.Item name="coverArtUploadId" hidden>
-                                <Input />
-                            </Form.Item>
-                            {activeOrganization?.id && (
-                                <CoverArtUploader
-                                    organizationId={activeOrganization.id}
-                                    currentImageUrl={
-                                        editingLesson?.coverArtUrl
-                                            ? getAssetUrl(editingLesson.coverArtUrl)
-                                            : undefined
-                                    }
-                                    onUploadSuccess={async (uploadId) => {
-                                        editForm.setFieldsValue({ coverArtUploadId: uploadId });
-                                        if (!editingLesson) return;
-                                        const updatedLesson = await updateLesson.mutateAsync({
-                                            lessonId: editingLesson.id,
-                                            coverArtUploadId: uploadId,
-                                        });
-                                        setEditingLesson(updatedLesson);
                                     }}
                                     aspectRatio={1}
                                 />
@@ -353,6 +308,16 @@ export const LessonsPage: React.FC = () => {
                             {
                                 title: "Lesson",
                                 dataIndex: "lessonTitle",
+                                render: (title: string, record) =>
+                                    orgSlug ? (
+                                        <Link
+                                            to={`/org/${orgSlug}/dashboard/lessons/${record.lessonId}`}
+                                        >
+                                            {title}
+                                        </Link>
+                                    ) : (
+                                        title
+                                    ),
                             },
                             {
                                 title: "Teacher",

@@ -612,6 +612,7 @@ export function SessionVocabularyPage() {
                     organizationId && sessionQuery.data ? (
                         <WordListPrintButton
                             data={{
+                                kind: "session",
                                 sessionName: sessionQuery.data.title,
                                 lessonName:
                                     lessonQuery.data?.title ?? sessionQuery.data.lessonId ?? "—",
@@ -629,6 +630,10 @@ export function SessionVocabularyPage() {
                     ) : null
                 }
             >
+                <Text type="secondary" className="block mb-3">
+                    Click the English word or Chinese translation in the table to play audio when
+                    recordings are available.
+                </Text>
                 <VocabularyTable
                     items={items}
                     loading={isLoading}

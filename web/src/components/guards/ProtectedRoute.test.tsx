@@ -245,7 +245,7 @@ describe("ProtectedRoute", () => {
         expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
     });
 
-    it("should deny staff access to student-only org routes (e.g. wallet)", () => {
+    it("should redirect staff away from student-only org routes to the org dashboard", () => {
         vi.mocked(useOrgRole).mockReturnValue({
             activeRole: "teacher",
             userRoles: ["teacher"],
@@ -285,13 +285,18 @@ describe("ProtectedRoute", () => {
             <MemoryRouter initialEntries={["/org/acme/dashboard/wallet"]}>
                 <Routes>
                     <Route element={<ProtectedRoute allowedOrgRoles={["student"]} />}>
-                        <Route path="/org/acme/dashboard/wallet" element={<MockDashboard />} />
+                        <Route path="/org/:slug/dashboard/wallet" element={<MockDashboard />} />
                     </Route>
+                    <Route
+                        path="/org/:slug/dashboard"
+                        element={<div data-testid="org-dashboard" />}
+                    />
                     <Route path={AppRoutes.unauthorized} element={<MockUnauthorized />} />
                 </Routes>
             </MemoryRouter>
         );
 
-        expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
+        expect(screen.getByTestId("org-dashboard")).toBeInTheDocument();
+        expect(screen.queryByTestId("unauthorized-page")).not.toBeInTheDocument();
     });
 });
