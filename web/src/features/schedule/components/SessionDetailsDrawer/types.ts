@@ -1,4 +1,6 @@
 export type SessionSubmitPayload = {
+    lessonId: string;
+    teacherId: string;
     title: string;
     description?: string;
     startTime: number;

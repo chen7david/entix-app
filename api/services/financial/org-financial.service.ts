@@ -41,6 +41,7 @@ export class OrgFinancialService extends FinancialBaseService {
         currencyId: string;
         amountCents: number;
         description?: string;
+        idempotencyKey?: string | null;
     }) {
         // Use shared logic from FinancialBaseService to enforce guards
         return this.executeTransaction({

@@ -9,8 +9,9 @@ const { Text } = Typography;
 type Props = {
     currencies: CurrencyWithStatus[];
     onActivate: (currencyId: string) => void;
-    onAccountClick: (account: FinancialAccountData) => void;
+    onAccountClick?: (account: FinancialAccountData) => void;
     activating?: boolean;
+    compact?: boolean;
 };
 
 export const CurrencyActivationGrid: React.FC<Props> = ({
@@ -18,6 +19,7 @@ export const CurrencyActivationGrid: React.FC<Props> = ({
     onActivate,
     onAccountClick,
     activating,
+    compact = false,
 }) => {
     const toFinancialAccountData = (currency: CurrencyWithStatus): FinancialAccountData => ({
         id: currency.accountId ?? `account_${currency.id}`,
@@ -36,6 +38,7 @@ export const CurrencyActivationGrid: React.FC<Props> = ({
                             currency={{} as any}
                             onActivate={() => {}}
                             loading={true}
+                            compact={compact}
                         />
                     </Col>
                 ))}
@@ -64,8 +67,13 @@ export const CurrencyActivationGrid: React.FC<Props> = ({
                     <AvailableCurrencyCard
                         currency={currency}
                         onActivate={onActivate}
-                        onClick={() => onAccountClick(toFinancialAccountData(currency))}
+                        onClick={
+                            onAccountClick
+                                ? () => onAccountClick(toFinancialAccountData(currency))
+                                : undefined
+                        }
                         loading={activating}
+                        compact={compact}
                     />
                 </Col>
             ))}

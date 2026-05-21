@@ -1,6 +1,7 @@
 import { AppRoutes } from "@shared";
 import { render, screen } from "@testing-library/react";
 import { useAuth } from "@web/src/features/auth";
+import { useOrgRole } from "@web/src/features/organization";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -9,6 +10,9 @@ import { ProtectedRoute } from "./ProtectedRoute";
 vi.mock("@web/src/features/auth", () => ({
     useAuth: vi.fn(),
 }));
+vi.mock("@web/src/features/organization", () => ({
+    useOrgRole: vi.fn(),
+}));
 
 const MockDashboard = () => <div data-testid="dashboard-page">Dashboard</div>;
 const MockSignIn = () => <div data-testid="signin-page">Sign In</div>;
@@ -16,6 +20,18 @@ const MockUnauthorized = () => <div data-testid="unauthorized-page">Unauthorized
 
 describe("ProtectedRoute", () => {
     it("should show loader when authentication is loading", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: null,
+            userRoles: [],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
+        });
         vi.mocked(useAuth).mockReturnValue({
             user: null,
             isAuthenticated: false,
@@ -40,6 +56,18 @@ describe("ProtectedRoute", () => {
     });
 
     it("should redirect to sign-in when not authenticated", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: null,
+            userRoles: [],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
+        });
         vi.mocked(useAuth).mockReturnValue({
             user: null,
             isAuthenticated: false,
@@ -69,6 +97,18 @@ describe("ProtectedRoute", () => {
     });
 
     it("should allow access when authenticated", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: null,
+            userRoles: [],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
+        });
         vi.mocked(useAuth).mockReturnValue({
             user: {
                 id: "1",
@@ -106,6 +146,18 @@ describe("ProtectedRoute", () => {
     });
 
     it("should deny access for incorrect global role", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: null,
+            userRoles: [],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
+        });
         vi.mocked(useAuth).mockReturnValue({
             user: {
                 id: "1",
@@ -144,6 +196,18 @@ describe("ProtectedRoute", () => {
     });
 
     it("should deny access for incorrect organization role", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: "student",
+            userRoles: ["student"],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: true,
+            isAdminOrOwner: false,
+            isStaff: false,
+        });
         vi.mocked(useAuth).mockReturnValue({
             user: {
                 id: "1",
@@ -179,5 +243,60 @@ describe("ProtectedRoute", () => {
         );
 
         expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
+    });
+
+    it("should redirect staff away from student-only org routes to the org dashboard", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: "teacher",
+            userRoles: ["teacher"],
+            loadingRoles: false,
+            needsRoleSelection: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: true,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: true,
+        });
+        vi.mocked(useAuth).mockReturnValue({
+            user: {
+                id: "1",
+                email: "teacher@example.com",
+                name: "Teacher",
+                globalRole: "user",
+                emailVerified: true,
+                orgRole: "teacher",
+                activeMemberId: "m1",
+                activeOrganizationId: "o1",
+            },
+            isAuthenticated: true,
+            isLoading: false,
+            isSuperAdmin: false,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: true,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: true,
+            refreshAuth: vi.fn() as any,
+        });
+
+        render(
+            <MemoryRouter initialEntries={["/org/acme/dashboard/wallet"]}>
+                <Routes>
+                    <Route element={<ProtectedRoute allowedOrgRoles={["student"]} />}>
+                        <Route path="/org/:slug/dashboard/wallet" element={<MockDashboard />} />
+                    </Route>
+                    <Route
+                        path="/org/:slug/dashboard"
+                        element={<div data-testid="org-dashboard" />}
+                    />
+                    <Route path={AppRoutes.unauthorized} element={<MockUnauthorized />} />
+                </Routes>
+            </MemoryRouter>
+        );
+
+        expect(screen.getByTestId("org-dashboard")).toBeInTheDocument();
+        expect(screen.queryByTestId("unauthorized-page")).not.toBeInTheDocument();
     });
 });

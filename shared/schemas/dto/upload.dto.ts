@@ -16,7 +16,7 @@ export const UploadResponseSchema = z
         contentType: z.string(),
         status: z.enum(["pending", "completed", "failed"]),
         organizationId: z.string(),
-        uploadedBy: z.string(),
+        uploadedBy: z.string().nullable(),
         createdAt: z
             .union([z.number(), z.date(), z.string(), z.null()])
             .optional()

@@ -26,6 +26,7 @@ export const financeBillingPlans = sqliteTable(
         updatedAt: integer("updated_at", { mode: "timestamp_ms" })
             .notNull()
             .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`),
+        /** Default overdraft when the wallet row has no explicit cap; see `resolveOverdraftLimit` in `shared/utils/billing.ts`. */
         overdraftLimitCents: integer("overdraft_limit_cents").notNull().default(0),
     },
     (table) => [

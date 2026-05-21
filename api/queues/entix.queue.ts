@@ -1,5 +1,7 @@
 import app from "@api/app";
 import { BadRequestError, InternalServerError } from "@api/errors/app.error";
+import { createAiServiceFromEnv } from "@api/factories/ai.factory";
+import { getBucketClientFromEnv } from "@api/factories/bucket.factory";
 import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
@@ -7,8 +9,15 @@ import { FinancialTransactionsRepository } from "@api/repositories/financial/fin
 import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import { UploadRepository } from "@api/repositories/upload.repository";
+import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { generateAuditId } from "@shared";
+import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
+import {
+    VOCABULARY_TRANSLATION_INSTRUCTIONS,
+    VocabularyProcessingService,
+} from "@api/services/vocabulary-processing.service";
+import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
 
@@ -23,6 +32,14 @@ export type EntixQueueMessage =
     | {
           type: "billing.process-payment";
           paymentRequestId: string;
+      }
+    | {
+          type: "vocabulary.process-text";
+          vocabularyId: string;
+      }
+    | {
+          type: "vocabulary.process-audio";
+          vocabularyId: string;
       };
 
 // ─── Handler ─────────────────────────────────────────────────────────────────
@@ -51,6 +68,20 @@ export const EntixQueueHandler = {
                     >,
                     env,
                     executionCtx
+                );
+            case "vocabulary.process-text":
+                return handleVocabularyProcessText(
+                    message as Message<
+                        Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>
+                    >,
+                    env
+                );
+            case "vocabulary.process-audio":
+                return handleVocabularyProcessAudio(
+                    message as Message<
+                        Extract<EntixQueueMessage, { type: "vocabulary.process-audio" }>
+                    >,
+                    env
                 );
 
             default: {
@@ -139,6 +170,106 @@ async function handleBillingProcess(
         }
 
         // Infrastructure failure — retry is appropriate
+        message.retry();
+    }
+}
+
+async function handleVocabularyProcessText(
+    message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>>,
+    env: CloudflareBindings
+): Promise<void> {
+    const db = drizzle(env.DB, { schema });
+    const vocabularyId = message.body.vocabularyId;
+    const vocabularyRepo = new VocabularyBankRepository(db);
+    const auditRepo = new SystemAuditRepository(db);
+    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+        systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
+    });
+    // Text processing never calls TTS. If it did, `processText` catches, runs logPipelineFailure, then rethrows — so the queue still hits retry().
+    const ttsService = {
+        generateAndUpload: async () => {
+            throw new InternalServerError("TTS is not available in text processing");
+        },
+    } as unknown as TtsService;
+
+    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
+        logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
+            const errMsg = error instanceof Error ? error.message : String(error);
+            await auditRepo.insert({
+                id: generateAuditId(),
+                organizationId: PLATFORM_ORGANIZATION_ID,
+                eventType: "vocabulary.pipeline_failed",
+                severity: "warning",
+                actorType: "system",
+                subjectType: "vocabulary_bank",
+                subjectId: vocabularyId,
+                message: `Vocabulary text pipeline failed: ${errMsg}`,
+                metadata: JSON.stringify({ phase: "text", vocabularyId }),
+            });
+        },
+    });
+
+    try {
+        await processor.processText(vocabularyId);
+        // Cron owns pipeline dispatching/chaining; queue handler only advances status.
+        message.ack();
+    } catch (error) {
+        console.error("[Queue:VocabularyText] Unhandled failure:", error);
+        message.retry();
+    }
+}
+
+async function handleVocabularyProcessAudio(
+    message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-audio" }>>,
+    env: CloudflareBindings
+): Promise<void> {
+    const db = drizzle(env.DB, { schema });
+    const envBindings = env as unknown as Record<string, unknown>;
+    if (
+        !envBindings.GCP_CLIENT_EMAIL ||
+        !envBindings.GCP_PRIVATE_KEY ||
+        !envBindings.GCP_PROJECT_ID
+    ) {
+        console.error("[Queue] GCP secrets not configured — acking to prevent retry storm");
+        message.ack();
+        return;
+    }
+    const vocabularyRepo = new VocabularyBankRepository(db);
+    const uploadRepo = new UploadRepository(db);
+    const auditRepo = new SystemAuditRepository(db);
+    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+        systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
+    });
+    const credentials = parseGoogleTtsCredentials(env as unknown as Record<string, unknown>);
+    const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
+    const processor = new VocabularyProcessingService(
+        vocabularyRepo,
+        aiService,
+        ttsService,
+        {
+            logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
+                const errMsg = error instanceof Error ? error.message : String(error);
+                await auditRepo.insert({
+                    id: generateAuditId(),
+                    organizationId: PLATFORM_ORGANIZATION_ID,
+                    eventType: "vocabulary.pipeline_failed",
+                    severity: "warning",
+                    actorType: "system",
+                    subjectType: "vocabulary_bank",
+                    subjectId: vocabularyId,
+                    message: `Vocabulary audio pipeline failed: ${errMsg}`,
+                    metadata: JSON.stringify({ phase: "audio", vocabularyId }),
+                });
+            },
+        },
+        uploadRepo
+    );
+
+    try {
+        await processor.processAudio(message.body.vocabularyId);
+        message.ack();
+    } catch (error) {
+        console.error("[Queue:VocabularyAudio] Unhandled failure:", error);
         message.retry();
     }
 }

@@ -5,8 +5,11 @@ import { ScheduleRoutes } from "./schedule.routes";
 
 export const scheduleRoutes = new OpenAPIHono<AppEnv>();
 
-scheduleRoutes.openapi(ScheduleRoutes.listSessions, ScheduleHandlers.listSessions);
+// IMPORTANT: Register static siblings before parameterized /schedule/{sessionId}
+// so `/schedule/metrics` is not swallowed by `sessionId="metrics"`.
 scheduleRoutes.openapi(ScheduleRoutes.getScheduleMetrics, ScheduleHandlers.getScheduleMetrics);
+scheduleRoutes.openapi(ScheduleRoutes.getSessionById, ScheduleHandlers.getSessionById);
+scheduleRoutes.openapi(ScheduleRoutes.listSessions, ScheduleHandlers.listSessions);
 scheduleRoutes.openapi(ScheduleRoutes.getAnalyticsSessions, ScheduleHandlers.getAnalyticsSessions);
 scheduleRoutes.openapi(
     ScheduleRoutes.getAnalyticsAttendance,

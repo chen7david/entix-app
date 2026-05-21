@@ -15,6 +15,8 @@ const envSchema = z.object({
     R2_SECRET_ACCESS_KEY: z.string().min(10, "R2_SECRET_ACCESS_KEY is required"),
     R2_BUCKET_NAME: z.string().min(3, "R2_BUCKET_NAME is required"),
     PUBLIC_CDN_URL: z.url(),
+    GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
+    GEMINI_MODEL: z.string().min(1, "GEMINI_MODEL is required"),
     SKIP_EMAIL_VERIFICATION: z.enum(["true", "false", ""]).optional(),
     CORS_ORIGINS: z.string().optional(),
 });

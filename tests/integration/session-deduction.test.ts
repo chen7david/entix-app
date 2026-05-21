@@ -13,6 +13,7 @@ import {
     financeMemberBillingPlans,
     financialAccounts,
     financialTransactions,
+    lessons,
     scheduledSessions,
     sessionAttendances,
 } from "@shared/db/schema";
@@ -131,9 +132,16 @@ describe("Session Billing Integration", () => {
         ]);
 
         const sessionId = "sess_01";
+        await db.insert(lessons).values({
+            id: "lesson_sess_01",
+            organizationId: orgId,
+            title: "Math Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_sess_01",
+            teacherId: student1.userId,
             title: "Math Class",
             startTime: new Date(),
             durationMinutes: 60,
@@ -235,9 +243,16 @@ describe("Session Billing Integration", () => {
         });
 
         const sessionId = "sess_high_tier";
+        await db.insert(lessons).values({
+            id: "lesson_high_tier",
+            organizationId: orgId,
+            title: "Group Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_high_tier",
+            teacherId: students[0].userId,
             title: "Group Class",
             startTime: new Date(),
             durationMinutes: 60,
@@ -274,7 +289,7 @@ describe("Session Billing Integration", () => {
         }
     });
 
-    it("should throw NotFoundError if headcount is below the lowest tier", async () => {
+    it("should gracefully skip billing when headcount is below the lowest tier", async () => {
         const planId = generateBillingPlanId();
         await db.insert(financeBillingPlans).values({
             id: planId,
@@ -311,9 +326,16 @@ describe("Session Billing Integration", () => {
         });
 
         const sessionId = "sess_02";
+        await db.insert(lessons).values({
+            id: "lesson_sess_02",
+            organizationId: orgId,
+            title: "Solo Lesson",
+        });
         await db.insert(scheduledSessions).values({
             id: sessionId,
             organizationId: orgId,
+            lessonId: "lesson_sess_02",
+            teacherId: student1.userId,
             title: "Solo Class",
             startTime: new Date(),
             durationMinutes: 60,
@@ -325,15 +347,15 @@ describe("Session Billing Integration", () => {
             absent: false,
         });
 
-        // 1 student present. Plan lowest tier is 5. Should fail.
+        // 1 student present. Plan lowest tier is 5. Completion should still succeed.
         const response = await client.orgs.schedule.updateStatus(orgId, sessionId, {
             status: "completed",
         });
-        // We do not drainQueue if the endpoint itself returns a 4xx error and doesn't enqueue.
-        expect(response.status).toBe(HttpStatusCodes.NOT_FOUND);
-        const body = (await response.json()) as any;
-        expect(body.error).toContain("has no tier for session size: 1");
-        expect(body.error).toContain("Minimum required: 5");
+        expect(response.status).toBe(HttpStatusCodes.OK);
+
+        // No payment should be recorded for an unbillable attendance.
+        const txRows = await db.select().from(financialTransactions);
+        expect(txRows.length).toBe(0);
     });
 
     it("should preserve assignedAt and allow silent replacement (Upsert)", async () => {

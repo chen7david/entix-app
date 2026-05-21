@@ -3,6 +3,7 @@ import { check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-cor
 import { financialAccounts } from "./financial-accounts.schema";
 import { financialTransactions } from "./financial-transactions.schema";
 
+/** Immutable double-entry legs; do not UPDATE rows — reverse with a new transaction instead. */
 export const financialTransactionLines = sqliteTable(
     "financial_transaction_lines",
     {

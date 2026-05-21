@@ -6,6 +6,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineWorkersConfig({
     test: {
+        /** Integration hooks (D1 + auth) occasionally exceed Vitest’s default 10s under load. */
+        hookTimeout: 30_000,
         setupFiles: ["./tests/setup.ts"],
         poolOptions: {
             workers: {
@@ -29,11 +31,16 @@ export default defineWorkersConfig({
                         CLOUDFLARE_ACCOUNT_ID: "mock_account_id",
                         R2_BUCKET_NAME: "mock-bucket",
                         PUBLIC_CDN_URL: "https://mock-cdn.example.com",
+                        GEMINI_API_KEY: "test-placeholder",
+                        GEMINI_MODEL: "gemini-2.5-flash",
                     },
                 },
             },
         },
-        include: ["tests/**/*.{test,spec}.ts"],
+        include: [
+            "tests/**/*.{test,spec}.ts",
+            "api/db/migration-guard/__tests__/**/*.{test,spec}.ts",
+        ],
         exclude: ["tests/e2e/**"],
         alias: {
             "@api": resolve(__dirname, "./api"),

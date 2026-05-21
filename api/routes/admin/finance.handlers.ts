@@ -1,4 +1,4 @@
-import { getAdminFinancialService } from "@api/factories/service.factory";
+import { getAdminFinancialService, getOrgFinancialService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { AdminFinanceRoutes } from "./finance.routes";
@@ -21,6 +21,26 @@ export class AdminFinanceHandler {
         const { organizationId } = ctx.req.valid("param");
         const accounts = await getAdminFinancialService(ctx).getAnyOrgAccounts(organizationId);
         return ctx.json({ data: accounts }, HttpStatusCodes.OK);
+    };
+
+    static getOrgCurrencyStatus: AppHandler<typeof AdminFinanceRoutes.getOrgCurrencyStatus> =
+        async (ctx) => {
+            const { organizationId } = ctx.req.valid("param");
+            const currencies =
+                await getOrgFinancialService(ctx).getOrgCurrencyStatus(organizationId);
+            return ctx.json({ data: currencies }, HttpStatusCodes.OK);
+        };
+
+    static activateOrgCurrency: AppHandler<typeof AdminFinanceRoutes.activateOrgCurrency> = async (
+        ctx
+    ) => {
+        const { organizationId } = ctx.req.valid("param");
+        const { currencyId } = ctx.req.valid("json");
+        const account = await getOrgFinancialService(ctx).activateCurrency(
+            organizationId,
+            currencyId
+        );
+        return ctx.json({ data: account }, HttpStatusCodes.CREATED);
     };
 
     static adminCredit: AppHandler<typeof AdminFinanceRoutes.adminCredit> = async (ctx) => {

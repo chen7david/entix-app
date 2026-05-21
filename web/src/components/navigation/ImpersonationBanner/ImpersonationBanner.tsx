@@ -1,20 +1,20 @@
-import { UserOutlined } from "@ant-design/icons";
+import { SwapOutlined, UserOutlined } from "@ant-design/icons";
 import { useStopImpersonating } from "@web/src/features/auth";
 import { useSession } from "@web/src/lib/auth-client";
-import { Alert, App, Button } from "antd";
+import { App, Button, theme } from "antd";
 import type React from "react";
 import { createPortal } from "react-dom";
 
 export const ImpersonationBanner: React.FC = () => {
+    const { token } = theme.useToken();
     const { notification } = App.useApp();
     const { data, isPending: isSessionPending } = useSession();
     const { mutate: stopImpersonating, isPending: isStopping } = useStopImpersonating();
 
-    // Better Auth injects `impersonatedBy` into the session object during impersonation
     const session = data?.session as any;
 
     if (isSessionPending || !session || !session.impersonatedBy) {
-        return null; // Don't render if not impersonating
+        return null;
     }
 
     const handleStopImpersonation = () => {
@@ -24,51 +24,43 @@ export const ImpersonationBanner: React.FC = () => {
                     message: "Stop Failed",
                     description: error.message || "Failed to stop impersonation",
                 });
-                console.error("Failed to stop impersonation", error);
             },
         });
     };
 
     const banner = (
-        <div className="fixed bottom-0 left-0 right-0 md:top-0 md:bottom-auto md:left-[var(--app-sidebar-width)] z-[900] md:z-[1200] pointer-events-none">
-            <Alert
-                message={
-                    <div className="flex justify-between items-center w-full px-2 py-1">
-                        <div className="flex items-center gap-2 font-medium">
-                            <UserOutlined />
-                            <span>
-                                You are currently impersonating{" "}
-                                {data?.user?.name || data?.user?.email}
-                            </span>
-                        </div>
-                        <Button
-                            type="primary"
-                            danger
-                            size="small"
-                            loading={isStopping}
-                            onClick={handleStopImpersonation}
-                            className="font-semibold pointer-events-auto"
-                        >
-                            Stop Impersonating
-                        </Button>
-                    </div>
-                }
-                type="warning"
-                showIcon={false}
-                banner
-                className="border-b border-warning-border pointer-events-auto"
+        <div className="fixed bottom-14 md:bottom-auto md:top-0 left-0 right-0 md:left-[var(--app-sidebar-width)] z-[900] md:z-[1200]">
+            <div
+                className="flex justify-between items-center w-full px-4 py-2"
                 style={{
-                    backgroundColor: "rgba(254, 243, 199, 0.58)",
-                    backdropFilter: "blur(6px)",
-                    WebkitBackdropFilter: "blur(6px)",
+                    backgroundColor: token.colorWarning,
+                    color: token.colorTextLightSolid,
                 }}
-            />
+            >
+                <div className="flex items-center gap-2 font-semibold text-sm">
+                    <UserOutlined />
+                    <span>
+                        Impersonating: <strong>{data?.user?.name || data?.user?.email}</strong>
+                    </span>
+                </div>
+                <Button
+                    size="small"
+                    loading={isStopping}
+                    onClick={handleStopImpersonation}
+                    icon={<SwapOutlined />}
+                    style={{
+                        backgroundColor: "rgba(0,0,0,0.2)",
+                        borderColor: "rgba(255,255,255,0.4)",
+                        color: token.colorTextLightSolid,
+                        fontWeight: 600,
+                    }}
+                >
+                    Stop Impersonating
+                </Button>
+            </div>
         </div>
     );
 
-    if (typeof document === "undefined") {
-        return banner;
-    }
-
+    if (typeof document === "undefined") return banner;
     return createPortal(banner, document.body);
 };

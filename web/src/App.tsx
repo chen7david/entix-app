@@ -24,12 +24,18 @@ import {
     ChangePasswordPage,
     EmailInsightsPage,
     EmailVerificationPendingPage,
+    EnrollmentPage,
     FinancialManagementPage,
     ForgotPasswordPage,
     GlobalOrganizationsPage,
     GlobalUsersPage,
+    GlobalVocabularyPage,
     HomePage,
+    LessonDetailPage,
+    LessonPreviewRedirect,
+    LessonStudyPage,
     LessonsPage,
+    MemberDetailPage,
     MemberImportExportPage,
     MoviesPage,
     NoOrganizationPage,
@@ -37,7 +43,6 @@ import {
     OrdersPage,
     OrganizationAnalyticsPage,
     OrganizationInvitationsPage,
-    OrganizationListPage,
     OrganizationMediaPage,
     OrganizationMembersPage,
     OrganizationPlaylistsPage,
@@ -47,12 +52,18 @@ import {
     ProfilePage,
     ResetPasswordPage,
     SelectOrganizationPage,
+    SessionDetailPage,
     SessionsPage,
+    SessionVocabularyPage,
     SettingsPage,
     ShopPage,
     SignInPage,
+    StudentDetailPage,
+    StudentSchedulePage,
+    StudentVocabularyPage,
     UnauthorizedPage,
     VerifyEmailPage,
+    VocabAiTesterPage,
     WalletPage,
 } from "./routes/lazy-pages";
 
@@ -155,11 +166,38 @@ export default function App() {
                                                     path="change-password"
                                                     element={<ChangePasswordPage />}
                                                 />
-                                                <Route path="lessons" element={<LessonsPage />} />
-                                                <Route path="shop" element={<ShopPage />} />
-                                                <Route path="wallet" element={<WalletPage />} />
-                                                <Route path="movies" element={<MoviesPage />} />
-                                                <Route path="orders" element={<OrdersPage />} />
+                                                {/* Student-only (org role `student`, not Better Auth resource "member"): staff hitting /dashboard/wallet|shop|… are redirected server-side in the router. */}
+                                                <Route
+                                                    element={
+                                                        <ProtectedRoute
+                                                            allowedOrgRoles={["student"]}
+                                                        />
+                                                    }
+                                                >
+                                                    <Route path="lessons">
+                                                        <Route index element={<LessonsPage />} />
+                                                        <Route
+                                                            path=":lessonId"
+                                                            element={<LessonStudyPage />}
+                                                        />
+                                                    </Route>
+                                                    <Route
+                                                        path="playlists/:playlistId"
+                                                        element={<PlaylistPlayerPage />}
+                                                    />
+                                                    <Route path="shop" element={<ShopPage />} />
+                                                    <Route path="wallet" element={<WalletPage />} />
+                                                    <Route path="movies" element={<MoviesPage />} />
+                                                    <Route path="orders" element={<OrdersPage />} />
+                                                    <Route
+                                                        path="my-schedule"
+                                                        element={<StudentSchedulePage />}
+                                                    />
+                                                    <Route
+                                                        path="vocabulary"
+                                                        element={<StudentVocabularyPage />}
+                                                    />
+                                                </Route>
                                             </Route>
 
                                             {/* ── ADMIN: restricted to true organization managers ── */}
@@ -173,7 +211,9 @@ export default function App() {
                                                 <Route path="admin">
                                                     <Route
                                                         index
-                                                        element={<OrganizationAnalyticsPage />}
+                                                        element={
+                                                            <Navigate to="analytics" replace />
+                                                        }
                                                     />
                                                     <Route
                                                         path="media"
@@ -200,16 +240,20 @@ export default function App() {
                                                         element={<OrganizationMembersPage />}
                                                     />
                                                     <Route
+                                                        path="members/:memberId"
+                                                        element={<MemberDetailPage />}
+                                                    />
+                                                    <Route
+                                                        path="enrollment"
+                                                        element={<EnrollmentPage />}
+                                                    />
+                                                    <Route
                                                         path="invitations"
                                                         element={<OrganizationInvitationsPage />}
                                                     />
                                                     <Route
                                                         path="bulk"
                                                         element={<MemberImportExportPage />}
-                                                    />
-                                                    <Route
-                                                        path="organizations"
-                                                        element={<OrganizationListPage />}
                                                     />
                                                     <Route
                                                         path="uploads"
@@ -253,11 +297,31 @@ export default function App() {
                                                 <Route path="teaching">
                                                     <Route
                                                         index
-                                                        element={<Navigate to="schedule" replace />}
+                                                        element={<Navigate to="sessions" replace />}
                                                     />
                                                     <Route
-                                                        path="schedule"
+                                                        path="sessions"
                                                         element={<OrganizationSchedulePage />}
+                                                    />
+                                                    <Route
+                                                        path="sessions/:sessionId/vocabulary"
+                                                        element={<SessionVocabularyPage />}
+                                                    />
+                                                    <Route
+                                                        path="sessions/:sessionId"
+                                                        element={<SessionDetailPage />}
+                                                    />
+                                                    <Route
+                                                        path="lessons"
+                                                        element={<LessonsPage />}
+                                                    />
+                                                    <Route
+                                                        path="lessons/:lessonId/preview"
+                                                        element={<LessonPreviewRedirect />}
+                                                    />
+                                                    <Route
+                                                        path="lessons/:lessonId"
+                                                        element={<LessonDetailPage />}
                                                     />
                                                     <Route
                                                         path="media"
@@ -274,6 +338,14 @@ export default function App() {
                                                     <Route
                                                         path="students"
                                                         element={<OrganizationMembersPage />}
+                                                    />
+                                                    <Route
+                                                        path="students/:memberId"
+                                                        element={<StudentDetailPage />}
+                                                    />
+                                                    <Route
+                                                        path="vocabulary"
+                                                        element={<GlobalVocabularyPage />}
                                                     />
                                                 </Route>
                                             </Route>
@@ -302,6 +374,10 @@ export default function App() {
                                             <Route
                                                 path="admin/audit-logs"
                                                 element={<AuditLogPage />}
+                                            />
+                                            <Route
+                                                path="admin/vocab-ai-test"
+                                                element={<VocabAiTesterPage />}
                                             />
                                         </Route>
                                     </Route>

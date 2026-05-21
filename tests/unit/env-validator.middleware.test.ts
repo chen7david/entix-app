@@ -25,6 +25,8 @@ const validEnv: any = {
     R2_SECRET_ACCESS_KEY: "mock_r2_secret_key",
     R2_BUCKET_NAME: "mock-bucket",
     PUBLIC_CDN_URL: "https://cdn.example.com",
+    GEMINI_API_KEY: "test-gemini-key",
+    GEMINI_MODEL: "gemini-2.5-flash",
 };
 
 describe("envValidatorMiddleware", () => {

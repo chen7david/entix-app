@@ -10,25 +10,27 @@ export const OrganizationSwitcher = ({ afterSelect }: { afterSelect?: () => void
     const { notification } = App.useApp();
 
     const handleChange = async (value: string) => {
-        const { error } = await setActive(value);
-        if (error) {
+        try {
+            await setActive(value);
+        } catch {
             notification.error({
                 message: "Switch Failed",
                 description: "Failed to switch organization. Please try again.",
             });
+            return;
+        }
+
+        notification.success({
+            message: "Organization Switched",
+            description: "You have successfully switched organizations.",
+        });
+        if (afterSelect) {
+            afterSelect();
         } else {
-            notification.success({
-                message: "Organization Switched",
-                description: "You have successfully switched organizations.",
-            });
-            if (afterSelect) {
-                afterSelect();
-            } else {
-                // Default: navigate to the selected org's dashboard
-                const selectedOrg = organizations.find((o: any) => o.id === value);
-                if (selectedOrg?.slug) {
-                    navigate(`/org/${selectedOrg.slug}${AppRoutes.org.dashboard.index}`);
-                }
+            // Default: navigate to the selected org's dashboard
+            const selectedOrg = organizations.find((o: any) => o.id === value);
+            if (selectedOrg?.slug) {
+                navigate(`/org/${selectedOrg.slug}${AppRoutes.org.dashboard.index}`);
             }
         }
     };

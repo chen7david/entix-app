@@ -4,8 +4,9 @@
 import { AppRoutes } from "@shared";
 import { CenteredSpin } from "@web/src/components/common/CenteredView";
 import { type OrgRole, type UserRole, useAuth } from "@web/src/features/auth";
+import { useOrgRole } from "@web/src/features/organization";
 import type React from "react";
-import { Navigate, Outlet, useLocation } from "react-router";
+import { Navigate, Outlet, useLocation, useParams } from "react-router";
 
 interface ProtectedRouteProps {
     allowedRoles?: UserRole[];
@@ -19,7 +20,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     redirectPath = AppRoutes.auth.signIn,
 }) => {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const { activeRole, loadingRoles, needsRoleSelection } = useOrgRole();
     const location = useLocation();
+    const { slug } = useParams<{ slug?: string }>();
 
     if (isLoading) {
         return <CenteredSpin />;
@@ -35,9 +38,29 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         return <Navigate to={AppRoutes.unauthorized} replace />;
     }
 
-    // Check organization roles
-    if (allowedOrgRoles && user && (!user.orgRole || !allowedOrgRoles.includes(user.orgRole))) {
-        return <Navigate to={AppRoutes.unauthorized} replace />;
+    // Check organization roles (must run under OrgGuard so useOrgRole resolves activeRole).
+    if (allowedOrgRoles?.length) {
+        if (!user) {
+            return <Navigate to={AppRoutes.unauthorized} replace />;
+        }
+        if (loadingRoles || needsRoleSelection) {
+            return <CenteredSpin />;
+        }
+
+        const roleToCheck = activeRole as OrgRole | null;
+
+        if (!roleToCheck || !allowedOrgRoles.includes(roleToCheck)) {
+            if (slug) {
+                return (
+                    <Navigate
+                        to={`/org/${slug}${AppRoutes.org.dashboard.index}`}
+                        replace
+                        state={{ from: location }}
+                    />
+                );
+            }
+            return <Navigate to={AppRoutes.unauthorized} replace />;
+        }
     }
 
     return <Outlet />;

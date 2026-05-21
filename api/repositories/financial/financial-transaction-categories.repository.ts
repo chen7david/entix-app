@@ -60,9 +60,10 @@ export class FinancialTransactionCategoriesRepository {
      * @throws Error if the category is not found.
      */
     async archive(id: string): Promise<FinancialTransactionCategory> {
+        const now = new Date();
         const [category] = await this.db
             .update(financialTransactionCategories)
-            .set({ archivedAt: new Date() })
+            .set({ archivedAt: now })
             .where(eq(financialTransactionCategories.id, id))
             .returning();
 

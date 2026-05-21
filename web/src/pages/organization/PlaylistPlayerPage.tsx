@@ -27,9 +27,12 @@ export const PlaylistPlayerPage: React.FC = () => {
     const location = useLocation();
 
     const isTeachingContext = location.pathname.includes("/teaching/");
+    const isDashboardPlaylist = location.pathname.includes("/dashboard/playlists");
     const backRoute = isTeachingContext
         ? AppRoutes.org.teaching.playlists
-        : AppRoutes.org.admin.playlists;
+        : isDashboardPlaylist
+          ? AppRoutes.org.dashboard.lessons
+          : AppRoutes.org.admin.playlists;
 
     const { data: activePlaylist, isLoading: loadingPlaylist } = usePlaylist(playlistId);
     const { token } = theme.useToken();
@@ -186,7 +189,7 @@ export const PlaylistPlayerPage: React.FC = () => {
                     onClick={() => navigateOrg(backRoute)}
                     className="self-start !px-0 !mb-2 text-gray-500"
                 >
-                    Back to Playlists
+                    {isDashboardPlaylist ? "Back to My lessons" : "Back to Playlists"}
                 </Button>
                 <Title level={2} style={{ margin: 0 }}>
                     {activePlaylist?.title || "Playlist Player"}

@@ -1,5 +1,5 @@
 import { ScheduledSessionsRepository } from "@api/repositories/scheduled-sessions.repository";
-import { authOrganizations, type NewScheduledSession } from "@shared/db/schema";
+import { authOrganizations, authUsers, lessons, type NewScheduledSession } from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { TestDb } from "../../lib/utils";
 import { createTestDb } from "../../lib/utils";
@@ -8,6 +8,8 @@ describe("ScheduledSessionsRepository Integration", () => {
     let db: TestDb;
     let repo: ScheduledSessionsRepository;
     const orgId = "org_123";
+    const teacherId = "teacher_123";
+    const lessonId = "lesson_123";
 
     beforeEach(async () => {
         db = await createTestDb();
@@ -23,12 +25,33 @@ describe("ScheduledSessionsRepository Integration", () => {
                 createdAt: new Date(),
             })
             .onConflictDoNothing();
+        await db
+            .insert(authUsers)
+            .values({
+                id: teacherId,
+                name: "Teacher",
+                email: "teacher@test.com",
+                emailVerified: true,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            })
+            .onConflictDoNothing();
+        await db
+            .insert(lessons)
+            .values({
+                id: lessonId,
+                organizationId: orgId,
+                title: "Intro Lesson",
+            })
+            .onConflictDoNothing();
     });
 
     it("should insert and find a session by ID", async () => {
         const sessionData: NewScheduledSession = {
             id: "sess_1",
             organizationId: orgId,
+            lessonId,
+            teacherId,
             title: "Test Session",
             startTime: new Date("2026-05-01T10:00:00Z"),
             durationMinutes: 60,
@@ -51,6 +74,8 @@ describe("ScheduledSessionsRepository Integration", () => {
             await repo.insert({
                 id: `sess_${i}`,
                 organizationId: orgId,
+                lessonId,
+                teacherId,
                 title: `Session ${i}`,
                 startTime: new Date(baseDate + i * 1000 * 60 * 60), // 1 hour apart
                 durationMinutes: 60,
@@ -79,6 +104,8 @@ describe("ScheduledSessionsRepository Integration", () => {
         await repo.insert({
             id: "sess_to_update",
             organizationId: orgId,
+            lessonId,
+            teacherId,
             title: "Original Title",
             startTime: new Date(),
             durationMinutes: 60,
@@ -95,6 +122,8 @@ describe("ScheduledSessionsRepository Integration", () => {
         await repo.insert({
             id: "sess_to_delete",
             organizationId: orgId,
+            lessonId,
+            teacherId,
             title: "Delete Me",
             startTime: new Date(),
             durationMinutes: 60,

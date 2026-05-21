@@ -69,6 +69,18 @@ export const LessonsPage = lazyNamed(
     () => import("@web/src/pages/dashboard/lessons/LessonsPage"),
     "LessonsPage"
 );
+export const LessonDetailPage = lazyNamed(
+    () => import("@web/src/pages/org/teacher/lessons/LessonDetailPage"),
+    "LessonDetailPage"
+);
+export const LessonPreviewRedirect = lazyNamed(
+    () => import("@web/src/pages/org/teacher/lessons/LessonPreviewRedirect"),
+    "LessonPreviewRedirect"
+);
+export const LessonStudyPage = lazyNamed(
+    () => import("@web/src/pages/dashboard/lesson-study/LessonStudyPage"),
+    "LessonStudyPage"
+);
 export const ShopPage = lazyNamed(
     () => import("@web/src/pages/dashboard/shop/ShopPage"),
     "ShopPage"
@@ -81,6 +93,14 @@ export const MoviesPage = lazyNamed(
 export const OrdersPage = lazyNamed(
     () => import("@web/src/pages/dashboard/orders/OrdersPage"),
     "OrdersPage"
+);
+export const StudentSchedulePage = lazyNamed(
+    () => import("@web/src/pages/dashboard/student-schedule/StudentSchedulePage"),
+    "StudentSchedulePage"
+);
+export const StudentVocabularyPage = lazyNamed(
+    () => import("@web/src/pages/dashboard/vocabulary/StudentVocabularyPage"),
+    "StudentVocabularyPage"
 );
 
 // —— Org admin / teaching ——
@@ -104,9 +124,32 @@ export const OrganizationSchedulePage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationSchedulePage"),
     "OrganizationSchedulePage"
 );
+export const SessionDetailPage = lazyNamed(
+    () => import("@web/src/pages/teaching/session-detail/SessionDetailPage"),
+    "SessionDetailPage"
+);
+export const StudentDetailPage = lazyNamed(
+    () => import("@web/src/pages/teaching/student-detail/StudentDetailPage"),
+    "StudentDetailPage"
+);
+export const SessionVocabularyPage = lazyNamed(
+    () => import("@web/src/pages/teaching/vocabulary/SessionVocabularyPage"),
+    "SessionVocabularyPage"
+);
+export const GlobalVocabularyPage = lazyDefault(
+    () => import("@web/src/pages/teaching/vocabulary/GlobalVocabularyPage")
+);
 export const OrganizationMembersPage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationMembersPage"),
     "OrganizationMembersPage"
+);
+export const MemberDetailPage = lazyNamed(
+    () => import("@web/src/pages/organization/member-detail/MemberDetailPage"),
+    "MemberDetailPage"
+);
+export const EnrollmentPage = lazyNamed(
+    () => import("@web/src/pages/organization/enrollment/EnrollmentPage"),
+    "EnrollmentPage"
 );
 export const OrganizationInvitationsPage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationInvitationsPage"),
@@ -161,6 +204,10 @@ export const FinancialManagementPage = lazyNamed(
 export const AuditLogPage = lazyNamed(
     () => import("@web/src/pages/admin/AuditLogPage"),
     "AuditLogPage"
+);
+export const VocabAiTesterPage = lazyNamed(
+    () => import("@web/src/pages/admin/temp/VocabAiTesterPage"),
+    "VocabAiTesterPage"
 );
 
 // —— Errors (auth layout shell) ——

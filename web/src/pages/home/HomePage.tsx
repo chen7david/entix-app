@@ -1,23 +1,26 @@
-import { useAuth } from "@web/src/features/auth";
+import { CenteredSpin } from "@web/src/components/common/CenteredView";
+import { useActiveRole } from "@web/src/features/organization";
 import type React from "react";
 import { AdminPortal } from "../org/admin/AdminPortal";
 import { StudentPortal } from "../org/student/StudentPortal";
 import { TeacherPortal } from "../org/teacher/TeacherPortal";
 
 export const HomePage: React.FC = () => {
-    const { user } = useAuth();
-    const role = user?.orgRole;
+    const { activeRole } = useActiveRole();
 
-    if (role === "admin" || role === "owner") {
+    if (activeRole === "admin" || activeRole === "owner") {
         return <AdminPortal />;
     }
 
-    if (role === "teacher") {
+    if (activeRole === "teacher") {
         return <TeacherPortal />;
     }
 
-    // Default to Student Portal for students or unknown roles within an org context
-    return <StudentPortal />;
+    if (activeRole === "student") {
+        return <StudentPortal />;
+    }
+
+    return <CenteredSpin />;
 };
 
 export default HomePage;

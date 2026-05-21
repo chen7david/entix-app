@@ -7,6 +7,9 @@ import { FinancialOrgSettingsRepository } from "@api/repositories/financial/fina
 import { FinancialTransactionCategoriesRepository } from "@api/repositories/financial/financial-transaction-categories.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
 import { CloudflareKvCacheRepository } from "@api/repositories/kv-cache.repository";
+import { LessonRepository } from "@api/repositories/lesson.repository";
+import { LessonContentRepository } from "@api/repositories/lesson-content.repository";
+import { LessonProgressRepository } from "@api/repositories/lesson-progress.repository";
 import { MediaRepository } from "@api/repositories/media.repository";
 import { MemberRepository } from "@api/repositories/member.repository";
 import { OrganizationRepository } from "@api/repositories/organization.repository";
@@ -16,10 +19,12 @@ import { ScheduledSessionsRepository } from "@api/repositories/scheduled-session
 import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
 import { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import { SocialMediaRepository } from "@api/repositories/social-media.repository";
+import { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
 import { UserRepository } from "@api/repositories/user.repository";
 import { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import { getDbClient } from "./db.factory";
 
 export const getFinancialAccountsRepository = (ctx: AppContext) => {
@@ -78,6 +83,18 @@ export const getMediaRepository = (ctx: AppContext) => {
     return new MediaRepository(getDbClient(ctx));
 };
 
+export const getLessonRepository = (ctx: AppContext) => {
+    return new LessonRepository(getDbClient(ctx));
+};
+
+export const getLessonContentRepository = (ctx: AppContext) => {
+    return new LessonContentRepository(getDbClient(ctx));
+};
+
+export const getLessonProgressRepository = (ctx: AppContext) => {
+    return new LessonProgressRepository(getDbClient(ctx));
+};
+
 export const getPlaylistRepository = (ctx: AppContext) => {
     return new PlaylistRepository(getDbClient(ctx));
 };
@@ -98,8 +115,16 @@ export const getSessionAttendancesRepository = (ctx: AppContext) => {
     return new SessionAttendancesRepository(getDbClient(ctx));
 };
 
+export const getStudentVocabularyRepository = (ctx: AppContext) => {
+    return new StudentVocabularyRepository(getDbClient(ctx));
+};
+
 export const getPaymentQueueRepository = (ctx: AppContext) => {
     return new PaymentQueueRepository(getDbClient(ctx));
+};
+
+export const getVocabularyBankRepository = (ctx: AppContext) => {
+    return new VocabularyBankRepository(getDbClient(ctx));
 };
 
 export const getSystemAuditRepository = (ctx: AppContext) => {

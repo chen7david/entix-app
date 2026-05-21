@@ -16,14 +16,16 @@ export class PaymentQueueRepository {
 
     /**
      * Attempts to persist a new payment request.
-     * Uses ON CONFLICT (idempotency_key) DO NOTHING to ensure atomicity.
+     * Uses ON CONFLICT (organization_id, idempotency_key) DO NOTHING to ensure atomicity per org.
      * Returns the created record, or null if a duplicate was detected.
      */
     async enqueue(input: NewPaymentRequest): Promise<PaymentRequest | null> {
         const [record] = await this.db
             .insert(paymentRequests)
             .values(input)
-            .onConflictDoNothing({ target: paymentRequests.idempotencyKey })
+            .onConflictDoNothing({
+                target: [paymentRequests.organizationId, paymentRequests.idempotencyKey],
+            })
             .returning();
 
         return record ?? null;
@@ -50,12 +52,18 @@ export class PaymentQueueRepository {
     }
 
     /**
-     * Looks up an existing payment request by idempotency key.
+     * Looks up an existing payment request by organization and idempotency key.
      */
-    async findByIdempotencyKey(idempotencyKey: string): Promise<PaymentRequest | null> {
+    async findByOrganizationAndIdempotencyKey(
+        organizationId: string,
+        idempotencyKey: string
+    ): Promise<PaymentRequest | null> {
         return (
             (await this.db.query.paymentRequests.findFirst({
-                where: eq(paymentRequests.idempotencyKey, idempotencyKey),
+                where: and(
+                    eq(paymentRequests.organizationId, organizationId),
+                    eq(paymentRequests.idempotencyKey, idempotencyKey)
+                ),
             })) ?? null
         );
     }

@@ -105,6 +105,8 @@ describe("useSchedule", () => {
         expect(getSchedule).toHaveBeenCalled();
 
         await result.current.createSession.mutateAsync({
+            lessonId: "lesson_1",
+            teacherId: "teacher_1",
             title: "New Session",
             description: "desc",
             startTime: 123,
@@ -115,6 +117,8 @@ describe("useSchedule", () => {
         expect(postSchedule).toHaveBeenCalledWith({
             param: { organizationId: "org_1" },
             json: {
+                lessonId: "lesson_1",
+                teacherId: "teacher_1",
                 title: "New Session",
                 description: "desc",
                 startTime: 123,
