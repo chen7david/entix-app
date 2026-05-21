@@ -1,4 +1,4 @@
-import { DeleteOutlined, PictureOutlined, PlusOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined, PictureOutlined, PlusOutlined } from "@ant-design/icons";
 import { getAssetUrl } from "@shared";
 import { CEFR_LEVELS } from "@shared/constants/cefr";
 import type { CursorPaginationConfig } from "@web/src/components/data/DataTableWithFilters";
@@ -26,18 +26,23 @@ import {
     Space,
     Table,
     Tag,
+    Tooltip,
     Typography,
 } from "antd";
 import type React from "react";
 import { useMemo, useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 
 const { Text } = Typography;
 
 export const LessonsPage: React.FC = () => {
+    const navigate = useNavigate();
     const { isStaff } = useOrgRole();
     const { activeOrganization } = useOrganization();
     const orgSlug = activeOrganization?.slug;
+
+    const lessonDetailHref = (lessonId: string) =>
+        orgSlug ? `/org/${orgSlug}/teaching/lessons/${lessonId}` : null;
     const { myEnrollments, isLoadingMyEnrollments } = useLessons();
     const createLesson = useCreateLesson();
     const deleteLesson = useDeleteLesson();
@@ -188,14 +193,22 @@ export const LessonsPage: React.FC = () => {
                                         placeholder: "Search lessons...",
                                     },
                                 ],
+                                onRowClick: (record) => {
+                                    const href = lessonDetailHref(record.id);
+                                    if (href) navigate(href);
+                                },
                                 actions: (record: LessonDto) => (
                                     <Space>
-                                        {orgSlug ? (
-                                            <Link
-                                                to={`/org/${orgSlug}/teaching/lessons/${record.id}`}
-                                            >
-                                                Detail
-                                            </Link>
+                                        {lessonDetailHref(record.id) ? (
+                                            <Tooltip title="Edit lesson">
+                                                <Button
+                                                    type="text"
+                                                    icon={<EditOutlined />}
+                                                    onClick={() =>
+                                                        navigate(lessonDetailHref(record.id)!)
+                                                    }
+                                                />
+                                            </Tooltip>
                                         ) : null}
                                         <Popconfirm
                                             title="Delete lesson?"
