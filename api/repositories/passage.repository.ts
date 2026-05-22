@@ -1,6 +1,5 @@
 import type { AppDb } from "@api/factories/db.factory";
 import { buildCursorPagination, processPaginatedResult } from "@api/helpers/pagination.helpers";
-import * as schema from "@shared/db/schema";
 import type {
     NewPassage,
     NewPassageImage,
@@ -9,6 +8,7 @@ import type {
     PassageType,
     TextCollectionType,
 } from "@shared/db/schema";
+import * as schema from "@shared/db/schema";
 import { and, asc, eq, type SQL } from "drizzle-orm";
 
 export class PassageRepository {
@@ -186,10 +186,7 @@ export class PassageRepository {
             .update(schema.passages)
             .set({ ...data, updatedAt: new Date() })
             .where(
-                and(
-                    eq(schema.passages.id, id),
-                    eq(schema.passages.organizationId, organizationId)
-                )
+                and(eq(schema.passages.id, id), eq(schema.passages.organizationId, organizationId))
             )
             .returning();
         return row ?? null;
@@ -199,10 +196,7 @@ export class PassageRepository {
         const result = await this.db
             .delete(schema.passages)
             .where(
-                and(
-                    eq(schema.passages.id, id),
-                    eq(schema.passages.organizationId, organizationId)
-                )
+                and(eq(schema.passages.id, id), eq(schema.passages.organizationId, organizationId))
             )
             .returning({ id: schema.passages.id });
         return result.length > 0;

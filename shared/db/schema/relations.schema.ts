@@ -12,20 +12,20 @@ import { financialTransactionLines } from "./financial-transaction-lines.schema"
 import { financialTransactions } from "./financial-transactions.schema";
 import { lessons } from "./lesson.schema";
 import { lessonObjectives } from "./lesson-objectives.schema";
+import { lessonPassages } from "./lesson-passages.schema";
 import { lessonPlaylists } from "./lesson-playlists.schema";
 import { lessonProgress } from "./lesson-progress.schema";
-import { lessonPassages } from "./lesson-passages.schema";
 import { lessonVocabulary } from "./lesson-vocabulary.schema";
-import { passageImages, passages } from "./passages.schema";
 import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
+import { passageImages, passages } from "./passages.schema";
 import { paymentRequests } from "./payment-requests.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
 import { studentVocabulary } from "./student-vocabulary.schema";
 import { systemAuditEvents } from "./system-audit-events.schema";
-import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 import { textCollections } from "./text-collections.schema";
+import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 import { vocabularyBank } from "./vocabulary-bank.schema";
 
 export const authUsersRelations = relations(authUsers, ({ one, many }) => ({

@@ -180,11 +180,7 @@ export class PassageService extends BaseService {
 
     // ─── Passage images ──────────────────────────────────────────────────────
 
-    async addPassageImage(
-        organizationId: string,
-        passageId: string,
-        data: AddPassageImageInput
-    ) {
+    async addPassageImage(organizationId: string, passageId: string, data: AddPassageImageInput) {
         await this.getPassage(organizationId, passageId);
         const imageUrl = await this.uploadService.getVerifiedImageUploadUrl(
             data.uploadId,

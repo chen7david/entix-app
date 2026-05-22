@@ -54,38 +54,45 @@ describe("Passage API", () => {
 
     it.skipIf(!passageSchemaReady)("POST /passages creates inline passage", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
-        const res = await app.request(`http://localhost/api/v1/orgs/${orgId}/passages`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Cookie: cookie },
-            body: JSON.stringify({
-                title: "Warm-up",
-                type: "instructional",
-                content: "Read this before class.",
-            }),
-        }, env);
+        const res = await app.request(
+            `http://localhost/api/v1/orgs/${orgId}/passages`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Cookie: cookie },
+                body: JSON.stringify({
+                    title: "Warm-up",
+                    type: "instructional",
+                    content: "Read this before class.",
+                }),
+            },
+            env
+        );
 
         expect(res.status).toBe(201);
         const body = (await res.json()) as { data: { content?: string; wordCount: number } };
         expect(body.data.wordCount).toBe(4);
     });
 
-    it.skipIf(!passageSchemaReady)("GET /passages/:id returns content and images array", async () => {
-        const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
-        const { passage } = await seedPassageTables(orgId);
+    it.skipIf(!passageSchemaReady)(
+        "GET /passages/:id returns content and images array",
+        async () => {
+            const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
+            const { passage } = await seedPassageTables(orgId);
 
-        const res = await app.request(
-            `http://localhost/api/v1/orgs/${orgId}/passages/${passage.id}`,
-            { headers: { Cookie: cookie } },
-            env
-        );
+            const res = await app.request(
+                `http://localhost/api/v1/orgs/${orgId}/passages/${passage.id}`,
+                { headers: { Cookie: cookie } },
+                env
+            );
 
-        expect(res.status).toBe(200);
-        const body = (await res.json()) as {
-            data: { content: string; images: unknown[] };
-        };
-        expect(body.data.content).toContain("Hello world");
-        expect(body.data.images).toEqual([]);
-    });
+            expect(res.status).toBe(200);
+            const body = (await res.json()) as {
+                data: { content: string; images: unknown[] };
+            };
+            expect(body.data.content).toContain("Hello world");
+            expect(body.data.images).toEqual([]);
+        }
+    );
 
     it.skipIf(!passageSchemaReady)("POST /text-collections creates collection", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });

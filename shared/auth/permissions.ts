@@ -15,7 +15,7 @@ export const statement = {
     schedule: ["read", "create", "update", "delete"],
     lesson: ["read", "create", "update", "delete"],
     vocabulary: ["read", "create", "update", "delete"],
-        passage: ["read", "create", "update", "delete"],
+    passage: ["read", "create", "update", "delete"],
     enrollment: ["read", "create", "delete"],
     playlist: ["read", "create", "update", "delete"],
     // Education Resources

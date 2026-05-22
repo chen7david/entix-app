@@ -25,8 +25,5 @@ export const lessonContentRoutes = createRouter()
     )
     .openapi(LessonContentRoutes.listLessonPassages, LessonContentHandlers.listLessonPassages)
     .openapi(LessonContentRoutes.addLessonPassage, LessonContentHandlers.addLessonPassage)
-    .openapi(
-        LessonContentRoutes.reorderLessonPassages,
-        LessonContentHandlers.reorderLessonPassages
-    )
+    .openapi(LessonContentRoutes.reorderLessonPassages, LessonContentHandlers.reorderLessonPassages)
     .openapi(LessonContentRoutes.removeLessonPassage, LessonContentHandlers.removeLessonPassage);

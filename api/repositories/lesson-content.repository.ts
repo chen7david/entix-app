@@ -316,10 +316,7 @@ export class LessonContentRepository {
         const result = await this.db
             .delete(lessonPassages)
             .where(
-                and(
-                    eq(lessonPassages.lessonId, lessonId),
-                    eq(lessonPassages.passageId, passageId)
-                )
+                and(eq(lessonPassages.lessonId, lessonId), eq(lessonPassages.passageId, passageId))
             )
             .returning({ lessonId: lessonPassages.lessonId });
         if (result.length === 0) {

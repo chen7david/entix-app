@@ -1,6 +1,8 @@
 import { HttpMethods, HttpStatusCodes, jsonContent } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
+import { PASSAGE_TYPES } from "@shared/db/schema/passages.schema";
+import { TEXT_COLLECTION_TYPES } from "@shared/db/schema/text-collections.schema";
 import {
     AddPassageImageSchema,
     CreateCollectionSchema,
@@ -12,8 +14,6 @@ import {
     UpdateCollectionSchema,
     UpdatePassageSchema,
 } from "@shared/schemas/dto/passage.dto";
-import { PASSAGE_TYPES } from "@shared/db/schema/passages.schema";
-import { TEXT_COLLECTION_TYPES } from "@shared/db/schema/text-collections.schema";
 import { PaginatedDataSchema, PaginationQuerySchema } from "@shared/schemas/pagination.schema";
 
 const OrgParamsSchema = z.object({ organizationId: z.string() });
