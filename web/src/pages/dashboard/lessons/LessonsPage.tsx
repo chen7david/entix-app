@@ -197,32 +197,33 @@ export const LessonsPage: React.FC = () => {
                                     const href = lessonDetailHref(record.id);
                                     if (href) navigate(href);
                                 },
-                                actions: (record: LessonDto) => (
-                                    <Space>
-                                        {lessonDetailHref(record.id) ? (
-                                            <Tooltip title="Edit lesson">
+                                actions: (record: LessonDto) => {
+                                    const editHref = lessonDetailHref(record.id);
+                                    return (
+                                        <Space>
+                                            {editHref ? (
+                                                <Tooltip title="Edit lesson">
+                                                    <Button
+                                                        type="text"
+                                                        icon={<EditOutlined />}
+                                                        onClick={() => navigate(editHref)}
+                                                    />
+                                                </Tooltip>
+                                            ) : null}
+                                            <Popconfirm
+                                                title="Delete lesson?"
+                                                onConfirm={() => deleteLesson.mutate(record.id)}
+                                            >
                                                 <Button
+                                                    danger
                                                     type="text"
-                                                    icon={<EditOutlined />}
-                                                    onClick={() =>
-                                                        navigate(lessonDetailHref(record.id)!)
-                                                    }
+                                                    icon={<DeleteOutlined />}
+                                                    loading={deleteLesson.isPending}
                                                 />
-                                            </Tooltip>
-                                        ) : null}
-                                        <Popconfirm
-                                            title="Delete lesson?"
-                                            onConfirm={() => deleteLesson.mutate(record.id)}
-                                        >
-                                            <Button
-                                                danger
-                                                type="text"
-                                                icon={<DeleteOutlined />}
-                                                loading={deleteLesson.isPending}
-                                            />
-                                        </Popconfirm>
-                                    </Space>
-                                ),
+                                            </Popconfirm>
+                                        </Space>
+                                    );
+                                },
                                 onFiltersChange: (newFilters) => {
                                     setFilters({
                                         search: newFilters.q || undefined,
