@@ -1,8 +1,14 @@
 import type { AppDb } from "@api/factories/db.factory";
 import type { LessonObjective, LessonPlaylist, LessonVocabulary } from "@shared/db/schema";
-import { lessonObjectives, lessonPlaylists, lessonVocabulary } from "@shared/db/schema";
+import {
+    lessonObjectives,
+    lessonPassages,
+    lessonPlaylists,
+    lessonVocabulary,
+    passages,
+} from "@shared/db/schema";
 import { generateOpaqueId } from "@shared/lib/id";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, max } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 
 /** Avoid unique (lesson_id, position) violations while reordering multiple rows in SQLite/D1. */
@@ -194,5 +200,132 @@ export class LessonContentRepository {
             )
             .returning({ lessonId: lessonVocabulary.lessonId });
         return result.length > 0;
+    }
+
+    async listPassages(lessonId: string) {
+        return this.db
+            .select({
+                lessonId: lessonPassages.lessonId,
+                passageId: lessonPassages.passageId,
+                position: lessonPassages.position,
+                addedAt: lessonPassages.addedAt,
+                title: passages.title,
+                type: passages.type,
+                cefrLevel: passages.cefrLevel,
+                wordCount: passages.wordCount,
+            })
+            .from(lessonPassages)
+            .innerJoin(passages, eq(passages.id, lessonPassages.passageId))
+            .where(eq(lessonPassages.lessonId, lessonId))
+            .orderBy(asc(lessonPassages.position));
+    }
+
+    async hasPassageLink(lessonId: string, passageId: string): Promise<boolean> {
+        const row = await this.db.query.lessonPassages.findFirst({
+            where: and(
+                eq(lessonPassages.lessonId, lessonId),
+                eq(lessonPassages.passageId, passageId)
+            ),
+        });
+        return row != null;
+    }
+
+    async getNextPassagePosition(lessonId: string): Promise<number> {
+        const [row] = await this.db
+            .select({ maxPos: max(lessonPassages.position) })
+            .from(lessonPassages)
+            .where(eq(lessonPassages.lessonId, lessonId));
+        return (row?.maxPos ?? 0) + 1;
+    }
+
+    async addPassage(lessonId: string, passageId: string, position: number) {
+        const [row] = await this.db
+            .insert(lessonPassages)
+            .values({ lessonId, passageId, position, addedAt: new Date() })
+            .returning();
+        return row;
+    }
+
+    async compactPassagePositions(lessonId: string): Promise<void> {
+        const rows = await this.db
+            .select({ passageId: lessonPassages.passageId })
+            .from(lessonPassages)
+            .where(eq(lessonPassages.lessonId, lessonId))
+            .orderBy(asc(lessonPassages.position));
+        if (rows.length === 0) {
+            return;
+        }
+        const phase1 = rows.map((r, i) =>
+            this.db
+                .update(lessonPassages)
+                .set({ position: REORDER_POSITION_OFFSET + i })
+                .where(
+                    and(
+                        eq(lessonPassages.lessonId, lessonId),
+                        eq(lessonPassages.passageId, r.passageId)
+                    )
+                )
+        ) as BatchItem<"sqlite">[];
+        await this.db.batch(phase1 as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+        const phase2 = rows.map((r, i) =>
+            this.db
+                .update(lessonPassages)
+                .set({ position: i + 1 })
+                .where(
+                    and(
+                        eq(lessonPassages.lessonId, lessonId),
+                        eq(lessonPassages.passageId, r.passageId)
+                    )
+                )
+        ) as BatchItem<"sqlite">[];
+        await this.db.batch(phase2 as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+    }
+
+    async reorderPassages(lessonId: string, orderedPassageIds: string[]) {
+        if (orderedPassageIds.length === 0) {
+            return this.listPassages(lessonId);
+        }
+        const phase1 = orderedPassageIds.map((passageId, i) =>
+            this.db
+                .update(lessonPassages)
+                .set({ position: REORDER_POSITION_OFFSET + i })
+                .where(
+                    and(
+                        eq(lessonPassages.lessonId, lessonId),
+                        eq(lessonPassages.passageId, passageId)
+                    )
+                )
+        ) as BatchItem<"sqlite">[];
+        await this.db.batch(phase1 as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+        const phase2 = orderedPassageIds.map((passageId, i) =>
+            this.db
+                .update(lessonPassages)
+                .set({ position: i + 1 })
+                .where(
+                    and(
+                        eq(lessonPassages.lessonId, lessonId),
+                        eq(lessonPassages.passageId, passageId)
+                    )
+                )
+        ) as BatchItem<"sqlite">[];
+        await this.db.batch(phase2 as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+        return this.listPassages(lessonId);
+    }
+
+    async removePassage(lessonId: string, passageId: string) {
+        const result = await this.db
+            .delete(lessonPassages)
+            .where(
+                and(
+                    eq(lessonPassages.lessonId, lessonId),
+                    eq(lessonPassages.passageId, passageId)
+                )
+            )
+            .returning({ lessonId: lessonPassages.lessonId });
+        if (result.length === 0) {
+            return false;
+        }
+        await this.compactPassagePositions(lessonId);
+        return true;
     }
 }

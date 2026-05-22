@@ -14,6 +14,7 @@ import { memberWalletRoutes } from "./orgs/member-wallet.index";
 import { memberRoutes } from "./orgs/members.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
+import { passageRoutes } from "./orgs/passage.index";
 import { uploadRoutes } from "./orgs/uploads.index";
 import { vocabularyRoutes } from "./orgs/vocabulary.index";
 import { socialMediaRoutes } from "./social-media/social-media.index";
@@ -36,6 +37,7 @@ export const routes = [
     mediaRoutes,
     playlistRoutes,
     scheduleRoutes,
+    passageRoutes,
     vocabularyRoutes,
     financeRoutes,
     memberWalletRoutes,

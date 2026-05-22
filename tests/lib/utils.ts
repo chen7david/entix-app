@@ -38,15 +38,44 @@ const migrations = Object.entries(migrationFiles)
         };
     });
 
-export async function createTestDb() {
-    const schemaReady = await env.DB.prepare(
+async function tableExists(tableName: string): Promise<boolean> {
+    const row = await env.DB.prepare(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
     )
-        .bind("financial_currencies")
+        .bind(tableName)
         .first();
+    return Boolean(row);
+}
 
-    if (!schemaReady && migrations.length > 0) {
+function tablesCreatedByMigration(queries: string[]): string[] {
+    const sql = queries.join("\n");
+    const names: string[] = [];
+    for (const match of sql.matchAll(/CREATE TABLE `([^`]+)`/g)) {
+        names.push(match[1]);
+    }
+    return names;
+}
+
+async function migrationHasPendingTables(migration: { queries: string[] }): Promise<boolean> {
+    for (const table of tablesCreatedByMigration(migration.queries)) {
+        if (!(await tableExists(table))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export async function createTestDb() {
+    const baseSchemaReady = await tableExists("financial_currencies");
+
+    if (!baseSchemaReady && migrations.length > 0) {
         await applyD1Migrations(env.DB, migrations);
+    } else {
+        for (const migration of migrations) {
+            if (await migrationHasPendingTables(migration)) {
+                await applyD1Migrations(env.DB, [migration]);
+            }
+        }
     }
 
     await clearTestDbData();
