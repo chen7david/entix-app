@@ -23,7 +23,11 @@ function mapPassageListItem(row: Passage) {
     };
 }
 
-function mapPassage(row: Passage & { content?: string | null }) {
+/**
+ * Full passage response including inline/R2 `content`.
+ * @see mapPassageListItem for list endpoints that should omit content.
+ */
+function mapPassage(row: Passage) {
     return {
         ...mapPassageListItem(row),
         content: row.content ?? null,

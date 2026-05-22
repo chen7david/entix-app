@@ -1,3 +1,4 @@
+import { UnprocessableEntityError } from "@api/errors/app.error";
 import type { AppDb } from "@api/factories/db.factory";
 import type { LessonObjective, LessonPlaylist, LessonVocabulary } from "@shared/db/schema";
 import {
@@ -8,13 +9,27 @@ import {
     passages,
 } from "@shared/db/schema";
 import { generateOpaqueId } from "@shared/lib/id";
-import { and, asc, eq, max } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import type { BatchItem } from "drizzle-orm/batch";
 
-/** Avoid unique (lesson_id, position) violations while reordering multiple rows in SQLite/D1. */
+/**
+ * Offset applied during two-phase position updates to avoid transient unique-position
+ * conflicts in SQLite/D1 (reorder and compact after remove).
+ */
 const REORDER_POSITION_OFFSET = 900_000;
 
 export class LessonContentRepository {
+    private readonly passageLinkSelect = {
+        lessonId: lessonPassages.lessonId,
+        passageId: lessonPassages.passageId,
+        position: lessonPassages.position,
+        addedAt: lessonPassages.addedAt,
+        title: passages.title,
+        type: passages.type,
+        cefrLevel: passages.cefrLevel,
+        wordCount: passages.wordCount,
+    };
+
     constructor(private readonly db: AppDb) {}
 
     async listObjectives(lessonId: string) {
@@ -202,22 +217,27 @@ export class LessonContentRepository {
         return result.length > 0;
     }
 
+    /**
+     * Lesson passage links with passage metadata only (no `content` / `bucketKey` bodies).
+     */
     async listPassages(lessonId: string) {
         return this.db
-            .select({
-                lessonId: lessonPassages.lessonId,
-                passageId: lessonPassages.passageId,
-                position: lessonPassages.position,
-                addedAt: lessonPassages.addedAt,
-                title: passages.title,
-                type: passages.type,
-                cefrLevel: passages.cefrLevel,
-                wordCount: passages.wordCount,
-            })
+            .select(this.passageLinkSelect)
             .from(lessonPassages)
             .innerJoin(passages, eq(passages.id, lessonPassages.passageId))
             .where(eq(lessonPassages.lessonId, lessonId))
             .orderBy(asc(lessonPassages.position));
+    }
+
+    private async findPassageLink(lessonId: string, passageId: string) {
+        const [row] = await this.db
+            .select(this.passageLinkSelect)
+            .from(lessonPassages)
+            .innerJoin(passages, eq(passages.id, lessonPassages.passageId))
+            .where(
+                and(eq(lessonPassages.lessonId, lessonId), eq(lessonPassages.passageId, passageId))
+            );
+        return row ?? null;
     }
 
     async hasPassageLink(lessonId: string, passageId: string): Promise<boolean> {
@@ -230,20 +250,21 @@ export class LessonContentRepository {
         return row != null;
     }
 
-    async getNextPassagePosition(lessonId: string): Promise<number> {
-        const [row] = await this.db
-            .select({ maxPos: max(lessonPassages.position) })
-            .from(lessonPassages)
-            .where(eq(lessonPassages.lessonId, lessonId));
-        return (row?.maxPos ?? 0) + 1;
-    }
-
-    async addPassage(lessonId: string, passageId: string, position: number) {
-        const [row] = await this.db
-            .insert(lessonPassages)
-            .values({ lessonId, passageId, position, addedAt: new Date() })
-            .returning();
-        return row;
+    /**
+     * Assigns the next position via MAX+1 subquery in a single insert.
+     *
+     * D1 serialises writes per-database; the subquery is safe under concurrent Worker
+     * requests because each HTTP request to D1 is handled atomically. If this assumption
+     * changes, add UNIQUE(lesson_id, position) and retry on conflict.
+     */
+    async addPassage(lessonId: string, passageId: string) {
+        await this.db.insert(lessonPassages).values({
+            lessonId,
+            passageId,
+            position: sql`(SELECT coalesce(max(${lessonPassages.position}), 0) + 1 FROM ${lessonPassages} WHERE ${lessonPassages.lessonId} = ${lessonId})`,
+            addedAt: new Date(),
+        });
+        return this.findPassageLink(lessonId, passageId);
     }
 
     async compactPassagePositions(lessonId: string): Promise<void> {
@@ -252,7 +273,7 @@ export class LessonContentRepository {
             .from(lessonPassages)
             .where(eq(lessonPassages.lessonId, lessonId))
             .orderBy(asc(lessonPassages.position));
-        if (rows.length === 0) {
+        if (rows.length <= 1) {
             return;
         }
         const phase1 = rows.map((r, i) =>
@@ -281,9 +302,21 @@ export class LessonContentRepository {
         await this.db.batch(phase2 as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
     }
 
+    /**
+     * Reorders lesson passages to 1..N.
+     *
+     * @precondition `orderedPassageIds` must exactly match current passage IDs for this lesson.
+     */
     async reorderPassages(lessonId: string, orderedPassageIds: string[]) {
-        if (orderedPassageIds.length === 0) {
-            return this.listPassages(lessonId);
+        const current = await this.listPassages(lessonId);
+        const currentIdSet = new Set(current.map((r) => r.passageId));
+        for (const id of orderedPassageIds) {
+            if (!currentIdSet.has(id)) {
+                throw new UnprocessableEntityError("orderedIds must match the current items");
+            }
+        }
+        if (orderedPassageIds.length !== current.length) {
+            throw new UnprocessableEntityError("orderedIds must include each item exactly once");
         }
         const phase1 = orderedPassageIds.map((passageId, i) =>
             this.db

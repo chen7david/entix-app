@@ -28,16 +28,18 @@ const LessonVocabRowSchema = z.object({
     addedAt: z.coerce.number(),
 });
 
-const LessonPassageRowSchema = z.object({
+export const LessonPassageRowSchema = z.object({
     lessonId: z.string(),
     passageId: z.string(),
     position: z.number(),
-    addedAt: z.coerce.number(),
+    addedAt: z.number(),
     title: z.string().nullable(),
     type: z.enum(PASSAGE_TYPES),
     cefrLevel: z.string().nullable(),
     wordCount: z.number().nullable(),
 });
+
+export type LessonPassageRowDto = z.infer<typeof LessonPassageRowSchema>;
 
 export const LessonContentRoutes = {
     listObjectives: createRoute({

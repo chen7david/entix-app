@@ -1,4 +1,9 @@
-import { ConflictError, NotFoundError, UnprocessableEntityError } from "@api/errors/app.error";
+import {
+    ConflictError,
+    InternalServerError,
+    NotFoundError,
+    UnprocessableEntityError,
+} from "@api/errors/app.error";
 import { getPassageService } from "@api/factories/passage.factory";
 import { getLessonContentRepository, getLessonRepository } from "@api/factories/repository.factory";
 import { toMs } from "@api/helpers/date.helpers";
@@ -266,13 +271,11 @@ export class LessonContentHandlers {
         if (await repo.hasPassageLink(lessonId, passageId)) {
             throw new ConflictError("This passage is already linked to this lesson");
         }
-        const position = await repo.getNextPassagePosition(lessonId);
-        await repo.addPassage(lessonId, passageId, position);
-        const match = (await repo.listPassages(lessonId)).find((r) => r.passageId === passageId);
-        if (!match) {
-            throw new ConflictError("Failed to link passage to lesson");
+        const row = await repo.addPassage(lessonId, passageId);
+        if (!row) {
+            throw new InternalServerError("Failed to link passage to lesson");
         }
-        return ctx.json({ ...match, addedAt: toMs(match.addedAt) }, HttpStatusCodes.CREATED);
+        return ctx.json({ ...row, addedAt: toMs(row.addedAt) }, HttpStatusCodes.CREATED);
     };
 
     static removeLessonPassage: AppHandler<typeof LessonContentRoutes.removeLessonPassage> = async (

@@ -180,3 +180,10 @@ async function clearTestDbData() {
 
     await env.DB.exec("PRAGMA foreign_keys=ON;");
 }
+
+/** Evaluated at run time (after `beforeAll`) — use instead of `it.skipIf(!ready)` at collection time. */
+export function skipIfPassageTablesMissing(ready: boolean, skip: (reason?: string) => void): void {
+    if (!ready) {
+        skip("Passage schema tables are not present — run db:generate and apply migrations");
+    }
+}

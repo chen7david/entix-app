@@ -1,20 +1,20 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
-import { passages, textCollections } from "@shared/db/schema";
+import { textCollections } from "@shared/db/schema";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
-import { createTestDb, type TestDb } from "../lib/utils";
-
-let passageSchemaReady = false;
+import { insertTestPassage } from "../lib/passage-fixtures";
+import { createTestDb, skipIfPassageTablesMissing, type TestDb } from "../lib/utils";
 
 describe("Passage API", () => {
+    let passageSchemaReady = false;
     let db: TestDb;
 
     beforeAll(async () => {
         const row = await env.DB.prepare(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
         )
-            .bind("text_collections")
+            .bind("lesson_passages")
             .first();
         passageSchemaReady = Boolean(row);
     });
@@ -35,24 +35,20 @@ describe("Passage API", () => {
             })
             .returning();
 
-        const [passage] = await db
-            .insert(passages)
-            .values({
-                id: "ps_test_1",
-                organizationId: orgId,
-                collectionId: collection.id,
-                title: "Chapter 1",
-                type: "reading",
-                content: "Hello world from a short passage.",
-                wordCount: 6,
-                updatedAt: new Date(),
-            })
-            .returning();
+        const passage = await insertTestPassage(db, orgId, {
+            id: "ps_test_1",
+            collectionId: collection.id,
+            title: "Chapter 1",
+            content: "Hello world from a short passage.",
+            wordCount: 6,
+        });
 
         return { collection, passage };
     }
 
-    it.skipIf(!passageSchemaReady)("POST /passages creates inline passage", async () => {
+    it("POST /passages creates inline passage", async ({ skip }) => {
+        skipIfPassageTablesMissing(passageSchemaReady, skip);
+
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         const res = await app.request(
             `http://localhost/api/v1/orgs/${orgId}/passages`,
@@ -73,28 +69,29 @@ describe("Passage API", () => {
         expect(body.data.wordCount).toBe(4);
     });
 
-    it.skipIf(!passageSchemaReady)(
-        "GET /passages/:id returns content and images array",
-        async () => {
-            const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
-            const { passage } = await seedPassageTables(orgId);
+    it("GET /passages/:id returns content and images array", async ({ skip }) => {
+        skipIfPassageTablesMissing(passageSchemaReady, skip);
 
-            const res = await app.request(
-                `http://localhost/api/v1/orgs/${orgId}/passages/${passage.id}`,
-                { headers: { Cookie: cookie } },
-                env
-            );
+        const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
+        const { passage } = await seedPassageTables(orgId);
 
-            expect(res.status).toBe(200);
-            const body = (await res.json()) as {
-                data: { content: string; images: unknown[] };
-            };
-            expect(body.data.content).toContain("Hello world");
-            expect(body.data.images).toEqual([]);
-        }
-    );
+        const res = await app.request(
+            `http://localhost/api/v1/orgs/${orgId}/passages/${passage.id}`,
+            { headers: { Cookie: cookie } },
+            env
+        );
 
-    it.skipIf(!passageSchemaReady)("POST /text-collections creates collection", async () => {
+        expect(res.status).toBe(200);
+        const body = (await res.json()) as {
+            data: { content: string; images: unknown[] };
+        };
+        expect(body.data.content).toContain("Hello world");
+        expect(body.data.images).toEqual([]);
+    });
+
+    it("POST /text-collections creates collection", async ({ skip }) => {
+        skipIfPassageTablesMissing(passageSchemaReady, skip);
+
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         const res = await app.request(
             `http://localhost/api/v1/orgs/${orgId}/text-collections`,

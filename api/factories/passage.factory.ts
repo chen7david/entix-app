@@ -6,11 +6,10 @@ import { getDbClient } from "./db.factory";
 import { getUploadService } from "./upload.factory";
 
 export const getPassageService = (ctx: AppContext): PassageService => {
-    const accountId = ctx.env.CLOUDFLARE_ACCOUNT_ID;
-    const bucketName = ctx.env.R2_BUCKET_NAME;
-    const publicUrlPrefix = (
-        ctx.env.PUBLIC_CDN_URL || `https://${accountId}.r2.cloudflarestorage.com/${bucketName}`
-    ).replace(/\/+$/, "");
+    if (!ctx.env.PUBLIC_CDN_URL) {
+        throw new Error("[passage.factory] PUBLIC_CDN_URL env var is required");
+    }
+    const publicUrlPrefix = ctx.env.PUBLIC_CDN_URL.replace(/\/+$/, "");
 
     return new PassageService(
         new PassageRepository(getDbClient(ctx)),
