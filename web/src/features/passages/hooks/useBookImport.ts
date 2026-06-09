@@ -49,7 +49,10 @@ export function useImportJob(jobId: string | undefined) {
         enabled: !!organizationId && !!jobId && isAuthenticated,
         staleTime: QUERY_STALE_MS,
         queryFn: async () => {
-            const res = await fetch(importsPath(organizationId!, jobId!), {
+            if (!organizationId || !jobId) {
+                throw new Error("Organization and job required");
+            }
+            const res = await fetch(importsPath(organizationId, jobId), {
                 credentials: "include",
             });
             return parseResponse<{ data: ImportJobWithParagraphs }>(res);

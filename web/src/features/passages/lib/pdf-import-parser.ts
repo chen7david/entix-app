@@ -51,7 +51,7 @@ function extractPageText(
         const y = item.transform?.[5];
         if (lastY !== undefined && y !== undefined && Math.abs(y - lastY) > 2) {
             parts.push("\n");
-        } else if (parts.length > 0 && !parts[parts.length - 1]!.endsWith("\n")) {
+        } else if (parts.length > 0 && !parts[parts.length - 1]?.endsWith("\n")) {
             parts.push(" ");
         }
         parts.push(item.str);
