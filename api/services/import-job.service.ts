@@ -1,6 +1,7 @@
 import { BadRequestError, NotFoundError } from "@api/errors/app.error";
 import type { ImportJobRepository } from "@api/repositories/import-job.repository";
 import type { PassageService } from "@api/services/passage.service";
+import type { ImportJobParagraph } from "@shared/db/schema";
 import type {
     BulkInsertParagraphsInput,
     CreateImportJobInput,
@@ -14,6 +15,22 @@ import { BaseService } from "./base.service";
 const MAX_INLINE_CONTENT = 50_000;
 const MUTABLE_JOB_STATUSES = new Set(["uploading", "review"]);
 const PARAGRAPH_MUTABLE_STATUSES = new Set(["uploading", "review", "finalizing"]);
+
+type PerParagraphFinalizePlan = {
+    mode: "per_paragraph";
+    passages: Array<{
+        content: string;
+        title: string;
+        pageNumber: number;
+    }>;
+};
+
+type SinglePassageFinalizePlan = {
+    mode: "single";
+    content: string;
+};
+
+type FinalizePlan = PerParagraphFinalizePlan | SinglePassageFinalizePlan;
 
 export class ImportJobService extends BaseService {
     constructor(
@@ -98,6 +115,45 @@ export class ImportJobService extends BaseService {
         return this.updateParagraph(organizationId, jobId, paragraphId, { isDeleted: 1 });
     }
 
+    /** Build passage payloads and validate size limits before any collection is created. */
+    private planFinalize(
+        paragraphs: ImportJobParagraph[],
+        data: FinalizeImportInput
+    ): FinalizePlan {
+        if (data.mode === "per_paragraph") {
+            return {
+                mode: "per_paragraph",
+                passages: paragraphs.map((para) => {
+                    const text = para.cleanedText ?? para.rawText;
+                    return {
+                        content: JSON.stringify(buildSingleParagraphTipTapDoc(text)),
+                        title: `${data.title} — p.${para.pageNumber} §${para.paragraphIndex + 1}`,
+                        pageNumber: para.pageNumber,
+                    };
+                }),
+            };
+        }
+
+        const content = JSON.stringify(
+            buildFullTipTapDoc(paragraphs.map((p) => p.cleanedText ?? p.rawText))
+        );
+        if (content.length > MAX_INLINE_CONTENT) {
+            throw new BadRequestError(
+                "Imported text exceeds 50 KB for a single passage. Use “one passage per paragraph” mode or shorten the text."
+            );
+        }
+
+        return { mode: "single", content };
+    }
+
+    private async rollbackFinalizeCollection(organizationId: string, collectionId: string) {
+        try {
+            await this.passageService.deleteCollection(organizationId, collectionId);
+        } catch {
+            // Best-effort cleanup; original finalize error is still thrown to the client.
+        }
+    }
+
     async finalizeJob(organizationId: string, jobId: string, data: FinalizeImportInput) {
         const claimed = await this.importRepo.claimJobForFinalize(organizationId, jobId);
         if (!claimed) {
@@ -116,6 +172,15 @@ export class ImportJobService extends BaseService {
             throw new BadRequestError("No paragraphs to finalize");
         }
 
+        let plan: FinalizePlan;
+        try {
+            plan = this.planFinalize(paragraphs, data);
+        } catch (error) {
+            await this.importRepo.releaseJobFromFinalize(organizationId, jobId);
+            throw error;
+        }
+
+        let collectionId: string | null = null;
         try {
             const collection = await this.passageService.createCollection(organizationId, {
                 title: data.title,
@@ -124,34 +189,26 @@ export class ImportJobService extends BaseService {
                 description: data.description,
                 cefrLevel: data.cefrLevel,
             });
+            collectionId = collection.id;
 
-            if (data.mode === "per_paragraph") {
-                for (const para of paragraphs) {
-                    const text = para.cleanedText ?? para.rawText;
-                    const content = JSON.stringify(buildSingleParagraphTipTapDoc(text));
+            if (plan.mode === "per_paragraph") {
+                for (const passage of plan.passages) {
                     await this.passageService.createPassage(organizationId, {
                         collectionId: collection.id,
-                        title: `${data.title} — p.${para.pageNumber} §${para.paragraphIndex + 1}`,
+                        title: passage.title,
                         type: "reading",
                         cefrLevel: data.cefrLevel,
-                        pageNumber: para.pageNumber,
-                        content,
+                        pageNumber: passage.pageNumber,
+                        content: passage.content,
                     });
                 }
             } else {
-                const doc = buildFullTipTapDoc(paragraphs.map((p) => p.cleanedText ?? p.rawText));
-                const content = JSON.stringify(doc);
-                if (content.length > MAX_INLINE_CONTENT) {
-                    throw new BadRequestError(
-                        "Imported text exceeds 50 KB for a single passage. Use “one passage per paragraph” mode or shorten the text."
-                    );
-                }
                 await this.passageService.createPassage(organizationId, {
                     collectionId: collection.id,
                     title: data.title,
                     type: "reading",
                     cefrLevel: data.cefrLevel,
-                    content,
+                    content: plan.content,
                 });
             }
 
@@ -163,6 +220,9 @@ export class ImportJobService extends BaseService {
 
             return collection;
         } catch (error) {
+            if (collectionId) {
+                await this.rollbackFinalizeCollection(organizationId, collectionId);
+            }
             await this.importRepo.releaseJobFromFinalize(organizationId, jobId);
             throw error;
         }

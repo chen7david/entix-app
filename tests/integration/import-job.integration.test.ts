@@ -99,4 +99,73 @@ describe("Import job API", () => {
         );
         expect(finalizeRes.status).toBe(400);
     });
+
+    it("POST /imports/:jobId/finalize in single mode rejects oversized content without creating a collection", async ({
+        skip,
+    }) => {
+        skipIfImportTablesMissing(importSchemaReady, skip);
+
+        const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
+
+        const collectionsBefore = await env.DB.prepare(
+            "SELECT COUNT(*) AS count FROM text_collections WHERE organization_id = ?"
+        )
+            .bind(orgId)
+            .first<{ count: number }>();
+
+        const createRes = await app.request(
+            `http://localhost/api/v1/orgs/${orgId}/imports`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Cookie: cookie },
+                body: JSON.stringify({ fileName: "large-book.pdf", fileType: "pdf" }),
+            },
+            env
+        );
+        expect(createRes.status).toBe(201);
+        const { data: job } = (await createRes.json()) as { data: { id: string } };
+
+        const oversizedText = "x".repeat(52_000);
+        const paragraphsRes = await app.request(
+            `http://localhost/api/v1/orgs/${orgId}/imports/${job.id}/paragraphs`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Cookie: cookie },
+                body: JSON.stringify({
+                    paragraphs: [{ pageNumber: 1, paragraphIndex: 0, rawText: oversizedText }],
+                }),
+            },
+            env
+        );
+        expect(paragraphsRes.status).toBe(204);
+
+        const finalizeRes = await app.request(
+            `http://localhost/api/v1/orgs/${orgId}/imports/${job.id}/finalize`,
+            {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Cookie: cookie },
+                body: JSON.stringify({ title: "Too large", mode: "single" }),
+            },
+            env
+        );
+        expect(finalizeRes.status).toBe(400);
+
+        const collectionsAfter = await env.DB.prepare(
+            "SELECT COUNT(*) AS count FROM text_collections WHERE organization_id = ?"
+        )
+            .bind(orgId)
+            .first<{ count: number }>();
+
+        expect(collectionsAfter?.count).toBe(collectionsBefore?.count ?? 0);
+
+        const getRes = await app.request(
+            `http://localhost/api/v1/orgs/${orgId}/imports/${job.id}`,
+            { headers: { Cookie: cookie } },
+            env
+        );
+        expect(getRes.status).toBe(200);
+        const body = (await getRes.json()) as { data: { status: string; collectionId: string | null } };
+        expect(body.data.status).toBe("review");
+        expect(body.data.collectionId).toBeNull();
+    });
 });
