@@ -22,6 +22,11 @@ export const createRouter = () => {
 };
 
 export const mountRoutes = ({ app, routes, prefix }: MountRoutes) => {
+    if (!routes?.length) {
+        throw new Error(
+            "[mountRoutes] routes is empty or undefined — the API bundle may have failed mid-reload; restart `npm run dev`"
+        );
+    }
     routes.forEach((route) => {
         app.route(prefix, route);
     });

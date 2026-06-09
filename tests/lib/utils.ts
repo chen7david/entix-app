@@ -187,3 +187,9 @@ export function skipIfPassageTablesMissing(ready: boolean, skip: (reason?: strin
         skip("Passage schema tables are not present — run db:generate and apply migrations");
     }
 }
+
+export function skipIfImportTablesMissing(ready: boolean, skip: (reason?: string) => void): void {
+    if (!ready) {
+        skip("Import job schema tables are not present — run db:generate and apply migrations");
+    }
+}

@@ -1,10 +1,10 @@
+import { TEXT_COLLECTION_TYPES } from "../../constants/passage";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { generateOpaqueId } from "../../lib/id";
 import { authOrganizations } from "./organization.schema";
 
-export const TEXT_COLLECTION_TYPES = ["book", "reader", "article", "curriculum"] as const;
-export type TextCollectionType = (typeof TEXT_COLLECTION_TYPES)[number];
+export { TEXT_COLLECTION_TYPES, type TextCollectionType } from "../../constants/passage";
 
 export const textCollections = sqliteTable(
     "text_collections",

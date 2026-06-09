@@ -4,11 +4,13 @@ import type { CefrLevel } from "@shared/constants/cefr";
 import { useQueries } from "@tanstack/react-query";
 import {
     useLessonObjectives,
+    useLessonPassages,
     useLessonPlaylists,
     useLessonVocabulary,
 } from "@web/src/features/lessons/hooks/useLessonContent";
 import { useLessonById } from "@web/src/features/lessons/hooks/useLessons";
 import { usePlaylist } from "@web/src/features/media/hooks/usePlaylists";
+import { PassageRichContent, usePassageById } from "@web/src/features/passages";
 import { VocabularyTable } from "@web/src/features/vocabulary/components/VocabularyTable";
 import type {
     SessionVocabularyItemDTO,
@@ -86,7 +88,33 @@ function LessonPlaylistStudyCard(props: {
     );
 }
 
-export type LessonStudyEditSection = "objectives" | "vocabulary" | "playlists";
+export type LessonStudyEditSection = "objectives" | "vocabulary" | "playlists" | "passages";
+
+function LessonPassageStudyCard(props: { passageId: string; fallbackTitle: string | null }) {
+    const passageQuery = usePassageById(props.passageId);
+    const title = passageQuery.data?.title ?? props.fallbackTitle ?? "Reading";
+    const hasContent = Boolean(passageQuery.data?.content?.trim());
+    return (
+        <div
+            className="rounded-xl border p-4"
+            style={{ borderColor: "var(--ant-color-border-secondary, #f0f0f0)" }}
+        >
+            <Text strong className="text-base block mb-2">
+                {title}
+            </Text>
+            {passageQuery.isLoading ? (
+                <Skeleton active paragraph={{ rows: 3 }} />
+            ) : hasContent ? (
+                <PassageRichContent
+                    content={passageQuery.data?.content}
+                    loading={passageQuery.isLoading}
+                />
+            ) : (
+                <Text type="secondary">No text content for this passage.</Text>
+            )}
+        </div>
+    );
+}
 
 export type LessonStudyContentProps = {
     organizationId: string;
@@ -135,6 +163,7 @@ export function LessonStudyContent({
     const lessonQuery = useLessonById(organizationId, lessonId);
     const objectivesQuery = useLessonObjectives(organizationId, lessonId);
     const playlistsQuery = useLessonPlaylists(organizationId, lessonId);
+    const passagesQuery = useLessonPassages(organizationId, lessonId);
     const vocabularyQuery = useLessonVocabulary(organizationId, lessonId);
 
     const lessonVocabularySorted = useMemo(
@@ -188,6 +217,10 @@ export function LessonStudyContent({
     const playlistsSorted = useMemo(
         () => [...(playlistsQuery.data ?? [])].sort((a, b) => a.position - b.position),
         [playlistsQuery.data]
+    );
+    const passagesSorted = useMemo(
+        () => [...(passagesQuery.data ?? [])].sort((a, b) => a.position - b.position),
+        [passagesQuery.data]
     );
 
     const playlistPlayerHref = (playlistId: string) =>
@@ -347,6 +380,34 @@ export function LessonStudyContent({
                     groupByWord
                     hideStudentCountColumn
                 />
+            </Card>
+
+            <Card
+                title="Reading passages"
+                className="shadow-sm"
+                extra={sectionEditExtra(onEditSection, "passages", "passages")}
+            >
+                <Paragraph type="secondary" className="!mt-0 !mb-4">
+                    Text linked to this lesson in order.
+                </Paragraph>
+                {passagesQuery.isLoading ? (
+                    <Skeleton active paragraph={{ rows: 2 }} />
+                ) : passagesSorted.length === 0 ? (
+                    <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description="No reading passages linked yet"
+                    />
+                ) : (
+                    <Space direction="vertical" className="w-full" size="middle">
+                        {passagesSorted.map((row) => (
+                            <LessonPassageStudyCard
+                                key={row.passageId}
+                                passageId={row.passageId}
+                                fallbackTitle={row.title}
+                            />
+                        ))}
+                    </Space>
+                )}
             </Card>
 
             <Card

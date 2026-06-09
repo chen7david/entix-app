@@ -8,17 +8,12 @@ import type {
     UpdatePassageInput,
 } from "@shared/schemas/dto/passage.dto";
 import type { PassageR2Content } from "@shared/types/text-collection-page.types";
+import { countPassageWords } from "@shared/utils/passage-content";
 import { BaseService } from "./base.service";
 import type { BucketService } from "./bucket.service";
 import type { UploadService } from "./upload.service";
 
 const MAX_INLINE_CONTENT = 50_000;
-
-function countWords(text: string): number {
-    const trimmed = text.trim();
-    if (!trimmed) return 0;
-    return trimmed.split(/\s+/).length;
-}
 
 export class PassageService extends BaseService {
     constructor(
@@ -89,7 +84,7 @@ export class PassageService extends BaseService {
             await this.getCollection(organizationId, data.collectionId);
         }
 
-        const wordCount = data.content !== undefined ? countWords(data.content) : null;
+        const wordCount = data.content !== undefined ? countPassageWords(data.content) : null;
         const bucketKey = data.bucketKey ?? null;
 
         return this.passageRepo.createPassage({
@@ -138,7 +133,7 @@ export class PassageService extends BaseService {
 
         const patch: Parameters<PassageRepository["updatePassage"]>[2] = { ...data };
         if (data.content !== undefined) {
-            patch.wordCount = countWords(data.content);
+            patch.wordCount = countPassageWords(data.content);
             if (data.bucketKey === undefined) {
                 patch.bucketKey = null;
                 patch.r2Url = null;

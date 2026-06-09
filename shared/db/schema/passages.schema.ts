@@ -1,14 +1,16 @@
+import { IMAGE_POSITIONS, PASSAGE_TYPES } from "../../constants/passage";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { generateOpaqueId } from "../../lib/id";
 import { authOrganizations } from "./organization.schema";
 import { textCollections } from "./text-collections.schema";
 
-export const PASSAGE_TYPES = ["reading", "instructional", "essay", "dialogue", "poem"] as const;
-export type PassageType = (typeof PASSAGE_TYPES)[number];
-
-export const IMAGE_POSITIONS = ["top", "bottom", "left", "right", "inline"] as const;
-export type ImagePosition = (typeof IMAGE_POSITIONS)[number];
+export {
+    IMAGE_POSITIONS,
+    type ImagePosition,
+    PASSAGE_TYPES,
+    type PassageType,
+} from "../../constants/passage";
 
 export const passages = sqliteTable(
     "passages",

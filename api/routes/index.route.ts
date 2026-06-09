@@ -12,6 +12,7 @@ import { lessonContentRoutes } from "./orgs/lesson-content.index";
 import { mediaRoutes } from "./orgs/media.index";
 import { memberWalletRoutes } from "./orgs/member-wallet.index";
 import { memberRoutes } from "./orgs/members.index";
+import { importJobRoutes } from "./orgs/import-job.index";
 import { passageRoutes } from "./orgs/passage.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
@@ -21,7 +22,9 @@ import { socialMediaRoutes } from "./social-media/social-media.index";
 import { userRoutes } from "./users/users.index";
 import { vocabAiTestRoutes } from "./vocab-ai-test.index";
 
-export const routes = [
+/** Lazy list avoids circular-import / HMR races where `routes` is still undefined at mount time. */
+export function getRoutes() {
+    return [
     adminAuditRoutes,
     userRoutes,
     authRoutes,
@@ -36,6 +39,7 @@ export const routes = [
     uploadRoutes,
     mediaRoutes,
     passageRoutes,
+    importJobRoutes,
     playlistRoutes,
     scheduleRoutes,
     vocabularyRoutes,
@@ -44,4 +48,5 @@ export const routes = [
     socialMediaRoutes,
     internalReconciliationRoutes,
     vocabAiTestRoutes,
-];
+    ];
+}

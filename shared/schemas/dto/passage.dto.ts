@@ -1,11 +1,14 @@
-import { IMAGE_POSITIONS, PASSAGE_TYPES } from "@shared/db/schema/passages.schema";
-import { TEXT_COLLECTION_TYPES } from "@shared/db/schema/text-collections.schema";
+import {
+    IMAGE_POSITIONS,
+    PASSAGE_TYPES,
+    TEXT_COLLECTION_TYPES,
+} from "../../constants/passage";
 import { z } from "zod";
 
 export const CreatePassageSchema = z.object({
     title: z.string().min(1).max(255).optional(),
     type: z.enum(PASSAGE_TYPES).default("reading"),
-    collectionId: z.string().optional(),
+    collectionId: z.string().nullable().optional(),
     cefrLevel: z.string().optional(),
     content: z.string().max(50_000).optional(),
     pageNumber: z.number().int().positive().optional(),

@@ -7,6 +7,7 @@ export * from "./financial-session-payment-events.schema";
 export * from "./financial-transaction-categories.schema";
 export * from "./financial-transaction-lines.schema";
 export * from "./financial-transactions.schema";
+export * from "./import-jobs.schema";
 export * from "./lesson.schema";
 export * from "./lesson-objectives.schema";
 export * from "./lesson-passages.schema";

@@ -139,6 +139,18 @@ export const SessionVocabularyPage = lazyNamed(
 export const GlobalVocabularyPage = lazyDefault(
     () => import("@web/src/pages/teaching/vocabulary/GlobalVocabularyPage")
 );
+export const TextLibraryPage = lazyNamed(
+    () => import("@web/src/pages/teaching/text-library/TextLibraryPage"),
+    "TextLibraryPage"
+);
+export const BookImportPage = lazyNamed(
+    () => import("@web/src/pages/teaching/text-library/BookImportPage"),
+    "BookImportPage"
+);
+export const BookImportReviewPage = lazyNamed(
+    () => import("@web/src/pages/teaching/text-library/BookImportReviewPage"),
+    "BookImportReviewPage"
+);
 export const OrganizationMembersPage = lazyNamed(
     () => import("@web/src/pages/organization/OrganizationMembersPage"),
     "OrganizationMembersPage"

@@ -24,6 +24,7 @@ import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
 import { studentVocabulary } from "./student-vocabulary.schema";
 import { systemAuditEvents } from "./system-audit-events.schema";
+import { importJobParagraphs, importJobs } from "./import-jobs.schema";
 import { textCollections } from "./text-collections.schema";
 import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 import { vocabularyBank } from "./vocabulary-bank.schema";
@@ -456,6 +457,25 @@ export const passageImagesRelations = relations(passageImages, ({ one }) => ({
     passage: one(passages, {
         fields: [passageImages.passageId],
         references: [passages.id],
+    }),
+}));
+
+export const importJobsRelations = relations(importJobs, ({ one, many }) => ({
+    organization: one(authOrganizations, {
+        fields: [importJobs.organizationId],
+        references: [authOrganizations.id],
+    }),
+    collection: one(textCollections, {
+        fields: [importJobs.collectionId],
+        references: [textCollections.id],
+    }),
+    paragraphs: many(importJobParagraphs),
+}));
+
+export const importJobParagraphsRelations = relations(importJobParagraphs, ({ one }) => ({
+    job: one(importJobs, {
+        fields: [importJobParagraphs.jobId],
+        references: [importJobs.id],
     }),
 }));
 
