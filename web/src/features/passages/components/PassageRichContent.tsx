@@ -31,10 +31,9 @@ export function PassageRichContent({ content, loading }: PassageRichContentProps
 
     useEffect(() => {
         if (!editor) return;
-        editor.commands.setContent(
-            parseStoredPassageContent(content ?? defaultPassageDocJson()),
-            false
-        );
+        editor.commands.setContent(parseStoredPassageContent(content ?? defaultPassageDocJson()), {
+            emitUpdate: false,
+        });
     }, [content, editor]);
 
     if (loading) {

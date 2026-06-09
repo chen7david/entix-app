@@ -1,3 +1,5 @@
+import type { PDFPageProxy } from "pdfjs-dist";
+
 export type ParsedParagraph = {
     pageNumber: number;
     paragraphIndex: number;
@@ -74,13 +76,7 @@ async function configurePdfWorker() {
 }
 
 async function ocrRenderedPage(
-    page: {
-        getViewport: (p: { scale: number }) => { width: number; height: number };
-        render: (p: {
-            canvasContext: CanvasRenderingContext2D;
-            viewport: { width: number; height: number };
-        }) => { promise: Promise<void> };
-    },
+    page: PDFPageProxy,
     worker: { recognize: (image: HTMLCanvasElement) => Promise<{ data: { text: string } }> }
 ) {
     const viewport = page.getViewport({ scale: 2 });
@@ -90,7 +86,7 @@ async function ocrRenderedPage(
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("Could not create canvas for OCR");
 
-    await page.render({ canvasContext: ctx, viewport }).promise;
+    await page.render({ canvasContext: ctx, viewport, canvas }).promise;
     const { data } = await worker.recognize(canvas);
     return data.text;
 }

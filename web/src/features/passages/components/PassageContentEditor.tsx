@@ -43,7 +43,9 @@ export function PassageContentEditor({ value = "", onChange }: PassageContentEdi
         const external = value || defaultPassageDocJson();
         const current = JSON.stringify(editor.getJSON());
         if (external !== current) {
-            editor.commands.setContent(parseStoredPassageContent(external), false);
+            editor.commands.setContent(parseStoredPassageContent(external), {
+                emitUpdate: false,
+            });
             setJsonDraft(external || defaultPassageDocJson());
         }
     }, [value, editor]);
@@ -56,7 +58,7 @@ export function PassageContentEditor({ value = "", onChange }: PassageContentEdi
                 return;
             }
             emitChange(JSON.stringify(parsed));
-            editor?.commands.setContent(parsed, false);
+            editor?.commands.setContent(parsed, { emitUpdate: false });
             setJsonError(null);
         } catch {
             setJsonError("Invalid JSON");
