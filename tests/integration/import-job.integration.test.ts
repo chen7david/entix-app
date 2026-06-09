@@ -164,7 +164,9 @@ describe("Import job API", () => {
             env
         );
         expect(getRes.status).toBe(200);
-        const body = (await getRes.json()) as { data: { status: string; collectionId: string | null } };
+        const body = (await getRes.json()) as {
+            data: { status: string; collectionId: string | null };
+        };
         expect(body.data.status).toBe("review");
         expect(body.data.collectionId).toBeNull();
     });
