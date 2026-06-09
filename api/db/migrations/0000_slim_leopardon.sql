@@ -232,18 +232,99 @@ CREATE INDEX `idx_fin_tx_org_id` ON `financial_transactions` (`organization_id`)
 CREATE INDEX `idx_fin_tx_org_date` ON `financial_transactions` (`organization_id`,`transaction_date`);--> statement-breakpoint
 CREATE INDEX `idx_fin_tx_source_acc` ON `financial_transactions` (`source_account_id`);--> statement-breakpoint
 CREATE INDEX `idx_fin_tx_dest_acc` ON `financial_transactions` (`destination_account_id`);--> statement-breakpoint
+CREATE TABLE `import_job_paragraphs` (
+	`id` text PRIMARY KEY NOT NULL,
+	`job_id` text NOT NULL,
+	`page_number` integer NOT NULL,
+	`paragraph_index` integer NOT NULL,
+	`raw_text` text NOT NULL,
+	`cleaned_text` text,
+	`clean_status` text DEFAULT 'pending' NOT NULL,
+	`last_error` text,
+	`is_deleted` integer DEFAULT 0 NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`job_id`) REFERENCES `import_jobs`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `ijp_job_idx` ON `import_job_paragraphs` (`job_id`);--> statement-breakpoint
+CREATE INDEX `ijp_clean_status_idx` ON `import_job_paragraphs` (`clean_status`);--> statement-breakpoint
+CREATE INDEX `ijp_job_order_idx` ON `import_job_paragraphs` (`job_id`,`page_number`,`paragraph_index`);--> statement-breakpoint
+CREATE UNIQUE INDEX `ijp_job_page_para_uidx` ON `import_job_paragraphs` (`job_id`,`page_number`,`paragraph_index`);--> statement-breakpoint
+CREATE TABLE `import_jobs` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organization_id` text NOT NULL,
+	`collection_id` text,
+	`status` text DEFAULT 'uploading' NOT NULL,
+	`file_name` text NOT NULL,
+	`file_type` text NOT NULL,
+	`bucket_key` text,
+	`total_paragraphs` integer,
+	`created_by` text NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`collection_id`) REFERENCES `text_collections`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`created_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `ij_org_idx` ON `import_jobs` (`organization_id`);--> statement-breakpoint
+CREATE INDEX `ij_status_idx` ON `import_jobs` (`status`);--> statement-breakpoint
 CREATE TABLE `lessons` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
 	`title` text NOT NULL,
 	`description` text,
 	`cover_art_url` text,
+	`cefr_level` text DEFAULT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer NOT NULL,
-	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "cefr_level_check" CHECK("lessons"."cefr_level" IS NULL OR "lessons"."cefr_level" IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2'))
 );
 --> statement-breakpoint
 CREATE INDEX `lessons_organization_id_idx` ON `lessons` (`organization_id`);--> statement-breakpoint
+CREATE TABLE `lesson_objectives` (
+	`id` text PRIMARY KEY NOT NULL,
+	`lesson_id` text NOT NULL,
+	`objective` text NOT NULL,
+	`position` integer NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "objective_not_empty" CHECK(length(trim("lesson_objectives"."objective")) > 0),
+	CONSTRAINT "objective_position_positive" CHECK("lesson_objectives"."position" > 0)
+);
+--> statement-breakpoint
+CREATE INDEX `lesson_objectives_lesson_id_idx` ON `lesson_objectives` (`lesson_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `lesson_objectives_lesson_id_position_uidx` ON `lesson_objectives` (`lesson_id`,`position`);--> statement-breakpoint
+CREATE TABLE `lesson_passages` (
+	`lesson_id` text NOT NULL,
+	`passage_id` text NOT NULL,
+	`position` integer NOT NULL,
+	`added_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	PRIMARY KEY(`lesson_id`, `passage_id`),
+	FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`passage_id`) REFERENCES `passages`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "lesson_passage_position_positive" CHECK("lesson_passages"."position" > 0)
+);
+--> statement-breakpoint
+CREATE INDEX `lp_lesson_idx` ON `lesson_passages` (`lesson_id`);--> statement-breakpoint
+CREATE INDEX `lp_passage_idx` ON `lesson_passages` (`passage_id`);--> statement-breakpoint
+CREATE UNIQUE INDEX `lp_lesson_position_uidx` ON `lesson_passages` (`lesson_id`,`position`);--> statement-breakpoint
+CREATE TABLE `lesson_playlists` (
+	`lesson_id` text NOT NULL,
+	`playlist_id` text NOT NULL,
+	`position` integer NOT NULL,
+	`added_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	PRIMARY KEY(`lesson_id`, `playlist_id`),
+	FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`playlist_id`) REFERENCES `playlists`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "lesson_playlist_position_positive" CHECK("lesson_playlists"."position" > 0)
+);
+--> statement-breakpoint
+CREATE INDEX `lesson_playlists_lesson_id_idx` ON `lesson_playlists` (`lesson_id`);--> statement-breakpoint
+CREATE INDEX `lesson_playlists_playlist_id_idx` ON `lesson_playlists` (`playlist_id`);--> statement-breakpoint
 CREATE TABLE `lesson_progress` (
 	`log_id` text PRIMARY KEY NOT NULL,
 	`enroll_id` text NOT NULL,
@@ -255,6 +336,19 @@ CREATE TABLE `lesson_progress` (
 );
 --> statement-breakpoint
 CREATE INDEX `lesson_progress_enroll_id_idx` ON `lesson_progress` (`enroll_id`);--> statement-breakpoint
+CREATE TABLE `lesson_vocabulary` (
+	`lesson_id` text NOT NULL,
+	`vocabulary_id` text NOT NULL,
+	`position` integer NOT NULL,
+	`added_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	PRIMARY KEY(`lesson_id`, `vocabulary_id`),
+	FOREIGN KEY (`lesson_id`) REFERENCES `lessons`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`vocabulary_id`) REFERENCES `vocabulary_bank`(`id`) ON UPDATE no action ON DELETE cascade,
+	CONSTRAINT "lesson_vocab_position_positive" CHECK("lesson_vocabulary"."position" > 0)
+);
+--> statement-breakpoint
+CREATE INDEX `lesson_vocabulary_lesson_id_idx` ON `lesson_vocabulary` (`lesson_id`);--> statement-breakpoint
+CREATE INDEX `lesson_vocabulary_vocab_id_idx` ON `lesson_vocabulary` (`vocabulary_id`);--> statement-breakpoint
 CREATE TABLE `media` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
@@ -309,15 +403,16 @@ CREATE TABLE `uploads` (
 	`content_type` text NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,
 	`organization_id` text NOT NULL,
-	`uploaded_by` text NOT NULL,
+	`uploaded_by` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`uploaded_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`uploaded_by`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE INDEX `upload_organizationId_idx` ON `uploads` (`organization_id`);--> statement-breakpoint
 CREATE INDEX `upload_uploadedBy_idx` ON `uploads` (`uploaded_by`);--> statement-breakpoint
+CREATE UNIQUE INDEX `upload_org_bucket_key_uidx` ON `uploads` (`organization_id`,`bucket_key`);--> statement-breakpoint
 CREATE TABLE `user_uploads` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -371,7 +466,40 @@ CREATE TABLE `auth_organizations` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `auth_organizations_slug_unique` ON `auth_organizations` (`slug`);--> statement-breakpoint
-CREATE UNIQUE INDEX `organization_slug_uidx` ON `auth_organizations` (`slug`);--> statement-breakpoint
+CREATE TABLE `passage_images` (
+	`id` text PRIMARY KEY NOT NULL,
+	`passage_id` text NOT NULL,
+	`upload_id` text,
+	`image_url` text NOT NULL,
+	`alt_text` text,
+	`caption` text,
+	`position` text DEFAULT 'bottom' NOT NULL,
+	`sort_order` integer DEFAULT 0 NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`passage_id`) REFERENCES `passages`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `pi_passage_idx` ON `passage_images` (`passage_id`);--> statement-breakpoint
+CREATE TABLE `passages` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organization_id` text NOT NULL,
+	`collection_id` text,
+	`title` text,
+	`type` text DEFAULT 'reading' NOT NULL,
+	`cefr_level` text,
+	`content` text,
+	`bucket_key` text,
+	`r2_url` text,
+	`page_number` integer,
+	`word_count` integer,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`collection_id`) REFERENCES `text_collections`(`id`) ON UPDATE no action ON DELETE set null
+);
+--> statement-breakpoint
+CREATE INDEX `ps_org_idx` ON `passages` (`organization_id`);--> statement-breakpoint
+CREATE INDEX `ps_collection_idx` ON `passages` (`collection_id`);--> statement-breakpoint
 CREATE TABLE `payment_requests` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
@@ -406,10 +534,11 @@ CREATE TABLE `payment_requests` (
 	CONSTRAINT "pr_type_check" CHECK("payment_requests"."type" IN ('session_payment', 'manual_payment')),
 	CONSTRAINT "pr_status_check" CHECK("payment_requests"."status" IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
 	CONSTRAINT "pr_amount_non_negative" CHECK("payment_requests"."amount_cents" >= 0),
-	CONSTRAINT "pr_attempt_count_non_negative" CHECK("payment_requests"."attempt_count" >= 0)
+	CONSTRAINT "pr_attempt_count_non_negative" CHECK("payment_requests"."attempt_count" >= 0),
+	CONSTRAINT "pr_session_payment_user_required" CHECK("payment_requests"."type" != 'session_payment' OR "payment_requests"."user_id" IS NOT NULL)
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `uq_payment_request_idempotency_key` ON `payment_requests` (`idempotency_key`);--> statement-breakpoint
+CREATE UNIQUE INDEX `uq_payment_request_idempotency_key` ON `payment_requests` (`organization_id`,`idempotency_key`);--> statement-breakpoint
 CREATE INDEX `idx_pr_organization_id` ON `payment_requests` (`organization_id`);--> statement-breakpoint
 CREATE INDEX `idx_pr_status` ON `payment_requests` (`status`);--> statement-breakpoint
 CREATE INDEX `idx_pr_reference` ON `payment_requests` (`reference_type`,`reference_id`);--> statement-breakpoint
@@ -480,19 +609,19 @@ CREATE TABLE `user_social_medias` (
 CREATE TABLE `student_vocabulary` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
-	`org_id` text NOT NULL,
+	`organization_id` text NOT NULL,
 	`vocabulary_id` text NOT NULL,
 	`attendance_id` text NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	FOREIGN KEY (`user_id`) REFERENCES `auth_users`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`org_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`vocabulary_id`) REFERENCES `vocabulary_bank`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`attendance_id`) REFERENCES `session_attendances`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `student_vocab_user_vocab_attendance_uidx` ON `student_vocabulary` (`user_id`,`vocabulary_id`,`attendance_id`);--> statement-breakpoint
 CREATE INDEX `student_vocab_userId_idx` ON `student_vocabulary` (`user_id`);--> statement-breakpoint
-CREATE INDEX `student_vocab_orgId_idx` ON `student_vocabulary` (`org_id`);--> statement-breakpoint
+CREATE INDEX `student_vocab_organizationId_idx` ON `student_vocabulary` (`organization_id`);--> statement-breakpoint
 CREATE INDEX `student_vocab_vocabularyId_idx` ON `student_vocabulary` (`vocabulary_id`);--> statement-breakpoint
 CREATE INDEX `student_vocab_attendanceId_idx` ON `student_vocabulary` (`attendance_id`);--> statement-breakpoint
 CREATE TABLE `system_audit_events` (
@@ -521,6 +650,23 @@ CREATE INDEX `idx_audit_event_type` ON `system_audit_events` (`event_type`);--> 
 CREATE INDEX `idx_audit_acknowledged` ON `system_audit_events` (`acknowledged_at`);--> statement-breakpoint
 CREATE INDEX `idx_audit_created_at` ON `system_audit_events` (`created_at`);--> statement-breakpoint
 CREATE UNIQUE INDEX `uq_audit_payment_ack` ON `system_audit_events` (`subject_id`,`event_type`) WHERE "system_audit_events"."event_type" = 'payment.acknowledged';--> statement-breakpoint
+CREATE TABLE `text_collections` (
+	`id` text PRIMARY KEY NOT NULL,
+	`organization_id` text NOT NULL,
+	`title` text NOT NULL,
+	`author` text,
+	`description` text,
+	`type` text DEFAULT 'book' NOT NULL,
+	`cefr_level` text,
+	`bucket_key` text,
+	`r2_url` text,
+	`total_pages` integer,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	FOREIGN KEY (`organization_id`) REFERENCES `auth_organizations`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `tc_org_idx` ON `text_collections` (`organization_id`);--> statement-breakpoint
 CREATE TABLE `user_addresses` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
@@ -568,11 +714,17 @@ CREATE TABLE `vocabulary_bank` (
 	`text` text NOT NULL,
 	`zh_translation` text,
 	`pinyin` text,
+	`needs_language_review` integer,
+	`ipa_us` text,
+	`syllables_en` text,
+	`syllables_ipa` text,
+	`definition_simple` text,
 	`en_audio_url` text,
 	`zh_audio_url` text,
 	`status` text DEFAULT 'new' NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	CONSTRAINT "vb_status_check" CHECK("vocabulary_bank"."status" IN ('new', 'queued_text', 'processing_text', 'text_ready', 'queued_audio', 'processing_audio', 'active', 'review'))
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `vocabulary_bank_text_uidx` ON `vocabulary_bank` (`text`);--> statement-breakpoint
