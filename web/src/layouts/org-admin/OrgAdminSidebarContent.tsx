@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { AppRoutes, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
-import { useOrganization } from "@web/src/features/organization";
+import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { useWalletBalance } from "@web/src/features/wallet";
 import { useSession } from "@web/src/lib/auth-client";
 import {
@@ -18,6 +18,7 @@ import {
     Dropdown,
     type MenuProps,
     Skeleton,
+    Tag,
     Tooltip,
     Typography,
     theme,
@@ -32,7 +33,8 @@ import { SidebarOrgSwitcher } from "../../components/navigation/Sidebar/SidebarO
 const { Text } = Typography;
 
 export const OrgAdminSidebarContent: React.FC = () => {
-    const { user, isLoading: isAuthLoading, isSuperAdmin, isAdminOrOwner } = useAuth();
+    const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
+    const { isAdminOrOwner, activeRole } = useOrgRole();
     const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
@@ -124,68 +126,88 @@ export const OrgAdminSidebarContent: React.FC = () => {
                 {isAuthLoading ? (
                     <Skeleton active avatar paragraph={{ rows: 1 }} />
                 ) : (
-                    <div className="flex items-center gap-3 overflow-hidden">
+                    <div
+                        className="grid gap-x-3 gap-y-1 overflow-hidden"
+                        style={{ gridTemplateColumns: "auto minmax(0, 1fr)" }}
+                    >
                         <Avatar
                             size={40}
                             src={user?.image ? getAvatarUrl(user.image, "sm") : undefined}
                             icon={<UserOutlined />}
-                            className="flex-shrink-0"
+                            className={`flex-shrink-0 self-center row-start-1 ${
+                                isError ? "row-span-1" : "row-span-2"
+                            }`}
                         />
-                        <div className="flex flex-col min-w-0 flex-1">
-                            <Text strong className="truncate text-sm">
-                                {user?.name}
-                            </Text>
-
-                            {!isError && (
-                                <div className="flex items-center gap-2 group">
-                                    {isWalletLoading ? (
-                                        <Text type="secondary" className="text-xs">
-                                            E$ ——
+                        <Text
+                            strong
+                            className="col-start-2 row-start-1 truncate text-sm self-center"
+                        >
+                            {user?.name}
+                        </Text>
+                        {!isError && (
+                            <div className="col-start-2 row-start-2 flex items-center gap-2 group min-w-0">
+                                {isWalletLoading ? (
+                                    <Text type="secondary" className="text-xs">
+                                        E$ ——
+                                    </Text>
+                                ) : hasWallet ? (
+                                    <>
+                                        <Text type="secondary" className="text-xs font-mono">
+                                            E$ {isBalanceVisible ? balanceValue : "••••••"}
                                         </Text>
-                                    ) : hasWallet ? (
-                                        <>
-                                            <Text type="secondary" className="text-xs font-mono">
-                                                E$ {isBalanceVisible ? balanceValue : "••••••"}
-                                            </Text>
-                                            <Button
-                                                type="text"
-                                                size="small"
-                                                className="h-4 w-4 flex items-center justify-center p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                icon={
-                                                    isBalanceVisible ? (
-                                                        <EyeInvisibleOutlined
-                                                            style={{ fontSize: 10 }}
-                                                        />
-                                                    ) : (
-                                                        <EyeOutlined style={{ fontSize: 10 }} />
-                                                    )
-                                                }
-                                                onClick={() =>
-                                                    setIsBalanceVisible(!isBalanceVisible)
-                                                }
-                                            />
-                                        </>
-                                    ) : (
-                                        <Tooltip
-                                            title={
-                                                isAdminOrOwner
-                                                    ? "Go to Members to initialize wallet"
-                                                    : undefined
+                                        <Button
+                                            type="text"
+                                            size="small"
+                                            className="h-4 w-4 flex items-center justify-center p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            icon={
+                                                isBalanceVisible ? (
+                                                    <EyeInvisibleOutlined
+                                                        style={{ fontSize: 10 }}
+                                                    />
+                                                ) : (
+                                                    <EyeOutlined style={{ fontSize: 10 }} />
+                                                )
                                             }
+                                            onClick={() => setIsBalanceVisible(!isBalanceVisible)}
+                                        />
+                                    </>
+                                ) : (
+                                    <Tooltip
+                                        title={
+                                            isAdminOrOwner
+                                                ? "Go to Members to initialize wallet"
+                                                : undefined
+                                        }
+                                    >
+                                        <Text
+                                            type="secondary"
+                                            className="text-[10px] opacity-60 italic"
                                         >
-                                            <Text
-                                                type="secondary"
-                                                className="text-[10px] opacity-60 italic"
-                                            >
-                                                {isAdminOrOwner
-                                                    ? "Wallet not set up — initialize in Members"
-                                                    : "Wallet not set up"}
-                                            </Text>
-                                        </Tooltip>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                                            {isAdminOrOwner
+                                                ? "Wallet not set up — initialize in Members"
+                                                : "Wallet not set up"}
+                                        </Text>
+                                    </Tooltip>
+                                )}
+                            </div>
+                        )}
+                        {activeRole && (
+                            <Tag
+                                color={
+                                    activeRole === "owner" || activeRole === "admin"
+                                        ? "gold"
+                                        : activeRole === "teacher"
+                                          ? "purple"
+                                          : "blue"
+                                }
+                                className={`col-start-2 w-fit max-w-full text-[10px] leading-none px-1 py-0 capitalize ${
+                                    isError ? "row-start-2" : "row-start-3"
+                                }`}
+                                bordered={false}
+                            >
+                                {activeRole}
+                            </Tag>
+                        )}
                     </div>
                 )}
             </div>

@@ -14,7 +14,7 @@ export const UpcomingSessionsCard: React.FC = () => {
     const { activeOrganization } = useOrganization();
     const navigateOrg = useOrgNavigate();
 
-    const startDate = useMemo(() => DateUtils.now(), []);
+    const startDate = useMemo(() => DateUtils.startOf("day"), []);
     const { sessions, isLoading } = useSchedule(
         activeOrganization?.id,
         startDate,

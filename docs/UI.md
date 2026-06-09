@@ -1,10 +1,10 @@
-:::v-pre
-<!-- AI_CONTEXT
-Stack: React 19, Ant Design 6, Tailwind v4, Jotai, React Query 5,
-       React Router 7, Vite, Vitest, TypeScript, Cloudflare Workers
-Target: Mobile-first fintech SaaS, dark/light mode, WCAG AA
-Enforce: All rules below are MANDATORY. Violations = bugs.
--->
+<!-- AI_CONTEXT -->
+<!-- LAST_UPDATED: 2026-05-01 -->
+<!-- VERSION: 1.3.0 -->
+<!-- Canonical frontend reference for AI-assisted development on Entix-App. -->
+<!-- Stack: React 19, Ant Design 6, Tailwind v4, Jotai, React Query 5, React Router 7, Vite, Vitest, TypeScript, Cloudflare Workers -->
+<!-- Target: Mobile-first fintech SaaS, dark/light mode, WCAG AA -->
+<!-- Enforce: All rules below are MANDATORY. Violations = bugs. -->
 
 # UI.md — Frontend Architecture & Design Standards
 # Entix-App Web Layer
@@ -79,6 +79,14 @@ Enforce: All rules below are MANDATORY. Violations = bugs.
 | 38 | ARIA Labels               | 10. Accessibility |
 | 55 | Accessibility Checklist   | 10. Accessibility |
 | 62 | Document Maintenance      | 11. Maintenance   |
+| 64 | No `any` Type             | 12. Code Quality  |
+| 65 | No Wildcard Imports       | 12. Code Quality  |
+| 66 | Deep Component Design     | 12. Code Quality  |
+| 67 | Code Clarity Standards    | 12. Code Quality  |
+| 68 | Frontend Verification Gate| 12. Code Quality  |
+| 69 | No Magic Strings          | 12. Code Quality  |
+| 70 | Reuse-First / Existing Components | 12. Code Quality |
+| 71 | Test Setup Helpers        | 12. Code Quality  |
 
 ---
 
@@ -599,6 +607,7 @@ Components MUST NOT produce side effects inside the render body. No `console.log
 ### Rule 34 — Silent Failure Prohibition
 - `useMutation` calls MUST handle `onError` explicitly.
 - Never allow a failed mutation to fail silently. Display `notification.error` or `message.error` at minimum.
+- Always access notification/message via `App.useApp()` — never static imports (see Rule 48).
 
 ### Rule 48 — App.useApp for Notifications
 Never use static `notification.error()` or `message.error()` imports. Always access via `App.useApp()` for context-aware rendering:
@@ -656,6 +665,162 @@ Every component MUST pass this checklist before a PR is merged:
 
 ---
 
+## 12. Code Quality Standards
+
+### Rule 64 — No `any` Type [MANDATORY]
+Using `any` anywhere in the frontend codebase is **strictly prohibited**. It bypasses
+TypeScript's type safety and is treated as a bug, not a style choice.
+
+- Use `unknown` and narrow with `typeof`, `instanceof`, or type guards.
+- Use generics when a component or hook needs to be flexible.
+- The sole exception is `// @ts-expect-error` — **must** include an inline comment
+  explaining exactly why the error is expected. `@ts-ignore` is prohibited.
+- Biome enforces `@typescript-eslint/no-explicit-any` in CI.
+
+```ts
+// ❌ Prohibited
+function formatValue(val: any) { return val.toFixed(2); }
+
+// ✅ Correct
+function formatValue(val: unknown): string {
+    if (typeof val === 'number') return val.toFixed(2);
+    throw new TypeError(`Expected number, got ${typeof val}`);
+}
+```
+
+### Rule 65 — No Wildcard Imports [MANDATORY]
+Never use `import * as X from '...'`. Always use named imports.
+
+Wildcard imports defeat tree-shaking, bloat bundles, and obscure what a
+component actually depends on.
+
+```ts
+// ❌ Prohibited
+import * as Icons from '@ant-design/icons';
+
+// ✅ Correct
+import { UserOutlined, PlusOutlined } from '@ant-design/icons';
+```
+
+- **Exception**: external type-only namespace imports where the library requires it.
+  Add `// wildcard required by <library>` inline.
+
+### Rule 66 — Deep Component Design
+Components and hooks MUST expose a minimal, stable interface while hiding internal complexity.
+
+- Prefer fewer, richer props over many granular ones.
+- A component's internals (sub-components, internal hooks, helper functions) MUST NOT
+  be exported from the feature barrel unless they are explicitly reused elsewhere.
+- If a page must reach into a feature's internals to wire up data, the feature's
+  public API is too shallow — redesign the hook or component interface.
+- Cross-feature dependencies go through `components/ui/`, `src/hooks/`, or `shared/` —
+  never through another feature's internal files.
+
+### Rule 67 — Code Clarity Standards
+- **Component length**: ≤ 150 lines (Rule 40). Extract when exceeded.
+- **Hook length**: ≤ 80 lines. Split into sub-hooks when exceeded.
+- **File length**: ≤ 300 lines. Split when exceeded.
+- **JSX nesting depth**: ≤ 4 levels. Extract deeper trees into named sub-components.
+- **One responsibility per hook**: a hook that does two unrelated things is two hooks.
+- **Meaningful names**: no single-letter variables except loop indices. Name state for
+  what it *represents* (`isModalOpen`, not `flag`).
+- **No commented-out code**: use `git` for history. Dead code must be deleted.
+- **No magic strings/numbers**: extract into named constants in `*.constants.ts`.
+
+### Rule 69 — No Magic Strings [MANDATORY]
+Never use raw string literals where a named constant can be used.
+Magic strings are untraceable, un-refactorable, and invisible to TypeScript.
+
+- Define string constants in a co-located `*.constants.ts` file.
+- Use `as const` objects for closed sets: status values, tab keys, query key segments,
+  route paths, event names, localStorage keys.
+- Query keys MUST use constants, not inline string tuples.
+
+```ts
+// ❌ Prohibited
+const { data } = useQuery({ queryKey: ['members', orgId], ... });
+if (member.role === 'admin') { ... }
+
+// ✅ Correct
+import { MemberQueryKey, MemberRole } from '../member.constants';
+const { data } = useQuery({ queryKey: [MemberQueryKey.List, orgId], ... });
+if (member.role === MemberRole.Admin) { ... }
+
+// member.constants.ts
+export const MemberQueryKey = { List: 'members', Detail: 'member' } as const;
+export const MemberRole = { Admin: 'admin', Student: 'student' } as const;
+export type MemberRole = typeof MemberRole[keyof typeof MemberRole];
+```
+
+### Rule 70 — Reuse-First / Existing Components [MANDATORY]
+Before building any new component, hook, helper, or utility, you MUST first search
+the existing codebase for equivalent functionality.
+
+- Check `components/ui/` for shared UI primitives before building a new one.
+- Check `features/<domain>/hooks/` for existing query/mutation hooks.
+- Check `src/lib/` and `shared/` for existing helpers before writing a new one.
+- If a similar component or hook exists but differs slightly, extend it via props —
+  do not duplicate it.
+- Building a second version of existing functionality is always a bug, never a feature.
+
+```ts
+// Before building a new modal, check:
+// components/ui/ConfirmModal.tsx, components/ui/DrawerForm.tsx
+// If a matching component exists — use it. Extend via props if needed.
+
+// Before building a new formatCurrency helper, check:
+// src/lib/format-currency.ts, shared/lib/format.ts
+```
+
+### Rule 71 — Test Setup Helpers [MANDATORY]
+All non-trivial test setup MUST be extracted into named helper functions.
+Tests should read like specifications, not setup scripts.
+
+- Extract repeated or multi-step render/arrange logic into a `render*` or `setup*`
+  helper defined at the top of the describe block or in a shared test utility file.
+- Helper functions MUST be named for what they produce, not how they work.
+- A reader should understand what a test does by reading only the `it`/`test` body.
+
+```ts
+// ❌ Prohibited — setup noise buries the assertion
+it('should disable the submit button while loading', () => {
+    const member = makeMember();
+    render(<MemberForm member={member} isLoading={true} onSubmit={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+});
+
+// ✅ Correct — intent is immediately clear
+function renderMemberForm(props?: Partial<MemberFormProps>) {
+    const defaults = { member: makeMember(), isLoading: false, onSubmit: vi.fn() };
+    return render(<MemberForm {...defaults} {...props} />);
+}
+
+it('should disable the submit button while loading', () => {
+    renderMemberForm({ isLoading: true });
+    expect(screen.getByRole('button', { name: /save/i })).toBeDisabled();
+});
+```
+
+### Rule 68 — Frontend Verification Gate [MANDATORY]
+After every implementation phase, run the full frontend verification suite **before
+moving to the next phase**. A phase is not complete until all three pass.
+
+```bash
+# 1. Type safety
+npm run typecheck:web
+
+# 2. Unit tests
+npm run test
+
+# 3. Lint & format
+npm run biome:check
+```
+
+Never skip the gate between phases. Accumulated type errors and lint violations
+are exponentially harder to fix at PR time.
+
+---
+
 ## 11. Maintenance
 
 ### Rule 62 — Document Maintenance
@@ -667,5 +832,4 @@ When a new architectural pattern is established or an existing rule is refined, 
 ---
 
 *UI.md — Entix-App Frontend Standards*
-*Version: 1.2.1 (Last Updated: 2026-04-01)*
-:::
+*Version: 1.4.0 (Last Updated: 2026-05-01)*

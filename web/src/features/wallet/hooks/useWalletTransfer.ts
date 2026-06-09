@@ -9,6 +9,7 @@ export type TransferInput = {
     currencyId: string;
     amountCents: number;
     description?: string;
+    idempotencyKey?: string;
 };
 
 export const useWalletTransfer = (orgId?: string) => {
@@ -17,11 +18,15 @@ export const useWalletTransfer = (orgId?: string) => {
     return useMutation({
         mutationFn: async (data: TransferInput) => {
             if (!orgId) throw new Error("Organization ID required");
+            const { idempotencyKey, ...body } = data;
             const api = getApiClient();
-            const res = await api.api.v1.orgs[":organizationId"].finance.transfer.$post({
-                param: { organizationId: orgId },
-                json: data,
-            });
+            const res = await api.api.v1.orgs[":organizationId"].finance.transfer.$post(
+                {
+                    param: { organizationId: orgId },
+                    json: body,
+                },
+                idempotencyKey ? { headers: { "Idempotency-Key": idempotencyKey } } : undefined
+            );
             return hcJson(res);
         },
         onSuccess: () => {

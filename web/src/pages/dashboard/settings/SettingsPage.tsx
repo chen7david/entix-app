@@ -5,11 +5,9 @@ import { Card, Col, Row, Space, Typography } from "antd";
 const { Title, Text } = Typography;
 
 export const SettingsPage = () => {
-    // Changed from React.FC
-
     return (
         <div>
-            <div className="max-w-3xl">
+            <div className="max-w-5xl">
                 <div style={{ marginBottom: 32 }}>
                     <Title level={2} style={{ margin: 0 }}>
                         Settings
@@ -18,14 +16,13 @@ export const SettingsPage = () => {
                 </div>
 
                 <Space direction="vertical" size="large" style={{ width: "100%" }}>
-                    {/* UI Preferences Card */}
                     <Card className="shadow-sm">
                         <div style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
                             <SettingOutlined
                                 style={{ fontSize: 20, marginRight: 12, color: "#2563eb" }}
                             />
                             <Title level={4} style={{ margin: 0 }}>
-                                UI Preferences
+                                Personal Settings
                             </Title>
                         </div>
                         <Text type="secondary" style={{ display: "block", marginBottom: 16 }}>

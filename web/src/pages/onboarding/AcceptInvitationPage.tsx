@@ -30,18 +30,14 @@ export const AcceptInvitationPage: React.FC = () => {
         if (!success && !error && !isAcceptingInvitation && !hasAcceptedRef.current) {
             hasAcceptedRef.current = true; // Mark as accepted immediately to prevent double-invocation
             acceptInvitation(invitationId)
-                .then(async (result) => {
-                    if (result.error) {
-                        setError(result.error.message || "Failed to accept invitation");
-                    } else {
-                        // Force refresh of org list
-                        await queryClient.invalidateQueries({ queryKey: ["organizations"] });
-                        setSuccess(true);
-                        notification.success({
-                            message: "Invitation Accepted",
-                            description: "You have successfully joined the organization.",
-                        });
-                    }
+                .then(async () => {
+                    // Force refresh of org list
+                    await queryClient.invalidateQueries({ queryKey: ["organizations"] });
+                    setSuccess(true);
+                    notification.success({
+                        message: "Invitation Accepted",
+                        description: "You have successfully joined the organization.",
+                    });
                 })
                 .catch((err: unknown) => {
                     setError(err instanceof Error ? err.message : "An unexpected error occurred");

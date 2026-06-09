@@ -6,9 +6,10 @@ import {
     CloudUploadOutlined,
     DashboardOutlined,
     DollarOutlined,
+    FileTextOutlined,
     OrderedListOutlined,
+    PictureOutlined,
     PlaySquareOutlined,
-    SettingOutlined,
     ShoppingOutlined,
     TeamOutlined,
     TransactionOutlined,
@@ -18,53 +19,216 @@ import {
     YoutubeOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-import { useAuth } from "@web/src/features/auth";
-import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
+import { useOrganization, useOrgNavigate, useOrgRole } from "@web/src/features/organization";
 import { useSidebar } from "@web/src/hooks/navigation/useSidebar";
 import { Menu, type MenuProps } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
 export const SidebarMenu: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
     const { close } = useSidebar();
-    const { isAdminOrOwner, isStaff } = useAuth();
-
+    const { isAdminOrOwner, isStaff, isStudent } = useOrgRole();
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
 
-    // Strip the org slug prefix from the current pathname to find the matching menu key naturally
     const orgPrefix = slug ? `/org/${slug}` : "";
     let activeKey = location.pathname;
     if (orgPrefix && activeKey.startsWith(orgPrefix)) {
         activeKey = activeKey.replace(orgPrefix, "") || "/";
     }
 
-    // Single-open accordion logic
-    const rootSubmenuKeys = ["billing_group", "teaching_group", "admin_group"];
-    const [openKeys, setOpenKeys] = useState<string[]>([]);
-
-    // Initialize open keys based on active path
-    useEffect(() => {
-        if (activeKey.includes("/admin/billing")) {
-            setOpenKeys(["billing_group"]);
-        } else if (activeKey.includes("/teaching")) {
-            setOpenKeys(["teaching_group"]);
-        } else if (activeKey.includes("/admin")) {
-            setOpenKeys(["admin_group"]);
-        }
-    }, [activeKey]);
-
-    const onOpenChange: MenuProps["onOpenChange"] = (keys) => {
-        const latestOpenKey = keys.find((key) => openKeys.indexOf(key) === -1);
-        if (latestOpenKey && rootSubmenuKeys.indexOf(latestOpenKey) === -1) {
-            setOpenKeys(keys);
-        } else {
-            setOpenKeys(latestOpenKey ? [latestOpenKey] : []);
-        }
+    const handleMenuClick = (e: { key: string }) => {
+        navigateOrg(e.key);
+        close();
     };
+
+    const learningItems: MenuProps["items"] = isStudent
+        ? [
+              {
+                  type: "group",
+                  label: "Learning",
+                  children: [
+                      {
+                          label: "My Lessons",
+                          key: AppRoutes.org.dashboard.lessons,
+                          icon: <BookOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Movies",
+                          key: AppRoutes.org.dashboard.movies,
+                          icon: <YoutubeOutlined />,
+                          disabled: !slug,
+                      },
+                  ],
+              },
+          ]
+        : [];
+
+    const studentFinanceItems: MenuProps["items"] = isStudent
+        ? [
+              {
+                  type: "group",
+                  label: "Finance",
+                  children: [
+                      {
+                          label: "Wallet",
+                          key: AppRoutes.org.dashboard.wallet,
+                          icon: <WalletOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Shop",
+                          key: AppRoutes.org.dashboard.shop,
+                          icon: <ShoppingOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Orders",
+                          key: AppRoutes.org.dashboard.orders,
+                          icon: <TruckOutlined />,
+                          disabled: !slug,
+                      },
+                  ],
+              },
+          ]
+        : [];
+
+    const classroomItems: MenuProps["items"] = isStaff
+        ? [
+              {
+                  type: "group",
+                  label: "Classroom",
+                  children: [
+                      {
+                          label: "Sessions",
+                          key: AppRoutes.org.teaching.sessions,
+                          icon: <CalendarOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Lessons",
+                          key: AppRoutes.org.teaching.lessons,
+                          icon: <BookOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Vocabulary",
+                          key: AppRoutes.org.teaching.vocabulary,
+                          icon: <OrderedListOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Class Roster",
+                          key: AppRoutes.org.teaching.students,
+                          icon: <TeamOutlined />,
+                          disabled: !slug,
+                      },
+                  ],
+              },
+          ]
+        : [];
+
+    const contentItems: MenuProps["items"] = isStaff
+        ? [
+              {
+                  type: "group",
+                  label: "Content",
+                  children: [
+                      {
+                          label: "Media Library",
+                          key: AppRoutes.org.teaching.media,
+                          icon: <PlaySquareOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Playlists",
+                          key: AppRoutes.org.teaching.playlists,
+                          icon: <PictureOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Text library",
+                          key: AppRoutes.org.teaching.textLibrary,
+                          icon: <FileTextOutlined />,
+                          disabled: !slug,
+                      },
+                  ],
+              },
+          ]
+        : [];
+
+    const operationsItems: MenuProps["items"] = isAdminOrOwner
+        ? [
+              {
+                  type: "group",
+                  label: "Operations",
+                  children: [
+                      {
+                          label: "Analytics",
+                          key: AppRoutes.org.admin.analytics,
+                          icon: <AreaChartOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Members",
+                          key: AppRoutes.org.admin.members,
+                          icon: <TeamOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Invitations",
+                          key: AppRoutes.org.admin.invitations,
+                          icon: <UserAddOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Bulk Import",
+                          key: AppRoutes.org.admin.bulk,
+                          icon: <CloudUploadOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Files & Uploads",
+                          key: AppRoutes.org.admin.uploads,
+                          icon: <CloudUploadOutlined />,
+                          disabled: !slug,
+                      },
+                  ],
+              },
+          ]
+        : [];
+
+    const billingItems: MenuProps["items"] = isAdminOrOwner
+        ? [
+              {
+                  type: "group",
+                  label: "Finance",
+                  children: [
+                      {
+                          label: "Transactions",
+                          key: AppRoutes.org.admin.billing.transactions,
+                          icon: <TransactionOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Accounts",
+                          key: AppRoutes.org.admin.billing.accounts,
+                          icon: <BankOutlined />,
+                          disabled: !slug,
+                      },
+                      {
+                          label: "Plans",
+                          key: AppRoutes.org.admin.billing.plans,
+                          icon: <DollarOutlined />,
+                          disabled: !slug,
+                      },
+                  ],
+              },
+          ]
+        : [];
 
     const menuItems: MenuProps["items"] = [
         {
@@ -73,155 +237,18 @@ export const SidebarMenu: React.FC = () => {
             icon: <DashboardOutlined />,
             disabled: !slug,
         },
-        {
-            label: "Lessons",
-            key: AppRoutes.org.dashboard.lessons,
-            icon: <BookOutlined />,
-            disabled: !slug,
-        },
-        {
-            label: "Shop",
-            key: AppRoutes.org.dashboard.shop,
-            icon: <ShoppingOutlined />,
-            disabled: !slug,
-        },
-        {
-            label: "Wallet",
-            key: AppRoutes.org.dashboard.wallet,
-            icon: <WalletOutlined />,
-            disabled: !slug,
-        },
-        {
-            label: "Movies",
-            key: AppRoutes.org.dashboard.movies,
-            icon: <YoutubeOutlined />,
-            disabled: !slug,
-        },
-        {
-            label: "Orders",
-            key: AppRoutes.org.dashboard.orders,
-            icon: <TruckOutlined />,
-            disabled: !slug,
-        },
-        {
-            type: "divider",
-        },
-        ...(activeOrganization && isStaff
-            ? [
-                  ...(isAdminOrOwner
-                      ? [
-                            {
-                                label: "Billing",
-                                key: "billing_group",
-                                icon: <DollarOutlined />,
-                                children: [
-                                    {
-                                        label: "Transactions",
-                                        key: AppRoutes.org.admin.billing.transactions,
-                                        icon: <TransactionOutlined />,
-                                    },
-                                    {
-                                        label: "Accounts",
-                                        key: AppRoutes.org.admin.billing.accounts,
-                                        icon: <BankOutlined />,
-                                    },
-                                    {
-                                        label: "Plans",
-                                        key: AppRoutes.org.admin.billing.plans,
-                                        icon: <OrderedListOutlined />,
-                                    },
-                                ],
-                            },
-                        ]
-                      : []),
-                  {
-                      label: "Teaching",
-                      key: "teaching_group",
-                      icon: <BookOutlined />,
-                      children: [
-                          {
-                              label: "Schedule",
-                              key: AppRoutes.org.teaching.schedule,
-                              icon: <CalendarOutlined />,
-                          },
-                          {
-                              label: "Media Library",
-                              key: AppRoutes.org.teaching.media,
-                              icon: <PlaySquareOutlined />,
-                          },
-                          {
-                              label: "Playlists",
-                              key: AppRoutes.org.teaching.playlists,
-                              icon: <OrderedListOutlined />,
-                          },
-                          {
-                              label: "Class Roster",
-                              key: AppRoutes.org.teaching.students,
-                              icon: <TeamOutlined />,
-                          },
-                      ],
-                  },
-                  ...(isAdminOrOwner
-                      ? [
-                            {
-                                label: "Admin",
-                                key: "admin_group",
-                                icon: <SettingOutlined />,
-                                children: [
-                                    {
-                                        label: "Analytics",
-                                        key: AppRoutes.org.admin.analytics,
-                                        icon: <AreaChartOutlined />,
-                                    },
-                                    {
-                                        label: "Members",
-                                        key: AppRoutes.org.admin.members,
-                                        icon: <TeamOutlined />,
-                                    },
-                                    {
-                                        label: "Invitations",
-                                        key: AppRoutes.org.admin.invitations,
-                                        icon: <UserAddOutlined />,
-                                    },
-                                    {
-                                        label: "Bulk Import",
-                                        key: AppRoutes.org.admin.bulk,
-                                        icon: <CloudUploadOutlined />,
-                                    },
-                                    {
-                                        label: "Organizations",
-                                        key: AppRoutes.org.admin.index,
-                                        icon: <BankOutlined />,
-                                        disabled: !slug,
-                                    },
-                                    {
-                                        label: "Files & Uploads",
-                                        key: AppRoutes.org.admin.uploads,
-                                        icon: <CloudUploadOutlined />,
-                                    },
-                                ],
-                            },
-                        ]
-                      : []),
-              ]
-            : []),
+        ...learningItems,
+        ...studentFinanceItems,
+        ...classroomItems,
+        ...contentItems,
+        ...operationsItems,
+        ...billingItems,
     ];
-
-    const handleMenuClick = (e: { key: string }) => {
-        // Disregard non-routable group keys
-        if (e.key === "teaching_group" || e.key === "admin_group" || e.key === "billing_group")
-            return;
-
-        navigateOrg(e.key);
-        close();
-    };
 
     return (
         <Menu
             mode="inline"
             selectedKeys={[activeKey]}
-            openKeys={openKeys}
-            onOpenChange={onOpenChange}
             style={{ height: "100%", borderRight: 0 }}
             onClick={handleMenuClick}
             items={menuItems}

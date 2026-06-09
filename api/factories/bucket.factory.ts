@@ -25,17 +25,17 @@ export function createCloudflareR2Client(
 }
 
 /**
- * Factory for creating a BucketService instance from the request context.
+ * Creates a BucketService from raw environment bindings.
  */
-export const getBucketClient = (ctx: AppContext): BucketService => {
-    const accountId = ctx.env.CLOUDFLARE_ACCOUNT_ID;
-    const bucketName = ctx.env.R2_BUCKET_NAME;
+export const getBucketClientFromEnv = (env: CloudflareBindings): BucketService => {
+    const accountId = env.CLOUDFLARE_ACCOUNT_ID;
+    const bucketName = env.R2_BUCKET_NAME;
     const endpoint = `https://${accountId}.r2.cloudflarestorage.com`;
-    const publicUrl = ctx.env.PUBLIC_CDN_URL || `${endpoint}/${bucketName}`;
+    const publicUrl = env.PUBLIC_CDN_URL || `${endpoint}/${bucketName}`;
 
     const client = createCloudflareR2Client({
-        accessKeyId: ctx.env.R2_ACCESS_KEY_ID,
-        secretAccessKey: ctx.env.R2_SECRET_ACCESS_KEY,
+        accessKeyId: env.R2_ACCESS_KEY_ID,
+        secretAccessKey: env.R2_SECRET_ACCESS_KEY,
     });
 
     return new BucketService(client, {
@@ -44,3 +44,8 @@ export const getBucketClient = (ctx: AppContext): BucketService => {
         publicUrl,
     });
 };
+
+/**
+ * Thin AppContext wrapper around getBucketClientFromEnv for request handlers.
+ */
+export const getBucketClient = (ctx: AppContext): BucketService => getBucketClientFromEnv(ctx.env);

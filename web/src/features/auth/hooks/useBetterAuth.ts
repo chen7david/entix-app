@@ -106,7 +106,7 @@ export const useSignOut = () => {
             return response;
         },
         onSuccess: () => {
-            sessionStorage.removeItem(STORAGE_KEYS.lastOrgSlug);
+            localStorage.removeItem(STORAGE_KEYS.lastOrgSlug);
             queryClient.clear();
         },
     });

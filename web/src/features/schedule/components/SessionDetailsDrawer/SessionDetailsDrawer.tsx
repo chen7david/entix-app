@@ -1,15 +1,11 @@
-import { AppRoutes } from "@shared";
 import { useDebouncedValue } from "@tanstack/react-pacer";
-import {
-    useBulkMembers,
-    useMembers,
-    useOrganization,
-    useOrgNavigate,
-} from "@web/src/features/organization";
+import { useAuth } from "@web/src/features/auth";
+import { useLessonOptions } from "@web/src/features/lessons/hooks/useLessons";
+import { useMembers } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { App, Button, Drawer, Form, Space, Tabs, Typography } from "antd";
 import dayjs from "dayjs";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MemberSelector } from "./MemberSelector";
 import { SessionAttendanceManager } from "./SessionAttendanceManager";
 import { SessionDangerZone } from "./SessionDangerZone";
@@ -26,9 +22,18 @@ export const SessionDetailsDrawer = ({
     onDelete,
 }: SessionDetailsDrawerProps) => {
     const { notification, modal } = App.useApp();
-    const { activeOrganization } = useOrganization();
-    const navigateOrg = useOrgNavigate();
-    const { metrics } = useBulkMembers(activeOrganization?.id);
+    const { user } = useAuth();
+    const [lessonSearch, setLessonSearch] = useState("");
+    const [debouncedLessonSearch] = useDebouncedValue(lessonSearch, {
+        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
+    });
+    const {
+        lessons,
+        isLoading: isLoadingLessons,
+        hasNextPage: hasNextLessonPage,
+        isFetchingNextPage: isFetchingNextLessonPage,
+        fetchNextPage: fetchNextLessonPage,
+    } = useLessonOptions(debouncedLessonSearch);
     const [form] = Form.useForm();
     const [memberSearch, setMemberSearch] = useState("");
     const [debouncedMemberSearch] = useDebouncedValue(memberSearch, {
@@ -38,12 +43,56 @@ export const SessionDetailsDrawer = ({
     const [isGeneratingTitle, setIsGeneratingTitle] = useState(false);
     const { members, loadingMembers, fetchNextPage, hasNextPage, isFetchingNextPage } =
         useMembers(debouncedMemberSearch);
+    const teacherOptions = (members || [])
+        .filter((member) => {
+            const roles = String(member.role || "")
+                .split(",")
+                .map((r) => r.trim().toLowerCase())
+                .filter(Boolean);
+            return roles.includes("teacher") || roles.includes("admin") || roles.includes("owner");
+        })
+        .map((member) => ({
+            value: member.userId,
+            label: member.name || member.email || member.userId,
+            image: member.avatarUrl,
+        }));
+    const selectedTeacherId = Form.useWatch("teacherId", form);
+    const mergedTeacherOptions = useMemo(() => {
+        const selectedTeacherFromSession =
+            session?.teacherId && session?.teacher
+                ? {
+                      value: session.teacherId,
+                      label:
+                          session.teacher.name ||
+                          session.teacher.email ||
+                          session.teacher.id ||
+                          session.teacherId,
+                      image: session.teacher.image ?? undefined,
+                  }
+                : null;
+        const selectedTeacherFromUser =
+            user?.id && selectedTeacherId === user.id
+                ? {
+                      value: user.id,
+                      label: user.name || user.email || user.id,
+                      image: user.image ?? undefined,
+                  }
+                : null;
+        return [
+            ...(selectedTeacherFromSession ? [selectedTeacherFromSession] : []),
+            ...(selectedTeacherFromUser ? [selectedTeacherFromUser] : []),
+            ...teacherOptions,
+        ].filter(
+            (option, index, arr) => arr.findIndex((item) => item.value === option.value) === index
+        );
+    }, [session, user, selectedTeacherId, teacherOptions]);
 
     const [memberCache, setMemberCache] = useState<
         Record<string, { name: string; image?: string }>
     >({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [attendanceDict, setAttendanceDict] = useState<Record<string, AttendanceLog>>({});
+    const hasInitializedCreateFormRef = useRef(false);
 
     // Cache sync logic for member metadata persistence during search
     useEffect(() => {
@@ -68,6 +117,16 @@ export const SessionDetailsDrawer = ({
         if (open && session?.attendances) {
             setMemberCache((prev) => {
                 const next = { ...prev };
+                if (session.teacherId) {
+                    next[session.teacherId] = {
+                        name:
+                            session.teacher?.name ||
+                            session.teacher?.email ||
+                            session.teacher?.id ||
+                            session.teacherId,
+                        image: session.teacher?.image ?? undefined,
+                    };
+                }
                 session.attendances.forEach((p: any) => {
                     if (p.userId) {
                         next[p.userId] = {
@@ -81,10 +140,12 @@ export const SessionDetailsDrawer = ({
         }
     }, [open, session]);
 
-    // Form hydration
+    // Form hydration for existing sessions
     useEffect(() => {
         if (open && session) {
             form.setFieldsValue({
+                lessonId: session.lessonId,
+                teacherId: session.teacherId,
                 title: session.title,
                 description: session.description,
                 date: dayjs(session.startTime),
@@ -114,17 +175,39 @@ export const SessionDetailsDrawer = ({
                 });
             }
             setAttendanceDict(att);
-        } else if (open) {
+            return;
+        }
+
+        // Initialize create form only once per drawer open.
+        if (open && !session && !hasInitializedCreateFormRef.current) {
+            hasInitializedCreateFormRef.current = true;
             form.resetFields();
             setAttendanceDict({});
             form.setFieldsValue({
                 durationMinutes: 60,
+                teacherId: user?.id,
                 status: "scheduled",
                 isRecurring: false,
                 recurrenceCount: 5,
             });
         }
-    }, [open, session, form]);
+    }, [open, session, form, user?.id]);
+
+    // Reset one-time initialization flag when drawer closes.
+    useEffect(() => {
+        if (!open) {
+            hasInitializedCreateFormRef.current = false;
+        }
+    }, [open]);
+
+    // Late-bind default lesson once lesson options arrive (create mode only).
+    useEffect(() => {
+        if (!open || session || lessons.length === 0) return;
+        const currentLessonId = form.getFieldValue("lessonId");
+        if (!currentLessonId) {
+            form.setFieldsValue({ lessonId: lessons[0].id });
+        }
+    }, [open, session, lessons, form]);
 
     const submitForm = async (values: any, updateForward: boolean = false) => {
         try {
@@ -137,6 +220,8 @@ export const SessionDetailsDrawer = ({
                 .valueOf();
 
             const payload: SessionSubmitPayload = {
+                lessonId: values.lessonId,
+                teacherId: values.teacherId,
                 title: values.title,
                 description: values.description,
                 startTime: startDateTime,
@@ -152,64 +237,10 @@ export const SessionDetailsDrawer = ({
                         : undefined,
             };
 
-            const readinessByUserId = new Map(
-                (metrics?.paymentReadiness?.membersNeedingSetup || []).map((member) => [
-                    member.userId,
-                    member,
-                ])
-            );
-            const blockedMembers = (payload.userIds || [])
-                .map((userId) => readinessByUserId.get(userId))
-                .filter(
-                    (member): member is NonNullable<typeof member> =>
-                        !!member && (!member.hasWallet || !member.hasBillingPlan)
-                );
-
-            if (blockedMembers.length > 0) {
-                modal.warning({
-                    title: "Payment setup required before scheduling",
-                    content: (
-                        <Space direction="vertical" size="small" style={{ width: "100%" }}>
-                            <Typography.Text>
-                                Some selected members are missing wallet setup or billing plans:
-                            </Typography.Text>
-                            {blockedMembers.slice(0, 6).map((member) => (
-                                <Typography.Text key={member.userId}>
-                                    • {member.name} (
-                                    {!member.hasWallet && !member.hasBillingPlan
-                                        ? "wallet + billing plan"
-                                        : !member.hasWallet
-                                          ? "wallet"
-                                          : "billing plan"}
-                                    )
-                                </Typography.Text>
-                            ))}
-                            <Space wrap>
-                                <Button
-                                    size="small"
-                                    onClick={() => navigateOrg(AppRoutes.org.admin.members)}
-                                >
-                                    Members
-                                </Button>
-                                <Button
-                                    size="small"
-                                    onClick={() =>
-                                        navigateOrg(AppRoutes.org.admin.billing.accounts)
-                                    }
-                                >
-                                    Billing Accounts
-                                </Button>
-                                <Button
-                                    size="small"
-                                    type="primary"
-                                    onClick={() => navigateOrg(AppRoutes.org.admin.billing.plans)}
-                                >
-                                    Billing Plans
-                                </Button>
-                            </Space>
-                        </Space>
-                    ),
-                    okText: "Close",
+            if (!payload.teacherId) {
+                notification.error({
+                    message: "Missing teacher",
+                    description: "Unable to resolve current teacher identity.",
                 });
                 return;
             }
@@ -293,10 +324,27 @@ export const SessionDetailsDrawer = ({
                     <SessionGeneralForm
                         form={form}
                         session={session}
+                        lessons={lessons.map((lesson) => ({
+                            label: lesson.title,
+                            value: lesson.id,
+                        }))}
+                        teachers={mergedTeacherOptions}
+                        isLoadingLessons={isLoadingLessons}
+                        hasNextLessonPage={!!hasNextLessonPage}
+                        isFetchingNextLessonPage={isFetchingNextLessonPage}
+                        onSearchLesson={setLessonSearch}
+                        onLoadMoreLessons={() => {
+                            fetchNextLessonPage();
+                        }}
                         onUpdateStatus={onUpdateStatus}
                         isGeneratingTitle={isGeneratingTitle}
                         onGenerateTitle={handleGenerateTitle}
                     />
+                    {!isLoadingLessons && lessons.length === 0 && (
+                        <Typography.Text type="secondary">
+                            Create a lesson first before scheduling sessions.
+                        </Typography.Text>
+                    )}
                 </div>
             ),
         },

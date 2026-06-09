@@ -11,7 +11,7 @@ import { useAuth } from "../context/AuthContext";
  * Determines where an authenticated user landing on "/" should go.
  *
  * Priority order:
- *  1. sessionStorage breadcrumb — return to the last org the user visited in this tab.
+ *  1. localStorage breadcrumb — return to the last org the user visited.
  *  2. Single-org fast-path — skip the selector if there is only one org.
  *  3. Multi-org — send to the org selector.
  *  4. No orgs — send to onboarding.
@@ -47,7 +47,7 @@ export function useHomeRedirect() {
         if (!orgsLoaded || orgsFetching) return;
 
         // Step 4: route based on confirmed org data
-        const savedSlug = sessionStorage.getItem(STORAGE_KEYS.lastOrgSlug);
+        const savedSlug = localStorage.getItem(STORAGE_KEYS.lastOrgSlug);
         if (savedSlug) {
             const matched = organizations.find((org) => org.slug === savedSlug);
             if (matched) {

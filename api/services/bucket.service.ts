@@ -1,4 +1,4 @@
-import { InternalServerError } from "@api/errors/app.error";
+import { InternalServerError, NotFoundError } from "@api/errors/app.error";
 import type { AwsClient } from "aws4fetch";
 import { BaseService } from "./base.service";
 
@@ -63,12 +63,15 @@ export class BucketService extends BaseService {
             );
         }
 
+        const bytes =
+            data instanceof Blob ? data.size : data instanceof ArrayBuffer ? data.byteLength : 0;
+
         return {
             asset_id: crypto.randomUUID(),
             public_id: key,
             version: Date.now(),
             format: contentType.split("/")[1] || "bin",
-            bytes: data instanceof Blob ? data.size : 0, // Simplified for brevity
+            bytes,
             secure_url: `${this.config.publicUrl}/${key}`,
             created_at: new Date().toISOString(),
         };
@@ -87,7 +90,33 @@ export class BucketService extends BaseService {
             aws: { signQuery: true },
         });
 
+        if (!signedRequest) {
+            throw new InternalServerError(
+                "Failed to generate presigned upload URL: AWS client signing failed"
+            );
+        }
+
         return signedRequest.url;
+    }
+
+    /**
+     * Reads an R2 object into memory as text. Suitable for small JSON blobs (e.g. single-passage
+     * `PassageR2Content`). Do not use for large collection page files without a size guard or streaming.
+     */
+    async get(key: string): Promise<string> {
+        const url = `${this.config.endpoint}/${this.config.bucketName}/${key}`;
+        const response = await this.client.fetch(url, { method: "GET" });
+
+        if (response.status === 404) {
+            throw new NotFoundError(`Object not found: ${key}`);
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => "Unknown error");
+            throw new InternalServerError(`R2 Get Error: ${response.statusText} - ${errorText}`);
+        }
+
+        return response.text();
     }
 
     async delete(key: string): Promise<void> {

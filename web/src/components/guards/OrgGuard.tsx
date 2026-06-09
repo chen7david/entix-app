@@ -8,8 +8,8 @@ import { authClient } from "@web/src/lib/auth-client";
 import { STORAGE_KEYS } from "@web/src/lib/storageKeys";
 import { Button } from "antd";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
-import { Outlet, useNavigate, useParams } from "react-router";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 
 /**
  * OrgGuard - Organization context guard and provider.
@@ -24,15 +24,22 @@ import { Outlet, useNavigate, useParams } from "react-router";
  *  1. Resolve org from URL slug against the cached org list.
  *  2. If org resolves and we haven't already synced this org id, call setActive()
  *     and refreshAuth() so that nested ProtectedRoutes see the correct orgRole.
- *  3. Persist the slug as a sessionStorage breadcrumb for useHomeRedirect.
+ *  3. Persist the slug as a localStorage breadcrumb for useHomeRedirect.
  *  4. Render children only after sync completes (isSyncing barrier).
  */
 export const OrgGuard: React.FC = () => {
     const { slug } = useParams<{ slug: string }>();
+    const location = useLocation();
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(true); // pessimistic default — block until first sync
+    const [isRoleSwitching, setIsRoleSwitching] = useState(false);
+    const [activeRole, setActiveRoleState] = useState<string | null>(() =>
+        slug ? localStorage.getItem(`activeRole:${slug}`) : null
+    );
+    const prevSlugRef = useRef(slug);
     const lastSyncedOrgIdRef = useRef<string | null>(null);
+    const roleSwitchTargetRef = useRef<string | null>(null);
     const auth = useAuth();
 
     // 1. Fetch the user's org list (cached; shared centrally via useOrganization)
@@ -43,10 +50,60 @@ export const OrgGuard: React.FC = () => {
     const activeOrganization =
         orgListSettled && slug ? organizations.find((o) => o.slug === slug) || null : null;
 
-    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (in this tab)
+    useEffect(() => {
+        if (slug === prevSlugRef.current) {
+            return;
+        }
+        prevSlugRef.current = slug;
+        if (!slug) {
+            setActiveRoleState(null);
+            return;
+        }
+        setActiveRoleState(localStorage.getItem(`activeRole:${slug}`));
+    }, [slug]);
+
+    const setActiveRole = useCallback(
+        (role: string | null) => {
+            if (!slug) return;
+            const key = `activeRole:${slug}`;
+            if (role) {
+                roleSwitchTargetRef.current = role;
+                setIsRoleSwitching(true);
+                localStorage.setItem(key, role);
+                setActiveRoleState(role);
+            } else {
+                roleSwitchTargetRef.current = null;
+                setIsRoleSwitching(false);
+                localStorage.removeItem(key);
+                setActiveRoleState(null);
+            }
+        },
+        [slug]
+    );
+
+    // Navigate only after React has committed the new active role so nested
+    // ProtectedRoute checks do not briefly see the new role on the old URL.
+    useEffect(() => {
+        if (!isRoleSwitching || !slug || !roleSwitchTargetRef.current) return;
+        if (activeRole !== roleSwitchTargetRef.current) return;
+
+        navigate(`/org/${slug}${AppRoutes.org.dashboard.index}`, { replace: true });
+    }, [isRoleSwitching, activeRole, slug, navigate]);
+
+    const orgDashboardPath = slug ? `/org/${slug}${AppRoutes.org.dashboard.index}` : null;
+
+    useEffect(() => {
+        if (!isRoleSwitching || !orgDashboardPath) return;
+        if (location.pathname !== orgDashboardPath) return;
+
+        roleSwitchTargetRef.current = null;
+        setIsRoleSwitching(false);
+    }, [isRoleSwitching, location.pathname, orgDashboardPath]);
+
+    // 3. Persist breadcrumb so useHomeRedirect can return to this org on next load (after refresh)
     useEffect(() => {
         if (!activeOrganization?.slug) return;
-        sessionStorage.setItem(STORAGE_KEYS.lastOrgSlug, activeOrganization.slug);
+        localStorage.setItem(STORAGE_KEYS.lastOrgSlug, activeOrganization.slug);
     }, [activeOrganization?.slug]);
 
     // 4. Sync server session to the URL-picked org.
@@ -100,8 +157,8 @@ export const OrgGuard: React.FC = () => {
         };
     }, [activeOrganization?.id, orgsLoaded, orgsFetching, auth.refreshAuth, queryClient]);
 
-    // Block children while resolving the org list or syncing the server session
-    if (!orgsLoaded || orgsFetching || isSyncing) {
+    // Block children while resolving the org list, syncing the server session, or switching role
+    if (!orgsLoaded || orgsFetching || isSyncing || isRoleSwitching) {
         return <CenteredSpin />;
     }
 
@@ -126,7 +183,9 @@ export const OrgGuard: React.FC = () => {
 
     // Provider — URL is the single source of truth for active org
     return (
-        <OrgProvider value={{ activeOrganization, loading: false, error: null }}>
+        <OrgProvider
+            value={{ activeOrganization, loading: false, error: null, activeRole, setActiveRole }}
+        >
             <Outlet />
         </OrgProvider>
     );

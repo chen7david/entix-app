@@ -57,6 +57,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
             initialValues={
                 initialValues || {
                     isActive: true,
+                    overdraftLimitDollars: 0,
                     rates: [{ participantCount: 1, hourlyRateDollars: 0 }],
                 }
             }
@@ -68,7 +69,7 @@ const BillingPlanForm: React.FC<BillingPlanFormProps> = ({
                     overdraftLimitCents:
                         values.overdraftLimitDollars != null
                             ? Math.round(values.overdraftLimitDollars * 100)
-                            : null,
+                            : 0,
                     rates:
                         values.rates?.map((r: any) => ({
                             ...r,

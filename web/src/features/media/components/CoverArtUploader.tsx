@@ -4,7 +4,7 @@ import { hcJson } from "@web/src/lib/hc-json";
 import type { UploadProps } from "antd";
 import { App, Spin, theme, Upload } from "antd";
 import ImgCrop from "antd-img-crop";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface CoverArtUploaderProps {
     organizationId: string;
@@ -23,7 +23,16 @@ export const CoverArtUploader = ({
 }: CoverArtUploaderProps) => {
     const { notification } = App.useApp();
     const [uploading, setUploading] = useState(false);
+    const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null);
     const { token } = theme.useToken();
+
+    useEffect(() => {
+        return () => {
+            if (localPreviewUrl) {
+                URL.revokeObjectURL(localPreviewUrl);
+            }
+        };
+    }, [localPreviewUrl]);
 
     const handleUpload: UploadProps["customRequest"] = async (options) => {
         const { file, onSuccess, onError, onProgress } = options;
@@ -43,6 +52,14 @@ export const CoverArtUploader = ({
         setUploading(true);
 
         try {
+            const objectUrl = URL.createObjectURL(fileObj);
+            setLocalPreviewUrl((previousUrl) => {
+                if (previousUrl) {
+                    URL.revokeObjectURL(previousUrl);
+                }
+                return objectUrl;
+            });
+
             const api = getApiClient();
             const presignResponse = await api.api.v1.orgs[":organizationId"].uploads.$post({
                 param: { organizationId },
@@ -122,9 +139,9 @@ export const CoverArtUploader = ({
                             style={{ backgroundColor: token.colorBgContainer }}
                         >
                             {/* Display existing cover or placeholder */}
-                            {currentImageUrl ? (
+                            {localPreviewUrl || currentImageUrl ? (
                                 <img
-                                    src={currentImageUrl}
+                                    src={localPreviewUrl ?? currentImageUrl ?? undefined}
                                     alt="Cover Art"
                                     className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-60"
                                 />

@@ -28,16 +28,58 @@ const migrations = Object.entries(migrationFiles)
     .sort(([pathA], [pathB]) => pathA.localeCompare(pathB))
     .map(([path, sql]) => {
         const name = path.split("/").pop() || path;
+        const queries = (sql as string)
+            .split("--> statement-breakpoint")
+            .map((statement) => statement.trim())
+            .filter((statement) => statement.length > 0);
         return {
             name,
-            queries: [sql as string],
+            queries,
         };
     });
 
-export async function createTestDb() {
-    if (migrations.length > 0) {
-        await applyD1Migrations(env.DB, migrations);
+async function tableExists(tableName: string): Promise<boolean> {
+    const row = await env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
+    )
+        .bind(tableName)
+        .first();
+    return Boolean(row);
+}
+
+function tablesCreatedByMigration(queries: string[]): string[] {
+    const sql = queries.join("\n");
+    const names: string[] = [];
+    for (const match of sql.matchAll(/CREATE TABLE `([^`]+)`/g)) {
+        names.push(match[1]);
     }
+    return names;
+}
+
+async function migrationHasPendingTables(migration: { queries: string[] }): Promise<boolean> {
+    for (const table of tablesCreatedByMigration(migration.queries)) {
+        if (!(await tableExists(table))) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export async function createTestDb() {
+    const baseSchemaReady = await tableExists("financial_currencies");
+
+    if (!baseSchemaReady && migrations.length > 0) {
+        await applyD1Migrations(env.DB, migrations);
+    } else {
+        for (const migration of migrations) {
+            if (await migrationHasPendingTables(migration)) {
+                await applyD1Migrations(env.DB, [migration]);
+            }
+        }
+    }
+
+    await clearTestDbData();
+
     const db = drizzle(env.DB, { schema });
 
     // Seed all mandatory financial currencies from the global constant
@@ -124,4 +166,30 @@ export async function createTestDb() {
     }
 
     return db;
+}
+
+async function clearTestDbData() {
+    await env.DB.exec("PRAGMA foreign_keys=OFF;");
+    const tableQuery = await env.DB.prepare(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"
+    ).all<{ name: string }>();
+
+    for (const table of tableQuery.results ?? []) {
+        await env.DB.exec(`DELETE FROM "${table.name}"`);
+    }
+
+    await env.DB.exec("PRAGMA foreign_keys=ON;");
+}
+
+/** Evaluated at run time (after `beforeAll`) — use instead of `it.skipIf(!ready)` at collection time. */
+export function skipIfPassageTablesMissing(ready: boolean, skip: (reason?: string) => void): void {
+    if (!ready) {
+        skip("Passage schema tables are not present — run db:generate and apply migrations");
+    }
+}
+
+export function skipIfImportTablesMissing(ready: boolean, skip: (reason?: string) => void): void {
+    if (!ready) {
+        skip("Import job schema tables are not present — run db:generate and apply migrations");
+    }
 }

@@ -32,7 +32,7 @@ export class PaymentQueueService extends BaseService {
         const paymentRequestId = generatePaymentRequestId();
 
         // 1. Attempt to persist the intent in the database.
-        // The repository uses ON CONFLICT DO NOTHING on the idempotency key.
+        // The repository uses ON CONFLICT DO NOTHING on (organization_id, idempotency_key).
         const record = await this.paymentQueueRepo.enqueue({
             ...input,
             id: paymentRequestId,

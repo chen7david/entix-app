@@ -8,6 +8,8 @@ export const adminFinanceRoutes = router
     .openapi(AdminFinanceRoutes.getTreasuryBalance, AdminFinanceHandler.getTreasuryBalance)
     .openapi(AdminFinanceRoutes.getAllManagedAccounts, AdminFinanceHandler.getAllManagedAccounts)
     .openapi(AdminFinanceRoutes.getOrgAccounts, AdminFinanceHandler.getOrgAccounts)
+    .openapi(AdminFinanceRoutes.getOrgCurrencyStatus, AdminFinanceHandler.getOrgCurrencyStatus)
+    .openapi(AdminFinanceRoutes.activateOrgCurrency, AdminFinanceHandler.activateOrgCurrency)
     .openapi(AdminFinanceRoutes.adminCredit, AdminFinanceHandler.adminCredit)
     .openapi(AdminFinanceRoutes.adminDebit, AdminFinanceHandler.adminDebit)
     .openapi(AdminFinanceRoutes.updateAccount, AdminFinanceHandler.updateAccount)

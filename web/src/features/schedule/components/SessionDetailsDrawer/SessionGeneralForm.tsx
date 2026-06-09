@@ -1,7 +1,8 @@
 import { ThunderboltOutlined } from "@ant-design/icons";
-import { createSessionSchema } from "@shared";
+import { createSessionSchema, getAvatarUrl } from "@shared";
 import {
     Alert,
+    Avatar,
     Button,
     Col,
     DatePicker,
@@ -9,6 +10,7 @@ import {
     Input,
     Row,
     Select,
+    Space,
     Switch,
     TimePicker,
     Tooltip,
@@ -23,6 +25,13 @@ const { Text } = Typography;
 type SessionGeneralFormProps = {
     form: FormInstance;
     session: any | null;
+    lessons: { label: string; value: string }[];
+    teachers: { label: string; value: string; image?: string | null }[];
+    isLoadingLessons: boolean;
+    hasNextLessonPage: boolean;
+    isFetchingNextLessonPage: boolean;
+    onSearchLesson: (value: string) => void;
+    onLoadMoreLessons: () => void;
     onUpdateStatus?: (
         sessionId: string,
         status: "scheduled" | "completed" | "cancelled"
@@ -34,6 +43,13 @@ type SessionGeneralFormProps = {
 export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
     form,
     session,
+    lessons,
+    teachers,
+    isLoadingLessons,
+    hasNextLessonPage,
+    isFetchingNextLessonPage,
+    onSearchLesson,
+    onLoadMoreLessons,
     onUpdateStatus,
     isGeneratingTitle,
     onGenerateTitle,
@@ -76,6 +92,66 @@ export const SessionGeneralForm: React.FC<SessionGeneralFormProps> = ({
                     style={{ marginBottom: 16 }}
                 />
             )}
+
+            <Form.Item
+                name="lessonId"
+                label="Lesson"
+                rules={[{ required: true, message: "Required" }]}
+            >
+                <Select
+                    placeholder="Select lesson"
+                    options={lessons}
+                    showSearch
+                    filterOption={false}
+                    optionFilterProp="label"
+                    loading={isLoadingLessons || isFetchingNextLessonPage}
+                    onSearch={onSearchLesson}
+                    onPopupScroll={(event) => {
+                        const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+                        if (
+                            scrollHeight - scrollTop <= clientHeight + 10 &&
+                            hasNextLessonPage &&
+                            !isFetchingNextLessonPage
+                        ) {
+                            onLoadMoreLessons();
+                        }
+                    }}
+                />
+            </Form.Item>
+
+            <Form.Item
+                name="teacherId"
+                label="Teacher"
+                rules={[{ required: true, message: "Required" }]}
+            >
+                <Select
+                    placeholder="Select teacher"
+                    options={teachers}
+                    showSearch
+                    optionFilterProp="label"
+                    filterOption={(input, option) =>
+                        String(option?.label || "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                    }
+                    optionRender={(option) => (
+                        <Space>
+                            <Avatar
+                                size="small"
+                                src={
+                                    option.data.image
+                                        ? getAvatarUrl(option.data.image, "sm")
+                                        : undefined
+                                }
+                            >
+                                {!option.data.image &&
+                                    option.label?.toString().charAt(0).toUpperCase()}
+                            </Avatar>
+                            {option.label}
+                        </Space>
+                    )}
+                />
+            </Form.Item>
 
             <Form.Item
                 name="title"

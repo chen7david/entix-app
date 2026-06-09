@@ -5,6 +5,8 @@ export * from "./financial/financial-currencies.repository";
 export * from "./financial/financial-org-settings.repository";
 export * from "./financial/financial-transaction-categories.repository";
 export * from "./financial/financial-transactions.repository";
+export * from "./lesson.repository";
+export * from "./lesson-progress.repository";
 export * from "./media.repository";
 export * from "./member.repository";
 export * from "./organization.repository";

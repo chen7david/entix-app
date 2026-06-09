@@ -20,6 +20,7 @@ describe("PaymentQueueRepository", () => {
         referenceType: "session",
         referenceId: "ses_test001",
         requestedBy: "usr_test001",
+        userId: "usr_student001",
         attemptCount: 0,
     };
 

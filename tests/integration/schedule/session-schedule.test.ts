@@ -4,7 +4,10 @@ import { SessionScheduleService } from "../../../api/services/session-schedule.s
 
 describe("SessionScheduleService Architecture Bounds", () => {
     let mockRepo: any;
+    let mockMemberRepo: any;
     let service: SessionScheduleService;
+    const lessonId = "lesson_sched_test";
+    const teacherId = "teacher_sched_test";
 
     const mockSessionPaymentService = {
         processSessionPayment: vi.fn().mockResolvedValue(undefined),
@@ -33,10 +36,21 @@ describe("SessionScheduleService Architecture Bounds", () => {
             deleteAllSessionAttendances: vi.fn(),
             deleteFollowingSessions: vi.fn(),
         };
+        mockMemberRepo = {
+            find: vi.fn().mockResolvedValue({
+                role: "teacher",
+            }),
+            findByUserIds: vi
+                .fn()
+                .mockImplementation((_organizationId: string, userIds: string[]) =>
+                    Promise.resolve(userIds.map((userId) => ({ userId, role: "student" })))
+                ),
+        };
         const mockBilling = {} as any;
         const mockWallet = {} as any;
         service = new SessionScheduleService(
             mockRepo,
+            mockMemberRepo,
             mockBilling,
             mockWallet,
             mockSessionPaymentService,
@@ -46,6 +60,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("creates a single session effortlessly scaling Drizzle mapping", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Physics 101",
             startTime: Date.now(),
             durationMinutes: 60,
@@ -56,6 +72,7 @@ describe("SessionScheduleService Architecture Bounds", () => {
         expect(result).toHaveLength(1);
         expect(mockRepo.createSessions).toHaveBeenCalledTimes(1);
         expect(mockRepo.addAttendances).toHaveBeenCalledTimes(1);
+        expect(mockMemberRepo.find).toHaveBeenCalledWith("teacher_sched_test", "org_1");
         expect(mockRepo.addAttendances).toHaveBeenCalledWith([
             {
                 sessionId: result[0].id,
@@ -67,6 +84,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("generates 4 recurring weekly sessions identically pinned via seriesId", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Advanced Mathematics",
             startTime: new Date("2026-03-20T10:00:00Z").getTime(),
             durationMinutes: 45,
@@ -109,6 +128,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
         const NEW_START_TIME = new Date("2026-03-21T11:00:00Z").getTime(); // shifting by 1 day and 1 hr
 
         const payload = {
+            lessonId,
+            teacherId,
             title: "Advanced Math Revamped",
             startTime: NEW_START_TIME,
             durationMinutes: 90,
@@ -140,8 +161,47 @@ describe("SessionScheduleService Architecture Bounds", () => {
         expect(insertedData[2].startTime.getTime()).toBe(addWeeks(NEW_START_TIME, 2).getTime());
     });
 
+    it("updates session with empty attendees without crashing", async () => {
+        mockRepo.findSessionById.mockResolvedValue({
+            id: "sess_single",
+            seriesId: null,
+            startTime: new Date("2026-03-20T10:00:00Z").getTime(),
+            recurrenceRule: null,
+        });
+
+        mockRepo.updateSessionDetails.mockResolvedValue({ success: true });
+
+        await expect(
+            service.updateSession("org_1", "sess_single", {
+                lessonId,
+                teacherId,
+                title: "No attendees",
+                startTime: new Date("2026-03-21T10:00:00Z").getTime(),
+                durationMinutes: 60,
+                userIds: [],
+                updateForward: false,
+            })
+        ).resolves.toEqual({ success: true });
+
+        expect(mockMemberRepo.findByUserIds).not.toHaveBeenCalled();
+        expect(mockRepo.updateSessionDetails).toHaveBeenCalledWith(
+            "org_1",
+            "sess_single",
+            expect.objectContaining({
+                lessonId,
+                teacherId,
+                title: "No attendees",
+                durationMinutes: 60,
+            })
+        );
+        expect(mockRepo.deleteAllSessionAttendances).toHaveBeenCalledWith("sess_single");
+        expect(mockRepo.addAttendances).not.toHaveBeenCalled();
+    });
+
     it("generates 3 recurring daily sessions correctly", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Daily Standup",
             startTime: new Date("2026-03-20T09:00:00Z").getTime(),
             durationMinutes: 15,
@@ -158,6 +218,8 @@ describe("SessionScheduleService Architecture Bounds", () => {
 
     it("generates 3 recurring monthly sessions correctly skipping across month boundaries", async () => {
         const payload = {
+            lessonId,
+            teacherId,
             title: "Monthly Review",
             startTime: new Date("2026-03-31T10:00:00Z").getTime(),
             durationMinutes: 60,
@@ -172,5 +234,67 @@ describe("SessionScheduleService Architecture Bounds", () => {
         expect(result[0].startTime.toISOString()).toContain("03-31");
         expect(result[1].startTime.toISOString()).toContain("04-30"); // April logic
         expect(result[2].startTime.toISOString()).toContain("05-31");
+    });
+
+    it("rejects assigning a teacher outside the organization", async () => {
+        mockMemberRepo.find.mockResolvedValueOnce(null);
+
+        await expect(
+            service.createSession("org_1", {
+                lessonId,
+                teacherId,
+                title: "Invalid teacher",
+                startTime: Date.now() + 60_000,
+                durationMinutes: 60,
+                userIds: [],
+            })
+        ).rejects.toThrow("Teacher must be a member of the organization.");
+    });
+
+    it("rejects assigning a member without staff role", async () => {
+        mockMemberRepo.find.mockResolvedValueOnce({ role: "student" });
+
+        await expect(
+            service.createSession("org_1", {
+                lessonId,
+                teacherId,
+                title: "Invalid role",
+                startTime: Date.now() + 60_000,
+                durationMinutes: 60,
+                userIds: [],
+            })
+        ).rejects.toThrow("Assigned teacher must have teacher, admin, or owner role.");
+    });
+
+    it("rejects attendees who are not org members", async () => {
+        mockMemberRepo.findByUserIds.mockResolvedValueOnce([]);
+
+        await expect(
+            service.createSession("org_1", {
+                lessonId,
+                teacherId,
+                title: "Invalid attendees",
+                startTime: Date.now() + 60_000,
+                durationMinutes: 60,
+                userIds: ["usr_missing"],
+            })
+        ).rejects.toThrow("is not a member of the organization");
+    });
+
+    it("rejects attendees that are not students", async () => {
+        mockMemberRepo.findByUserIds.mockResolvedValueOnce([
+            { userId: "usr_teacher", role: "teacher" },
+        ]);
+
+        await expect(
+            service.createSession("org_1", {
+                lessonId,
+                teacherId,
+                title: "Invalid attendee role",
+                startTime: Date.now() + 60_000,
+                durationMinutes: 60,
+                userIds: ["usr_teacher"],
+            })
+        ).rejects.toThrow("Only members with student role can be added as session attendees.");
     });
 });

@@ -32,13 +32,15 @@ export const useOrganization = () => {
 
     const { mutateAsync: setActiveMutation, isPending: isSwitching } = useMutation({
         mutationFn: async (organizationId: string) => {
-            return await authClient.organization.setActive({ organizationId });
-        },
-        onSuccess: async (result) => {
-            if (result.data) {
-                await queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
-                await queryClient.invalidateQueries({ queryKey: ["organizations"] });
+            const { data, error } = await authClient.organization.setActive({ organizationId });
+            if (error) {
+                throw new Error(error.message ?? "Failed to set active organization");
             }
+            return data;
+        },
+        onSuccess: async () => {
+            await queryClient.invalidateQueries({ queryKey: ["activeOrganization"] });
+            await queryClient.invalidateQueries({ queryKey: ["organizations"] });
         },
     });
 

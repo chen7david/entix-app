@@ -14,4 +14,12 @@ export const createPaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema
         prevCursor: z.string().nullable(),
     });
 
+/** Cursor-paginated list shape used by vocabulary, passages, and similar org APIs. */
+export const PaginatedDataSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+    z.object({
+        data: z.array(itemSchema),
+        nextCursor: z.string().nullable(),
+        prevCursor: z.string().nullable(),
+    });
+
 export type PaginationQuery = z.infer<typeof PaginationQuerySchema>;
