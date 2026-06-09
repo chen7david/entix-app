@@ -1,7 +1,7 @@
 import { HttpMethods, HttpStatusCodes } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
-import { PaginationQuerySchema } from "@shared/schemas/pagination.schema";
+import { PaginatedDataSchema, PaginationQuerySchema } from "@shared/schemas/pagination.schema";
 
 const VocabularyBankSchema = z.object({
     id: z.string(),
@@ -47,13 +47,6 @@ const StudentVocabularyWithVocabSchema = z.object({
     createdAt: z.coerce.number(),
     vocabulary: VocabularyBankSchema,
 });
-
-const PaginatedDataSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
-    z.object({
-        data: z.array(itemSchema),
-        nextCursor: z.string().nullable(),
-        prevCursor: z.string().nullable(),
-    });
 
 export const VocabularyRoutes = {
     createVocabulary: createRoute({

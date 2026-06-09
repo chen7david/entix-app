@@ -21,6 +21,8 @@ import {
     BillingAccountsPage,
     BillingPlansPage,
     BillingTransactionsPage,
+    BookImportPage,
+    BookImportReviewPage,
     ChangePasswordPage,
     EmailInsightsPage,
     EmailVerificationPendingPage,
@@ -61,6 +63,7 @@ import {
     StudentDetailPage,
     StudentSchedulePage,
     StudentVocabularyPage,
+    TextLibraryPage,
     UnauthorizedPage,
     VerifyEmailPage,
     VocabAiTesterPage,
@@ -334,6 +337,18 @@ export default function App() {
                                                     <Route
                                                         path="playlists/:playlistId"
                                                         element={<PlaylistPlayerPage />}
+                                                    />
+                                                    <Route
+                                                        path="text-library"
+                                                        element={<TextLibraryPage />}
+                                                    />
+                                                    <Route
+                                                        path="text-library/import"
+                                                        element={<BookImportPage />}
+                                                    />
+                                                    <Route
+                                                        path="text-library/import/:jobId/review"
+                                                        element={<BookImportReviewPage />}
                                                     />
                                                     <Route
                                                         path="students"

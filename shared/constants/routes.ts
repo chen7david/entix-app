@@ -48,6 +48,10 @@ export const AppRoutes = {
             media: "/teaching/media",
             playlists: "/teaching/playlists",
             playlistDetail: (id: string | number) => `/teaching/playlists/${id}`,
+            textLibrary: "/teaching/text-library",
+            textLibraryImport: "/teaching/text-library/import",
+            textLibraryImportReview: (jobId: string) =>
+                `/teaching/text-library/import/${jobId}/review`,
             sessions: "/teaching/sessions",
             schedule: "/teaching/sessions",
             students: "/teaching/students",

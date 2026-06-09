@@ -1,4 +1,4 @@
-import { InternalServerError } from "@api/errors/app.error";
+import { InternalServerError, NotFoundError } from "@api/errors/app.error";
 import type { AwsClient } from "aws4fetch";
 import { BaseService } from "./base.service";
 
@@ -97,6 +97,26 @@ export class BucketService extends BaseService {
         }
 
         return signedRequest.url;
+    }
+
+    /**
+     * Reads an R2 object into memory as text. Suitable for small JSON blobs (e.g. single-passage
+     * `PassageR2Content`). Do not use for large collection page files without a size guard or streaming.
+     */
+    async get(key: string): Promise<string> {
+        const url = `${this.config.endpoint}/${this.config.bucketName}/${key}`;
+        const response = await this.client.fetch(url, { method: "GET" });
+
+        if (response.status === 404) {
+            throw new NotFoundError(`Object not found: ${key}`);
+        }
+
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => "Unknown error");
+            throw new InternalServerError(`R2 Get Error: ${response.statusText} - ${errorText}`);
+        }
+
+        return response.text();
     }
 
     async delete(key: string): Promise<void> {

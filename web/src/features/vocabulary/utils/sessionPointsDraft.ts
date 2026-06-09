@@ -1,13 +1,16 @@
 export const POINTS_DRAFT_STEP = 1;
 export const CENTS_PER_POINT = 100;
 
+/** Minimal storage surface used by draft helpers (easier to mock than full `Storage`). */
+export type SessionPointsDraftStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
+
 /** Stable scope for drafts — prefer org URL slug so keys match before server org context hydrates. */
 export function getSessionPointsDraftKey(scopeKey: string, sessionId: string) {
     return `session-points-draft:${scopeKey}:${sessionId}`;
 }
 
 export function loadSessionPointsDraft(
-    storage: Storage | undefined,
+    storage: SessionPointsDraftStorage | undefined,
     scopeKey: string,
     sessionId: string
 ): Record<string, number> {
@@ -29,7 +32,7 @@ export function loadSessionPointsDraft(
 }
 
 export function saveSessionPointsDraft(
-    storage: Storage | undefined,
+    storage: SessionPointsDraftStorage | undefined,
     scopeKey: string,
     sessionId: string,
     draft: Record<string, number>
@@ -47,7 +50,7 @@ export function saveSessionPointsDraft(
 }
 
 export function clearSessionPointsDraft(
-    storage: Storage | undefined,
+    storage: SessionPointsDraftStorage | undefined,
     scopeKey: string,
     sessionId: string
 ) {
@@ -57,7 +60,7 @@ export function clearSessionPointsDraft(
 
 /** Clear slug-scoped and legacy org-id scoped drafts for the same session (after save/reset). */
 export function clearSessionPointsDraftAllScopes(
-    storage: Storage | undefined,
+    storage: SessionPointsDraftStorage | undefined,
     slug: string | undefined,
     organizationId: string | undefined,
     sessionId: string
@@ -73,7 +76,7 @@ export function clearSessionPointsDraftAllScopes(
  * Prefer slug-backed draft; if empty, load legacy org-id draft and migrate it under slug when possible.
  */
 export function loadSessionPointsDraftMigrating(
-    storage: Storage | undefined,
+    storage: SessionPointsDraftStorage | undefined,
     slug: string | undefined,
     organizationId: string | undefined,
     sessionId: string

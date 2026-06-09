@@ -4,6 +4,7 @@
  * `AppType` / client inference when OpenAPI client types include lesson content paths.
  */
 
+import type { PassageType } from "@shared/constants/passage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@web/src/features/auth";
 import type { VocabularyItemDTO } from "@web/src/features/vocabulary/hooks/useVocabulary";
@@ -38,6 +39,17 @@ export type LessonVocabRowDto = {
     addedAt: number;
 };
 
+export type LessonPassageRowDto = {
+    lessonId: string;
+    passageId: string;
+    position: number;
+    addedAt: number;
+    title: string | null;
+    type: PassageType;
+    cefrLevel: string | null;
+    wordCount: number | null;
+};
+
 function objectivesPath(organizationId: string, lessonId: string) {
     return `/api/v1/orgs/${organizationId}/lessons/${lessonId}/objectives`;
 }
@@ -50,6 +62,11 @@ function playlistsPath(organizationId: string, lessonId: string, playlistId?: st
 function lessonVocabularyPath(organizationId: string, lessonId: string, vocabularyId?: string) {
     const base = `/api/v1/orgs/${organizationId}/lessons/${lessonId}/vocabulary`;
     return vocabularyId ? `${base}/${vocabularyId}` : base;
+}
+
+function lessonPassagesPath(organizationId: string, lessonId: string, passageId?: string) {
+    const base = `/api/v1/orgs/${organizationId}/lessons/${lessonId}/passages`;
+    return passageId ? `${base}/${passageId}` : base;
 }
 
 export function useLessonObjectives(
@@ -421,6 +438,133 @@ export function useCreateBankVocabularyWord() {
                     Array.isArray(q.queryKey) &&
                     q.queryKey[0] === "vocabulary-bank-item" &&
                     q.queryKey[1] === variables.organizationId,
+            });
+        },
+    });
+}
+
+export function useLessonPassages(
+    organizationId: string | undefined,
+    lessonId: string | undefined
+) {
+    const { isAuthenticated } = useAuth();
+
+    return useQuery({
+        queryKey: ["lesson-passages", organizationId, lessonId],
+        enabled: !!organizationId && !!lessonId && isAuthenticated,
+        staleTime: QUERY_STALE_MS,
+        queryFn: async () => {
+            if (!organizationId || !lessonId) throw new Error("Organization and lesson required");
+            const res = await fetch(lessonPassagesPath(organizationId, lessonId), {
+                credentials: "include",
+            });
+            return hcJson<LessonPassageRowDto[]>(res);
+        },
+    });
+}
+
+export function useAddLessonPassage() {
+    const queryClient = useQueryClient();
+    const { notification } = App.useApp();
+
+    return useMutation({
+        mutationFn: async (variables: {
+            organizationId: string;
+            lessonId: string;
+            passageId: string;
+        }) => {
+            const res = await fetch(
+                lessonPassagesPath(variables.organizationId, variables.lessonId),
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ passageId: variables.passageId }),
+                }
+            );
+            return hcJson<LessonPassageRowDto>(res);
+        },
+        onSuccess: async (_, vars) => {
+            await queryClient.invalidateQueries({
+                queryKey: ["lesson-passages", vars.organizationId, vars.lessonId],
+            });
+        },
+        onError: (error: Error) => {
+            notification.error({
+                message: "Failed to link passage",
+                description: error.message,
+            });
+        },
+    });
+}
+
+export function useRemoveLessonPassage() {
+    const queryClient = useQueryClient();
+    const { notification } = App.useApp();
+
+    return useMutation({
+        mutationFn: async (variables: {
+            organizationId: string;
+            lessonId: string;
+            passageId: string;
+        }) => {
+            const res = await fetch(
+                lessonPassagesPath(
+                    variables.organizationId,
+                    variables.lessonId,
+                    variables.passageId
+                ),
+                {
+                    method: "DELETE",
+                    credentials: "include",
+                }
+            );
+            if (!res.ok) await parseApiError(res);
+        },
+        onSuccess: async (_, vars) => {
+            await queryClient.invalidateQueries({
+                queryKey: ["lesson-passages", vars.organizationId, vars.lessonId],
+            });
+        },
+        onError: (error: Error) => {
+            notification.error({
+                message: "Failed to remove passage",
+                description: error.message,
+            });
+        },
+    });
+}
+
+export function useReorderLessonPassages() {
+    const queryClient = useQueryClient();
+    const { notification } = App.useApp();
+
+    return useMutation({
+        mutationFn: async (variables: {
+            organizationId: string;
+            lessonId: string;
+            orderedIds: string[];
+        }) => {
+            const res = await fetch(
+                `${lessonPassagesPath(variables.organizationId, variables.lessonId)}/reorder`,
+                {
+                    method: "PUT",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ orderedIds: variables.orderedIds }),
+                }
+            );
+            return hcJson<LessonPassageRowDto[]>(res);
+        },
+        onSuccess: async (_, vars) => {
+            await queryClient.invalidateQueries({
+                queryKey: ["lesson-passages", vars.organizationId, vars.lessonId],
+            });
+        },
+        onError: (error: Error) => {
+            notification.error({
+                message: "Failed to reorder passages",
+                description: error.message,
             });
         },
     });

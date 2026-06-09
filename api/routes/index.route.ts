@@ -7,11 +7,13 @@ import { authRoutes } from "./auth/auth.index";
 import { internalReconciliationRoutes } from "./internal/reconciliation.index";
 import { enrollmentRoutes } from "./orgs/enrollment.index";
 import { financeRoutes } from "./orgs/finance.index";
+import { importJobRoutes } from "./orgs/import-job.index";
 import { lessonRoutes } from "./orgs/lesson.index";
 import { lessonContentRoutes } from "./orgs/lesson-content.index";
 import { mediaRoutes } from "./orgs/media.index";
 import { memberWalletRoutes } from "./orgs/member-wallet.index";
 import { memberRoutes } from "./orgs/members.index";
+import { passageRoutes } from "./orgs/passage.index";
 import { playlistRoutes } from "./orgs/playlist.index";
 import { scheduleRoutes } from "./orgs/schedule.index";
 import { uploadRoutes } from "./orgs/uploads.index";
@@ -20,26 +22,31 @@ import { socialMediaRoutes } from "./social-media/social-media.index";
 import { userRoutes } from "./users/users.index";
 import { vocabAiTestRoutes } from "./vocab-ai-test.index";
 
-export const routes = [
-    adminAuditRoutes,
-    userRoutes,
-    authRoutes,
-    memberRoutes,
-    lessonRoutes,
-    lessonContentRoutes,
-    enrollmentRoutes,
-    emailInsightsRoutes,
-    adminOrgsRoutes,
-    adminUsersRoutes,
-    adminFinanceRoutes,
-    uploadRoutes,
-    mediaRoutes,
-    playlistRoutes,
-    scheduleRoutes,
-    vocabularyRoutes,
-    financeRoutes,
-    memberWalletRoutes,
-    socialMediaRoutes,
-    internalReconciliationRoutes,
-    vocabAiTestRoutes,
-];
+/** Lazy list avoids circular-import / HMR races where `routes` is still undefined at mount time. */
+export function getRoutes() {
+    return [
+        adminAuditRoutes,
+        userRoutes,
+        authRoutes,
+        memberRoutes,
+        lessonRoutes,
+        lessonContentRoutes,
+        enrollmentRoutes,
+        emailInsightsRoutes,
+        adminOrgsRoutes,
+        adminUsersRoutes,
+        adminFinanceRoutes,
+        uploadRoutes,
+        mediaRoutes,
+        passageRoutes,
+        importJobRoutes,
+        playlistRoutes,
+        scheduleRoutes,
+        vocabularyRoutes,
+        financeRoutes,
+        memberWalletRoutes,
+        socialMediaRoutes,
+        internalReconciliationRoutes,
+        vocabAiTestRoutes,
+    ];
+}

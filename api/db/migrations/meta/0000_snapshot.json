@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "af2dd6aa-19c4-4785-bd72-6c7585e5a5ef",
+  "id": "3878a0c2-916c-4e3a-b09c-3a348f66bb07",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "auth_accounts": {
@@ -1668,6 +1668,289 @@
         }
       }
     },
+    "import_job_paragraphs": {
+      "name": "import_job_paragraphs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_number": {
+          "name": "page_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "paragraph_index": {
+          "name": "paragraph_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "raw_text": {
+          "name": "raw_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cleaned_text": {
+          "name": "cleaned_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "clean_status": {
+          "name": "clean_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "ijp_job_idx": {
+          "name": "ijp_job_idx",
+          "columns": [
+            "job_id"
+          ],
+          "isUnique": false
+        },
+        "ijp_clean_status_idx": {
+          "name": "ijp_clean_status_idx",
+          "columns": [
+            "clean_status"
+          ],
+          "isUnique": false
+        },
+        "ijp_job_order_idx": {
+          "name": "ijp_job_order_idx",
+          "columns": [
+            "job_id",
+            "page_number",
+            "paragraph_index"
+          ],
+          "isUnique": false
+        },
+        "ijp_job_page_para_uidx": {
+          "name": "ijp_job_page_para_uidx",
+          "columns": [
+            "job_id",
+            "page_number",
+            "paragraph_index"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "import_job_paragraphs_job_id_import_jobs_id_fk": {
+          "name": "import_job_paragraphs_job_id_import_jobs_id_fk",
+          "tableFrom": "import_job_paragraphs",
+          "tableTo": "import_jobs",
+          "columnsFrom": [
+            "job_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "import_jobs": {
+      "name": "import_jobs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "collection_id": {
+          "name": "collection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'uploading'"
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_type": {
+          "name": "file_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "bucket_key": {
+          "name": "bucket_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_paragraphs": {
+          "name": "total_paragraphs",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "ij_org_idx": {
+          "name": "ij_org_idx",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "ij_status_idx": {
+          "name": "ij_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "import_jobs_organization_id_auth_organizations_id_fk": {
+          "name": "import_jobs_organization_id_auth_organizations_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "import_jobs_collection_id_text_collections_id_fk": {
+          "name": "import_jobs_collection_id_text_collections_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "text_collections",
+          "columnsFrom": [
+            "collection_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "import_jobs_created_by_auth_users_id_fk": {
+          "name": "import_jobs_created_by_auth_users_id_fk",
+          "tableFrom": "import_jobs",
+          "tableTo": "auth_users",
+          "columnsFrom": [
+            "created_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "lessons": {
       "name": "lessons",
       "columns": {
@@ -1705,6 +1988,14 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "cefr_level": {
+          "name": "cefr_level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "default": "NULL"
         },
         "created_at": {
           "name": "created_at",
@@ -1748,7 +2039,301 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "cefr_level_check": {
+          "name": "cefr_level_check",
+          "value": "\"lessons\".\"cefr_level\" IS NULL OR \"lessons\".\"cefr_level\" IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')"
+        }
+      }
+    },
+    "lesson_objectives": {
+      "name": "lesson_objectives",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "objective": {
+          "name": "objective",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "lesson_objectives_lesson_id_idx": {
+          "name": "lesson_objectives_lesson_id_idx",
+          "columns": [
+            "lesson_id"
+          ],
+          "isUnique": false
+        },
+        "lesson_objectives_lesson_id_position_uidx": {
+          "name": "lesson_objectives_lesson_id_position_uidx",
+          "columns": [
+            "lesson_id",
+            "position"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "lesson_objectives_lesson_id_lessons_id_fk": {
+          "name": "lesson_objectives_lesson_id_lessons_id_fk",
+          "tableFrom": "lesson_objectives",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "objective_not_empty": {
+          "name": "objective_not_empty",
+          "value": "length(trim(\"lesson_objectives\".\"objective\")) > 0"
+        },
+        "objective_position_positive": {
+          "name": "objective_position_positive",
+          "value": "\"lesson_objectives\".\"position\" > 0"
+        }
+      }
+    },
+    "lesson_passages": {
+      "name": "lesson_passages",
+      "columns": {
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "passage_id": {
+          "name": "passage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "added_at": {
+          "name": "added_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "lp_lesson_idx": {
+          "name": "lp_lesson_idx",
+          "columns": [
+            "lesson_id"
+          ],
+          "isUnique": false
+        },
+        "lp_passage_idx": {
+          "name": "lp_passage_idx",
+          "columns": [
+            "passage_id"
+          ],
+          "isUnique": false
+        },
+        "lp_lesson_position_uidx": {
+          "name": "lp_lesson_position_uidx",
+          "columns": [
+            "lesson_id",
+            "position"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "lesson_passages_lesson_id_lessons_id_fk": {
+          "name": "lesson_passages_lesson_id_lessons_id_fk",
+          "tableFrom": "lesson_passages",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lesson_passages_passage_id_passages_id_fk": {
+          "name": "lesson_passages_passage_id_passages_id_fk",
+          "tableFrom": "lesson_passages",
+          "tableTo": "passages",
+          "columnsFrom": [
+            "passage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "lesson_passages_lesson_id_passage_id_pk": {
+          "columns": [
+            "lesson_id",
+            "passage_id"
+          ],
+          "name": "lesson_passages_lesson_id_passage_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lesson_passage_position_positive": {
+          "name": "lesson_passage_position_positive",
+          "value": "\"lesson_passages\".\"position\" > 0"
+        }
+      }
+    },
+    "lesson_playlists": {
+      "name": "lesson_playlists",
+      "columns": {
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "playlist_id": {
+          "name": "playlist_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "added_at": {
+          "name": "added_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "lesson_playlists_lesson_id_idx": {
+          "name": "lesson_playlists_lesson_id_idx",
+          "columns": [
+            "lesson_id"
+          ],
+          "isUnique": false
+        },
+        "lesson_playlists_playlist_id_idx": {
+          "name": "lesson_playlists_playlist_id_idx",
+          "columns": [
+            "playlist_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lesson_playlists_lesson_id_lessons_id_fk": {
+          "name": "lesson_playlists_lesson_id_lessons_id_fk",
+          "tableFrom": "lesson_playlists",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lesson_playlists_playlist_id_playlists_id_fk": {
+          "name": "lesson_playlists_playlist_id_playlists_id_fk",
+          "tableFrom": "lesson_playlists",
+          "tableTo": "playlists",
+          "columnsFrom": [
+            "playlist_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "lesson_playlists_lesson_id_playlist_id_pk": {
+          "columns": [
+            "lesson_id",
+            "playlist_id"
+          ],
+          "name": "lesson_playlists_lesson_id_playlist_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lesson_playlist_position_positive": {
+          "name": "lesson_playlist_position_positive",
+          "value": "\"lesson_playlists\".\"position\" > 0"
+        }
+      }
     },
     "lesson_progress": {
       "name": "lesson_progress",
@@ -1823,6 +2408,100 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
+    },
+    "lesson_vocabulary": {
+      "name": "lesson_vocabulary",
+      "columns": {
+        "lesson_id": {
+          "name": "lesson_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "vocabulary_id": {
+          "name": "vocabulary_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "added_at": {
+          "name": "added_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "lesson_vocabulary_lesson_id_idx": {
+          "name": "lesson_vocabulary_lesson_id_idx",
+          "columns": [
+            "lesson_id"
+          ],
+          "isUnique": false
+        },
+        "lesson_vocabulary_vocab_id_idx": {
+          "name": "lesson_vocabulary_vocab_id_idx",
+          "columns": [
+            "vocabulary_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lesson_vocabulary_lesson_id_lessons_id_fk": {
+          "name": "lesson_vocabulary_lesson_id_lessons_id_fk",
+          "tableFrom": "lesson_vocabulary",
+          "tableTo": "lessons",
+          "columnsFrom": [
+            "lesson_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "lesson_vocabulary_vocabulary_id_vocabulary_bank_id_fk": {
+          "name": "lesson_vocabulary_vocabulary_id_vocabulary_bank_id_fk",
+          "tableFrom": "lesson_vocabulary",
+          "tableTo": "vocabulary_bank",
+          "columnsFrom": [
+            "vocabulary_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "lesson_vocabulary_lesson_id_vocabulary_id_pk": {
+          "columns": [
+            "lesson_id",
+            "vocabulary_id"
+          ],
+          "name": "lesson_vocabulary_lesson_id_vocabulary_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "lesson_vocab_position_positive": {
+          "name": "lesson_vocab_position_positive",
+          "value": "\"lesson_vocabulary\".\"position\" > 0"
+        }
+      }
     },
     "media": {
       "name": "media",
@@ -2219,7 +2898,7 @@
           "name": "uploaded_by",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "created_at": {
@@ -2253,6 +2932,14 @@
             "uploaded_by"
           ],
           "isUnique": false
+        },
+        "upload_org_bucket_key_uidx": {
+          "name": "upload_org_bucket_key_uidx",
+          "columns": [
+            "organization_id",
+            "bucket_key"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {
@@ -2279,7 +2966,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -2651,16 +3338,253 @@
             "slug"
           ],
           "isUnique": true
-        },
-        "organization_slug_uidx": {
-          "name": "organization_slug_uidx",
-          "columns": [
-            "slug"
-          ],
-          "isUnique": true
         }
       },
       "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "passage_images": {
+      "name": "passage_images",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "passage_id": {
+          "name": "passage_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "alt_text": {
+          "name": "alt_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "caption": {
+          "name": "caption",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'bottom'"
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "pi_passage_idx": {
+          "name": "pi_passage_idx",
+          "columns": [
+            "passage_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "passage_images_passage_id_passages_id_fk": {
+          "name": "passage_images_passage_id_passages_id_fk",
+          "tableFrom": "passage_images",
+          "tableTo": "passages",
+          "columnsFrom": [
+            "passage_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "passages": {
+      "name": "passages",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "collection_id": {
+          "name": "collection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'reading'"
+        },
+        "cefr_level": {
+          "name": "cefr_level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "bucket_key": {
+          "name": "bucket_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "r2_url": {
+          "name": "r2_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "page_number": {
+          "name": "page_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "word_count": {
+          "name": "word_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "ps_org_idx": {
+          "name": "ps_org_idx",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        },
+        "ps_collection_idx": {
+          "name": "ps_collection_idx",
+          "columns": [
+            "collection_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "passages_organization_id_auth_organizations_id_fk": {
+          "name": "passages_organization_id_auth_organizations_id_fk",
+          "tableFrom": "passages",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "passages_collection_id_text_collections_id_fk": {
+          "name": "passages_collection_id_text_collections_id_fk",
+          "tableFrom": "passages",
+          "tableTo": "text_collections",
+          "columnsFrom": [
+            "collection_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "checkConstraints": {}
@@ -2831,6 +3755,7 @@
         "uq_payment_request_idempotency_key": {
           "name": "uq_payment_request_idempotency_key",
           "columns": [
+            "organization_id",
             "idempotency_key"
           ],
           "isUnique": true
@@ -2989,6 +3914,10 @@
         "pr_attempt_count_non_negative": {
           "name": "pr_attempt_count_non_negative",
           "value": "\"payment_requests\".\"attempt_count\" >= 0"
+        },
+        "pr_session_payment_user_required": {
+          "name": "pr_session_payment_user_required",
+          "value": "\"payment_requests\".\"type\" != 'session_payment' OR \"payment_requests\".\"user_id\" IS NOT NULL"
         }
       }
     },
@@ -3467,8 +4396,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "org_id": {
-          "name": "org_id",
+        "organization_id": {
+          "name": "organization_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -3514,10 +4443,10 @@
           ],
           "isUnique": false
         },
-        "student_vocab_orgId_idx": {
-          "name": "student_vocab_orgId_idx",
+        "student_vocab_organizationId_idx": {
+          "name": "student_vocab_organizationId_idx",
           "columns": [
-            "org_id"
+            "organization_id"
           ],
           "isUnique": false
         },
@@ -3550,12 +4479,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "student_vocabulary_org_id_auth_organizations_id_fk": {
-          "name": "student_vocabulary_org_id_auth_organizations_id_fk",
+        "student_vocabulary_organization_id_auth_organizations_id_fk": {
+          "name": "student_vocabulary_organization_id_auth_organizations_id_fk",
           "tableFrom": "student_vocabulary",
           "tableTo": "auth_organizations",
           "columnsFrom": [
-            "org_id"
+            "organization_id"
           ],
           "columnsTo": [
             "id"
@@ -3778,6 +4707,125 @@
           "value": "\"system_audit_events\".\"actor_type\" IN ('system', 'user', 'admin')"
         }
       }
+    },
+    "text_collections": {
+      "name": "text_collections",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "organization_id": {
+          "name": "organization_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'book'"
+        },
+        "cefr_level": {
+          "name": "cefr_level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "bucket_key": {
+          "name": "bucket_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "r2_url": {
+          "name": "r2_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "total_pages": {
+          "name": "total_pages",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "tc_org_idx": {
+          "name": "tc_org_idx",
+          "columns": [
+            "organization_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "text_collections_organization_id_auth_organizations_id_fk": {
+          "name": "text_collections_organization_id_auth_organizations_id_fk",
+          "tableFrom": "text_collections",
+          "tableTo": "auth_organizations",
+          "columnsFrom": [
+            "organization_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
     },
     "user_addresses": {
       "name": "user_addresses",
@@ -4101,6 +5149,41 @@
           "notNull": false,
           "autoincrement": false
         },
+        "needs_language_review": {
+          "name": "needs_language_review",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ipa_us": {
+          "name": "ipa_us",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "syllables_en": {
+          "name": "syllables_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "syllables_ipa": {
+          "name": "syllables_ipa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "definition_simple": {
+          "name": "definition_simple",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "en_audio_url": {
           "name": "en_audio_url",
           "type": "text",
@@ -4159,7 +5242,12 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "checkConstraints": {
+        "vb_status_check": {
+          "name": "vb_status_check",
+          "value": "\"vocabulary_bank\".\"status\" IN ('new', 'queued_text', 'processing_text', 'text_ready', 'queued_audio', 'processing_audio', 'active', 'review')"
+        }
+      }
     }
   },
   "views": {},

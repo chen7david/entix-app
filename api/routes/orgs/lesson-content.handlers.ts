@@ -1,10 +1,15 @@
-import { ConflictError, NotFoundError, UnprocessableEntityError } from "@api/errors/app.error";
+import {
+    ConflictError,
+    InternalServerError,
+    NotFoundError,
+    UnprocessableEntityError,
+} from "@api/errors/app.error";
+import { getPassageService } from "@api/factories/passage.factory";
 import { getLessonContentRepository, getLessonRepository } from "@api/factories/repository.factory";
+import { toMs } from "@api/helpers/date.helpers";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { LessonContentRoutes } from "./lesson-content.routes";
-
-const toMs = (v: number | Date) => (v instanceof Date ? v.getTime() : v);
 
 function assertOrderedIdsMatchCurrent(currentIds: string[], orderedIds: string[]): void {
     if (new Set(orderedIds).size !== orderedIds.length) {
@@ -71,7 +76,7 @@ export class LessonContentHandlers {
         }
         const repo = getLessonContentRepository(ctx);
         const current = await repo.listObjectives(lessonId);
-        const curIds = [...current].sort((a, b) => a.position - b.position).map((o) => o.id);
+        const curIds = current.map((o) => o.id);
         assertOrderedIdsMatchCurrent(curIds, orderedIds);
         const items = await repo.reorderObjectives(lessonId, orderedIds);
         return ctx.json(
@@ -147,9 +152,7 @@ export class LessonContentHandlers {
             }
             const repo = getLessonContentRepository(ctx);
             const current = await repo.listPlaylists(lessonId);
-            const curIds = [...current]
-                .sort((a, b) => a.position - b.position)
-                .map((r) => r.playlistId);
+            const curIds = current.map((r) => r.playlistId);
             assertOrderedIdsMatchCurrent(curIds, orderedIds);
             const items = await repo.reorderPlaylists(lessonId, orderedIds);
             return ctx.json(
@@ -223,11 +226,87 @@ export class LessonContentHandlers {
             }
             const repo = getLessonContentRepository(ctx);
             const current = await repo.listVocabulary(lessonId);
-            const curIds = [...current]
-                .sort((a, b) => a.position - b.position)
-                .map((r) => r.vocabularyId);
+            const curIds = current.map((r) => r.vocabularyId);
             assertOrderedIdsMatchCurrent(curIds, orderedIds);
             const items = await repo.reorderVocabulary(lessonId, orderedIds);
+            return ctx.json(
+                items.map((r) => ({
+                    ...r,
+                    addedAt: toMs(r.addedAt),
+                })),
+                HttpStatusCodes.OK
+            );
+        };
+
+    static listLessonPassages: AppHandler<typeof LessonContentRoutes.listLessonPassages> = async (
+        ctx
+    ) => {
+        const { organizationId, lessonId } = ctx.req.valid("param");
+        const lessonRepo = getLessonRepository(ctx);
+        if (!(await lessonRepo.findById(organizationId, lessonId))) {
+            throw new NotFoundError("Lesson not found");
+        }
+        const repo = getLessonContentRepository(ctx);
+        const items = await repo.listPassages(lessonId);
+        return ctx.json(
+            items.map((r) => ({
+                ...r,
+                addedAt: toMs(r.addedAt),
+            })),
+            HttpStatusCodes.OK
+        );
+    };
+
+    static addLessonPassage: AppHandler<typeof LessonContentRoutes.addLessonPassage> = async (
+        ctx
+    ) => {
+        const { organizationId, lessonId } = ctx.req.valid("param");
+        const { passageId } = ctx.req.valid("json");
+        const lessonRepo = getLessonRepository(ctx);
+        if (!(await lessonRepo.findById(organizationId, lessonId))) {
+            throw new NotFoundError("Lesson not found");
+        }
+        await getPassageService(ctx).getPassage(organizationId, passageId);
+        const repo = getLessonContentRepository(ctx);
+        if (await repo.hasPassageLink(lessonId, passageId)) {
+            throw new ConflictError("This passage is already linked to this lesson");
+        }
+        const row = await repo.addPassage(lessonId, passageId);
+        if (!row) {
+            throw new InternalServerError("Failed to link passage to lesson");
+        }
+        return ctx.json({ ...row, addedAt: toMs(row.addedAt) }, HttpStatusCodes.CREATED);
+    };
+
+    static removeLessonPassage: AppHandler<typeof LessonContentRoutes.removeLessonPassage> = async (
+        ctx
+    ) => {
+        const { organizationId, lessonId, passageId } = ctx.req.valid("param");
+        const lessonRepo = getLessonRepository(ctx);
+        if (!(await lessonRepo.findById(organizationId, lessonId))) {
+            throw new NotFoundError("Lesson not found");
+        }
+        const repo = getLessonContentRepository(ctx);
+        const ok = await repo.removePassage(lessonId, passageId);
+        if (!ok) {
+            throw new NotFoundError("Passage not linked to this lesson");
+        }
+        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
+
+    static reorderLessonPassages: AppHandler<typeof LessonContentRoutes.reorderLessonPassages> =
+        async (ctx) => {
+            const { organizationId, lessonId } = ctx.req.valid("param");
+            const { orderedIds } = ctx.req.valid("json");
+            const lessonRepo = getLessonRepository(ctx);
+            if (!(await lessonRepo.findById(organizationId, lessonId))) {
+                throw new NotFoundError("Lesson not found");
+            }
+            const repo = getLessonContentRepository(ctx);
+            const current = await repo.listPassages(lessonId);
+            const curIds = current.map((r) => r.passageId);
+            assertOrderedIdsMatchCurrent(curIds, orderedIds);
+            const items = await repo.reorderPassages(lessonId, orderedIds);
             return ctx.json(
                 items.map((r) => ({
                     ...r,

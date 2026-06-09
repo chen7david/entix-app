@@ -25,17 +25,22 @@ import {
     type LessonStudyEditSection,
 } from "@web/src/features/lessons/components/LessonStudyContent";
 import {
+    type LessonPassageRowDto,
     type LessonPlaylistRowDto,
     type ObjectiveDto,
+    useAddLessonPassage,
     useAddLessonPlaylist,
     useAddLessonVocabulary,
     useCreateBankVocabularyWord,
     useLessonObjectives,
+    useLessonPassages,
     useLessonPlaylists,
     useLessonVocabulary,
+    useRemoveLessonPassage,
     useRemoveLessonPlaylist,
     useRemoveLessonVocabulary,
     useReorderLessonObjectives,
+    useReorderLessonPassages,
     useReorderLessonPlaylists,
     useReplaceObjectives,
 } from "@web/src/features/lessons/hooks/useLessonContent";
@@ -43,6 +48,7 @@ import { useLessonById, useUpdateLesson } from "@web/src/features/lessons/hooks/
 import { CoverArtUploader } from "@web/src/features/media";
 import { usePlaylist, usePlaylists } from "@web/src/features/media/hooks/usePlaylists";
 import { useOrganization } from "@web/src/features/organization";
+import { usePassageLibrary } from "@web/src/features/passages";
 import { AddVocabularyForm } from "@web/src/features/vocabulary/components/AddVocabularyForm";
 import { VocabularyTable } from "@web/src/features/vocabulary/components/VocabularyTable";
 import type {
@@ -137,6 +143,63 @@ function LessonObjectiveSortableRow(props: {
     );
 }
 
+function LessonPassageSortableRow(props: {
+    row: LessonPassageRowDto;
+    onRemove: () => void;
+}): React.ReactElement {
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+        id: props.row.passageId,
+    });
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 100 : ("auto" as const),
+    };
+    const title = props.row.title ?? "(Untitled passage)";
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
+                isDragging
+                    ? "border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20"
+                    : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            } transition-all group`}
+        >
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                    <HolderOutlined />
+                </div>
+                <Tooltip title={`ID: ${props.row.passageId}`}>
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <Typography.Text strong className="truncate">
+                            {title}
+                        </Typography.Text>
+                        <Typography.Text type="secondary" className="text-xs">
+                            {props.row.type}
+                            {props.row.wordCount != null ? ` · ${props.row.wordCount} words` : ""}
+                        </Typography.Text>
+                    </div>
+                </Tooltip>
+            </div>
+            <Popconfirm title="Remove passage?" okText="Remove" onConfirm={props.onRemove}>
+                <Button
+                    danger
+                    type="link"
+                    size="small"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                    Delete
+                </Button>
+            </Popconfirm>
+        </div>
+    );
+}
+
 function LessonPlaylistSortableRow(props: {
     row: LessonPlaylistRowDto;
     onRemove: () => void;
@@ -218,6 +281,11 @@ export function LessonDetailPage(): React.ReactElement | null {
     const removePlaylist = useRemoveLessonPlaylist();
     const reorderPlaylistsMutation = useReorderLessonPlaylists();
 
+    const passagesQuery = useLessonPassages(organizationId, lessonId);
+    const addPassage = useAddLessonPassage();
+    const removePassage = useRemoveLessonPassage();
+    const reorderPassagesMutation = useReorderLessonPassages();
+
     const vocabularyQuery = useLessonVocabulary(organizationId, lessonId);
     const addVocabulary = useAddLessonVocabulary();
     const removeVocabulary = useRemoveLessonVocabulary();
@@ -234,6 +302,8 @@ export function LessonDetailPage(): React.ReactElement | null {
 
     const [playlistSearch, setPlaylistSearch] = useState("");
     const { playlistsResponse } = usePlaylists({ search: playlistSearch || undefined });
+    const { passages: passageLibrary } = usePassageLibrary({ limit: 100 });
+    const [passageForm] = Form.useForm<{ passageId: string }>();
 
     const [objectiveEditDrawerOpen, setObjectiveEditDrawerOpen] = useState(false);
     const [editingObjectiveId, setEditingObjectiveId] = useState<string | null>(null);
@@ -263,6 +333,14 @@ export function LessonDetailPage(): React.ReactElement | null {
     const lessonVocabularySorted = useMemo(
         () => [...(vocabularyQuery.data ?? [])].sort((a, b) => a.position - b.position),
         [vocabularyQuery.data]
+    );
+    const lessonPassagesSorted = useMemo(
+        () => [...(passagesQuery.data ?? [])].sort((a, b) => a.position - b.position),
+        [passagesQuery.data]
+    );
+    const linkedPassageIds = useMemo(
+        () => new Set(lessonPassagesSorted.map((r) => r.passageId)),
+        [lessonPassagesSorted]
     );
 
     const vocabularyBankQueries = useQueries({
@@ -362,6 +440,20 @@ export function LessonDetailPage(): React.ReactElement | null {
         [organizationId, lessonId, addPlaylist, playlistForm, notification]
     );
 
+    const handleLinkPassage = useCallback(
+        async (passageId: string) => {
+            if (!organizationId || !lessonId) return;
+            await addPassage.mutateAsync({
+                organizationId,
+                lessonId,
+                passageId,
+            });
+            passageForm.resetFields();
+            notification.success({ message: "Passage linked" });
+        },
+        [organizationId, lessonId, addPassage, passageForm, notification]
+    );
+
     const handleAddObjective = useCallback(
         async (text: string) => {
             const trimmed = text.trim();
@@ -433,6 +525,20 @@ export function LessonDetailPage(): React.ReactElement | null {
             void reorderPlaylistsMutation.mutateAsync({ organizationId, lessonId, orderedIds });
         },
         [lessonPlaylistsSorted, organizationId, lessonId, reorderPlaylistsMutation]
+    );
+
+    const handlePassagesDragEnd = useCallback(
+        (event: DragEndEvent) => {
+            const { active, over } = event;
+            if (!over || active.id === over.id || !organizationId || !lessonId) return;
+            const items = [...lessonPassagesSorted];
+            const oldIndex = items.findIndex((r) => r.passageId === active.id);
+            const newIndex = items.findIndex((r) => r.passageId === over.id);
+            if (oldIndex < 0 || newIndex < 0) return;
+            const orderedIds = arrayMove(items, oldIndex, newIndex).map((r) => r.passageId);
+            void reorderPassagesMutation.mutateAsync({ organizationId, lessonId, orderedIds });
+        },
+        [lessonPassagesSorted, organizationId, lessonId, reorderPassagesMutation]
     );
 
     useEffect(() => {
@@ -637,6 +743,77 @@ export function LessonDetailPage(): React.ReactElement | null {
                                         }}
                                         onDelete={() => void handleDeleteObjective(o.id)}
                                         deleteLoading={replaceObjectives.isPending}
+                                    />
+                                ))}
+                            </SortableContext>
+                        </DndContext>
+                    )}
+                </Space>
+            </Drawer>
+
+            <Drawer
+                title="Edit reading passages"
+                width={UI_CONSTANTS.RIGHT_DRAWER_WIDTH}
+                open={editPanel === "passages"}
+                destroyOnClose={false}
+                onClose={() => setEditPanel(null)}
+            >
+                <Space direction="vertical" style={{ width: "100%" }} size="large">
+                    <Typography.Text type="secondary">
+                        Link passages from your org text library. Create new passages under Content
+                        → Text library if needed.
+                    </Typography.Text>
+                    <Form
+                        layout="vertical"
+                        form={passageForm}
+                        onFinish={async (vals) => handleLinkPassage(vals.passageId)}
+                    >
+                        <Form.Item
+                            name="passageId"
+                            label="Link a passage"
+                            rules={[{ required: true, message: "Select a passage" }]}
+                        >
+                            <Select
+                                showSearch
+                                optionFilterProp="label"
+                                placeholder="Select passage"
+                                options={passageLibrary
+                                    .filter((p) => !linkedPassageIds.has(p.id))
+                                    .map((p) => ({
+                                        label: p.title ?? p.id,
+                                        value: p.id,
+                                    }))}
+                            />
+                        </Form.Item>
+                        <Button type="primary" htmlType="submit" loading={addPassage.isPending}>
+                            Link passage
+                        </Button>
+                    </Form>
+                    {passagesQuery.isLoading ? (
+                        <Typography.Text>Loading…</Typography.Text>
+                    ) : lessonPassagesSorted.length === 0 ? (
+                        <Empty description="No passages linked" />
+                    ) : (
+                        <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={handlePassagesDragEnd}
+                        >
+                            <SortableContext
+                                items={lessonPassagesSorted.map((r) => r.passageId)}
+                                strategy={verticalListSortingStrategy}
+                            >
+                                {lessonPassagesSorted.map((row) => (
+                                    <LessonPassageSortableRow
+                                        key={row.passageId}
+                                        row={row}
+                                        onRemove={() =>
+                                            removePassage.mutate({
+                                                organizationId,
+                                                lessonId,
+                                                passageId: row.passageId,
+                                            })
+                                        }
                                     />
                                 ))}
                             </SortableContext>

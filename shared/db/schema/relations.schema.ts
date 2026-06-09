@@ -10,18 +10,22 @@ import { financialCurrencies } from "./financial-currencies.schema";
 import { financialTransactionCategories } from "./financial-transaction-categories.schema";
 import { financialTransactionLines } from "./financial-transaction-lines.schema";
 import { financialTransactions } from "./financial-transactions.schema";
+import { importJobParagraphs, importJobs } from "./import-jobs.schema";
 import { lessons } from "./lesson.schema";
 import { lessonObjectives } from "./lesson-objectives.schema";
+import { lessonPassages } from "./lesson-passages.schema";
 import { lessonPlaylists } from "./lesson-playlists.schema";
 import { lessonProgress } from "./lesson-progress.schema";
 import { lessonVocabulary } from "./lesson-vocabulary.schema";
 import { media, playlistMedia, playlists, uploads, userUploads } from "./media.schema";
 import { authInvitations, authMembers, authOrganizations } from "./organization.schema";
+import { passageImages, passages } from "./passages.schema";
 import { paymentRequests } from "./payment-requests.schema";
 import { scheduledSessions, sessionAttendances } from "./schedule.schema";
 import { socialMediaTypes, userSocialMedias } from "./social-media.schema";
 import { studentVocabulary } from "./student-vocabulary.schema";
 import { systemAuditEvents } from "./system-audit-events.schema";
+import { textCollections } from "./text-collections.schema";
 import { userAddresses, userPhoneNumbers, userProfiles } from "./user-profiles.schema";
 import { vocabularyBank } from "./vocabulary-bank.schema";
 
@@ -65,6 +69,8 @@ export const authOrganizationsRelations = relations(authOrganizations, ({ many }
     playlists: many(playlists),
     scheduledSessions: many(scheduledSessions),
     lessons: many(lessons),
+    textCollections: many(textCollections),
+    passages: many(passages),
     auditEvents: many(systemAuditEvents),
     paymentRequests: many(paymentRequests),
     studentVocabularies: many(studentVocabulary),
@@ -187,6 +193,7 @@ export const lessonsRelations = relations(lessons, ({ one, many }) => ({
     objectives: many(lessonObjectives),
     playlists: many(lessonPlaylists),
     vocabularyItems: many(lessonVocabulary),
+    passageItems: many(lessonPassages),
     scheduledSessions: many(scheduledSessions),
 }));
 
@@ -422,6 +429,64 @@ export const lessonVocabularyRelations = relations(lessonVocabulary, ({ one }) =
     vocabulary: one(vocabularyBank, {
         fields: [lessonVocabulary.vocabularyId],
         references: [vocabularyBank.id],
+    }),
+}));
+
+export const textCollectionsRelations = relations(textCollections, ({ one, many }) => ({
+    organization: one(authOrganizations, {
+        fields: [textCollections.organizationId],
+        references: [authOrganizations.id],
+    }),
+    passages: many(passages),
+}));
+
+export const passagesRelations = relations(passages, ({ one, many }) => ({
+    organization: one(authOrganizations, {
+        fields: [passages.organizationId],
+        references: [authOrganizations.id],
+    }),
+    collection: one(textCollections, {
+        fields: [passages.collectionId],
+        references: [textCollections.id],
+    }),
+    images: many(passageImages),
+    lessonLinks: many(lessonPassages),
+}));
+
+export const passageImagesRelations = relations(passageImages, ({ one }) => ({
+    passage: one(passages, {
+        fields: [passageImages.passageId],
+        references: [passages.id],
+    }),
+}));
+
+export const importJobsRelations = relations(importJobs, ({ one, many }) => ({
+    organization: one(authOrganizations, {
+        fields: [importJobs.organizationId],
+        references: [authOrganizations.id],
+    }),
+    collection: one(textCollections, {
+        fields: [importJobs.collectionId],
+        references: [textCollections.id],
+    }),
+    paragraphs: many(importJobParagraphs),
+}));
+
+export const importJobParagraphsRelations = relations(importJobParagraphs, ({ one }) => ({
+    job: one(importJobs, {
+        fields: [importJobParagraphs.jobId],
+        references: [importJobs.id],
+    }),
+}));
+
+export const lessonPassagesRelations = relations(lessonPassages, ({ one }) => ({
+    lesson: one(lessons, {
+        fields: [lessonPassages.lessonId],
+        references: [lessons.id],
+    }),
+    passage: one(passages, {
+        fields: [lessonPassages.passageId],
+        references: [passages.id],
     }),
 }));
 
