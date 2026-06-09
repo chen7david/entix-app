@@ -152,7 +152,9 @@ export const ImportJobRoutes = {
         },
         responses: {
             [HttpStatusCodes.CREATED]: {
-                content: { "application/json": { schema: z.object({ data: TextCollectionDtoSchema }) } },
+                content: {
+                    "application/json": { schema: z.object({ data: TextCollectionDtoSchema }) },
+                },
                 description: "Import finalized as text collection",
             },
             [HttpStatusCodes.NOT_FOUND]: NotFoundResponse,

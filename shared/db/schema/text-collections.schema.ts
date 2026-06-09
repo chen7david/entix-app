@@ -1,6 +1,6 @@
-import { TEXT_COLLECTION_TYPES } from "../../constants/passage";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { TEXT_COLLECTION_TYPES } from "../../constants/passage";
 import { generateOpaqueId } from "../../lib/id";
 import { authOrganizations } from "./organization.schema";
 

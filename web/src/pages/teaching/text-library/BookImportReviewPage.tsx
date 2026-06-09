@@ -1,22 +1,14 @@
 import { AppRoutes } from "@shared";
 import { CEFR_LEVELS } from "@shared/constants/cefr";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { useOrgNavigate } from "@web/src/features/organization";
 import {
     useDeleteImportParagraph,
     useFinalizeImportJob,
     useImportJob,
     useUpdateImportParagraph,
 } from "@web/src/features/passages/hooks/useBookImport";
-import { useOrgNavigate } from "@web/src/features/organization";
-import {
-    Button,
-    Form,
-    Input,
-    Modal,
-    Select,
-    Spin,
-    Typography,
-} from "antd";
+import { Alert, Button, Form, Input, Modal, Result, Select, Spin, Typography } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
@@ -25,7 +17,7 @@ const { Text } = Typography;
 export function BookImportReviewPage() {
     const { jobId } = useParams<{ jobId: string }>();
     const navigateOrg = useOrgNavigate();
-    const { data, isLoading } = useImportJob(jobId);
+    const { data, isLoading, isError, error } = useImportJob(jobId);
     const job = data?.data;
 
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -62,13 +54,45 @@ export function BookImportReviewPage() {
         setEditText(text);
     }
 
-    if (isLoading || !jobId) {
+    if (!jobId) {
+        return (
+            <Result
+                status="warning"
+                title="Missing import job"
+                extra={
+                    <Button onClick={() => navigateOrg(AppRoutes.org.teaching.textLibrary)}>
+                        Back to Text Library
+                    </Button>
+                }
+            />
+        );
+    }
+
+    if (isLoading) {
         return (
             <div className="p-8">
                 <Spin />
             </div>
         );
     }
+
+    if (isError || !job) {
+        return (
+            <Result
+                status="error"
+                title="Import job not found"
+                subTitle={error instanceof Error ? error.message : "Failed to load import job."}
+                extra={
+                    <Button onClick={() => navigateOrg(AppRoutes.org.teaching.textLibrary)}>
+                        Back to Text Library
+                    </Button>
+                }
+            />
+        );
+    }
+
+    const canEdit = job.status === "uploading" || job.status === "review";
+    const canFinalize = job.status === "review" && active.length > 0;
 
     return (
         <div className="flex flex-col h-full">
@@ -77,12 +101,26 @@ export function BookImportReviewPage() {
                     title="Review import"
                     subtitle={job?.fileName ?? ""}
                     actions={
-                        <Button type="primary" onClick={() => setFinalizeOpen(true)}>
+                        <Button
+                            type="primary"
+                            disabled={!canFinalize}
+                            onClick={() => setFinalizeOpen(true)}
+                        >
                             Finalize →
                         </Button>
                     }
                 />
             </div>
+
+            {!canEdit && (
+                <div className="px-4 md:px-6 pt-4">
+                    <Alert
+                        type="info"
+                        showIcon
+                        message={`This import is ${job.status} and can no longer be edited.`}
+                    />
+                </div>
+            )}
 
             <div className="flex flex-1 min-h-0">
                 <div className="w-80 border-r flex flex-col shrink-0">
@@ -94,16 +132,16 @@ export function BookImportReviewPage() {
                             const preview = p.cleanedText ?? p.rawText;
                             const deleted = !!p.isDeleted;
                             return (
-                                <div
+                                <button
                                     key={p.id}
-                                    role="button"
-                                    tabIndex={deleted ? -1 : 0}
-                                    onClick={() =>
-                                        !deleted && selectParagraph(p.id, preview)
-                                    }
+                                    type="button"
+                                    disabled={deleted || !canEdit}
+                                    onClick={() => selectParagraph(p.id, preview)}
                                     className={[
-                                        "p-3 border-b text-xs cursor-pointer",
-                                        deleted ? "opacity-40 line-through" : "hover:bg-muted/40",
+                                        "w-full text-left p-3 border-b text-xs",
+                                        deleted
+                                            ? "opacity-40 line-through"
+                                            : "hover:bg-muted/40 cursor-pointer",
                                         p.id === selectedId ? "bg-muted" : "",
                                     ].join(" ")}
                                 >
@@ -111,7 +149,7 @@ export function BookImportReviewPage() {
                                         p.{p.pageNumber} §{p.paragraphIndex + 1}
                                     </Text>
                                     <div className="line-clamp-2">{preview}</div>
-                                    {!deleted && (
+                                    {canEdit && !deleted && (
                                         <Button
                                             type="link"
                                             danger
@@ -125,7 +163,7 @@ export function BookImportReviewPage() {
                                             Delete
                                         </Button>
                                     )}
-                                </div>
+                                </button>
                             );
                         })}
                     </div>
@@ -135,8 +173,7 @@ export function BookImportReviewPage() {
                     {selected ? (
                         <>
                             <Text type="secondary">
-                                Page {selected.pageNumber} · Paragraph{" "}
-                                {selected.paragraphIndex + 1}
+                                Page {selected.pageNumber} · Paragraph {selected.paragraphIndex + 1}
                             </Text>
                             <Input.TextArea
                                 rows={16}
@@ -146,6 +183,7 @@ export function BookImportReviewPage() {
                             />
                             <Button
                                 type="primary"
+                                disabled={!canEdit}
                                 loading={updatePara.isPending}
                                 onClick={() => {
                                     if (!selectedId) return;

@@ -1,9 +1,5 @@
-import {
-    IMAGE_POSITIONS,
-    PASSAGE_TYPES,
-    TEXT_COLLECTION_TYPES,
-} from "../../constants/passage";
 import { z } from "zod";
+import { IMAGE_POSITIONS, PASSAGE_TYPES, TEXT_COLLECTION_TYPES } from "../../constants/passage";
 
 export const CreatePassageSchema = z.object({
     title: z.string().min(1).max(255).optional(),

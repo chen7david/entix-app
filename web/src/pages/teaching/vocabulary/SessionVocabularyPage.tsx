@@ -91,8 +91,8 @@ export function SessionVocabularyPage() {
     const transferPoints = useWalletTransfer(organizationId);
     const savePointsInFlightRef = useRef(false);
     const [stagedDeltas, setStagedDeltas] = useState<Record<string, number>>({});
-    /** Prefer org id when present so scope matches hydration ref (slug-only fallback avoids slug↔uuid key flips that reload drafts and wipe per-row +1). */
-    const draftScopeKey = organizationId ?? slug ?? null;
+    /** Prefer URL slug so draft keys stay stable when org context hydrates (uuid scope would re-key and wipe per-student pending deltas). */
+    const draftScopeKey = slug ?? organizationId ?? null;
     const sessionDraftKey = draftScopeKey && sessionId ? `${draftScopeKey}:${sessionId}` : null;
     /** Only re-load from localStorage when org/session identity changes (not on every render). */
     const hydratedDraftKeyRef = useRef<string | null>(null);
@@ -183,7 +183,7 @@ export function SessionVocabularyPage() {
 
     const flushPendingStaging = useCallback(() => {
         /** Same preference as `draftScopeKey` so LS clear/write matches the layout persist path. */
-        const scope = organizationId ?? slug;
+        const scope = slug ?? organizationId;
         if (!scope || !sessionId) return;
         clearSessionPointsDraftAllScopes(window.localStorage, slug, organizationId, sessionId);
         saveSessionPointsDraft(window.localStorage, scope, sessionId, {});

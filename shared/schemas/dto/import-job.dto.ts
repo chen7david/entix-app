@@ -13,13 +13,18 @@ export const CreateImportJobSchema = z.object({
 });
 export type CreateImportJobInput = z.infer<typeof CreateImportJobSchema>;
 
+/** Client-writable fields only — status transitions are internal to import service methods. */
 export const UpdateImportJobSchema = z.object({
-    status: z.enum(IMPORT_JOB_STATUSES).optional(),
-    collectionId: z.string().nullable().optional(),
     bucketKey: z.string().nullable().optional(),
-    totalParagraphs: z.number().int().positive().optional(),
 });
 export type UpdateImportJobInput = z.infer<typeof UpdateImportJobSchema>;
+
+export type ImportJobInternalUpdate = {
+    status?: (typeof IMPORT_JOB_STATUSES)[number];
+    collectionId?: string | null;
+    bucketKey?: string | null;
+    totalParagraphs?: number | null;
+};
 
 export const ImportParagraphItemSchema = z.object({
     pageNumber: z.number().int().min(0),

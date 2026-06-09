@@ -34,4 +34,5 @@ CREATE TABLE `import_job_paragraphs` (
 --> statement-breakpoint
 CREATE INDEX `ijp_job_idx` ON `import_job_paragraphs` (`job_id`);--> statement-breakpoint
 CREATE INDEX `ijp_clean_status_idx` ON `import_job_paragraphs` (`clean_status`);--> statement-breakpoint
-CREATE INDEX `ijp_job_order_idx` ON `import_job_paragraphs` (`job_id`,`page_number`,`paragraph_index`);
+CREATE INDEX `ijp_job_order_idx` ON `import_job_paragraphs` (`job_id`,`page_number`,`paragraph_index`);--> statement-breakpoint
+CREATE UNIQUE INDEX `ijp_job_page_para_uidx` ON `import_job_paragraphs` (`job_id`,`page_number`,`paragraph_index`);

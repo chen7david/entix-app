@@ -5,8 +5,5 @@ import { getDbClient } from "./db.factory";
 import { getPassageService } from "./passage.factory";
 
 export const getImportJobService = (ctx: AppContext): ImportJobService => {
-    return new ImportJobService(
-        new ImportJobRepository(getDbClient(ctx)),
-        getPassageService(ctx)
-    );
+    return new ImportJobService(new ImportJobRepository(getDbClient(ctx)), getPassageService(ctx));
 };

@@ -59,7 +59,10 @@ function extractPageText(
         lastY = y;
     }
 
-    return parts.join("").replace(/[ \t]+\n/g, "\n").trim();
+    return parts
+        .join("")
+        .replace(/[ \t]+\n/g, "\n")
+        .trim();
 }
 
 async function configurePdfWorker() {

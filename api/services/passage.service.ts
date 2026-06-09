@@ -166,8 +166,12 @@ export class PassageService extends BaseService {
             content = passage.content;
         } else if (passage.bucketKey) {
             const raw = await this.bucketService.get(passage.bucketKey);
-            const parsed = JSON.parse(raw) as PassageR2Content;
-            content = parsed.content ?? null;
+            try {
+                const parsed = JSON.parse(raw) as PassageR2Content;
+                content = parsed.content ?? null;
+            } catch {
+                throw new UnprocessableEntityError("Passage R2 content is not valid JSON");
+            }
         }
 
         return { passage, content, images };

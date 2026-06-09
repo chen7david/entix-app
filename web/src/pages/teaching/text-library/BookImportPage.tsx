@@ -1,17 +1,17 @@
 import { UploadOutlined } from "@ant-design/icons";
 import { AppRoutes, IMPORT_PARAGRAPH_INSERT_CHUNK_SIZE } from "@shared";
-import {
-    isPdfPasswordError,
-    parsePdfToParagraphs,
-    splitIntoParagraphs,
-    type ParsedParagraph,
-} from "@web/src/features/passages/lib/pdf-import-parser";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { useOrgNavigate } from "@web/src/features/organization";
 import {
     useBulkInsertImportParagraphs,
     useCreateImportJob,
 } from "@web/src/features/passages/hooks/useBookImport";
-import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { useOrgNavigate } from "@web/src/features/organization";
+import {
+    isPdfPasswordError,
+    type ParsedParagraph,
+    parsePdfToParagraphs,
+    splitIntoParagraphs,
+} from "@web/src/features/passages/lib/pdf-import-parser";
 import { Alert, Input, Modal, Spin, Upload, type UploadProps } from "antd";
 import { useState } from "react";
 
@@ -39,7 +39,11 @@ export function BookImportPage() {
     const createJob = useCreateImportJob();
     const bulkInsert = useBulkInsertImportParagraphs();
 
-    async function ingestParagraphs(file: File, fileType: "pdf" | "image", paragraphs: ParsedParagraph[]) {
+    async function ingestParagraphs(
+        file: File,
+        fileType: "pdf" | "image",
+        paragraphs: ParsedParagraph[]
+    ) {
         if (!paragraphs.length) {
             setError(
                 "No text could be extracted. If the PDF is password-protected, enter the password when prompted. Otherwise try a clearer scan or image."
@@ -127,8 +131,8 @@ export function BookImportPage() {
                     </p>
                     <p className="ant-upload-text">Click or drag a PDF or image here</p>
                     <p className="ant-upload-hint text-muted-foreground">
-                        Supported: PDF, PNG, JPG, WEBP, TIFF. Password-protected PDFs are
-                        supported — you will be prompted for the password.
+                        Supported: PDF, PNG, JPG, WEBP, TIFF. Password-protected PDFs are supported
+                        — you will be prompted for the password.
                     </p>
                 </Upload.Dragger>
             </Spin>
@@ -151,8 +155,8 @@ export function BookImportPage() {
                 }}
             >
                 <p className="mb-3 text-sm text-muted-foreground">
-                    This PDF is encrypted. Enter the password used to open it in a PDF reader
-                    (not your Entix account password).
+                    This PDF is encrypted. Enter the password used to open it in a PDF reader (not
+                    your Entix account password).
                 </p>
                 <Input.Password
                     value={pdfPassword}

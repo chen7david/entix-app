@@ -100,14 +100,15 @@ export class ImportJobHandlers {
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
 
-    static bulkInsertParagraphs: AppHandler<typeof ImportJobRoutes.bulkInsertParagraphs> =
-        async (ctx) => {
-            const { organizationId, jobId } = ctx.req.valid("param");
-            const body = ctx.req.valid("json");
-            const service = getImportJobService(ctx);
-            await service.bulkInsertParagraphs(organizationId, jobId, body);
-            return ctx.body(null, HttpStatusCodes.NO_CONTENT);
-        };
+    static bulkInsertParagraphs: AppHandler<typeof ImportJobRoutes.bulkInsertParagraphs> = async (
+        ctx
+    ) => {
+        const { organizationId, jobId } = ctx.req.valid("param");
+        const body = ctx.req.valid("json");
+        const service = getImportJobService(ctx);
+        await service.bulkInsertParagraphs(organizationId, jobId, body);
+        return ctx.body(null, HttpStatusCodes.NO_CONTENT);
+    };
 
     static updateParagraph: AppHandler<typeof ImportJobRoutes.updateParagraph> = async (ctx) => {
         const { organizationId, jobId, paragraphId } = ctx.req.valid("param");

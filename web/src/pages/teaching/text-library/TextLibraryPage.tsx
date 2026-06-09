@@ -4,6 +4,7 @@ import { CEFR_LEVELS } from "@shared/constants/cefr";
 import { PASSAGE_TYPES, TEXT_COLLECTION_TYPES } from "@shared/constants/passage";
 import { defaultPassageDocJson, plainTextFromPassageContent } from "@shared/utils/passage-content";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { useOrgNavigate } from "@web/src/features/organization";
 import {
     PassageContentEditor,
     type PassageDto,
@@ -33,7 +34,6 @@ import {
     Tag,
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { useOrgNavigate } from "@web/src/features/organization";
 import { useEffect, useMemo, useState } from "react";
 
 type CollectionFormValues = {

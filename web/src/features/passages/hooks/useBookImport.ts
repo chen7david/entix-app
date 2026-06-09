@@ -77,7 +77,8 @@ export function useCreateImportJob() {
             });
             return parseResponse<{ data: ImportJobDto }>(res);
         },
-        onError: (err) => message.error(err instanceof Error ? err.message : "Failed to create import"),
+        onError: (err) =>
+            message.error(err instanceof Error ? err.message : "Failed to create import"),
     });
 }
 

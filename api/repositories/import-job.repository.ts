@@ -1,13 +1,15 @@
 import type { AppDb } from "@api/factories/db.factory";
+import { IMPORT_PARAGRAPH_INSERT_CHUNK_SIZE } from "@shared/constants/import";
+import * as schema from "@shared/db/schema";
 import type {
     BulkInsertParagraphsInput,
     CreateImportJobInput,
+    ImportJobInternalUpdate,
     ImportParagraphItem,
-    UpdateImportJobInput,
     UpdateImportParagraphInput,
 } from "@shared/schemas/dto/import-job.dto";
-import * as schema from "@shared/db/schema";
 import { and, asc, count, eq } from "drizzle-orm";
+import type { BatchItem } from "drizzle-orm/batch";
 
 export class ImportJobRepository {
     constructor(private readonly db: AppDb) {}
@@ -17,7 +19,7 @@ export class ImportJobRepository {
             .insert(schema.importJobs)
             .values({ organizationId, createdBy, ...data })
             .returning();
-        return row;
+        return row ?? null;
     }
 
     async getJob(organizationId: string, jobId: string) {
@@ -44,7 +46,7 @@ export class ImportJobRepository {
         });
     }
 
-    async updateJob(organizationId: string, jobId: string, data: UpdateImportJobInput) {
+    async updateJob(organizationId: string, jobId: string, data: ImportJobInternalUpdate) {
         const [row] = await this.db
             .update(schema.importJobs)
             .set(data)
@@ -56,6 +58,37 @@ export class ImportJobRepository {
             )
             .returning();
         return row ?? null;
+    }
+
+    /**
+     * Atomically move a job from `review` → `finalizing` so only one finalize can proceed.
+     */
+    async claimJobForFinalize(organizationId: string, jobId: string) {
+        const [row] = await this.db
+            .update(schema.importJobs)
+            .set({ status: "finalizing" })
+            .where(
+                and(
+                    eq(schema.importJobs.id, jobId),
+                    eq(schema.importJobs.organizationId, organizationId),
+                    eq(schema.importJobs.status, "review")
+                )
+            )
+            .returning();
+        return row ?? null;
+    }
+
+    async releaseJobFromFinalize(organizationId: string, jobId: string) {
+        await this.db
+            .update(schema.importJobs)
+            .set({ status: "review" })
+            .where(
+                and(
+                    eq(schema.importJobs.id, jobId),
+                    eq(schema.importJobs.organizationId, organizationId),
+                    eq(schema.importJobs.status, "finalizing")
+                )
+            );
     }
 
     async deleteJob(organizationId: string, jobId: string) {
@@ -75,20 +108,38 @@ export class ImportJobRepository {
         return this.db.insert(schema.importJobParagraphs).values({ jobId, ...paragraph });
     }
 
-    async bulkInsertParagraphs(jobId: string, data: BulkInsertParagraphsInput) {
+    async bulkInsertParagraphs(
+        jobId: string,
+        data: BulkInsertParagraphsInput,
+        totalParagraphs: number
+    ) {
         if (data.paragraphs.length === 0) return;
 
-        const statements = data.paragraphs.map((paragraph) =>
+        const insertStatements = data.paragraphs.map((paragraph) =>
             this.prepareInsertParagraph(jobId, paragraph)
-        );
-        await this.db.batch(statements as Parameters<AppDb["batch"]>[0] & unknown[]);
+        ) as BatchItem<"sqlite">[];
+
+        for (let i = 0; i < insertStatements.length; i += IMPORT_PARAGRAPH_INSERT_CHUNK_SIZE) {
+            const chunk = insertStatements.slice(i, i + IMPORT_PARAGRAPH_INSERT_CHUNK_SIZE);
+            await this.db.batch(chunk as [BatchItem<"sqlite">, ...BatchItem<"sqlite">[]]);
+        }
+
+        await this.db
+            .update(schema.importJobs)
+            .set({ status: "review", totalParagraphs })
+            .where(eq(schema.importJobs.id, jobId));
     }
 
-    async countParagraphs(jobId: string) {
+    async countActiveParagraphs(jobId: string) {
         const [row] = await this.db
             .select({ value: count() })
             .from(schema.importJobParagraphs)
-            .where(eq(schema.importJobParagraphs.jobId, jobId));
+            .where(
+                and(
+                    eq(schema.importJobParagraphs.jobId, jobId),
+                    eq(schema.importJobParagraphs.isDeleted, 0)
+                )
+            );
         return row?.value ?? 0;
     }
 
@@ -127,32 +178,5 @@ export class ImportJobRepository {
                 asc(schema.importJobParagraphs.paragraphIndex),
             ],
         });
-    }
-
-    async claimNextPendingParagraph(jobId: string) {
-        const next = await this.db.query.importJobParagraphs.findFirst({
-            where: and(
-                eq(schema.importJobParagraphs.jobId, jobId),
-                eq(schema.importJobParagraphs.cleanStatus, "pending"),
-                eq(schema.importJobParagraphs.isDeleted, 0)
-            ),
-            orderBy: [
-                asc(schema.importJobParagraphs.pageNumber),
-                asc(schema.importJobParagraphs.paragraphIndex),
-            ],
-        });
-        if (!next) return null;
-
-        const [claimed] = await this.db
-            .update(schema.importJobParagraphs)
-            .set({ cleanStatus: "cleaning" })
-            .where(
-                and(
-                    eq(schema.importJobParagraphs.id, next.id),
-                    eq(schema.importJobParagraphs.cleanStatus, "pending")
-                )
-            )
-            .returning();
-        return claimed ?? null;
     }
 }

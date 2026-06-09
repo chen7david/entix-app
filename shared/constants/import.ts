@@ -2,6 +2,7 @@ export const IMPORT_JOB_STATUSES = [
     "uploading",
     "ocr",
     "review",
+    "finalizing",
     "done",
     "failed",
 ] as const;

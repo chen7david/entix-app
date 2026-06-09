@@ -1,6 +1,10 @@
-import { IMPORT_FILE_TYPES, IMPORT_JOB_STATUSES, IMPORT_PARA_CLEAN_STATUSES } from "../../constants/import";
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+    IMPORT_FILE_TYPES,
+    IMPORT_JOB_STATUSES,
+    IMPORT_PARA_CLEAN_STATUSES,
+} from "../../constants/import";
 import { generateOpaqueId } from "../../lib/id";
 import { authUsers } from "./auth.schema";
 import { authOrganizations } from "./organization.schema";
@@ -8,10 +12,10 @@ import { textCollections } from "./text-collections.schema";
 
 export {
     IMPORT_FILE_TYPES,
-    type ImportFileType,
     IMPORT_JOB_STATUSES,
-    type ImportJobStatus,
     IMPORT_PARA_CLEAN_STATUSES,
+    type ImportFileType,
+    type ImportJobStatus,
     type ImportParaCleanStatus,
 } from "../../constants/import";
 
@@ -79,6 +83,11 @@ export const importJobParagraphs = sqliteTable(
         index("ijp_job_idx").on(table.jobId),
         index("ijp_clean_status_idx").on(table.cleanStatus),
         index("ijp_job_order_idx").on(table.jobId, table.pageNumber, table.paragraphIndex),
+        uniqueIndex("ijp_job_page_para_uidx").on(
+            table.jobId,
+            table.pageNumber,
+            table.paragraphIndex
+        ),
     ]
 );
 
