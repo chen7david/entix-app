@@ -1,3 +1,4 @@
+import { TooManyRequestsError } from "@api/errors/app.error";
 import { EntixQueueHandler } from "@api/queues/entix.queue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -54,6 +55,21 @@ describe("EntixQueueHandler vocabulary.process-text", () => {
         await EntixQueueHandler.process(message as never, { DB: {} } as never, {} as never);
 
         expect(message.retry).toHaveBeenCalledTimes(1);
+        expect(message.ack).not.toHaveBeenCalled();
+    });
+
+    it("defers text job when Gemini RPM limit is exceeded", async () => {
+        mocks.processText.mockRejectedValue(
+            new TooManyRequestsError("Gemini rate limit", {
+                retryAfterMs: 12_000,
+                source: "gemini_rate_limiter",
+            })
+        );
+        const message = makeMessage("vocabulary.process-text", { vocabularyId: "vocab_3" });
+
+        await EntixQueueHandler.process(message as never, { DB: {} } as never, {} as never);
+
+        expect(message.retry).toHaveBeenCalledWith({ delaySeconds: 12 });
         expect(message.ack).not.toHaveBeenCalled();
     });
 });

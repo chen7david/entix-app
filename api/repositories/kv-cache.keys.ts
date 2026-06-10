@@ -13,4 +13,7 @@ export const KvCacheKeys = {
      */
     idempotency: (method: string, path: string, key: string): string =>
         `idempotency:${method}:${path}:${key}`,
+
+    /** Sliding-window timestamps for Gemini generateContent RPM throttling. */
+    geminiGenerateRpm: (): string => "gemini:generate:rpm",
 } as const;

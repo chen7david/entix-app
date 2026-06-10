@@ -17,3 +17,6 @@ export const AI_DEFAULTS = {
     TEMPERATURE: 0.7,
     TOP_P: 1,
 } as const;
+
+/** Global Gemini `generateContent` cap (RPM), enforced before every API call including queue retries. */
+export const GEMINI_MAX_REQUESTS_PER_MINUTE = 10;

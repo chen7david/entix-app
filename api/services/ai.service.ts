@@ -1,5 +1,6 @@
 import { InternalServerError, ServiceUnavailableError } from "@api/errors/app.error";
 import { buildMessages, resolveAiRunParams } from "@api/helpers/ai.helpers";
+import type { GeminiRateLimiter } from "@api/services/gemini-rate-limiter.service";
 import type {
     AiGenerateDefaultsResolved,
     AiGenerateOptions,
@@ -19,6 +20,7 @@ export class AiService extends BaseService {
     private readonly model: AiTextModel;
     private readonly systemPrompt: string | undefined;
     private readonly defaults: AiGenerateDefaultsResolved;
+    private readonly rateLimiter: GeminiRateLimiter | undefined;
 
     constructor(config: AiServiceConfig) {
         super();
@@ -39,6 +41,7 @@ export class AiService extends BaseService {
             topP: config.defaults?.topP ?? 1,
             responseFormat: config.defaults?.responseFormat,
         };
+        this.rateLimiter = config.rateLimiter;
     }
 
     async generate(prompt: string, options: AiGenerateOptions = {}): Promise<AiGenerateResult> {
@@ -146,6 +149,10 @@ export class AiService extends BaseService {
         }
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
+
+        if (this.rateLimiter) {
+            await this.rateLimiter.acquire();
+        }
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 55000);

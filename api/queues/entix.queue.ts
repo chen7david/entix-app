@@ -12,6 +12,7 @@ import { SystemAuditRepository } from "@api/repositories/system-audit.repository
 import { UploadRepository } from "@api/repositories/upload.repository";
 import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
+import { retryQueueMessageOnGeminiRateLimit } from "@api/services/gemini-rate-limiter.service";
 import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
 import {
     VOCABULARY_TRANSLATION_INSTRUCTIONS,
@@ -182,7 +183,7 @@ async function handleVocabularyProcessText(
     const vocabularyId = message.body.vocabularyId;
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+    const aiService = createAiServiceFromEnv(env, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
     // Text processing never calls TTS. If it did, `processText` catches, runs logPipelineFailure, then rethrows — so the queue still hits retry().
@@ -214,6 +215,10 @@ async function handleVocabularyProcessText(
         // Cron owns pipeline dispatching/chaining; queue handler only advances status.
         message.ack();
     } catch (error) {
+        if (retryQueueMessageOnGeminiRateLimit(message, error)) {
+            console.warn("[Queue:VocabularyText] Deferred — Gemini RPM limit (max 10/min)");
+            return;
+        }
         console.error("[Queue:VocabularyText] Unhandled failure:", error);
         message.retry();
     }
@@ -237,7 +242,7 @@ async function handleVocabularyProcessAudio(
     const vocabularyRepo = new VocabularyBankRepository(db);
     const uploadRepo = new UploadRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+    const aiService = createAiServiceFromEnv(env, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
     const credentials = parseGoogleTtsCredentials(env as unknown as Record<string, unknown>);

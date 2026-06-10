@@ -1,12 +1,6 @@
 import type { EntixQueueMessage } from "./entix.queue";
 import { EntixQueueHandler } from "./entix.queue";
 
-const INTER_REQUEST_DELAY_MS = 2_000; // 2 seconds between AI calls
-
-function sleep(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 export async function routeQueue(
     batch: MessageBatch<EntixQueueMessage>,
     env: CloudflareBindings,
@@ -19,11 +13,8 @@ export async function routeQueue(
         return;
     }
 
-    for (let i = 0; i < batch.messages.length; i++) {
-        const message = batch.messages[i];
+    // Gemini RPM (10/min, retries included) is enforced in AiService via KV — no inter-message delay here.
+    for (const message of batch.messages) {
         await EntixQueueHandler.process(message, env, _ctx);
-        if (i < batch.messages.length - 1) {
-            await sleep(INTER_REQUEST_DELAY_MS);
-        }
     }
 }

@@ -73,6 +73,8 @@ export type AiTextProvider = {
     fetchModels(): Promise<string[]>;
 };
 
+import type { GeminiRateLimiter } from "@api/services/gemini-rate-limiter.service";
+
 /** Full config for AiService construction (Google AI Studio). */
 export type AiServiceConfig = {
     /** Google AI Studio / Gemini API key. */
@@ -83,4 +85,6 @@ export type AiServiceConfig = {
     systemPrompt?: string;
     /** Service-level generation defaults applied to every call unless overridden. */
     defaults?: AiGenerateOptions;
+    /** When set, every `generateContent` call acquires a slot before fetch (queue retries included). */
+    rateLimiter?: GeminiRateLimiter;
 };
