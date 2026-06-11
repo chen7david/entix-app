@@ -19,8 +19,12 @@ vi.mock("@api/repositories/system-audit.repository", () => ({
     },
 }));
 
-vi.mock("@api/services/ai.service", () => ({
-    AiService: class {},
+vi.mock("@api/factories/ai.factory", () => ({
+    createAiServiceFromEnv: vi.fn(() => ({
+        generate: vi.fn(),
+        getModel: () => "deepseek-v4-flash",
+        getProvider: () => "deepseek",
+    })),
 }));
 
 vi.mock("@api/services/vocabulary-processing.service", () => ({
@@ -40,7 +44,15 @@ describe("EntixQueueHandler vocabulary.process-text", () => {
         mocks.processText.mockResolvedValue(undefined);
         const message = makeMessage("vocabulary.process-text", { vocabularyId: "vocab_1" });
 
-        await EntixQueueHandler.process(message as never, { DB: {} } as never, {} as never);
+        await EntixQueueHandler.process(
+            message as never,
+            {
+                DB: {},
+                DEEPSEEK_API_KEY: "sk-test",
+                DEEPSEEK_MODEL: "deepseek-v4-flash",
+            } as never,
+            {} as never
+        );
 
         expect(mocks.processText).toHaveBeenCalledWith("vocab_1");
         expect(message.ack).toHaveBeenCalledTimes(1);
@@ -51,7 +63,15 @@ describe("EntixQueueHandler vocabulary.process-text", () => {
         mocks.processText.mockRejectedValue(new Error("translation failed"));
         const message = makeMessage("vocabulary.process-text", { vocabularyId: "vocab_2" });
 
-        await EntixQueueHandler.process(message as never, { DB: {} } as never, {} as never);
+        await EntixQueueHandler.process(
+            message as never,
+            {
+                DB: {},
+                DEEPSEEK_API_KEY: "sk-test",
+                DEEPSEEK_MODEL: "deepseek-v4-flash",
+            } as never,
+            {} as never
+        );
 
         expect(message.retry).toHaveBeenCalledTimes(1);
         expect(message.ack).not.toHaveBeenCalled();

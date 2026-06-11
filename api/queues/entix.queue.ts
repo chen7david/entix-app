@@ -182,7 +182,7 @@ async function handleVocabularyProcessText(
     const vocabularyId = message.body.vocabularyId;
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+    const aiService = createAiServiceFromEnv(env, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
     // Text processing never calls TTS. If it did, `processText` catches, runs logPipelineFailure, then rethrows — so the queue still hits retry().
@@ -237,7 +237,7 @@ async function handleVocabularyProcessAudio(
     const vocabularyRepo = new VocabularyBankRepository(db);
     const uploadRepo = new UploadRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+    const aiService = createAiServiceFromEnv(env, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
     const credentials = parseGoogleTtsCredentials(env as unknown as Record<string, unknown>);
