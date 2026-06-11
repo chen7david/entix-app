@@ -91,7 +91,8 @@ export class VocabularyProcessingService {
 
         try {
             const phrase = item.text;
-            const prompt = `${VOCABULARY_TRANSLATION_INSTRUCTIONS}\nEnglish phrase: "${phrase}"`;
+            // Instructions live in AiService systemPrompt (queue handler / factory) — user turn is phrase only.
+            const prompt = `English phrase: "${phrase}"`;
 
             const result = await this.aiService.generate(prompt, {
                 temperature: 0.1,
