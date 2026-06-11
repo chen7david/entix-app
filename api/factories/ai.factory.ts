@@ -15,10 +15,14 @@ import type {
     BaseAiServiceConfig,
 } from "@api/types/ai.types";
 
-export type AiServiceEnvSource = Pick<
-    CloudflareBindings,
-    "AI_PROVIDER" | "DEEPSEEK_API_KEY" | "DEEPSEEK_MODEL" | "GEMINI_API_KEY" | "GEMINI_MODEL"
->;
+/** Env slice used by the AI factory — intentionally wider than cf-typegen literals (supports gemini in tests/overrides). */
+export type AiServiceEnvSource = {
+    AI_PROVIDER?: AiProvider | string;
+    DEEPSEEK_API_KEY?: string;
+    DEEPSEEK_MODEL?: string;
+    GEMINI_API_KEY?: string;
+    GEMINI_MODEL?: string;
+};
 
 function resolveAiProvider(envLike: AiServiceEnvSource): AiProvider {
     const raw = (envLike.AI_PROVIDER ?? AI_PROVIDERS.DEEPSEEK).trim().toLowerCase();
@@ -73,7 +77,7 @@ export function createAiService(
         defaultModel?: AiTextModel;
     }
 ): AiTextProvider {
-    return createAiServiceFromEnv(ctx.env, config);
+    return createAiServiceFromEnv(ctx.env as AiServiceEnvSource, config);
 }
 
 /** Creates a text provider with a caller-specified validated model. */

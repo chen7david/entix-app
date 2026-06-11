@@ -13,7 +13,7 @@ describe("createAiServiceFromEnv", () => {
         const service = createAiServiceFromEnv({
             DEEPSEEK_API_KEY: "sk-test",
             DEEPSEEK_MODEL: DEEPSEEK_MODELS.DEFAULT,
-        } as CloudflareBindings);
+        } as AiServiceEnvSource);
 
         expect(service).toBeInstanceOf(DeepSeekAiService);
         expect(service.getProvider()).toBe("deepseek");
@@ -25,7 +25,7 @@ describe("createAiServiceFromEnv", () => {
             AI_PROVIDER: AI_PROVIDERS.GEMINI,
             GEMINI_API_KEY: "gemini-key",
             GEMINI_MODEL: GEMINI_MODELS.DEFAULT,
-        } as CloudflareBindings);
+        } as AiServiceEnvSource);
 
         expect(service).toBeInstanceOf(GeminiAiService);
         expect(service.getProvider()).toBe("gemini");
@@ -33,7 +33,7 @@ describe("createAiServiceFromEnv", () => {
     });
 
     it("resolveAiProvider treats unknown values as deepseek", () => {
-        expect(resolveAiProvider({ AI_PROVIDER: "unknown" } as unknown as AiServiceEnvSource)).toBe(
+        expect(resolveAiProvider({ AI_PROVIDER: "unknown" } as AiServiceEnvSource)).toBe(
             AI_PROVIDERS.DEEPSEEK
         );
     });
