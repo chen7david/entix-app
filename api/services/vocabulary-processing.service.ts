@@ -6,6 +6,15 @@ import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { pinyin } from "pinyin-pro";
 import type { TtsAudioResult, TtsService } from "./tts.service";
 
+/** Max output tokens per phrase (single or batched). */
+export const VOCABULARY_TEXT_MAX_TOKENS = 512;
+
+/** Phrases per AI request — aligned with queue `max_batch_size`. */
+export const VOCABULARY_TEXT_BATCH_SIZE = 5;
+
+/** Max vocabulary rows the cron dispatcher claims per minute. */
+export const VOCABULARY_PIPELINE_DISPATCH_LIMIT = 10;
+
 export type VocabularyTranslation = {
     normalized_text: string;
     zh_translation: string;
@@ -51,6 +60,29 @@ export const VOCABULARY_TRANSLATION_SCHEMA: AiJsonSchema = {
     additionalProperties: false,
 };
 
+export const VOCABULARY_TRANSLATION_BATCH_SCHEMA: AiJsonSchema = {
+    type: "object",
+    properties: {
+        translations: {
+            type: "array",
+            items: {
+                type: "object",
+                properties: {
+                    vocabulary_id: {
+                        type: "string",
+                        description: "Must match the input id for this phrase.",
+                    },
+                    ...VOCABULARY_TRANSLATION_SCHEMA.properties,
+                },
+                required: ["vocabulary_id", ...(VOCABULARY_TRANSLATION_SCHEMA.required ?? [])],
+                additionalProperties: false,
+            },
+        },
+    },
+    required: ["translations"],
+    additionalProperties: false,
+};
+
 export type VocabularyProcessingDeps = {
     /** Pipeline / infra failures only — content-quality review uses status `review` via AI flag. */
     logPipelineFailure: (
@@ -70,6 +102,20 @@ export const VOCABULARY_TRANSLATION_INSTRUCTIONS = [
     "6. Return 'syllables_ipa' as the IPA transcription with hyphen-separated syllables within each word, spaces preserved between words, without surrounding slashes.",
     "7. Return 'definition_simple' as a 1-sentence definition a 7-year-old can understand.",
 ].join("\n");
+
+export const VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS = [
+    VOCABULARY_TRANSLATION_INSTRUCTIONS,
+    "8. When given multiple phrases, return a JSON object with a 'translations' array — one entry per input phrase, each including 'vocabulary_id' matching the id provided.",
+].join("\n");
+
+/** Split vocabulary ids into fixed-size queue batches. */
+export function chunkVocabularyIds(ids: string[], size = VOCABULARY_TEXT_BATCH_SIZE): string[][] {
+    const chunks: string[][] = [];
+    for (let i = 0; i < ids.length; i += size) {
+        chunks.push(ids.slice(i, i + size));
+    }
+    return chunks;
+}
 
 export class VocabularyProcessingService {
     constructor(
@@ -91,11 +137,12 @@ export class VocabularyProcessingService {
 
         try {
             const phrase = item.text;
-            const prompt = `${VOCABULARY_TRANSLATION_INSTRUCTIONS}\nEnglish phrase: "${phrase}"`;
+            // Instructions live in AiService systemPrompt (queue handler / factory) — user turn is phrase only.
+            const prompt = `English phrase: "${phrase}"`;
 
             const result = await this.aiService.generate(prompt, {
                 temperature: 0.1,
-                maxTokens: 1024,
+                maxTokens: VOCABULARY_TEXT_MAX_TOKENS,
                 responseFormat: {
                     type: "json_schema",
                     json_schema: VOCABULARY_TRANSLATION_SCHEMA,
@@ -103,48 +150,139 @@ export class VocabularyProcessingService {
             });
 
             const parsed = parseVocabularyTranslation(result.text, item.text);
-
-            // Generate pinyin deterministically — never trust the AI for this
-            const pinyinValue = pinyin(parsed.zh_translation, {
-                toneType: "symbol",
-                separator: " ",
-            });
-
-            // Update with AI results, including the canonical casing
-            const updateData: any = {
-                zhTranslation: parsed.zh_translation,
-                pinyin: pinyinValue,
-                needsLanguageReview: parsed.needs_language_review,
-                ipaUs: parsed.ipa_us,
-                syllablesEn: parsed.syllables_en,
-                syllablesIpa: parsed.syllables_ipa,
-                definitionSimple: parsed.definition_simple,
-            };
-
-            // Only update text casing if it changed and doesn't conflict with another entry
-            if (parsed.normalized_text !== item.text) {
-                const existing = await this.vocabRepo.findByText(parsed.normalized_text);
-                if (!existing) {
-                    updateData.text = parsed.normalized_text;
-                }
-            }
-
-            if (parsed.needs_language_review) {
-                await this.vocabRepo.update(vocabularyId, {
-                    ...updateData,
-                    status: "review",
-                });
-                return;
-            }
-
-            await this.vocabRepo.update(vocabularyId, {
-                ...updateData,
-                status: "text_ready",
-            });
+            await this.applyTextTranslation(vocabularyId, item.text, parsed);
         } catch (error: unknown) {
             await this.emitPipelineFailure("text", vocabularyId, error);
             throw error;
         }
+    }
+
+    async processTextBatch(vocabularyIds: string[]): Promise<void> {
+        const uniqueIds = [...new Set(vocabularyIds.filter(Boolean))];
+        if (uniqueIds.length === 0) {
+            return;
+        }
+
+        if (uniqueIds.length === 1) {
+            const [singleId] = uniqueIds;
+            if (singleId) {
+                await this.processText(singleId);
+            }
+            return;
+        }
+
+        const items = await Promise.all(uniqueIds.map((id) => this.vocabRepo.findById(id)));
+        const workItems = uniqueIds
+            .map((vocabularyId, index) => ({ item: items[index], vocabularyId }))
+            .filter(
+                (
+                    entry
+                ): entry is {
+                    item: NonNullable<(typeof items)[number]>;
+                    vocabularyId: string;
+                } =>
+                    !!entry.item &&
+                    ["new", "queued_text", "processing_text"].includes(entry.item.status)
+            );
+
+        if (workItems.length === 0) {
+            return;
+        }
+
+        await Promise.all(
+            workItems.map(({ vocabularyId }) =>
+                this.vocabRepo.updateStatus(vocabularyId, "processing_text")
+            )
+        );
+
+        const promptLines = workItems.map(
+            ({ item, vocabularyId }, index) => `${index + 1}. id="${vocabularyId}": "${item.text}"`
+        );
+        const prompt = `Translate each English phrase below.\n\n${promptLines.join("\n")}`;
+
+        try {
+            const result = await this.aiService.generate(prompt, {
+                temperature: 0.1,
+                maxTokens: VOCABULARY_TEXT_MAX_TOKENS * workItems.length,
+                responseFormat: {
+                    type: "json_schema",
+                    json_schema: VOCABULARY_TRANSLATION_BATCH_SCHEMA,
+                },
+            });
+
+            const expectedIds = new Set(workItems.map(({ vocabularyId }) => vocabularyId));
+            const translations = parseVocabularyTranslationBatch(
+                result.text,
+                expectedIds,
+                new Map(workItems.map(({ item, vocabularyId }) => [vocabularyId, item.text]))
+            );
+
+            for (const { item, vocabularyId } of workItems) {
+                const parsed = translations.get(vocabularyId);
+                if (!parsed) {
+                    await this.emitPipelineFailure(
+                        "text",
+                        vocabularyId,
+                        new InternalServerError("Missing translation in batch AI response")
+                    );
+                    continue;
+                }
+
+                try {
+                    await this.applyTextTranslation(vocabularyId, item.text, parsed);
+                } catch (error: unknown) {
+                    await this.emitPipelineFailure("text", vocabularyId, error);
+                }
+            }
+        } catch (error: unknown) {
+            await Promise.all(
+                workItems.map(({ vocabularyId }) =>
+                    this.emitPipelineFailure("text", vocabularyId, error)
+                )
+            );
+            throw error;
+        }
+    }
+
+    private async applyTextTranslation(
+        vocabularyId: string,
+        originalText: string,
+        parsed: VocabularyTranslation
+    ): Promise<void> {
+        const pinyinValue = pinyin(parsed.zh_translation, {
+            toneType: "symbol",
+            separator: " ",
+        });
+
+        const updateData: Record<string, unknown> = {
+            zhTranslation: parsed.zh_translation,
+            pinyin: pinyinValue,
+            needsLanguageReview: parsed.needs_language_review,
+            ipaUs: parsed.ipa_us,
+            syllablesEn: parsed.syllables_en,
+            syllablesIpa: parsed.syllables_ipa,
+            definitionSimple: parsed.definition_simple,
+        };
+
+        if (parsed.normalized_text !== originalText) {
+            const existing = await this.vocabRepo.findByText(parsed.normalized_text);
+            if (!existing) {
+                updateData.text = parsed.normalized_text;
+            }
+        }
+
+        if (parsed.needs_language_review) {
+            await this.vocabRepo.update(vocabularyId, {
+                ...updateData,
+                status: "review",
+            });
+            return;
+        }
+
+        await this.vocabRepo.update(vocabularyId, {
+            ...updateData,
+            status: "text_ready",
+        });
     }
 
     async processAudio(vocabularyId: string): Promise<void> {
@@ -274,6 +412,38 @@ function stripIpaSlashes(s: string): string {
         .trim()
         .replace(/^\/+|\/+$/g, "")
         .trim();
+}
+
+function parseVocabularyTranslationBatch(
+    raw: string,
+    expectedIds: Set<string>,
+    fallbackTextById: Map<string, string>
+): Map<string, VocabularyTranslation> {
+    const parsed = JSON.parse(raw) as { translations?: unknown };
+    if (!Array.isArray(parsed.translations)) {
+        throw new InternalServerError("Invalid batch translation payload from AI");
+    }
+
+    const result = new Map<string, VocabularyTranslation>();
+    for (const entry of parsed.translations) {
+        if (typeof entry !== "object" || entry === null) {
+            continue;
+        }
+        const record = entry as Record<string, unknown>;
+        const vocabularyId = record.vocabulary_id;
+        if (typeof vocabularyId !== "string" || !expectedIds.has(vocabularyId)) {
+            continue;
+        }
+
+        const { vocabulary_id: _ignored, ...translationFields } = record;
+        const translation = parseVocabularyTranslation(
+            JSON.stringify(translationFields),
+            fallbackTextById.get(vocabularyId)
+        );
+        result.set(vocabularyId, translation);
+    }
+
+    return result;
 }
 
 function parseVocabularyTranslation(raw: string, fallbackText?: string): VocabularyTranslation {

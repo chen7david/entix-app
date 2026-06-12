@@ -40,8 +40,7 @@ export function buildMessages(messages: AiMessage[], systemPrompt?: string): AiM
 /**
  * Safely extracts text from Workers-style `{ response: string }` or OpenAI-compatible chat responses.
  *
- * @deprecated Production inference uses Gemini only; callers should use structured parsing for their provider.
- *             Retained for unit tests (`ai.helpers.test.ts`).
+ * @deprecated Prefer provider-specific clients; retained for unit tests.
  */
 export function extractAiText(response: unknown): string | null {
     if (response instanceof ReadableStream) {

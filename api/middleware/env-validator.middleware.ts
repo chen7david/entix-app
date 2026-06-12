@@ -1,3 +1,4 @@
+import { AI_PROVIDERS } from "@api/constants/ai.constants";
 import type { AppEnv } from "@api/helpers/types.helpers";
 import { createMiddleware } from "hono/factory";
 import { z } from "zod";
@@ -6,20 +7,53 @@ import { z } from "zod";
  * Zod schema defining all required Cloudflare environment variables and secrets.
  * This guarantees the Edge Worker has all necessary configuration before handling any business logic.
  */
-const envSchema = z.object({
-    FRONTEND_URL: z.string().url(),
-    BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
-    RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
-    CLOUDFLARE_ACCOUNT_ID: z.string().min(10, "CLOUDFLARE_ACCOUNT_ID is required"),
-    R2_ACCESS_KEY_ID: z.string().min(10, "R2_ACCESS_KEY_ID is required"),
-    R2_SECRET_ACCESS_KEY: z.string().min(10, "R2_SECRET_ACCESS_KEY is required"),
-    R2_BUCKET_NAME: z.string().min(3, "R2_BUCKET_NAME is required"),
-    PUBLIC_CDN_URL: z.url(),
-    GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY is required"),
-    GEMINI_MODEL: z.string().min(1, "GEMINI_MODEL is required"),
-    SKIP_EMAIL_VERIFICATION: z.enum(["true", "false", ""]).optional(),
-    CORS_ORIGINS: z.string().optional(),
-});
+const envSchema = z
+    .object({
+        FRONTEND_URL: z.string().url(),
+        BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+        RESEND_API_KEY: z.string().min(1, "RESEND_API_KEY is required"),
+        CLOUDFLARE_ACCOUNT_ID: z.string().min(10, "CLOUDFLARE_ACCOUNT_ID is required"),
+        R2_ACCESS_KEY_ID: z.string().min(10, "R2_ACCESS_KEY_ID is required"),
+        R2_SECRET_ACCESS_KEY: z.string().min(10, "R2_SECRET_ACCESS_KEY is required"),
+        R2_BUCKET_NAME: z.string().min(3, "R2_BUCKET_NAME is required"),
+        PUBLIC_CDN_URL: z.url(),
+        AI_PROVIDER: z.enum([AI_PROVIDERS.DEEPSEEK, AI_PROVIDERS.GEMINI]).optional(),
+        DEEPSEEK_API_KEY: z.string().optional(),
+        DEEPSEEK_MODEL: z.string().optional(),
+        GEMINI_API_KEY: z.string().optional(),
+        GEMINI_MODEL: z.string().optional(),
+        SKIP_EMAIL_VERIFICATION: z.enum(["true", "false", ""]).optional(),
+        CORS_ORIGINS: z.string().optional(),
+    })
+    .superRefine((env, ctx) => {
+        const provider = (env.AI_PROVIDER ?? AI_PROVIDERS.DEEPSEEK).trim().toLowerCase();
+
+        if (provider === AI_PROVIDERS.DEEPSEEK) {
+            if (!env.DEEPSEEK_API_KEY?.trim()) {
+                ctx.addIssue({
+                    code: "custom",
+                    path: ["DEEPSEEK_API_KEY"],
+                    message: "DEEPSEEK_API_KEY is required when AI_PROVIDER is deepseek",
+                });
+            }
+            return;
+        }
+
+        if (!env.GEMINI_API_KEY?.trim()) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["GEMINI_API_KEY"],
+                message: "GEMINI_API_KEY is required when AI_PROVIDER is gemini",
+            });
+        }
+        if (!env.GEMINI_MODEL?.trim()) {
+            ctx.addIssue({
+                code: "custom",
+                path: ["GEMINI_MODEL"],
+                message: "GEMINI_MODEL is required when AI_PROVIDER is gemini",
+            });
+        }
+    });
 
 export const envValidatorMiddleware = () => {
     return createMiddleware<AppEnv>(async (c, next) => {

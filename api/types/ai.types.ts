@@ -1,4 +1,4 @@
-/** Gemini model id passed to `models/{id}:generateContent`. */
+/** Provider-agnostic model id passed to the active inference backend. */
 export type AiTextModel = string;
 
 /** Role for a message turn in a chat conversation. */
@@ -12,7 +12,7 @@ export type AiMessage = {
 
 /**
  * Generation options settable at service-level (defaults) or per-call (overrides).
- * camelCase throughout — transformed to Cloudflare's snake_case only at the call boundary.
+ * camelCase throughout — transformed to provider-specific params at the call boundary.
  */
 export type AiGenerateOptions = {
     /** Max tokens to generate. */
@@ -21,13 +21,12 @@ export type AiGenerateOptions = {
     temperature?: number;
     /** Top-p nucleus sampling (0-1). */
     topP?: number;
-    /** Optional structured output mode supported by Workers AI compatible APIs. */
+    /** Optional structured output mode (Gemini json_schema; DeepSeek json_object). */
     responseFormat?: AiResponseFormat;
 };
 
 /**
- * Resolved AiService defaults: sampling params are always set; structured output remains optional.
- * (Avoids `Required<AiGenerateOptions>`, which would incorrectly require `responseFormat`.)
+ * Resolved AI service defaults: sampling params are always set; structured output remains optional.
  */
 export type AiGenerateDefaultsResolved = Required<
     Pick<AiGenerateOptions, "maxTokens" | "temperature" | "topP">
@@ -46,8 +45,7 @@ export type AiResponseFormat =
     | { type: "json_schema"; json_schema: AiJsonSchema };
 
 /**
- * Internal snake_case params passed directly to `ai.run()`.
- * Keeping this type explicit documents the camelCase -> snake_case transform boundary.
+ * Internal snake_case params passed directly to provider clients.
  */
 export type AiRunParams = {
     max_tokens: number;
@@ -64,23 +62,23 @@ export type AiGenerateResult = {
     generatedAt: string;
 };
 
-/** Shared surface implemented by {@link AiService}. */
+/** Shared surface implemented by DeepSeek and Gemini text clients. */
 export type AiTextProvider = {
     generate(prompt: string, options?: AiGenerateOptions): Promise<AiGenerateResult>;
     chat(messages: AiMessage[], options?: AiGenerateOptions): Promise<AiGenerateResult>;
     getModel(): AiTextModel;
+    getProvider(): "deepseek" | "gemini";
     stream(prompt: string, options?: AiGenerateOptions): Promise<ReadableStream>;
     fetchModels(): Promise<string[]>;
 };
 
-/** Full config for AiService construction (Google AI Studio). */
-export type AiServiceConfig = {
-    /** Google AI Studio / Gemini API key. */
+/** Shared config for text inference service construction. */
+export type BaseAiServiceConfig = {
     apiKey: string;
-    /** Default model id (e.g. `gemini-2.5-flash`). */
     defaultModel: AiTextModel;
-    /** Optional system prompt prepended to every request. */
     systemPrompt?: string;
-    /** Service-level generation defaults applied to every call unless overridden. */
     defaults?: AiGenerateOptions;
 };
+
+/** @deprecated Use {@link BaseAiServiceConfig}. Kept for Gemini-only call sites. */
+export type AiServiceConfig = BaseAiServiceConfig;

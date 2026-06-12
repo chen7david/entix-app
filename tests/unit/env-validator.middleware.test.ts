@@ -25,6 +25,9 @@ const validEnv: any = {
     R2_SECRET_ACCESS_KEY: "mock_r2_secret_key",
     R2_BUCKET_NAME: "mock-bucket",
     PUBLIC_CDN_URL: "https://cdn.example.com",
+    AI_PROVIDER: "deepseek",
+    DEEPSEEK_API_KEY: "test-deepseek-key",
+    DEEPSEEK_MODEL: "deepseek-v4-flash",
     GEMINI_API_KEY: "test-gemini-key",
     GEMINI_MODEL: "gemini-2.5-flash",
 };
@@ -66,5 +69,20 @@ describe("envValidatorMiddleware", () => {
         expect(res.status).toBe(500);
         const body = await parseJson<ErrorResponse>(res);
         expect(body.success).toBe(false);
+    });
+
+    it("should return 500 when DEEPSEEK_API_KEY is missing for default provider", async () => {
+        const { DEEPSEEK_API_KEY: _, ...missingDeepSeek } = validEnv;
+        const res = await buildTestApp(missingDeepSeek)("/health");
+        expect(res.status).toBe(500);
+    });
+
+    it("should require GEMINI keys when AI_PROVIDER is gemini", async () => {
+        const res = await buildTestApp({
+            ...validEnv,
+            AI_PROVIDER: "gemini",
+            GEMINI_API_KEY: "",
+        })("/health");
+        expect(res.status).toBe(500);
     });
 });

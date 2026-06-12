@@ -7,8 +7,8 @@ export function VocabAiTesterHeader() {
         <div style={{ marginBottom: 24 }}>
             <Title level={2}>Vocab AI Pipeline Tester</Title>
             <Text type="secondary">
-                Provider: <strong>Open WebUI</strong> — credentials loaded from server env vars. No
-                DB writes. Local AI pipeline tester only.
+                Provider: <strong>DeepSeek V4 Flash</strong> (default) — credentials loaded from
+                server env. Set <code>AI_PROVIDER=gemini</code> to use Google. No DB writes.
             </Text>
         </div>
     );
