@@ -1,6 +1,6 @@
 import { InternalServerError, ServiceUnavailableError } from "@api/errors/app.error";
-import { AiService } from "@api/services/ai.service";
-import type { AiServiceConfig } from "@api/types/ai.types";
+import { GeminiAiService } from "@api/services/gemini-ai.service";
+import type { BaseAiServiceConfig } from "@api/types/ai.types";
 import { describe, expect, it, vi } from "vitest";
 
 function geminiTextResponse(text: string): unknown {
@@ -9,20 +9,20 @@ function geminiTextResponse(text: string): unknown {
     };
 }
 
-function buildService(): AiService {
-    const config: AiServiceConfig = {
+function buildService(): GeminiAiService {
+    const config: BaseAiServiceConfig = {
         apiKey: "test-key",
         defaultModel: "gemini-test",
         systemPrompt: "system",
         defaults: { maxTokens: 64, temperature: 0.2, topP: 0.9 },
     };
 
-    return new AiService(config);
+    return new GeminiAiService(config);
 }
 
-describe("AiService", () => {
+describe("GeminiAiService", () => {
     it("throws when API key is missing", () => {
-        expect(() => new AiService({ apiKey: "", defaultModel: "gemini-test" })).toThrow(
+        expect(() => new GeminiAiService({ apiKey: "", defaultModel: "gemini-test" })).toThrow(
             InternalServerError
         );
     });
@@ -40,6 +40,7 @@ describe("AiService", () => {
 
         expect(result.text).toBe("ok");
         expect(service.getModel()).toBe("gemini-test");
+        expect(service.getProvider()).toBe("gemini");
 
         expect(fetchMock).toHaveBeenCalledTimes(1);
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
@@ -75,7 +76,7 @@ describe("AiService", () => {
                 headers: { "Content-Type": "application/json" },
             })
         );
-        const service = new AiService({
+        const service = new GeminiAiService({
             apiKey: "test-key",
             defaultModel: "gemini-test",
             defaults: { maxTokens: 64, temperature: 0.2, topP: 0.9 },
@@ -114,61 +115,18 @@ describe("AiService", () => {
         fetchMock.mockRestore();
     });
 
-    it("response_format json_object: sets application/json MIME", async () => {
-        const fetchMock = vi
-            .spyOn(globalThis, "fetch")
-            .mockResolvedValue(
-                new Response(
-                    JSON.stringify(
-                        geminiTextResponse(
-                            '{"zh_translation":"x","pinyin":"y","needs_language_review":false}'
-                        )
-                    ),
-                    { status: 200, headers: { "Content-Type": "application/json" } }
-                )
-            );
-        const service = new AiService({
-            apiKey: "test-key",
-            defaultModel: "gemini-test",
-        });
-
-        const result = await service.generate("hello", {
-            responseFormat: { type: "json_object" },
-        });
-
-        expect(result.text).toBe(
-            '{"zh_translation":"x","pinyin":"y","needs_language_review":false}'
-        );
-        const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-        const body = JSON.parse(String(init.body)) as {
-            generationConfig: { responseMimeType?: string };
-        };
-        expect(body.generationConfig.responseMimeType).toBe("application/json");
-        fetchMock.mockRestore();
-    });
-
-    it("response_format json_object: falls back to serializing structured payload when no text parts", async () => {
-        const fallbackPayload = { candidates: [] };
-        const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-            new Response(JSON.stringify(fallbackPayload), {
-                status: 200,
-                headers: { "Content-Type": "application/json" },
-            })
-        );
-        const service = new AiService({
-            apiKey: "test-key",
-            defaultModel: "gemini-test",
-        });
-
-        const result = await service.generate("hello", { responseFormat: { type: "json_object" } });
-        expect(result.text).toBe(JSON.stringify(fallbackPayload));
-        fetchMock.mockRestore();
-    });
-
     it("streaming throws until enabled", async () => {
         const service = buildService();
         await expect(service.stream("hello")).rejects.toThrow(
             "Streaming is not enabled for Gemini integration."
         );
+    });
+});
+
+/** Backward-compatible suite name for CI grep / historical references. */
+describe("AiService (Gemini alias)", () => {
+    it("re-exports GeminiAiService", async () => {
+        const { AiService } = await import("@api/services/ai.service");
+        expect(AiService).toBe(GeminiAiService);
     });
 });

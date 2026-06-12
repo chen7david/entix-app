@@ -1,6 +1,11 @@
 import type { EntixQueueMessage } from "@api/queues/entix.queue";
 import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import {
+    chunkVocabularyIds,
+    VOCABULARY_PIPELINE_DISPATCH_LIMIT,
+    VOCABULARY_TEXT_BATCH_SIZE,
+} from "@api/services/vocabulary-processing.service";
 import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";
@@ -13,6 +18,7 @@ export const VOCABULARY_PIPELINE_STALE_AFTER_MS = 15 * 60 * 1000; // 15 min
  * 1. Atomically claims `new` → `queued_text` / `text_ready` → `queued_audio`, then enqueues work
  * 2. Re-dispatches stuck `processing_*` / `queued_*` older than `VOCABULARY_PIPELINE_STALE_AFTER_MS`
  *
+ * Text jobs are batched ({@link VOCABULARY_TEXT_BATCH_SIZE} phrases per AI call).
  * This is the ONLY place queue messages are sent for vocabulary processing.
  * Queue handlers purely do work and update status — they never chain to the next stage.
  */
@@ -24,8 +30,8 @@ export async function driveVocabularyPipeline(env: CloudflareBindings): Promise<
     const cutoff = new Date(Date.now() - VOCABULARY_PIPELINE_STALE_AFTER_MS);
 
     const [pending, stale] = await Promise.all([
-        vocabularyRepo.findPendingDispatch(40),
-        vocabularyRepo.findStaleProcessing(cutoff, 40),
+        vocabularyRepo.findPendingDispatch(VOCABULARY_PIPELINE_DISPATCH_LIMIT),
+        vocabularyRepo.findStaleProcessing(cutoff, VOCABULARY_PIPELINE_DISPATCH_LIMIT),
     ]);
 
     const toDispatch = [
@@ -34,7 +40,9 @@ export async function driveVocabularyPipeline(env: CloudflareBindings): Promise<
         ...stale.filter((s) => !pending.some((p) => p.id === s.id)),
     ];
 
-    let enqueued = 0;
+    const textVocabularyIds: string[] = [];
+    let audioEnqueued = 0;
+
     for (const row of toDispatch) {
         const isStaleRetry =
             row.status === "processing_text" ||
@@ -60,13 +68,30 @@ export async function driveVocabularyPipeline(env: CloudflareBindings): Promise<
             row.status === "processing_audio" ||
             row.status === "queued_audio";
 
-        const msg: EntixQueueMessage = isAudio
-            ? { type: "vocabulary.process-audio", vocabularyId: row.id }
-            : { type: "vocabulary.process-text", vocabularyId: row.id };
+        if (isAudio) {
+            const msg: EntixQueueMessage = {
+                type: "vocabulary.process-audio",
+                vocabularyId: row.id,
+            };
+            await env.QUEUE.send(msg);
+            audioEnqueued++;
+            continue;
+        }
 
-        await env.QUEUE.send(msg);
-        enqueued++;
+        textVocabularyIds.push(row.id);
     }
+
+    let textBatchEnqueued = 0;
+    for (const batch of chunkVocabularyIds(textVocabularyIds, VOCABULARY_TEXT_BATCH_SIZE)) {
+        const msg: EntixQueueMessage = {
+            type: "vocabulary.process-text-batch",
+            vocabularyIds: batch,
+        };
+        await env.QUEUE.send(msg);
+        textBatchEnqueued++;
+    }
+
+    const enqueued = audioEnqueued + textBatchEnqueued;
 
     if (enqueued > 0) {
         await auditRepo.insert({
@@ -81,9 +106,14 @@ export async function driveVocabularyPipeline(env: CloudflareBindings): Promise<
             metadata: JSON.stringify({
                 pending: pending.length,
                 stale: stale.length,
+                textPhrases: textVocabularyIds.length,
+                textBatches: textBatchEnqueued,
+                audioJobs: audioEnqueued,
                 cutoffMs: cutoff.getTime(),
             }),
         });
-        console.log(`[Scheduled:VocabularyPipeline] Dispatched ${enqueued} jobs`);
+        console.log(
+            `[Scheduled:VocabularyPipeline] Dispatched ${enqueued} jobs (${textVocabularyIds.length} text phrases in ${textBatchEnqueued} batch(es), ${audioEnqueued} audio)`
+        );
     }
 }

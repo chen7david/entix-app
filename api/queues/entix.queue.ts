@@ -14,6 +14,7 @@ import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repo
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
 import {
+    VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS,
     VOCABULARY_TRANSLATION_INSTRUCTIONS,
     VocabularyProcessingService,
 } from "@api/services/vocabulary-processing.service";
@@ -36,6 +37,10 @@ export type EntixQueueMessage =
     | {
           type: "vocabulary.process-text";
           vocabularyId: string;
+      }
+    | {
+          type: "vocabulary.process-text-batch";
+          vocabularyIds: string[];
       }
     | {
           type: "vocabulary.process-audio";
@@ -73,6 +78,13 @@ export const EntixQueueHandler = {
                 return handleVocabularyProcessText(
                     message as Message<
                         Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>
+                    >,
+                    env
+                );
+            case "vocabulary.process-text-batch":
+                return handleVocabularyProcessTextBatch(
+                    message as Message<
+                        Extract<EntixQueueMessage, { type: "vocabulary.process-text-batch" }>
                     >,
                     env
                 );
@@ -178,21 +190,49 @@ async function handleVocabularyProcessText(
     message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>>,
     env: CloudflareBindings
 ): Promise<void> {
-    const db = drizzle(env.DB, { schema });
+    const processor = createVocabularyTextProcessor(env, VOCABULARY_TRANSLATION_INSTRUCTIONS);
     const vocabularyId = message.body.vocabularyId;
+
+    try {
+        await processor.processText(vocabularyId);
+        message.ack();
+    } catch (error) {
+        console.error("[Queue:VocabularyText] Unhandled failure:", error);
+        message.retry();
+    }
+}
+
+async function handleVocabularyProcessTextBatch(
+    message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-text-batch" }>>,
+    env: CloudflareBindings
+): Promise<void> {
+    const processor = createVocabularyTextProcessor(env, VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS);
+    const vocabularyIds = message.body.vocabularyIds;
+
+    try {
+        await processor.processTextBatch(vocabularyIds);
+        message.ack();
+    } catch (error) {
+        console.error("[Queue:VocabularyTextBatch] Unhandled failure:", error);
+        message.retry();
+    }
+}
+
+function createVocabularyTextProcessor(
+    env: CloudflareBindings,
+    systemPrompt: string
+): VocabularyProcessingService {
+    const db = drizzle(env.DB, { schema });
     const vocabularyRepo = new VocabularyBankRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
-        systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
-    });
-    // Text processing never calls TTS. If it did, `processText` catches, runs logPipelineFailure, then rethrows — so the queue still hits retry().
+    const aiService = createAiServiceFromEnv(env, { systemPrompt });
     const ttsService = {
         generateAndUpload: async () => {
             throw new InternalServerError("TTS is not available in text processing");
         },
     } as unknown as TtsService;
 
-    const processor = new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
+    return new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
         logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
             const errMsg = error instanceof Error ? error.message : String(error);
             await auditRepo.insert({
@@ -208,15 +248,6 @@ async function handleVocabularyProcessText(
             });
         },
     });
-
-    try {
-        await processor.processText(vocabularyId);
-        // Cron owns pipeline dispatching/chaining; queue handler only advances status.
-        message.ack();
-    } catch (error) {
-        console.error("[Queue:VocabularyText] Unhandled failure:", error);
-        message.retry();
-    }
 }
 
 async function handleVocabularyProcessAudio(
@@ -237,7 +268,7 @@ async function handleVocabularyProcessAudio(
     const vocabularyRepo = new VocabularyBankRepository(db);
     const uploadRepo = new UploadRepository(db);
     const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env as unknown as Record<string, string | undefined>, {
+    const aiService = createAiServiceFromEnv(env, {
         systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
     });
     const credentials = parseGoogleTtsCredentials(env as unknown as Record<string, unknown>);

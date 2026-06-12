@@ -1,24 +1,68 @@
-import { AI_MODELS } from "@api/constants/ai.constants";
+import {
+    AI_MODELS,
+    AI_PROVIDERS,
+    type AiProvider,
+    DEEPSEEK_MODELS,
+    GEMINI_MODELS,
+} from "@api/constants/ai.constants";
 import type { AppContext } from "@api/helpers/types.helpers";
-import { AiService } from "@api/services/ai.service";
+import { DeepSeekAiService } from "@api/services/deepseek-ai.service";
+import { GeminiAiService } from "@api/services/gemini-ai.service";
 import type {
     AiGenerateOptions,
-    AiServiceConfig,
     AiTextModel,
     AiTextProvider,
+    BaseAiServiceConfig,
 } from "@api/types/ai.types";
 
-/** Worker env → {@link AiService} (shared by HTTP routes and queue consumers). */
+/** Env slice used by the AI factory — intentionally wider than cf-typegen literals (supports gemini in tests/overrides). */
+export type AiServiceEnvSource = {
+    AI_PROVIDER?: AiProvider | string;
+    DEEPSEEK_API_KEY?: string;
+    DEEPSEEK_MODEL?: string;
+    GEMINI_API_KEY?: string;
+    GEMINI_MODEL?: string;
+};
+
+function resolveAiProvider(envLike: AiServiceEnvSource): AiProvider {
+    const raw = (envLike.AI_PROVIDER ?? AI_PROVIDERS.DEEPSEEK).trim().toLowerCase();
+    if (raw === AI_PROVIDERS.GEMINI) return AI_PROVIDERS.GEMINI;
+    return AI_PROVIDERS.DEEPSEEK;
+}
+
+/** Worker env → active text provider (DeepSeek by default, Gemini optional). */
 export function createAiServiceFromEnv(
-    envLike: Record<string, string | undefined>,
-    config: Omit<AiServiceConfig, "apiKey" | "defaultModel"> & {
+    envLike: AiServiceEnvSource,
+    config: Omit<BaseAiServiceConfig, "apiKey" | "defaultModel"> & {
         defaultModel?: AiTextModel;
     } = {}
 ): AiTextProvider {
-    const apiKey = (envLike.GEMINI_API_KEY ?? "").trim();
-    const defaultModel = (config.defaultModel ?? envLike.GEMINI_MODEL ?? AI_MODELS.DEFAULT).trim();
+    const provider = resolveAiProvider(envLike);
 
-    return new AiService({
+    if (provider === AI_PROVIDERS.GEMINI) {
+        const apiKey = (envLike.GEMINI_API_KEY ?? "").trim();
+        const defaultModel = (
+            config.defaultModel ??
+            envLike.GEMINI_MODEL ??
+            GEMINI_MODELS.DEFAULT
+        ).trim();
+
+        return new GeminiAiService({
+            apiKey,
+            defaultModel,
+            systemPrompt: config.systemPrompt,
+            defaults: config.defaults,
+        });
+    }
+
+    const apiKey = (envLike.DEEPSEEK_API_KEY ?? "").trim();
+    const defaultModel = (
+        config.defaultModel ??
+        envLike.DEEPSEEK_MODEL ??
+        AI_MODELS.DEFAULT
+    ).trim();
+
+    return new DeepSeekAiService({
         apiKey,
         defaultModel,
         systemPrompt: config.systemPrompt,
@@ -26,22 +70,17 @@ export function createAiServiceFromEnv(
     });
 }
 
-/**
- * Core AI factory. Resolves Google AI Studio secrets and model from Worker env.
- */
+/** Core AI factory. Resolves provider secrets and model from Worker env. */
 export function createAiService(
     ctx: AppContext,
-    config: Omit<AiServiceConfig, "apiKey" | "defaultModel"> & {
+    config: Omit<BaseAiServiceConfig, "apiKey" | "defaultModel"> & {
         defaultModel?: AiTextModel;
     }
 ): AiTextProvider {
-    const env = ctx.env as unknown as Record<string, string | undefined>;
-    return createAiServiceFromEnv(env, config);
+    return createAiServiceFromEnv(ctx.env as AiServiceEnvSource, config);
 }
 
-/**
- * Creates an AiService with a caller-specified validated model.
- */
+/** Creates a text provider with a caller-specified validated model. */
 export function createAiServiceForModel(
     ctx: AppContext,
     model: AiTextModel,
@@ -49,3 +88,6 @@ export function createAiServiceForModel(
 ): AiTextProvider {
     return createAiService(ctx, { defaultModel: model, ...opts });
 }
+
+/** Exported for tests and diagnostics. */
+export { AI_PROVIDERS, DEEPSEEK_MODELS, GEMINI_MODELS, resolveAiProvider };

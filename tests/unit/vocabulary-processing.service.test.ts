@@ -1,5 +1,8 @@
 import type { TtsAudioResult } from "@api/services/tts.service";
-import { VocabularyProcessingService } from "@api/services/vocabulary-processing.service";
+import {
+    chunkVocabularyIds,
+    VocabularyProcessingService,
+} from "@api/services/vocabulary-processing.service";
 import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -92,7 +95,7 @@ describe("VocabularyProcessingService", () => {
 
         expect(aiService.generate).toHaveBeenCalledWith(expect.stringContaining("English phrase"), {
             temperature: 0.1,
-            maxTokens: 1024,
+            maxTokens: 512,
             responseFormat: expect.any(Object),
         });
         expect(vocabRepo.updateStatus).toHaveBeenNthCalledWith(1, "vocab_1", "processing_text");
@@ -237,6 +240,92 @@ describe("VocabularyProcessingService", () => {
         expect(vocabRepo.update).not.toHaveBeenCalled();
         expect(logPipelineFailure).toHaveBeenCalledTimes(1);
         expect(ttsService.generateAndUpload).not.toHaveBeenCalled();
+    });
+
+    it("processTextBatch uses one AI call for multiple phrases", async () => {
+        vocabRepo.findById.mockImplementation(async (id: string) => {
+            if (id === "vocab_1") {
+                return { id: "vocab_1", text: "hello", status: "queued_text" };
+            }
+            if (id === "vocab_2") {
+                return { id: "vocab_2", text: "world", status: "queued_text" };
+            }
+            return null;
+        });
+        aiService.generate.mockResolvedValueOnce({
+            text: JSON.stringify({
+                translations: [
+                    { vocabulary_id: "vocab_1", ...MOCK_SUCCESS_RESULT },
+                    {
+                        vocabulary_id: "vocab_2",
+                        normalized_text: "world",
+                        zh_translation: "世界",
+                        needs_language_review: false,
+                        ipa_us: "wɜːld",
+                        syllables_en: "world",
+                        syllables_ipa: "wɜːld",
+                        definition_simple: "The earth",
+                    },
+                ],
+            }),
+        });
+        vocabRepo.update.mockResolvedValue({});
+        vocabRepo.updateStatus.mockResolvedValue({});
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            undefined
+        );
+        await service.processTextBatch(["vocab_1", "vocab_2"]);
+
+        expect(aiService.generate).toHaveBeenCalledTimes(1);
+        expect(aiService.generate).toHaveBeenCalledWith(
+            expect.stringContaining('id="vocab_1"'),
+            expect.objectContaining({ maxTokens: 1024 })
+        );
+        expect(vocabRepo.update).toHaveBeenCalledWith(
+            "vocab_1",
+            expect.objectContaining({ status: "text_ready" })
+        );
+        expect(vocabRepo.update).toHaveBeenCalledWith(
+            "vocab_2",
+            expect.objectContaining({ status: "text_ready" })
+        );
+    });
+
+    it("processTextBatch delegates single-id batches to processText", async () => {
+        vocabRepo.findById.mockResolvedValueOnce({
+            id: "vocab_1",
+            text: "hello",
+            status: "new",
+        });
+        aiService.generate.mockResolvedValueOnce({
+            text: JSON.stringify(MOCK_SUCCESS_RESULT),
+        });
+        vocabRepo.update.mockResolvedValue({});
+        vocabRepo.updateStatus.mockResolvedValue({});
+
+        const service = new VocabularyProcessingService(
+            vocabRepo as never,
+            aiService as never,
+            ttsService as never,
+            undefined
+        );
+        await service.processTextBatch(["vocab_1"]);
+
+        expect(aiService.generate).toHaveBeenCalledWith(
+            expect.stringContaining("English phrase"),
+            expect.objectContaining({ maxTokens: 512 })
+        );
+    });
+
+    it("chunkVocabularyIds splits ids into fixed-size batches", () => {
+        expect(chunkVocabularyIds(["a", "b", "c", "d", "e", "f"], 5)).toEqual([
+            ["a", "b", "c", "d", "e"],
+            ["f"],
+        ]);
     });
 
     it("processAudio uploads audio and transitions text_ready -> active", async () => {
