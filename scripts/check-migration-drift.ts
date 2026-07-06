@@ -34,7 +34,7 @@ function main() {
     const beforeJournal = readFileSync(JOURNAL_PATH, "utf-8");
 
     try {
-        execSync("npx drizzle-kit generate --config=drizzle.config.ts --name=drift_check", {
+        execSync("npx drizzle-kit generate --config=tooling/drizzle.config.ts --name=drift_check", {
             stdio: "pipe",
             encoding: "utf-8",
         });

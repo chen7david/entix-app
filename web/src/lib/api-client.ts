@@ -7,7 +7,6 @@ import { hc } from "hono/client";
  *
  * Narrow at call sites with `hcJson<T>(res)` (Phase I — UI.md / assessment §7.1 I).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ApiClient = any;
 
 /**

@@ -2,18 +2,19 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineWorkersConfig } from "@cloudflare/vitest-pool-workers/config";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 export default defineWorkersConfig({
     test: {
         /** Integration hooks (D1 + auth) occasionally exceed Vitest’s default 10s under load. */
         hookTimeout: 30_000,
-        setupFiles: ["./tests/setup.ts"],
+        root: rootDir,
+        setupFiles: [resolve(rootDir, "tests/setup.ts")],
         poolOptions: {
             workers: {
                 isolate: false,
                 singleWorker: true,
-                wrangler: { configPath: "./wrangler.jsonc" },
+                wrangler: { configPath: resolve(rootDir, "wrangler.jsonc") },
                 miniflare: {
                     d1Databases: ["DB"],
                     kvNamespaces: ["IDEMPOTENCY_KV"],
@@ -46,9 +47,9 @@ export default defineWorkersConfig({
         ],
         exclude: ["tests/e2e/**"],
         alias: {
-            "@api": resolve(__dirname, "./api"),
-            "@shared": resolve(__dirname, "./shared"),
-            "@web": resolve(__dirname, "./web"),
+            "@api": resolve(rootDir, "api"),
+            "@shared": resolve(rootDir, "shared"),
+            "@web": resolve(rootDir, "web"),
         },
     },
 });

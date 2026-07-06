@@ -16,7 +16,7 @@ async function clickVisibleRowMenuItem(page: Page, name: string) {
     const item = page.locator(".ant-dropdown:visible").getByRole("menuitem", { name }).first();
     await expect(item).toBeVisible();
     await item.evaluate((node) => {
-        (node as { click: () => void }).click();
+        (node as unknown as { click: () => void }).click();
     });
 }
 
@@ -181,7 +181,7 @@ export async function createOrganizationMember(
         .first();
     await expect(roleOption).toBeVisible();
     await roleOption.evaluate((node) => {
-        (node as { click: () => void }).click();
+        (node as unknown as { click: () => void }).click();
     });
 
     await modal.getByRole("button", { name: "Create Member" }).click();
@@ -228,7 +228,7 @@ export async function creditMemberWalletByEmail(
     const walletTab = drawer.getByRole("tab", { name: "Wallet" }).first();
     await expect(walletTab).toBeVisible();
     await walletTab.evaluate((node) => {
-        (node as { click: () => void }).click();
+        (node as unknown as { click: () => void }).click();
     });
     await expect(drawer.getByRole("tab", { name: "Wallet", selected: true })).toBeVisible();
     await expect(drawer.locator(".ant-spin-spinning")).toHaveCount(0, { timeout: 20000 });
@@ -256,7 +256,7 @@ export async function creditMemberWalletByEmail(
 
     await expect(walletSelectTrigger).toBeVisible();
     await walletSelectTrigger.evaluate((node) => {
-        (node as { click: () => void }).click();
+        (node as unknown as { click: () => void }).click();
     });
     const walletDropdown = page.locator(".ant-select-dropdown:visible").last();
     if ((await walletDropdown.count()) === 0) {

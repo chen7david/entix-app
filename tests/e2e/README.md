@@ -23,4 +23,9 @@ This folder contains Playwright end-to-end tests for full user flows.
 - `npm run test:e2e:reset` - reset DB, then headless run
 - `npm run test:e2e:reset:headed` - reset DB, then visible run
 
+## Artifacts (gitignored)
+
+- `tests/e2e/test-results/` — screenshots, videos, traces per failed run
+- `tests/e2e/playwright-report/` — HTML report (`npx playwright show-report tests/e2e/playwright-report`)
+
 Use the `:reset` scripts for deterministic runs when tests depend on seed state.

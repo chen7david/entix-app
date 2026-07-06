@@ -9,13 +9,13 @@ This guide explains how to set up your local development environment and safely 
 
 Before running the application, you must set up your baseline environment variables.
 
-1.  **Local Development**: Create a `.dev.vars` file in the project root (used by Wrangler).
-    ```bash
-    # Example .dev.vars
-    BETTER_AUTH_SECRET="your-secret-here"
-    RESEND_API_KEY="re_..."
-    SKIP_EMAIL_VERIFICATION="true" # Set to true to skip verification locally
-    ```
+1.  **Local Development**: Run `npm run dev:vars` (also runs as part of `npm run dev:init`). It copies `.example.dev.vars` → `.dev.vars` and fills:
+    - `BETTER_AUTH_SECRET` (random 32-byte hex)
+    - Mock `RESEND_API_KEY` / `R2_SECRET_ACCESS_KEY` for local boot
+    - `CLOUDFLARE_D1_LOCAL_DB` when local D1 already exists under `.wrangler/`
+    - `SKIP_EMAIL_VERIFICATION=true` and `SKIP_AUTH_EMAILS=true` for easier local auth
+
+    Re-run after first DB migration if `CLOUDFLARE_D1_LOCAL_DB` was empty: `npm run db:migrate:dev && npm run dev:vars -- --force`
 2.  **Web Application**: Ensure `web/.env` is configured (usually managed by Vite defaults).
 
 ## 2. Database Initialization
