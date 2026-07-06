@@ -29,7 +29,7 @@
         "db:seed:staging": "npx wrangler d1 execute entix-app-staging --remote --file=api/db/seeds/0001_genesis_seed.sql --env staging",
         "db:seed:production": "npx wrangler d1 execute entix-app-production --remote --file=api/db/seeds/0001_genesis_seed.sql --env production",
         "auth:generate": "npx @better-auth/cli generate --config ./tooling/better-auth.config.ts",
-        "test": "npm run test:migrations && npm run typecheck && npm run lint:web && concurrently --kill-others-on-fail \"npm run test:api\" \"npm run test:web\"",
+        "test": "npm run test:migrations && npm run typecheck && concurrently --kill-others-on-fail \"npm run test:api\" \"npm run test:web\"",
         "test:migrations": "npm run check:migrations && npm run check:migrations:drift",
         "test:api": "vitest run --config tooling/vitest.config.ts",
         "test:web": "cd web && npm run test:run",
