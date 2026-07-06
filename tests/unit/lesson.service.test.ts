@@ -1,5 +1,5 @@
 import { NotFoundError } from "@api/errors/app.error";
-import { LessonHandlers } from "@api/routes/orgs/lesson.handlers";
+import { LessonService } from "@api/services/lesson.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRepo = {
@@ -13,17 +13,12 @@ const mockUploadService = {
     deleteUploadByUrlGlobalSafely: vi.fn(),
 };
 
-vi.mock("@api/factories/repository.factory", () => ({
-    getLessonRepository: () => mockRepo,
-}));
+describe("LessonService.updateLesson", () => {
+    let service: LessonService;
 
-vi.mock("@api/factories/upload.factory", () => ({
-    getUploadService: () => mockUploadService,
-}));
-
-describe("LessonHandlers.updateLesson", () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        service = new LessonService(mockRepo as any, mockUploadService as any);
     });
 
     it("does not delete old cover art when update returns null", async () => {
@@ -40,26 +35,22 @@ describe("LessonHandlers.updateLesson", () => {
         mockUploadService.getVerifiedImageUploadUrl.mockResolvedValueOnce("https://new-cover");
         mockRepo.update.mockResolvedValueOnce(null);
 
-        const ctx = {
-            req: {
-                valid: (source: "param" | "json") =>
-                    source === "param"
-                        ? { organizationId: "org_1", lessonId: "lesson_1" }
-                        : { title: "Updated", coverArtUploadId: "upload_1" },
-            },
-            json: vi.fn(),
-        } as any;
-
-        await expect(LessonHandlers.updateLesson(ctx, undefined as never)).rejects.toBeInstanceOf(
-            NotFoundError
-        );
+        await expect(
+            service.updateLesson("org_1", "lesson_1", {
+                title: "Updated",
+                coverArtUploadId: "upload_1",
+            })
+        ).rejects.toBeInstanceOf(NotFoundError);
         expect(mockUploadService.deleteUploadByUrlGlobalSafely).not.toHaveBeenCalled();
     });
 });
 
-describe("LessonHandlers.deleteLesson", () => {
+describe("LessonService.deleteLesson", () => {
+    let service: LessonService;
+
     beforeEach(() => {
         vi.clearAllMocks();
+        service = new LessonService(mockRepo as any, mockUploadService as any);
     });
 
     it("does not delete cover art when repository delete fails", async () => {
@@ -75,14 +66,7 @@ describe("LessonHandlers.deleteLesson", () => {
         });
         mockRepo.delete.mockResolvedValueOnce(false);
 
-        const ctx = {
-            req: {
-                valid: () => ({ organizationId: "org_1", lessonId: "lesson_1" }),
-            },
-            body: vi.fn(),
-        } as any;
-
-        await expect(LessonHandlers.deleteLesson(ctx, undefined as never)).rejects.toBeInstanceOf(
+        await expect(service.deleteLesson("org_1", "lesson_1")).rejects.toBeInstanceOf(
             NotFoundError
         );
         expect(mockUploadService.deleteUploadByUrlGlobalSafely).not.toHaveBeenCalled();
