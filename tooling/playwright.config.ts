@@ -1,9 +1,14 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig, devices } from "@playwright/test";
 
+const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const e2eDir = resolve(rootDir, "tests/e2e");
 const slowMo = Number(process.env.PLAYWRIGHT_SLOWMO ?? "0");
 
 export default defineConfig({
-    testDir: "./tests/e2e",
+    testDir: e2eDir,
+    outputDir: resolve(e2eDir, "test-results"),
     timeout: 60_000,
     workers: 1,
     expect: {
@@ -11,7 +16,10 @@ export default defineConfig({
     },
     fullyParallel: false,
     retries: 0,
-    reporter: [["list"], ["html", { open: "never" }]],
+    reporter: [
+        ["list"],
+        ["html", { open: "never", outputFolder: resolve(e2eDir, "playwright-report") }],
+    ],
     use: {
         baseURL: "http://localhost:8000",
         launchOptions: {
@@ -26,6 +34,7 @@ export default defineConfig({
         url: "http://localhost:8000/auth/sign-in",
         reuseExistingServer: false,
         timeout: 120_000,
+        cwd: rootDir,
     },
     projects: [
         {
