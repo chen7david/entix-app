@@ -5,7 +5,9 @@
     "sideEffects": false,
     "scripts": {
         "prepare": "husky || true",
-        "dev:init": "npm install && cd web && npm install && npm run dev:vars",
+        "postinstall": "npm install --prefix web --ignore-scripts",
+        "install:web": "npm install --prefix web --ignore-scripts",
+        "dev:init": "npm install && npm run dev:vars",
         "dev:vars": "tsx ./scripts/setup-dev-vars.ts",
         "dev": "concurrently --restart-tries 5 --restart-after 2000 \"npm run dev:api\" \"npm run dev:web\"",
         "dev:ai": "concurrently \"npm run dev:api:remote\" \"npm run dev:web\"",
