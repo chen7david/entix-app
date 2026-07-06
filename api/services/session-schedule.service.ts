@@ -1,6 +1,7 @@
 import { BadRequestError, NotFoundError } from "@api/errors/app.error";
 import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
 import type { MemberRepository } from "@api/repositories/member.repository";
+import type { ScheduledSessionsRepository } from "@api/repositories/scheduled-sessions.repository";
 import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
 import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
 import {
@@ -46,6 +47,7 @@ export type UpdateSessionDTO = {
 export class SessionScheduleService extends BaseService {
     constructor(
         private readonly sessionRepo: SessionScheduleRepository,
+        private readonly scheduledSessionsReadRepo: ScheduledSessionsRepository,
         private readonly memberRepo: MemberRepository,
         private readonly billingPlansService: FinanceBillingPlansService,
         private readonly walletService: FinanceWalletService,
@@ -464,5 +466,9 @@ export class SessionScheduleService extends BaseService {
         }
 
         return { success: true };
+    }
+
+    async getStudentEnrollmentDashboard(organizationId: string, userId: string) {
+        return this.scheduledSessionsReadRepo.getStudentDashboard({ organizationId, userId });
     }
 }

@@ -48,8 +48,12 @@ describe("SessionScheduleService Architecture Bounds", () => {
         };
         const mockBilling = {} as any;
         const mockWallet = {} as any;
+        const mockScheduledSessionsReadRepo = {
+            getStudentDashboard: vi.fn().mockResolvedValue([]),
+        };
         service = new SessionScheduleService(
             mockRepo,
+            mockScheduledSessionsReadRepo as any,
             mockMemberRepo,
             mockBilling,
             mockWallet,

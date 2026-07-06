@@ -5,12 +5,15 @@ import { AdminAuditService } from "@api/services/admin-audit.service";
 import { AvatarService } from "@api/services/avatar.service";
 import { CacheService } from "@api/services/cache.service";
 import { DashboardService } from "@api/services/dashboard.service";
+import { EnrollmentService } from "@api/services/enrollment.service";
 import { AdminFinancialService } from "@api/services/financial/admin-financial.service";
 import { FinanceBillingPlansService } from "@api/services/financial/finance-billing-plans.service";
 import { FinanceWalletService } from "@api/services/financial/finance-wallet.service";
 import { OrgFinancialService } from "@api/services/financial/org-financial.service";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import { UserFinancialService } from "@api/services/financial/user-financial.service";
+import { LessonService } from "@api/services/lesson.service";
+import { LessonContentService } from "@api/services/lesson-content.service";
 import { MailService } from "@api/services/mailer.service";
 import { MediaService } from "@api/services/media.service";
 import { MemberService } from "@api/services/member.service";
@@ -30,6 +33,7 @@ import { UserProfileService } from "@api/services/user-profile.service";
 import { VocabularyService } from "@api/services/vocabulary.service";
 import { getBucketClient } from "./bucket.factory";
 import { getDbClient } from "./db.factory";
+import { getPassageService } from "./passage.factory";
 import {
     getDashboardRepository,
     getFinanceBillingPlansRepository,
@@ -39,11 +43,14 @@ import {
     getFinancialTransactionCategoriesRepository,
     getFinancialTransactionsRepository,
     getKvCacheRepository,
+    getLessonContentRepository,
+    getLessonRepository,
     getMediaRepository,
     getMemberRepository,
     getOrganizationRepository,
     getPaymentQueueRepository,
     getPlaylistRepository,
+    getScheduledSessionsRepository,
     getSessionAttendancesRepository,
     getSessionScheduleRepository,
     getSocialMediaRepository,
@@ -96,6 +103,18 @@ export const getMailService = (ctx: AppContext) => {
     return new MailService(ctx.env.RESEND_API_KEY);
 };
 
+export const getLessonService = (ctx: AppContext) => {
+    return new LessonService(getLessonRepository(ctx), getUploadService(ctx));
+};
+
+export const getLessonContentService = (ctx: AppContext) => {
+    return new LessonContentService(
+        getLessonRepository(ctx),
+        getLessonContentRepository(ctx),
+        getPassageService(ctx)
+    );
+};
+
 export const getMediaService = (ctx: AppContext) => {
     return new MediaService(getMediaRepository(ctx), getUploadService(ctx));
 };
@@ -107,11 +126,21 @@ export const getPlaylistService = (ctx: AppContext) => {
 export const getSessionScheduleService = (ctx: AppContext) => {
     return new SessionScheduleService(
         getSessionScheduleRepository(ctx),
+        getScheduledSessionsRepository(ctx),
         getMemberRepository(ctx),
         getFinanceBillingPlansService(ctx),
         getFinanceWalletService(ctx),
         getPaymentQueueService(ctx),
         getSystemAuditRepository(ctx)
+    );
+};
+
+export const getEnrollmentService = (ctx: AppContext) => {
+    return new EnrollmentService(
+        getScheduledSessionsRepository(ctx),
+        getSessionAttendancesRepository(ctx),
+        getMemberRepository(ctx),
+        getSessionScheduleService(ctx)
     );
 };
 
