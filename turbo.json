@@ -1,0 +1,33 @@
+{
+    "$schema": "https://turbo.build/schema.json",
+    "ui": "tui",
+    "tasks": {
+        "build": {
+            "dependsOn": ["^build"],
+            "outputs": ["dist/**"]
+        },
+        "build:docs": {
+            "outputs": [".vitepress/dist/**"]
+        },
+        "typecheck": {
+            "dependsOn": ["^typecheck"],
+            "outputs": []
+        },
+        "typecheck:api": {
+            "outputs": []
+        },
+        "lint": {
+            "outputs": []
+        },
+        "test:run": {
+            "outputs": []
+        },
+        "test:api": {
+            "outputs": []
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        }
+    }
+}
