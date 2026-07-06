@@ -19,5 +19,21 @@ export default defineConfig([
             ecmaVersion: 2020,
             globals: globals.browser,
         },
+        rules: {
+            // Align with root Biome config (biome.json → suspicious.noExplicitAny: off)
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/no-unused-vars": [
+                "error",
+                { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+            ],
+            // React Hooks v7 compiler rules — too noisy for existing patterns; revisit incrementally
+            "react-hooks/set-state-in-effect": "off",
+            "react-hooks/preserve-manual-memoization": "off",
+            "react-hooks/purity": "off",
+            "react-refresh/only-export-components": [
+                "warn",
+                { allowConstantExport: true, allowExportNames: ["useAuth", "useOrg"] },
+            ],
+        },
     },
 ]);

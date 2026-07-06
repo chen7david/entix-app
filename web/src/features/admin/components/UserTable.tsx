@@ -404,9 +404,11 @@ export const UserTable: React.FC = () => {
                                                 )
                                             }
                                             onClick={() => {
-                                                selectedUser.banned
-                                                    ? handleUnbanUser(selectedUser.id)
-                                                    : handleBanUser(selectedUser.id);
+                                                if (selectedUser.banned) {
+                                                    handleUnbanUser(selectedUser.id);
+                                                } else {
+                                                    handleBanUser(selectedUser.id);
+                                                }
                                                 setSelectedUser({
                                                     ...selectedUser,
                                                     banned: !selectedUser.banned,

@@ -10,8 +10,7 @@
 ```bash
 git clone https://github.com/chen7david/entix-app
 cd entix-app
-npm run dev:init     # Install dependencies for both API and Web
-cp .example.dev.vars .dev.vars
+npm run dev:init     # Install deps + create .dev.vars from template
 npm run dev          # Start API and Web concurrently
 ```
 

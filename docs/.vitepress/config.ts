@@ -34,7 +34,12 @@ export default defineConfig({
                     { text: "Factories & DI", link: "/how-to/04-factory-and-di" },
                     { text: "Testing Guide", link: "/how-to/05-testing" },
                     { text: "Git Workflow", link: "/how-to/06-git-workflow" },
+                    { text: "Project Layout", link: "/how-to/07-project-layout" },
                 ],
+            },
+            {
+                text: "Incidents",
+                items: [{ text: "Overview", link: "/incidents/" }],
             },
             {
                 text: "Frontend",
