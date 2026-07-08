@@ -4,8 +4,8 @@ import type {
     SessionVocabularyItemDTO,
     VocabularyItemDTO,
 } from "@web/src/features/vocabulary/hooks/useVocabulary";
-import { queryKeys } from "@web/src/lib/query-keys";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
+import { queryKeys } from "@web/src/lib/query-keys";
 import { useMemo } from "react";
 
 export type LessonVocabularyLinkRow = {

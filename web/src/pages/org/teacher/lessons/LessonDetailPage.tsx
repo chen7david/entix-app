@@ -325,15 +325,13 @@ export function LessonDetailPage(): React.ReactElement | null {
         () => [...(playlistsQuery.data ?? [])].sort((a, b) => a.position - b.position),
         [playlistsQuery.data]
     );
-    const {
-        tableItems: lessonVocabTableItems,
-        isLoading: lessonVocabBankLoading,
-    } = useLessonVocabularyBankItems({
-        organizationId,
-        lessonId,
-        vocabularyRows: vocabularyQuery.data ?? [],
-        itemIdPrefix: "lesson",
-    });
+    const { tableItems: lessonVocabTableItems, isLoading: lessonVocabBankLoading } =
+        useLessonVocabularyBankItems({
+            organizationId,
+            lessonId,
+            vocabularyRows: vocabularyQuery.data ?? [],
+            itemIdPrefix: "lesson",
+        });
     const lessonPassagesSorted = useMemo(
         () => [...(passagesQuery.data ?? [])].sort((a, b) => a.position - b.position),
         [passagesQuery.data]

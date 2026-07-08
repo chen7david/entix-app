@@ -18,8 +18,8 @@ import {
     countUniqueVocabularyWords,
     dedupeSessionVocabularyByWord,
 } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
-import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
 import { useSessionStudentWallets } from "@web/src/features/wallet/hooks/useSessionStudentWallets";
+import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
 import { useWalletTransfer } from "@web/src/features/wallet/hooks/useWalletTransfer";
 import { queryKeys } from "@web/src/lib/query-keys";
 import { WordListPrintButton } from "@web/src/reports";
@@ -365,10 +365,10 @@ export function SessionVocabularyPage() {
                 queryClient.setQueryData<WalletSummaryDTO | undefined>(
                     queryKeys.wallet.balance(row.userId, "user", organizationId),
                     (current) => {
-                    if (!current) return current;
-                    return {
-                        ...current,
-                        accounts: current.accounts.map((account) =>
+                        if (!current) return current;
+                        return {
+                            ...current,
+                            accounts: current.accounts.map((account) =>
                                 account.currencyId === FINANCIAL_CURRENCIES.ETD
                                     ? {
                                           ...account,
@@ -378,8 +378,9 @@ export function SessionVocabularyPage() {
                                       }
                                     : account
                             ),
-                    };
-                });
+                        };
+                    }
+                );
             }
 
             queryClient.setQueryData<WalletSummaryDTO | undefined>(
