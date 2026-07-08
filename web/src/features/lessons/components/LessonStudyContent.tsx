@@ -1,7 +1,6 @@
 import { CheckCircleOutlined, EditOutlined, PlayCircleOutlined } from "@ant-design/icons";
 import { getAssetUrl } from "@shared";
 import type { CefrLevel } from "@shared/constants/cefr";
-import { useQueries } from "@tanstack/react-query";
 import {
     useLessonObjectives,
     useLessonPassages,
@@ -12,13 +11,8 @@ import { useLessonById } from "@web/src/features/lessons/hooks/useLessons";
 import { usePlaylist } from "@web/src/features/media/hooks/usePlaylists";
 import { PassageRichContent, usePassageById } from "@web/src/features/passages";
 import { VocabularyTable } from "@web/src/features/vocabulary/components/VocabularyTable";
-import type {
-    SessionVocabularyItemDTO,
-    VocabularyItemDTO,
-} from "@web/src/features/vocabulary/hooks/useVocabulary";
+import { useLessonVocabularyBankItems } from "@web/src/features/vocabulary/hooks/useLessonVocabularyBankItems";
 import { dedupeSessionVocabularyByWord } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
-import { hcJson } from "@web/src/lib/hc-json";
-import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import {
     Button,
     Card,
@@ -166,49 +160,13 @@ export function LessonStudyContent({
     const passagesQuery = useLessonPassages(organizationId, lessonId);
     const vocabularyQuery = useLessonVocabulary(organizationId, lessonId);
 
-    const lessonVocabularySorted = useMemo(
-        () => [...(vocabularyQuery.data ?? [])].sort((a, b) => a.position - b.position),
-        [vocabularyQuery.data]
-    );
-
-    const vocabularyBankQueries = useQueries({
-        queries: lessonVocabularySorted.map((row) => ({
-            queryKey: ["vocabulary-bank-item", organizationId, row.vocabularyId] as const,
-            queryFn: async () => {
-                const res = await fetch(
-                    `/api/v1/orgs/${organizationId}/vocabulary/bank/${row.vocabularyId}`,
-                    { credentials: "include" }
-                );
-                const body = await hcJson<{ data: VocabularyItemDTO }>(res);
-                return body.data;
-            },
-            enabled: !!organizationId && !!lessonId,
-            staleTime: QUERY_STALE_MS,
-        })),
-    });
-
-    const vocabBankLoading =
-        lessonVocabularySorted.length > 0 && vocabularyBankQueries.some((q) => q.isPending);
-
-    const vocabTableItems = useMemo((): SessionVocabularyItemDTO[] => {
-        const out: SessionVocabularyItemDTO[] = [];
-        for (let i = 0; i < lessonVocabularySorted.length; i++) {
-            const row = lessonVocabularySorted.at(i);
-            if (row === undefined) continue;
-            const q = vocabularyBankQueries[i];
-            const vocab = q?.data;
-            if (!vocab) continue;
-            out.push({
-                id: `lesson-study:${lessonId}:${row.vocabularyId}`,
-                userId: "",
-                organizationId,
-                attendanceId: "",
-                createdAt: row.addedAt,
-                vocabulary: vocab,
-            });
-        }
-        return out;
-    }, [lessonVocabularySorted, vocabularyBankQueries, organizationId, lessonId]);
+    const { tableItems: vocabTableItems, isLoading: vocabBankLoading } =
+        useLessonVocabularyBankItems({
+            organizationId,
+            lessonId,
+            vocabularyRows: vocabularyQuery.data ?? [],
+            itemIdPrefix: "lesson-study",
+        });
 
     const objectivesSorted = useMemo(
         () => [...(objectivesQuery.data ?? [])].sort((a, b) => a.position - b.position),

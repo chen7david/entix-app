@@ -571,18 +571,14 @@ export function useReorderLessonPassages() {
 }
 
 /** GET single vocabulary bank row (for lesson printout / lookups). */
-export async function fetchVocabularyBankItem(organizationId: string, vocabularyId: string) {
-    const res = await fetch(`/api/v1/orgs/${organizationId}/vocabulary/bank/${vocabularyId}`, {
-        credentials: "include",
+export async function fetchVocabularyBankItem(
+    organizationId: string,
+    vocabularyId: string
+): Promise<VocabularyItemDTO> {
+    const api = getApiClient();
+    const res = await api.api.v1.orgs[":organizationId"].vocabulary.bank[":vocabId"].$get({
+        param: { organizationId, vocabId: vocabularyId },
     });
-    type BankWrap = {
-        data: {
-            text: string;
-            zhTranslation: string | null;
-            enAudioUrl: string | null;
-            zhAudioUrl: string | null;
-        };
-    };
-    const body = await hcJson<BankWrap>(res);
+    const body = await hcJson<{ data: VocabularyItemDTO }>(res);
     return body.data;
 }

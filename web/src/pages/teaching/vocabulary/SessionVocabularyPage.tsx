@@ -1,11 +1,10 @@
 import { ArrowLeftOutlined, QuestionCircleOutlined, UserOutlined } from "@ant-design/icons";
 import type { WalletSummaryDTO } from "@shared";
 import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { useOrgContext } from "@web/src/context/OrgContext";
 import { useLessonById } from "@web/src/features/lessons/hooks/useLessons";
-import { useOrgRole } from "@web/src/features/organization";
+import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { useSessionById } from "@web/src/features/schedule";
 import { AddVocabularyForm, useVocabulary, VocabularyTable } from "@web/src/features/vocabulary";
 import {
@@ -20,9 +19,9 @@ import {
     dedupeSessionVocabularyByWord,
 } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
+import { useSessionStudentWallets } from "@web/src/features/wallet/hooks/useSessionStudentWallets";
 import { useWalletTransfer } from "@web/src/features/wallet/hooks/useWalletTransfer";
-import { getApiClient } from "@web/src/lib/api-client";
-import { hcJson } from "@web/src/lib/hc-json";
+import { queryKeys } from "@web/src/lib/query-keys";
 import { WordListPrintButton } from "@web/src/reports";
 import { App, Avatar, Button, Card, Result, Space, Table, Tag, Tooltip, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
@@ -43,7 +42,7 @@ type StudentRow = {
 };
 
 export function SessionVocabularyPage() {
-    const { activeOrganization } = useOrgContext();
+    const { activeOrganization } = useOrganization();
     const { notification } = App.useApp();
     const { isAdminOrOwner } = useOrgRole();
     const navigate = useNavigate();
@@ -63,31 +62,12 @@ export function SessionVocabularyPage() {
     } = useVocabulary(organizationId, sessionId);
     const orgWalletQuery = useWalletBalance(organizationId, "org");
 
-    const studentWalletQueries = useQueries({
-        queries: (sessionQuery.data?.attendances ?? []).map((attendance) => ({
-            queryKey: ["walletBalance", organizationId, attendance.userId, "user"],
-            queryFn: async () => {
-                if (!organizationId) return null;
-                const api = getApiClient();
-                const res = await api.api.v1.orgs[":organizationId"].members[
-                    ":userId"
-                ].wallet.summary.$get({
-                    param: { organizationId, userId: attendance.userId },
-                });
-                return hcJson<{
-                    data: {
-                        accounts: Array<{
-                            id: string;
-                            currencyId: string;
-                            balanceCents: number;
-                            accountType: string;
-                        }>;
-                    };
-                }>(res);
-            },
-            enabled: !!organizationId,
-        })),
-    });
+    const attendeeUserIds = useMemo(
+        () => sessionQuery.data?.attendances?.map((a) => a.userId) ?? [],
+        [sessionQuery.data?.attendances]
+    );
+
+    const studentWalletQueries = useSessionStudentWallets(organizationId, attendeeUserIds);
     const transferPoints = useWalletTransfer(organizationId);
     const savePointsInFlightRef = useRef(false);
     const [stagedDeltas, setStagedDeltas] = useState<Record<string, number>>({});
@@ -136,7 +116,7 @@ export function SessionVocabularyPage() {
     const studentRows = useMemo<StudentRow[]>(() => {
         const attendances = sessionQuery.data?.attendances ?? [];
         return attendances.map((attendance, index) => {
-            const walletAccounts = studentWalletQueries[index]?.data?.data.accounts ?? [];
+            const walletAccounts = studentWalletQueries[index]?.data?.accounts ?? [];
             const etdAccount =
                 walletAccounts.find((account) => account.currencyId === FINANCIAL_CURRENCIES.ETD) ??
                 null;
@@ -158,11 +138,6 @@ export function SessionVocabularyPage() {
     const totalDelta = nonZeroRows.reduce((sum, row) => sum + row.stagedDelta, 0);
 
     const uniqueWordCount = useMemo(() => countUniqueVocabularyWords(items), [items]);
-
-    const attendeeUserIds = useMemo(
-        () => sessionQuery.data?.attendances?.map((a) => a.userId) ?? [],
-        [sessionQuery.data?.attendances]
-    );
 
     /** Add pending points for every enrolled student (batch staged deltas). */
     const addPendingToEveryone = useCallback(
@@ -387,24 +362,13 @@ export function SessionVocabularyPage() {
             }
 
             for (const row of succeededRows) {
-                queryClient.setQueryData<
-                    | {
-                          data: {
-                              accounts: Array<{
-                                  id: string;
-                                  currencyId: string;
-                                  balanceCents: number;
-                                  accountType: string;
-                              }>;
-                          };
-                      }
-                    | undefined
-                >(["walletBalance", organizationId, row.userId, "user"], (current) => {
+                queryClient.setQueryData<WalletSummaryDTO | undefined>(
+                    queryKeys.wallet.balance(row.userId, "user", organizationId),
+                    (current) => {
                     if (!current) return current;
                     return {
-                        data: {
-                            ...current.data,
-                            accounts: current.data.accounts.map((account) =>
+                        ...current,
+                        accounts: current.accounts.map((account) =>
                                 account.currencyId === FINANCIAL_CURRENCIES.ETD
                                     ? {
                                           ...account,
@@ -414,13 +378,12 @@ export function SessionVocabularyPage() {
                                       }
                                     : account
                             ),
-                        },
                     };
                 });
             }
 
             queryClient.setQueryData<WalletSummaryDTO | undefined>(
-                ["walletBalance", organizationId, "org", undefined],
+                queryKeys.wallet.balance(organizationId!, "org"),
                 (current) => {
                     if (!current) return current;
                     return {
@@ -442,7 +405,9 @@ export function SessionVocabularyPage() {
                 }
             );
 
-            queryClient.invalidateQueries({ queryKey: ["walletBalance", organizationId] });
+            queryClient.invalidateQueries({
+                queryKey: queryKeys.wallet.balance(organizationId!, "org"),
+            });
 
             if (failures.length === 0) {
                 notification.success({

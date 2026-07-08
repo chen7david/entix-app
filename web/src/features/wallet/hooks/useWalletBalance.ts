@@ -2,6 +2,7 @@ import type { WalletSummaryDTO } from "@shared";
 import { useQuery } from "@tanstack/react-query";
 import { getApiClient } from "@web/src/lib/api-client";
 import { hcJson } from "@web/src/lib/hc-json";
+import { queryKeys } from "@web/src/lib/query-keys";
 import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 
 type WalletSummaryResponse = {
@@ -14,7 +15,7 @@ export const useWalletBalance = (
     orgId?: string
 ) => {
     return useQuery({
-        queryKey: ["walletBalance", id, ownerType, orgId],
+        queryKey: queryKeys.wallet.balance(id ?? "", ownerType, orgId),
         queryFn: async () => {
             if (!id) throw new Error("ID required");
 

@@ -18,7 +18,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { getAssetUrl } from "@shared";
 import { CEFR_LEVELS, type CefrLevel } from "@shared/constants/cefr";
-import { useQueries } from "@tanstack/react-query";
 import { AddObjectiveForm } from "@web/src/features/lessons/components/AddObjectiveForm";
 import {
     LessonStudyContent,
@@ -51,13 +50,9 @@ import { useOrganization } from "@web/src/features/organization";
 import { usePassageLibrary } from "@web/src/features/passages";
 import { AddVocabularyForm } from "@web/src/features/vocabulary/components/AddVocabularyForm";
 import { VocabularyTable } from "@web/src/features/vocabulary/components/VocabularyTable";
-import type {
-    SessionVocabularyItemDTO,
-    VocabularyItemDTO,
-} from "@web/src/features/vocabulary/hooks/useVocabulary";
+import { useLessonVocabularyBankItems } from "@web/src/features/vocabulary/hooks/useLessonVocabularyBankItems";
+import type { VocabularyItemDTO } from "@web/src/features/vocabulary/hooks/useVocabulary";
 import { dedupeSessionVocabularyByWord } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
-import { hcJson } from "@web/src/lib/hc-json";
-import { QUERY_STALE_MS } from "@web/src/lib/query-config";
 import { WordListPrintButton } from "@web/src/reports";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import {
@@ -330,10 +325,15 @@ export function LessonDetailPage(): React.ReactElement | null {
         () => [...(playlistsQuery.data ?? [])].sort((a, b) => a.position - b.position),
         [playlistsQuery.data]
     );
-    const lessonVocabularySorted = useMemo(
-        () => [...(vocabularyQuery.data ?? [])].sort((a, b) => a.position - b.position),
-        [vocabularyQuery.data]
-    );
+    const {
+        tableItems: lessonVocabTableItems,
+        isLoading: lessonVocabBankLoading,
+    } = useLessonVocabularyBankItems({
+        organizationId,
+        lessonId,
+        vocabularyRows: vocabularyQuery.data ?? [],
+        itemIdPrefix: "lesson",
+    });
     const lessonPassagesSorted = useMemo(
         () => [...(passagesQuery.data ?? [])].sort((a, b) => a.position - b.position),
         [passagesQuery.data]
@@ -342,47 +342,6 @@ export function LessonDetailPage(): React.ReactElement | null {
         () => new Set(lessonPassagesSorted.map((r) => r.passageId)),
         [lessonPassagesSorted]
     );
-
-    const vocabularyBankQueries = useQueries({
-        queries: lessonVocabularySorted.map((row) => ({
-            queryKey: ["vocabulary-bank-item", organizationId, row.vocabularyId] as const,
-            queryFn: async () => {
-                if (!organizationId) throw new Error("Organization required");
-                const res = await fetch(
-                    `/api/v1/orgs/${organizationId}/vocabulary/bank/${row.vocabularyId}`,
-                    { credentials: "include" }
-                );
-                const body = await hcJson<{ data: VocabularyItemDTO }>(res);
-                return body.data;
-            },
-            enabled: !!organizationId && !!lessonId,
-            staleTime: QUERY_STALE_MS,
-        })),
-    });
-
-    const lessonVocabBankLoading =
-        lessonVocabularySorted.length > 0 && vocabularyBankQueries.some((q) => q.isPending);
-
-    const lessonVocabTableItems = useMemo((): SessionVocabularyItemDTO[] => {
-        if (!organizationId || !lessonId) return [];
-        const out: SessionVocabularyItemDTO[] = [];
-        for (let i = 0; i < lessonVocabularySorted.length; i++) {
-            const row = lessonVocabularySorted.at(i);
-            if (row === undefined) continue;
-            const q = vocabularyBankQueries[i];
-            const vocab = q?.data;
-            if (!vocab) continue;
-            out.push({
-                id: `lesson:${lessonId}:${row.vocabularyId}`,
-                userId: "",
-                organizationId,
-                attendanceId: "",
-                createdAt: row.addedAt,
-                vocabulary: vocab,
-            });
-        }
-        return out;
-    }, [lessonVocabularySorted, vocabularyBankQueries, organizationId, lessonId]);
 
     const handleAddLessonWord = useCallback(
         async (text: string) => {

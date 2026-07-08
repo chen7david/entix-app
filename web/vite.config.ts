@@ -26,4 +26,18 @@ export default defineConfig({
             },
         },
     },
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks(id) {
+                    if (!id.includes("node_modules")) return;
+                    if (id.includes("antd")) return "antd";
+                    if (id.includes("recharts")) return "recharts";
+                    if (id.includes("@vidstack") || id.includes("/vidstack/")) return "vidstack";
+                    if (id.includes("@tiptap")) return "tiptap";
+                    if (id.includes("@uppy")) return "uppy";
+                },
+            },
+        },
+    },
 });

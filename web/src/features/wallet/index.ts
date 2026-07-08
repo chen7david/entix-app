@@ -4,4 +4,5 @@ export * from "./components/TransferDrawer";
 export { useCreateAccount } from "./hooks/useCreateAccount";
 export * from "./hooks/useTransactionHistory";
 export * from "./hooks/useWalletBalance";
+export * from "./hooks/useSessionStudentWallets";
 export * from "./hooks/useWalletTransfer";
