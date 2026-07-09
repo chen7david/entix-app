@@ -68,7 +68,12 @@ export const useMembers = (searchQuery?: string, options?: UseMembersOptions) =>
         string[],
         string | undefined
     >({
-        queryKey: ["organizationMembers", "infinite", activeOrganization?.id, searchQuery],
+        queryKey: [
+            "organizationMembers",
+            "infinite",
+            activeOrganization?.id ?? "",
+            searchQuery ?? "",
+        ],
         queryFn: async ({ pageParam }) => {
             if (!activeOrganization?.id)
                 return { items: [], total: 0, nextCursor: null, prevCursor: null };

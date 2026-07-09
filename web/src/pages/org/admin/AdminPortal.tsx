@@ -6,11 +6,7 @@ import {
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
-import {
-    AttendanceTrendChart,
-    SessionVolumeChart,
-    useAnalytics,
-} from "@web/src/features/analytics";
+import { useAnalytics } from "@web/src/features/analytics";
 import {
     DashboardMetricCards,
     MemberSetupIssuesPanel,
@@ -22,8 +18,15 @@ import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import { useOrgNavigate } from "@web/src/features/organization/hooks/useOrgNavigate";
 import { DateUtils } from "@web/src/utils/date";
-import { Alert, Button, Col, Row, Typography } from "antd";
-import { useCallback, useMemo, useState } from "react";
+import { Alert, Button, Col, Row, Spin, Typography } from "antd";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
+
+const SessionVolumeChart = lazy(() =>
+    import("@web/src/features/analytics").then((m) => ({ default: m.SessionVolumeChart }))
+);
+const AttendanceTrendChart = lazy(() =>
+    import("@web/src/features/analytics").then((m) => ({ default: m.AttendanceTrendChart }))
+);
 
 const { Title, Text } = Typography;
 
@@ -183,10 +186,17 @@ export const AdminPortal: React.FC = () => {
             <Row gutter={[24, 24]}>
                 {/* Analytics Row */}
                 <Col xs={24} lg={12}>
-                    <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
+                    <Suspense fallback={<Spin className="flex justify-center p-8" />}>
+                        <SessionVolumeChart data={sessionTrends} isLoading={isLoadingSessions} />
+                    </Suspense>
                 </Col>
                 <Col xs={24} lg={12}>
-                    <AttendanceTrendChart data={attendanceTrends} isLoading={isLoadingAttendance} />
+                    <Suspense fallback={<Spin className="flex justify-center p-8" />}>
+                        <AttendanceTrendChart
+                            data={attendanceTrends}
+                            isLoading={isLoadingAttendance}
+                        />
+                    </Suspense>
                 </Col>
 
                 {/* List Cards Row */}

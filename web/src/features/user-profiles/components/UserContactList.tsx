@@ -24,9 +24,10 @@ import {
     Tag,
     Typography,
 } from "antd";
-import { City, Country, State } from "country-state-city";
 import { AsYouType, type CountryCode } from "libphonenumber-js";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type GeoModule = typeof import("country-state-city");
 
 export const UserContactList = ({
     userId,
@@ -68,6 +69,18 @@ export const UserContactList = ({
     const [socialModalState, setSocialModalState] = useState<{ isOpen: boolean; editId?: string }>({
         isOpen: false,
     });
+    const [geo, setGeo] = useState<GeoModule | null>(null);
+
+    useEffect(() => {
+        if (!addressModalState.isOpen || geo) return;
+        let cancelled = false;
+        import("country-state-city").then((mod) => {
+            if (!cancelled) setGeo(mod);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [addressModalState.isOpen, geo]);
 
     const handlePhoneSubmit = async (values: any) => {
         try {
@@ -191,16 +204,18 @@ export const UserContactList = ({
     const addressStateWatch = Form.useWatch("state", addressForm);
 
     const getIsoCodeFromName = (name: string) =>
-        Country.getAllCountries().find((c) => c.name === name || c.isoCode === name)?.isoCode || "";
+        geo?.Country.getAllCountries().find((c) => c.name === name || c.isoCode === name)
+            ?.isoCode || "";
     const addressCountryIso = getIsoCodeFromName(addressCountryWatch);
 
-    const statesData = addressCountryIso ? State.getStatesOfCountry(addressCountryIso) : [];
+    const statesData =
+        addressCountryIso && geo ? geo.State.getStatesOfCountry(addressCountryIso) : [];
     const states = statesData.map((s) => ({ value: s.name }));
 
     const addressStateIso = statesData.find((s) => s.name === addressStateWatch)?.isoCode || "";
     const cities =
-        addressCountryIso && addressStateIso
-            ? City.getCitiesOfState(addressCountryIso, addressStateIso).map((c) => ({
+        addressCountryIso && addressStateIso && geo
+            ? geo.City.getCitiesOfState(addressCountryIso, addressStateIso).map((c) => ({
                   value: c.name,
               }))
             : [];
@@ -478,10 +493,13 @@ export const UserContactList = ({
                     >
                         <Select
                             showSearch
-                            options={Country.getAllCountries().map((c) => ({
-                                label: c.name,
-                                value: c.name,
-                            }))}
+                            loading={!geo}
+                            options={
+                                geo?.Country.getAllCountries().map((c) => ({
+                                    label: c.name,
+                                    value: c.name,
+                                })) ?? []
+                            }
                             filterOption={(input, option) =>
                                 (option?.label as string)
                                     .toLowerCase()

@@ -1,7 +1,17 @@
 import { createContext, useContext } from "react";
 
+/** Organization row from Better Auth `organization.list()` (org guard context). */
+export type ActiveOrganization = {
+    id: string;
+    name: string;
+    slug: string;
+    createdAt: Date;
+    logo?: string | null;
+    metadata?: Record<string, unknown> | null;
+};
+
 interface OrgContextType {
-    activeOrganization: any | null;
+    activeOrganization: ActiveOrganization | null;
     loading: boolean;
     error: Error | null;
     activeRole: string | null;
