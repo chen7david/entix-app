@@ -1,5 +1,4 @@
-import { getPaymentQueueRepository } from "@api/factories/repository.factory";
-import type { AppContext } from "@api/helpers/types.helpers";
+import { getPaymentQueueRepositoryFromEnv } from "@api/factories/worker.factory";
 import type { EntixQueueMessage } from "@api/queues/entix.queue";
 
 /**
@@ -8,8 +7,7 @@ import type { EntixQueueMessage } from "@api/queues/entix.queue";
  * and re-enqueues them to the processing queue.
  */
 export async function enqueueMissedPayments(env: CloudflareBindings): Promise<void> {
-    const ctx = { env } as AppContext;
-    const paymentQueueRepo = getPaymentQueueRepository(ctx);
+    const paymentQueueRepo = getPaymentQueueRepositoryFromEnv(env);
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
 
     // Find all requests that haven't been picked up by a worker yet

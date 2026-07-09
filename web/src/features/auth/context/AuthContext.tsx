@@ -83,25 +83,10 @@ export const useAuth = () => {
         throw new Error("useAuth must be used within an AuthProvider");
     }
 
-    const derivedFlags = useMemo(() => {
-        const orgRole = context.user?.orgRole;
-        const isOwner = orgRole === "owner";
-        const isAdmin = orgRole === "admin";
-        const isTeacher = orgRole === "teacher";
-        const isStudent = orgRole === "student";
-
-        return {
-            isOwner,
-            isAdmin,
-            isTeacher,
-            isStudent,
-            isAdminOrOwner: isAdmin || isOwner,
-            isStaff: isAdmin || isOwner || isTeacher,
-        };
-    }, [context.user?.orgRole]);
-
-    return {
-        ...context,
-        ...derivedFlags,
-    };
+    /**
+     * For org-scoped UI authorization (sidebar, role guards), use `useOrgRole()` instead.
+     * `user.orgRole` reflects Better Auth's active member only and may differ from the
+     * role the user picked via the org role switcher.
+     */
+    return context;
 };

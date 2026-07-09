@@ -1,29 +1,12 @@
-import tailwindcss from "@tailwindcss/vite";
-import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { mergeConfig } from "vite";
 import checker from "vite-plugin-checker";
-import tsconfigPaths from "vite-tsconfig-paths";
+import baseConfig from "./vite.config.base";
 
-// https://vite.dev/config/
-export default defineConfig({
+export default mergeConfig(baseConfig, {
     plugins: [
-        react(),
-        tailwindcss(),
-        tsconfigPaths(),
         checker({
             typescript: true,
+            enableBuild: false,
         }),
     ],
-    server: {
-        port: 8000,
-        fs: {
-            allow: [".."],
-        },
-        proxy: {
-            "/api": {
-                target: "http://localhost:3000",
-                changeOrigin: true,
-            },
-        },
-    },
 });

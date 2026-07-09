@@ -1,14 +1,14 @@
+import {
+    getSystemAuditRepositoryFromEnv,
+    getVocabularyBankRepositoryFromEnv,
+} from "@api/factories/worker.factory";
 import type { EntixQueueMessage } from "@api/queues/entix.queue";
-import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
 import {
     chunkVocabularyIds,
     VOCABULARY_PIPELINE_DISPATCH_LIMIT,
     VOCABULARY_TEXT_BATCH_SIZE,
 } from "@api/services/vocabulary-processing.service";
 import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
-import * as schema from "@shared/db/schema";
-import { drizzle } from "drizzle-orm/d1";
 
 /** Stale cutoff for re-dispatch of stuck pipeline rows (shared with integration tests). */
 export const VOCABULARY_PIPELINE_STALE_AFTER_MS = 15 * 60 * 1000; // 15 min
@@ -23,9 +23,8 @@ export const VOCABULARY_PIPELINE_STALE_AFTER_MS = 15 * 60 * 1000; // 15 min
  * Queue handlers purely do work and update status — they never chain to the next stage.
  */
 export async function driveVocabularyPipeline(env: CloudflareBindings): Promise<void> {
-    const db = drizzle(env.DB, { schema });
-    const vocabularyRepo = new VocabularyBankRepository(db);
-    const auditRepo = new SystemAuditRepository(db);
+    const vocabularyRepo = getVocabularyBankRepositoryFromEnv(env);
+    const auditRepo = getSystemAuditRepositoryFromEnv(env);
 
     const cutoff = new Date(Date.now() - VOCABULARY_PIPELINE_STALE_AFTER_MS);
 

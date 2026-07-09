@@ -48,12 +48,6 @@ describe("BillingAccountsPage Smoke Tests", () => {
             isAuthenticated: true,
             isLoading: false,
             isSuperAdmin: false,
-            isOwner: false,
-            isAdmin: false,
-            isTeacher: false,
-            isStudent: false,
-            isAdminOrOwner: false,
-            isStaff: false,
             refreshAuth: vi.fn() as any,
         });
     });

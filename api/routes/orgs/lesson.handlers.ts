@@ -1,6 +1,4 @@
-import { NotFoundError } from "@api/errors/app.error";
-import { getLessonRepository } from "@api/factories/repository.factory";
-import { getUploadService } from "@api/factories/upload.factory";
+import { getLessonService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { CefrLevel } from "@shared/constants/cefr";
@@ -21,8 +19,8 @@ export class LessonHandlers {
         const { organizationId } = ctx.req.valid("param");
         const queryParams = ctx.req.valid("query");
         const { limit, cursor, direction, search, hasCoverArt } = queryParams;
-        const repo = getLessonRepository(ctx);
-        const result = await repo.listByOrganization({
+        const service = getLessonService(ctx);
+        const result = await service.listByOrganization({
             organizationId,
             limit,
             cursor,
@@ -42,86 +40,40 @@ export class LessonHandlers {
     static createLesson: AppHandler<typeof LessonRoutes.createLesson> = async (ctx) => {
         const { organizationId } = ctx.req.valid("param");
         const payload = ctx.req.valid("json");
-        const repo = getLessonRepository(ctx);
-        const uploadService = getUploadService(ctx);
-        let coverArtUrl: string | null = null;
-        if (payload.coverArtUploadId) {
-            coverArtUrl = await uploadService.getVerifiedImageUploadUrl(
-                payload.coverArtUploadId,
-                organizationId
-            );
-        }
-        const lesson = await repo.create({
-            organizationId,
+        const service = getLessonService(ctx);
+        const lesson = await service.createLesson(organizationId, {
             title: payload.title,
-            description: payload.description ?? null,
-            coverArtUrl,
-            cefrLevel: payload.cefrLevel ?? null,
+            description: payload.description,
+            coverArtUploadId: payload.coverArtUploadId,
+            cefrLevel: payload.cefrLevel,
         });
         return ctx.json(serializeLesson(lesson), HttpStatusCodes.CREATED);
     };
 
     static getLesson: AppHandler<typeof LessonRoutes.getLesson> = async (ctx) => {
         const { organizationId, lessonId } = ctx.req.valid("param");
-        const repo = getLessonRepository(ctx);
-        const lesson = await repo.findById(organizationId, lessonId);
-        if (!lesson) {
-            throw new NotFoundError("Lesson not found");
-        }
+        const service = getLessonService(ctx);
+        const lesson = await service.getLesson(organizationId, lessonId);
         return ctx.json(serializeLesson(lesson), HttpStatusCodes.OK);
     };
 
     static updateLesson: AppHandler<typeof LessonRoutes.updateLesson> = async (ctx) => {
         const { organizationId, lessonId } = ctx.req.valid("param");
         const payload = ctx.req.valid("json");
-        const repo = getLessonRepository(ctx);
-        const uploadService = getUploadService(ctx);
-        const currentLesson = await repo.findById(organizationId, lessonId);
-        if (!currentLesson) {
-            throw new NotFoundError("Lesson not found");
-        }
-
-        let coverArtUrl: string | undefined;
-        if (payload.coverArtUploadId) {
-            coverArtUrl = await uploadService.getVerifiedImageUploadUrl(
-                payload.coverArtUploadId,
-                organizationId
-            );
-        }
-
-        const lesson = await repo.update(organizationId, lessonId, {
+        const service = getLessonService(ctx);
+        const lesson = await service.updateLesson(organizationId, lessonId, {
             title: payload.title,
             description: payload.description,
-            ...(coverArtUrl !== undefined ? { coverArtUrl } : {}),
-            ...(payload.cefrLevel !== undefined ? { cefrLevel: payload.cefrLevel } : {}),
+            coverArtUploadId: payload.coverArtUploadId,
+            cefrLevel: payload.cefrLevel,
         });
-        if (!lesson) {
-            throw new NotFoundError("Lesson not found");
-        }
-
-        if (coverArtUrl !== undefined && currentLesson.coverArtUrl) {
-            await uploadService.deleteUploadByUrlGlobalSafely(currentLesson.coverArtUrl);
-        }
         return ctx.json(serializeLesson(lesson), HttpStatusCodes.OK);
     };
 
     static deleteLesson: AppHandler<typeof LessonRoutes.deleteLesson> = async (ctx) => {
         const { organizationId, lessonId } = ctx.req.valid("param");
-        const repo = getLessonRepository(ctx);
-        const uploadService = getUploadService(ctx);
-        const lesson = await repo.findById(organizationId, lessonId);
-        if (!lesson) {
-            throw new NotFoundError("Lesson not found");
-        }
-
-        const deleted = await repo.delete(organizationId, lessonId);
-        if (!deleted) {
-            throw new NotFoundError("Lesson not found");
-        }
-
-        if (lesson.coverArtUrl) {
-            await uploadService.deleteUploadByUrlGlobalSafely(lesson.coverArtUrl);
-        }
+        const service = getLessonService(ctx);
+        await service.deleteLesson(organizationId, lessonId);
         return ctx.body(null, HttpStatusCodes.NO_CONTENT);
     };
 }

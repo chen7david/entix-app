@@ -10,7 +10,6 @@ import { ThemeProvider } from "./providers/ThemeProvider.tsx";
 import { getRequiredElementById } from "./utils/dom.ts";
 
 const rootElement = getRequiredElementById("root");
-// test 008
 createRoot(rootElement).render(
     <StrictMode>
         <ThemeProvider>

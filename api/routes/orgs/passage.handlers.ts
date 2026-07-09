@@ -1,6 +1,7 @@
 import { getPassageService } from "@api/factories/passage.factory";
 import { toMs } from "@api/helpers/date.helpers";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
+import { mapTextCollection } from "@api/helpers/text-collection.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { Passage, PassageImage, TextCollection } from "@shared/db/schema";
 import type { PassageRoutes } from "./passage.routes";
@@ -35,20 +36,7 @@ function mapPassage(row: Passage) {
 }
 
 function mapCollection(row: TextCollection) {
-    return {
-        id: row.id,
-        organizationId: row.organizationId,
-        title: row.title,
-        author: row.author,
-        description: row.description,
-        type: row.type,
-        cefrLevel: row.cefrLevel,
-        bucketKey: row.bucketKey,
-        r2Url: row.r2Url,
-        totalPages: row.totalPages,
-        createdAt: toMs(row.createdAt),
-        updatedAt: toMs(row.updatedAt),
-    };
+    return mapTextCollection(row);
 }
 
 function mapPassageImage(row: PassageImage) {

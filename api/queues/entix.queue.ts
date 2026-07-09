@@ -1,26 +1,19 @@
 import app from "@api/app";
 import { BadRequestError, InternalServerError } from "@api/errors/app.error";
-import { createAiServiceFromEnv } from "@api/factories/ai.factory";
-import { getBucketClientFromEnv } from "@api/factories/bucket.factory";
-import { DbBatchRunner } from "@api/helpers/batch-runner";
-import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
-import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
-import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
-import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { UploadRepository } from "@api/repositories/upload.repository";
-import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
-import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
+import {
+    createVocabularyAudioProcessorFromEnv,
+    createVocabularyTextProcessorFromEnv,
+    getPaymentQueueRepositoryFromEnv,
+    getSessionPaymentServiceFromEnv,
+    getSystemAuditRepositoryFromEnv,
+} from "@api/factories/worker.factory";
+import type { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import {
     VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS,
     VOCABULARY_TRANSLATION_INSTRUCTIONS,
-    VocabularyProcessingService,
 } from "@api/services/vocabulary-processing.service";
-import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
-import * as schema from "@shared/db/schema";
-import { drizzle } from "drizzle-orm/d1";
+import { generateAuditId } from "@shared";
+import type * as schema from "@shared/db/schema";
 
 // ─── Message Type Union ───────────────────────────────────────────────────────
 
@@ -114,19 +107,9 @@ async function handleBillingProcess(
 ): Promise<void> {
     const { paymentRequestId } = message.body;
 
-    // Explicit dependency instantiation (No AppContext cast)
-    const db = drizzle(env.DB, { schema });
-    const paymentQueueRepo = new PaymentQueueRepository(db);
-    const auditRepo = new SystemAuditRepository(db);
-    const sessionPaymentService = new SessionPaymentService(
-        new DbBatchRunner(db),
-        new FinancialTransactionsRepository(db),
-        new SessionAttendancesRepository(db),
-        paymentQueueRepo,
-        auditRepo,
-        new FinancialAccountsRepository(db),
-        new FinanceBillingPlansRepository(db)
-    );
+    const paymentQueueRepo = getPaymentQueueRepositoryFromEnv(env);
+    const auditRepo = getSystemAuditRepositoryFromEnv(env);
+    const sessionPaymentService = getSessionPaymentServiceFromEnv(env);
 
     try {
         const pr = await paymentQueueRepo.findById(paymentRequestId);
@@ -190,7 +173,10 @@ async function handleVocabularyProcessText(
     message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-text" }>>,
     env: CloudflareBindings
 ): Promise<void> {
-    const processor = createVocabularyTextProcessor(env, VOCABULARY_TRANSLATION_INSTRUCTIONS);
+    const processor = createVocabularyTextProcessorFromEnv(
+        env,
+        VOCABULARY_TRANSLATION_INSTRUCTIONS
+    );
     const vocabularyId = message.body.vocabularyId;
 
     try {
@@ -206,7 +192,10 @@ async function handleVocabularyProcessTextBatch(
     message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-text-batch" }>>,
     env: CloudflareBindings
 ): Promise<void> {
-    const processor = createVocabularyTextProcessor(env, VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS);
+    const processor = createVocabularyTextProcessorFromEnv(
+        env,
+        VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS
+    );
     const vocabularyIds = message.body.vocabularyIds;
 
     try {
@@ -218,83 +207,16 @@ async function handleVocabularyProcessTextBatch(
     }
 }
 
-function createVocabularyTextProcessor(
-    env: CloudflareBindings,
-    systemPrompt: string
-): VocabularyProcessingService {
-    const db = drizzle(env.DB, { schema });
-    const vocabularyRepo = new VocabularyBankRepository(db);
-    const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env, { systemPrompt });
-    const ttsService = {
-        generateAndUpload: async () => {
-            throw new InternalServerError("TTS is not available in text processing");
-        },
-    } as unknown as TtsService;
-
-    return new VocabularyProcessingService(vocabularyRepo, aiService, ttsService, {
-        logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
-            const errMsg = error instanceof Error ? error.message : String(error);
-            await auditRepo.insert({
-                id: generateAuditId(),
-                organizationId: PLATFORM_ORGANIZATION_ID,
-                eventType: "vocabulary.pipeline_failed",
-                severity: "warning",
-                actorType: "system",
-                subjectType: "vocabulary_bank",
-                subjectId: vocabularyId,
-                message: `Vocabulary text pipeline failed: ${errMsg}`,
-                metadata: JSON.stringify({ phase: "text", vocabularyId }),
-            });
-        },
-    });
-}
-
 async function handleVocabularyProcessAudio(
     message: Message<Extract<EntixQueueMessage, { type: "vocabulary.process-audio" }>>,
     env: CloudflareBindings
 ): Promise<void> {
-    const db = drizzle(env.DB, { schema });
-    const envBindings = env as unknown as Record<string, unknown>;
-    if (
-        !envBindings.GCP_CLIENT_EMAIL ||
-        !envBindings.GCP_PRIVATE_KEY ||
-        !envBindings.GCP_PROJECT_ID
-    ) {
+    const processor = createVocabularyAudioProcessorFromEnv(env);
+    if (!processor) {
         console.error("[Queue] GCP secrets not configured — acking to prevent retry storm");
         message.ack();
         return;
     }
-    const vocabularyRepo = new VocabularyBankRepository(db);
-    const uploadRepo = new UploadRepository(db);
-    const auditRepo = new SystemAuditRepository(db);
-    const aiService = createAiServiceFromEnv(env, {
-        systemPrompt: VOCABULARY_TRANSLATION_INSTRUCTIONS,
-    });
-    const credentials = parseGoogleTtsCredentials(env as unknown as Record<string, unknown>);
-    const ttsService = new TtsService(credentials, getBucketClientFromEnv(env));
-    const processor = new VocabularyProcessingService(
-        vocabularyRepo,
-        aiService,
-        ttsService,
-        {
-            logPipelineFailure: async (_phase: string, vocabularyId: string, error: unknown) => {
-                const errMsg = error instanceof Error ? error.message : String(error);
-                await auditRepo.insert({
-                    id: generateAuditId(),
-                    organizationId: PLATFORM_ORGANIZATION_ID,
-                    eventType: "vocabulary.pipeline_failed",
-                    severity: "warning",
-                    actorType: "system",
-                    subjectType: "vocabulary_bank",
-                    subjectId: vocabularyId,
-                    message: `Vocabulary audio pipeline failed: ${errMsg}`,
-                    metadata: JSON.stringify({ phase: "audio", vocabularyId }),
-                });
-            },
-        },
-        uploadRepo
-    );
 
     try {
         await processor.processAudio(message.body.vocabularyId);
@@ -381,8 +303,7 @@ async function writePermanentFailureAuditEvent(
     env: CloudflareBindings
 ): Promise<void> {
     try {
-        const db = drizzle(env.DB, { schema });
-        const auditRepo = new SystemAuditRepository(db);
+        const auditRepo = getSystemAuditRepositoryFromEnv(env);
         await auditRepo.insert({
             id: generateAuditId(), // isolated insert; explicit id for clarity in queue failure path
             eventType: "payment.reconciliation-failed",
