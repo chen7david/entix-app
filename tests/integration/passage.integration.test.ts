@@ -4,19 +4,19 @@ import { textCollections } from "@shared/db/schema";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { insertTestPassage } from "../lib/passage-fixtures";
-import { createTestDb, skipIfPassageTablesMissing, type TestDb } from "../lib/utils";
+import { createTestDb, type TestDb } from "../lib/utils";
 
 describe("Passage API", () => {
-    let passageSchemaReady = false;
     let db: TestDb;
 
     beforeAll(async () => {
+        await createTestDb();
         const row = await env.DB.prepare(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
         )
-            .bind("lesson_passages")
+            .bind("passages")
             .first();
-        passageSchemaReady = Boolean(row);
+        expect(Boolean(row)).toBe(true);
     });
 
     beforeEach(async () => {
@@ -46,9 +46,7 @@ describe("Passage API", () => {
         return { collection, passage };
     }
 
-    it("POST /passages creates inline passage", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("POST /passages creates inline passage", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         const res = await app.request(
             `http://localhost/api/v1/orgs/${orgId}/passages`,
@@ -69,9 +67,7 @@ describe("Passage API", () => {
         expect(body.data.wordCount).toBe(4);
     });
 
-    it("GET /passages/:id returns content and images array", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("GET /passages/:id returns content and images array", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         const { passage } = await seedPassageTables(orgId);
 
@@ -89,9 +85,7 @@ describe("Passage API", () => {
         expect(body.data.images).toEqual([]);
     });
 
-    it("POST /text-collections creates collection", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("POST /text-collections creates collection", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         const res = await app.request(
             `http://localhost/api/v1/orgs/${orgId}/text-collections`,
