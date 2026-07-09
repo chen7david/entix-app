@@ -51,13 +51,21 @@ export const requirePermission = (
 
         let currentRoleString = ctx.get("membershipRole") as string | undefined;
 
+        /**
+         * User-scoped routes (e.g. /users/{userId}/profile) are not org-mounted, so
+         * membershipRole is absent. Elevate only via admin/owner roles shared with the
+         * target — never peer student/teacher permissions (would allow co-member PII edits).
+         */
         if (!currentRoleString && allowSelfTargetParam) {
             const targetUserId = ctx.req.param(allowSelfTargetParam);
-            if (targetUserId) {
+            if (targetUserId && targetUserId !== userId) {
                 const memberRepo = getMemberRepository(ctx);
                 const commonRoles = await memberRepo.findCommonOrgRoles(userId, targetUserId);
-                if (commonRoles.length > 0) {
-                    currentRoleString = commonRoles.join(",");
+                const elevated = commonRoles
+                    .flatMap((role) => role.split(",").map((r) => r.trim()))
+                    .filter((role) => role === "admin" || role === "owner");
+                if (elevated.length > 0) {
+                    currentRoleString = elevated.join(",");
                 }
             }
         }

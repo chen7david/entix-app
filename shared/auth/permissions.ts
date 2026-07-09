@@ -18,6 +18,12 @@ export const statement = {
     passage: ["read", "create", "update", "delete"],
     enrollment: ["read", "create", "delete"],
     playlist: ["read", "create", "update", "delete"],
+    /**
+     * Org-scoped ledger / billing (not personal member wallets).
+     * `transfer` is intentionally broader so students can move funds between
+     * their own accounts via the wallet UI; org ledger reads/mutations stay elevated.
+     */
+    finance: ["read", "create", "update", "delete", "transfer"],
     // Education Resources
     course: ["read", "create", "update", "delete", "enroll", "unenroll"],
     assignment: ["read", "create", "update", "delete", "submit", "grade"],
@@ -40,6 +46,7 @@ export const roles = {
         passage: ["read"],
         enrollment: ["read"],
         playlist: ["read"],
+        finance: ["transfer"],
         course: ["read", "enroll", "unenroll"],
         assignment: ["read", "submit"],
         submission: ["read", "create", "update", "delete"],
@@ -57,6 +64,7 @@ export const roles = {
         passage: ["read", "create", "update", "delete"],
         enrollment: ["read", "create", "delete"],
         playlist: ["read", "create", "update", "delete"],
+        finance: ["read"],
         course: ["read", "create", "update", "delete", "enroll", "unenroll"],
         assignment: ["read", "create", "update", "delete", "submit", "grade"],
         submission: ["read", "create", "update", "delete", "grade"],
@@ -80,6 +88,7 @@ export const roles = {
         passage: ["read", "create", "update", "delete"],
         enrollment: ["read", "create", "delete"],
         playlist: ["read", "create", "update", "delete"],
+        finance: ["read", "create", "update", "delete", "transfer"],
         course: ["read", "create", "update", "delete", "enroll", "unenroll"],
         assignment: ["read", "create", "update", "delete", "submit", "grade"],
         submission: ["read", "create", "update", "delete", "grade"],
@@ -103,6 +112,7 @@ export const roles = {
         passage: ["read", "create", "update", "delete"],
         enrollment: ["read", "create", "delete"],
         playlist: ["read", "create", "update", "delete"],
+        finance: ["read", "create", "update", "delete", "transfer"],
         course: ["read", "create", "update", "delete", "enroll", "unenroll"],
         assignment: ["read", "create", "update", "delete", "submit", "grade"],
         submission: ["read", "create", "update", "delete", "grade"],

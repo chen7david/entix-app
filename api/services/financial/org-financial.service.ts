@@ -1,4 +1,9 @@
-import { BadRequestError, ConflictError, NotFoundError } from "@api/errors/app.error";
+import {
+    BadRequestError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+} from "@api/errors/app.error";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialCurrenciesRepository } from "@api/repositories/financial/financial-currencies.repository";
 import {
@@ -16,6 +21,18 @@ import {
 import { createAccountRepoInputSchema } from "@shared/db/schema";
 import { FinancialBaseService } from "./financial-base.service";
 
+function actorCanMoveOrgFunds(
+    membershipRole: string | undefined,
+    isSuperAdmin: boolean | undefined
+): boolean {
+    if (isSuperAdmin) return true;
+    const roles = (membershipRole ?? "")
+        .split(",")
+        .map((r) => r.trim())
+        .filter(Boolean);
+    return roles.includes("admin") || roles.includes("owner");
+}
+
 /**
  * OrgFinancialService manages all organization-level treasury operations.
  * It strictly enforces 'ownerType: "org"' and handles multi-account creation
@@ -31,7 +48,8 @@ export class OrgFinancialService extends FinancialBaseService {
     }
 
     /**
-     * Executes an internal transfer between two or more organizational accounts.
+     * Executes an internal transfer between accounts in an organization.
+     * Non-admin actors may only move funds between their own user-owned accounts.
      */
     async executeTransfer(input: {
         organizationId: string;
@@ -42,10 +60,37 @@ export class OrgFinancialService extends FinancialBaseService {
         amountCents: number;
         description?: string;
         idempotencyKey?: string | null;
+        actorUserId: string;
+        actorMembershipRole?: string;
+        isSuperAdmin?: boolean;
     }) {
+        if (!actorCanMoveOrgFunds(input.actorMembershipRole, input.isSuperAdmin)) {
+            const [source, destination] = await Promise.all([
+                this.accountsRepo.findById(input.sourceAccountId),
+                this.accountsRepo.findById(input.destinationAccountId),
+            ]);
+            if (!source || !destination) {
+                throw new NotFoundError("Source or destination account not found");
+            }
+            const owns = (account: typeof source) =>
+                account.ownerType === "user" && account.ownerId === input.actorUserId;
+            if (!owns(source) || !owns(destination)) {
+                throw new ForbiddenError(
+                    "You can only transfer between your own personal wallet accounts"
+                );
+            }
+        }
+
         // Use shared logic from FinancialBaseService to enforce guards
         return this.executeTransaction({
-            ...input,
+            organizationId: input.organizationId,
+            categoryId: input.categoryId,
+            sourceAccountId: input.sourceAccountId,
+            destinationAccountId: input.destinationAccountId,
+            currencyId: input.currencyId,
+            amountCents: input.amountCents,
+            description: input.description,
+            idempotencyKey: input.idempotencyKey,
             transactionDate: new Date(),
         });
     }
@@ -56,6 +101,9 @@ export class OrgFinancialService extends FinancialBaseService {
     async reverseTransaction(txId: string, organizationId: string, reason: string) {
         const original = await this.transactionsRepo.findById(txId);
         if (!original) throw new NotFoundError("Transaction not found");
+        if (original.organizationId !== organizationId) {
+            throw new NotFoundError("Transaction not found");
+        }
         if (original.status === "reversed") throw new ConflictError("Transaction already reversed");
 
         // Execute mirror transaction (swap source and destination)

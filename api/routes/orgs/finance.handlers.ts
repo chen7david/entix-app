@@ -44,6 +44,9 @@ export class FinanceHandler {
         const txId = await getOrgFinancialService(ctx).executeTransfer({
             organizationId,
             idempotencyKey: ctx.req.header("Idempotency-Key"),
+            actorUserId: ctx.get("userId"),
+            actorMembershipRole: ctx.get("membershipRole"),
+            isSuperAdmin: ctx.get("isSuperAdmin"),
             ...body,
         });
 
@@ -74,8 +77,8 @@ export class FinanceHandler {
     };
 
     static deactivateAccount: AppHandler<typeof FinanceRoutes.deactivateAccount> = async (ctx) => {
-        const { accountId } = ctx.req.valid("param");
-        await getOrgFinancialService(ctx).deactivateAccount(accountId);
+        const { organizationId, accountId } = ctx.req.valid("param");
+        await getOrgFinancialService(ctx).deactivateAccount(accountId, organizationId);
         return ctx.json({ success: true }, HttpStatusCodes.OK);
     };
 

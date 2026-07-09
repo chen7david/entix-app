@@ -5,6 +5,7 @@ import {
     jsonContentRequired,
 } from "@api/helpers/http.helpers";
 import { idempotencyMiddleware } from "@api/middleware/idempotency.middleware";
+import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute, z } from "@hono/zod-openapi";
 import {
     activateCurrencyRequestSchema,
@@ -36,6 +37,7 @@ export const FinanceRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/summary",
         summary: "Get organization wallet balance summary",
+        middleware: [requirePermission("finance", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
         },
@@ -52,6 +54,7 @@ export const FinanceRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/transactions",
         summary: "Get paginated transaction history for the organization with filters",
+        middleware: [requirePermission("finance", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             query: transactionFiltersSchema,
@@ -69,6 +72,7 @@ export const FinanceRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/finance/transactions/{txId}/reverse",
         summary: "Reverse a transaction by creating a mirror reversal",
+        middleware: [requirePermission("finance", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -88,7 +92,7 @@ export const FinanceRoutes = {
         tags,
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/finance/transfer",
-        middleware: [idempotencyMiddleware] as const,
+        middleware: [requirePermission("finance", ["transfer"]), idempotencyMiddleware] as const,
         summary: "Execute an internal transfer between accounts",
         request: {
             params: z.object({ organizationId: z.string() }),
@@ -107,6 +111,7 @@ export const FinanceRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/finance/accounts",
         summary: "Create a new financial account for the organization",
+        middleware: [requirePermission("finance", ["create"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             body: jsonContentRequired(createFinancialAccountSchema, "Account creation details"),
@@ -132,6 +137,7 @@ export const FinanceRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/accounts",
         summary: "List all active financial accounts for the organization",
+        middleware: [requirePermission("finance", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
         },
@@ -148,6 +154,7 @@ export const FinanceRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/finance/accounts/{accountId}/deactivate",
         summary: "Deactivate a financial account (blocks future transactions)",
+        middleware: [requirePermission("finance", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -167,6 +174,7 @@ export const FinanceRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/currencies",
         summary: "Get all platform currencies with activation status for this org",
+        middleware: [requirePermission("finance", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
         },
@@ -183,6 +191,7 @@ export const FinanceRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/finance/currencies/activate",
         summary: "Activate a currency for this org by creating a General Fund account",
+        middleware: [requirePermission("finance", ["create"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             body: jsonContentRequired(activateCurrencyRequestSchema, "Currency to activate"),
@@ -200,6 +209,7 @@ export const FinanceRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/members/{userId}/initialize-wallet",
         summary: "Manually provision default accounts for a member (idempotent)",
+        middleware: [requirePermission("finance", ["create"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -228,6 +238,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/finance/billing-plans",
         summary: "Create a new organization-level billing plan",
+        middleware: [requirePermission("finance", ["create"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             body: jsonContentRequired(createBillingPlanSchema, "Billing plan details"),
@@ -245,6 +256,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/finance/billing-plans",
         summary: "List organization billing plans with pagination and search",
+        middleware: [requirePermission("finance", ["read"])] as const,
         request: {
             params: z.object({ organizationId: z.string() }),
             query: billingPlanPaginationSchema,
@@ -262,6 +274,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.PATCH,
         path: "/orgs/{organizationId}/finance/billing-plans/{planId}",
         summary: "Update an organization-level billing plan and its tiers",
+        middleware: [requirePermission("finance", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -286,6 +299,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.DELETE,
         path: "/orgs/{organizationId}/finance/billing-plans/{planId}",
         summary: "Delete an organization-level billing plan",
+        middleware: [requirePermission("finance", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -310,6 +324,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.POST,
         path: "/orgs/{organizationId}/members/{userId}/billing-plans",
         summary: "Assign a billing plan to a member (student)",
+        middleware: [requirePermission("finance", ["create"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -334,6 +349,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.PUT, // PUT for idempotent replacement
         path: "/orgs/{organizationId}/members/{userId}/billing-plans",
         summary: "Replace a student's billing plan for a currency",
+        middleware: [requirePermission("finance", ["update"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -354,6 +370,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.GET,
         path: "/orgs/{organizationId}/members/{userId}/billing-plans",
         summary: "List a member's billing plan assignments",
+        middleware: [requirePermission("finance", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
@@ -374,6 +391,7 @@ export const FinanceBillingRoutes = {
         method: HttpMethods.DELETE,
         path: "/orgs/{organizationId}/members/{userId}/billing-plans/{assignmentId}",
         summary: "Remove a student's billing plan assignment",
+        middleware: [requirePermission("finance", ["delete"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),
