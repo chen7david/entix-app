@@ -63,6 +63,20 @@ export abstract class FinancialBaseService extends BaseService {
             throw new NotFoundError("Source or destination account not found");
         }
 
+        // Tenant isolation: both legs must belong to the org in the request path
+        // (platform treasury accounts use organizationId "platform" and are excluded).
+        const isPlatformAccount = (orgId: string | null | undefined) => orgId === "platform";
+        if (
+            (!isPlatformAccount(source.organizationId) &&
+                source.organizationId !== input.organizationId) ||
+            (!isPlatformAccount(destination.organizationId) &&
+                destination.organizationId !== input.organizationId)
+        ) {
+            throw new ForbiddenError(
+                "Accounts must belong to the organization specified in the request"
+            );
+        }
+
         // Ledger Hardening: Currency Isolation
         if (source.currencyId !== input.currencyId || destination.currencyId !== input.currencyId) {
             throw new BadRequestError("Currency mismatch between accounts and transaction");
@@ -101,9 +115,7 @@ export abstract class FinancialBaseService extends BaseService {
         const overdraftLimit = source.overdraftLimitCents ?? 0;
         const availableBalance = source.balanceCents + overdraftLimit;
         if (availableBalance < input.amountCents) {
-            throw new BadRequestError(
-                `Insufficient funds (balance: ${source.balanceCents}, overdraft: ${overdraftLimit}, required: ${input.amountCents})`
-            );
+            throw new BadRequestError("Insufficient funds for this transaction.");
         }
 
         // Ledger batch ties header + debit/credit lines + idempotency in one atomic batch — ids must exist before `transactionsRepo.insert`.
@@ -150,8 +162,15 @@ export abstract class FinancialBaseService extends BaseService {
 
     /**
      * Deactivates an account to prevent further transactions.
+     * When organizationId is provided, rejects cross-tenant deactivation.
      */
-    async deactivateAccount(accountId: string) {
+    async deactivateAccount(accountId: string, organizationId?: string) {
+        if (organizationId) {
+            const existing = await this.accountsRepo.findById(accountId);
+            if (!existing || existing.organizationId !== organizationId) {
+                throw new NotFoundError(`Account ${accountId} not found`);
+            }
+        }
         const now = new Date();
         const account = await this.accountsRepo.deactivate(accountId, now);
         return this.assertExists(account, `Account ${accountId} not found`);

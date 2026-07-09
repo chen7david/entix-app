@@ -33,6 +33,7 @@ export const OrgGuard: React.FC = () => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const [isSyncing, setIsSyncing] = useState(true); // pessimistic default — block until first sync
+    const [syncFailed, setSyncFailed] = useState(false);
     const [isRoleSwitching, setIsRoleSwitching] = useState(false);
     const [activeRole, setActiveRoleState] = useState<string | null>(() =>
         slug ? localStorage.getItem(`activeRole:${slug}`) : null
@@ -125,6 +126,7 @@ export const OrgGuard: React.FC = () => {
 
         let cancelled = false;
         setIsSyncing(true);
+        setSyncFailed(false);
 
         authClient.organization
             .setActive({ organizationId: activeOrganization.id })
@@ -147,6 +149,7 @@ export const OrgGuard: React.FC = () => {
                 console.error("OrgGuard: failed to sync organization session:", err);
                 // Reset the ref so a retry is possible on next render
                 lastSyncedOrgIdRef.current = null;
+                if (!cancelled) setSyncFailed(true);
             })
             .finally(() => {
                 if (!cancelled) setIsSyncing(false);
@@ -175,6 +178,29 @@ export const OrgGuard: React.FC = () => {
                         onClick={() => navigate(AppRoutes.onboarding.selectOrganization)}
                     >
                         Switch Organization
+                    </Button>
+                }
+            />
+        );
+    }
+
+    // Do not mount org routes with a stale Better Auth session after sync failure
+    if (syncFailed) {
+        return (
+            <CenteredResult
+                status="error"
+                title="Organization sync failed"
+                subTitle="We could not activate this organization in your session. Please try again or switch organizations."
+                extra={
+                    <Button
+                        type="primary"
+                        onClick={() => {
+                            lastSyncedOrgIdRef.current = null;
+                            setSyncFailed(false);
+                            setIsSyncing(true);
+                        }}
+                    >
+                        Retry
                     </Button>
                 }
             />

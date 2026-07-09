@@ -30,8 +30,9 @@ export const useWalletTransfer = (orgId?: string) => {
             return hcJson(res);
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["walletBalance", orgId] });
-            queryClient.invalidateQueries({ queryKey: ["transactionHistory", orgId] });
+            // Prefix match: keys are ["walletBalance", id, ownerType, orgId]
+            queryClient.invalidateQueries({ queryKey: ["walletBalance"] });
+            queryClient.invalidateQueries({ queryKey: ["transactionHistory"] });
         },
     });
 };

@@ -17,7 +17,13 @@ export function canAccessMemberWallet(
 
     if (callerId === targetUserId) return true;
     if (isSuperAdmin) return true;
-    if (callerRole === "admin" || callerRole === "owner") return true;
+
+    // Comma-separated multi-roles (e.g. "student, admin") must elevate if any role is admin/owner.
+    const roles = (callerRole ?? "")
+        .split(",")
+        .map((r) => r.trim())
+        .filter(Boolean);
+    if (roles.includes("admin") || roles.includes("owner")) return true;
 
     return false;
 }

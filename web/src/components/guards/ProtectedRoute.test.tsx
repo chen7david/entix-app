@@ -215,6 +215,50 @@ describe("ProtectedRoute", () => {
         expect(screen.getByTestId("unauthorized-page")).toBeInTheDocument();
     });
 
+    it("should show loader when multi-role member still needs role selection", () => {
+        vi.mocked(useOrgRole).mockReturnValue({
+            activeRole: null,
+            userRoles: ["student", "teacher"],
+            loadingRoles: false,
+            needsRoleSelection: true,
+            isOwner: false,
+            isAdmin: false,
+            isTeacher: false,
+            isStudent: false,
+            isAdminOrOwner: false,
+            isStaff: false,
+        });
+        vi.mocked(useAuth).mockReturnValue({
+            user: {
+                id: "1",
+                email: "test@example.com",
+                name: "Test User",
+                globalRole: "user",
+                emailVerified: true,
+                orgRole: "student,teacher",
+                activeMemberId: "m1",
+                activeOrganizationId: "o1",
+            },
+            isAuthenticated: true,
+            isLoading: false,
+            isSuperAdmin: false,
+            refreshAuth: vi.fn() as any,
+        });
+
+        const { container } = render(
+            <MemoryRouter initialEntries={["/manage"]}>
+                <Routes>
+                    <Route element={<ProtectedRoute allowedOrgRoles={["admin", "owner"]} />}>
+                        <Route path="/manage" element={<MockDashboard />} />
+                    </Route>
+                </Routes>
+            </MemoryRouter>
+        );
+
+        expect(container.querySelector(".ant-spin")).toBeInTheDocument();
+        expect(screen.queryByTestId("dashboard-page")).not.toBeInTheDocument();
+    });
+
     it("should redirect staff away from student-only org routes to the org dashboard", () => {
         vi.mocked(useOrgRole).mockReturnValue({
             activeRole: "teacher",

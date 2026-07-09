@@ -39,4 +39,9 @@ describe("canAccessMemberWallet", () => {
         const ctx = makeCtx({ userId: "teacher_1", membershipRole: "teacher" });
         expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(false);
     });
+
+    it("allows multi-role members when one role is admin", () => {
+        const ctx = makeCtx({ userId: "multi_1", membershipRole: "student, admin" });
+        expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(true);
+    });
 });

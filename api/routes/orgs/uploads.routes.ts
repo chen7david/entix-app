@@ -56,7 +56,7 @@ export const OrgUploadsRoutes = {
         method: "get",
         path: "/orgs/{organizationId}/uploads",
         tags: ["Organization Uploads"],
-        middleware: [] as const,
+        middleware: [requirePermission("upload", ["read"])] as const,
         request: {
             params: z.object({
                 organizationId: z.string(),

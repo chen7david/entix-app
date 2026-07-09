@@ -246,34 +246,37 @@ export function SessionVocabularyPage() {
             align: "right",
             width: 130,
             fixed: "right",
-            render: (_, row) => (
-                <Space>
-                    <Tooltip title={`Remove ${POINTS_DRAFT_STEP} point(s) from pending`}>
-                        <Button
-                            onClick={() =>
-                                setStagedDeltas((prev) => ({
-                                    ...prev,
-                                    [row.userId]: (prev[row.userId] ?? 0) - POINTS_DRAFT_STEP,
-                                }))
-                            }
-                        >
-                            -
-                        </Button>
-                    </Tooltip>
-                    <Tooltip title={`Add ${POINTS_DRAFT_STEP} point(s) to pending`}>
-                        <Button
-                            onClick={() =>
-                                setStagedDeltas((prev) => ({
-                                    ...prev,
-                                    [row.userId]: (prev[row.userId] ?? 0) + POINTS_DRAFT_STEP,
-                                }))
-                            }
-                        >
-                            +
-                        </Button>
-                    </Tooltip>
-                </Space>
-            ),
+            render: (_, row) =>
+                isAdminOrOwner ? (
+                    <Space>
+                        <Tooltip title={`Remove ${POINTS_DRAFT_STEP} point(s) from pending`}>
+                            <Button
+                                onClick={() =>
+                                    setStagedDeltas((prev) => ({
+                                        ...prev,
+                                        [row.userId]: (prev[row.userId] ?? 0) - POINTS_DRAFT_STEP,
+                                    }))
+                                }
+                            >
+                                -
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title={`Add ${POINTS_DRAFT_STEP} point(s) to pending`}>
+                            <Button
+                                onClick={() =>
+                                    setStagedDeltas((prev) => ({
+                                        ...prev,
+                                        [row.userId]: (prev[row.userId] ?? 0) + POINTS_DRAFT_STEP,
+                                    }))
+                                }
+                            >
+                                +
+                            </Button>
+                        </Tooltip>
+                    </Space>
+                ) : (
+                    <Text type="secondary">—</Text>
+                ),
         },
     ];
 
@@ -384,7 +387,7 @@ export function SessionVocabularyPage() {
             }
 
             queryClient.setQueryData<WalletSummaryDTO | undefined>(
-                queryKeys.wallet.balance(organizationId!, "org"),
+                queryKeys.wallet.balance(organizationId, "org"),
                 (current) => {
                     if (!current) return current;
                     return {
@@ -407,7 +410,7 @@ export function SessionVocabularyPage() {
             );
 
             queryClient.invalidateQueries({
-                queryKey: queryKeys.wallet.balance(organizationId!, "org"),
+                queryKey: queryKeys.wallet.balance(organizationId, "org"),
             });
 
             if (failures.length === 0) {
@@ -494,7 +497,7 @@ export function SessionVocabularyPage() {
                             </Tooltip>
                         </Space>
                         <Space wrap size="small">
-                            {attendeeUserIds.length > 0 && (
+                            {isAdminOrOwner && attendeeUserIds.length > 0 && (
                                 <>
                                     <Tooltip title="Add +1 pending for every enrolled student">
                                         <Button
@@ -531,15 +534,23 @@ export function SessionVocabularyPage() {
                                     </Tooltip>
                                 </>
                             )}
-                            <Button onClick={flushPendingStaging}>Reset</Button>
-                            <Button
-                                type="primary"
-                                onClick={handleSavePoints}
-                                disabled={!isAdminOrOwner}
-                                loading={transferPoints.isPending}
-                            >
-                                Save points
-                            </Button>
+                            {isAdminOrOwner && (
+                                <>
+                                    <Button onClick={flushPendingStaging}>Reset</Button>
+                                    <Button
+                                        type="primary"
+                                        onClick={handleSavePoints}
+                                        loading={transferPoints.isPending}
+                                    >
+                                        Save points
+                                    </Button>
+                                </>
+                            )}
+                            {!isAdminOrOwner && (
+                                <Text type="secondary">
+                                    Point adjustments can be saved by org admins and owners.
+                                </Text>
+                            )}
                         </Space>
                     </Space>
                     <Table
