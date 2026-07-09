@@ -235,7 +235,7 @@ describe("ProtectedRoute", () => {
                 name: "Test User",
                 globalRole: "user",
                 emailVerified: true,
-                orgRole: "student,teacher",
+                orgRole: "student",
                 activeMemberId: "m1",
                 activeOrganizationId: "o1",
             },

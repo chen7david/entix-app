@@ -18,7 +18,7 @@ describe("User profile cross-member isolation", () => {
 
     beforeEach(async () => {
         await createTestDb();
-        const { cookie, orgId: id } = await createAuthenticatedOrg({ app, env });
+        const { orgId: id } = await createAuthenticatedOrg({ app, env });
         orgId = id;
         // Owner cookie unused; create elevated admin for positive control
         const stamp = Date.now();
