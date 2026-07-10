@@ -1,4 +1,4 @@
-import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
 import { authOrganizations } from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { TestDb } from "../../lib/utils";

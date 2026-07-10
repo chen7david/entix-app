@@ -1,5 +1,5 @@
-import { UserProfileRepository } from "@api/repositories/user-profile.repository";
-import { UserProfileService } from "@api/services/user-profile.service";
+import { UserProfileRepository } from "@api/repositories/users/user-profile.repository";
+import { UserProfileService } from "@api/services/users/user-profile.service";
 import { authUsers as user, userPhoneNumbers } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";

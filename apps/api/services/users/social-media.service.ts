@@ -1,7 +1,7 @@
 import { BadRequestError } from "@api/errors/app.error";
-import type { SocialMediaRepository } from "@api/repositories/social-media.repository";
+import type { SocialMediaRepository } from "@api/repositories/members/social-media.repository";
 import type * as schema from "@shared/db/schema";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export class SocialMediaService extends BaseService {
     constructor(private socialRepo: SocialMediaRepository) {

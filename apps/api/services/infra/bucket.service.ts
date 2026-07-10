@@ -1,6 +1,6 @@
 import { InternalServerError, NotFoundError } from "@api/errors/app.error";
 import type { AwsClient } from "aws4fetch";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export type BucketConfig = {
     bucketName: string;

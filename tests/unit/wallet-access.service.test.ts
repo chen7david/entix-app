@@ -1,4 +1,4 @@
-import { canAccessMemberWallet } from "@api/services/wallet-access.service";
+import { canAccessMemberWallet } from "@api/services/financial/wallet-access.service";
 import { describe, expect, it } from "vitest";
 
 function makeCtx(values: Record<string, unknown>) {

@@ -1,5 +1,5 @@
-import type { DashboardRepository } from "@api/repositories/dashboard.repository";
-import { BaseService } from "./base.service";
+import type { DashboardRepository } from "@api/repositories/org/dashboard.repository";
+import { BaseService } from "../base.service";
 
 export class DashboardService extends BaseService {
     constructor(private dashboardRepo: DashboardRepository) {

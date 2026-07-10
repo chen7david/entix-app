@@ -1,8 +1,8 @@
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionCategoriesRepository } from "@api/repositories/financial/financial-transaction-categories.repository";
-import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { BaseService } from "./base.service";
-import type { SessionPaymentService } from "./financial/session-payment.service";
+import type { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
+import { BaseService } from "../base.service";
+import type { SessionPaymentService } from "./session-payment.service";
 
 export type MissedPaymentRetryOutcome =
     | { outcome: "not_found" }

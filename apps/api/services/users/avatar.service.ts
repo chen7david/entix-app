@@ -1,8 +1,8 @@
 import { BadRequestError, ConflictError, NotFoundError } from "@api/errors/app.error";
 import { AVATAR_BUCKET_FOLDER, USER_ASSETS_PREFIX } from "@api/helpers/constants.helpers";
-import type { UserRepository } from "@api/repositories/user.repository";
-import { BaseService } from "./base.service";
-import type { UploadService } from "./upload.service";
+import type { UserRepository } from "@api/repositories/users/user.repository";
+import type { UploadService } from "@api/services/media/upload.service";
+import { BaseService } from "../base.service";
 
 export class AvatarService extends BaseService {
     constructor(

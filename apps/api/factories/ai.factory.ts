@@ -6,8 +6,8 @@ import {
     GEMINI_MODELS,
 } from "@api/constants/ai.constants";
 import type { AppContext } from "@api/helpers/types.helpers";
-import { DeepSeekAiService } from "@api/services/deepseek-ai.service";
-import { GeminiAiService } from "@api/services/gemini-ai.service";
+import { DeepSeekAiService } from "@api/services/ai/deepseek-ai.service";
+import { GeminiAiService } from "@api/services/ai/gemini-ai.service";
 import type {
     AiGenerateOptions,
     AiTextModel,

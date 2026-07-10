@@ -34,12 +34,6 @@ import {
 } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
-import {
-    CoverArtUploader,
-    useMedia,
-    usePlaylistSequence,
-    usePlaylists,
-} from "@web/src/features/media";
 import { useOrgNavigate } from "@web/src/features/organization";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
@@ -59,6 +53,9 @@ import {
 } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
+import { useMedia } from "../hooks/useMedia";
+import { usePlaylistSequence, usePlaylists } from "../hooks/usePlaylists";
+import { CoverArtUploader } from "./CoverArtUploader";
 
 const { Title, Text } = Typography;
 

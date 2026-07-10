@@ -10,7 +10,7 @@ import type {
     AiTextModel,
     BaseAiServiceConfig,
 } from "@api/types/ai.types";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 /**
  * Google Gemini (`generativelanguage.googleapis.com`) REST client with a typed chat-style API.

@@ -1,5 +1,5 @@
 import { env } from "cloudflare:test";
-import { LessonContentRepository } from "@api/repositories/lesson-content.repository";
+import { LessonContentRepository } from "@api/repositories/lessons/lesson-content.repository";
 import { authOrganizations, lessons } from "@shared/db/schema";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { insertTestPassage } from "../lib/passage-fixtures";

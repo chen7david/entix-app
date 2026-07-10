@@ -1,5 +1,5 @@
 import { ConflictError, NotFoundError } from "@api/errors/app.error";
-import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
+import { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
 import {
     authOrganizations,
     authUsers,

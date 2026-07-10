@@ -1,6 +1,6 @@
 import { getDbClient } from "@api/factories/db.factory";
 import type { AppContext, AppOpenApi } from "@api/helpers/types.helpers";
-import { MailService } from "@api/services/mailer.service";
+import { MailService } from "@api/services/infra/mailer.service";
 import * as schema from "@shared/db/schema";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";

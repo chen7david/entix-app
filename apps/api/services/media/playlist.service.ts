@@ -1,7 +1,7 @@
-import type { PlaylistRepository } from "@api/repositories/playlist.repository";
-import type { UploadService } from "@api/services/upload.service";
+import type { PlaylistRepository } from "@api/repositories/media/playlist.repository";
+import type { UploadService } from "@api/services/media/upload.service";
 import type * as schema from "@shared/db/schema";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export class PlaylistService extends BaseService {
     constructor(

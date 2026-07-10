@@ -11,18 +11,16 @@ import type { Media } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
-import {
-    CoverArtUploader,
-    MediaPlayer,
-    useMedia,
-    useRecordMediaPlay,
-} from "@web/src/features/media";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Space, Tooltip, Typography } from "antd";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
+import { useMedia } from "../hooks/useMedia";
+import { useRecordMediaPlay } from "../hooks/useRecordMediaPlay";
+import { CoverArtUploader } from "./CoverArtUploader";
 import { MediaDropzone } from "./MediaDropzone";
+import { MediaPlayer } from "./MediaPlayer";
 
 const { Title, Text } = Typography;
 

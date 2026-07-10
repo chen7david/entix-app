@@ -1,6 +1,6 @@
 import { BadRequestError, NotFoundError } from "@api/errors/app.error";
-import type { ImportJobRepository } from "@api/repositories/import-job.repository";
-import type { PassageService } from "@api/services/passage.service";
+import type { ImportJobRepository } from "@api/repositories/passages/import-job.repository";
+import type { PassageService } from "@api/services/passages/passage.service";
 import type { ImportJobParagraph } from "@shared/db/schema";
 import type {
     BulkInsertParagraphsInput,
@@ -10,7 +10,7 @@ import type {
     UpdateImportParagraphInput,
 } from "@shared/schemas/dto/import-job.dto";
 import { buildFullTipTapDoc, buildSingleParagraphTipTapDoc } from "@shared/utils/passage-content";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 const MAX_INLINE_CONTENT = 50_000;
 const MUTABLE_JOB_STATUSES = new Set(["uploading", "review"]);

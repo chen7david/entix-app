@@ -1,7 +1,10 @@
 import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
-import type { UploadRepository, UserUploadRepository } from "@api/repositories/upload.repository";
-import { BaseService } from "./base.service";
-import type { BucketService } from "./bucket.service";
+import type {
+    UploadRepository,
+    UserUploadRepository,
+} from "@api/repositories/media/upload.repository";
+import type { BucketService } from "@api/services/infra/bucket.service";
+import { BaseService } from "../base.service";
 
 export class UploadService extends BaseService {
     constructor(

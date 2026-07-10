@@ -1,8 +1,8 @@
 import type { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import type { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import type { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
-import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import type { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
+import type { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
 import { vi } from "vitest";
 
 /**

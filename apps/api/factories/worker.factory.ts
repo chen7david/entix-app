@@ -6,17 +6,17 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
+import { UploadRepository } from "@api/repositories/media/upload.repository";
 import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
-import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { UploadRepository } from "@api/repositories/upload.repository";
-import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
+import { VocabularyBankRepository } from "@api/repositories/vocabulary/vocabulary-bank.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
-import { parseGoogleTtsCredentials, TtsService } from "@api/services/tts.service";
+import { parseGoogleTtsCredentials, TtsService } from "@api/services/media/tts.service";
 import {
     VOCABULARY_TRANSLATION_INSTRUCTIONS,
     VocabularyProcessingService,
-} from "@api/services/vocabulary-processing.service";
+} from "@api/services/vocabulary/vocabulary-processing.service";
 import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 import * as schema from "@shared/db/schema";
 import { drizzle } from "drizzle-orm/d1";

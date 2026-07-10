@@ -1,7 +1,7 @@
 import { InternalServerError } from "@api/errors/app.error";
-import type { UserRepository } from "@api/repositories/user.repository";
+import type { UserRepository } from "@api/repositories/users/user.repository";
 import type { Auth } from "better-auth";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export type CreateUserInput = {
     email: string;

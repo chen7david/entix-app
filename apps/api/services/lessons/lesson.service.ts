@@ -1,9 +1,9 @@
 import { NotFoundError } from "@api/errors/app.error";
-import type { LessonRepository } from "@api/repositories/lesson.repository";
-import type { UploadService } from "@api/services/upload.service";
+import type { LessonRepository } from "@api/repositories/lessons/lesson.repository";
+import type { UploadService } from "@api/services/media/upload.service";
 import type { CefrLevel } from "@shared/constants/cefr";
 import type { Lesson } from "@shared/db/schema";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export class LessonService extends BaseService {
     constructor(

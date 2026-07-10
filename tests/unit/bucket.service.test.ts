@@ -1,4 +1,4 @@
-import { type BucketConfig, BucketService } from "@api/services/bucket.service";
+import { type BucketConfig, BucketService } from "@api/services/infra/bucket.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("BucketService", () => {

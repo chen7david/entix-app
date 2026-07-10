@@ -1,10 +1,10 @@
 import { BadRequestError, ForbiddenError, NotFoundError } from "@api/errors/app.error";
 import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
-import type { MemberRepository } from "@api/repositories/member.repository";
-import type { ScheduledSessionsRepository } from "@api/repositories/scheduled-sessions.repository";
-import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import type { SessionScheduleService } from "@api/services/session-schedule.service";
-import { BaseService } from "./base.service";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
+import type { ScheduledSessionsRepository } from "@api/repositories/schedule/scheduled-sessions.repository";
+import type { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
+import type { SessionScheduleService } from "@api/services/schedule/session-schedule.service";
+import { BaseService } from "../base.service";
 
 export class EnrollmentService extends BaseService {
     constructor(

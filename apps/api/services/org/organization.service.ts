@@ -1,5 +1,5 @@
-import type { OrganizationRepository } from "@api/repositories/organization.repository";
-import { BaseService } from "./base.service";
+import type { OrganizationRepository } from "@api/repositories/org/organization.repository";
+import { BaseService } from "../base.service";
 
 export class OrganizationService extends BaseService {
     constructor(private orgRepo: OrganizationRepository) {

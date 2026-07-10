@@ -1,10 +1,10 @@
 import { ConflictError, InternalServerError, NotFoundError } from "@api/errors/app.error";
 import { decodeCursor, processPaginatedResult } from "@api/helpers/pagination.helpers";
-import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import type { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
-import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import type { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
+import type { StudentVocabularyRepository } from "@api/repositories/vocabulary/student-vocabulary.repository";
+import type { VocabularyBankRepository } from "@api/repositories/vocabulary/vocabulary-bank.repository";
 import type { VocabularyBankItem } from "@shared/db/schema";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 type CursorDirection = "next" | "prev";
 

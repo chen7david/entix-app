@@ -1,14 +1,14 @@
-import type { MemberRepository } from "@api/repositories/member.repository";
-import type { SocialMediaRepository } from "@api/repositories/social-media.repository";
-import type { UserRepository } from "@api/repositories/user.repository";
-import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
+import type { SocialMediaRepository } from "@api/repositories/members/social-media.repository";
+import type { UserRepository } from "@api/repositories/users/user.repository";
+import type { UserProfileRepository } from "@api/repositories/users/user-profile.repository";
 import { generateOpaqueId } from "@shared";
 import type { OrgRole } from "@shared/auth/permissions";
 import type * as schema from "@shared/db/schema";
 import type { BulkImportOptionsDTO, BulkMemberItemDTO } from "@shared/schemas/dto/bulk-member.dto";
-import { BaseService } from "./base.service";
-import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
-import type { FinanceWalletService } from "./financial/finance-wallet.service";
+import { BaseService } from "../base.service";
+import type { FinanceBillingPlansService } from "../financial/finance-billing-plans.service";
+import type { FinanceWalletService } from "../financial/finance-wallet.service";
 
 export class MemberImportService extends BaseService {
     constructor(

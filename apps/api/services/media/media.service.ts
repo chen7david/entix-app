@@ -1,7 +1,7 @@
 import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
-import type { MediaRepository } from "@api/repositories/media.repository";
-import type { UploadService } from "@api/services/upload.service";
-import { BaseService } from "./base.service";
+import type { MediaRepository } from "@api/repositories/media/media.repository";
+import type { UploadService } from "@api/services/media/upload.service";
+import { BaseService } from "../base.service";
 
 export class MediaService extends BaseService {
     constructor(

@@ -624,7 +624,7 @@ Modules MUST expose a small, stable public interface while hiding implementation
 - Prefer fewer, richer functions over many thin, leaky helpers.
 - Export only what callers need. Keep internals unexported.
 - Cross-module interaction goes through the public barrel (`index.ts`), never via
-  deep internal paths (e.g., `../../repositories/member.repository`).
+  deep internal paths (e.g., `../../repositories/members/member.repository`).
 - If a caller must know implementation details to use a module correctly, the
   abstraction is too shallow — redesign the interface.
 

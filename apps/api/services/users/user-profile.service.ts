@@ -1,7 +1,7 @@
 import { BadRequestError } from "@api/errors/app.error";
-import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import type { UserProfileRepository } from "@api/repositories/users/user-profile.repository";
 import type * as schema from "@shared/db/schema";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export class UserProfileService extends BaseService {
     constructor(private profileRepo: UserProfileRepository) {

@@ -1,6 +1,6 @@
 import { getBucketClient } from "@api/factories/bucket.factory";
 import type { AppContext } from "@api/helpers/types.helpers";
-import { BucketService } from "@api/services/bucket.service";
+import { BucketService } from "@api/services/infra/bucket.service";
 import { describe, expect, it } from "vitest";
 
 describe("BucketFactory", () => {

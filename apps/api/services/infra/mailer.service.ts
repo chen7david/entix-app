@@ -1,6 +1,6 @@
 import { ServiceUnavailableError } from "@api/errors/app.error";
 import { Resend } from "resend";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 type SendTemplateParams = {
     to: string;

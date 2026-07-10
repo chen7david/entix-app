@@ -1,9 +1,9 @@
 import { BadRequestError, NotFoundError } from "@api/errors/app.error";
 import { parseAuthMemberRoles } from "@api/helpers/auth-member-role.helpers";
-import type { MemberRepository } from "@api/repositories/member.repository";
-import type { ScheduledSessionsRepository } from "@api/repositories/scheduled-sessions.repository";
-import type { SessionScheduleRepository } from "@api/repositories/session-schedule.repository";
-import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import type { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
+import type { ScheduledSessionsRepository } from "@api/repositories/schedule/scheduled-sessions.repository";
+import type { SessionScheduleRepository } from "@api/repositories/schedule/session-schedule.repository";
 import {
     calculateClassChargeCents,
     FINANCIAL_CATEGORIES,
@@ -13,10 +13,10 @@ import {
     IdempotencyKeys,
 } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
-import { BaseService } from "./base.service";
-import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
-import type { FinanceWalletService } from "./financial/finance-wallet.service";
-import type { PaymentQueueService } from "./payment/payment-queue.service";
+import { BaseService } from "../base.service";
+import type { FinanceBillingPlansService } from "../financial/finance-billing-plans.service";
+import type { FinanceWalletService } from "../financial/finance-wallet.service";
+import type { PaymentQueueService } from "../payment/payment-queue.service";
 
 export type CreateSessionDTO = {
     lessonId: string;

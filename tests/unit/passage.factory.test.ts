@@ -1,6 +1,6 @@
 import { getPassageService } from "@api/factories/passage.factory";
 import type { AppContext } from "@api/helpers/types.helpers";
-import { PassageService } from "@api/services/passage.service";
+import { PassageService } from "@api/services/passages/passage.service";
 import { describe, expect, it } from "vitest";
 
 function buildMockCtx(overrides: { PUBLIC_CDN_URL?: string } = {}): AppContext {

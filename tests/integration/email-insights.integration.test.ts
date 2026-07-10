@@ -39,7 +39,7 @@ describe("Email Insights Integration", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);
 
-            const { MailService } = await import("@api/services/mailer.service");
+            const { MailService } = await import("@api/services/infra/mailer.service");
             const spy = vi.spyOn(MailService.prototype, "listEmails").mockResolvedValue({
                 data: {
                     object: "list",
@@ -78,7 +78,7 @@ describe("Email Insights Integration", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);
 
-            const { MailService } = await import("@api/services/mailer.service");
+            const { MailService } = await import("@api/services/infra/mailer.service");
             const spy = vi.spyOn(MailService.prototype, "getEmail").mockResolvedValue({
                 data: {
                     object: "email",
@@ -114,7 +114,7 @@ describe("Email Insights Integration", () => {
             const { cookie } = await createSuperAdmin({ app, env });
             const client = createTestClient(app, env, cookie);
 
-            const { MailService } = await import("@api/services/mailer.service");
+            const { MailService } = await import("@api/services/infra/mailer.service");
             const spy = vi.spyOn(MailService.prototype, "getEmail").mockResolvedValue({
                 data: null,
                 error: { name: "not_found", message: "Not found" } as any,

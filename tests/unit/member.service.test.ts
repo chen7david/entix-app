@@ -1,5 +1,5 @@
-import { MemberRepository } from "@api/repositories/member.repository";
-import { MemberService } from "@api/services/member.service";
+import { MemberRepository } from "@api/repositories/members/member.repository";
+import { MemberService } from "@api/services/members/member.service";
 import { generateOpaqueId } from "@shared";
 import {
     authMembers as member,

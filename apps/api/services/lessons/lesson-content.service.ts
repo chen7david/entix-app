@@ -4,10 +4,10 @@ import {
     NotFoundError,
     UnprocessableEntityError,
 } from "@api/errors/app.error";
-import type { LessonRepository } from "@api/repositories/lesson.repository";
-import type { LessonContentRepository } from "@api/repositories/lesson-content.repository";
-import type { PassageService } from "@api/services/passage.service";
-import { BaseService } from "./base.service";
+import type { LessonRepository } from "@api/repositories/lessons/lesson.repository";
+import type { LessonContentRepository } from "@api/repositories/lessons/lesson-content.repository";
+import type { PassageService } from "@api/services/passages/passage.service";
+import { BaseService } from "../base.service";
 
 export function assertOrderedIdsMatchCurrent(currentIds: string[], orderedIds: string[]): void {
     if (new Set(orderedIds).size !== orderedIds.length) {

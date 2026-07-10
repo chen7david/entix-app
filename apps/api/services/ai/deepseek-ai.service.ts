@@ -18,7 +18,7 @@ import type {
     AiTextModel,
     BaseAiServiceConfig,
 } from "@api/types/ai.types";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export type DeepSeekAiServiceConfig = BaseAiServiceConfig & {
     /** Override API base (defaults to {@link DEEPSEEK_API_BASE_URL}). */

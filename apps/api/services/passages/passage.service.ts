@@ -1,5 +1,7 @@
 import { NotFoundError, UnprocessableEntityError } from "@api/errors/app.error";
-import type { PassageRepository } from "@api/repositories/passage.repository";
+import type { PassageRepository } from "@api/repositories/passages/passage.repository";
+import type { BucketService } from "@api/services/infra/bucket.service";
+import type { UploadService } from "@api/services/media/upload.service";
 import type {
     AddPassageImageInput,
     CreateCollectionInput,
@@ -9,9 +11,7 @@ import type {
 } from "@shared/schemas/dto/passage.dto";
 import type { PassageR2Content } from "@shared/types/text-collection-page.types";
 import { countPassageWords } from "@shared/utils/passage-content";
-import { BaseService } from "./base.service";
-import type { BucketService } from "./bucket.service";
-import type { UploadService } from "./upload.service";
+import { BaseService } from "../base.service";
 
 const MAX_INLINE_CONTENT = 50_000;
 

@@ -1,6 +1,6 @@
 import type { EntixQueueMessage } from "@api/queues/entix.queue";
-import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
-import { BaseService } from "./base.service";
+import type { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
+import { BaseService } from "../base.service";
 
 type AuditQueueBinding = { send: (body: EntixQueueMessage) => Promise<void> };
 

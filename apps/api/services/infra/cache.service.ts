@@ -1,6 +1,6 @@
-import { KvCacheKeys } from "@api/repositories/kv-cache.keys";
-import type { KvCacheRepository } from "@api/repositories/kv-cache.repository";
-import { BaseService } from "./base.service";
+import { KvCacheKeys } from "@api/repositories/infra/kv-cache.keys";
+import type { KvCacheRepository } from "@api/repositories/infra/kv-cache.repository";
+import { BaseService } from "../base.service";
 
 /** Sentinel stored in KV while a request is in-flight. */
 const PENDING_SENTINEL = "PENDING" as const;

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SessionScheduleRepository } from "../../../apps/api/repositories/session-schedule.repository";
+import { SessionScheduleRepository } from "../../../apps/api/repositories/schedule/session-schedule.repository";
 
 describe("SessionScheduleRepository Unit test", () => {
     let mockDb: any;

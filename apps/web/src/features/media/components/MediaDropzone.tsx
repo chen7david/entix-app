@@ -1,10 +1,4 @@
 import { InboxOutlined } from "@ant-design/icons";
-import {
-    isUploadWindowVisibleAtom,
-    type UploadTask,
-    uploadQueueAtom,
-    useMedia,
-} from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
 import { getApiClient } from "@web/src/lib/api-client";
 import { hcJson } from "@web/src/lib/hc-json";
@@ -12,6 +6,8 @@ import type { UploadProps } from "antd";
 import { App, Typography, Upload } from "antd";
 import { useSetAtom } from "jotai";
 import type React from "react";
+import { useMedia } from "../hooks/useMedia";
+import { isUploadWindowVisibleAtom, type UploadTask, uploadQueueAtom } from "../store/upload.store";
 
 const { Dragger } = Upload;
 const { Paragraph } = Typography;

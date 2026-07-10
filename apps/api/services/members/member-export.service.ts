@@ -1,6 +1,6 @@
-import type { MemberRepository } from "@api/repositories/member.repository";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
 import type { OrgRole } from "@shared/auth/permissions";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export class MemberExportService extends BaseService {
     constructor(private memberRepo: MemberRepository) {

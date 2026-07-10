@@ -1,14 +1,14 @@
 import { BadRequestError, ConflictError, InternalServerError } from "@api/errors/app.error";
-import type { MemberRepository } from "@api/repositories/member.repository";
-import type { OrganizationRepository } from "@api/repositories/organization.repository";
-import type { UserRepository } from "@api/repositories/user.repository";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
+import type { OrganizationRepository } from "@api/repositories/org/organization.repository";
+import type { UserRepository } from "@api/repositories/users/user.repository";
+import type { UserService } from "@api/services/users/user.service";
 import { generateOpaqueId, generateSecretToken } from "@shared";
 import { hashPassword } from "better-auth/crypto";
 import type { PinoLogger } from "hono-pino";
-import { BaseService } from "./base.service";
-import type { FinanceBillingPlansService } from "./financial/finance-billing-plans.service";
-import type { UserFinancialService } from "./financial/user-financial.service";
-import type { UserService } from "./user.service";
+import { BaseService } from "../base.service";
+import type { FinanceBillingPlansService } from "../financial/finance-billing-plans.service";
+import type { UserFinancialService } from "../financial/user-financial.service";
 
 type SignupData = {
     email: string;

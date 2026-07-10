@@ -1,10 +1,10 @@
 import { InternalServerError } from "@api/errors/app.error";
-import type { UploadRepository } from "@api/repositories/upload.repository";
-import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import type { UploadRepository } from "@api/repositories/media/upload.repository";
+import type { VocabularyBankRepository } from "@api/repositories/vocabulary/vocabulary-bank.repository";
+import type { TtsAudioResult, TtsService } from "@api/services/media/tts.service";
 import type { AiJsonSchema, AiTextProvider } from "@api/types/ai.types";
 import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { pinyin } from "pinyin-pro";
-import type { TtsAudioResult, TtsService } from "./tts.service";
 
 /** Max output tokens per phrase (single or batched). */
 export const VOCABULARY_TEXT_MAX_TOKENS = 512;

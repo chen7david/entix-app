@@ -1,6 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import { ImportJobRepository } from "@api/repositories/import-job.repository";
-import { ImportJobService } from "@api/services/import-job.service";
+import { ImportJobRepository } from "@api/repositories/passages/import-job.repository";
+import { ImportJobService } from "@api/services/passages/import-job.service";
 import { getDbClient } from "./db.factory";
 import { getPassageService } from "./passage.factory";
 

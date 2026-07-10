@@ -1,7 +1,7 @@
 import { ConflictError, InternalServerError } from "@api/errors/app.error";
-import type { MemberRepository } from "@api/repositories/member.repository";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
 import type * as schema from "@shared/db/schema";
-import { BaseService } from "./base.service";
+import { BaseService } from "../base.service";
 
 export type AddMemberInput = {
     userId: string;

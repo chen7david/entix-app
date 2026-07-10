@@ -24,7 +24,7 @@ A factory is a function that takes the **Hono Context (`ctx`)** and returns a fu
 ```typescript
 // api/factories/service.factory.ts
 import { getPlaylistRepository } from "./repository.factory";
-import { PlaylistService } from "@api/services/playlist.service";
+import { PlaylistService } from "@api/services/media/playlist.service";
 
 export const getPlaylistService = (ctx: Context) => {
     // 1. Get database client
@@ -42,7 +42,7 @@ export const getPlaylistService = (ctx: Context) => {
 
 ```typescript
 // api/factories/repository.factory.ts
-import { PlaylistRepository } from "@api/repositories/playlist.repository";
+import { PlaylistRepository } from "@api/repositories/media/playlist.repository";
 
 export const getPlaylistRepository = (db: AppDb) => {
     return new PlaylistRepository(db);

@@ -11,7 +11,7 @@ import type { SessionPaymentService } from "@api/services/financial/session-paym
 import {
     VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS,
     VOCABULARY_TRANSLATION_INSTRUCTIONS,
-} from "@api/services/vocabulary-processing.service";
+} from "@api/services/vocabulary/vocabulary-processing.service";
 import { generateAuditId } from "@shared";
 import type * as schema from "@shared/db/schema";
 
