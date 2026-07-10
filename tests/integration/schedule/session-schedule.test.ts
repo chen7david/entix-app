@@ -1,6 +1,6 @@
 import { addWeeks } from "date-fns";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { SessionScheduleService } from "../../../apps/api/services/session-schedule.service";
+import { SessionScheduleService } from "../../../apps/api/services/schedule/session-schedule.service";
 
 describe("SessionScheduleService Architecture Bounds", () => {
     let mockRepo: any;

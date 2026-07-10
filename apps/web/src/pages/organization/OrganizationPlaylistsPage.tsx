@@ -1,9 +1,9 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PlaylistManager } from "@web/src/features/media/components/PlaylistManager";
 import { Button } from "antd";
 import type React from "react";
 import { useState } from "react";
-import { PlaylistManager } from "./components/PlaylistManager";
 
 export const OrganizationPlaylistsPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

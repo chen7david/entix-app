@@ -1,5 +1,5 @@
-import type { UserRepository } from "@api/repositories/user.repository";
-import { UserService } from "@api/services/user.service";
+import type { UserRepository } from "@api/repositories/users/user.repository";
+import { UserService } from "@api/services/users/user.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockAuth, type MockAuth } from "../factories/auth.factory";
 

@@ -1,5 +1,5 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import { BucketService } from "@api/services/bucket.service";
+import { BucketService } from "@api/services/infra/bucket.service";
 import { AwsClient } from "aws4fetch";
 
 export type CloudflareR2Config = {

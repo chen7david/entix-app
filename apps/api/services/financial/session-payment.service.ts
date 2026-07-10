@@ -11,9 +11,9 @@ import {
     type FinancialTransactionsRepository,
     LEDGER_BATCH_INDEX,
 } from "@api/repositories/financial/financial-transactions.repository";
+import type { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
 import type { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
-import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import type { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import type { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
 import {
     generateAuditId,
     generatePaymentRequestId,

@@ -2,11 +2,11 @@ import { CloudUploadOutlined, DatabaseOutlined, FileOutlined } from "@ant-design
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
+import { UploadsTable } from "@web/src/features/media/components/UploadsTable";
 import { useOrganization } from "@web/src/features/organization";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { Button, Modal, Skeleton } from "antd";
 import { useState } from "react";
-import { UploadsTable } from "../../features/uploads/components/UploadsTable";
 
 export type UploadFilters = {
     search?: string;

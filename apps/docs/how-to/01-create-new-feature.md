@@ -33,7 +33,7 @@ export const playlistSchema = z.object({
 Create a "dumb" repository for data access.
 
 ```typescript
-// api/repositories/playlist.repository.ts
+// api/repositories/media/playlist.repository.ts
 export class PlaylistRepository {
     constructor(private db: AppDb) {}
 
@@ -49,7 +49,7 @@ export class PlaylistRepository {
 Implement business logic and the `find*` vs `get*` protocol.
 
 ```typescript
-// api/services/playlist.service.ts
+// api/services/media/playlist.service.ts
 export class PlaylistService extends BaseService {
     constructor(private playlistRepo: PlaylistRepository) {
         super();

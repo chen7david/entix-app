@@ -6,7 +6,7 @@ How the repo is organized and what must stay at the root for Cloudflare deploy.
 
 | Path | Purpose |
 |------|---------|
-| `apps/api/` | Hono Cloudflare Worker (routes, services, repositories, DB migrations) |
+| `apps/api/` | Hono Cloudflare Worker (routes, domain-folder services/repositories, DB migrations) |
 | `apps/web/` | Vite React SPA — builds to `apps/web/dist/` |
 | `apps/docs/` | VitePress documentation — builds into `apps/web/dist/docs/` |
 | `shared/` | Shared TypeScript (schemas, DTOs, DB schema) used by API and web |
@@ -14,6 +14,8 @@ How the repo is organized and what must stay at the root for Cloudflare deploy.
 | `apps/api/tests/` | API unit tests with DB mocks (not in default vitest `include` yet) |
 | `tooling/` | Vitest, Playwright, Drizzle, Better Auth configs |
 | `scripts/` | Migration validation and deploy verification |
+
+API `repositories/` and `services/` use one-level domain folders (same pattern as `financial/` / `payment/`): `vocabulary/`, `lessons/`, `media/`, `schedule/`, `members/`, `passages/`, `users/`, `org/`, `ai/`, `infra/`. Shared `base.service.ts` stays at `services/` root.
 
 ## Root files (deploy-critical)
 

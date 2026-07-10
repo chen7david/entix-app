@@ -1,8 +1,8 @@
 import { ConflictError, NotFoundError } from "@api/errors/app.error";
-import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import type { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
-import type { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
-import { VocabularyService } from "@api/services/vocabulary.service";
+import type { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
+import type { StudentVocabularyRepository } from "@api/repositories/vocabulary/student-vocabulary.repository";
+import type { VocabularyBankRepository } from "@api/repositories/vocabulary/vocabulary-bank.repository";
+import { VocabularyService } from "@api/services/vocabulary/vocabulary.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeSessionAttendancesRepoMock } from "../mocks/session-attendances.repository.mock";
 import { makeStudentVocabularyRepoMock } from "../mocks/student-vocabulary.repository.mock";

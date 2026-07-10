@@ -1,6 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import { PassageRepository } from "@api/repositories/passage.repository";
-import { PassageService } from "@api/services/passage.service";
+import { PassageRepository } from "@api/repositories/passages/passage.repository";
+import { PassageService } from "@api/services/passages/passage.service";
 import { getBucketClient } from "./bucket.factory";
 import { getDbClient } from "./db.factory";
 import { getUploadService } from "./upload.factory";

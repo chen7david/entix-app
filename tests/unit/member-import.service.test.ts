@@ -1,10 +1,10 @@
-import type { MemberRepository } from "@api/repositories/member.repository";
-import type { SocialMediaRepository } from "@api/repositories/social-media.repository";
-import type { UserRepository } from "@api/repositories/user.repository";
-import type { UserProfileRepository } from "@api/repositories/user-profile.repository";
+import type { MemberRepository } from "@api/repositories/members/member.repository";
+import type { SocialMediaRepository } from "@api/repositories/members/social-media.repository";
+import type { UserRepository } from "@api/repositories/users/user.repository";
+import type { UserProfileRepository } from "@api/repositories/users/user-profile.repository";
 import type { FinanceBillingPlansService } from "@api/services/financial/finance-billing-plans.service";
 import type { FinanceWalletService } from "@api/services/financial/finance-wallet.service";
-import { MemberImportService } from "@api/services/member-import.service";
+import { MemberImportService } from "@api/services/members/member-import.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("MemberImportService", () => {

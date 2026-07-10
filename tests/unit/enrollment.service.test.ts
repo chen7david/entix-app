@@ -1,5 +1,5 @@
 import { ForbiddenError, NotFoundError } from "@api/errors/app.error";
-import { EnrollmentService } from "@api/services/enrollment.service";
+import { EnrollmentService } from "@api/services/schedule/enrollment.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({

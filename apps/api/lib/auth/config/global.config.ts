@@ -1,5 +1,5 @@
 import type { AppContext } from "@api/helpers/types.helpers";
-import type { MailService } from "@api/services/mailer.service";
+import type { MailService } from "@api/services/infra/mailer.service";
 import type { BetterAuthOptions } from "better-auth";
 import { getBetterAuthPluginsConfig } from "./plugins.config";
 

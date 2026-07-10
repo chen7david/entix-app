@@ -33,7 +33,7 @@ describe("AuthUser & AuthMember Creation Atomicity", () => {
         const targetEmail = "new-member@example.com";
         const dummyName = "New AuthMember";
 
-        const { MemberRepository } = await import("@api/repositories/member.repository");
+        const { MemberRepository } = await import("@api/repositories/members/member.repository");
         const spy = vi
             .spyOn(MemberRepository.prototype, "prepareInsertQuery")
             .mockImplementation(

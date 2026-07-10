@@ -16,7 +16,7 @@ Unit tests are used to verify isolated logic in **Services** or **Utility functi
 ### Example: Mocking a Repository
 ```typescript
 // tests/unit/playlist.service.test.ts
-import { PlaylistService } from "@api/services/playlist.service";
+import { PlaylistService } from "@api/services/media/playlist.service";
 
 describe("PlaylistService", () => {
     it("should throw NotFoundError if playlist is missing", async () => {

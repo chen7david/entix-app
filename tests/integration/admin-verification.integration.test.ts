@@ -20,7 +20,7 @@ describe("Admin Verification Resend Integration", () => {
         const db = drizzle(env.DB, { schema });
 
         // Mock the service method to avoid Better Auth "email not enabled" errors in test env
-        const { NotificationService } = await import("@api/services/notification.service");
+        const { NotificationService } = await import("@api/services/infra/notification.service");
         const spy = vi
             .spyOn(NotificationService.prototype, "sendVerificationReminder")
             .mockResolvedValue(undefined);

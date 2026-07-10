@@ -1,4 +1,4 @@
-import { VocabularyBankRepository } from "@api/repositories/vocabulary-bank.repository";
+import { VocabularyBankRepository } from "@api/repositories/vocabulary/vocabulary-bank.repository";
 import { VOCABULARY_PIPELINE_STALE_AFTER_MS } from "@api/scheduled/handlers/vocabulary-pipeline.scheduled";
 import { vocabularyBank } from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";

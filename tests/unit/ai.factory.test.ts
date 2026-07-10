@@ -4,8 +4,8 @@ import {
     createAiServiceFromEnv,
     resolveAiProvider,
 } from "@api/factories/ai.factory";
-import { DeepSeekAiService } from "@api/services/deepseek-ai.service";
-import { GeminiAiService } from "@api/services/gemini-ai.service";
+import { DeepSeekAiService } from "@api/services/ai/deepseek-ai.service";
+import { GeminiAiService } from "@api/services/ai/gemini-ai.service";
 import { describe, expect, it } from "vitest";
 
 describe("createAiServiceFromEnv", () => {

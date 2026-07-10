@@ -7,7 +7,7 @@ import {
     chunkVocabularyIds,
     VOCABULARY_PIPELINE_DISPATCH_LIMIT,
     VOCABULARY_TEXT_BATCH_SIZE,
-} from "@api/services/vocabulary-processing.service";
+} from "@api/services/vocabulary/vocabulary-processing.service";
 import { generateAuditId, PLATFORM_ORGANIZATION_ID } from "@shared";
 
 /** Stale cutoff for re-dispatch of stuck pipeline rows (shared with integration tests). */

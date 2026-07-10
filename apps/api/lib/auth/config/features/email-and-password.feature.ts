@@ -1,7 +1,7 @@
 import { getUserRepository } from "@api/factories/repository.factory";
 import type { AppContext } from "@api/helpers/types.helpers";
 import { getFrontendUrl } from "@api/helpers/url.helpers";
-import type { MailService } from "@api/services/mailer.service";
+import type { MailService } from "@api/services/infra/mailer.service";
 import type { BetterAuthOptions } from "better-auth";
 
 export const getEmailAndPasswordConfig = (

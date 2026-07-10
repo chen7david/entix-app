@@ -1,4 +1,4 @@
-import { PlaylistRepository } from "@api/repositories/playlist.repository";
+import { PlaylistRepository } from "@api/repositories/media/playlist.repository";
 import { media, authOrganizations as organization, authUsers as user } from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import { createMockUser } from "../factories/user.factory";

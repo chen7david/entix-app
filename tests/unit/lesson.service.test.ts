@@ -1,5 +1,5 @@
 import { NotFoundError } from "@api/errors/app.error";
-import { LessonService } from "@api/services/lesson.service";
+import { LessonService } from "@api/services/lessons/lesson.service";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockRepo = {

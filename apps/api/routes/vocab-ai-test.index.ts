@@ -9,7 +9,7 @@ import {
     VOCABULARY_TRANSLATION_INSTRUCTIONS,
     VOCABULARY_TRANSLATION_SCHEMA,
     type VocabularyTranslation,
-} from "@api/services/vocabulary-processing.service";
+} from "@api/services/vocabulary/vocabulary-processing.service";
 import { pinyin } from "pinyin-pro";
 
 const DEFAULT_SYSTEM_PROMPT = [

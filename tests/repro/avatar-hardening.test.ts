@@ -6,7 +6,7 @@ import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
 
-vi.mock("@api/services/bucket.service", () => {
+vi.mock("@api/services/infra/bucket.service", () => {
     return {
         BucketService: class {
             getPresignedUploadUrl = vi.fn().mockResolvedValue("https://fake-presigned-url.com");

@@ -1,6 +1,6 @@
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { MediaLibraryTable } from "@web/src/features/media/components/MediaLibraryTable";
 import type React from "react";
-import { MediaLibraryTable } from "./components/MediaLibraryTable";
 
 export const OrganizationMediaPage: React.FC = () => {
     return (

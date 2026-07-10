@@ -1,4 +1,4 @@
-import type { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
+import type { StudentVocabularyRepository } from "@api/repositories/vocabulary/student-vocabulary.repository";
 import type { Mocked } from "vitest";
 import { vi } from "vitest";
 

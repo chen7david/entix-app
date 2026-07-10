@@ -1,7 +1,7 @@
 import { getUserFinancialService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
-import { canAccessMemberWallet } from "@api/services/wallet-access.service";
+import { canAccessMemberWallet } from "@api/services/financial/wallet-access.service";
 import type { MemberWalletRoutes } from "./member-wallet.routes";
 
 export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = async (c) => {

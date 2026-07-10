@@ -210,7 +210,7 @@ export const EmailInsightsPage = lazyNamed(
     "EmailInsightsPage"
 );
 export const FinancialManagementPage = lazyNamed(
-    () => import("@web/src/features/admin/FinancialManagementPage"),
+    () => import("@web/src/pages/admin/FinancialManagementPage"),
     "FinancialManagementPage"
 );
 export const AuditLogPage = lazyNamed(
