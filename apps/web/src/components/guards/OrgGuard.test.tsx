@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useAuth } from "@web/src/features/auth";
 import { useOrganization } from "@web/src/features/organization/hooks/useOrganization";
 import { authClient } from "@web/src/lib/auth-client";
@@ -44,6 +44,17 @@ function renderOrgGuard(slug: string) {
             </MemoryRouter>
         </QueryClientProvider>
     );
+}
+
+function mockOrgList() {
+    vi.mocked(useOrganization).mockReturnValue({
+        organizations: [{ id: "org_1", slug: "acme", name: "Acme" }],
+        activeOrganization: null,
+        orgsLoaded: true,
+        orgsFetching: false,
+        isSwitching: false,
+        setActive: vi.fn(),
+    } as any);
 }
 
 describe("OrgGuard", () => {
@@ -104,14 +115,7 @@ describe("OrgGuard", () => {
 
     it("syncs active organization and renders children for a valid slug", async () => {
         vi.mocked(authClient.organization.setActive).mockResolvedValue({ data: {}, error: null });
-        vi.mocked(useOrganization).mockReturnValue({
-            organizations: [{ id: "org_1", slug: "acme", name: "Acme" }],
-            activeOrganization: null,
-            orgsLoaded: true,
-            orgsFetching: false,
-            isSwitching: false,
-            setActive: vi.fn(),
-        } as any);
+        mockOrgList();
 
         renderOrgGuard("acme");
 
@@ -127,14 +131,7 @@ describe("OrgGuard", () => {
 
     it("blocks children when organization sync fails", async () => {
         vi.mocked(authClient.organization.setActive).mockRejectedValue(new Error("network"));
-        vi.mocked(useOrganization).mockReturnValue({
-            organizations: [{ id: "org_1", slug: "acme", name: "Acme" }],
-            activeOrganization: null,
-            orgsLoaded: true,
-            orgsFetching: false,
-            isSwitching: false,
-            setActive: vi.fn(),
-        } as any);
+        mockOrgList();
 
         renderOrgGuard("acme");
 
@@ -142,5 +139,28 @@ describe("OrgGuard", () => {
             expect(screen.getByText("Organization sync failed")).toBeInTheDocument();
         });
         expect(screen.queryByTestId("org-child")).not.toBeInTheDocument();
+    });
+
+    it("retries setActive when Retry is clicked after sync failure", async () => {
+        vi.mocked(authClient.organization.setActive)
+            .mockRejectedValueOnce(new Error("network"))
+            .mockResolvedValueOnce({ data: {}, error: null });
+        mockOrgList();
+
+        renderOrgGuard("acme");
+
+        await waitFor(() => {
+            expect(screen.getByText("Organization sync failed")).toBeInTheDocument();
+        });
+        expect(authClient.organization.setActive).toHaveBeenCalledTimes(1);
+
+        fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+        await waitFor(() => {
+            expect(authClient.organization.setActive).toHaveBeenCalledTimes(2);
+        });
+        await waitFor(() => {
+            expect(screen.getByTestId("org-child")).toBeInTheDocument();
+        });
     });
 });

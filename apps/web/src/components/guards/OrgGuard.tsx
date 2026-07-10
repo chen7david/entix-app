@@ -42,6 +42,7 @@ export const OrgGuard: React.FC = () => {
     const lastSyncedOrgIdRef = useRef<string | null>(null);
     const roleSwitchTargetRef = useRef<string | null>(null);
     const auth = useAuth();
+    const { refreshAuth } = auth;
 
     // 1. Fetch the user's org list (cached; shared centrally via useOrganization)
     const { organizations, orgsLoaded, orgsFetching } = useOrganization();
@@ -50,6 +51,7 @@ export const OrgGuard: React.FC = () => {
     const orgListSettled = orgsLoaded && !orgsFetching;
     const activeOrganization =
         orgListSettled && slug ? organizations.find((o) => o.slug === slug) || null : null;
+    const activeOrganizationId = activeOrganization?.id ?? null;
 
     useEffect(() => {
         if (slug === prevSlugRef.current) {
@@ -107,58 +109,59 @@ export const OrgGuard: React.FC = () => {
         localStorage.setItem(STORAGE_KEYS.lastOrgSlug, activeOrganization.slug);
     }, [activeOrganization?.slug]);
 
+    // Imperative sync so Retry can re-run setActive without inventing fake effect deps.
+    const syncOrgSession = useCallback(
+        async (orgId: string, signal?: { cancelled: boolean }) => {
+            setIsSyncing(true);
+            setSyncFailed(false);
+            try {
+                await authClient.organization.setActive({ organizationId: orgId });
+                if (signal?.cancelled) return;
+
+                lastSyncedOrgIdRef.current = orgId;
+
+                // CRITICAL: refresh the session so nested ProtectedRoutes see the
+                // correct orgRole before they evaluate allowedOrgRoles.
+                await refreshAuth();
+                if (signal?.cancelled) return;
+
+                await Promise.all([
+                    queryClient.invalidateQueries({ queryKey: ["better-auth"] }),
+                    queryClient.invalidateQueries({ queryKey: ["session"] }),
+                ]);
+            } catch (err) {
+                console.error("OrgGuard: failed to sync organization session:", err);
+                lastSyncedOrgIdRef.current = null;
+                if (!signal?.cancelled) setSyncFailed(true);
+            } finally {
+                if (!signal?.cancelled) setIsSyncing(false);
+            }
+        },
+        [refreshAuth, queryClient]
+    );
+
     // 4. Sync server session to the URL-picked org.
     //    Guard with lastSyncedOrgIdRef so we don't re-sync on every render or background refetch.
     //    isSyncing starts as true so children never render before the first sync completes.
-    // biome-ignore lint/correctness/useExhaustiveDependencies: URL-driven sync is stable by activeOrganization?.id
     useEffect(() => {
         if (!orgsLoaded || orgsFetching) return; // wait for settled org list
-        if (!activeOrganization) {
+        if (!activeOrganizationId) {
             // Org not found in the list — stop blocking so the 403 result can render
             setIsSyncing(false);
             return;
         }
-        if (lastSyncedOrgIdRef.current === activeOrganization.id) {
+        if (lastSyncedOrgIdRef.current === activeOrganizationId) {
             // Already synced this org; nothing to do
             setIsSyncing(false);
             return;
         }
 
-        let cancelled = false;
-        setIsSyncing(true);
-        setSyncFailed(false);
-
-        authClient.organization
-            .setActive({ organizationId: activeOrganization.id })
-            .then(async () => {
-                if (cancelled) return;
-
-                lastSyncedOrgIdRef.current = activeOrganization.id;
-
-                // CRITICAL: refresh the session so nested ProtectedRoutes see the
-                // correct orgRole before they evaluate allowedOrgRoles.
-                await auth.refreshAuth();
-
-                // Invalidate any query that reads from the session org context
-                await Promise.all([
-                    queryClient.invalidateQueries({ queryKey: ["better-auth"] }),
-                    queryClient.invalidateQueries({ queryKey: ["session"] }),
-                ]);
-            })
-            .catch((err) => {
-                console.error("OrgGuard: failed to sync organization session:", err);
-                // Reset the ref so a retry is possible on next render
-                lastSyncedOrgIdRef.current = null;
-                if (!cancelled) setSyncFailed(true);
-            })
-            .finally(() => {
-                if (!cancelled) setIsSyncing(false);
-            });
-
+        const signal = { cancelled: false };
+        void syncOrgSession(activeOrganizationId, signal);
         return () => {
-            cancelled = true;
+            signal.cancelled = true;
         };
-    }, [activeOrganization?.id, orgsLoaded, orgsFetching, auth.refreshAuth, queryClient]);
+    }, [activeOrganizationId, orgsLoaded, orgsFetching, syncOrgSession]);
 
     // Block children while resolving the org list, syncing the server session, or switching role
     if (!orgsLoaded || orgsFetching || isSyncing || isRoleSwitching) {
@@ -196,8 +199,7 @@ export const OrgGuard: React.FC = () => {
                         type="primary"
                         onClick={() => {
                             lastSyncedOrgIdRef.current = null;
-                            setSyncFailed(false);
-                            setIsSyncing(true);
+                            void syncOrgSession(activeOrganization.id);
                         }}
                     >
                         Retry

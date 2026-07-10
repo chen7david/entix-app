@@ -67,7 +67,7 @@ export class PlaylistService extends BaseService {
 ```
 
 ## Step 4: Add to Factories
-Register your new repository and service in `api/factories/`.
+Register your new repository and service in `apps/api/factories/`.
 
 ```typescript
 // api/factories/service.factory.ts

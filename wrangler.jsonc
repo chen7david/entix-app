@@ -5,7 +5,7 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "entix-app",
-    "main": "api/main.ts",
+    "main": "apps/api/main.ts",
     "keep_vars": true,
     "compatibility_date": "2025-12-10",
     "compatibility_flags": ["nodejs_compat"],
@@ -34,7 +34,7 @@
                     "binding": "DB",
                     "database_name": "entix-app-development",
                     "database_id": "12345678910",
-                    "migrations_dir": "api/db/migrations"
+                    "migrations_dir": "apps/api/db/migrations"
                 }
             ],
             "kv_namespaces": [
@@ -84,7 +84,7 @@
                     "binding": "DB",
                     "database_name": "entix-app-local",
                     "database_id": "602e799b-3322-45f3-b2b0-ed231cf58ba5",
-                    "migrations_dir": "api/db/migrations"
+                    "migrations_dir": "apps/api/db/migrations"
                 }
             ],
             "kv_namespaces": [
@@ -131,7 +131,7 @@
             },
             "assets": {
                 "binding": "ASSETS",
-                "directory": "./web/dist",
+                "directory": "./apps/web/dist",
                 "not_found_handling": "single-page-application",
                 "run_worker_first": ["/api/*"]
             },
@@ -140,7 +140,7 @@
                     "binding": "DB",
                     "database_name": "entix-app-staging",
                     "database_id": "ea4b97c4-c54b-4d92-b41d-b94cd0bad586",
-                    "migrations_dir": "api/db/migrations"
+                    "migrations_dir": "apps/api/db/migrations"
                 }
             ],
             "kv_namespaces": [
@@ -186,7 +186,7 @@
             },
             "assets": {
                 "binding": "ASSETS",
-                "directory": "./web/dist",
+                "directory": "./apps/web/dist",
                 "not_found_handling": "single-page-application",
                 "run_worker_first": ["/api/*"]
             },
@@ -195,7 +195,7 @@
                     "binding": "DB",
                     "database_name": "entix-app-production",
                     "database_id": "bf5c7661-1399-454e-8bc3-78c3e39e8bfe",
-                    "migrations_dir": "api/db/migrations"
+                    "migrations_dir": "apps/api/db/migrations"
                 }
             ],
             "kv_namespaces": [

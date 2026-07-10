@@ -6,12 +6,12 @@ How the repo is organized and what must stay at the root for Cloudflare deploy.
 
 | Path | Purpose |
 |------|---------|
-| `api/` | Hono Cloudflare Worker (routes, services, repositories, DB migrations) |
-| `web/` | Vite React SPA — builds to `web/dist/` |
+| `apps/api/` | Hono Cloudflare Worker (routes, services, repositories, DB migrations) |
+| `apps/web/` | Vite React SPA — builds to `apps/web/dist/` |
+| `apps/docs/` | VitePress documentation — builds into `apps/web/dist/docs/` |
 | `shared/` | Shared TypeScript (schemas, DTOs, DB schema) used by API and web |
 | `tests/` | Integration, unit, and e2e tests run by `npm run test` |
-| `api/tests/` | API unit tests with DB mocks (not in default vitest `include` yet) |
-| `docs/` | VitePress documentation — builds into `web/dist/docs/` |
+| `apps/api/tests/` | API unit tests with DB mocks (not in default vitest `include` yet) |
 | `tooling/` | Vitest, Playwright, Drizzle, Better Auth configs |
 | `scripts/` | Migration validation and deploy verification |
 
@@ -19,7 +19,7 @@ How the repo is organized and what must stay at the root for Cloudflare deploy.
 
 | File | Why it stays at root |
 |------|----------------------|
-| `wrangler.jsonc` | Deploy entry; references `api/main.ts` and `web/dist` |
+| `wrangler.jsonc` | Deploy entry; references `apps/api/main.ts` and `apps/web/dist` |
 | `worker-configuration.d.ts` | Generated `CloudflareBindings` types — **required for deploy** |
 | `package.json` | Install, dev, test, and `deploy:*` scripts |
 | `biome.json` | Biome 2.x requires root config (cannot move to `tooling/`) |
@@ -29,7 +29,7 @@ How the repo is organized and what must stay at the root for Cloudflare deploy.
 
 ```bash
 npm run dev:init          # once after clone
-npm run build:web         # web/dist + web/dist/docs
+npm run build:web         # apps/web/dist + apps/web/dist/docs
 npm run verify:deploy     # optional smoke check
 npm run deploy:staging    # migrate + wrangler deploy
 ```

@@ -132,7 +132,7 @@ Developers and AI assistants MUST verify the exact version of core dependencies 
 ## 2. Component Architecture
 
 ### Rule 6 — Directory Structure
-Actual **`web/src/`** layout (Phase **K** — doc alignment with code):
+Actual **`apps/web/src/`** layout (Phase **K** — doc alignment with code):
 
 ```text
 web/src/

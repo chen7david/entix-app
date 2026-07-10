@@ -11,10 +11,10 @@ This guide defines how to build scalable filters with the shared `FilterBar` and
 
 ## Core Components
 
-- `web/src/components/data/FilterBar.tsx`
+- `apps/web/src/components/data/FilterBar.tsx`
   - Generic UI renderer for `search`, `select`, `segmented`, and `dateRange` controls.
   - Supports dynamic visibility (`visibleWhen`), disabled rules (`disabledWhen`), and `customRender`.
-- `web/src/components/data/DataTableWithFilters.tsx`
+- `apps/web/src/components/data/DataTableWithFilters.tsx`
   - Composes `FilterBar` with table + pagination.
   - Handles local filter state, reset wiring, and forwards filter changes to page hooks.
 
@@ -40,7 +40,7 @@ Use adapters for domain logic (preset/date mapping, payload transforms) and keep
 
 ### 1) Adapter (domain mapping)
 
-Use `web/src/components/data/filter-bar/datePresetAdapter.ts` for preset-based date filters:
+Use `apps/web/src/components/data/filter-bar/datePresetAdapter.ts` for preset-based date filters:
 
 - `getPresetFromRange(...)`
 - `getRangeFromPreset(...)`

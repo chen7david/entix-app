@@ -6,7 +6,7 @@
 
 All **random ID shapes** (prefix + nanoid length, opaque PK, secrets) are defined in **`shared/lib/id.ts`** and re-exported from **`@shared`**. Do **not** call `nanoid()` outside that module.
 
-**Where the file lives:** keep **`shared/lib/id.ts`** inside the **`shared`** package (never under `api/`). That keeps **web**, **api**, and future **Turborepo** apps depending on one direction: **apps → `@shared`**. `shared` must **not** import from `api/`.
+**Where the file lives:** keep **`shared/lib/id.ts`** inside **`shared`** (never under `apps/api/`). That keeps **`apps/web`**, **`apps/api`**, and any future apps depending on one direction: **apps → `@shared`**. `shared` must **not** import from `apps/api/`.
 
 Schema files **import** from **`../../lib/id`** (relative to `shared/db/schema/*.ts`) when attaching `$defaultFn` to a column.
 
@@ -97,7 +97,7 @@ Fixed string IDs (for example `pr_test001`, `facc_ghost`) are fine when the test
 
 ## Financial IDs: production consistency
 
-**Application code** that mints new financial primary keys should use **`@shared`** helpers only (`generateTransactionId`, `generateTransactionLineId`, `generatePaymentRequestId`, `generateAccountId`, `generateAuditId`, …). Grep the repo under `api/` for `generateTransactionId` / `generatePaymentRequestId` etc. to confirm call sites.
+**Application code** that mints new financial primary keys should use **`@shared`** helpers only (`generateTransactionId`, `generateTransactionLineId`, `generatePaymentRequestId`, `generateAccountId`, `generateAuditId`, …). Grep the repo under `apps/api/` for `generateTransactionId` / `generatePaymentRequestId` etc. to confirm call sites.
 
 You will still see **literal** `facc_…`, `fcur_…`, `fcat_…`, `tx_…` strings in three intentional cases:
 

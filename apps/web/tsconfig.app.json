@@ -23,10 +23,10 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true,
         "paths": {
-            "@shared": ["../shared/index.ts"],
-            "@shared/*": ["../shared/*"],
+            "@shared": ["../../shared/index.ts"],
+            "@shared/*": ["../../shared/*"],
             "@web/*": ["./*"]
         }
     },
-    "include": ["src", "../shared"]
+    "include": ["src", "../../shared"]
 }

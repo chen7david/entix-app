@@ -1,6 +1,6 @@
 import type { AppOpenApi } from "@api/helpers/types.helpers";
 import { Scalar } from "@scalar/hono-api-reference";
-import packageJson from "../../package.json";
+import packageJson from "../../../package.json";
 
 export const configureOpenApi = (app: AppOpenApi) => {
     app.doc("/api/v1/openapi", {

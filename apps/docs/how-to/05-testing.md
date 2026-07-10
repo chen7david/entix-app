@@ -67,7 +67,7 @@ Integration tests run in an isolated environment. Any environment variables or s
 | `npm run test` | Migrations, typecheck (incl. web ESLint), API + web unit/integration tests. |
 | `npm run test:api` | Runs all API integration tests. |
 | `npm run test:web` | Runs web Vitest suite. |
-| `npm run lint:web` | Web-only ESLint (`web/eslint.config.js`). Root `npm run lint` uses Biome. |
+| `npm run lint:web` | Web-only ESLint (`apps/web/eslint.config.js`). Root `npm run lint` uses Biome. |
 | `npm run typecheck:api` | Verifies TypeScript integrity of the API and tests. |
 
 ---

@@ -11,12 +11,12 @@ This document tracks the evolution of the Entix App, documenting major technical
 ### 2. Infrastructure: D1 Parameter Limit Resolution
 - **Achievement**: Solved a critical 500 error where Cloudflare D1 would crash on organizations with 100+ members due to SQL variable limits.
 - **Implementation**: Created `patchD1Adapter` to automatically batch large `IN` clause queries.
-- **Key Files**: `api/helpers/auth-adapter.helpers.ts`.
+- **Key Files**: `apps/api/helpers/auth-adapter.helpers.ts`.
 
 ### 3. Architecture: Unified Asset Naming Convention
 - **Achievement**: Refactored the database and repository layers to follow the project's "Implicit Org Scope" philosophy.
 - **Convention**: `uploads` (organizationally scoped) vs. `user_uploads` (globally user-owned).
-- **Documentation**: Updated `docs/architecture/NAMING.md`.
+- **Documentation**: Updated `apps/docs/architecture/NAMING.md`.
 
 ### 4. Stability: Auth Route Optimization
 - **Achievement**: Fixed runtime `ReferenceError` issues caused by external helper dependencies and resolved `jsonContentRequired` loading errors.

@@ -16,7 +16,7 @@ Before running the application, you must set up your baseline environment variab
     - `SKIP_EMAIL_VERIFICATION=true` and `SKIP_AUTH_EMAILS=true` for easier local auth
 
     Re-run after first DB migration if `CLOUDFLARE_D1_LOCAL_DB` was empty: `npm run db:migrate:dev && npm run dev:vars -- --force`
-2.  **Web Application**: Ensure `web/.env` is configured (usually managed by Vite defaults).
+2.  **Web Application**: Ensure `apps/web/.env` is configured (usually managed by Vite defaults).
 
 ## 2. Database Initialization
 

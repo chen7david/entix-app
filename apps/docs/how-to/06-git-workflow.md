@@ -15,7 +15,7 @@ All feature development and bug fixes must occur on dedicated branches. Never co
 | :--- | :--- | :--- |
 | `feat` | New features | `feat/ENT-142-playlist-service` |
 | `fix` | Bug fixes | `fix/ENT-201-null-coercion` |
-| `docs` | Documentation changes | `docs/ENT-155-docs-overhaul` |
+| `docs` | Documentation changes | `apps/docs/ENT-155-docs-overhaul` |
 | `refactor` | Code restructuring without logic change | `refactor/ENT-188-auth-boundary` |
 | `test` | Adding or fixing tests | `test/ENT-99-coverage-bump` |
 | `chore` | Maintenance tasks | `chore/ENT-10-dep-update` |

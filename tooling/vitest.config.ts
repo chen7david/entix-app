@@ -43,13 +43,13 @@ export default defineWorkersConfig({
         },
         include: [
             "tests/**/*.{test,spec}.ts",
-            "api/db/migration-guard/__tests__/**/*.{test,spec}.ts",
+            "apps/api/db/migration-guard/__tests__/**/*.{test,spec}.ts",
         ],
         exclude: ["tests/e2e/**"],
         alias: {
-            "@api": resolve(rootDir, "api"),
+            "@api": resolve(rootDir, "apps/api"),
             "@shared": resolve(rootDir, "shared"),
-            "@web": resolve(rootDir, "web"),
+            "@web": resolve(rootDir, "apps/web"),
         },
     },
 });

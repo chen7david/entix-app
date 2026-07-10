@@ -19,7 +19,7 @@ import {
 } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
-import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
+import { drainQueue } from "../../apps/api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg, createOrgMemberWithRole } from "../lib/auth-test.helper";
 import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";

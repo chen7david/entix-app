@@ -31,7 +31,6 @@ lerna-debug.log*
 
 # misc
 .DS_Store
-.turbo
 
 # Wrangler auto-generated types — commit this file so CI can resolve CloudflareBindings
 # Regenerate with: npm run cf-typegen

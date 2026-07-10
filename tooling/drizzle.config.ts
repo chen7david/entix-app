@@ -14,7 +14,7 @@ const url = resolve(rootDir, `.wrangler/state/v3/d1/miniflare-D1DatabaseObject/$
 
 export default defineConfig({
     schema: "./shared/db/schema/index.ts",
-    out: "./api/db/migrations",
+    out: "./apps/api/db/migrations",
     dialect: "sqlite",
     dbCredentials: { url },
 });

@@ -8,9 +8,9 @@ Cloudflare Queues deliver batched messages to the Worker. All background jobs sh
 
 ### How It Works
 
-1. **Entry Point**: Cloudflare delivers batched messages to the `queue()` export in `api/main.ts`.
-2. **Routing**: `api/queues/queue.router.ts` forwards all batches that match `entix-queue*` to `EntixQueueHandler`.
-3. **Dispatch**: `EntixQueueHandler.process()` in `api/queues/entix.queue.ts` uses an **exhaustive switch** on `message.body.type` to call the correct private handler function.
+1. **Entry Point**: Cloudflare delivers batched messages to the `queue()` export in `apps/api/main.ts`.
+2. **Routing**: `apps/api/queues/queue.router.ts` forwards all batches that match `entix-queue*` to `EntixQueueHandler`.
+3. **Dispatch**: `EntixQueueHandler.process()` in `apps/api/queues/entix.queue.ts` uses an **exhaustive switch** on `message.body.type` to call the correct private handler function.
 4. **DLQ**: After `max_retries` (currently 3) failed `message.retry()` calls, Cloudflare automatically moves the message to `entix-dlq-*` for inspection.
 
 Cloudflare automatically scales Worker instances horizontally based on queue depth — no manual concurrency configuration is needed.
@@ -65,14 +65,14 @@ Scheduled tasks allow you to run logic at specific time intervals using cron exp
 
 ### How It Works
 
-1. **Entry Point**: Cloudflare triggers the `scheduled()` export in `api/main.ts` according to configured cron schedules.
-2. **Routing**: `api/scheduled/scheduled.router.ts` dispatches the event to the appropriate handler based on `controller.cron`.
-3. **Execution**: Handlers (in `api/scheduled/handlers/`) perform periodic logic such as enqueuing missed payments.
+1. **Entry Point**: Cloudflare triggers the `scheduled()` export in `apps/api/main.ts` according to configured cron schedules.
+2. **Routing**: `apps/api/scheduled/scheduled.router.ts` dispatches the event to the appropriate handler based on `controller.cron`.
+3. **Execution**: Handlers (in `apps/api/scheduled/handlers/`) perform periodic logic such as enqueuing missed payments.
 
 ### Adding a New Scheduled Task
 
 #### 1. Create the handler
-Create `api/scheduled/handlers/<name>.scheduled.ts`:
+Create `apps/api/scheduled/handlers/<name>.scheduled.ts`:
 
 ```ts
 export async function myCronTask(env: CloudflareBindings): Promise<void> {
@@ -81,7 +81,7 @@ export async function myCronTask(env: CloudflareBindings): Promise<void> {
 ```
 
 #### 2. Register the handler
-In `api/scheduled/scheduled.router.ts`, add the cron mapping:
+In `apps/api/scheduled/scheduled.router.ts`, add the cron mapping:
 
 ```ts
 const SCHEDULED_HANDLERS = {
