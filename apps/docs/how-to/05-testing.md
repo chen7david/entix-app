@@ -53,6 +53,12 @@ npx vitest tests/integration/orgs/playlist.integration.test.ts
 npm run test:api
 ```
 
+HTTP request/response logging is **silent** during Vitest (see `apps/api/middleware/logger.middleware.ts`). To debug a failing request locally:
+
+```bash
+LOG_LEVEL=info npm run test:api -- tests/integration/auth.integration.test.ts
+```
+
 ## 3. Mocking External Bindings (`tooling/vitest.config.ts`)
 
 Integration tests run in an isolated environment. Any environment variables or service bindings (R2, KV) defined in `wrangler.jsonc` must have a mock value in `tooling/vitest.config.ts`.
