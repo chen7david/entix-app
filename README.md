@@ -19,9 +19,9 @@ npm run dev          # Start API and Web concurrently
 📡 **[OpenAPI / Swagger UI Reference](https://api.entix.org/docs)**
 
 ### Key Entry Points:
-- 🚀 [Developer Onboarding](./docs/index.md)
-- 🏗 [Architecture Overview](./docs/architecture/01-overview.md)
-- 📐 [Naming Conventions](./docs/conventions/01-naming.md)
+- 🚀 [Developer Onboarding](./apps/docs/index.md)
+- 🏗 [Architecture Overview](./apps/docs/architecture/01-overview.md)
+- 📐 [Naming Conventions](./apps/docs/conventions/01-naming.md)
 
 🤝 *To the Community:* Learning and improving is a continuous process. If you spot a potential architectural improvement, a cleaner pattern, or a bug, **I invite you to open a Pull Request (PR)**! Contributions and discussions are highly appreciated.
 

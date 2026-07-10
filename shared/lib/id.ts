@@ -1,6 +1,6 @@
 /**
  * Central ID helpers for the **shared** package. Safe for web + api + future monorepo workers:
- * do not import from `api/` here.
+ * do not import from `apps/api/` here.
  */
 import { nanoid } from "nanoid";
 

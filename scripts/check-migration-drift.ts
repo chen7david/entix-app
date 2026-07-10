@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-const MIGRATIONS_DIR = "./api/db/migrations";
+const MIGRATIONS_DIR = "./apps/api/db/migrations";
 const META_DIR = path.join(MIGRATIONS_DIR, "meta");
 const JOURNAL_PATH = path.join(META_DIR, "_journal.json");
 const listSql = (dir: string) =>
