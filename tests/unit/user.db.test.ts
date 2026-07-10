@@ -1,4 +1,4 @@
-import { UserRepository } from "@api/repositories/user.repository";
+import { UserRepository } from "@api/repositories/users/user.repository";
 import { authUsers as user } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";

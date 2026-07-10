@@ -1,8 +1,8 @@
-import type { TtsAudioResult } from "@api/services/tts.service";
+import type { TtsAudioResult } from "@api/services/media/tts.service";
 import {
     chunkVocabularyIds,
     VocabularyProcessingService,
-} from "@api/services/vocabulary-processing.service";
+} from "@api/services/vocabulary/vocabulary-processing.service";
 import { PLATFORM_ORGANIZATION_ID } from "@shared";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 

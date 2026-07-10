@@ -150,7 +150,7 @@ describe("Auth Integration Test", () => {
             createdAt: new Date(),
         });
 
-        const { MemberRepository } = await import("@api/repositories/member.repository");
+        const { MemberRepository } = await import("@api/repositories/members/member.repository");
         const { vi } = await import("vitest");
         const spy = vi
             .spyOn(MemberRepository.prototype, "prepareInsertQuery")

@@ -5,7 +5,7 @@ import {
     decodeCursor,
     encodeCursor,
     processPaginatedResult,
-} from "../../api/helpers/pagination.helpers";
+} from "../../apps/api/helpers/pagination.helpers";
 
 describe("Cursor Pagination Helpers", () => {
     describe("encodeCursor & decodeCursor", () => {

@@ -5,28 +5,28 @@ import { lessons } from "@shared/db/schema";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { insertTestPassage } from "../lib/passage-fixtures";
-import { createTestDb, skipIfPassageTablesMissing, type TestDb } from "../lib/utils";
+import { createTestDb, type TestDb } from "../lib/utils";
 
 describe("Lesson Passages API", () => {
     let passageSchemaReady = false;
     let db: TestDb;
 
     beforeAll(async () => {
+        await createTestDb();
         const row = await env.DB.prepare(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
         )
             .bind("lesson_passages")
             .first();
         passageSchemaReady = Boolean(row);
+        expect(passageSchemaReady).toBe(true);
     });
 
     beforeEach(async () => {
         db = await createTestDb();
     });
 
-    it("links passage to lesson and reorders", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("links passage to lesson and reorders", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         await db.insert(lessons).values({
             id: "lesson_ps_1",
@@ -92,9 +92,7 @@ describe("Lesson Passages API", () => {
         expect(rows.map((r) => r.position)).toEqual([1, 2]);
     });
 
-    it("POST duplicate passage returns 409 already linked", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("POST duplicate passage returns 409 already linked", async () => {
         const { cookie, orgId } = await createAuthenticatedOrg({ app, env });
         await db.insert(lessons).values({
             id: "lesson_ps_dup",

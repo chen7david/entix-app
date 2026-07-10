@@ -51,5 +51,5 @@
 - [ ] **Patterns**: No direct repository access from handlers. All DB logic is in Services.
 - [ ] **Boundaries**: No external clients (Better Auth, Stripe, etc.) in Repositories.
 - [ ] **Resilience**: `get*` methods have corresponding `NotFoundError` test cases.
-- [ ] **Documentation**: `docs/` updated if new architecture patterns were introduced.
-- [ ] **AI Context**: `docs/AI.md` updated if canonical rules changed.
+- [ ] **Documentation**: `apps/docs/` updated if new architecture patterns were introduced.
+- [ ] **AI Context**: `apps/docs/AI.md` updated if canonical rules changed.

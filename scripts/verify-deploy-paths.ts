@@ -6,10 +6,10 @@ const rootDir = resolve(import.meta.dirname, "..");
 const requiredPaths = [
     "wrangler.jsonc",
     "worker-configuration.d.ts",
-    "api/main.ts",
-    "api/db/migrations",
-    "web/dist/index.html",
-    "web/dist/docs/index.html",
+    "apps/api/main.ts",
+    "apps/api/db/migrations",
+    "apps/web/dist/index.html",
+    "apps/web/dist/docs/index.html",
 ] as const;
 
 async function assertExists(relativePath: string) {

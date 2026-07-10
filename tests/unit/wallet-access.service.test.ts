@@ -1,4 +1,4 @@
-import { canAccessMemberWallet } from "@api/services/wallet-access.service";
+import { canAccessMemberWallet } from "@api/services/financial/wallet-access.service";
 import { describe, expect, it } from "vitest";
 
 function makeCtx(values: Record<string, unknown>) {
@@ -38,5 +38,10 @@ describe("canAccessMemberWallet", () => {
     it("denies unrelated members", () => {
         const ctx = makeCtx({ userId: "teacher_1", membershipRole: "teacher" });
         expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(false);
+    });
+
+    it("allows multi-role members when one role is admin", () => {
+        const ctx = makeCtx({ userId: "multi_1", membershipRole: "student, admin" });
+        expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(true);
     });
 });

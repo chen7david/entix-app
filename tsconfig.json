@@ -17,10 +17,10 @@
         "paths": {
             "@shared": ["./shared/index.ts"],
             "@shared/*": ["./shared/*"],
-            "@api/*": ["./api/*"],
-            "@web/*": ["./web/*"]
+            "@api/*": ["./apps/api/*"],
+            "@web/*": ["./apps/web/*"]
         }
     },
-    "include": ["api/**/*", "shared/**/*", "tests/**/*", "*.ts"],
-    "exclude": ["web/**/*", "node_modules"]
+    "include": ["apps/api/**/*", "shared/**/*", "tests/**/*", "*.ts"],
+    "exclude": ["apps/web/**/*", "node_modules"]
 }

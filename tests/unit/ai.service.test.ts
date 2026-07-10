@@ -1,5 +1,5 @@
 import { InternalServerError, ServiceUnavailableError } from "@api/errors/app.error";
-import { GeminiAiService } from "@api/services/gemini-ai.service";
+import { GeminiAiService } from "@api/services/ai/gemini-ai.service";
 import type { BaseAiServiceConfig } from "@api/types/ai.types";
 import { describe, expect, it, vi } from "vitest";
 
@@ -126,7 +126,7 @@ describe("GeminiAiService", () => {
 /** Backward-compatible suite name for CI grep / historical references. */
 describe("AiService (Gemini alias)", () => {
     it("re-exports GeminiAiService", async () => {
-        const { AiService } = await import("@api/services/ai.service");
+        const { AiService } = await import("@api/services/ai/ai.service");
         expect(AiService).toBe(GeminiAiService);
     });
 });

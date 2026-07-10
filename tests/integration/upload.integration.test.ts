@@ -56,7 +56,7 @@ describe("Uploads Integration", () => {
 
             const client = createTestClient(app, env, cookie);
 
-            const { BucketService } = await import("@api/services/bucket.service");
+            const { BucketService } = await import("@api/services/infra/bucket.service");
             const presignSpy = vi
                 .spyOn(BucketService.prototype, "getPresignedUploadUrl")
                 .mockResolvedValue("https://fake-presigned-url.com");
@@ -116,7 +116,7 @@ describe("Uploads Integration", () => {
 
             const client = createTestClient(app, env, cookie);
 
-            const { BucketService } = await import("@api/services/bucket.service");
+            const { BucketService } = await import("@api/services/infra/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
                 "https://fake.presigned"
             );
@@ -150,7 +150,7 @@ describe("Uploads Integration", () => {
             const organizationId = orgId;
             const client = createTestClient(app, env, cookie);
 
-            const { BucketService } = await import("@api/services/bucket.service");
+            const { BucketService } = await import("@api/services/infra/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
                 "https://fake.presigned"
             );
@@ -185,7 +185,7 @@ describe("Uploads Integration", () => {
             const organizationId = orgId;
             const client = createTestClient(app, env, cookie);
 
-            const { BucketService } = await import("@api/services/bucket.service");
+            const { BucketService } = await import("@api/services/infra/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
                 "https://fake.presigned"
             );
@@ -224,7 +224,7 @@ describe("Uploads Integration", () => {
             const organizationId = orgId;
             const client = createTestClient(app, env, cookie);
 
-            const { BucketService } = await import("@api/services/bucket.service");
+            const { BucketService } = await import("@api/services/infra/bucket.service");
             vi.spyOn(BucketService.prototype, "getPresignedUploadUrl").mockResolvedValue(
                 "https://fake.presigned"
             );

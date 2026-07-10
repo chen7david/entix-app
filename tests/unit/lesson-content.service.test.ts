@@ -1,5 +1,5 @@
 import { UnprocessableEntityError } from "@api/errors/app.error";
-import { assertOrderedIdsMatchCurrent } from "@api/services/lesson-content.service";
+import { assertOrderedIdsMatchCurrent } from "@api/services/lessons/lesson-content.service";
 import { describe, expect, it } from "vitest";
 
 describe("assertOrderedIdsMatchCurrent", () => {

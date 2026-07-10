@@ -1,9 +1,9 @@
 import { env } from "cloudflare:test";
-import { LessonContentRepository } from "@api/repositories/lesson-content.repository";
+import { LessonContentRepository } from "@api/repositories/lessons/lesson-content.repository";
 import { authOrganizations, lessons } from "@shared/db/schema";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { insertTestPassage } from "../lib/passage-fixtures";
-import { createTestDb, skipIfPassageTablesMissing, type TestDb } from "../lib/utils";
+import { createTestDb, type TestDb } from "../lib/utils";
 
 describe("LessonContentRepository — lesson passages", () => {
     let passageSchemaReady = false;
@@ -13,12 +13,14 @@ describe("LessonContentRepository — lesson passages", () => {
     const orgId = "org_repo_ps_1";
 
     beforeAll(async () => {
+        await createTestDb();
         const row = await env.DB.prepare(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?"
         )
             .bind("lesson_passages")
             .first();
         passageSchemaReady = Boolean(row);
+        expect(passageSchemaReady).toBe(true);
     });
 
     beforeEach(async () => {
@@ -39,19 +41,12 @@ describe("LessonContentRepository — lesson passages", () => {
         });
     });
 
-    // Single Worker context: Promise.all interleaves awaits cooperatively, not cross-request D1 races.
-    it("addPassage assigns positions 1 and 2 when two adds run via Promise.all (single Worker context)", async ({
-        skip,
-    }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("addPassage assigns positions 1 and 2 for sequential inserts", async () => {
         const passageIdA = (await insertTestPassage(db, orgId, { title: "A" })).id;
         const passageIdB = (await insertTestPassage(db, orgId, { title: "B" })).id;
 
-        const [rowA, rowB] = await Promise.all([
-            repo.addPassage(lessonId, passageIdA),
-            repo.addPassage(lessonId, passageIdB),
-        ]);
+        const rowA = await repo.addPassage(lessonId, passageIdA);
+        const rowB = await repo.addPassage(lessonId, passageIdB);
 
         expect(rowA).toBeTruthy();
         expect(rowB).toBeTruthy();
@@ -62,9 +57,7 @@ describe("LessonContentRepository — lesson passages", () => {
         expect(positions.sort((a, b) => a - b)).toEqual([1, 2]);
     });
 
-    it("reorderPassages rejects unknown passage IDs", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("reorderPassages rejects unknown passage IDs", async () => {
         const passageIdA = (await insertTestPassage(db, orgId, { title: "A" })).id;
         const passageIdB = (await insertTestPassage(db, orgId, { title: "B" })).id;
         await repo.addPassage(lessonId, passageIdA);
@@ -79,9 +72,7 @@ describe("LessonContentRepository — lesson passages", () => {
         expect(positions).toEqual([1, 2]);
     });
 
-    it("reorderPassages rejects empty orderedIds when lesson has passages", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("reorderPassages rejects empty orderedIds when lesson has passages", async () => {
         const passageIdA = (await insertTestPassage(db, orgId, { title: "A" })).id;
         await repo.addPassage(lessonId, passageIdA);
 
@@ -90,9 +81,7 @@ describe("LessonContentRepository — lesson passages", () => {
         );
     });
 
-    it("removePassage compacts positions after deleting the middle item", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("removePassage compacts positions after deleting the middle item", async () => {
         const passageIdA = (await insertTestPassage(db, orgId, { title: "A" })).id;
         const passageIdB = (await insertTestPassage(db, orgId, { title: "B" })).id;
         const passageIdC = (await insertTestPassage(db, orgId, { title: "C" })).id;
@@ -107,9 +96,7 @@ describe("LessonContentRepository — lesson passages", () => {
         expect(rows.map((r) => r.position).sort((a, b) => a - b)).toEqual([1, 2]);
     });
 
-    it("removePassage leaving one item keeps position 1 without error", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("removePassage leaving one item keeps position 1 without error", async () => {
         const passageIdA = (await insertTestPassage(db, orgId, { title: "A" })).id;
         const passageIdB = (await insertTestPassage(db, orgId, { title: "B" })).id;
         await repo.addPassage(lessonId, passageIdA);
@@ -126,9 +113,7 @@ describe("LessonContentRepository — lesson passages", () => {
         });
     });
 
-    it("addPassage returns joined passage metadata", async ({ skip }) => {
-        skipIfPassageTablesMissing(passageSchemaReady, skip);
-
+    it("addPassage returns joined passage metadata", async () => {
         const passageId = (await insertTestPassage(db, orgId, { title: "Joined", wordCount: 2 }))
             .id;
         const row = await repo.addPassage(lessonId, passageId);

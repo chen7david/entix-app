@@ -1,4 +1,4 @@
-import { ScheduledSessionsRepository } from "@api/repositories/scheduled-sessions.repository";
+import { ScheduledSessionsRepository } from "@api/repositories/schedule/scheduled-sessions.repository";
 import { authOrganizations, authUsers, lessons, type NewScheduledSession } from "@shared/db/schema";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { TestDb } from "../../lib/utils";

@@ -1,5 +1,5 @@
 import { InternalServerError, ServiceUnavailableError } from "@api/errors/app.error";
-import { DeepSeekAiService } from "@api/services/deepseek-ai.service";
+import { DeepSeekAiService } from "@api/services/ai/deepseek-ai.service";
 import type { BaseAiServiceConfig } from "@api/types/ai.types";
 import { describe, expect, it, vi } from "vitest";
 

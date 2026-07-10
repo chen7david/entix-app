@@ -1,9 +1,9 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
-import { JournalSchema, SnapshotSchema } from "../api/db/migration-guard/meta.schemas";
-import { type MigrationContext, policies } from "../api/db/migration-guard/policies";
+import { JournalSchema, SnapshotSchema } from "../apps/api/db/migration-guard/meta.schemas";
+import { type MigrationContext, policies } from "../apps/api/db/migration-guard/policies";
 
-const MIGRATIONS_DIR = "./api/db/migrations";
+const MIGRATIONS_DIR = "./apps/api/db/migrations";
 const META_DIR = path.join(MIGRATIONS_DIR, "meta");
 const JOURNAL_PATH = path.join(META_DIR, "_journal.json");
 

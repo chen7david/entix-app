@@ -1,4 +1,4 @@
-import type { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
+import type { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
 import type { Mocked } from "vitest";
 import { vi } from "vitest";
 

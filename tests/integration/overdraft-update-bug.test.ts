@@ -4,9 +4,9 @@ import { DbBatchRunner } from "@api/helpers/batch-runner";
 import { FinanceBillingPlansRepository } from "@api/repositories/financial/finance-billing-plans.repository";
 import { FinancialAccountsRepository } from "@api/repositories/financial/financial-accounts.repository";
 import { FinancialTransactionsRepository } from "@api/repositories/financial/financial-transactions.repository";
+import { SystemAuditRepository } from "@api/repositories/infra/system-audit.repository";
 import { PaymentQueueRepository } from "@api/repositories/payment/payment-queue.repository";
-import { SessionAttendancesRepository } from "@api/repositories/session-attendances.repository";
-import { SystemAuditRepository } from "@api/repositories/system-audit.repository";
+import { SessionAttendancesRepository } from "@api/repositories/schedule/session-attendances.repository";
 import { SessionPaymentService } from "@api/services/financial/session-payment.service";
 import {
     FINANCIAL_CATEGORIES,
@@ -28,7 +28,7 @@ import {
 } from "@shared/db/schema";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
-import { drainQueue } from "../../api/tests/helpers/queue-test.helper";
+import { drainQueue } from "../../apps/api/tests/helpers/queue-test.helper";
 import { createAuthenticatedOrg } from "../lib/auth-test.helper";
 import { createTestDb } from "../lib/utils";
 

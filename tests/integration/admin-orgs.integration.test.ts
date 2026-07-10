@@ -1,6 +1,6 @@
 import { env } from "cloudflare:test";
 import app from "@api/app";
-import { OrganizationRepository } from "@api/repositories/organization.repository";
+import { OrganizationRepository } from "@api/repositories/org/organization.repository";
 import { generateOpaqueId } from "@shared";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseJson } from "../lib/api-request.helper";

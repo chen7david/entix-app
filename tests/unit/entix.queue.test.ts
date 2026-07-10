@@ -10,11 +10,11 @@ vi.mock("drizzle-orm/d1", () => ({
     drizzle: vi.fn(() => ({})),
 }));
 
-vi.mock("@api/repositories/vocabulary-bank.repository", () => ({
+vi.mock("@api/repositories/vocabulary/vocabulary-bank.repository", () => ({
     VocabularyBankRepository: class {},
 }));
 
-vi.mock("@api/repositories/system-audit.repository", () => ({
+vi.mock("@api/repositories/infra/system-audit.repository", () => ({
     SystemAuditRepository: class {
         insert = vi.fn();
     },
@@ -28,7 +28,7 @@ vi.mock("@api/factories/ai.factory", () => ({
     })),
 }));
 
-vi.mock("@api/services/vocabulary-processing.service", () => ({
+vi.mock("@api/services/vocabulary/vocabulary-processing.service", () => ({
     VOCABULARY_TRANSLATION_INSTRUCTIONS: "translate",
     VOCABULARY_TRANSLATION_BATCH_INSTRUCTIONS: "translate batch",
     VocabularyProcessingService: class {

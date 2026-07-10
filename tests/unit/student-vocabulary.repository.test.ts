@@ -1,5 +1,5 @@
 import type { AppDb } from "@api/factories/db.factory";
-import { StudentVocabularyRepository } from "@api/repositories/student-vocabulary.repository";
+import { StudentVocabularyRepository } from "@api/repositories/vocabulary/student-vocabulary.repository";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 describe("StudentVocabularyRepository", () => {
