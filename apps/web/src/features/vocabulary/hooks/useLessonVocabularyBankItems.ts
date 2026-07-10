@@ -42,7 +42,12 @@ export function useLessonVocabularyBankItems({
     const bankQueries = useQueries({
         queries: sortedRows.map((row) => ({
             queryKey: queryKeys.vocabulary.bankItem(organizationId ?? "", row.vocabularyId),
-            queryFn: () => fetchVocabularyBankItem(organizationId!, row.vocabularyId),
+            queryFn: () => {
+                if (!organizationId) {
+                    throw new Error("organizationId is required to fetch vocabulary bank items");
+                }
+                return fetchVocabularyBankItem(organizationId, row.vocabularyId);
+            },
             enabled: !!organizationId && !!lessonId && enabled,
             staleTime: QUERY_STALE_MS,
         })),

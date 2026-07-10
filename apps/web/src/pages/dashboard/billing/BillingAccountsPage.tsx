@@ -28,7 +28,7 @@ export const BillingAccountsPage: React.FC = () => {
     });
 
     const { data: balanceData, isLoading: isLoadingBalance } = useWalletBalance(orgId, "org");
-    const accounts = balanceData?.accounts ?? [];
+    const accounts = useMemo(() => balanceData?.accounts ?? [], [balanceData?.accounts]);
     const currencyCount = useMemo(
         () => new Set(accounts.map((account) => account.currencyId)).size,
         [accounts]

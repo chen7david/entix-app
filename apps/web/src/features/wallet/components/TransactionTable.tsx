@@ -1,8 +1,6 @@
 import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
-import {
-    DataTableWithFilters,
-    type FilterConfig,
-} from "@web/src/components/data/DataTableWithFilters";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import type { FilterConfig } from "@web/src/components/data/FilterBar";
 import { App } from "antd";
 import {
     getTransactionColumns,

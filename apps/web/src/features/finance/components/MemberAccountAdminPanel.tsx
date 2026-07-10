@@ -5,7 +5,7 @@ import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalanc
 import { FINANCIAL_ADJUSTMENT_REASONS } from "@web/src/utils/constants";
 import { Alert, Button, Divider, Form, Input, Radio, Select, Skeleton, Space } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
 
 const DEFAULT_REASON = FINANCIAL_ADJUSTMENT_REASONS[0];
@@ -29,10 +29,10 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
     const { data: orgBalanceData, isLoading: isLoadingOrg } = useWalletBalance(orgId, "org");
     const { mutate: adjust, isPending } = useAdminAdjustWallet(orgId);
 
-    const accounts = balanceData?.accounts || [];
+    const accounts = useMemo(() => balanceData?.accounts || [], [balanceData?.accounts]);
     const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
 
-    const orgAccounts = orgBalanceData?.accounts || [];
+    const orgAccounts = useMemo(() => orgBalanceData?.accounts || [], [orgBalanceData?.accounts]);
     const orgFundingAccount = orgAccounts.find(
         (a) => a.currencyId === selectedAccount?.currencyId && a.accountType === "funding"
     );

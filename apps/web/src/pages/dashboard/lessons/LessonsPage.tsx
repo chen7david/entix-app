@@ -1,7 +1,7 @@
 import { DeleteOutlined, EditOutlined, PictureOutlined, PlusOutlined } from "@ant-design/icons";
 import { getAssetUrl } from "@shared";
 import { CEFR_LEVELS } from "@shared/constants/cefr";
-import type { CursorPaginationConfig } from "@web/src/components/data/DataTableWithFilters";
+import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import {

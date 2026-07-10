@@ -5,10 +5,8 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { getAssetUrl, type UploadDto } from "@shared";
-import {
-    type CursorPaginationConfig,
-    DataTableWithFilters,
-} from "@web/src/components/data/DataTableWithFilters";
+import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { Button, Tag, Tooltip, Typography } from "antd";
 import type React from "react";
 

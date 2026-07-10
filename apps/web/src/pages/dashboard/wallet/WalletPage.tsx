@@ -1,7 +1,7 @@
 import { PlusCircleOutlined } from "@ant-design/icons";
 import { ACCOUNT_TYPES } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
-import type { FilterConfig } from "@web/src/components/data/DataTableWithFilters";
+import type { FilterConfig } from "@web/src/components/data/FilterBar";
 import {
     type DatePresetOption,
     getRangeFromPreset,

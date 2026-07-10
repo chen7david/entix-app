@@ -1,9 +1,7 @@
 import { HistoryOutlined, RollbackOutlined } from "@ant-design/icons";
 import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
-import {
-    DataTableWithFilters,
-    type FilterConfig,
-} from "@web/src/components/data/DataTableWithFilters";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import type { FilterConfig } from "@web/src/components/data/FilterBar";
 import { App, Button, Input, Modal, Space, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";

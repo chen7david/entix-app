@@ -34,7 +34,7 @@ export function BookImportReviewPage() {
     const deletePara = useDeleteImportParagraph(jobId);
     const finalize = useFinalizeImportJob(jobId);
 
-    const paragraphs = job?.paragraphs ?? [];
+    const paragraphs = useMemo(() => job?.paragraphs ?? [], [job?.paragraphs]);
     const active = useMemo(() => paragraphs.filter((p) => !p.isDeleted), [paragraphs]);
     const selected = paragraphs.find((p) => p.id === selectedId);
 

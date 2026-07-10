@@ -31,9 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const session = authClient.useSession();
     const activeMember = authClient.useActiveMember();
 
+    const refetchSession = session.refetch;
+    const refetchActiveMember = activeMember.refetch;
+
     const refreshAuth = useCallback(async () => {
-        await Promise.all([session.refetch(), activeMember.refetch()]);
-    }, [session.refetch, activeMember.refetch]);
+        await Promise.all([refetchSession(), refetchActiveMember()]);
+    }, [refetchSession, refetchActiveMember]);
 
     // better-auth's useAuthQuery initializes with `data: null` (not undefined) while
     // `isPending: true` (see better-auth/client/query). The old `data === undefined`

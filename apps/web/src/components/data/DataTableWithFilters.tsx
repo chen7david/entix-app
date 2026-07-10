@@ -3,14 +3,9 @@ import type { TableProps } from "antd";
 import { Table, theme } from "antd";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import type { ClientPaginationConfig, CursorPaginationConfig } from "./DataTable.types";
-import { isCursorPagination } from "./DataTable.types";
 import { DataTablePagination } from "./DataTablePagination";
 import { FilterBar, type FilterConfig } from "./FilterBar";
 import { TableEmptyState } from "./TableEmptyState";
-
-// Re-export pagination types and helpers so callers may import from either location
-export type { ClientPaginationConfig, CursorPaginationConfig, FilterConfig };
-export { isCursorPagination };
 
 export interface DataTableConfig<T> {
     columns: TableProps<T>["columns"];
@@ -39,29 +34,42 @@ function DataTableWithFiltersInternal<T extends object>({
     config: DataTableConfig<T>;
 }) {
     const { token } = theme.useToken();
-    const [localFilters, setLocalFilters] = useState<Record<string, any>>(
-        config.initialFilters ?? {}
-    );
+    const {
+        columns,
+        data,
+        pagination,
+        loading,
+        filters,
+        actions,
+        onFiltersChange,
+        onRowClick,
+        rowKey,
+        selectedRowKey,
+        initialFilters,
+        filterBar,
+    } = config;
+
+    const [localFilters, setLocalFilters] = useState<Record<string, any>>(initialFilters ?? {});
 
     useEffect(() => {
-        setLocalFilters(config.initialFilters ?? {});
-    }, [config.initialFilters]);
+        setLocalFilters(initialFilters ?? {});
+    }, [initialFilters]);
 
     const handleFiltersChange = useCallback(
         (newFilters: Record<string, any>) => {
             setLocalFilters(newFilters);
-            config.onFiltersChange(newFilters);
+            onFiltersChange(newFilters);
         },
-        [config.onFiltersChange]
+        [onFiltersChange]
     );
 
     const handleReset = useCallback(() => {
-        handleFiltersChange(config.initialFilters ?? {});
-    }, [config.initialFilters, handleFiltersChange]);
+        handleFiltersChange(initialFilters ?? {});
+    }, [initialFilters, handleFiltersChange]);
 
     const tableColumns = useMemo(() => {
-        const cols = [...(config.columns || [])];
-        if (config.actions) {
+        const cols = [...(columns || [])];
+        if (actions) {
             cols.push({
                 title: "Actions",
                 key: "actions",
@@ -76,30 +84,28 @@ function DataTableWithFiltersInternal<T extends object>({
                         onClick={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                     >
-                        {config.actions?.(record)}
+                        {actions(record)}
                     </div>
                 ),
             });
         }
         return cols;
-    }, [config.columns, config.actions]);
-
-    const pagination = config.pagination;
+    }, [columns, actions]);
 
     return (
         <div className="data-table-wrapper flex flex-col flex-1 min-h-0 overflow-hidden">
-            {config.filters.length > 0 && (
+            {filters.length > 0 && (
                 <FilterBar
-                    filters={config.filters}
+                    filters={filters}
                     values={localFilters}
-                    initialValues={config.initialFilters}
+                    initialValues={initialFilters}
                     onChange={(nextFilters) => handleFiltersChange(nextFilters)}
                     onReset={handleReset}
-                    showReset={config.filterBar?.showReset}
-                    resetLabel={config.filterBar?.resetLabel}
-                    className={config.filterBar?.className}
-                    compact={config.filterBar?.compact}
-                    resetIconOnly={config.filterBar?.resetIconOnly}
+                    showReset={filterBar?.showReset}
+                    resetLabel={filterBar?.resetLabel}
+                    className={filterBar?.className}
+                    compact={filterBar?.compact}
+                    resetIconOnly={filterBar?.resetIconOnly}
                 />
             )}
 
@@ -116,22 +122,21 @@ function DataTableWithFiltersInternal<T extends object>({
                 <div className="flex-1 custom-scrollbar relative overflow-auto">
                     <Table<T>
                         columns={tableColumns}
-                        dataSource={config.data}
+                        dataSource={data}
                         pagination={false}
-                        loading={config.loading}
-                        rowKey={config.rowKey || "id"}
+                        loading={loading}
+                        rowKey={rowKey || "id"}
                         size="middle"
                         sticky={true}
                         scroll={{ x: "max-content" }}
                         className="data-table-pro-content"
                         onRow={(record) => {
                             const key =
-                                typeof config.rowKey === "function"
-                                    ? config.rowKey(record)
-                                    : (record as any)[config.rowKey || "id"];
+                                typeof rowKey === "function"
+                                    ? rowKey(record)
+                                    : (record as any)[rowKey || "id"];
                             const isSelected =
-                                config.selectedRowKey !== undefined &&
-                                config.selectedRowKey === key;
+                                selectedRowKey !== undefined && selectedRowKey === key;
 
                             return {
                                 onClick: (e) => {
@@ -139,10 +144,10 @@ function DataTableWithFiltersInternal<T extends object>({
                                     // actions column sentinel, regardless of stopPropagation.
                                     const target = e.target as HTMLElement;
                                     if (target.closest("[data-row-action]")) return;
-                                    config.onRowClick?.(record);
+                                    onRowClick?.(record);
                                 },
                                 className:
-                                    `${config.onRowClick ? "cursor-pointer" : ""} ${isSelected ? "row-active" : ""}`.trim(),
+                                    `${onRowClick ? "cursor-pointer" : ""} ${isSelected ? "row-active" : ""}`.trim(),
                             };
                         }}
                         locale={{

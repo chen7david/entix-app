@@ -32,7 +32,18 @@ export default defineConfig([
             "react-hooks/purity": "off",
             "react-refresh/only-export-components": [
                 "warn",
-                { allowConstantExport: true, allowExportNames: ["useAuth", "useOrg"] },
+                {
+                    allowConstantExport: true,
+                    allowExportNames: [
+                        "useAuth",
+                        "useOrg",
+                        "useOrgContext",
+                        "useOptionalOrgContext",
+                        "OrgContext",
+                        "OrgProvider",
+                        "useVocabAudioContext",
+                    ],
+                },
             ],
         },
     },

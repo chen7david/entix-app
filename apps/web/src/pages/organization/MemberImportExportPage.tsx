@@ -43,7 +43,7 @@ export const MemberImportExportPage: React.FC = () => {
     const { data: billingPlansQuery } = useBillingPlans(activeOrganization?.id ?? "", {
         limit: 100,
     });
-    const billingPlans = billingPlansQuery?.data ?? [];
+    const billingPlans = useMemo(() => billingPlansQuery?.data ?? [], [billingPlansQuery?.data]);
     const hasBillingPlans = billingPlans.length > 0;
     const billingPlanOptions = useMemo(
         () =>
