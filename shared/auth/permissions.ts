@@ -19,9 +19,9 @@ export const statement = {
     enrollment: ["read", "create", "delete"],
     playlist: ["read", "create", "update", "delete"],
     /**
-     * Org-scoped ledger / billing (not personal member wallets).
-     * `transfer` is intentionally broader so students can move funds between
-     * their own accounts via the wallet UI; org ledger reads/mutations stay elevated.
+     * Org-scoped ledger / billing. Restricted to admin, owner, and finance roles
+     * (plus platform super-admin on `/admin/finance/*`). Students and teachers
+     * have no finance permissions.
      */
     finance: ["read", "create", "update", "delete", "transfer"],
     // Education Resources
@@ -46,7 +46,6 @@ export const roles = {
         passage: ["read"],
         enrollment: ["read"],
         playlist: ["read"],
-        finance: ["transfer"],
         course: ["read", "enroll", "unenroll"],
         assignment: ["read", "submit"],
         submission: ["read", "create", "update", "delete"],
@@ -64,13 +63,22 @@ export const roles = {
         passage: ["read", "create", "update", "delete"],
         enrollment: ["read", "create", "delete"],
         playlist: ["read", "create", "update", "delete"],
-        finance: ["read"],
         course: ["read", "create", "update", "delete", "enroll", "unenroll"],
         assignment: ["read", "create", "update", "delete", "submit", "grade"],
         submission: ["read", "create", "update", "delete", "grade"],
         grade: ["read", "create", "update", "delete"],
         announcement: ["read", "create", "update", "delete"],
         attendance: ["read", "create", "update", "delete"],
+    }),
+    /**
+     * Org finance staff: ledger, billing plans, and member wallets.
+     * No org settings, invitations, or content management.
+     */
+    finance: ac.newRole({
+        member: ["read"],
+        dashboard: ["read"],
+        "user-profile": ["read"],
+        finance: ["read", "create", "update", "delete", "transfer"],
     }),
     admin: ac.newRole({
         organization: ["update"],
@@ -122,7 +130,7 @@ export const roles = {
     }),
 };
 
-export const { student, teacher, admin, owner } = roles;
+export const { student, teacher, finance, admin, owner } = roles;
 
 /** Organization-level role. Derived from the `roles` object above. */
 export type OrgRole = keyof typeof roles;

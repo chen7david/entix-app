@@ -1,4 +1,4 @@
-import { BookOutlined, ShoppingOutlined, WalletOutlined, YoutubeOutlined } from "@ant-design/icons";
+import { BookOutlined, ShoppingOutlined, YoutubeOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useMyEnrollments } from "@web/src/features/schedule/hooks/useSchedule";
@@ -44,7 +44,7 @@ export const StudentPortal: React.FC = () => {
             </div>
 
             <Row gutter={[24, 24]}>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} sm={12} lg={8}>
                     <Card
                         hoverable
                         className="h-full shadow-sm text-center"
@@ -57,20 +57,7 @@ export const StudentPortal: React.FC = () => {
                         <Text type="secondary">Access your classroom.</Text>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
-                    <Card
-                        hoverable
-                        className="h-full shadow-sm text-center"
-                        onClick={() => navigateOrg(AppRoutes.org.dashboard.wallet)}
-                    >
-                        <WalletOutlined
-                            style={{ fontSize: 32, color: token.colorSuccess, marginBottom: 16 }}
-                        />
-                        <Title level={4}>Wallet</Title>
-                        <Text type="secondary">Check your balance.</Text>
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} sm={12} lg={8}>
                     <Card
                         hoverable
                         className="h-full shadow-sm text-center"
@@ -83,7 +70,7 @@ export const StudentPortal: React.FC = () => {
                         <Text type="secondary">Watch and learn.</Text>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={6}>
+                <Col xs={24} sm={12} lg={8}>
                     <Card
                         hoverable
                         className="h-full shadow-sm text-center"
@@ -93,7 +80,7 @@ export const StudentPortal: React.FC = () => {
                             style={{ fontSize: 32, color: token.colorWarning, marginBottom: 16 }}
                         />
                         <Title level={4}>Shop</Title>
-                        <Text type="secondary">Redeem your E$.</Text>
+                        <Text type="secondary">Redeem your rewards.</Text>
                     </Card>
                 </Col>
             </Row>

@@ -1,25 +1,28 @@
 import { z } from "@hono/zod-openapi";
 import type { OrgRole } from "../../auth/permissions";
+import { normalizeBulkMemberRaw } from "../../utils/bulk-member";
 
 const timestampSchema = z.union([z.string(), z.date()]).optional();
 
+const avatarUrlSchema = z
+    .union([z.string().url(), z.literal(""), z.null()])
+    .optional()
+    .transform((value) => (value === "" || value === undefined ? null : value))
+    .openapi({ example: "https://example.com/avatar.jpg" });
+
 /**
- * Schema for bulk member import/export items
+ * Schema for bulk member import/export items.
+ * Preprocess accepts legacy export shapes (`phoneNumbers`, `socialMedia`, role `member`).
  */
-export const bulkMemberItemSchema = z.object({
+const bulkMemberItemObjectSchema = z.object({
     id: z.string().optional().openapi({ example: "user_123" }),
     email: z.string().trim().openapi({ example: "member@example.com" }),
     name: z.string().trim().min(1).openapi({ example: "John Doe" }),
     role: z
-        .enum(["admin", "student", "teacher", "owner"])
+        .enum(["admin", "student", "teacher", "owner", "finance"])
         .optional()
         .openapi({ example: "student" }),
-    avatarUrl: z
-        .string()
-        .url()
-        .optional()
-        .nullable()
-        .openapi({ example: "https://example.com/avatar.jpg" }),
+    avatarUrl: avatarUrlSchema,
     createdAt: timestampSchema.openapi({ example: "2023-01-01T00:00:00Z" }),
     updatedAt: timestampSchema.openapi({ example: "2023-01-01T00:00:00Z" }),
     profile: z
@@ -93,7 +96,12 @@ export const bulkMemberItemSchema = z.object({
         .openapi({ example: [{ type: "Facebook", urlOrHandle: "johndoe" }] }),
 });
 
-export type BulkMemberItemDTO = z.infer<typeof bulkMemberItemSchema> & {
+export const bulkMemberItemSchema = z.preprocess(
+    normalizeBulkMemberRaw,
+    bulkMemberItemObjectSchema
+);
+
+export type BulkMemberItemDTO = z.infer<typeof bulkMemberItemObjectSchema> & {
     role?: OrgRole;
 };
 

@@ -3,7 +3,7 @@ import type React from "react";
 import { createContext, useCallback, useContext, useMemo } from "react";
 
 export type UserRole = "admin" | "user";
-export type OrgRole = "owner" | "admin" | "teacher" | "student";
+export type OrgRole = "owner" | "admin" | "finance" | "teacher" | "student";
 
 export interface UnifiedUser {
     id: string;

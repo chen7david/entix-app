@@ -1,10 +1,17 @@
 import type { AppContext } from "@api/helpers/types.helpers";
+import { membershipHasFinanceAccess } from "@shared/constants/roles";
 
 export type WalletAccessContext = Pick<AppContext, "get">;
 
+function isFinanceStaff(ctx: WalletAccessContext): boolean {
+    if (ctx.get("isSuperAdmin")) return true;
+    return membershipHasFinanceAccess(ctx.get("membershipRole"));
+}
+
 /**
- * Whether the caller may view or initialize a member's org-scoped wallet.
- * Allowed when the caller is the target user, a super-admin, or org admin/owner.
+ * Whether the caller may view a member's org-scoped wallet summary/history.
+ * Allowed when the caller is the target user, a super-admin, or org finance staff
+ * (admin / owner / finance).
  */
 export function canAccessMemberWallet(
     ctx: WalletAccessContext,
@@ -12,18 +19,18 @@ export function canAccessMemberWallet(
     _organizationId: string
 ): boolean {
     const callerId = ctx.get("userId");
-    const callerRole = ctx.get("membershipRole");
-    const isSuperAdmin = ctx.get("isSuperAdmin");
-
     if (callerId === targetUserId) return true;
-    if (isSuperAdmin) return true;
+    return isFinanceStaff(ctx);
+}
 
-    // Comma-separated multi-roles (e.g. "student, admin") must elevate if any role is admin/owner.
-    const roles = (callerRole ?? "")
-        .split(",")
-        .map((r) => r.trim())
-        .filter(Boolean);
-    if (roles.includes("admin") || roles.includes("owner")) return true;
-
-    return false;
+/**
+ * Whether the caller may provision or administer another member's wallet.
+ * Self-service initialization is not allowed — finance staff or super-admin only.
+ */
+export function canManageMemberWallet(
+    ctx: WalletAccessContext,
+    _targetUserId: string,
+    _organizationId: string
+): boolean {
+    return isFinanceStaff(ctx);
 }

@@ -67,7 +67,6 @@ import {
     UnauthorizedPage,
     VerifyEmailPage,
     VocabAiTesterPage,
-    WalletPage,
 } from "./routes/lazy-pages";
 
 const queryClient = new QueryClient({
@@ -169,7 +168,7 @@ export default function App() {
                                                     path="change-password"
                                                     element={<ChangePasswordPage />}
                                                 />
-                                                {/* Student-only (org role `student`, not Better Auth resource "member"): staff hitting /dashboard/wallet|shop|… are redirected server-side in the router. */}
+                                                {/* Student-only learning & commerce (org finance is staff-only). */}
                                                 <Route
                                                     element={
                                                         <ProtectedRoute
@@ -189,7 +188,6 @@ export default function App() {
                                                         element={<PlaylistPlayerPage />}
                                                     />
                                                     <Route path="shop" element={<ShopPage />} />
-                                                    <Route path="wallet" element={<WalletPage />} />
                                                     <Route path="movies" element={<MoviesPage />} />
                                                     <Route path="orders" element={<OrdersPage />} />
                                                     <Route
@@ -203,7 +201,7 @@ export default function App() {
                                                 </Route>
                                             </Route>
 
-                                            {/* ── ADMIN: restricted to true organization managers ── */}
+                                            {/* ── ADMIN: organization managers ── */}
                                             <Route
                                                 element={
                                                     <ProtectedRoute
@@ -239,14 +237,6 @@ export default function App() {
                                                         element={<OrganizationAnalyticsPage />}
                                                     />
                                                     <Route
-                                                        path="members"
-                                                        element={<OrganizationMembersPage />}
-                                                    />
-                                                    <Route
-                                                        path="members/:memberId"
-                                                        element={<MemberDetailPage />}
-                                                    />
-                                                    <Route
                                                         path="enrollment"
                                                         element={<EnrollmentPage />}
                                                     />
@@ -261,6 +251,30 @@ export default function App() {
                                                     <Route
                                                         path="uploads"
                                                         element={<OrganizationUploadsPage />}
+                                                    />
+                                                </Route>
+                                            </Route>
+
+                                            {/* ── FINANCE: admin, owner, and finance role ── */}
+                                            <Route
+                                                element={
+                                                    <ProtectedRoute
+                                                        allowedOrgRoles={[
+                                                            "admin",
+                                                            "owner",
+                                                            "finance",
+                                                        ]}
+                                                    />
+                                                }
+                                            >
+                                                <Route path="admin">
+                                                    <Route
+                                                        path="members"
+                                                        element={<OrganizationMembersPage />}
+                                                    />
+                                                    <Route
+                                                        path="members/:memberId"
+                                                        element={<MemberDetailPage />}
                                                     />
                                                     <Route path="billing">
                                                         <Route

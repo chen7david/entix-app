@@ -120,9 +120,29 @@ export const useBulkMembers = (orgId?: string) => {
             });
             return hcJson<ImportResult>(res);
         },
-        onSuccess: () => {
+        onSuccess: (result) => {
             queryClient.invalidateQueries({ queryKey: ["organizationMembers"] });
             queryClient.invalidateQueries({ queryKey: ["bulkMetrics", orgId] });
+            notification.success({
+                message: "Import complete",
+                description: `Processed ${result.total} row(s): ${result.created} created, ${result.linked} linked, ${result.failed} failed.`,
+            });
+            if (result.failed > 0 || result.errors.length > 0) {
+                notification.warning({
+                    message: "Import finished with issues",
+                    description:
+                        result.errors[0] ??
+                        `${result.failed} row(s) failed. See the import result card for details.`,
+                    duration: 8,
+                });
+            }
+        },
+        onError: (err) => {
+            notification.error({
+                message: "Import failed",
+                description: err.message || "Could not import members. Please try again.",
+                duration: 10,
+            });
         },
     });
 

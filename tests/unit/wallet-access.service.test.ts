@@ -1,4 +1,7 @@
-import { canAccessMemberWallet } from "@api/services/financial/wallet-access.service";
+import {
+    canAccessMemberWallet,
+    canManageMemberWallet,
+} from "@api/services/financial/wallet-access.service";
 import { describe, expect, it } from "vitest";
 
 function makeCtx(values: Record<string, unknown>) {
@@ -18,7 +21,7 @@ describe("canAccessMemberWallet", () => {
         expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(true);
     });
 
-    it("allows org admins and owners", () => {
+    it("allows org admins, owners, and finance staff", () => {
         expect(
             canAccessMemberWallet(
                 makeCtx({ userId: "a", membershipRole: "admin" }) as any,
@@ -33,6 +36,13 @@ describe("canAccessMemberWallet", () => {
                 "org_1"
             )
         ).toBe(true);
+        expect(
+            canAccessMemberWallet(
+                makeCtx({ userId: "f", membershipRole: "finance" }) as any,
+                "user_1",
+                "org_1"
+            )
+        ).toBe(true);
     });
 
     it("denies unrelated members", () => {
@@ -40,8 +50,32 @@ describe("canAccessMemberWallet", () => {
         expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(false);
     });
 
-    it("allows multi-role members when one role is admin", () => {
-        const ctx = makeCtx({ userId: "multi_1", membershipRole: "student, admin" });
+    it("allows multi-role members when one role is finance-capable", () => {
+        const ctx = makeCtx({ userId: "multi_1", membershipRole: "student, finance" });
         expect(canAccessMemberWallet(ctx as any, "user_1", "org_1")).toBe(true);
+    });
+});
+
+describe("canManageMemberWallet", () => {
+    it("denies self-service initialization", () => {
+        const ctx = makeCtx({ userId: "user_1", membershipRole: "student" });
+        expect(canManageMemberWallet(ctx as any, "user_1", "org_1")).toBe(false);
+    });
+
+    it("allows finance staff and super admins", () => {
+        expect(
+            canManageMemberWallet(
+                makeCtx({ userId: "f", membershipRole: "finance" }) as any,
+                "user_1",
+                "org_1"
+            )
+        ).toBe(true);
+        expect(
+            canManageMemberWallet(
+                makeCtx({ userId: "sa", isSuperAdmin: true }) as any,
+                "user_1",
+                "org_1"
+            )
+        ).toBe(true);
     });
 });

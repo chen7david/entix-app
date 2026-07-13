@@ -5,11 +5,13 @@ import {
     InfoCircleOutlined,
     UploadOutlined,
 } from "@ant-design/icons";
+import { normalizeBulkMembersRaw } from "@shared";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import {
     Alert,
+    App,
     Button,
     Card,
     Collapse,
@@ -18,6 +20,7 @@ import {
     Radio,
     Select,
     Space,
+    Spin,
     Statistic,
     Typography,
     theme,
@@ -31,6 +34,7 @@ const { Dragger } = Upload;
 const { Panel } = Collapse;
 
 export const MemberImportExportPage: React.FC = () => {
+    const { notification } = App.useApp();
     const { activeOrganization } = useOrganization();
     const { token } = theme.useToken();
     const { exportMembers, importMembers, isImporting, importResult } = useBulkMembers(
@@ -40,37 +44,112 @@ export const MemberImportExportPage: React.FC = () => {
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [selectedBillingPlanId, setSelectedBillingPlanId] = useState<string | undefined>();
     const [billingPlanConflict, setBillingPlanConflict] = useState<"replace" | "skip">("replace");
-    const { data: billingPlansQuery } = useBillingPlans(activeOrganization?.id ?? "", {
+    const {
+        data: billingPlansQuery,
+        isLoading: isLoadingBillingPlans,
+        isError: isBillingPlansError,
+        error: billingPlansError,
+    } = useBillingPlans(activeOrganization?.id ?? "", {
         limit: 100,
     });
     const billingPlans = useMemo(() => billingPlansQuery?.data ?? [], [billingPlansQuery?.data]);
-    const hasBillingPlans = billingPlans.length > 0;
-    const billingPlanOptions = useMemo(
-        () =>
-            billingPlans
-                .filter((plan) => plan.isActive)
-                .map((plan) => ({
-                    label: `${plan.name} (${plan.currencyId})`,
-                    value: plan.id,
-                })),
+    const activeBillingPlans = useMemo(
+        () => billingPlans.filter((plan) => plan.isActive),
         [billingPlans]
     );
+    const hasActiveBillingPlans = activeBillingPlans.length > 0;
+    const billingPlanOptions = useMemo(
+        () =>
+            activeBillingPlans.map((plan) => ({
+                label: `${plan.name} (${plan.currencyId})`,
+                value: plan.id,
+            })),
+        [activeBillingPlans]
+    );
+
+    const notifyUploadBlocked = () => {
+        if (isLoadingBillingPlans) {
+            notification.info({
+                message: "Loading billing plans",
+                description: "Wait a moment for billing plans to finish loading, then try again.",
+            });
+            return;
+        }
+        if (isBillingPlansError) {
+            notification.error({
+                message: "Could not load billing plans",
+                description:
+                    billingPlansError instanceof Error
+                        ? billingPlansError.message
+                        : "Refresh the page and try again.",
+            });
+            return;
+        }
+        if (!hasActiveBillingPlans) {
+            notification.warning({
+                message: "Active billing plan required",
+                description:
+                    "Create and activate at least one billing plan under Admin → Finance → Plans before importing members.",
+                duration: 8,
+            });
+        }
+    };
 
     const handleUpload = (file: File) => {
+        if (isImporting || isLoadingBillingPlans || !hasActiveBillingPlans) {
+            notifyUploadBlocked();
+            return false;
+        }
+
+        if (!file.name.toLowerCase().endsWith(".json")) {
+            notification.error({
+                message: "Unsupported file type",
+                description: "Please upload a .json member export file.",
+            });
+            return false;
+        }
+
         const reader = new FileReader();
-        reader.onload = async (e) => {
+        reader.onerror = () => {
+            notification.error({
+                message: "Could not read file",
+                description:
+                    "The selected file could not be read. Try exporting again or pick another file.",
+            });
+        };
+        reader.onload = (e) => {
             try {
-                const json = JSON.parse(e.target?.result as string);
-                if (!Array.isArray(json)) {
-                    throw new Error("JSON must be an array of members");
+                const text = e.target?.result;
+                if (typeof text !== "string" || text.trim().length === 0) {
+                    throw new Error("File is empty");
                 }
-                setParsedMembers(json);
+                const json = JSON.parse(text);
+                const members = normalizeBulkMembersRaw(json);
+                if (members.length === 0) {
+                    notification.warning({
+                        message: "No members found",
+                        description: "The JSON file is a valid array, but it contains no members.",
+                    });
+                    return;
+                }
+                setParsedMembers(members);
                 setSelectedBillingPlanId(undefined);
                 setBillingPlanConflict("replace");
                 setIsReviewOpen(true);
+                notification.success({
+                    message: "File ready to import",
+                    description: `Loaded ${members.length} member row(s). Confirm billing settings to continue.`,
+                });
             } catch (err) {
-                console.error(err);
-                // AntD message handled by hook manually or via try/catch here if needed
+                const description =
+                    err instanceof Error
+                        ? err.message
+                        : "The file must be a JSON array of members.";
+                notification.error({
+                    message: "Invalid import file",
+                    description,
+                    duration: 8,
+                });
             }
         };
         reader.readAsText(file);
@@ -78,16 +157,33 @@ export const MemberImportExportPage: React.FC = () => {
     };
 
     const handleConfirmImport = async () => {
-        if (!parsedMembers || !selectedBillingPlanId) return;
-        await importMembers({
-            members: parsedMembers,
-            importOptions: {
-                defaultBillingPlanId: selectedBillingPlanId,
-                billingPlanConflict,
-            },
-        });
-        setIsReviewOpen(false);
-        setParsedMembers(null);
+        if (!parsedMembers?.length) {
+            notification.warning({
+                message: "Nothing to import",
+                description: "Upload a member JSON file first.",
+            });
+            return;
+        }
+        if (!selectedBillingPlanId) {
+            notification.warning({
+                message: "Billing plan required",
+                description: "Select a default billing plan before starting the import.",
+            });
+            return;
+        }
+        try {
+            await importMembers({
+                members: parsedMembers,
+                importOptions: {
+                    defaultBillingPlanId: selectedBillingPlanId,
+                    billingPlanConflict,
+                },
+            });
+            setIsReviewOpen(false);
+            setParsedMembers(null);
+        } catch {
+            // Error toast is handled by the import mutation onError.
+        }
     };
 
     const importExample = [
@@ -147,6 +243,8 @@ export const MemberImportExportPage: React.FC = () => {
         },
     ];
 
+    const uploadBlocked = isLoadingBillingPlans || !hasActiveBillingPlans;
+
     return (
         <div>
             <PageHeader
@@ -170,32 +268,59 @@ export const MemberImportExportPage: React.FC = () => {
                 </Card>
 
                 <Card title="Import Data" className="shadow-sm">
-                    {!hasBillingPlans && (
+                    {isLoadingBillingPlans && (
+                        <Alert
+                            type="info"
+                            showIcon
+                            className="mb-3"
+                            message="Loading billing plans…"
+                            description="Import is unavailable until billing plans finish loading."
+                        />
+                    )}
+                    {isBillingPlansError && (
+                        <Alert
+                            type="error"
+                            showIcon
+                            className="mb-3"
+                            message="Could not load billing plans"
+                            description="Refresh the page or check that you have finance access for this organization."
+                        />
+                    )}
+                    {!isLoadingBillingPlans && !isBillingPlansError && !hasActiveBillingPlans && (
                         <Alert
                             type="warning"
                             showIcon
                             className="mb-3"
-                            message="No billing plans found"
-                            description="Create at least one billing plan before importing members."
+                            message="No active billing plans found"
+                            description="Create and activate at least one billing plan before importing members."
                         />
                     )}
                     <Paragraph>
                         Upload a JSON file to bulk-add or update members.{" "}
                         <Text strong>No automated emails will be sent.</Text>
                     </Paragraph>
-                    <Dragger
-                        accept=".json"
-                        beforeUpload={handleUpload}
-                        showUploadList={false}
-                        disabled={isImporting || !hasBillingPlans}
-                    >
-                        <Paragraph className="ant-upload-drag-icon">
-                            <UploadOutlined className="text-blue-500" />
-                        </Paragraph>
-                        <Paragraph className="ant-upload-text">
-                            Click or drag JSON file to this area to import
-                        </Paragraph>
-                    </Dragger>
+                    <Spin spinning={isLoadingBillingPlans || isImporting}>
+                        <Dragger
+                            accept=".json,application/json"
+                            beforeUpload={handleUpload}
+                            showUploadList={false}
+                            disabled={isImporting}
+                        >
+                            <Paragraph className="ant-upload-drag-icon">
+                                <UploadOutlined className="text-blue-500" />
+                            </Paragraph>
+                            <Paragraph className="ant-upload-text">
+                                Click or drag JSON file to this area to import
+                            </Paragraph>
+                            {uploadBlocked && (
+                                <Paragraph type="secondary" className="ant-upload-hint">
+                                    {isLoadingBillingPlans
+                                        ? "Waiting for billing plans…"
+                                        : "Requires an active billing plan"}
+                                </Paragraph>
+                            )}
+                        </Dragger>
+                    </Spin>
                 </Card>
             </div>
 
@@ -363,7 +488,8 @@ export const MemberImportExportPage: React.FC = () => {
                 okText="Start Import"
                 okButtonProps={{
                     loading: isImporting,
-                    disabled: !selectedBillingPlanId || !hasBillingPlans || !parsedMembers?.length,
+                    disabled:
+                        !selectedBillingPlanId || !hasActiveBillingPlans || !parsedMembers?.length,
                 }}
             >
                 <Space direction="vertical" className="w-full" size="middle">
@@ -373,6 +499,14 @@ export const MemberImportExportPage: React.FC = () => {
                         message={`Rows ready: ${parsedMembers?.length ?? 0}`}
                         description="Review and confirm these settings before import."
                     />
+                    {!hasActiveBillingPlans && (
+                        <Alert
+                            type="warning"
+                            showIcon
+                            message="No active billing plan available"
+                            description="Create an active billing plan, then reopen this import."
+                        />
+                    )}
                     <div>
                         <Text strong>Default billing plan</Text>
                         <Select
@@ -381,7 +515,13 @@ export const MemberImportExportPage: React.FC = () => {
                             value={selectedBillingPlanId}
                             options={billingPlanOptions}
                             onChange={setSelectedBillingPlanId}
+                            status={!selectedBillingPlanId ? "warning" : undefined}
                         />
+                        {!selectedBillingPlanId && (
+                            <Text type="secondary" className="text-xs mt-1 block">
+                                Choose a plan to enable Start Import.
+                            </Text>
+                        )}
                     </div>
                     <div>
                         <Text strong>If member already has a billing plan</Text>

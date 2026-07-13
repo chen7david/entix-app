@@ -15,7 +15,6 @@ import {
     TransactionOutlined,
     TruckOutlined,
     UserAddOutlined,
-    WalletOutlined,
     YoutubeOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
@@ -29,7 +28,7 @@ export const SidebarMenu: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
     const { close } = useSidebar();
-    const { isAdminOrOwner, isStaff, isStudent } = useOrgRole();
+    const { isAdminOrOwner, isFinanceStaff, isStaff, isStudent } = useOrgRole();
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
 
@@ -60,23 +59,6 @@ export const SidebarMenu: React.FC = () => {
                           label: "Movies",
                           key: AppRoutes.org.dashboard.movies,
                           icon: <YoutubeOutlined />,
-                          disabled: !slug,
-                      },
-                  ],
-              },
-          ]
-        : [];
-
-    const studentFinanceItems: MenuProps["items"] = isStudent
-        ? [
-              {
-                  type: "group",
-                  label: "Finance",
-                  children: [
-                      {
-                          label: "Wallet",
-                          key: AppRoutes.org.dashboard.wallet,
-                          icon: <WalletOutlined />,
                           disabled: !slug,
                       },
                       {
@@ -173,12 +155,6 @@ export const SidebarMenu: React.FC = () => {
                           disabled: !slug,
                       },
                       {
-                          label: "Members",
-                          key: AppRoutes.org.admin.members,
-                          icon: <TeamOutlined />,
-                          disabled: !slug,
-                      },
-                      {
                           label: "Invitations",
                           key: AppRoutes.org.admin.invitations,
                           icon: <UserAddOutlined />,
@@ -201,12 +177,18 @@ export const SidebarMenu: React.FC = () => {
           ]
         : [];
 
-    const billingItems: MenuProps["items"] = isAdminOrOwner
+    const billingItems: MenuProps["items"] = isFinanceStaff
         ? [
               {
                   type: "group",
                   label: "Finance",
                   children: [
+                      {
+                          label: "Members",
+                          key: AppRoutes.org.admin.members,
+                          icon: <TeamOutlined />,
+                          disabled: !slug,
+                      },
                       {
                           label: "Transactions",
                           key: AppRoutes.org.admin.billing.transactions,
@@ -238,7 +220,6 @@ export const SidebarMenu: React.FC = () => {
             disabled: !slug,
         },
         ...learningItems,
-        ...studentFinanceItems,
         ...classroomItems,
         ...contentItems,
         ...operationsItems,

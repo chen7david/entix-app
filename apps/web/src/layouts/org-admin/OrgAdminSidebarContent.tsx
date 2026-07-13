@@ -7,7 +7,7 @@ import {
     SettingOutlined,
     UserOutlined,
 } from "@ant-design/icons";
-import { AppRoutes, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
+import { AppRoutes, FINANCIAL_CURRENCIES, getAvatarUrl, getRoleColor } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
 import { useOrganization, useOrgRole } from "@web/src/features/organization";
 import { useWalletBalance } from "@web/src/features/wallet";
@@ -34,7 +34,7 @@ const { Text } = Typography;
 
 export const OrgAdminSidebarContent: React.FC = () => {
     const { user, isLoading: isAuthLoading, isSuperAdmin } = useAuth();
-    const { isAdminOrOwner, activeRole } = useOrgRole();
+    const { isFinanceStaff, activeRole } = useOrgRole();
     const { data: session } = useSession();
     const { mutate: signOut } = useSignOut();
     const { activeOrganization } = useOrganization();
@@ -58,7 +58,7 @@ export const OrgAdminSidebarContent: React.FC = () => {
         data: summary,
         isLoading: isWalletLoading,
         isError,
-    } = useWalletBalance(userId, "user", orgId);
+    } = useWalletBalance(isFinanceStaff ? userId : undefined, "user", orgId);
 
     const etdAccount = summary?.accounts.find((a) => a.currencyId === FINANCIAL_CURRENCIES.ETD);
     const hasWallet = !!etdAccount;
@@ -135,7 +135,7 @@ export const OrgAdminSidebarContent: React.FC = () => {
                             src={user?.image ? getAvatarUrl(user.image, "sm") : undefined}
                             icon={<UserOutlined />}
                             className={`flex-shrink-0 self-center row-start-1 ${
-                                isError ? "row-span-1" : "row-span-2"
+                                isError || !isFinanceStaff ? "row-span-1" : "row-span-2"
                             }`}
                         />
                         <Text
@@ -144,7 +144,7 @@ export const OrgAdminSidebarContent: React.FC = () => {
                         >
                             {user?.name}
                         </Text>
-                        {!isError && (
+                        {!isError && isFinanceStaff && (
                             <div className="col-start-2 row-start-2 flex items-center gap-2 group min-w-0">
                                 {isWalletLoading ? (
                                     <Text type="secondary" className="text-xs">
@@ -172,20 +172,12 @@ export const OrgAdminSidebarContent: React.FC = () => {
                                         />
                                     </>
                                 ) : (
-                                    <Tooltip
-                                        title={
-                                            isAdminOrOwner
-                                                ? "Go to Members to initialize wallet"
-                                                : undefined
-                                        }
-                                    >
+                                    <Tooltip title="Go to Members to initialize wallet">
                                         <Text
                                             type="secondary"
                                             className="text-[10px] opacity-60 italic"
                                         >
-                                            {isAdminOrOwner
-                                                ? "Wallet not set up — initialize in Members"
-                                                : "Wallet not set up"}
+                                            Wallet not set up — initialize in Members
                                         </Text>
                                     </Tooltip>
                                 )}
@@ -193,15 +185,9 @@ export const OrgAdminSidebarContent: React.FC = () => {
                         )}
                         {activeRole && (
                             <Tag
-                                color={
-                                    activeRole === "owner" || activeRole === "admin"
-                                        ? "gold"
-                                        : activeRole === "teacher"
-                                          ? "purple"
-                                          : "blue"
-                                }
+                                color={getRoleColor(activeRole)}
                                 className={`col-start-2 w-fit max-w-full text-[10px] leading-none px-1 py-0 capitalize ${
-                                    isError ? "row-start-2" : "row-start-3"
+                                    isError || !isFinanceStaff ? "row-start-2" : "row-start-3"
                                 }`}
                                 bordered={false}
                             >

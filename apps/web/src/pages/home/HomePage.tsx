@@ -8,7 +8,7 @@ import { TeacherPortal } from "../org/teacher/TeacherPortal";
 export const HomePage: React.FC = () => {
     const { activeRole } = useActiveRole();
 
-    if (activeRole === "admin" || activeRole === "owner") {
+    if (activeRole === "admin" || activeRole === "owner" || activeRole === "finance") {
         return <AdminPortal />;
     }
 

@@ -21,7 +21,7 @@ export const MobileBottomNav: React.FC = () => {
     const { token } = theme.useToken();
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
-    const { isAdminOrOwner, isStaff } = useOrgRole();
+    const { isAdminOrOwner, isFinanceStaff, isStaff } = useOrgRole();
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
 
@@ -46,7 +46,24 @@ export const MobileBottomNav: React.FC = () => {
         { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
     ];
 
-    const tabs = isAdminOrOwner ? adminTabs : isStaff ? teacherTabs : studentTabs;
+    const financeTabs: BottomTab[] = [
+        { key: AppRoutes.org.dashboard.index, label: "Home", icon: <DashboardOutlined /> },
+        { key: AppRoutes.org.admin.members, label: "Members", icon: <TeamOutlined /> },
+        {
+            key: AppRoutes.org.admin.billing.transactions,
+            label: "Finance",
+            icon: <BookOutlined />,
+        },
+        { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
+    ];
+
+    const tabs = isAdminOrOwner
+        ? adminTabs
+        : isFinanceStaff
+          ? financeTabs
+          : isStaff
+            ? teacherTabs
+            : studentTabs;
 
     const orgPrefix = slug ? `/org/${slug}` : "";
     let pathSuffix = location.pathname;

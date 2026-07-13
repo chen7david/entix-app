@@ -32,7 +32,7 @@ export class MemberExportService extends BaseService {
                           updatedAt: user.profile.updatedAt.toISOString(),
                       }
                     : null,
-                phoneNumbers: user.phoneNumbers.map((p) => ({
+                phones: user.phoneNumbers.map((p) => ({
                     id: p.id,
                     countryCode: p.countryCode,
                     number: p.number,
@@ -54,7 +54,7 @@ export class MemberExportService extends BaseService {
                     createdAt: a.createdAt.toISOString(),
                     updatedAt: a.updatedAt.toISOString(),
                 })),
-                socialMedia: user.socialMedias.map((s) => ({
+                socials: user.socialMedias.map((s) => ({
                     id: s.id,
                     type: s.socialMediaType.name,
                     urlOrHandle: s.urlOrHandle,
