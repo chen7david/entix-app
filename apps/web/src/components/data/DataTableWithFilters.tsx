@@ -1,7 +1,7 @@
 import { InboxOutlined } from "@ant-design/icons";
 import type { TableProps } from "antd";
 import { Table, theme } from "antd";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import type { ClientPaginationConfig, CursorPaginationConfig } from "./DataTable.types";
 import { DataTablePagination } from "./DataTablePagination";
 import { FilterBar, type FilterConfig } from "./FilterBar";
@@ -67,11 +67,14 @@ function DataTableWithFiltersInternal<T extends object>({
         tableProps,
     } = config;
 
-    const [localFilters, setLocalFilters] = useState<Record<string, any>>(initialFilters ?? {});
+    const [localFilters, setLocalFilters] = useState<Record<string, any>>(
+        () => initialFilters ?? {}
+    );
 
-    useEffect(() => {
-        setLocalFilters(initialFilters ?? {});
-    }, [initialFilters]);
+    // Do NOT sync `initialFilters` → local state on every parent render.
+    // Inline `initialFilters={{ search: ... }}` objects are new references each render;
+    // resetting here overwrote in-progress search typing (skipped/lagging characters).
+    // `initialFilters` is only the mount seed and the Reset target.
 
     const handleFiltersChange = useCallback(
         (newFilters: Record<string, any>) => {
