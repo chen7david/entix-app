@@ -23,12 +23,17 @@ export const useScheduleState = (organizationId?: string) => {
     // Sync defaults to URL
     useEffect(() => {
         if (!startDateParam || !endDateParam) {
-            const params = new URLSearchParams(searchParams);
-            params.set("startDate", queryStart.toString());
-            params.set("endDate", queryEnd.toString());
-            setSearchParams(params, { replace: true });
+            setSearchParams(
+                (prev) => {
+                    const params = new URLSearchParams(prev);
+                    params.set("startDate", queryStart.toString());
+                    params.set("endDate", queryEnd.toString());
+                    return params;
+                },
+                { replace: true }
+            );
         }
-    }, [startDateParam, endDateParam, searchParams, setSearchParams, queryStart, queryEnd]);
+    }, [startDateParam, endDateParam, setSearchParams, queryStart, queryEnd]);
 
     // Search logic
     const [localSearch, setLocalSearch] = useState(searchParams.get("q") || "");
@@ -39,11 +44,19 @@ export const useScheduleState = (organizationId?: string) => {
     );
 
     useEffect(() => {
-        const params = new URLSearchParams(searchParams);
-        if (debouncedSearch) params.set("q", debouncedSearch);
-        else params.delete("q");
-        setSearchParams(params, { replace: true });
-    }, [debouncedSearch, searchParams, setSearchParams]);
+        setSearchParams(
+            (prev) => {
+                const params = new URLSearchParams(prev);
+                const current = prev.get("q") ?? "";
+                const desired = debouncedSearch || "";
+                if (current === desired) return prev;
+                if (desired) params.set("q", desired);
+                else params.delete("q");
+                return params;
+            },
+            { replace: true }
+        );
+    }, [debouncedSearch, setSearchParams]);
 
     // Timeline filtering
     const [timeline, setTimeline] = useState<TimelineFilter>("Upcoming");
