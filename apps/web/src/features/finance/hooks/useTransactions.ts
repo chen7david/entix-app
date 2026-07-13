@@ -16,6 +16,7 @@ export type TransactionRecord = {
     description: string | null;
     transactionDate: string;
     createdAt: string;
+    direction?: "credit" | "debit" | null;
     sourceAccount: { name: string };
     destinationAccount: { name: string };
     category: { name: string; isExpense: boolean; isRevenue: boolean };

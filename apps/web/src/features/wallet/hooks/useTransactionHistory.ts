@@ -16,9 +16,11 @@ export type Transaction = {
     description: string | null;
     transactionDate: string;
     createdAt: string;
+    direction?: "credit" | "debit" | null;
+    counterpartyName?: string | null;
     sourceAccount: { name: string };
     destinationAccount: { name: string };
-    category: { name: string };
+    category: { name: string; isRevenue?: boolean; isExpense?: boolean };
     currency: { symbol: string; code: string };
 };
 
@@ -39,6 +41,7 @@ export const useTransactionHistory = (
         status?: string;
         txId?: string;
         accountId?: string;
+        currencyId?: string;
     }
 ) => {
     return useQuery<TransactionHistoryResponse>({
@@ -50,6 +53,7 @@ export const useTransactionHistory = (
             limit,
             orgId,
             filters?.accountId,
+            filters?.currencyId,
             filters?.status,
             filters?.startDate,
             filters?.endDate,
@@ -67,6 +71,7 @@ export const useTransactionHistory = (
                 status: filters?.status,
                 txId: filters?.txId,
                 accountId: filters?.accountId,
+                currencyId: filters?.currencyId,
             };
 
             if (ownerType === "org") {

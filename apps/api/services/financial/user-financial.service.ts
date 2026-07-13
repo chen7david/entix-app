@@ -27,10 +27,16 @@ export class UserFinancialService extends FinancialBaseService {
 
     /**
      * Returns personal wallet summary for a user within a specific organization.
+     * When currencyId is set, only accounts in that currency are returned (student ETD isolation).
      */
-    async getUserSummary(userId: string, orgId: string) {
+    async getUserSummary(userId: string, orgId: string, options?: { currencyId?: string }) {
         const accounts = await this.accountsRepo.findActiveByOwner(userId, "user", orgId);
-        return { accounts };
+        if (!options?.currencyId) {
+            return { accounts };
+        }
+        return {
+            accounts: accounts.filter((account) => account.currencyId === options.currencyId),
+        };
     }
 
     /**

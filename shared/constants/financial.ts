@@ -74,14 +74,34 @@ export const FINANCIAL_CURRENCY_CONFIG = {
     },
 } as const;
 
+/**
+ * Ledger category IDs (must match `financial_transaction_categories` seed rows).
+ *
+ * Product usage (viewer direction — not category flags — drives UI sign):
+ * - CASH_DEPOSIT: parent/org cash top-up into a student CNY (or fiat) wallet
+ * - SESSION_PAYMENT: class fee after session complete (student → org funding)
+ * - POINTS_AWARD / POINTS_REDEEM: teacher ETD adjustments (org funding ↔ student)
+ * - REFUND: mirror reversal of a prior completed transaction
+ * - INTERNAL_TRANSFER: same-org moves that are not cash / session / points
+ * - SYSTEM_ADJUSTMENT: rare ops overrides (prefer a specific category when possible)
+ */
 export const FINANCIAL_CATEGORIES = {
     CASH_DEPOSIT: "fcat_cash_deposit",
     STORE_PURCHASE: "fcat_store_purchase",
     SERVICE_FEE: "fcat_service_fee",
+    SESSION_PAYMENT: "fcat_session_payment",
+    POINTS_AWARD: "fcat_points_award",
+    POINTS_REDEEM: "fcat_points_redeem",
     REFUND: "fcat_refund",
     INTERNAL_TRANSFER: "fcat_internal_transfer",
     SYSTEM_ADJUSTMENT: "fcat_system_adjustment",
 } as const;
+
+/** Session class fees are settled in this currency unless org settings override later. */
+export const SESSION_BILLING_CURRENCY_ID = FINANCIAL_CURRENCIES.CNY;
+
+/** Students may view/manage only this currency on their personal ledger. */
+export const STUDENT_VISIBLE_CURRENCY_ID = FINANCIAL_CURRENCIES.ETD;
 
 /** Returns the deterministic platform treasury account ID for a given currency. */
 export const getTreasuryAccountId = (currencyId: string) => `facc_treasury_${currencyId}`;

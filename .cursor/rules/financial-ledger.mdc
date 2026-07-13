@@ -1,0 +1,32 @@
+---
+description: Double-entry ledger product rules (cash, session fees, points, student ETD isolation)
+globs: "{apps/api/services/financial/**,apps/api/repositories/financial/**,apps/api/routes/**/finance*,apps/api/routes/**/member-wallet*,apps/web/src/features/finance/**,apps/web/src/features/wallet/**,apps/web/src/pages/dashboard/wallet/**,shared/constants/financial*.ts}"
+alwaysApply: false
+---
+
+# Financial ledger rules
+
+Source of truth: `shared/constants/financial-product-rules.ts` and `shared/constants/financial.ts`.
+
+## Money flow
+
+1. Parents pay cash → finance credits the **student fiat wallet** from **org funding** via org `finance/transfer` (not super-admin credit/debit). Category: `CASH_DEPOSIT`.
+2. Session marked done → fee = minutes × billing-plan tier → `SESSION_PAYMENT` student → org funding. Default currency: `SESSION_BILLING_CURRENCY_ID` (CNY).
+3. Deduct until funds (and configured overdraft) are exhausted; then contact parents / audit.
+4. Reversals: mirror legs with `REFUND` and `IdempotencyKeys.refund(originalTxId)`, then mark original reversed.
+5. Points (ETD) use the same ledger: `POINTS_AWARD` / `POINTS_REDEEM` between org funding and student ETD.
+
+## Student visibility
+
+- Students may see and manage **only** `STUDENT_VISIBLE_CURRENCY_ID` (ETD) on their personal ledger.
+- Self-service member wallet APIs must filter summary + history to ETD when the caller is not finance staff.
+- Do not expose CNY/other fiat balances or history to students in UI or API.
+
+## UI signing
+
+- Sign amounts by **viewer direction** (`credit` / `debit`), not category `isRevenue` / `isExpense`.
+- Member history already returns `direction` + `counterpartyName` — use them.
+
+## Categories
+
+Never invent category IDs. Use `FINANCIAL_CATEGORIES` and keep seed rows in sync (`0001_genesis_seed.sql`).

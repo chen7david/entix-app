@@ -1,5 +1,4 @@
-import { PlusCircleOutlined } from "@ant-design/icons";
-import { ACCOUNT_TYPES } from "@shared";
+import { ACCOUNT_TYPES, FINANCIAL_CATEGORIES, STUDENT_VISIBLE_CURRENCY_ID } from "@shared";
 import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import type { FilterConfig } from "@web/src/components/data/FilterBar";
 import {
@@ -15,12 +14,12 @@ import { PageShell } from "@web/src/components/layout/PageShell";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
-import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
+import { useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Card, Col, Row, Typography } from "antd";
-import { useCallback, useMemo, useState } from "react";
+import { Card, Col, Row, Typography } from "antd";
+import { useCallback, useMemo } from "react";
 
 const { Title, Text } = Typography;
 const CUSTOM_RANGE_PRESET = "__custom";
@@ -44,6 +43,9 @@ function areWalletFiltersEqual(a: Record<string, any>, b: Record<string, any>): 
     );
 }
 
+/**
+ * Student points ledger — ETD only. Fiat/CNY balances are finance-staff only.
+ */
 export const WalletPage = () => {
     const { data: session } = useSession();
     const userId = session?.user?.id;
@@ -103,7 +105,6 @@ export const WalletPage = () => {
         initialFilters: walletInitialFilters,
         initialPageSize: DEFAULT_PAGE_SIZE,
     });
-    const [isTransferOpen, setIsTransferOpen] = useState(false);
 
     const {
         data: summary,
@@ -112,6 +113,14 @@ export const WalletPage = () => {
         dataUpdatedAt: balanceUpdatedAt,
         refetch: refetchBalance,
     } = useWalletBalance(userId, "user", orgId);
+
+    const etdAccount = useMemo(
+        () =>
+            (summary?.accounts ?? []).find(
+                (account) => account.currencyId === STUDENT_VISIBLE_CURRENCY_ID
+            ),
+        [summary?.accounts]
+    );
 
     const {
         data: history,
@@ -123,6 +132,8 @@ export const WalletPage = () => {
         endDate: filters.endDate ?? undefined,
         status: filters.status,
         txId: filters.txId,
+        accountId: etdAccount?.id,
+        currencyId: STUDENT_VISIBLE_CURRENCY_ID,
     });
 
     const filterConfig: FilterConfig[] = [
@@ -177,12 +188,15 @@ export const WalletPage = () => {
         isFetching: isFetchingBalance || isFetchingHistory,
         onRefresh: handleRefresh,
     });
-    const savingsAccounts = useMemo(
+
+    const pointsAccounts = useMemo(
         () =>
-            (summary?.accounts ?? []).map((account) => ({
-                ...account,
-                accountType: ACCOUNT_TYPES.SAVINGS,
-            })),
+            (summary?.accounts ?? [])
+                .filter((account) => account.currencyId === STUDENT_VISIBLE_CURRENCY_ID)
+                .map((account) => ({
+                    ...account,
+                    accountType: ACCOUNT_TYPES.SAVINGS,
+                })),
         [summary?.accounts]
     );
 
@@ -199,20 +213,14 @@ export const WalletPage = () => {
         onFiltersChange(nextFilters);
     };
 
+    // Reference category constants so product rules stay discoverable in this surface.
+    void FINANCIAL_CATEGORIES.POINTS_AWARD;
+
     return (
         <PageShell>
             <PageHeader
-                title="Personal Wallet"
-                subtitle="Manage your personal financial accounts within this organization."
-                actions={
-                    <Button
-                        type="primary"
-                        icon={<PlusCircleOutlined />}
-                        onClick={() => setIsTransferOpen(true)}
-                    >
-                        New Transfer
-                    </Button>
-                }
+                title="My Points"
+                subtitle="Your Entix points (ETD) balance and ledger. Class tuition balances are managed by finance staff."
             />
 
             <div className="mb-4">
@@ -228,18 +236,19 @@ export const WalletPage = () => {
             <Row gutter={[24, 24]} className="flex-1 min-h-0">
                 <Col span={24}>
                     <Title level={4} style={{ marginBottom: 24 }}>
-                        Your Accounts
+                        Points balance
                     </Title>
-                    {savingsAccounts.length ? (
+                    {pointsAccounts.length ? (
                         <OrgAccountCardGrid
-                            accounts={savingsAccounts}
+                            accounts={pointsAccounts}
                             loading={isLoadingBalance}
                             lowBalanceThresholdCents={10_000}
                         />
                     ) : (
                         <Card style={{ textAlign: "center", padding: "40px 0" }}>
                             <Text type="secondary">
-                                No active accounts found in this organization.
+                                No points wallet yet. Ask your teacher or finance staff to activate
+                                ETD for you.
                             </Text>
                         </Card>
                     )}
@@ -249,6 +258,7 @@ export const WalletPage = () => {
                     <TransactionLedgerTable
                         transactions={history?.data || []}
                         loading={isFetchingHistory}
+                        columnOptions={{ viewerPerspective: true }}
                         pagination={{
                             pageSize,
                             hasNextPage: !!history?.nextCursor,
@@ -263,13 +273,6 @@ export const WalletPage = () => {
                     />
                 </Col>
             </Row>
-
-            <TransferDrawer
-                open={isTransferOpen}
-                onClose={() => setIsTransferOpen(false)}
-                orgId={orgId}
-                accounts={summary?.accounts}
-            />
         </PageShell>
     );
 };

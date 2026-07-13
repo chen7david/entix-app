@@ -5,7 +5,11 @@ import type { FilterConfig } from "@web/src/components/data/FilterBar";
 import { App, Button, Input, Modal, Space, Typography } from "antd";
 import type React from "react";
 import { useState } from "react";
-import { getTransactionColumns, type TransactionRecord } from "./TransactionColumns";
+import {
+    getTransactionColumns,
+    type TransactionColumnOptions,
+    type TransactionRecord,
+} from "./TransactionColumns";
 
 const { Text } = Typography;
 
@@ -18,6 +22,7 @@ type Props = {
     pagination: CursorPaginationConfig;
     filters: FilterConfig[];
     initialFilters?: Record<string, any>;
+    columnOptions?: TransactionColumnOptions;
 };
 
 export const TransactionLedgerTable: React.FC<Props> = ({
@@ -29,6 +34,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
     pagination,
     filters,
     initialFilters,
+    columnOptions,
 }) => {
     const { notification } = App.useApp();
     const [reversalModal, setReversalModal] = useState<{ id: string } | null>(null);
@@ -38,7 +44,7 @@ export const TransactionLedgerTable: React.FC<Props> = ({
         <>
             <DataTableWithFilters<TransactionRecord>
                 config={{
-                    columns: getTransactionColumns(notification),
+                    columns: getTransactionColumns(notification, columnOptions),
                     data: transactions,
                     pagination,
                     loading,

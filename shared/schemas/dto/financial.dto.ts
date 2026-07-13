@@ -136,6 +136,7 @@ export const transactionFiltersSchema = paginationSchema.extend({
     maxAmount: z.coerce.number().optional(),
     txId: z.string().optional(),
     accountId: z.string().optional(),
+    currencyId: z.string().optional(),
     status: z.enum(["pending", "completed", "reversed"]).optional(),
     categoryId: z.string().optional(),
 });

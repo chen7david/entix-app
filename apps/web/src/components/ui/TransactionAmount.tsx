@@ -1,3 +1,7 @@
+/**
+ * Standard signed amount display.
+ * Prefer viewer `direction` (credit/debit). Fall back to category revenue/expense flags.
+ */
 import { NumberUtils } from "@web/src/utils/number";
 import { Typography } from "antd";
 
@@ -7,29 +11,29 @@ type TransactionAmountProps = {
     amountCents: number;
     currencySymbol?: string;
     currencyCode?: string;
+    /** Viewer-relative ledger direction — preferred over category flags. */
+    direction?: "credit" | "debit" | null;
     isRevenue?: boolean;
     isExpense?: boolean;
     compact?: boolean;
 };
 
-/**
- * Standard signed amount display from organization perspective:
- * revenue -> +, expense -> -
- */
 export function TransactionAmount({
     amountCents,
     currencySymbol = "$",
     currencyCode,
+    direction,
     isRevenue,
     isExpense,
     compact = false,
 }: TransactionAmountProps) {
-    const sign = isRevenue ? "+" : isExpense ? "-" : "";
-    const toneClass = isRevenue
-        ? "text-emerald-600"
-        : isExpense
-          ? "text-rose-600"
-          : "text-slate-800";
+    const isCredit =
+        direction === "credit" ? true : direction === "debit" ? false : Boolean(isRevenue);
+    const isDebit =
+        direction === "debit" ? true : direction === "credit" ? false : Boolean(isExpense);
+
+    const sign = isCredit ? "+" : isDebit ? "-" : "";
+    const toneClass = isCredit ? "text-emerald-600" : isDebit ? "text-rose-600" : "text-slate-800";
 
     return (
         <div className="flex flex-col items-end">

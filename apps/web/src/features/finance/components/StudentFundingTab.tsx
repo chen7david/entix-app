@@ -24,7 +24,7 @@ import {
 } from "antd";
 import type React from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
+import { useOrgFundMemberWallet } from "../hooks/useOrgFundMemberWallet";
 
 const { Text } = Typography;
 
@@ -57,7 +57,7 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
     );
 
     const { data: orgWallet } = useWalletBalance(orgId, "org");
-    const { mutate: adjust, isPending } = useAdminAdjustWallet(orgId);
+    const { mutate: adjust, isPending } = useOrgFundMemberWallet(orgId);
     const { mutate: initializeWallet, isPending: isInitializing } = useInitializeWallet(orgId);
 
     const currencyMeta =
@@ -132,8 +132,8 @@ export const StudentFundingTab: React.FC<Props> = ({ orgId, account }) => {
         adjust(
             {
                 organizationId: orgId,
-                accountId: studentAccount.id,
-                platformTreasuryAccountId: orgFundingAccount.id,
+                memberAccountId: studentAccount.id,
+                orgFundingAccountId: orgFundingAccount.id,
                 amountCents: Math.round(values.amount * 100),
                 currencyId: account.currencyId,
                 description: finalDescription || `Admin ${values.type}`,
