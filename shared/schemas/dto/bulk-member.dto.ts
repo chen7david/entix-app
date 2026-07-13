@@ -4,15 +4,10 @@ import { normalizeBulkMemberRaw } from "../../utils/bulk-member";
 
 const timestampSchema = z.union([z.string(), z.date()]).optional();
 
-const avatarUrlSchema = z
-    .union([z.string().url(), z.literal(""), z.null()])
-    .optional()
-    .transform((value) => (value === "" || value === undefined ? null : value))
-    .openapi({ example: "https://example.com/avatar.jpg" });
-
 /**
  * Schema for bulk member import/export items.
  * Preprocess accepts legacy export shapes (`phoneNumbers`, `socialMedia`, role `member`).
+ * Empty/invalid avatar URLs are normalized to `null` before this object schema runs.
  */
 const bulkMemberItemObjectSchema = z.object({
     id: z.string().optional().openapi({ example: "user_123" }),
@@ -22,7 +17,12 @@ const bulkMemberItemObjectSchema = z.object({
         .enum(["admin", "student", "teacher", "owner", "finance"])
         .optional()
         .openapi({ example: "student" }),
-    avatarUrl: avatarUrlSchema,
+    avatarUrl: z
+        .string()
+        .url()
+        .optional()
+        .nullable()
+        .openapi({ example: "https://example.com/avatar.jpg" }),
     createdAt: timestampSchema.openapi({ example: "2023-01-01T00:00:00Z" }),
     updatedAt: timestampSchema.openapi({ example: "2023-01-01T00:00:00Z" }),
     profile: z
