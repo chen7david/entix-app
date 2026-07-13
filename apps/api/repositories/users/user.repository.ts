@@ -57,6 +57,11 @@ export class UserRepository {
         }
     }
 
+    /** Delete all sessions for a user (e.g. after admin email change). */
+    async deleteSessionsForUser(userId: string): Promise<void> {
+        await this.db.delete(schema.authSessions).where(eq(schema.authSessions.userId, userId));
+    }
+
     /**
      * Find users belonging to an organization with cursor pagination.
      */

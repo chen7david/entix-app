@@ -6,6 +6,7 @@ import { MemberRoutes } from "./member.routes";
 
 export const memberRoutes = createRouter()
     .openapi(MemberRoutes.createMember, MemberHandler.createMember)
+    .openapi(MemberRoutes.updateMemberAccount, MemberHandler.updateMemberAccount)
     .openapi(BulkMemberRoutes.getMetrics, BulkMemberHandler.getMetrics)
     .openapi(BulkMemberRoutes.exportMembers, BulkMemberHandler.exportMembers)
     .openapi(BulkMemberRoutes.importMembers, BulkMemberHandler.importMembers);
