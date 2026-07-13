@@ -6,7 +6,12 @@ import {
 } from "@api/helpers/http.helpers";
 import { requirePermission } from "@api/middleware/require-permission.middleware";
 import { createRoute } from "@hono/zod-openapi";
-import { createMemberResponseSchema, createMemberSchema } from "@shared/schemas/dto/member.dto";
+import {
+    createMemberResponseSchema,
+    createMemberSchema,
+    updateMemberAccountResponseSchema,
+    updateMemberAccountSchema,
+} from "@shared/schemas/dto/member.dto";
 import { z } from "zod";
 
 const tags = ["Members"];
@@ -37,6 +42,36 @@ export const MemberRoutes = {
             },
             [HttpStatusCodes.INTERNAL_SERVER_ERROR]: {
                 description: "Internal server error",
+            },
+        },
+    }),
+
+    updateMemberAccount: createRoute({
+        tags: tags,
+        method: HttpMethods.PATCH,
+        path: "/orgs/{organizationId}/members/{userId}/account",
+        summary: "Update a member's login account (email)",
+        middleware: [requirePermission("member", ["update"])] as const,
+        request: {
+            params: z.object({
+                organizationId: z.string(),
+                userId: z.string(),
+            }),
+            body: jsonContentRequired(updateMemberAccountSchema, "Account update"),
+        },
+        responses: {
+            [HttpStatusCodes.OK]: jsonContent(
+                updateMemberAccountResponseSchema,
+                "Member account updated"
+            ),
+            [HttpStatusCodes.BAD_REQUEST]: {
+                description: "Invalid email",
+            },
+            [HttpStatusCodes.CONFLICT]: {
+                description: "Email already in use",
+            },
+            [HttpStatusCodes.NOT_FOUND]: {
+                description: "Member not found",
             },
         },
     }),

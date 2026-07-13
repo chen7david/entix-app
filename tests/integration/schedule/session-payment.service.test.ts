@@ -33,7 +33,7 @@ describe("SessionPaymentService Integration", () => {
     const lessonId = "lesson_svc_test";
     const currencyId = FINANCIAL_CURRENCIES.USD;
     const manualOverrideCurrencyId = FINANCIAL_CURRENCIES.ETD;
-    const categoryId = FINANCIAL_CATEGORIES.CASH_DEPOSIT;
+    const categoryId = FINANCIAL_CATEGORIES.SESSION_PAYMENT;
 
     let studentAccountId: string;
     let orgAccountId: string;

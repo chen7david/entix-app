@@ -315,8 +315,8 @@ export function SessionVocabularyPage() {
                 const idempotencyKey = `session-points:${organizationId}:${sessionId}:${saveBatchId}:${row.userId}`;
                 const categoryId =
                     row.stagedDelta > 0
-                        ? FINANCIAL_CATEGORIES.CASH_DEPOSIT
-                        : FINANCIAL_CATEGORIES.SERVICE_FEE;
+                        ? FINANCIAL_CATEGORIES.POINTS_AWARD
+                        : FINANCIAL_CATEGORIES.POINTS_REDEEM;
                 const description = `Session ${sessionQuery.data?.title ?? sessionId} points adjustment`;
 
                 try {

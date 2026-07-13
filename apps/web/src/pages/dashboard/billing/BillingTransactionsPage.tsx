@@ -240,6 +240,7 @@ export const BillingTransactionsPage: React.FC = () => {
                 <TransactionLedgerTable
                     transactions={data?.items || []}
                     loading={isLoading}
+                    columnOptions={{ viewerPerspective: true }}
                     onReverse={(txId, reason) => reverse({ txId, reason })}
                     isReversing={isReversing ? variables?.txId : null}
                     pagination={{

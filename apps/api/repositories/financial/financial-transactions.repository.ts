@@ -112,6 +112,16 @@ export class FinancialTransactionsRepository {
             .where(eq(financialTransactions.id, txId));
     }
 
+    async findByIdempotencyKey(organizationId: string, idempotencyKey: string) {
+        const transaction = await this.db.query.financialTransactions.findFirst({
+            where: and(
+                eq(financialTransactions.organizationId, organizationId),
+                eq(financialTransactions.idempotencyKey, idempotencyKey)
+            ),
+        });
+        return transaction ?? null;
+    }
+
     /**
      * Prepares the SQL statements required for an atomic double-entry transaction.
      * 1. Debit the source account (with balance guard)
@@ -283,6 +293,9 @@ export class FinancialTransactionsRepository {
         if (filters.categoryId) {
             conditions.push(eq(financialTransactions.categoryId, filters.categoryId));
         }
+        if (filters.currencyId) {
+            conditions.push(eq(financialTransactions.currencyId, filters.currencyId));
+        }
         if (filters.accountId) {
             conditions.push(
                 or(
@@ -422,12 +435,18 @@ export class FinancialTransactionsRepository {
                 eq(financialAccounts.ownerType, ownerType),
                 organizationId
                     ? eq(financialAccounts.organizationId, organizationId)
-                    : sql`${financialAccounts.organizationId} IS NULL`
+                    : sql`${financialAccounts.organizationId} IS NULL`,
+                filters.currencyId
+                    ? eq(financialAccounts.currencyId, filters.currencyId)
+                    : undefined
             ),
             columns: { id: true },
         });
 
-        const accountIds = ownerAccounts.map((a) => a.id);
+        let accountIds = ownerAccounts.map((a) => a.id);
+        if (filters.accountId) {
+            accountIds = accountIds.filter((id) => id === filters.accountId);
+        }
         if (accountIds.length === 0) return [];
 
         const conditions = [sql`${financialTransactionLines.accountId} IN ${accountIds}`];
@@ -445,6 +464,12 @@ export class FinancialTransactionsRepository {
         }
         if (filters.status) {
             conditions.push(eq(financialTransactions.status, filters.status));
+        }
+        if (filters.currencyId) {
+            conditions.push(eq(financialTransactions.currencyId, filters.currencyId));
+        }
+        if (filters.categoryId) {
+            conditions.push(eq(financialTransactions.categoryId, filters.categoryId));
         }
 
         if (cursor) {

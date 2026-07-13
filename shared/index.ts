@@ -1,6 +1,7 @@
 export * from "./auth/permissions";
 export * from "./constants/api";
 export * from "./constants/financial";
+export * from "./constants/financial-product-rules";
 export * from "./constants/import";
 export * from "./constants/passage";
 export * from "./constants/roles";

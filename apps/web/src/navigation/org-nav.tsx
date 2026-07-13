@@ -11,7 +11,6 @@ import {
     OrderedListOutlined,
     PictureOutlined,
     PlaySquareOutlined,
-    SettingOutlined,
     TeamOutlined,
     TransactionOutlined,
     UserAddOutlined,
@@ -58,6 +57,11 @@ export function buildOrgSidebarGroups(flags: OrgNavRoleFlags): OrgNavGroup[] {
                     label: "My Schedule",
                     key: AppRoutes.org.dashboard.mySchedule,
                     icon: <CalendarOutlined />,
+                },
+                {
+                    label: "My Points",
+                    key: AppRoutes.org.dashboard.wallet,
+                    icon: <DollarOutlined />,
                 },
             ],
         });
@@ -227,6 +231,6 @@ export function buildOrgMobileTabs(flags: OrgNavRoleFlags): OrgNavItem[] {
             label: "Schedule",
             icon: <CalendarOutlined />,
         },
-        { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
+        { key: AppRoutes.org.dashboard.wallet, label: "Points", icon: <DollarOutlined /> },
     ];
 }

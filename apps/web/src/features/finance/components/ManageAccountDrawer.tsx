@@ -245,6 +245,9 @@ export const ManageAccountDrawer: React.FC<Props> = ({
                                                                 tx.currency?.symbol ?? "$"
                                                             }
                                                             currencyCode={tx.currency?.code}
+                                                            direction={tx.direction}
+                                                            isRevenue={tx.category?.isRevenue}
+                                                            isExpense={tx.category?.isExpense}
                                                             compact
                                                         />
                                                     </div>

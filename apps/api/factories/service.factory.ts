@@ -18,6 +18,7 @@ import { MediaService } from "@api/services/media/media.service";
 import { PlaylistService } from "@api/services/media/playlist.service";
 import { parseGoogleTtsCredentials, TtsService } from "@api/services/media/tts.service";
 import { MemberService } from "@api/services/members/member.service";
+import { MemberAccountService } from "@api/services/members/member-account.service";
 import { MemberExportService } from "@api/services/members/member-export.service";
 import { MemberImportService } from "@api/services/members/member-import.service";
 import { RegistrationService } from "@api/services/members/registration.service";
@@ -146,6 +147,15 @@ export const getEnrollmentService = (ctx: AppContext) => {
 
 export const getMemberService = (ctx: AppContext) => {
     return new MemberService(getMemberRepository(ctx));
+};
+
+export const getMemberAccountService = (ctx: AppContext) => {
+    return new MemberAccountService(
+        getMemberRepository(ctx),
+        getUserRepository(ctx),
+        auth(ctx),
+        ctx.var.logger
+    );
 };
 
 export const getDashboardService = (ctx: AppContext) => {

@@ -43,7 +43,8 @@ export const VerifyEmailPage: React.FC = () => {
                             message: "Email Verified",
                             description: "Your email has been verified successfully!",
                         });
-                        // Invalidate org cache so useHomeRedirect sees the newly created org
+                        // Session cookie is set when autoSignInAfterVerification is enabled.
+                        await queryClient.invalidateQueries({ queryKey: ["session"] });
                         await queryClient.invalidateQueries({ queryKey: ["organizations"] });
                         handleNavigateResult();
                     } else {

@@ -67,6 +67,7 @@ import {
     UnauthorizedPage,
     VerifyEmailPage,
     VocabAiTesterPage,
+    WalletPage,
 } from "./routes/lazy-pages";
 
 const queryClient = new QueryClient({
@@ -190,6 +191,7 @@ export default function App() {
                                                     <Route path="shop" element={<ShopPage />} />
                                                     <Route path="movies" element={<MoviesPage />} />
                                                     <Route path="orders" element={<OrdersPage />} />
+                                                    <Route path="wallet" element={<WalletPage />} />
                                                     <Route
                                                         path="my-schedule"
                                                         element={<StudentSchedulePage />}

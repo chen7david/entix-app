@@ -19,133 +19,157 @@ export type TransactionRecord = {
     destinationAccount: { name: string };
     category: { name: string; isRevenue?: boolean; isExpense?: boolean };
     currency: { symbol: string; code: string };
+    direction?: "credit" | "debit" | null;
+    counterpartyName?: string | null;
 };
 
-export const getTransactionColumns = (notification: any): ColumnsType<TransactionRecord> => [
-    {
-        title: "ID",
-        dataIndex: "id",
-        key: "id",
-        width: 140,
-        render: (id) => (
-            <Tooltip title="Click to copy full ID">
-                <Text
-                    className="font-mono text-[10px] opacity-60 hover:opacity-100 cursor-pointer transition-opacity"
-                    onClick={() => {
-                        navigator.clipboard.writeText(id);
-                        notification.success({
-                            message: "Copied",
-                            description: "Transaction ID copied to clipboard",
-                        });
-                    }}
-                >
-                    {id.slice(0, 8)}...
-                    <CopyOutlined className="ml-1 text-[8px]" />
-                </Text>
-            </Tooltip>
-        ),
-    },
-    {
-        title: "Date",
-        dataIndex: "transactionDate",
-        key: "date",
-        width: 160,
-        sorter: (a, b) =>
-            new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime(),
-        render: (date) => (
-            <div className="flex flex-col">
-                <Text className="text-xs font-medium">
-                    {format(new Date(date), "MMM dd, yyyy")}
-                </Text>
-                <Text type="secondary" className="text-[10px] uppercase tracking-tight">
-                    {format(new Date(date), "HH:mm:ss")}
-                </Text>
-            </div>
-        ),
-    },
-    {
-        title: "Category",
-        dataIndex: ["category", "name"],
-        key: "category",
-        width: 140,
-        render: (name, record) => (
-            <Tag
-                color={record.categoryId.includes("refund") ? "orange" : "blue"}
-                variant="filled"
-                className="rounded-full px-3 text-[10px] font-semibold border-none"
-            >
-                {name ?? "General"}
-            </Tag>
-        ),
-    },
-    {
-        title: "Flow",
-        key: "flow",
-        width: 300,
-        render: (_, record) => (
-            <Space className="max-w-[280px]">
-                <Text
-                    strong
-                    className="truncate text-[11px] block max-w-[110px]"
-                    title={record.sourceAccount?.name}
-                >
-                    {formatAccountDisplayName(
-                        record.sourceAccount?.name ?? "",
-                        record.currency?.code
-                    )}
-                </Text>
-                <ArrowRightOutlined className="text-zinc-300 scale-75" />
-                <Text
-                    strong
-                    className="truncate text-[11px] block max-w-[110px]"
-                    title={record.destinationAccount?.name}
-                >
-                    {formatAccountDisplayName(
-                        record.destinationAccount?.name ?? "",
-                        record.currency?.code
-                    )}
-                </Text>
-            </Space>
-        ),
-    },
-    {
-        title: "Amount",
-        dataIndex: "amountCents",
-        key: "amount",
-        align: "right",
-        width: 130,
-        render: (amount, record) => (
-            <TransactionAmount
-                amountCents={amount}
-                currencySymbol={record.currency?.symbol ?? "$"}
-                currencyCode={record.currency?.code}
-                isRevenue={record.category?.isRevenue}
-                isExpense={record.category?.isExpense}
-                compact
-            />
-        ),
-    },
-    {
-        title: "Status",
-        dataIndex: "status",
-        key: "status",
-        width: 110,
-        render: (status) => {
-            const config = {
-                completed: { color: "success", label: "Completed" },
-                pending: { color: "warning", label: "Pending" },
-                reversed: { color: "error", label: "Reversed" },
-            };
-            const { color, label } = config[status as keyof typeof config] || {
-                color: "default",
-                label: status,
-            };
-            return (
-                <Badge
-                    status={color as any}
-                    text={<Text className="text-[10px] font-bold uppercase">{label}</Text>}
-                />
-            );
+export type TransactionColumnOptions = {
+    /** When true, prefer direction for amount sign and show counterparty when present. */
+    viewerPerspective?: boolean;
+};
+
+export const getTransactionColumns = (
+    notification: { success: (args: { message: string; description: string }) => void },
+    options: TransactionColumnOptions = {}
+): ColumnsType<TransactionRecord> => {
+    const { viewerPerspective = false } = options;
+
+    return [
+        {
+            title: "ID",
+            dataIndex: "id",
+            key: "id",
+            width: 140,
+            render: (id) => (
+                <Tooltip title="Click to copy full ID">
+                    <Text
+                        className="font-mono text-[10px] opacity-60 hover:opacity-100 cursor-pointer transition-opacity"
+                        onClick={() => {
+                            navigator.clipboard.writeText(id);
+                            notification.success({
+                                message: "Copied",
+                                description: "Transaction ID copied to clipboard",
+                            });
+                        }}
+                    >
+                        {id.slice(0, 8)}...
+                        <CopyOutlined className="ml-1 text-[8px]" />
+                    </Text>
+                </Tooltip>
+            ),
         },
-    },
-];
+        {
+            title: "Date",
+            dataIndex: "transactionDate",
+            key: "date",
+            width: 160,
+            sorter: (a, b) =>
+                new Date(a.transactionDate).getTime() - new Date(b.transactionDate).getTime(),
+            render: (date) => (
+                <div className="flex flex-col">
+                    <Text className="text-xs font-medium">
+                        {format(new Date(date), "MMM dd, yyyy")}
+                    </Text>
+                    <Text type="secondary" className="text-[10px] uppercase tracking-tight">
+                        {format(new Date(date), "HH:mm:ss")}
+                    </Text>
+                </div>
+            ),
+        },
+        {
+            title: "Category",
+            dataIndex: ["category", "name"],
+            key: "category",
+            width: 140,
+            render: (name, record) => (
+                <Tag
+                    color={record.categoryId.includes("refund") ? "orange" : "blue"}
+                    variant="filled"
+                    className="rounded-full px-3 text-[10px] font-semibold border-none"
+                >
+                    {name ?? "General"}
+                </Tag>
+            ),
+        },
+        {
+            title: viewerPerspective ? "Counterparty" : "Flow",
+            key: "flow",
+            width: 300,
+            render: (_, record) => {
+                if (viewerPerspective && record.counterpartyName) {
+                    return (
+                        <Text strong className="truncate text-[11px] block max-w-[280px]">
+                            {record.counterpartyName}
+                        </Text>
+                    );
+                }
+                return (
+                    <Space className="max-w-[280px]">
+                        <Text
+                            strong
+                            className="truncate text-[11px] block max-w-[110px]"
+                            title={record.sourceAccount?.name}
+                        >
+                            {formatAccountDisplayName(
+                                record.sourceAccount?.name ?? "",
+                                record.currency?.code
+                            )}
+                        </Text>
+                        <ArrowRightOutlined className="text-zinc-300 scale-75" />
+                        <Text
+                            strong
+                            className="truncate text-[11px] block max-w-[110px]"
+                            title={record.destinationAccount?.name}
+                        >
+                            {formatAccountDisplayName(
+                                record.destinationAccount?.name ?? "",
+                                record.currency?.code
+                            )}
+                        </Text>
+                    </Space>
+                );
+            },
+        },
+        {
+            title: "Amount",
+            dataIndex: "amountCents",
+            key: "amount",
+            align: "right",
+            width: 130,
+            render: (amount, record) => (
+                <TransactionAmount
+                    amountCents={amount}
+                    currencySymbol={record.currency?.symbol ?? "$"}
+                    currencyCode={record.currency?.code}
+                    direction={record.direction}
+                    isRevenue={record.category?.isRevenue}
+                    isExpense={record.category?.isExpense}
+                    compact
+                />
+            ),
+        },
+        {
+            title: "Status",
+            dataIndex: "status",
+            key: "status",
+            width: 110,
+            render: (status) => {
+                const config = {
+                    completed: { color: "success", label: "Completed" },
+                    pending: { color: "warning", label: "Pending" },
+                    reversed: { color: "error", label: "Reversed" },
+                };
+                const { color, label } = config[status as keyof typeof config] || {
+                    color: "default",
+                    label: status,
+                };
+                return (
+                    <Badge
+                        status={color as any}
+                        text={<Text className="text-[10px] font-bold uppercase">{label}</Text>}
+                    />
+                );
+            },
+        },
+    ];
+};

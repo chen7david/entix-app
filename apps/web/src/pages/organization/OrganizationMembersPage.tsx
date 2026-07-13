@@ -28,6 +28,7 @@ import {
     useOrganization,
     useOrgRole,
 } from "@web/src/features/organization";
+import { MemberAccountForm } from "@web/src/features/organization/components/MemberAccountForm";
 import {
     MemberRolesForm,
     UserContactList,
@@ -636,6 +637,19 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                                             children: (
                                                 <UserProfileForm userId={activeMember.userId} />
                                             ),
+                                        },
+                                        {
+                                            key: "account",
+                                            label: "Account",
+                                            children: activeOrganization ? (
+                                                <MemberAccountForm
+                                                    organizationId={activeOrganization.id}
+                                                    userId={activeMember.userId}
+                                                    currentEmail={activeMember.email || ""}
+                                                    emailVerified={activeMember.emailVerified}
+                                                    canUpdate={canUpdateMember}
+                                                />
+                                            ) : null,
                                         },
                                         {
                                             key: "2",

@@ -16,6 +16,7 @@ import {
     FINANCIAL_CATEGORIES,
     type FinancialAccount,
     generateAccountId,
+    IdempotencyKeys,
     membershipHasFinanceAccess,
     type TransactionFilters,
 } from "@shared";
@@ -95,6 +96,7 @@ export class OrgFinancialService extends FinancialBaseService {
 
     /**
      * Reverses a completed transaction by creating a mirror rebuttal.
+     * Idempotency key is stable per original tx so retries do not double-refund.
      */
     async reverseTransaction(txId: string, organizationId: string, reason: string) {
         const original = await this.transactionsRepo.findById(txId);
@@ -104,19 +106,32 @@ export class OrgFinancialService extends FinancialBaseService {
         }
         if (original.status === "reversed") throw new ConflictError("Transaction already reversed");
 
-        // Execute mirror transaction (swap source and destination)
-        const reversalTxId = await this.executeTransaction({
-            organizationId,
-            categoryId: FINANCIAL_CATEGORIES.REFUND,
-            sourceAccountId: original.destinationAccountId,
-            destinationAccountId: original.sourceAccountId,
-            currencyId: original.currencyId,
-            amountCents: original.amountCents,
-            description: `Reversal of ${txId}: ${reason}`,
-            transactionDate: new Date(),
-        });
+        const refundKey = IdempotencyKeys.refund(txId);
 
-        // Mark original as officially reversed in the database
+        let reversalTxId: string;
+        try {
+            reversalTxId = await this.executeTransaction({
+                organizationId,
+                categoryId: FINANCIAL_CATEGORIES.REFUND,
+                sourceAccountId: original.destinationAccountId,
+                destinationAccountId: original.sourceAccountId,
+                currencyId: original.currencyId,
+                amountCents: original.amountCents,
+                description: `Reversal of ${txId}: ${reason}`,
+                idempotencyKey: refundKey,
+                transactionDate: new Date(),
+            });
+        } catch (error) {
+            // Mirror already landed (prior attempt); still ensure original is marked reversed.
+            if (!(error instanceof ConflictError)) throw error;
+            const existing = await this.transactionsRepo.findByIdempotencyKey(
+                organizationId,
+                refundKey
+            );
+            if (!existing) throw error;
+            reversalTxId = existing.id;
+        }
+
         await this.transactionsRepo.reverse(txId);
 
         return reversalTxId;
@@ -230,8 +245,30 @@ export class OrgFinancialService extends FinancialBaseService {
         const limit = filters.limit ?? 20;
         const transactions = await this.transactionsRepo.findByOrgId(orgId, filters);
         const nextCursor = buildTransactionCursor(transactions, limit);
+
+        // Org-centric direction: money into an org-owned account is credit; out is debit.
+        const data = transactions.map((tx) => {
+            const sourceType = (tx as any).sourceAccount?.ownerType as string | undefined;
+            const destType = (tx as any).destinationAccount?.ownerType as string | undefined;
+            let direction: "credit" | "debit" | null = null;
+            if (filters.accountId) {
+                direction =
+                    tx.destinationAccountId === filters.accountId
+                        ? "credit"
+                        : tx.sourceAccountId === filters.accountId
+                          ? "debit"
+                          : null;
+            } else if (destType === "org" && sourceType === "user") {
+                direction = "credit";
+            } else if (sourceType === "org" && destType === "user") {
+                direction = "debit";
+            }
+
+            return { ...tx, direction };
+        });
+
         return {
-            data: transactions,
+            data,
             nextCursor,
         };
     }
