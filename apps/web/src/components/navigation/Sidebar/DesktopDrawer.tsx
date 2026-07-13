@@ -42,15 +42,26 @@ export const DesktopDrawer: React.FC<DesktopDrawerProps> = ({
             {...rest}
         >
             {(title || extra) && (
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 min-h-[56px]">
-                    {title && <div className="text-base font-semibold text-gray-800">{title}</div>}
+                <div
+                    className="flex items-center justify-between px-4 py-3 min-h-[56px]"
+                    style={{ borderBottom: `1px solid ${token.colorSplit}` }}
+                >
+                    {title && (
+                        <div className="text-base font-semibold" style={{ color: token.colorText }}>
+                            {title}
+                        </div>
+                    )}
                     {extra && <div className="flex items-center gap-2">{extra}</div>}
                 </div>
             )}
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden">{children}</div>
 
-            {footer && <div className="px-6 py-4 border-t border-gray-100">{footer}</div>}
+            {footer && (
+                <div className="px-4 py-3" style={{ borderTop: `1px solid ${token.colorSplit}` }}>
+                    {footer}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,4 +1,5 @@
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { useVocabAudio } from "@web/src/features/vocabulary/hooks/useVocabAudio";
 import type {
     SessionVocabularyItemDTO,
@@ -9,7 +10,7 @@ import {
     VocabAudioProvider,
 } from "@web/src/features/vocabulary/hooks/vocab-audio.context";
 import { dedupeSessionVocabularyByWord } from "@web/src/features/vocabulary/utils/sessionVocabularyDisplay";
-import { Button, Empty, Popconfirm, Space, Table, Tag, Typography } from "antd";
+import { Button, Popconfirm, Space, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMemo } from "react";
 import { IpaBracketed } from "./IpaBracketed";
@@ -19,6 +20,8 @@ import { VocabularyStatusBadge } from "./VocabularyStatusBadge";
 const { Text } = Typography;
 
 type DisplayRow = SessionVocabularyItemDTO & { assignedStudentCount?: number };
+
+const noopFiltersChange = () => {};
 
 function WordCell({ vocab }: { vocab: VocabularyItemDTO }) {
     const { play, playingUrl } = useVocabAudioContext();
@@ -148,6 +151,7 @@ export function VocabularyTable({
 
         const showDelete = groupByWord ? !!onDeleteBatch : !!onDelete;
 
+        // Complex Popconfirm copy stays in columns rather than config.actions
         if (showDelete || onEdit) {
             result = [
                 ...result,
@@ -221,28 +225,27 @@ export function VocabularyTable({
 
     return (
         <VocabAudioProvider value={audioContextValue}>
-            <Table
-                rowKey={(row) => {
-                    const vocabId =
-                        "vocabulary" in row
-                            ? (row as SessionVocabularyItemDTO).vocabulary.id
-                            : (row as VocabularyItemDTO).id;
-                    return groupByWord ? vocabId : (row as { id: string }).id;
+            <DataTableWithFilters<DisplayRow>
+                config={{
+                    columns,
+                    data: dataSource,
+                    loading,
+                    rowKey: (row) => {
+                        const vocabId =
+                            "vocabulary" in row
+                                ? (row as SessionVocabularyItemDTO).vocabulary.id
+                                : (row as VocabularyItemDTO).id;
+                        return groupByWord ? vocabId : (row as { id: string }).id;
+                    },
+                    filters: [],
+                    onFiltersChange: noopFiltersChange,
+                    pagination: null,
+                    emptyState: {
+                        title: "No vocabulary yet",
+                        subtitle: "Add a word above to get started.",
+                    },
+                    tableProps: { scroll: { x: 800 }, sticky: false },
                 }}
-                columns={columns}
-                dataSource={dataSource}
-                loading={loading}
-                size="middle"
-                scroll={{ x: 800 }}
-                locale={{
-                    emptyText: (
-                        <Empty
-                            description="No vocabulary yet. Add a word above to get started."
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        />
-                    ),
-                }}
-                pagination={{ pageSize: 10, showSizeChanger: false }}
             />
         </VocabAudioProvider>
     );

@@ -1,24 +1,43 @@
+import { ArrowLeftOutlined } from "@ant-design/icons";
+import { AppRoutes } from "@shared";
+import { PageBreadcrumb } from "@web/src/components/layout/PageBreadcrumb";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { LessonStudyContent } from "@web/src/features/lessons/components/LessonStudyContent";
+import { useLessonById } from "@web/src/features/lessons/hooks/useLessons";
 import { useOrganization } from "@web/src/features/organization";
+import { Button } from "antd";
 import type React from "react";
-import { Link, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 export function LessonStudyPage(): React.ReactElement | null {
     const { slug, lessonId } = useParams<{ slug: string; lessonId: string }>();
     const { activeOrganization } = useOrganization();
     const organizationId = activeOrganization?.id;
+    const navigate = useNavigate();
+    const lessonQuery = useLessonById(organizationId, lessonId);
+    const orgSlug = slug ?? activeOrganization?.slug;
+    const orgPrefix = orgSlug ? `/org/${orgSlug}` : "";
 
     if (!slug || !lessonId || !organizationId) return null;
 
     return (
-        <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-            <div className="mb-4">
-                <Link
-                    to={`/org/${slug}/dashboard/lessons`}
-                    className="text-slate-500 hover:text-indigo-600 text-sm"
+        <PageShell fill={false}>
+            <PageBreadcrumb
+                items={[
+                    { title: "Home", path: `${orgPrefix}${AppRoutes.org.dashboard.index}` },
+                    { title: "Lessons", path: `${orgPrefix}${AppRoutes.org.dashboard.lessons}` },
+                    { title: lessonQuery.data?.title ?? "Lesson" },
+                ]}
+            />
+            <div className="mb-6">
+                <Button
+                    type="text"
+                    icon={<ArrowLeftOutlined />}
+                    onClick={() => navigate(`/org/${slug}${AppRoutes.org.dashboard.lessons}`)}
+                    className="!px-0"
                 >
-                    ← My lessons
-                </Link>
+                    My lessons
+                </Button>
             </div>
             <LessonStudyContent
                 organizationId={organizationId}
@@ -26,6 +45,6 @@ export function LessonStudyPage(): React.ReactElement | null {
                 slug={slug}
                 playlistArea="dashboard"
             />
-        </div>
+        </PageShell>
     );
 }

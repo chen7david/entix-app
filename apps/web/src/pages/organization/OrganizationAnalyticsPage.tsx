@@ -6,6 +6,7 @@ import {
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { useDatePresetFilterState } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import {
     AnalyticsMetricCards,
     AttendanceTrendChart,
@@ -159,7 +160,7 @@ export const OrganizationAnalyticsPage = () => {
     };
 
     return (
-        <div>
+        <PageShell fill={false}>
             <PageHeader title="Analytics" subtitle="Historical performance and engagement trends" />
 
             <div className="mb-6">
@@ -187,6 +188,6 @@ export const OrganizationAnalyticsPage = () => {
                     <AttendanceTrendChart data={attendanceTrends} isLoading={isLoadingAttendance} />
                 </Col>
             </Row>
-        </div>
+        </PageShell>
     );
 };

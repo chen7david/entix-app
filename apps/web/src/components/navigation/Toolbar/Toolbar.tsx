@@ -11,9 +11,9 @@ export const Toolbar = ({ children, className, ...rest }: React.HTMLAttributes<H
 
     return (
         <div
-            className={cn("z-10 flex items-center sticky top-0 h-16 md:hidden px-8", className)}
+            className={cn("z-10 flex items-center sticky top-0 h-14 md:hidden px-4", className)}
             style={{
-                backgroundColor: `${token.colorBgContainer}CC`, // 80% opacity for glass effect
+                backgroundColor: `${token.colorBgContainer}CC`,
                 borderBottom: `1px solid ${token.colorBorderSecondary}`,
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
@@ -21,11 +21,7 @@ export const Toolbar = ({ children, className, ...rest }: React.HTMLAttributes<H
             {...rest}
         >
             <div className="flex items-center w-full gap-2">
-                <div className="md:hidden">
-                    <div>
-                        <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" />
-                    </div>
-                </div>
+                <Button onClick={toggle} size="large" icon={<MenuOutlined />} type="text" />
                 {children}
             </div>
         </div>

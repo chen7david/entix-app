@@ -36,7 +36,7 @@ export const PlatformAdminLayout: React.FC = () => {
                     }}
                 >
                     <Toolbar />
-                    <div className="flex-1 flex flex-col min-h-0 p-8">
+                    <div className="flex-1 flex flex-col min-h-0 p-4 md:p-8">
                         <div className="flex-1 flex flex-col max-w-7xl mx-auto w-full min-h-0">
                             <RouteErrorBoundary>
                                 <Outlet />

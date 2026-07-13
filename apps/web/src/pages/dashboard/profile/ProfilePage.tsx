@@ -1,5 +1,7 @@
 import { LogoutOutlined, UserOutlined } from "@ant-design/icons";
 import { AppRoutes, getAvatarUrl } from "@shared";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useSignOut } from "@web/src/features/auth";
 import { AvatarUpload } from "@web/src/features/media";
 import { useOrganization } from "@web/src/features/organization";
@@ -43,33 +45,35 @@ export const ProfilePage: React.FC = () => {
 
     if (isPending) {
         return (
-            <div className="flex justify-center items-center py-24">
-                <Spin size="large" />
-            </div>
+            <PageShell fill={false}>
+                <div className="flex justify-center items-center py-24">
+                    <Spin size="large" />
+                </div>
+            </PageShell>
         );
     }
 
     if (!session) {
         return (
-            <div className="flex justify-center items-center py-24">
-                <Card className="text-center">
-                    <Title level={4}>You are not logged in</Title>
-                    <Button type="primary" onClick={() => navigate(AppRoutes.auth.signIn)}>
-                        Go to Sign In
-                    </Button>
-                </Card>
-            </div>
+            <PageShell fill={false}>
+                <div className="flex justify-center items-center py-24">
+                    <Card className="text-center">
+                        <Title level={4}>You are not logged in</Title>
+                        <Button type="primary" onClick={() => navigate(AppRoutes.auth.signIn)}>
+                            Go to Sign In
+                        </Button>
+                    </Card>
+                </div>
+            </PageShell>
         );
     }
 
     return (
-        <div>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    My Profile
-                </Title>
-                <Text type="secondary">Manage your personal information and security settings</Text>
-            </div>
+        <PageShell fill={false}>
+            <PageHeader
+                title="My Profile"
+                subtitle="Manage your personal information and security settings."
+            />
             <Row gutter={[24, 24]}>
                 <Col xs={24} md={8}>
                     <Card
@@ -140,6 +144,6 @@ export const ProfilePage: React.FC = () => {
                     </div>
                 </Col>
             </Row>
-        </div>
+        </PageShell>
     );
 };

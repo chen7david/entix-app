@@ -14,7 +14,7 @@ const sharedTokens = {
     controlHeightLG: 48,
     controlHeightSM: 32,
     fontFamily:
-        "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+        "'Plus Jakarta Sans', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
     wireframe: false,
 };
 
@@ -62,7 +62,7 @@ const sharedComponents = {
         activeBarBorderWidth: 0, // Remove the side bar line for a cleaner look
         itemBorderRadius: 6,
         itemMarginInline: 8,
-        itemHeight: 40,
+        itemHeight: 44,
     },
     Typography: {
         fontFamilyCode: "'Fira Code', monospace",

@@ -7,6 +7,8 @@ import {
     MobileOutlined,
     SafetyOutlined,
 } from "@ant-design/icons";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import {
     useBetterAuth,
     useListSessions,
@@ -30,7 +32,7 @@ import {
 } from "antd";
 import React from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const SessionsPage: React.FC = () => {
     const { token } = theme.useToken();
@@ -109,40 +111,32 @@ export const SessionsPage: React.FC = () => {
     const otherSessionsCount = sortedSessions.filter((s) => !isCurrentSession(s.token)).length || 0;
 
     return (
-        <div>
-            <div
-                className="flex flex-col md:flex-row md:justify-between md:items-center gap-4"
-                style={{ marginBottom: 32 }}
-            >
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Active Sessions
-                    </Title>
-                    <Text type="secondary" style={{ fontSize: 13 }}>
-                        Manage your active sessions across all devices
-                    </Text>
-                </div>
-
-                {otherSessionsCount > 0 && (
-                    <Popconfirm
-                        title="Revoke all other sessions?"
-                        description="This will sign you out from all other devices except this one."
-                        onConfirm={handleRevokeAllOtherSessions}
-                        okText="Revoke All"
-                        okButtonProps={{ danger: true }}
-                        cancelText="Cancel"
-                    >
-                        <Button
-                            danger
-                            loading={isRevokingAll}
-                            icon={<DeleteOutlined />}
-                            size="large"
+        <PageShell fill={false}>
+            <PageHeader
+                title="Account security"
+                subtitle="Manage your active sign-ins across devices."
+                actions={
+                    otherSessionsCount > 0 ? (
+                        <Popconfirm
+                            title="Revoke all other sessions?"
+                            description="This will sign you out from all other devices except this one."
+                            onConfirm={handleRevokeAllOtherSessions}
+                            okText="Revoke All"
+                            okButtonProps={{ danger: true }}
+                            cancelText="Cancel"
                         >
-                            Revoke All Other Sessions
-                        </Button>
-                    </Popconfirm>
-                )}
-            </div>
+                            <Button
+                                danger
+                                loading={isRevokingAll}
+                                icon={<DeleteOutlined />}
+                                size="large"
+                            >
+                                Revoke All Other Sessions
+                            </Button>
+                        </Popconfirm>
+                    ) : undefined
+                }
+            />
 
             {isLoading ? (
                 <Space direction="vertical" style={{ width: "100%" }} size="large">
@@ -150,14 +144,14 @@ export const SessionsPage: React.FC = () => {
                     <Skeleton active paragraph={{ rows: 3 }} />
                 </Space>
             ) : !sessions || sessions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20">
+                <div className="flex flex-col items-center justify-center py-12">
                     <Empty
                         image={
                             <ClockCircleOutlined
                                 style={{
-                                    fontSize: 64,
+                                    fontSize: 44,
                                     color: token.colorFillSecondary,
-                                    marginBottom: 16,
+                                    marginBottom: 12,
                                 }}
                             />
                         }
@@ -165,7 +159,7 @@ export const SessionsPage: React.FC = () => {
                             <div className="max-w-[300px]">
                                 <p
                                     style={{ color: token.colorTextSecondary }}
-                                    className="text-lg font-medium mb-1"
+                                    className="text-base font-medium mb-1"
                                 >
                                     No active sessions found
                                 </p>
@@ -319,6 +313,6 @@ export const SessionsPage: React.FC = () => {
                     }}
                 />
             )}
-        </div>
+        </PageShell>
     );
 };

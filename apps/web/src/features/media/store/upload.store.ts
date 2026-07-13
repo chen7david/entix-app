@@ -11,8 +11,10 @@ export interface UploadTask {
 }
 
 export const uploadQueueAtom = atom<UploadTask[]>([]);
+/** @deprecated Kept for compatibility; modal replaces the old minimize panel. */
 export const isUploadWindowMinimizedAtom = atom<boolean>(false);
 export const isUploadWindowVisibleAtom = atom<boolean>(false);
+export const isUploadModalOpenAtom = atom<boolean>(false);
 
 // Derived atom to check if there are active uploads
 export const hasActiveUploadsAtom = atom((get) => {

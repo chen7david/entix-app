@@ -1,17 +1,14 @@
-import { Typography } from "antd";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import type React from "react";
-
-const { Title, Paragraph } = Typography;
 
 export const OrdersPage: React.FC = () => {
     return (
-        <div>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Orders
-                </Title>
-                <Paragraph type="secondary">View and track your order history.</Paragraph>
-            </div>
-        </div>
+        <PageShell fill={false}>
+            <PageHeader
+                title="Orders"
+                subtitle="Order history will appear here when the shop is enabled."
+            />
+        </PageShell>
     );
 };

@@ -1,3 +1,4 @@
+import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
 import {
@@ -6,6 +7,8 @@ import {
 } from "@web/src/components/data/filter-bar/datePresetAdapter";
 import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useAnalytics } from "@web/src/features/analytics";
 import {
     DashboardMetricCards,
@@ -18,7 +21,7 @@ import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import { useOrgNavigate } from "@web/src/features/organization/hooks/useOrgNavigate";
 import { DateUtils } from "@web/src/utils/date";
-import { Alert, Button, Col, Row, Spin, Typography } from "antd";
+import { Alert, Button, Col, Row, Space, Spin } from "antd";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 
 const SessionVolumeChart = lazy(() =>
@@ -27,8 +30,6 @@ const SessionVolumeChart = lazy(() =>
 const AttendanceTrendChart = lazy(() =>
     import("@web/src/features/analytics").then((m) => ({ default: m.AttendanceTrendChart }))
 );
-
-const { Title, Text } = Typography;
 
 export const AdminPortal: React.FC = () => {
     const { activeOrganization } = useOrganization();
@@ -128,18 +129,29 @@ export const AdminPortal: React.FC = () => {
     ];
 
     return (
-        <div className="pb-8">
-            <Row justify="space-between" align="bottom" style={{ marginBottom: 32 }}>
-                <Col>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Organization Dashboard
-                    </Title>
-                    <Text type="secondary">
-                        Welcome back to {activeOrganization?.name}. Your central command for
-                        organization health.
-                    </Text>
-                </Col>
-            </Row>
+        <PageShell fill={false}>
+            <PageHeader
+                eyebrow="Operations"
+                title={activeOrganization?.name || "Organization"}
+                subtitle="Create sessions, manage people, and monitor school health."
+                actions={
+                    <Space wrap>
+                        <Button
+                            type="primary"
+                            icon={<CalendarOutlined />}
+                            onClick={() => navigateOrg(AppRoutes.org.teaching.sessions)}
+                        >
+                            Sessions
+                        </Button>
+                        <Button
+                            icon={<TeamOutlined />}
+                            onClick={() => navigateOrg(AppRoutes.org.admin.members)}
+                        >
+                            People
+                        </Button>
+                    </Space>
+                }
+            />
 
             <div className="mb-4">
                 <DataFreshnessControls
@@ -214,6 +226,6 @@ export const AdminPortal: React.FC = () => {
             <div className="mt-6">
                 <MemberSetupIssuesPanel paymentReadiness={metrics?.paymentReadiness} />
             </div>
-        </div>
+        </PageShell>
     );
 };

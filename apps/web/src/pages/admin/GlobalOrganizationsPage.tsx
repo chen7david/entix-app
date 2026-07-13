@@ -6,11 +6,10 @@ import {
     PlusOutlined,
     UserAddOutlined,
 } from "@ant-design/icons";
-import { useDebouncedValue } from "@tanstack/react-pacer";
-import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import {
     AdminOrgCurrencyPanel,
     useAdminCreateUserWithOrg,
@@ -18,7 +17,7 @@ import {
 } from "@web/src/features/admin";
 import { SignUpWithOrgForm, type SignUpWithOrgValues } from "@web/src/features/auth";
 import { CreateOrganizationForm } from "@web/src/features/organization";
-import { UI_CONSTANTS } from "@web/src/utils/constants";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import type { MenuProps } from "antd";
 import { App, Button, Dropdown, Modal, Tag, Typography } from "antd";
 import dayjs from "dayjs";
@@ -29,14 +28,16 @@ const { Text } = Typography;
 
 export const GlobalOrganizationsPage: React.FC = () => {
     const { notification } = App.useApp();
-    const [searchText, setSearchText] = useState("");
-    const [currentCursor, setCurrentCursor] = useState<string | undefined>();
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
-
-    const [debouncedSearch] = useDebouncedValue(searchText, {
-        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
-    });
+    const {
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>();
 
     const {
         data: orgData,
@@ -44,7 +45,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
         refetch,
     } = useAdminOrganizations(debouncedSearch || undefined, {
         cursor: currentCursor,
-        limit,
+        limit: pageSize,
     });
 
     const { mutate: createUserWithOrg, isPending: isCreatingUserWithOrg } =
@@ -54,20 +55,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
     const [isCreateUserWithOrgModalOpen, setIsCreateUserWithOrgModalOpen] = useState(false);
     const [currencyOrgId, setCurrencyOrgId] = useState<string | null>(null);
     const [currencyOrgName, setCurrencyOrgName] = useState("");
-
-    const handleNext = () => {
-        if (orgData?.nextCursor) {
-            setCursorStack((prev) => [...prev, currentCursor || ""]);
-            setCurrentCursor(orgData.nextCursor);
-        }
-    };
-
-    const handlePrev = () => {
-        const prevStack = [...cursorStack];
-        const prevCursor = prevStack.pop();
-        setCursorStack(prevStack);
-        setCurrentCursor(prevCursor);
-    };
 
     const handleCreateUserWithOrg = (values: SignUpWithOrgValues) => {
         createUserWithOrg(values, {
@@ -143,7 +130,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
     ];
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Global Organizations"
                 subtitle="Manage all platform organizations and their owners from a centralized authority."
@@ -153,7 +140,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateOrgModalOpen(true)}
                             size="large"
-                            className="h-11 font-semibold transition-all duration-200"
                         >
                             Create Organization
                         </Button>
@@ -162,7 +148,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             icon={<UserAddOutlined />}
                             onClick={() => setIsCreateUserWithOrgModalOpen(true)}
                             size="large"
-                            className="h-11 font-semibold transition-all duration-200"
                         >
                             Create User + Org
                         </Button>
@@ -179,13 +164,12 @@ export const GlobalOrganizationsPage: React.FC = () => {
                         label: "Platform Organizations",
                         value: orgData?.items?.length || 0,
                         icon: <ApartmentOutlined />,
-                        color: "#2563eb",
                     },
                 ]}
             />
 
             {/* Table */}
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{
                         columns,
@@ -198,22 +182,14 @@ export const GlobalOrganizationsPage: React.FC = () => {
                                 placeholder: "Search organizations...",
                             },
                         ],
-                        onFiltersChange: (f: Record<string, any>) => {
-                            setSearchText(f.search || "");
-                            setCurrentCursor(undefined);
-                            setCursorStack([]);
-                        },
+                        onFiltersChange,
                         pagination: {
-                            pageSize: limit,
+                            pageSize,
                             hasNextPage: !!orgData?.nextCursor,
                             hasPrevPage: cursorStack.length > 0,
-                            onNext: handleNext,
-                            onPrev: handlePrev,
-                            onPageSizeChange: (s) => {
-                                setLimit(s);
-                                setCurrentCursor(undefined);
-                                setCursorStack([]);
-                            },
+                            onNext: () => onNext(orgData?.nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         },
                         actions: (record: any) => {
                             const items: MenuProps["items"] = [
@@ -295,6 +271,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
             >
                 {currencyOrgId && <AdminOrgCurrencyPanel orgId={currencyOrgId} />}
             </Modal>
-        </div>
+        </PageShell>
     );
 };

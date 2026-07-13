@@ -15,9 +15,10 @@ test.describe("Student flows", () => {
         );
     });
 
-    test("lands on student dashboard and sees wallet balance", async ({ page }) => {
-        await expect(page.getByText(/Welcome to Entix Academy/i)).toBeVisible();
-        await expect(page.getByText(/E\$/)).toBeVisible();
+    test("lands on student learning dashboard", async ({ page }) => {
+        await expect(page.getByText(/Continue learning/i)).toBeVisible();
+        await expect(page.getByRole("heading", { name: /My Lessons/i })).toBeVisible();
+        await expect(page.getByRole("heading", { name: /Wallet/i })).toHaveCount(0);
     });
 
     test("navigates to My Lessons", async ({ page }) => {
@@ -26,14 +27,9 @@ test.describe("Student flows", () => {
         await expect(page.getByRole("heading")).toBeVisible();
     });
 
-    test("navigates to Shop", async ({ page }) => {
-        await page.goto(`/org/${ORG_SLUG}/dashboard/shop`);
-        await expect(page).toHaveURL(/\/shop$/);
-    });
-
-    test("navigates to Wallet", async ({ page }) => {
+    test("student wallet route is not available", async ({ page }) => {
         await page.goto(`/org/${ORG_SLUG}/dashboard/wallet`);
-        await expect(page).toHaveURL(/\/wallet$/);
+        await expect(page).not.toHaveURL(/\/wallet$/);
     });
 
     test("student vocabulary page loads", async ({ page }) => {

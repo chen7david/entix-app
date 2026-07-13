@@ -1,4 +1,4 @@
-import { ac, admin, owner, student, teacher } from "@shared";
+import { ac, admin, finance, owner, student, teacher } from "@shared";
 import { adminClient, organizationClient } from "better-auth/client/plugins";
 import type { AccessControl } from "better-auth/plugins/access";
 import { createAuthClient } from "better-auth/react";
@@ -10,6 +10,7 @@ export const authClient = createAuthClient({
             roles: {
                 student,
                 teacher,
+                finance,
                 admin,
                 owner,
             },

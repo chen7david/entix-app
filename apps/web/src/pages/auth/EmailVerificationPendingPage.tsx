@@ -48,7 +48,7 @@ export const EmailVerificationPendingPage: React.FC = () => {
         <Card style={{ width: 400, margin: "0 auto" }}>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
                 <div className="mb-6">
-                    <MailOutlined style={{ fontSize: "48px", color: "#646cff" }} />
+                    <MailOutlined style={{ fontSize: "48px", color: "var(--color-primary)" }} />
                 </div>
                 <Title level={2}>Check your email</Title>
                 <div style={{ marginBottom: 24 }}>

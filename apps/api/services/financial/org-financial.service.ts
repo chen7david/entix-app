@@ -16,6 +16,7 @@ import {
     FINANCIAL_CATEGORIES,
     type FinancialAccount,
     generateAccountId,
+    membershipHasFinanceAccess,
     type TransactionFilters,
 } from "@shared";
 import { createAccountRepoInputSchema } from "@shared/db/schema";
@@ -26,11 +27,7 @@ function actorCanMoveOrgFunds(
     isSuperAdmin: boolean | undefined
 ): boolean {
     if (isSuperAdmin) return true;
-    const roles = (membershipRole ?? "")
-        .split(",")
-        .map((r) => r.trim())
-        .filter(Boolean);
-    return roles.includes("admin") || roles.includes("owner");
+    return membershipHasFinanceAccess(membershipRole);
 }
 
 /**
@@ -49,7 +46,8 @@ export class OrgFinancialService extends FinancialBaseService {
 
     /**
      * Executes an internal transfer between accounts in an organization.
-     * Non-admin actors may only move funds between their own user-owned accounts.
+     * Non–finance-staff actors may only move funds between their own user-owned accounts
+     * (and still need the `finance:transfer` permission on the route).
      */
     async executeTransfer(input: {
         organizationId: string;

@@ -6,15 +6,18 @@ import {
     TeamOutlined,
 } from "@ant-design/icons";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
+import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { EntityAvatar } from "@web/src/components/ui/EntityAvatar";
 import { useInvitations, useMembers, useOrganization } from "@web/src/features/organization";
 import type { MenuProps } from "antd";
-import { Button, Card, Col, Dropdown, Row, Skeleton, Statistic, Tag, Tooltip } from "antd";
+import { Button, Dropdown, Skeleton, Tag, Tooltip, theme } from "antd";
 import dayjs from "dayjs";
 import { useMemo } from "react";
 
 export const OrganizationListPage = () => {
+    const { token } = theme.useToken();
     const { organizations, orgsLoaded, activeOrganization } = useOrganization();
     const { members } = useMembers();
     const { invitations } = useInvitations();
@@ -97,46 +100,39 @@ export const OrganizationListPage = () => {
 
     if (!orgsLoaded) {
         return (
-            <div>
+            <PageShell fill={false}>
                 <Skeleton active />
-            </div>
+            </PageShell>
         );
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader title="Organizations" subtitle="View and manage your organizations." />
 
-            {/* Stats Cards */}
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Current Organization"
-                            value={activeOrganization?.name || "None"}
-                            prefix={<AppstoreOutlined style={{ color: "#2563eb" }} />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Members"
-                            value={members?.length || 0}
-                            prefix={<TeamOutlined style={{ color: "#2563eb" }} />}
-                        />
-                    </Card>
-                </Col>
-                <Col xs={24} sm={8}>
-                    <Card>
-                        <Statistic
-                            title="Pending Invitations"
-                            value={invitations?.length || 0}
-                            prefix={<MailOutlined style={{ color: "#f59e0b" }} />}
-                        />
-                    </Card>
-                </Col>
-            </Row>
+            <SummaryCardsRow
+                items={[
+                    {
+                        key: "current",
+                        label: "Current Organization",
+                        value: activeOrganization?.name || "None",
+                        icon: <AppstoreOutlined />,
+                    },
+                    {
+                        key: "members",
+                        label: "Members",
+                        value: members?.length || 0,
+                        icon: <TeamOutlined />,
+                    },
+                    {
+                        key: "invitations",
+                        label: "Pending Invitations",
+                        value: invitations?.length || 0,
+                        icon: <MailOutlined />,
+                        color: token.colorWarning,
+                    },
+                ]}
+            />
 
             {/* Organizations Table */}
             <div className="flex-1 min-h-0">
@@ -159,6 +155,6 @@ export const OrganizationListPage = () => {
                     }}
                 />
             </div>
-        </div>
+        </PageShell>
     );
 };

@@ -104,7 +104,7 @@ export class MemberImportService extends BaseService {
             );
 
             const enforcedRole: OrgRole = "student";
-            const IMPORTABLE_ROLES = ["student", "teacher", "admin"] as const;
+            const IMPORTABLE_ROLES = ["student", "teacher", "admin", "finance"] as const;
 
             // Process users one by one to ensure identity consistency
             for (const input of validMembers) {

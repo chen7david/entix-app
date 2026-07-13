@@ -1,14 +1,12 @@
 import { CheckCircleOutlined, SendOutlined, WarningOutlined } from "@ant-design/icons";
-import { useDebouncedValue } from "@tanstack/react-pacer";
-import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/features/admin";
-import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { Alert, type TableColumnsType, Tag, Typography } from "antd";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
+import { Alert, type TableColumnsType, Tag, Typography, theme } from "antd";
 import type React from "react";
-import { useCallback, useState } from "react";
 
 const { Text } = Typography;
 
@@ -33,33 +31,23 @@ const EventTag: React.FC<{ event: EmailEvent }> = ({ event }) => {
 };
 
 export const EmailInsightsPage: React.FC = () => {
-    const [searchText, setSearchText] = useState("");
-    const [currentCursor, setCurrentCursor] = useState<string | undefined>();
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
-
-    const [debouncedSearch] = useDebouncedValue(searchText, {
-        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
-    });
+    const { token } = theme.useToken();
+    const {
+        searchInput,
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>();
 
     const { data: emailData, isLoading } = useAdminEmails({
         cursor: currentCursor,
-        limit,
+        limit: pageSize,
     });
-
-    const handleNext = useCallback(() => {
-        if (emailData?.nextCursor) {
-            setCursorStack((prev) => [...prev, currentCursor || ""]);
-            setCurrentCursor(emailData.nextCursor);
-        }
-    }, [emailData?.nextCursor, currentCursor]);
-
-    const handlePrev = useCallback(() => {
-        const prevStack = [...cursorStack];
-        const prevCursor = prevStack.pop();
-        setCursorStack(prevStack);
-        setCurrentCursor(prevCursor);
-    }, [cursorStack]);
 
     const rawEmails = emailData?.items ?? [];
 
@@ -111,7 +99,7 @@ export const EmailInsightsPage: React.FC = () => {
     ];
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Email Insights"
                 subtitle="Monitor email delivery status, activity, and dispatch logs via Resend architecture."
@@ -125,27 +113,26 @@ export const EmailInsightsPage: React.FC = () => {
                         label: "Page Emails",
                         value: totalSent,
                         icon: <SendOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "delivered",
                         label: "Delivered / Active",
                         value: delivered,
                         icon: <CheckCircleOutlined />,
-                        color: "#10b981",
+                        color: token.colorSuccess,
                     },
                     {
                         key: "failed",
                         label: "Bounced / Failed",
                         value: failed,
                         icon: <WarningOutlined />,
-                        color: failed > 0 ? "#ef4444" : "#10b981",
+                        color: failed > 0 ? token.colorError : token.colorSuccess,
                     },
                 ]}
             />
 
-            <div className="h-[calc(100vh-400px)] min-h-[500px]">
-                {searchText && (
+            <div className="flex-1 min-h-0">
+                {searchInput && (
                     <Alert
                         message="Local Filter Active"
                         description="This filter only searches the currently visible page of recent emails."
@@ -167,26 +154,18 @@ export const EmailInsightsPage: React.FC = () => {
                                 placeholder: "Search page items...",
                             },
                         ],
-                        onFiltersChange: (f: Record<string, any>) => {
-                            setSearchText(f.search || "");
-                            setCurrentCursor(undefined);
-                            setCursorStack([]);
-                        },
+                        onFiltersChange,
                         pagination: {
-                            pageSize: limit,
+                            pageSize,
                             hasNextPage: !!emailData?.nextCursor,
                             hasPrevPage: cursorStack.length > 0,
-                            onNext: handleNext,
-                            onPrev: handlePrev,
-                            onPageSizeChange: (s) => {
-                                setLimit(s);
-                                setCurrentCursor(undefined);
-                                setCursorStack([]);
-                            },
+                            onNext: () => onNext(emailData?.nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         },
                     }}
                 />
             </div>
-        </div>
+        </PageShell>
     );
 };

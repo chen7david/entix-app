@@ -5,14 +5,16 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
-// useOrganization import removed
+import { PageBreadcrumb } from "@web/src/components/layout/PageBreadcrumb";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import {
     MediaPlayer,
     usePlaylist,
     usePlaylistSequence,
     useRecordMediaPlay,
 } from "@web/src/features/media";
-import { useOrgNavigate } from "@web/src/features/organization";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { Button, List, Skeleton, Switch, Tooltip, Typography, theme } from "antd";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -24,7 +26,9 @@ const { Title, Text } = Typography;
 export const PlaylistPlayerPage: React.FC = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigateOrg = useOrgNavigate();
+    const { activeOrganization } = useOrganization();
     const location = useLocation();
+    const orgPrefix = activeOrganization?.slug ? `/org/${activeOrganization.slug}` : "";
 
     const isTeachingContext = location.pathname.includes("/teaching/");
     const isDashboardPlaylist = location.pathname.includes("/dashboard/playlists");
@@ -33,6 +37,15 @@ export const PlaylistPlayerPage: React.FC = () => {
         : isDashboardPlaylist
           ? AppRoutes.org.dashboard.lessons
           : AppRoutes.org.admin.playlists;
+    const breadcrumbParent = isDashboardPlaylist
+        ? {
+              title: "Lessons",
+              path: `${orgPrefix}${AppRoutes.org.dashboard.lessons}`,
+          }
+        : {
+              title: "Playlists",
+              path: `${orgPrefix}${backRoute}`,
+          };
 
     const { data: activePlaylist, isLoading: loadingPlaylist } = usePlaylist(playlistId);
     const { token } = theme.useToken();
@@ -181,23 +194,23 @@ export const PlaylistPlayerPage: React.FC = () => {
     );
 
     return (
-        <div>
-            <div className="flex flex-col" style={{ marginBottom: 32 }}>
-                <Button
-                    type="text"
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigateOrg(backRoute)}
-                    className="self-start !px-0 !mb-2 text-gray-500"
-                >
-                    {isDashboardPlaylist ? "Back to My lessons" : "Back to Playlists"}
-                </Button>
-                <Title level={2} style={{ margin: 0 }}>
-                    {activePlaylist?.title || "Playlist Player"}
-                </Title>
-                <Text type="secondary">
-                    {activePlaylist?.description || "Seamless edge delivery playback sequence."}
-                </Text>
-            </div>
+        <PageShell fill={false}>
+            <PageBreadcrumb items={[breadcrumbParent, { title: "Player" }]} />
+            <Button
+                type="text"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigateOrg(backRoute)}
+                className="self-start !px-0 !mb-2"
+                style={{ color: token.colorTextSecondary }}
+            >
+                {isDashboardPlaylist ? "Back to My lessons" : "Back to Playlists"}
+            </Button>
+            <PageHeader
+                title={activePlaylist?.title || "Playlist Player"}
+                subtitle={
+                    activePlaylist?.description || "Seamless edge delivery playback sequence."
+                }
+            />
 
             <div className="flex flex-col lg:flex-row gap-8">
                 <div className="w-full lg:w-[70%] flex flex-col">
@@ -289,6 +302,6 @@ export const PlaylistPlayerPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </PageShell>
     );
 };

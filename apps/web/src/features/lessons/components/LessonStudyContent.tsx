@@ -49,7 +49,7 @@ function LessonPlaylistStudyCard(props: {
     return (
         <Link
             to={props.playHref}
-            className="group block rounded-xl overflow-hidden border shadow-sm hover:shadow-md transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+            className="group block rounded-xl overflow-hidden border shadow-sm hover:shadow-md transition-shadow outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             style={{ borderColor: "var(--ant-color-border-secondary, #f0f0f0)" }}
         >
             <div className="relative aspect-video bg-slate-200/80 dark:bg-slate-800/80">
