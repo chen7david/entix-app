@@ -17,6 +17,7 @@ import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { MemberBillingSection } from "@web/src/features/finance/components/MemberBillingSection";
@@ -345,7 +346,7 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Members"
                 subtitle="Manage organization members and roles."
@@ -356,7 +357,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateModalOpen(true)}
                             size="large"
-                            className="h-11 font-semibold transition-all duration-200"
                         >
                             Create New Member
                         </Button>
@@ -687,6 +687,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         );
                     })()}
             </Drawer>
-        </div>
+        </PageShell>
     );
 };

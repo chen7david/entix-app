@@ -3,10 +3,11 @@ import {
     BankOutlined,
     BookOutlined,
     CalendarOutlined,
-    CloudUploadOutlined,
     DashboardOutlined,
     DollarOutlined,
     FileTextOutlined,
+    FolderOpenOutlined,
+    ImportOutlined,
     OrderedListOutlined,
     PictureOutlined,
     PlaySquareOutlined,
@@ -133,12 +134,12 @@ export function buildOrgSidebarGroups(flags: OrgNavRoleFlags): OrgNavGroup[] {
                 {
                     label: "Bulk Import",
                     key: AppRoutes.org.admin.bulk,
-                    icon: <CloudUploadOutlined />,
+                    icon: <ImportOutlined />,
                 },
                 {
                     label: "Files & Uploads",
                     key: AppRoutes.org.admin.uploads,
-                    icon: <CloudUploadOutlined />,
+                    icon: <FolderOpenOutlined />,
                 },
             ],
         });

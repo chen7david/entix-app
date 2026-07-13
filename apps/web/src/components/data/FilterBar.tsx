@@ -153,7 +153,7 @@ export function FilterBar({
                     ) : filter.type === "dateRange" ? (
                         <DatePicker.RangePicker
                             variant="outlined"
-                            className="w-full rounded-lg h-[40px]"
+                            className="w-full rounded-lg"
                             disabled={
                                 filter.disabled ||
                                 (filter.disabledWhen ? filter.disabledWhen(values) : false)
@@ -175,7 +175,7 @@ export function FilterBar({
                         <Select
                             variant="outlined"
                             placeholder={filter.placeholder || "All"}
-                            className="w-full h-[40px]"
+                            className="w-full"
                             options={filter.options}
                             showSearch={filter.showSearch}
                             value={values[filter.key] ?? undefined}
@@ -207,7 +207,7 @@ export function FilterBar({
                     icon={<RedoOutlined />}
                     onClick={onReset}
                     type="text"
-                    className="flex items-center text-sm font-medium transition-all hover:bg-black/5 dark:hover:bg-white/10 h-[40px] px-3 rounded-lg"
+                    className="flex items-center text-sm font-medium transition-all hover:bg-black/5 dark:hover:bg-white/10 px-3 rounded-lg"
                     style={{
                         color: hasFiltersSet ? token.colorTextSecondary : token.colorTextQuaternary,
                         opacity: hasFiltersSet ? 1 : 0.7,

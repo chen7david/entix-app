@@ -4,6 +4,7 @@ import { CEFR_LEVELS } from "@shared/constants/cefr";
 import { PASSAGE_TYPES, TEXT_COLLECTION_TYPES } from "@shared/constants/passage";
 import { defaultPassageDocJson, plainTextFromPassageContent } from "@shared/utils/passage-content";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useOrgNavigate } from "@web/src/features/organization";
 import {
     PassageContentEditor,
@@ -225,7 +226,7 @@ export function TextLibraryPage() {
     }));
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Text library"
                 subtitle="Manage collections (books/readers) and passages. Link passages to a collection when creating or editing."
@@ -549,6 +550,6 @@ export function TextLibraryPage() {
                     </Form>
                 )}
             </Drawer>
-        </div>
+        </PageShell>
     );
 }

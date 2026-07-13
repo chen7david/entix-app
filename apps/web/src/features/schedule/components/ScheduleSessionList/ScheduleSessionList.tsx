@@ -37,7 +37,7 @@ export const ScheduleSessionList: React.FC<Props> = ({
                 locale={{
                     emptyText: (
                         <TableEmptyState
-                            icon={<CalendarOutlined style={{ fontSize: 64 }} />}
+                            icon={<CalendarOutlined />}
                             title="No sessions found"
                             subtitle="Try adjusting your filters, or schedule a new session."
                             action={

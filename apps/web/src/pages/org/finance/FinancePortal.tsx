@@ -6,6 +6,8 @@ import {
     TransactionOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { MemberSetupIssuesPanel, RecentTransactionsCard } from "@web/src/features/dashboard";
 import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
@@ -13,7 +15,7 @@ import { useOrgNavigate } from "@web/src/features/organization/hooks/useOrgNavig
 import { Alert, Button, Card, Col, Row, Space, Typography, theme } from "antd";
 import type React from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const FinancePortal: React.FC = () => {
     const { token } = theme.useToken();
@@ -28,22 +30,12 @@ export const FinancePortal: React.FC = () => {
     const readiness = metrics?.paymentReadiness;
 
     return (
-        <div className="pb-2">
-            <div className="mb-8">
-                <Text
-                    className="uppercase tracking-[0.14em] text-xs font-semibold"
-                    style={{ color: token.colorPrimary }}
-                >
-                    Finance
-                </Text>
-                <Title level={2} className="!mt-2 !mb-1 font-display">
-                    Money & billing
-                </Title>
-                <Text type="secondary">
-                    Manage member wallets, ledger activity, and billing plans for{" "}
-                    {activeOrganization?.name}.
-                </Text>
-            </div>
+        <PageShell fill={false}>
+            <PageHeader
+                eyebrow="Finance"
+                title="Money & billing"
+                subtitle={`Manage member wallets, ledger activity, and billing plans for ${activeOrganization?.name}.`}
+            />
 
             {!isBillingPlansLoading && !hasActiveBillingPlan && (
                 <Alert
@@ -100,7 +92,7 @@ export const FinancePortal: React.FC = () => {
                             onClick={() => navigateOrg(item.path)}
                         >
                             <Space align="start">
-                                <span style={{ fontSize: 22, color: token.colorPrimary }}>
+                                <span style={{ fontSize: 24, color: token.colorPrimary }}>
                                     {item.icon}
                                 </span>
                                 <div>
@@ -130,6 +122,6 @@ export const FinancePortal: React.FC = () => {
                     <RecentTransactionsCard />
                 </Col>
             </Row>
-        </div>
+        </PageShell>
     );
 };

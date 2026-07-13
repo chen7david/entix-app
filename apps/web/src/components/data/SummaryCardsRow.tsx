@@ -24,7 +24,7 @@ export const SummaryCardsRow: React.FC<SummaryCardsRowProps> = ({ items, loading
     const lgSpan = 24 / Math.min(Math.max(items.length, 1), 4);
 
     return (
-        <Row gutter={[16, 16]} className="mb-8">
+        <Row gutter={[16, 16]} className="mb-6">
             {items.map((item) => (
                 <Col xs={24} sm={12} md={8} lg={lgSpan} key={item.key}>
                     <Card

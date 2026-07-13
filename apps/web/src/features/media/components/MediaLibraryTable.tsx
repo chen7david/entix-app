@@ -97,13 +97,13 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
             render: (text: string, record: Media) => (
                 <div className="flex items-center gap-3">
                     {record.mimeType.startsWith("video/") ? (
-                        <PlaySquareOutlined className="text-purple-500 flex-shrink-0" />
+                        <PlaySquareOutlined className="text-primary flex-shrink-0" />
                     ) : (
                         <AudioOutlined className="text-blue-500 flex-shrink-0" />
                     )}
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={text} placement="topLeft" mouseEnterDelay={0.5}>
-                            <span className="font-semibold text-sm truncate text-[#646cff] hover:text-[#747bff] transition-colors block">
+                            <span className="font-semibold text-sm truncate text-primary hover:text-primary transition-colors block">
                                 {text}
                             </span>
                         </Tooltip>

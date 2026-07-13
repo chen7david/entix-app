@@ -102,12 +102,7 @@ export const BillingAccountsPage: React.FC = () => {
                 title="Billing Accounts"
                 subtitle="Treasury management and currency activation for organizational billing."
                 actions={
-                    <Button
-                        type="primary"
-                        size="large"
-                        onClick={() => setIsCreateDrawerOpen(true)}
-                        className="h-11 font-semibold"
-                    >
+                    <Button type="primary" size="large" onClick={() => setIsCreateDrawerOpen(true)}>
                         Create Custom Account
                     </Button>
                 }

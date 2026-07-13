@@ -25,7 +25,6 @@ export const BillingPlansPage: React.FC = () => {
                         type="primary"
                         icon={<PlusOutlined />}
                         size="large"
-                        className="h-11 font-semibold"
                         onClick={() => managementRef.current?.handleCreate()}
                     >
                         Create Plan

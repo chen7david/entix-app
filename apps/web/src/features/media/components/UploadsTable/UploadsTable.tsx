@@ -40,7 +40,7 @@ export const UploadsTable: React.FC<Props> = ({
     const getFileIcon = (contentType: string) => {
         if (contentType.startsWith("image/")) return <PictureOutlined className="text-blue-500" />;
         if (contentType.startsWith("video/"))
-            return <PlaySquareOutlined className="text-purple-500" />;
+            return <PlaySquareOutlined className="text-primary" />;
         return <FileOutlined className="text-gray-500" />;
     };
 

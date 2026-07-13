@@ -9,6 +9,7 @@ import { getRoleColor, ORG_ROLE_OPTIONS } from "@shared";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
 import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Tag, theme } from "antd";
 import dayjs from "dayjs";
@@ -117,7 +118,7 @@ export const OrganizationInvitationsPage = () => {
     if (!activeOrganization) return null;
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Invitations"
                 subtitle="Manage pending and sent invitations to join your organization."
@@ -127,7 +128,6 @@ export const OrganizationInvitationsPage = () => {
                         icon={<PlusOutlined />}
                         onClick={() => setIsModalOpen(true)}
                         size="large"
-                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Invite Member
                     </Button>
@@ -238,6 +238,6 @@ export const OrganizationInvitationsPage = () => {
                     </Form.Item>
                 </Form>
             </Modal>
-        </div>
+        </PageShell>
     );
 };

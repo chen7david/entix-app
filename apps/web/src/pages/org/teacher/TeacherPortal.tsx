@@ -7,21 +7,22 @@ import {
     TeamOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useAuth } from "@web/src/features/auth";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useSchedule } from "@web/src/features/schedule/hooks/useSchedule";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Card, Col, Empty, List, Row, Space, Typography, theme } from "antd";
+import { Button, Card, Col, Empty, List, Row, Space, Typography } from "antd";
 import type React from "react";
 import { useMemo } from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const TeacherPortal: React.FC = () => {
     const navigateOrg = useOrgNavigate();
     const { activeOrganization } = useOrganization();
     const { user } = useAuth();
-    const { token } = theme.useToken();
     const { sessions, isLoading } = useSchedule(activeOrganization?.id, Date.now(), undefined);
 
     const myUpcomingSessions = useMemo(
@@ -36,28 +37,21 @@ export const TeacherPortal: React.FC = () => {
     );
 
     return (
-        <div>
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <Text
-                        className="uppercase tracking-[0.14em] text-xs font-semibold"
-                        style={{ color: token.colorPrimary }}
+        <PageShell fill={false}>
+            <PageHeader
+                eyebrow="Teaching"
+                title="Your classroom"
+                subtitle="Run sessions, lessons, and student lists."
+                actions={
+                    <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => navigateOrg(AppRoutes.org.teaching.sessions)}
                     >
-                        Teaching
-                    </Text>
-                    <Title level={2} className="!mt-2 !mb-1 font-display">
-                        Your classroom
-                    </Title>
-                    <Text type="secondary">Run sessions, lessons, and student lists.</Text>
-                </div>
-                <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    onClick={() => navigateOrg(AppRoutes.org.teaching.sessions)}
-                >
-                    Manage sessions
-                </Button>
-            </div>
+                        Manage sessions
+                    </Button>
+                }
+            />
 
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={16}>
@@ -159,6 +153,6 @@ export const TeacherPortal: React.FC = () => {
                     </Card>
                 </Col>
             </Row>
-        </div>
+        </PageShell>
     );
 };

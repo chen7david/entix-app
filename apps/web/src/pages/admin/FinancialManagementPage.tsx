@@ -40,7 +40,6 @@ export const FinancialManagementPage: React.FC = () => {
                         type="primary"
                         icon={<PlusOutlined />}
                         size="large"
-                        className="h-11 font-semibold transition-all duration-200"
                         onClick={() => {
                             setSelectedAccount(undefined);
                             setCreditDrawerOpen(true);

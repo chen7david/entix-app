@@ -151,18 +151,7 @@ function DataTableWithFiltersInternal<T extends object>({
                             };
                         }}
                         locale={{
-                            emptyText: (
-                                <TableEmptyState
-                                    icon={
-                                        <InboxOutlined
-                                            style={{
-                                                fontSize: 64,
-                                                color: token.colorFillSecondary,
-                                            }}
-                                        />
-                                    }
-                                />
-                            ),
+                            emptyText: <TableEmptyState icon={<InboxOutlined />} />,
                         }}
                     />
                 </div>

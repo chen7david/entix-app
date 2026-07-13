@@ -1,6 +1,7 @@
 import { CloudUploadOutlined, DatabaseOutlined, FileOutlined } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { UploadsTable } from "@web/src/features/media/components/UploadsTable";
 import { useOrganization } from "@web/src/features/organization";
@@ -74,7 +75,7 @@ export const OrganizationUploadsPage = () => {
     );
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Files and Uploads"
                 subtitle="Manage your organization's storage securely via Direct-to-R2 architecture."
@@ -84,7 +85,6 @@ export const OrganizationUploadsPage = () => {
                         icon={<CloudUploadOutlined />}
                         onClick={() => setIsUploadModalOpen(true)}
                         size="large"
-                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Upload Files
                     </Button>
@@ -148,6 +148,6 @@ export const OrganizationUploadsPage = () => {
                     />
                 </div>
             </Modal>
-        </div>
+        </PageShell>
     );
 };

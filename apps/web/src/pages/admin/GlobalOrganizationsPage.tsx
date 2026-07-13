@@ -154,7 +154,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateOrgModalOpen(true)}
                             size="large"
-                            className="h-11 font-semibold transition-all duration-200"
                         >
                             Create Organization
                         </Button>
@@ -163,7 +162,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
                             icon={<UserAddOutlined />}
                             onClick={() => setIsCreateUserWithOrgModalOpen(true)}
                             size="large"
-                            className="h-11 font-semibold transition-all duration-200"
                         >
                             Create User + Org
                         </Button>

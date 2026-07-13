@@ -2,6 +2,7 @@ import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useOrganization } from "@web/src/features/organization";
 import { IpaBracketed } from "@web/src/features/vocabulary/components/IpaBracketed";
 import { VocabularyEditDrawer } from "@web/src/features/vocabulary/components/VocabularyEditDrawer";
@@ -136,7 +137,7 @@ export default function GlobalVocabularyPage() {
     ];
 
     return (
-        <div className="flex flex-col h-full overflow-hidden">
+        <PageShell className="overflow-hidden">
             <PageHeader
                 title="Vocabulary Bank"
                 subtitle="Manage the global list of vocabulary words and phrases."
@@ -149,7 +150,6 @@ export default function GlobalVocabularyPage() {
                             setIsDrawerVisible(true);
                         }}
                         size="large"
-                        className="h-11 font-semibold"
                     >
                         Add Vocabulary
                     </Button>
@@ -215,6 +215,6 @@ export default function GlobalVocabularyPage() {
                     updateVocabularyBankMutation.isPending || createVocabularyMutation.isPending
                 }
             />
-        </div>
+        </PageShell>
     );
 }

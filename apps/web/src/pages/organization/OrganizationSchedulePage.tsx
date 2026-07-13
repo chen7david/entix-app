@@ -1,5 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useOrganization } from "@web/src/features/organization";
 import {
     ScheduleFilterBar,
@@ -61,7 +62,7 @@ export const OrganizationSchedulePage: React.FC = () => {
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Schedule"
                 subtitle="Manage and track organization sessions."
@@ -71,7 +72,6 @@ export const OrganizationSchedulePage: React.FC = () => {
                         icon={<PlusOutlined />}
                         onClick={handleCreate}
                         size="large"
-                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Schedule Session
                     </Button>
@@ -94,7 +94,7 @@ export const OrganizationSchedulePage: React.FC = () => {
 
             <div className="flex-1 min-h-0 flex flex-col">
                 {isLoading && displaySessions.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: 50 }}>
+                    <div className="flex justify-center py-12">
                         <Spin size="large" />
                     </div>
                 ) : (
@@ -122,6 +122,6 @@ export const OrganizationSchedulePage: React.FC = () => {
                 onSaveAttendance={handleSaveAttendance}
                 onDelete={handleDelete}
             />
-        </div>
+        </PageShell>
     );
 };

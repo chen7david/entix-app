@@ -20,14 +20,14 @@ export const TableEmptyState: React.FC<TableEmptyStateProps> = ({
     const { token } = theme.useToken();
 
     return (
-        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+        <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
             <Empty
                 image={
                     <div
                         style={{
-                            fontSize: 64,
+                            fontSize: 44,
                             color: token.colorFillSecondary,
-                            marginBottom: 16,
+                            marginBottom: 12,
                             display: "flex",
                             justifyContent: "center",
                         }}
@@ -39,7 +39,7 @@ export const TableEmptyState: React.FC<TableEmptyStateProps> = ({
                     <div className="max-w-[320px] mx-auto">
                         <p
                             style={{ color: token.colorTextSecondary }}
-                            className="text-lg font-medium mb-1"
+                            className="text-base font-medium mb-1"
                         >
                             {title}
                         </p>

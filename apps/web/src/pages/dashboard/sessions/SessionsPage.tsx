@@ -144,14 +144,14 @@ export const SessionsPage: React.FC = () => {
                     <Skeleton active paragraph={{ rows: 3 }} />
                 </Space>
             ) : !sessions || sessions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-20">
+                <div className="flex flex-col items-center justify-center py-12">
                     <Empty
                         image={
                             <ClockCircleOutlined
                                 style={{
-                                    fontSize: 64,
+                                    fontSize: 44,
                                     color: token.colorFillSecondary,
-                                    marginBottom: 16,
+                                    marginBottom: 12,
                                 }}
                             />
                         }
@@ -159,7 +159,7 @@ export const SessionsPage: React.FC = () => {
                             <div className="max-w-[300px]">
                                 <p
                                     style={{ color: token.colorTextSecondary }}
-                                    className="text-lg font-medium mb-1"
+                                    className="text-base font-medium mb-1"
                                 >
                                     No active sessions found
                                 </p>

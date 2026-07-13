@@ -131,7 +131,7 @@ export const CoverArtUploader = ({
             >
                 <Upload {...uploadProps} className="w-full block !mb-0 cover-art-uploader">
                     <div
-                        className="w-full aspect-video relative rounded-2xl border-2 border-dashed group-hover:border-[#646cff] transition-colors p-[4px] cursor-pointer group"
+                        className="w-full aspect-video relative rounded-2xl border-2 border-dashed group-hover:border-primary transition-colors p-[4px] cursor-pointer group"
                         style={{ borderColor: token.colorBorderSecondary }}
                     >
                         <div
@@ -154,7 +154,7 @@ export const CoverArtUploader = ({
                             )}
 
                             {/* Hover Overlay matching Member Avatar */}
-                            <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-[#646cff]/80 text-white pointer-events-none">
+                            <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 bg-primary/80 text-white pointer-events-none">
                                 {uploading ? (
                                     <Spin className="text-white" />
                                 ) : (
@@ -170,7 +170,7 @@ export const CoverArtUploader = ({
 
                         {/* Floating Upload Indicator Badge matching Member Avatar */}
                         <div
-                            className="absolute -bottom-2 -right-2 border rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-[#646cff] group-hover:border-[#646cff] transition-colors pointer-events-none z-10"
+                            className="absolute -bottom-2 -right-2 border rounded-full w-8 h-8 flex items-center justify-center shadow-sm text-gray-500 group-hover:text-primary group-hover:border-primary transition-colors pointer-events-none z-10"
                             style={{
                                 backgroundColor: token.colorBgElevated,
                                 borderColor: token.colorBorderSecondary,

@@ -1,5 +1,7 @@
 import { BookOutlined, CalendarOutlined, RightOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useMyEnrollments } from "@web/src/features/schedule/hooks/useSchedule";
 import { DateUtils } from "@web/src/utils/date";
@@ -36,30 +38,22 @@ export const StudentPortal: React.FC = () => {
     const nextSession = myDisplaySessions[0];
 
     return (
-        <div>
-            <div className="mb-8">
-                <Text
-                    className="uppercase tracking-[0.14em] text-xs font-semibold"
-                    style={{ color: token.colorPrimary }}
-                >
-                    {activeOrganization?.name || "Entix"}
-                </Text>
-                <Title level={2} className="!mt-2 !mb-1 font-display">
-                    Continue learning
-                </Title>
-                <Text type="secondary">Your lessons and upcoming sessions, in one place.</Text>
-            </div>
+        <PageShell fill={false}>
+            <PageHeader
+                eyebrow={activeOrganization?.name || "Entix"}
+                title="Continue learning"
+                subtitle="Your lessons and upcoming sessions, in one place."
+            />
 
-            <Row gutter={[20, 20]} className="mb-8">
+            <Row gutter={[24, 24]} className="mb-6">
                 <Col xs={24} sm={12}>
                     <Card
                         hoverable
                         className="h-full border-0 shadow-sm"
-                        styles={{ body: { padding: 24 } }}
                         onClick={() => navigateOrg(AppRoutes.org.dashboard.lessons)}
                     >
                         <BookOutlined
-                            style={{ fontSize: 28, color: token.colorPrimary, marginBottom: 12 }}
+                            style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 12 }}
                         />
                         <Title level={4} className="!mb-1">
                             My Lessons
@@ -71,11 +65,10 @@ export const StudentPortal: React.FC = () => {
                     <Card
                         hoverable
                         className="h-full border-0 shadow-sm"
-                        styles={{ body: { padding: 24 } }}
                         onClick={() => navigateOrg(AppRoutes.org.dashboard.mySchedule)}
                     >
                         <CalendarOutlined
-                            style={{ fontSize: 28, color: token.colorPrimary, marginBottom: 12 }}
+                            style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 12 }}
                         />
                         <Title level={4} className="!mb-1">
                             My Schedule
@@ -184,6 +177,6 @@ export const StudentPortal: React.FC = () => {
                     )}
                 />
             </Card>
-        </div>
+        </PageShell>
     );
 };

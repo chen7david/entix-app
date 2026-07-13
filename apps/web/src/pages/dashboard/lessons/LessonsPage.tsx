@@ -128,7 +128,6 @@ export const LessonsPage: React.FC = () => {
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateDrawerOpen(true)}
                             size="large"
-                            className="h-11 font-semibold"
                         >
                             Create Lesson
                         </Button>

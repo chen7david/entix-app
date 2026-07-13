@@ -98,7 +98,7 @@ function LessonObjectiveSortableRow(props: {
             onClick={props.onTileClick}
             className={`flex items-center gap-3 px-4 py-3 mb-3 rounded-xl border cursor-pointer text-left w-full ${
                 isDragging
-                    ? "border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20"
+                    ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-xl ring-2 ring-primary/20"
                     : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             } transition-all group`}
         >
@@ -157,7 +157,7 @@ function LessonPassageSortableRow(props: {
             style={style}
             className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
                 isDragging
-                    ? "border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20"
+                    ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-xl ring-2 ring-primary/20"
                     : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             } transition-all group`}
         >
@@ -215,7 +215,7 @@ function LessonPlaylistSortableRow(props: {
             style={style}
             className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
                 isDragging
-                    ? "border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20"
+                    ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-xl ring-2 ring-primary/20"
                     : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             } transition-all group`}
         >
@@ -579,7 +579,7 @@ export function LessonDetailPage(): React.ReactElement | null {
         <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
             <Link
                 to={teachingLessonsHref}
-                className="text-slate-500 hover:text-indigo-600 text-sm mb-6 inline-block"
+                className="text-slate-500 hover:text-primary text-sm mb-6 inline-block"
             >
                 ← Back to lessons
             </Link>
