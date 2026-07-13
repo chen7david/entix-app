@@ -19,7 +19,6 @@ import { useEffect, useState } from "react";
 import { useMedia } from "../hooks/useMedia";
 import { useRecordMediaPlay } from "../hooks/useRecordMediaPlay";
 import { CoverArtUploader } from "./CoverArtUploader";
-import { MediaDropzone } from "./MediaDropzone";
 import { MediaPlayer } from "./MediaPlayer";
 
 const { Title, Text } = Typography;
@@ -169,7 +168,6 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                     },
                 ]}
             />
-            <MediaDropzone type="all" />
 
             <div className="flex-1 min-h-0">
                 <DataTableWithFilters<Media>

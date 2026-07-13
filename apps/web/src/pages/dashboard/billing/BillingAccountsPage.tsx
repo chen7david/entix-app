@@ -10,7 +10,7 @@ import { useOrganization } from "@web/src/features/organization";
 import { CreateAccountDrawer } from "@web/src/features/wallet/components/CreateAccountDrawer";
 import type { FinancialAccountData } from "@web/src/features/wallet/components/FinancialAccountCard";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
-import { Button, Col, Flex, Row, Tag, Typography, theme } from "antd";
+import { Button, Flex, Tag, Typography, theme } from "antd";
 import type React from "react";
 import { useMemo, useState } from "react";
 
@@ -135,22 +135,23 @@ export const BillingAccountsPage: React.FC = () => {
                 ]}
             />
 
-            <Row gutter={[24, 24]}>
-                <Col span={24}>
-                    <FilterBar
-                        filters={filterConfig}
-                        values={filters}
-                        initialValues={{ search: "", status: "all", accountType: "all" }}
-                        onChange={(next) => setFilters((prev) => ({ ...prev, ...next }))}
-                        onReset={() =>
-                            setFilters({
-                                search: "",
-                                status: "all",
-                                accountType: "all",
-                            })
-                        }
-                    />
-                    <Flex align="center" gap={12} className="mb-4">
+            <div className="flex flex-col gap-6 mt-2">
+                <FilterBar
+                    filters={filterConfig}
+                    values={filters}
+                    initialValues={{ search: "", status: "all", accountType: "all" }}
+                    onChange={(next) => setFilters((prev) => ({ ...prev, ...next }))}
+                    onReset={() =>
+                        setFilters({
+                            search: "",
+                            status: "all",
+                            accountType: "all",
+                        })
+                    }
+                    className="!mb-0"
+                />
+                <div>
+                    <Flex align="center" gap={12} className="mb-6">
                         <Title level={4} style={{ margin: 0 }}>
                             Accounts
                         </Title>
@@ -168,8 +169,8 @@ export const BillingAccountsPage: React.FC = () => {
                             </Button>
                         }
                     />
-                </Col>
-            </Row>
+                </div>
+            </div>
 
             <ManageAccountDrawer
                 open={isManageDrawerOpen}

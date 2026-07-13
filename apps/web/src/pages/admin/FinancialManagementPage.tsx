@@ -52,7 +52,7 @@ export const FinancialManagementPage: React.FC = () => {
 
             {/* Treasury Health */}
             <div className="mb-8">
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-6">
                     <Title level={4} style={{ margin: 0 }}>
                         Platform Treasury
                     </Title>

@@ -5,11 +5,12 @@ import {
     InfoCircleOutlined,
     UploadOutlined,
 } from "@ant-design/icons";
-import { normalizeBulkMembersRaw } from "@shared";
+import { AppRoutes, normalizeBulkMembersRaw } from "@shared";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { PageShell } from "@web/src/components/layout/PageShell";
 import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
+import { useOrgNavigate } from "@web/src/features/organization/hooks/useOrgNavigate";
 import {
     Alert,
     App,
@@ -38,6 +39,7 @@ const { Panel } = Collapse;
 export const MemberImportExportPage: React.FC = () => {
     const { notification } = App.useApp();
     const { activeOrganization } = useOrganization();
+    const navigateOrg = useOrgNavigate();
     const { token } = theme.useToken();
     const { exportMembers, importMembers, isImporting, importResult } = useBulkMembers(
         activeOrganization?.id
@@ -69,6 +71,17 @@ export const MemberImportExportPage: React.FC = () => {
         [activeBillingPlans]
     );
 
+    const openBillingPlans = () => {
+        notification.destroy();
+        navigateOrg(AppRoutes.org.admin.billing.plans);
+    };
+
+    const billingPlansAction = (
+        <Button size="small" type="primary" onClick={openBillingPlans}>
+            Open Billing Plans
+        </Button>
+    );
+
     const notifyUploadBlocked = () => {
         if (isLoadingBillingPlans) {
             notification.info({
@@ -91,8 +104,9 @@ export const MemberImportExportPage: React.FC = () => {
             notification.warning({
                 message: "Active billing plan required",
                 description:
-                    "Create and activate at least one billing plan under Admin → Finance → Plans before importing members.",
-                duration: 8,
+                    "Create and activate at least one billing plan before importing members.",
+                duration: 10,
+                btn: billingPlansAction,
             });
         }
     };
@@ -295,6 +309,11 @@ export const MemberImportExportPage: React.FC = () => {
                             className="mb-3"
                             message="No active billing plans found"
                             description="Create and activate at least one billing plan before importing members."
+                            action={
+                                <Button size="small" type="primary" onClick={openBillingPlans}>
+                                    Open Plans
+                                </Button>
+                            }
                         />
                     )}
                     <Paragraph>
@@ -510,6 +529,11 @@ export const MemberImportExportPage: React.FC = () => {
                             showIcon
                             message="No active billing plan available"
                             description="Create an active billing plan, then reopen this import."
+                            action={
+                                <Button size="small" type="primary" onClick={openBillingPlans}>
+                                    Open Plans
+                                </Button>
+                            }
                         />
                     )}
                     <div>

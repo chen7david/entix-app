@@ -227,7 +227,7 @@ export const WalletPage = () => {
 
             <Row gutter={[24, 24]} className="flex-1 min-h-0">
                 <Col span={24}>
-                    <Title level={4} style={{ marginBottom: 16 }}>
+                    <Title level={4} style={{ marginBottom: 24 }}>
                         Your Accounts
                     </Title>
                     {savingsAccounts.length ? (
