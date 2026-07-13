@@ -5,7 +5,18 @@ import {
     canAccessMemberWallet,
     canManageMemberWallet,
 } from "@api/services/financial/wallet-access.service";
+import { STUDENT_VISIBLE_CURRENCY_ID } from "@shared";
 import type { MemberWalletRoutes } from "./member-wallet.routes";
+
+function studentSelfServiceCurrencyFilter(
+    c: Parameters<typeof canManageMemberWallet>[0],
+    targetUserId: string
+): string | undefined {
+    const isSelf = c.get("userId") === targetUserId;
+    if (!isSelf) return undefined;
+    if (canManageMemberWallet(c, targetUserId, "")) return undefined;
+    return STUDENT_VISIBLE_CURRENCY_ID;
+}
 
 export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = async (c) => {
     const { organizationId, userId } = c.req.valid("param");
@@ -21,7 +32,8 @@ export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = asyn
     }
 
     const service = getUserFinancialService(c);
-    const result = await service.getUserSummary(userId, organizationId);
+    const currencyId = studentSelfServiceCurrencyFilter(c, userId);
+    const result = await service.getUserSummary(userId, organizationId, { currencyId });
 
     return c.json({ data: result }, HttpStatusCodes.OK);
 };
@@ -39,11 +51,15 @@ export const getTransactions: AppHandler<typeof MemberWalletRoutes.getTransactio
 
     const service = getUserFinancialService(c);
     const { cursor, limit, ...filters } = query;
+    const studentCurrencyId = studentSelfServiceCurrencyFilter(c, userId);
     const result = await service.getTransactionHistory(
         userId,
         organizationId,
         { cursor, limit },
-        filters
+        {
+            ...filters,
+            ...(studentCurrencyId ? { currencyId: studentCurrencyId } : {}),
+        }
     );
 
     return c.json(result, HttpStatusCodes.OK);

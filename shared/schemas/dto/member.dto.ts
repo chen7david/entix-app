@@ -39,3 +39,23 @@ export const createMemberResponseSchema = z.object({
 });
 
 export type CreateMemberResponseDTO = z.infer<typeof createMemberResponseSchema>;
+
+/** Org staff: correct a member's login email (typos / changed addresses). */
+export const updateMemberAccountSchema = z.object({
+    email: z.email().openapi({ example: "corrected@example.com" }),
+    /** When true (default), mark unverified and send a verification email to the new address. */
+    sendVerification: z.boolean().optional().default(true),
+});
+
+export type UpdateMemberAccountDTO = z.infer<typeof updateMemberAccountSchema>;
+
+export const updateMemberAccountResponseSchema = z.object({
+    data: z.object({
+        userId: z.string(),
+        email: z.string(),
+        emailVerified: z.boolean(),
+        verificationEmailQueued: z.boolean(),
+    }),
+});
+
+export type UpdateMemberAccountResponseDTO = z.infer<typeof updateMemberAccountResponseSchema>;

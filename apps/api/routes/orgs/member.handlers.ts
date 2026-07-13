@@ -1,4 +1,4 @@
-import { getRegistrationService, getUserService } from "@api/factories/service.factory";
+import { getMemberAccountService, getRegistrationService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
 import type { MemberRoutes } from "./member.routes";
@@ -15,8 +15,9 @@ export class MemberHandler {
         );
 
         const registrationService = getRegistrationService(ctx);
-        const userService = getUserService(ctx);
 
+        // Welcome / password-setup email is sent inside RegistrationService.createUserAndMember
+        // (single send — do not requestPasswordReset again here).
         const result = await registrationService.createUserAndMember(
             email,
             name,
@@ -25,22 +26,29 @@ export class MemberHandler {
             defaultBillingPlanId
         );
 
-        const resetUrl = `${ctx.var.frontendUrl}/auth/reset-password`;
-
-        // Fire-and-forget — member creation succeeds regardless of email outcome.
-        // Failure is logged by the service; caller receives 201.
-        userService.sendPasswordResetEmail(email, resetUrl).catch((err: unknown) => {
-            ctx.var.logger.error(
-                { err, email, memberId: result.member.id },
-                "Password reset email failed after member creation"
-            );
-        });
-
         ctx.var.logger.info(
             { userId: result.user.id, memberId: result.member.id },
             "Member created successfully"
         );
 
         return ctx.json({ data: result }, HttpStatusCodes.CREATED);
+    };
+
+    static updateMemberAccount: AppHandler<typeof MemberRoutes.updateMemberAccount> = async (
+        ctx
+    ) => {
+        const { userId } = ctx.req.valid("param");
+        const { email, sendVerification } = ctx.req.valid("json");
+        const organizationId = ctx.get("organizationId");
+
+        const service = getMemberAccountService(ctx);
+        const result = await service.updateMemberEmail({
+            organizationId,
+            userId,
+            email,
+            sendVerification,
+        });
+
+        return ctx.json({ data: result }, HttpStatusCodes.OK);
     };
 }

@@ -14,7 +14,7 @@ export const getEmailVerificationConfig = (
     return {
         emailVerification: {
             sendOnSignUp: true,
-            autoSignInAfterVerification: false,
+            autoSignInAfterVerification: true,
             sendVerificationEmail: async ({ user, token }) => {
                 if (!ctx || !mailer) return;
                 if (skipEmailDelivery) return;

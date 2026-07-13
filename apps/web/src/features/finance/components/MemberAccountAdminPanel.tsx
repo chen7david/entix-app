@@ -6,7 +6,7 @@ import { FINANCIAL_ADJUSTMENT_REASONS } from "@web/src/utils/constants";
 import { Alert, Button, Divider, Form, Input, Radio, Select, Skeleton, Space } from "antd";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
-import { useAdminAdjustWallet } from "../hooks/useAdminAdjustWallet";
+import { useOrgFundMemberWallet } from "../hooks/useOrgFundMemberWallet";
 
 const DEFAULT_REASON = FINANCIAL_ADJUSTMENT_REASONS[0];
 
@@ -27,7 +27,7 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
         orgId
     );
     const { data: orgBalanceData, isLoading: isLoadingOrg } = useWalletBalance(orgId, "org");
-    const { mutate: adjust, isPending } = useAdminAdjustWallet(orgId);
+    const { mutate: adjust, isPending } = useOrgFundMemberWallet(orgId);
 
     const accounts = useMemo(() => balanceData?.accounts || [], [balanceData?.accounts]);
     const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
@@ -82,10 +82,8 @@ export const MemberAccountAdminPanel: React.FC<Props> = ({ memberId, orgId, memb
         adjust(
             {
                 organizationId: orgId,
-                accountId: selectedAccountId,
-                // The 'platformTreasuryAccountId' field is repurposed here to mean the 'Org Funding Account'
-                // This ensures the ledger maintains a clear Org -> Member internal transfer audit trail.
-                platformTreasuryAccountId: orgFundingAccount.id,
+                memberAccountId: selectedAccountId,
+                orgFundingAccountId: orgFundingAccount.id,
                 amountCents: Math.round(values.amount * 100),
                 currencyId: selectedAccount.currencyId,
                 description: finalDescription || `Admin ${values.type} by ${memberName}`,

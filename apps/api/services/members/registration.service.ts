@@ -85,6 +85,15 @@ export class RegistrationService extends BaseService {
             // Auto-provision personal accounts for the user (Ticket 5 refactor)
             await this.userFinancialService.provisionUserAccounts(uId, oId);
 
+            // Welcome password-setup email (DB signup bypasses Better Auth sendOnSignUp).
+            const resetUrl = `${this.frontendUrl}/auth/reset-password`;
+            this.userService.sendPasswordResetEmail(input.email, resetUrl).catch((err: unknown) => {
+                this.logger.error(
+                    { err, email: input.email, userId: uId },
+                    "Password reset email failed after signup-with-org"
+                );
+            });
+
             return {
                 user: {
                     id: uId,

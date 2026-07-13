@@ -169,16 +169,32 @@ export async function createTestDb() {
 }
 
 async function clearTestDbData() {
-    await env.DB.exec("PRAGMA foreign_keys=OFF;");
     const tableQuery = await env.DB.prepare(
-        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%'"
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_cf_%' AND name NOT LIKE 'd1_%'"
     ).all<{ name: string }>();
 
-    for (const table of tableQuery.results ?? []) {
-        await env.DB.exec(`DELETE FROM "${table.name}"`);
-    }
+    const tables = (tableQuery.results ?? []).map((t) => t.name);
+    if (tables.length === 0) return;
 
-    await env.DB.exec("PRAGMA foreign_keys=ON;");
+    // Tables that ON DELETE SET NULL into columns guarded by CHECKs must be cleared
+    // before their parent rows (auth_users). D1 does not keep PRAGMA foreign_keys=OFF
+    // across separate exec() calls, so we batch the pragma with the deletes.
+    const deleteFirst = [
+        "payment_requests",
+        "financial_session_payment_events",
+        "financial_transaction_lines",
+        "financial_transactions",
+    ];
+    const ordered = [
+        ...deleteFirst.filter((name) => tables.includes(name)),
+        ...tables.filter((name) => !deleteFirst.includes(name)),
+    ];
+
+    await env.DB.batch([
+        env.DB.prepare("PRAGMA foreign_keys = OFF"),
+        ...ordered.map((name) => env.DB.prepare(`DELETE FROM "${name}"`)),
+        env.DB.prepare("PRAGMA foreign_keys = ON"),
+    ]);
 }
 
 /** Evaluated at run time (after `beforeAll`) — use instead of `it.skipIf(!ready)` at collection time. */

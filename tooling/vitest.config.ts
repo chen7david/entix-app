@@ -13,8 +13,12 @@ export default defineWorkersConfig({
         setupFiles: [resolve(rootDir, "tests/setup.ts")],
         poolOptions: {
             workers: {
+                // Vitest module isolation (not D1 storage). Keep single process for shared helpers.
                 isolate: false,
                 singleWorker: true,
+                // Per-test D1 snapshots break when SQLite leaves .sqlite-shm/.sqlite-wal behind
+                // (cloudflare/workers-sdk#5629). Tests already recreate DB via createTestDb().
+                isolatedStorage: false,
                 wrangler: { configPath: resolve(rootDir, "wrangler.jsonc") },
                 miniflare: {
                     d1Databases: ["DB"],

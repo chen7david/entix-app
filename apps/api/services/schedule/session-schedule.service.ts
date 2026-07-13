@@ -7,10 +7,10 @@ import type { SessionScheduleRepository } from "@api/repositories/schedule/sessi
 import {
     calculateClassChargeCents,
     FINANCIAL_CATEGORIES,
-    FINANCIAL_CURRENCIES,
     generateAuditId,
     generateOpaqueId,
     IdempotencyKeys,
+    SESSION_BILLING_CURRENCY_ID,
 } from "@shared";
 import { addDays, addMonths, addWeeks } from "date-fns";
 import { BaseService } from "../base.service";
@@ -243,7 +243,7 @@ export class SessionScheduleService extends BaseService {
             // Fetch attendances to know who to bill
             const attendances = await this.sessionRepo.findAttendancesBySessionId(sessionId);
             const activeParticipantCount = attendances.filter((a) => !a.absent).length;
-            const currencyId = FINANCIAL_CURRENCIES.CNY; // Default to CNY for now
+            const currencyId = SESSION_BILLING_CURRENCY_ID;
 
             for (const attendance of attendances) {
                 if (attendance.absent) continue; // Don't bill if absent
@@ -314,7 +314,7 @@ export class SessionScheduleService extends BaseService {
                 currencyId,
                 sourceAccountId: account.id,
                 destinationAccountId: orgFunding.id,
-                categoryId: FINANCIAL_CATEGORIES.CASH_DEPOSIT,
+                categoryId: FINANCIAL_CATEGORIES.SESSION_PAYMENT,
                 idempotencyKey,
                 referenceType: "session",
                 referenceId: session.id,

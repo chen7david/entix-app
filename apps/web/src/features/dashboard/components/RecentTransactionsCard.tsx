@@ -27,8 +27,6 @@ export const RecentTransactionsCard: React.FC = () => {
                 loading={isLoading}
                 dataSource={transactions?.items || []}
                 renderItem={(item) => {
-                    const isRevenue = item.category.isRevenue;
-                    const isExpense = item.category.isExpense;
                     return (
                         <List.Item
                             className="px-0 py-3"
@@ -38,8 +36,9 @@ export const RecentTransactionsCard: React.FC = () => {
                                         amountCents={item.amountCents}
                                         currencySymbol={item.currency.symbol}
                                         currencyCode={item.currency.code}
-                                        isRevenue={isRevenue}
-                                        isExpense={isExpense}
+                                        direction={item.direction}
+                                        isRevenue={item.category.isRevenue}
+                                        isExpense={item.category.isExpense}
                                     />
                                     <Text
                                         type="secondary"
