@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=Plus+Jakarta+Sans:wght@500..700&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -6,12 +6,17 @@
     --text-base: #0f172a;
     --border-base: #e2e8f0;
     --app-sidebar-width: 240px;
+    --font-display: "Plus Jakarta Sans", Inter, system-ui, sans-serif;
 }
 
 .dark {
     --bg-base: #060a12; /* Slate 950-ish but deeper */
     --text-base: #f8fafc;
     --border-base: #1e293b;
+}
+
+.font-display {
+    font-family: var(--font-display);
 }
 
 /* TipTap / ProseMirror passage editor & read-only passage body */

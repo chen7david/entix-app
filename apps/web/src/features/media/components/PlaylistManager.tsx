@@ -50,6 +50,7 @@ import {
     Space,
     Tooltip,
     Typography,
+    theme,
 } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -130,6 +131,7 @@ export const PlaylistManager: React.FC<{
     externalIsCreateModalOpen?: boolean;
     onCloseCreateModal?: () => void;
 }> = ({ externalIsCreateModalOpen, onCloseCreateModal }) => {
+    const { token } = theme.useToken();
     const {
         debouncedSearch,
         cursorStack,
@@ -333,14 +335,13 @@ export const PlaylistManager: React.FC<{
                         label: "Playlists on This Page",
                         value: totalPlaylists,
                         icon: <OrderedListOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "media",
                         label: "Media Available",
                         value: media?.length || 0,
                         icon: <AppstoreOutlined />,
-                        color: "#8b5cf6",
+                        color: token.colorInfo,
                     },
                 ]}
             />

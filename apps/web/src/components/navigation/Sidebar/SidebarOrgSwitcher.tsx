@@ -1,4 +1,4 @@
-import { CheckOutlined, PlusOutlined, SwapOutlined } from "@ant-design/icons";
+import { CheckOutlined, DownOutlined, SettingOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { useActiveRole, useOrganization } from "@web/src/features/organization";
 import { Popover, Typography, theme } from "antd";
@@ -7,6 +7,42 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 
 const { Text } = Typography;
+
+function formatRole(role: string) {
+    return role.charAt(0).toUpperCase() + role.slice(1);
+}
+
+function OrgMark({
+    name,
+    size = 32,
+    active = false,
+}: {
+    name?: string | null;
+    size?: number;
+    active?: boolean;
+}) {
+    const { token } = theme.useToken();
+    return (
+        <div
+            style={{
+                width: size,
+                height: size,
+                borderRadius: size >= 32 ? 8 : 6,
+                background: active ? token.colorPrimary : token.colorFillSecondary,
+                color: active ? token.colorTextLightSolid : token.colorTextSecondary,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: size >= 32 ? 13 : 11,
+                fontWeight: 700,
+                flexShrink: 0,
+                letterSpacing: "-0.02em",
+            }}
+        >
+            {name?.charAt(0)?.toUpperCase() || "?"}
+        </div>
+    );
+}
 
 export const SidebarOrgSwitcher: React.FC = () => {
     const { organizations, activeOrganization, setActive, isSwitching } = useOrganization();
@@ -33,7 +69,6 @@ export const SidebarOrgSwitcher: React.FC = () => {
         }
         setActiveRole(role);
         setOpen(false);
-        /** `setActiveRole` (OrgGuard) already redirects to org dashboard for the new role. */
     };
 
     const handleManageOrgs = () => {
@@ -44,124 +79,96 @@ export const SidebarOrgSwitcher: React.FC = () => {
         }
     };
 
+    const sectionLabelStyle: React.CSSProperties = {
+        fontSize: 11,
+        fontWeight: 600,
+        textTransform: "uppercase",
+        letterSpacing: 0.6,
+        padding: "6px 12px 4px",
+        display: "block",
+        color: token.colorTextTertiary,
+    };
+
+    const rowBase = (isActive: boolean): React.CSSProperties => ({
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 10px",
+        cursor: "pointer",
+        borderRadius: 8,
+        margin: "1px 4px",
+        width: "calc(100% - 8px)",
+        border: "none",
+        background: isActive ? token.colorPrimaryBg : "transparent",
+        transition: "background 0.15s ease",
+        font: "inherit",
+        color: "inherit",
+        textAlign: "left",
+    });
+
     const orgList = (
-        <div style={{ width: 220, maxHeight: 280, overflow: "auto" }}>
-            <div style={{ padding: "4px 0" }}>
-                <Text
-                    type="secondary"
-                    style={{
-                        fontSize: 11,
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        letterSpacing: 0.5,
-                        padding: "4px 12px",
-                        display: "block",
-                    }}
-                >
-                    Organizations
-                </Text>
-            </div>
+        <div style={{ width: 240, maxHeight: 360, overflow: "auto" }}>
+            <Text style={sectionLabelStyle}>Organizations</Text>
             {organizations.map((org) => {
                 const isActive = org.id === activeOrganization?.id;
                 return (
-                    <div
+                    <button
                         key={org.id}
+                        type="button"
                         onClick={() => handleSelect(org)}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "8px 12px",
-                            cursor: "pointer",
-                            borderRadius: 6,
-                            margin: "0 4px",
-                            background: isActive ? "rgba(100, 108, 255, 0.08)" : "transparent",
-                            transition: "background 0.15s",
-                        }}
+                        style={rowBase(isActive)}
                         onMouseEnter={(e) => {
-                            if (!isActive) e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                            if (!isActive) {
+                                e.currentTarget.style.background = token.colorFillTertiary;
+                            }
                         }}
                         onMouseLeave={(e) => {
                             e.currentTarget.style.background = isActive
-                                ? "rgba(100, 108, 255, 0.08)"
+                                ? token.colorPrimaryBg
                                 : "transparent";
                         }}
                     >
-                        <div
-                            style={{
-                                width: 28,
-                                height: 28,
-                                borderRadius: 6,
-                                background: isActive ? "#646cff" : "#e8e8e8",
-                                color: isActive ? "#fff" : "#666",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 12,
-                                fontWeight: 700,
-                                flexShrink: 0,
-                            }}
-                        >
-                            {org.name?.charAt(0)?.toUpperCase() || "?"}
-                        </div>
+                        <OrgMark name={org.name} size={28} active={isActive} />
                         <Text
                             style={{
                                 flex: 1,
                                 fontSize: 13,
-                                fontWeight: isActive ? 600 : 400,
+                                fontWeight: isActive ? 600 : 450,
+                                minWidth: 0,
                             }}
-                            type={isActive ? undefined : "secondary"}
                             ellipsis
                         >
                             {org.name}
                         </Text>
-                        {isActive && <CheckOutlined style={{ color: "#646cff", fontSize: 12 }} />}
-                    </div>
+                        {isActive && (
+                            <CheckOutlined
+                                style={{ color: token.colorPrimary, fontSize: 12, flexShrink: 0 }}
+                            />
+                        )}
+                    </button>
                 );
             })}
+
             {userRoles.length > 1 && (
                 <>
                     <div
                         style={{
                             borderTop: `1px solid ${token.colorSplit}`,
-                            marginTop: 4,
-                            paddingTop: 4,
+                            margin: "6px 0 2px",
                         }}
-                    >
-                        <Text
-                            type="secondary"
-                            style={{
-                                fontSize: 11,
-                                fontWeight: 600,
-                                textTransform: "uppercase",
-                                letterSpacing: 0.5,
-                                padding: "4px 12px",
-                                display: "block",
-                            }}
-                        >
-                            Active Role
-                        </Text>
-                    </div>
+                    />
+                    <Text style={sectionLabelStyle}>Active role</Text>
                     {userRoles.map((role) => {
                         const isActiveRole = role === activeRole;
                         return (
-                            <div
+                            <button
                                 key={role}
+                                type="button"
                                 onClick={() => handleRoleSelect(role)}
-                                style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: 10,
-                                    padding: "8px 12px",
-                                    cursor: "pointer",
-                                    borderRadius: 6,
-                                    margin: "0 4px",
-                                    background: isActiveRole ? token.colorPrimaryBg : "transparent",
-                                    transition: "background 0.15s",
-                                }}
+                                style={rowBase(isActiveRole)}
                                 onMouseEnter={(e) => {
                                     if (!isActiveRole) {
-                                        e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                                        e.currentTarget.style.background = token.colorFillTertiary;
                                     }
                                 }}
                                 onMouseLeave={(e) => {
@@ -174,55 +181,58 @@ export const SidebarOrgSwitcher: React.FC = () => {
                                     style={{
                                         flex: 1,
                                         fontSize: 13,
-                                        fontWeight: isActiveRole ? 600 : 400,
+                                        fontWeight: isActiveRole ? 600 : 450,
                                     }}
-                                    type={isActiveRole ? undefined : "secondary"}
                                     ellipsis
                                 >
-                                    {role.charAt(0).toUpperCase()}
-                                    {role.slice(1)}
+                                    {formatRole(role)}
                                 </Text>
                                 {isActiveRole && (
                                     <CheckOutlined
-                                        style={{ color: token.colorPrimary, fontSize: 12 }}
+                                        style={{
+                                            color: token.colorPrimary,
+                                            fontSize: 12,
+                                            flexShrink: 0,
+                                        }}
                                     />
                                 )}
-                            </div>
+                            </button>
                         );
                     })}
                 </>
             )}
+
             <div
-                style={{ borderTop: `1px solid ${token.colorSplit}`, marginTop: 4, paddingTop: 4 }}
+                style={{
+                    borderTop: `1px solid ${token.colorSplit}`,
+                    marginTop: 6,
+                    paddingTop: 4,
+                }}
             >
-                <div
+                <button
+                    type="button"
                     onClick={handleManageOrgs}
                     style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        padding: "8px 12px",
-                        cursor: "pointer",
-                        borderRadius: 6,
-                        margin: "0 4px",
-                        color: "#666",
-                        transition: "background 0.15s",
+                        ...rowBase(false),
+                        color: token.colorTextSecondary,
                     }}
                     onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                        e.currentTarget.style.background = token.colorFillTertiary;
                     }}
                     onMouseLeave={(e) => {
                         e.currentTarget.style.background = "transparent";
                     }}
                 >
-                    <PlusOutlined style={{ fontSize: 12 }} />
+                    <SettingOutlined style={{ fontSize: 13 }} />
                     <Text type="secondary" style={{ fontSize: 13 }}>
-                        Manage Organizations
+                        Manage organizations
                     </Text>
-                </div>
+                </button>
             </div>
         </div>
     );
+
+    const roleLabel = activeRole ? formatRole(activeRole) : null;
 
     return (
         <Popover
@@ -230,58 +240,74 @@ export const SidebarOrgSwitcher: React.FC = () => {
             trigger="click"
             open={open}
             onOpenChange={setOpen}
-            placement="topLeft"
+            placement="bottomLeft"
             arrow={false}
-            styles={{ content: { padding: 4, borderRadius: 10 } }}
+            styles={{
+                content: {
+                    padding: 6,
+                    borderRadius: 12,
+                    boxShadow: token.boxShadowSecondary,
+                },
+            }}
         >
-            <div
+            <button
+                type="button"
+                aria-label="Switch organization or role"
+                aria-expanded={open}
+                disabled={isSwitching}
                 style={{
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
-                    cursor: "pointer",
-                    padding: "6px 8px",
-                    borderRadius: 8,
-                    transition: "background 0.15s",
-                    opacity: isSwitching ? 0.6 : 1,
+                    width: "100%",
+                    cursor: isSwitching ? "wait" : "pointer",
+                    padding: "8px 10px",
+                    borderRadius: 10,
+                    border: `1px solid ${open ? token.colorBorder : "transparent"}`,
+                    background: open ? token.colorFillTertiary : "transparent",
+                    transition: "background 0.15s ease, border-color 0.15s ease",
+                    opacity: isSwitching ? 0.65 : 1,
+                    textAlign: "left",
+                    font: "inherit",
+                    color: "inherit",
                 }}
                 onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(0,0,0,0.04)";
+                    if (!open) e.currentTarget.style.background = token.colorFillTertiary;
                 }}
                 onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "transparent";
+                    if (!open) e.currentTarget.style.background = "transparent";
                 }}
             >
-                <div
-                    style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 8,
-                        background: "#646cff",
-                        color: "#fff",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        flexShrink: 0,
-                    }}
-                >
-                    {activeOrganization?.name?.charAt(0)?.toUpperCase() || "E"}
-                </div>
+                <OrgMark name={activeOrganization?.name} size={34} active />
                 <div style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                    <Text strong style={{ fontSize: 13, lineHeight: "18px" }} ellipsis>
-                        Entix
+                    <Text
+                        strong
+                        className="font-display"
+                        style={{ fontSize: 13.5, lineHeight: "18px", letterSpacing: "-0.01em" }}
+                        ellipsis
+                    >
+                        {activeOrganization?.name || "Select organization"}
                     </Text>
-                    <Text type="secondary" style={{ fontSize: 11, lineHeight: "14px" }} ellipsis>
-                        {activeOrganization?.slug || "No organization"}
-                        {activeRole
-                            ? ` · ${activeRole.charAt(0).toUpperCase()}${activeRole.slice(1)}`
-                            : ""}
+                    <Text
+                        type="secondary"
+                        style={{ fontSize: 11.5, lineHeight: "15px", marginTop: 1 }}
+                        ellipsis
+                    >
+                        {roleLabel
+                            ? `Acting as ${roleLabel}`
+                            : activeOrganization?.slug || "No organization"}
                     </Text>
                 </div>
-                <SwapOutlined style={{ color: "#999", fontSize: 12, flexShrink: 0 }} />
-            </div>
+                <DownOutlined
+                    style={{
+                        color: token.colorTextTertiary,
+                        fontSize: 10,
+                        flexShrink: 0,
+                        transform: open ? "rotate(180deg)" : undefined,
+                        transition: "transform 0.15s ease",
+                    }}
+                />
+            </button>
         </Popover>
     );
 };

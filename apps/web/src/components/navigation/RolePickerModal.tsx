@@ -1,4 +1,10 @@
-import { BookOutlined, CrownOutlined, SafetyOutlined, UserOutlined } from "@ant-design/icons";
+import {
+    BookOutlined,
+    CrownOutlined,
+    DollarOutlined,
+    SafetyOutlined,
+    UserOutlined,
+} from "@ant-design/icons";
 import { useActiveRole } from "@web/src/features/organization";
 import { Button, Modal, Typography } from "antd";
 import type React from "react";
@@ -10,6 +16,7 @@ export const RolePickerModal: React.FC = () => {
     const getRoleIcon = (role: string) => {
         if (role === "owner") return <CrownOutlined />;
         if (role === "admin") return <SafetyOutlined />;
+        if (role === "finance") return <DollarOutlined />;
         if (role === "teacher") return <BookOutlined />;
         return <UserOutlined />;
     };

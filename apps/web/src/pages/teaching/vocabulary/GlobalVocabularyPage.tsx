@@ -156,7 +156,7 @@ export default function GlobalVocabularyPage() {
                 }
             />
 
-            <div className="flex-1 min-h-0 px-6 pb-6">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{
                         columns,

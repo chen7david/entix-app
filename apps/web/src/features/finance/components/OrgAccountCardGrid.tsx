@@ -1,16 +1,20 @@
+import { BankOutlined } from "@ant-design/icons";
 import type { WalletAccountDTO } from "@shared";
+import { TableEmptyState } from "@web/src/components/data/TableEmptyState";
 import {
     FinancialAccountCard,
     type FinancialAccountData,
 } from "@web/src/features/wallet/components/FinancialAccountCard";
 import { Col, Row } from "antd";
 import type React from "react";
+import type { ReactNode } from "react";
 
 type Props = {
     accounts: WalletAccountDTO[];
     loading?: boolean;
     onAccountClick?: (account: FinancialAccountData) => void;
     lowBalanceThresholdCents?: number;
+    emptyAction?: ReactNode;
 };
 
 export const OrgAccountCardGrid: React.FC<Props> = ({
@@ -18,6 +22,7 @@ export const OrgAccountCardGrid: React.FC<Props> = ({
     loading,
     onAccountClick,
     lowBalanceThresholdCents,
+    emptyAction,
 }) => {
     if (loading && (!accounts || accounts.length === 0)) {
         return (
@@ -28,6 +33,17 @@ export const OrgAccountCardGrid: React.FC<Props> = ({
                     </Col>
                 ))}
             </Row>
+        );
+    }
+
+    if (!accounts || accounts.length === 0) {
+        return (
+            <TableEmptyState
+                icon={<BankOutlined />}
+                title="No accounts to show"
+                subtitle="Activate a currency or create a custom account to get started."
+                action={emptyAction}
+            />
         );
     }
 

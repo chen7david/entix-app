@@ -5,7 +5,7 @@ import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/feat
 import { UploadsTable } from "@web/src/features/media/components/UploadsTable";
 import { useOrganization } from "@web/src/features/organization";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
-import { Button, Modal, Skeleton } from "antd";
+import { Button, Modal, Skeleton, theme } from "antd";
 import { useState } from "react";
 
 export type UploadFilters = {
@@ -14,6 +14,7 @@ export type UploadFilters = {
 };
 
 export const OrganizationUploadsPage = () => {
+    const { token } = theme.useToken();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const { activeOrganization } = useOrganization();
 
@@ -98,14 +99,13 @@ export const OrganizationUploadsPage = () => {
                         label: "Uploads on This Page",
                         value: totalFiles,
                         icon: <FileOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "storage",
                         label: "Storage Used",
                         value: formatBytes(totalStorage),
                         icon: <DatabaseOutlined />,
-                        color: "#8b5cf6",
+                        color: token.colorInfo,
                     },
                 ]}
             />

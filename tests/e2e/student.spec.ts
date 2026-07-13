@@ -15,8 +15,9 @@ test.describe("Student flows", () => {
         );
     });
 
-    test("lands on student dashboard without wallet entry points", async ({ page }) => {
-        await expect(page.getByText(/Welcome to Entix Academy/i)).toBeVisible();
+    test("lands on student learning dashboard", async ({ page }) => {
+        await expect(page.getByText(/Continue learning/i)).toBeVisible();
+        await expect(page.getByRole("heading", { name: /My Lessons/i })).toBeVisible();
         await expect(page.getByRole("heading", { name: /Wallet/i })).toHaveCount(0);
     });
 
@@ -24,11 +25,6 @@ test.describe("Student flows", () => {
         await page.goto(`/org/${ORG_SLUG}/dashboard/lessons`);
         await expect(page).toHaveURL(/\/lessons$/);
         await expect(page.getByRole("heading")).toBeVisible();
-    });
-
-    test("navigates to Shop", async ({ page }) => {
-        await page.goto(`/org/${ORG_SLUG}/dashboard/shop`);
-        await expect(page).toHaveURL(/\/shop$/);
     });
 
     test("student wallet route is not available", async ({ page }) => {

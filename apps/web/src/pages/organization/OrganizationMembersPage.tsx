@@ -373,21 +373,20 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         label: "Total Members",
                         value: totalMembers,
                         icon: <TeamOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "admins",
                         label: "Admins",
                         value: adminCount,
                         icon: <SafetyOutlined />,
-                        color: "#10b981",
+                        color: token.colorSuccess,
                     },
                     {
                         key: "owners",
                         label: "Owners",
                         value: ownerCount,
                         icon: <CrownOutlined />,
-                        color: "#f59e0b",
+                        color: token.colorWarning,
                     },
                 ]}
             />

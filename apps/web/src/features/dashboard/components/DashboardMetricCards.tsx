@@ -7,6 +7,7 @@ import {
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import type { BulkMetrics } from "@web/src/features/organization";
 import { NumberUtils } from "@web/src/utils/number";
+import { theme } from "antd";
 
 interface DashboardMetricCardsProps {
     metrics?: BulkMetrics;
@@ -22,6 +23,8 @@ const formatBytes = (bytes: number) => {
 };
 
 export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsProps) => {
+    const { token } = theme.useToken();
+
     return (
         <SummaryCardsRow
             loading={loading}
@@ -31,28 +34,30 @@ export const DashboardMetricCards = ({ metrics, loading }: DashboardMetricCardsP
                     label: "Total Members",
                     value: NumberUtils.formatNumber(metrics?.totalMembers || 0),
                     icon: <TeamOutlined />,
-                    color: "#2563eb",
                 },
                 {
                     key: "sessions",
                     label: "Active Sessions",
                     value: NumberUtils.formatNumber(metrics?.activeSessions || 0),
                     icon: <ThunderboltOutlined />,
-                    color: "#10b981",
+                    color: token.colorSuccess,
                 },
                 {
                     key: "risk",
                     label: "Engagement Risk",
                     value: NumberUtils.formatNumber(metrics?.engagementRisk || 0),
                     icon: <WarningOutlined />,
-                    color: (metrics?.engagementRisk || 0) > 0 ? "#fa8c16" : "#10b981",
+                    color:
+                        (metrics?.engagementRisk || 0) > 0
+                            ? token.colorWarning
+                            : token.colorSuccess,
                 },
                 {
                     key: "storage",
                     label: "Storage Used",
                     value: formatBytes(metrics?.totalStorage || 0),
                     icon: <DatabaseOutlined />,
-                    color: "#8b5cf6",
+                    color: token.colorInfo,
                 },
             ]}
         />

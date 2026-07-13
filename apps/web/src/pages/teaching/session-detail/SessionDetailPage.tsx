@@ -1,9 +1,11 @@
-import { ClockCircleOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, ClockCircleOutlined } from "@ant-design/icons";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useOrganization } from "@web/src/features/organization";
 import { useSessionById } from "@web/src/features/schedule";
-import { Card, Result, Space, Spin, Tag, Typography } from "antd";
+import { Button, Card, Result, Spin, Tag, Typography, theme } from "antd";
 import type React from "react";
-import { Link, useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 function sessionStatusTagColor(status: "scheduled" | "completed" | "cancelled") {
     if (status === "completed") return "green";
@@ -12,6 +14,8 @@ function sessionStatusTagColor(status: "scheduled" | "completed" | "cancelled") 
 }
 
 export const SessionDetailPage: React.FC = () => {
+    const { token } = theme.useToken();
+    const navigate = useNavigate();
     const { slug, sessionId } = useParams<{ slug: string; sessionId: string }>();
     const { activeOrganization } = useOrganization();
     const organizationId = activeOrganization?.id;
@@ -24,27 +28,36 @@ export const SessionDetailPage: React.FC = () => {
     const sessionTitle = sessionQuery.data?.title ?? "Session";
 
     return (
-        <div style={{ padding: 24 }}>
-            <Space align="baseline" wrap size="middle" style={{ marginBottom: 12 }}>
-                <Link to={teachingSessionsHref}>← Back to schedule</Link>
-                <Typography.Title level={4} style={{ margin: 0 }}>
-                    {sessionTitle}
-                </Typography.Title>
-                {sessionQuery.data?.status != null ? (
-                    <Tag color={sessionStatusTagColor(sessionQuery.data.status)}>
-                        {sessionQuery.data.status}
-                    </Tag>
-                ) : sessionQuery.isLoading ? (
-                    <Spin size="small" />
-                ) : null}
-            </Space>
+        <PageShell fill={false}>
+            <Button
+                type="text"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate(teachingSessionsHref)}
+                className="self-start !px-0 !mb-2"
+                style={{ color: token.colorTextSecondary }}
+            >
+                Back to schedule
+            </Button>
+            <PageHeader
+                title={sessionTitle}
+                subtitle="Session workspace"
+                actions={
+                    sessionQuery.data?.status != null ? (
+                        <Tag color={sessionStatusTagColor(sessionQuery.data.status)}>
+                            {sessionQuery.data.status}
+                        </Tag>
+                    ) : sessionQuery.isLoading ? (
+                        <Spin size="small" />
+                    ) : undefined
+                }
+            />
 
             {sessionQuery.isLoading && !sessionQuery.data ? (
                 <Typography.Text type="secondary">Loading session…</Typography.Text>
             ) : (
                 <Card>
                     <Result
-                        icon={<ClockCircleOutlined style={{ color: "#8b5cf6" }} />}
+                        icon={<ClockCircleOutlined style={{ color: token.colorPrimary }} />}
                         title="Session workspace"
                         subTitle={
                             <Typography.Text type="secondary">
@@ -55,6 +68,6 @@ export const SessionDetailPage: React.FC = () => {
                     />
                 </Card>
             )}
-        </div>
+        </PageShell>
     );
 };

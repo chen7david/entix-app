@@ -1,69 +1,31 @@
-import {
-    BookOutlined,
-    DashboardOutlined,
-    SettingOutlined,
-    ShoppingOutlined,
-    TeamOutlined,
-} from "@ant-design/icons";
-import { AppRoutes } from "@shared";
 import { useOrganization, useOrgNavigate, useOrgRole } from "@web/src/features/organization";
+import { buildOrgMobileTabs } from "@web/src/navigation/org-nav";
 import { theme } from "antd";
 import type React from "react";
+import { useMemo } from "react";
 import { useLocation } from "react-router";
-
-interface BottomTab {
-    key: string;
-    label: string;
-    icon: React.ReactNode;
-}
 
 export const MobileBottomNav: React.FC = () => {
     const { token } = theme.useToken();
     const navigateOrg = useOrgNavigate();
     const location = useLocation();
-    const { isAdminOrOwner, isFinanceStaff, isStaff } = useOrgRole();
+    const { isAdminOrOwner, isFinance, isFinanceStaff, isStaff, isStudent, isTeacher } =
+        useOrgRole();
     const { activeOrganization } = useOrganization();
     const slug = activeOrganization?.slug || "";
 
-    const studentTabs: BottomTab[] = [
-        { key: AppRoutes.org.dashboard.index, label: "Home", icon: <DashboardOutlined /> },
-        { key: AppRoutes.org.dashboard.lessons, label: "Lessons", icon: <BookOutlined /> },
-        { key: AppRoutes.org.dashboard.shop, label: "Shop", icon: <ShoppingOutlined /> },
-        { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
-    ];
-
-    const teacherTabs: BottomTab[] = [
-        { key: AppRoutes.org.dashboard.index, label: "Home", icon: <DashboardOutlined /> },
-        { key: AppRoutes.org.teaching.sessions, label: "Sessions", icon: <BookOutlined /> },
-        { key: AppRoutes.org.teaching.students, label: "Students", icon: <TeamOutlined /> },
-        { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
-    ];
-
-    const adminTabs: BottomTab[] = [
-        { key: AppRoutes.org.dashboard.index, label: "Home", icon: <DashboardOutlined /> },
-        { key: AppRoutes.org.admin.members, label: "Members", icon: <TeamOutlined /> },
-        { key: AppRoutes.org.admin.analytics, label: "Analytics", icon: <BookOutlined /> },
-        { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
-    ];
-
-    const financeTabs: BottomTab[] = [
-        { key: AppRoutes.org.dashboard.index, label: "Home", icon: <DashboardOutlined /> },
-        { key: AppRoutes.org.admin.members, label: "Members", icon: <TeamOutlined /> },
-        {
-            key: AppRoutes.org.admin.billing.transactions,
-            label: "Finance",
-            icon: <BookOutlined />,
-        },
-        { key: AppRoutes.org.dashboard.settings, label: "Settings", icon: <SettingOutlined /> },
-    ];
-
-    const tabs = isAdminOrOwner
-        ? adminTabs
-        : isFinanceStaff
-          ? financeTabs
-          : isStaff
-            ? teacherTabs
-            : studentTabs;
+    const tabs = useMemo(
+        () =>
+            buildOrgMobileTabs({
+                isStudent,
+                isTeacher,
+                isAdminOrOwner,
+                isFinance,
+                isFinanceStaff,
+                isStaff,
+            }),
+        [isAdminOrOwner, isFinance, isFinanceStaff, isStaff, isStudent, isTeacher]
+    );
 
     const orgPrefix = slug ? `/org/${slug}` : "";
     let pathSuffix = location.pathname;

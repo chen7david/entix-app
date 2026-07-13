@@ -10,13 +10,15 @@ import {
 import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/useDatePresetFilter";
 import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
 import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Card, Col, Row, Space, Typography } from "antd";
+import { Button, Card, Col, Row, Typography } from "antd";
 import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
@@ -191,30 +193,22 @@ export const WalletPage = () => {
     };
 
     return (
-        <div>
-            <Row justify="space-between" align="middle" style={{ marginBottom: 32 }}>
-                <Col>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Personal Wallet
-                    </Title>
-                    <Typography.Text type="secondary">
-                        Manage your personal financial accounts within this organization.
-                    </Typography.Text>
-                </Col>
-                <Col>
-                    <Space>
-                        <Button
-                            type="primary"
-                            icon={<PlusCircleOutlined />}
-                            onClick={() => setIsTransferOpen(true)}
-                        >
-                            New Transfer
-                        </Button>
-                    </Space>
-                </Col>
-            </Row>
+        <PageShell>
+            <PageHeader
+                title="Personal Wallet"
+                subtitle="Manage your personal financial accounts within this organization."
+                actions={
+                    <Button
+                        type="primary"
+                        icon={<PlusCircleOutlined />}
+                        onClick={() => setIsTransferOpen(true)}
+                    >
+                        New Transfer
+                    </Button>
+                }
+            />
 
-            <div style={{ marginBottom: 16 }}>
+            <div className="mb-4">
                 <DataFreshnessControls
                     freshnessLabel={freshnessControls.freshness.label}
                     freshnessTooltip={freshnessControls.freshness.tooltip}
@@ -224,7 +218,7 @@ export const WalletPage = () => {
                 />
             </div>
 
-            <Row gutter={[24, 24]}>
+            <Row gutter={[24, 24]} className="flex-1 min-h-0">
                 <Col span={24}>
                     <Title level={4} style={{ marginBottom: 16 }}>
                         Your Accounts
@@ -268,7 +262,7 @@ export const WalletPage = () => {
                 orgId={orgId}
                 accounts={summary?.accounts}
             />
-        </div>
+        </PageShell>
     );
 };
 

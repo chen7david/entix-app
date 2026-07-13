@@ -3,6 +3,7 @@ import {
     ClockCircleOutlined,
     OrderedListOutlined,
     PlaySquareOutlined,
+    PlusOutlined,
     TeamOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
@@ -10,7 +11,7 @@ import { useAuth } from "@web/src/features/auth";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useSchedule } from "@web/src/features/schedule/hooks/useSchedule";
 import { DateUtils } from "@web/src/utils/date";
-import { Button, Card, Col, List, Row, Space, Typography, theme } from "antd";
+import { Button, Card, Col, Empty, List, Row, Space, Typography, theme } from "antd";
 import type React from "react";
 import { useMemo } from "react";
 
@@ -36,39 +37,67 @@ export const TeacherPortal: React.FC = () => {
 
     return (
         <div>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Teacher Dashboard
-                </Title>
-                <Text type="secondary">Manage your classes, media, and student engagement.</Text>
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                    <Text
+                        className="uppercase tracking-[0.14em] text-xs font-semibold"
+                        style={{ color: token.colorPrimary }}
+                    >
+                        Teaching
+                    </Text>
+                    <Title level={2} className="!mt-2 !mb-1 font-display">
+                        Your classroom
+                    </Title>
+                    <Text type="secondary">Run sessions, lessons, and student lists.</Text>
+                </div>
+                <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => navigateOrg(AppRoutes.org.teaching.sessions)}
+                >
+                    Manage sessions
+                </Button>
             </div>
 
             <Row gutter={[24, 24]}>
                 <Col xs={24} lg={16}>
-                    <Card title="Upcoming Classes" className="shadow-sm h-full">
+                    <Card title="Upcoming classes" className="border-0 shadow-sm h-full">
                         <List
                             loading={isLoading}
                             dataSource={myUpcomingSessions}
                             locale={{
                                 emptyText: (
-                                    <Space direction="vertical" className="w-full text-center py-8">
-                                        <CalendarOutlined
-                                            style={{ fontSize: 48, color: token.colorTextDisabled }}
-                                        />
-                                        <Text type="secondary">No assigned classes scheduled.</Text>
+                                    <Empty
+                                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                        description="No classes scheduled for you yet."
+                                    >
                                         <Button
                                             type="primary"
                                             onClick={() =>
                                                 navigateOrg(AppRoutes.org.teaching.sessions)
                                             }
                                         >
-                                            Go to Sessions
+                                            Open schedule
                                         </Button>
-                                    </Space>
+                                    </Empty>
                                 ),
                             }}
                             renderItem={(item) => (
-                                <List.Item>
+                                <List.Item
+                                    actions={[
+                                        <Button
+                                            key="open"
+                                            type="link"
+                                            onClick={() =>
+                                                navigateOrg(
+                                                    `${AppRoutes.org.teaching.sessions}/${item.id}`
+                                                )
+                                            }
+                                        >
+                                            Open
+                                        </Button>,
+                                    ]}
+                                >
                                     <List.Item.Meta
                                         title={<Text strong>{item.title}</Text>}
                                         description={
@@ -92,39 +121,42 @@ export const TeacherPortal: React.FC = () => {
                     </Card>
                 </Col>
                 <Col xs={24} lg={8}>
-                    <Space direction="vertical" className="w-full" size="middle">
-                        <Card title="Quick Resources" className="shadow-sm">
-                            <Space direction="vertical" className="w-full">
-                                <Button
-                                    block
-                                    icon={<PlaySquareOutlined />}
-                                    onClick={() => navigateOrg(AppRoutes.org.teaching.media)}
-                                >
-                                    Media Library
-                                </Button>
-                                <Button
-                                    block
-                                    icon={<OrderedListOutlined />}
-                                    onClick={() => navigateOrg(AppRoutes.org.teaching.playlists)}
-                                >
-                                    Playlists
-                                </Button>
-                                <Button
-                                    block
-                                    icon={<TeamOutlined />}
-                                    onClick={() => navigateOrg(AppRoutes.org.teaching.students)}
-                                >
-                                    Class Roster
-                                </Button>
-                            </Space>
-                        </Card>
-                        <Card title="Education Insights" className="shadow-sm">
-                            <Text type="secondary" italic>
-                                Student GPA trends, engagement scores, and attendance reports coming
-                                soon.
-                            </Text>
-                        </Card>
-                    </Space>
+                    <Card title="Quick actions" className="border-0 shadow-sm">
+                        <Space direction="vertical" className="w-full">
+                            <Button
+                                block
+                                size="large"
+                                icon={<CalendarOutlined />}
+                                onClick={() => navigateOrg(AppRoutes.org.teaching.sessions)}
+                            >
+                                Sessions
+                            </Button>
+                            <Button
+                                block
+                                size="large"
+                                icon={<PlaySquareOutlined />}
+                                onClick={() => navigateOrg(AppRoutes.org.teaching.media)}
+                            >
+                                Media library
+                            </Button>
+                            <Button
+                                block
+                                size="large"
+                                icon={<OrderedListOutlined />}
+                                onClick={() => navigateOrg(AppRoutes.org.teaching.vocabulary)}
+                            >
+                                Vocabulary
+                            </Button>
+                            <Button
+                                block
+                                size="large"
+                                icon={<TeamOutlined />}
+                                onClick={() => navigateOrg(AppRoutes.org.teaching.students)}
+                            >
+                                Students
+                            </Button>
+                        </Space>
+                    </Card>
                 </Col>
             </Row>
         </div>

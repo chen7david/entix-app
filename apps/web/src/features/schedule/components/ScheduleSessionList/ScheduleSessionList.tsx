@@ -14,6 +14,7 @@ type Props = {
     onFetchNextPage: () => void;
     onEdit: (session: SessionDTO) => void;
     onOpenVocabulary?: (session: SessionDTO) => void;
+    onCreate?: () => void;
 };
 
 export const ScheduleSessionList: React.FC<Props> = ({
@@ -23,6 +24,7 @@ export const ScheduleSessionList: React.FC<Props> = ({
     onFetchNextPage,
     onEdit,
     onOpenVocabulary,
+    onCreate,
 }) => {
     const { token } = theme.useToken();
 
@@ -36,8 +38,15 @@ export const ScheduleSessionList: React.FC<Props> = ({
                     emptyText: (
                         <TableEmptyState
                             icon={<CalendarOutlined style={{ fontSize: 64 }} />}
-                            title="No upcoming sessions found matching criteria"
-                            subtitle="Try adjusting your filters or checking a different date range."
+                            title="No sessions found"
+                            subtitle="Try adjusting your filters, or schedule a new session."
+                            action={
+                                onCreate ? (
+                                    <Button type="primary" onClick={onCreate}>
+                                        Schedule session
+                                    </Button>
+                                ) : undefined
+                            }
                         />
                     ),
                 }}

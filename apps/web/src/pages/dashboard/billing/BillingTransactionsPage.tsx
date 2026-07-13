@@ -15,16 +15,17 @@ import { normalizeDatePresetFilters } from "@web/src/components/data/filter-bar/
 import { DataFreshnessControls } from "@web/src/components/data/refresh/DataFreshnessControls";
 import { useDataFreshnessControls } from "@web/src/components/data/refresh/useDataFreshnessControls";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
 import { useTransactions } from "@web/src/features/finance/hooks/useTransactions";
 import { useOrganization } from "@web/src/features/organization";
 import { DateUtils } from "@web/src/utils/date";
-import { Typography } from "antd";
+import { theme } from "antd";
 import type React from "react";
 import { useCallback, useMemo, useState } from "react";
 
-const { Title, Text } = Typography;
 const CUSTOM_RANGE_PRESET = "__custom";
 
 function areBillingTransactionFiltersEqual(
@@ -41,6 +42,7 @@ function areBillingTransactionFiltersEqual(
 }
 
 export const BillingTransactionsPage: React.FC = () => {
+    const { token } = theme.useToken();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
 
@@ -178,16 +180,11 @@ export const BillingTransactionsPage: React.FC = () => {
     };
 
     return (
-        <div>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Transaction Ledger
-                </Title>
-                <Text type="secondary" className="text-base">
-                    A comprehensive, immutable record of all organizational billing transactions and
-                    reversals.
-                </Text>
-                <div style={{ marginTop: 12 }}>
+        <PageShell>
+            <PageHeader
+                title="Transaction Ledger"
+                subtitle="Immutable record of organizational billing transactions and reversals."
+                actions={
                     <DataFreshnessControls
                         freshnessLabel={freshnessControls.freshness.label}
                         freshnessTooltip={freshnessControls.freshness.tooltip}
@@ -195,8 +192,8 @@ export const BillingTransactionsPage: React.FC = () => {
                         isRefreshing={freshnessControls.isFetching}
                         onRefresh={freshnessControls.refreshNow}
                     />
-                </div>
-            </div>
+                }
+            />
 
             <SummaryCardsRow
                 loading={isLoading}
@@ -206,52 +203,54 @@ export const BillingTransactionsPage: React.FC = () => {
                         label: "Ledger Records",
                         value: data?.items?.length || 0,
                         icon: <InteractionOutlined />,
-                        color: "#2563eb",
+                        color: token.colorPrimary,
                     },
                     {
                         key: "completed",
                         label: "Completed",
                         value: data?.items?.filter((t) => t.status === "completed").length || 0,
                         icon: <CheckCircleOutlined />,
-                        color: "#10b981",
+                        color: token.colorSuccess,
                     },
                     {
                         key: "pending",
                         label: "Pending",
                         value: data?.items?.filter((t) => t.status === "pending").length || 0,
                         icon: <SyncOutlined />,
-                        color: "#f59e0b",
+                        color: token.colorWarning,
                     },
                     {
                         key: "reversed",
                         label: "Reversed",
                         value: data?.items?.filter((t) => t.status === "reversed").length || 0,
                         icon: <RollbackOutlined />,
-                        color: "#ef4444",
+                        color: token.colorError,
                     },
                 ]}
             />
 
-            <TransactionLedgerTable
-                transactions={data?.items || []}
-                loading={isLoading}
-                onReverse={(txId, reason) => reverse({ txId, reason })}
-                isReversing={isReversing ? variables?.txId : null}
-                pagination={{
-                    pageSize,
-                    hasNextPage: !!data?.nextCursor,
-                    hasPrevPage: cursorStack.length > 0,
-                    onNext: handleNext,
-                    onPrev: handlePrev,
-                    onPageSizeChange: (size: number) => {
-                        setPageSize(size);
-                        setCursorStack([]); // Reset on size change
-                    },
-                }}
-                filters={filterConfig}
-                initialFilters={billingTransactionInitialFilters}
-                onFiltersChange={handleFiltersChange}
-            />
-        </div>
+            <div className="flex-1 min-h-0">
+                <TransactionLedgerTable
+                    transactions={data?.items || []}
+                    loading={isLoading}
+                    onReverse={(txId, reason) => reverse({ txId, reason })}
+                    isReversing={isReversing ? variables?.txId : null}
+                    pagination={{
+                        pageSize,
+                        hasNextPage: !!data?.nextCursor,
+                        hasPrevPage: cursorStack.length > 0,
+                        onNext: handleNext,
+                        onPrev: handlePrev,
+                        onPageSizeChange: (size: number) => {
+                            setPageSize(size);
+                            setCursorStack([]);
+                        },
+                    }}
+                    filters={filterConfig}
+                    initialFilters={billingTransactionInitialFilters}
+                    onFiltersChange={handleFiltersChange}
+                />
+            </div>
+        </PageShell>
     );
 };

@@ -225,7 +225,7 @@ export function TextLibraryPage() {
     }));
 
     return (
-        <div className="flex flex-col h-full p-4 md:p-6">
+        <div className="flex flex-col h-full">
             <PageHeader
                 title="Text library"
                 subtitle="Manage collections (books/readers) and passages. Link passages to a collection when creating or editing."

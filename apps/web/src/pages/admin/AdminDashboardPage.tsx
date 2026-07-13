@@ -1,13 +1,16 @@
 import { SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useAdminUsers } from "@web/src/features/admin";
 import { useAuth } from "@web/src/features/auth";
-import { Card, Empty, Tag, Typography } from "antd";
+import { Card, Empty, Tag, Typography, theme } from "antd";
 import type React from "react";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 export const AdminDashboardPage: React.FC = () => {
+    const { token } = theme.useToken();
     const { user } = useAuth();
     const { data: userData, isPending: isLoading } = useAdminUsers();
     const users = userData?.items || [];
@@ -17,18 +20,16 @@ export const AdminDashboardPage: React.FC = () => {
     const bannedUsers = users.filter((u: any) => u.banned).length || 0;
 
     return (
-        <div>
-            <div className="flex justify-between items-center" style={{ marginBottom: 32 }}>
-                <div>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Admin Dashboard
-                    </Title>
-                    <Text type="secondary">Manage all system users</Text>
-                </div>
-                <Tag color="blue" className="text-sm px-3 py-1">
-                    Logged in as: {user?.name}
-                </Tag>
-            </div>
+        <PageShell fill={false}>
+            <PageHeader
+                title="Admin Dashboard"
+                subtitle="Manage all system users."
+                actions={
+                    <Tag color="blue" className="text-sm px-3 py-1">
+                        Logged in as: {user?.name}
+                    </Tag>
+                }
+            />
 
             <SummaryCardsRow
                 loading={isLoading}
@@ -38,31 +39,30 @@ export const AdminDashboardPage: React.FC = () => {
                         label: "Total Users",
                         value: totalUsers,
                         icon: <TeamOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "admins",
                         label: "Platform Admins",
                         value: adminUsers,
                         icon: <SafetyOutlined />,
-                        color: "#f59e0b",
+                        color: token.colorWarning,
                     },
                     {
                         key: "banned",
                         label: "Banned Users",
                         value: bannedUsers,
                         icon: <StopOutlined />,
-                        color: bannedUsers > 0 ? "#ef4444" : "#10b981",
+                        color: bannedUsers > 0 ? token.colorError : token.colorSuccess,
                     },
                 ]}
             />
 
-            <Card style={{ marginTop: 32 }}>
+            <Card className="mt-8">
                 <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
                     description={
                         <span>
-                            <strong>More Metrics Coming Soon</strong>
+                            <strong>More metrics coming soon</strong>
                             <br />
                             <Text type="secondary">
                                 Reserved for administrative analytics and future charts.
@@ -71,6 +71,6 @@ export const AdminDashboardPage: React.FC = () => {
                     }
                 />
             </Card>
-        </div>
+        </PageShell>
     );
 };

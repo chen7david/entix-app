@@ -70,7 +70,7 @@ export function BookImportReviewPage() {
 
     if (isLoading) {
         return (
-            <div className="p-8">
+            <div className="py-8">
                 <Spin />
             </div>
         );
@@ -95,11 +95,12 @@ export function BookImportReviewPage() {
     const canFinalize = job.status === "review" && active.length > 0;
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="p-4 md:p-6 border-b">
+        <div className="flex flex-col h-full min-h-0">
+            <div className="border-b pb-4 mb-4">
                 <PageHeader
                     title="Review import"
                     subtitle={job?.fileName ?? ""}
+                    className="mb-0"
                     actions={
                         <Button
                             type="primary"
@@ -113,7 +114,7 @@ export function BookImportReviewPage() {
             </div>
 
             {!canEdit && (
-                <div className="px-4 md:px-6 pt-4">
+                <div className="pb-4">
                     <Alert
                         type="info"
                         showIcon
@@ -169,7 +170,7 @@ export function BookImportReviewPage() {
                     </div>
                 </div>
 
-                <div className="flex-1 p-6 flex flex-col gap-4 min-w-0">
+                <div className="flex-1 pl-4 md:pl-6 flex flex-col gap-4 min-w-0">
                     {selected ? (
                         <>
                             <Text type="secondary">

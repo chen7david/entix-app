@@ -1,6 +1,7 @@
 import { PlusOutlined } from "@ant-design/icons";
 import type { WalletAccountDTO } from "@shared";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { AdminCreditDrawer } from "@web/src/features/wallet/components/AdminCreditDrawer";
 import {
     FinancialAccountCard,
@@ -30,7 +31,7 @@ export const FinancialManagementPage: React.FC = () => {
     };
 
     return (
-        <div>
+        <PageShell fill={false}>
             <PageHeader
                 title="Billing Oversight"
                 subtitle="Centralized platform treasury management and organizational funding controls."
@@ -51,21 +52,12 @@ export const FinancialManagementPage: React.FC = () => {
             />
 
             {/* Treasury Health */}
-            <div style={{ marginBottom: 32 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <div className="mb-8">
+                <div className="flex items-center gap-3 mb-4">
                     <Title level={4} style={{ margin: 0 }}>
                         Platform Treasury
                     </Title>
-                    <Tag
-                        color="blue"
-                        style={{
-                            margin: 0,
-                            borderRadius: 6,
-                            fontWeight: 600,
-                            borderColor: "#1e40af",
-                            color: "#1e40af",
-                        }}
-                    >
+                    <Tag color="blue" className="m-0 font-semibold rounded-md">
                         LIQUIDITY
                     </Tag>
                 </div>
@@ -100,6 +92,6 @@ export const FinancialManagementPage: React.FC = () => {
                 onOrgChange={handleOrgChange}
                 preSelectedAccount={selectedAccount}
             />
-        </div>
+        </PageShell>
     );
 };

@@ -1,3 +1,4 @@
+import { CalendarOutlined, TeamOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
 import {
@@ -18,7 +19,7 @@ import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import { useOrgNavigate } from "@web/src/features/organization/hooks/useOrgNavigate";
 import { DateUtils } from "@web/src/utils/date";
-import { Alert, Button, Col, Row, Spin, Typography } from "antd";
+import { Alert, Button, Col, Row, Space, Spin, Typography, theme } from "antd";
 import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 
 const SessionVolumeChart = lazy(() =>
@@ -31,6 +32,7 @@ const AttendanceTrendChart = lazy(() =>
 const { Title, Text } = Typography;
 
 export const AdminPortal: React.FC = () => {
+    const { token } = theme.useToken();
     const { activeOrganization } = useOrganization();
     const navigateOrg = useOrgNavigate();
     const { metrics, isLoadingMetrics, isFetchingMetrics, metricsUpdatedAt, refetchMetrics } =
@@ -129,15 +131,42 @@ export const AdminPortal: React.FC = () => {
 
     return (
         <div className="pb-8">
-            <Row justify="space-between" align="bottom" style={{ marginBottom: 32 }}>
+            <Row
+                justify="space-between"
+                align="bottom"
+                style={{ marginBottom: 32 }}
+                gutter={[16, 16]}
+            >
                 <Col>
-                    <Title level={2} style={{ margin: 0 }}>
-                        Organization Dashboard
+                    <Text
+                        className="uppercase tracking-[0.14em] text-xs font-semibold"
+                        style={{ color: token.colorPrimary }}
+                    >
+                        Operations
+                    </Text>
+                    <Title level={2} className="!mt-2 !mb-1 font-display">
+                        {activeOrganization?.name || "Organization"}
                     </Title>
                     <Text type="secondary">
-                        Welcome back to {activeOrganization?.name}. Your central command for
-                        organization health.
+                        Create sessions, manage people, and monitor school health.
                     </Text>
+                </Col>
+                <Col>
+                    <Space wrap>
+                        <Button
+                            type="primary"
+                            icon={<CalendarOutlined />}
+                            onClick={() => navigateOrg(AppRoutes.org.teaching.sessions)}
+                        >
+                            Sessions
+                        </Button>
+                        <Button
+                            icon={<TeamOutlined />}
+                            onClick={() => navigateOrg(AppRoutes.org.admin.members)}
+                        >
+                            People
+                        </Button>
+                    </Space>
                 </Col>
             </Row>
 

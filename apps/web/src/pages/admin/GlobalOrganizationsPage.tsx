@@ -11,6 +11,7 @@ import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import {
     AdminOrgCurrencyPanel,
     useAdminCreateUserWithOrg,
@@ -143,7 +144,7 @@ export const GlobalOrganizationsPage: React.FC = () => {
     ];
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Global Organizations"
                 subtitle="Manage all platform organizations and their owners from a centralized authority."
@@ -179,13 +180,12 @@ export const GlobalOrganizationsPage: React.FC = () => {
                         label: "Platform Organizations",
                         value: orgData?.items?.length || 0,
                         icon: <ApartmentOutlined />,
-                        color: "#2563eb",
                     },
                 ]}
             />
 
             {/* Table */}
-            <div className="h-[calc(100vh-420px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 <DataTableWithFilters
                     config={{
                         columns,
@@ -295,6 +295,6 @@ export const GlobalOrganizationsPage: React.FC = () => {
             >
                 {currencyOrgId && <AdminOrgCurrencyPanel orgId={currencyOrgId} />}
             </Modal>
-        </div>
+        </PageShell>
     );
 };

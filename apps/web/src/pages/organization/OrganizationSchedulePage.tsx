@@ -104,6 +104,7 @@ export const OrganizationSchedulePage: React.FC = () => {
                         isFetchingNextPage={isFetchingNextPage}
                         onFetchNextPage={fetchNextPage}
                         onEdit={handleEdit}
+                        onCreate={handleCreate}
                         onOpenVocabulary={(session) => {
                             if (!slug) return;
                             navigate(`/org/${slug}/teaching/sessions/${session.id}/vocabulary`);

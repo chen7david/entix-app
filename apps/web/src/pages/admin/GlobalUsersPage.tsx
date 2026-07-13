@@ -1,10 +1,13 @@
 import { SafetyOutlined, StopOutlined, TeamOutlined } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { UserTable, useAdminUsers } from "@web/src/features/admin";
+import { theme } from "antd";
 import type React from "react";
 
 export const GlobalUsersPage: React.FC = () => {
+    const { token } = theme.useToken();
     const { data: userData, isPending: isLoading } = useAdminUsers();
     const users = userData?.items || [];
 
@@ -13,7 +16,7 @@ export const GlobalUsersPage: React.FC = () => {
     const bannedUsers = users.filter((u: any) => u.banned).length || 0;
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Global Users"
                 subtitle="Manage all platform users, roles, and access controls from a centralized authority."
@@ -27,26 +30,27 @@ export const GlobalUsersPage: React.FC = () => {
                         label: "Total Users",
                         value: totalUsers,
                         icon: <TeamOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "admins",
                         label: "Platform Admins",
                         value: adminUsers,
                         icon: <SafetyOutlined />,
-                        color: "#f59e0b",
+                        color: token.colorWarning,
                     },
                     {
                         key: "banned",
                         label: "Banned Users",
                         value: bannedUsers,
                         icon: <StopOutlined />,
-                        color: "#ef4444",
+                        color: token.colorError,
                     },
                 ]}
             />
 
-            <UserTable />
-        </div>
+            <div className="flex-1 min-h-0">
+                <UserTable />
+            </div>
+        </PageShell>
     );
 };

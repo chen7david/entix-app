@@ -17,6 +17,8 @@ export const AppRoutes = {
             lessons: "/dashboard/lessons",
             lessonStudy: (lessonId: string) => `/dashboard/lessons/${lessonId}`,
             playlistDetail: (playlistId: string | number) => `/dashboard/playlists/${playlistId}`,
+            mySchedule: "/dashboard/my-schedule",
+            vocabulary: "/dashboard/vocabulary",
             shop: "/dashboard/shop",
             wallet: "/dashboard/wallet",
             movies: "/dashboard/movies",

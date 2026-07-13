@@ -1,9 +1,9 @@
-import { BookOutlined, ShoppingOutlined, YoutubeOutlined } from "@ant-design/icons";
+import { BookOutlined, CalendarOutlined, RightOutlined } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
 import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import { useMyEnrollments } from "@web/src/features/schedule/hooks/useSchedule";
 import { DateUtils } from "@web/src/utils/date";
-import { Alert, Card, Col, List, Row, Space, Typography, theme } from "antd";
+import { Alert, Button, Card, Col, Empty, List, Row, Space, Typography, theme } from "antd";
 import type React from "react";
 import { useMemo } from "react";
 import { Link } from "react-router";
@@ -29,117 +29,161 @@ export const StudentPortal: React.FC = () => {
             return parsed >= now;
         });
 
-        // If clock parsing/timezone edge cases hide "upcoming", still show enrolled sessions.
         const source = upcoming.length > 0 ? upcoming : sorted;
         return source.slice(0, 5);
     }, [enrollments]);
 
+    const nextSession = myDisplaySessions[0];
+
     return (
         <div>
-            <div style={{ marginBottom: 32 }}>
-                <Title level={2} style={{ margin: 0 }}>
-                    Welcome to Entix Academy
+            <div className="mb-8">
+                <Text
+                    className="uppercase tracking-[0.14em] text-xs font-semibold"
+                    style={{ color: token.colorPrimary }}
+                >
+                    {activeOrganization?.name || "Entix"}
+                </Text>
+                <Title level={2} className="!mt-2 !mb-1 font-display">
+                    Continue learning
                 </Title>
-                <Text type="secondary">Your portal for lessons, entertainment, and rewards.</Text>
+                <Text type="secondary">Your lessons and upcoming sessions, in one place.</Text>
             </div>
 
-            <Row gutter={[24, 24]}>
-                <Col xs={24} sm={12} lg={8}>
+            <Row gutter={[20, 20]} className="mb-8">
+                <Col xs={24} sm={12}>
                     <Card
                         hoverable
-                        className="h-full shadow-sm text-center"
+                        className="h-full border-0 shadow-sm"
+                        styles={{ body: { padding: 24 } }}
                         onClick={() => navigateOrg(AppRoutes.org.dashboard.lessons)}
                     >
                         <BookOutlined
-                            style={{ fontSize: 32, color: token.colorPrimary, marginBottom: 16 }}
+                            style={{ fontSize: 28, color: token.colorPrimary, marginBottom: 12 }}
                         />
-                        <Title level={4}>My Lessons</Title>
-                        <Text type="secondary">Access your classroom.</Text>
+                        <Title level={4} className="!mb-1">
+                            My Lessons
+                        </Title>
+                        <Text type="secondary">Open courses and study materials.</Text>
                     </Card>
                 </Col>
-                <Col xs={24} sm={12} lg={8}>
+                <Col xs={24} sm={12}>
                     <Card
                         hoverable
-                        className="h-full shadow-sm text-center"
-                        onClick={() => navigateOrg(AppRoutes.org.dashboard.movies)}
+                        className="h-full border-0 shadow-sm"
+                        styles={{ body: { padding: 24 } }}
+                        onClick={() => navigateOrg(AppRoutes.org.dashboard.mySchedule)}
                     >
-                        <YoutubeOutlined
-                            style={{ fontSize: 32, color: token.colorError, marginBottom: 16 }}
+                        <CalendarOutlined
+                            style={{ fontSize: 28, color: token.colorPrimary, marginBottom: 12 }}
                         />
-                        <Title level={4}>Movies</Title>
-                        <Text type="secondary">Watch and learn.</Text>
-                    </Card>
-                </Col>
-                <Col xs={24} sm={12} lg={8}>
-                    <Card
-                        hoverable
-                        className="h-full shadow-sm text-center"
-                        onClick={() => navigateOrg(AppRoutes.org.dashboard.shop)}
-                    >
-                        <ShoppingOutlined
-                            style={{ fontSize: 32, color: token.colorWarning, marginBottom: 16 }}
-                        />
-                        <Title level={4}>Shop</Title>
-                        <Text type="secondary">Redeem your rewards.</Text>
+                        <Title level={4} className="!mb-1">
+                            My Schedule
+                        </Title>
+                        <Text type="secondary">See all enrolled sessions.</Text>
                     </Card>
                 </Col>
             </Row>
 
-            <div className="mt-8">
-                <Card title="My Upcoming Sessions" className="shadow-sm">
-                    {error && (
-                        <Alert
-                            type="warning"
-                            showIcon
-                            style={{ marginBottom: 12 }}
-                            message="Unable to load enrollment sessions right now."
-                            description={error.message}
-                        />
-                    )}
-                    <List
-                        loading={isLoading}
-                        dataSource={myDisplaySessions}
-                        locale={{
-                            emptyText: (
-                                <Text type="secondary" italic>
-                                    No assigned sessions yet.
-                                </Text>
-                            ),
-                        }}
-                        renderItem={(item) => (
-                            <List.Item>
-                                <List.Item.Meta
-                                    title={
-                                        orgSlug ? (
-                                            <Link
-                                                to={`/org/${orgSlug}/dashboard/lessons/${item.lessonId}`}
-                                                className="text-inherit"
-                                            >
-                                                <Text strong className="hover:text-indigo-600">
-                                                    {item.lessonTitle}
-                                                </Text>
-                                            </Link>
-                                        ) : (
-                                            <Text strong>{item.lessonTitle}</Text>
-                                        )
-                                    }
-                                    description={
-                                        <Space direction="vertical" size={0}>
-                                            <Text type="secondary">
-                                                {DateUtils.format(item.startTime, "MMM D, h:mm A")}{" "}
-                                                - {DateUtils.format(item.endTime, "h:mm A")}
-                                            </Text>
-                                            <Text type="secondary">
-                                                Teacher: {item.teacherName || "Unassigned"}
-                                            </Text>
-                                        </Space>
-                                    }
-                                />
-                            </List.Item>
-                        )}
-                    />
+            {nextSession && (
+                <Card
+                    className="mb-6 border-0 shadow-sm"
+                    styles={{
+                        body: {
+                            padding: 20,
+                            background: `linear-gradient(135deg, ${token.colorPrimaryBg} 0%, ${token.colorBgContainer} 70%)`,
+                        },
+                    }}
+                >
+                    <Text type="secondary" className="text-xs uppercase tracking-wide">
+                        Up next
+                    </Text>
+                    <Title level={4} className="!mt-1 !mb-2">
+                        {nextSession.lessonTitle}
+                    </Title>
+                    <Text type="secondary">
+                        {DateUtils.format(nextSession.startTime, "ddd, MMM D · h:mm A")}
+                        {nextSession.teacherName ? ` · ${nextSession.teacherName}` : ""}
+                    </Text>
+                    <div className="mt-4">
+                        <Button
+                            type="primary"
+                            icon={<RightOutlined />}
+                            onClick={() =>
+                                navigateOrg(
+                                    AppRoutes.org.dashboard.lessonStudy(nextSession.lessonId)
+                                )
+                            }
+                        >
+                            Open lesson
+                        </Button>
+                    </div>
                 </Card>
-            </div>
+            )}
+
+            <Card
+                title="Upcoming sessions"
+                className="border-0 shadow-sm"
+                extra={
+                    <Button
+                        type="link"
+                        onClick={() => navigateOrg(AppRoutes.org.dashboard.mySchedule)}
+                    >
+                        View all
+                    </Button>
+                }
+            >
+                {error && (
+                    <Alert
+                        type="warning"
+                        showIcon
+                        className="mb-3"
+                        message="Unable to load sessions right now."
+                        description={error.message}
+                    />
+                )}
+                <List
+                    loading={isLoading}
+                    dataSource={myDisplaySessions}
+                    locale={{
+                        emptyText: (
+                            <Empty
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                                description="No sessions assigned yet. Check back after your school schedules classes."
+                            />
+                        ),
+                    }}
+                    renderItem={(item) => (
+                        <List.Item>
+                            <List.Item.Meta
+                                title={
+                                    orgSlug ? (
+                                        <Link
+                                            to={`/org/${orgSlug}${AppRoutes.org.dashboard.lessonStudy(item.lessonId)}`}
+                                            className="text-inherit hover:!text-[var(--ant-color-primary)]"
+                                        >
+                                            <Text strong>{item.lessonTitle}</Text>
+                                        </Link>
+                                    ) : (
+                                        <Text strong>{item.lessonTitle}</Text>
+                                    )
+                                }
+                                description={
+                                    <Space direction="vertical" size={0}>
+                                        <Text type="secondary">
+                                            {DateUtils.format(item.startTime, "MMM D, h:mm A")} –{" "}
+                                            {DateUtils.format(item.endTime, "h:mm A")}
+                                        </Text>
+                                        <Text type="secondary">
+                                            Teacher: {item.teacherName || "Unassigned"}
+                                        </Text>
+                                    </Space>
+                                }
+                            />
+                        </List.Item>
+                    )}
+                />
+            </Card>
         </div>
     );
 };

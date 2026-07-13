@@ -8,17 +8,19 @@ type TableEmptyStateProps = {
     icon: ReactNode;
     title?: string;
     subtitle?: string;
+    action?: ReactNode;
 };
 
 export const TableEmptyState: React.FC<TableEmptyStateProps> = ({
     icon,
     title = "No matches found",
     subtitle = "Try adjusting your filters or search terms",
+    action,
 }) => {
     const { token } = theme.useToken();
 
     return (
-        <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
             <Empty
                 image={
                     <div
@@ -34,7 +36,7 @@ export const TableEmptyState: React.FC<TableEmptyStateProps> = ({
                     </div>
                 }
                 description={
-                    <div className="max-w-[300px] mx-auto">
+                    <div className="max-w-[320px] mx-auto">
                         <p
                             style={{ color: token.colorTextSecondary }}
                             className="text-lg font-medium mb-1"
@@ -44,7 +46,9 @@ export const TableEmptyState: React.FC<TableEmptyStateProps> = ({
                         <Text type="secondary">{subtitle}</Text>
                     </div>
                 }
-            />
+            >
+                {action}
+            </Empty>
         </div>
     );
 };

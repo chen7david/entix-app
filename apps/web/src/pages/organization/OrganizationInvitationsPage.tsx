@@ -10,11 +10,12 @@ import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilt
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useInvitations, useOrganization } from "@web/src/features/organization";
-import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Tag } from "antd";
+import { App, Button, Form, Input, Modal, Popconfirm, Select, Space, Tag, theme } from "antd";
 import dayjs from "dayjs";
 import { useMemo, useState } from "react";
 
 export const OrganizationInvitationsPage = () => {
+    const { token } = theme.useToken();
     const { notification } = App.useApp();
     const { activeOrganization } = useOrganization();
 
@@ -140,21 +141,20 @@ export const OrganizationInvitationsPage = () => {
                         label: "Total Invitations",
                         value: totalInvitations,
                         icon: <MailOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "pending",
                         label: "Pending",
                         value: pendingCount,
                         icon: <ClockCircleOutlined />,
-                        color: "#fa8c16",
+                        color: token.colorWarning,
                     },
                     {
                         key: "accepted",
                         label: "Accepted",
                         value: acceptedCount,
                         icon: <CheckCircleOutlined />,
-                        color: "#52c41a",
+                        color: token.colorSuccess,
                     },
                 ]}
             />

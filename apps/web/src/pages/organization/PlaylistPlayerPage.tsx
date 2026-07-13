@@ -5,6 +5,8 @@ import {
     PlaySquareOutlined,
 } from "@ant-design/icons";
 import { AppRoutes } from "@shared";
+import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 // useOrganization import removed
 import {
     MediaPlayer,
@@ -181,23 +183,22 @@ export const PlaylistPlayerPage: React.FC = () => {
     );
 
     return (
-        <div>
-            <div className="flex flex-col" style={{ marginBottom: 32 }}>
-                <Button
-                    type="text"
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigateOrg(backRoute)}
-                    className="self-start !px-0 !mb-2 text-gray-500"
-                >
-                    {isDashboardPlaylist ? "Back to My lessons" : "Back to Playlists"}
-                </Button>
-                <Title level={2} style={{ margin: 0 }}>
-                    {activePlaylist?.title || "Playlist Player"}
-                </Title>
-                <Text type="secondary">
-                    {activePlaylist?.description || "Seamless edge delivery playback sequence."}
-                </Text>
-            </div>
+        <PageShell fill={false}>
+            <Button
+                type="text"
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigateOrg(backRoute)}
+                className="self-start !px-0 !mb-2"
+                style={{ color: token.colorTextSecondary }}
+            >
+                {isDashboardPlaylist ? "Back to My lessons" : "Back to Playlists"}
+            </Button>
+            <PageHeader
+                title={activePlaylist?.title || "Playlist Player"}
+                subtitle={
+                    activePlaylist?.description || "Seamless edge delivery playback sequence."
+                }
+            />
 
             <div className="flex flex-col lg:flex-row gap-8">
                 <div className="w-full lg:w-[70%] flex flex-col">
@@ -289,6 +290,6 @@ export const PlaylistPlayerPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </PageShell>
     );
 };

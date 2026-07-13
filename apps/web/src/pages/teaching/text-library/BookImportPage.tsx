@@ -118,7 +118,7 @@ export function BookImportPage() {
     };
 
     return (
-        <div className="flex flex-col h-full p-4 md:p-6 max-w-2xl">
+        <div className="flex flex-col h-full max-w-2xl">
             <PageHeader
                 title="Import a book"
                 subtitle="Upload a PDF or image. Text is extracted locally (including OCR for scanned or copy-protected pages), then you can review before saving."

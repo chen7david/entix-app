@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { normalizeBulkMembersRaw } from "@shared";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useBillingPlans } from "@web/src/features/finance/hooks/useBillingPlans";
 import { useBulkMembers, useOrganization } from "@web/src/features/organization";
 import {
@@ -246,7 +247,7 @@ export const MemberImportExportPage: React.FC = () => {
     const uploadBlocked = isLoadingBillingPlans || !hasActiveBillingPlans;
 
     return (
-        <div>
+        <PageShell fill={false}>
             <PageHeader
                 title="Bulk Member Management"
                 subtitle="Import and export member data directly via JSON files."
@@ -538,6 +539,6 @@ export const MemberImportExportPage: React.FC = () => {
                     </div>
                 </Space>
             </Modal>
-        </div>
+        </PageShell>
     );
 };

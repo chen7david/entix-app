@@ -4,9 +4,10 @@ import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { type EmailEvent, type EmailRow, useAdminEmails } from "@web/src/features/admin";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
-import { Alert, type TableColumnsType, Tag, Typography } from "antd";
+import { Alert, type TableColumnsType, Tag, Typography, theme } from "antd";
 import type React from "react";
 import { useCallback, useState } from "react";
 
@@ -33,6 +34,7 @@ const EventTag: React.FC<{ event: EmailEvent }> = ({ event }) => {
 };
 
 export const EmailInsightsPage: React.FC = () => {
+    const { token } = theme.useToken();
     const [searchText, setSearchText] = useState("");
     const [currentCursor, setCurrentCursor] = useState<string | undefined>();
     const [cursorStack, setCursorStack] = useState<string[]>([]);
@@ -111,7 +113,7 @@ export const EmailInsightsPage: React.FC = () => {
     ];
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Email Insights"
                 subtitle="Monitor email delivery status, activity, and dispatch logs via Resend architecture."
@@ -125,26 +127,25 @@ export const EmailInsightsPage: React.FC = () => {
                         label: "Page Emails",
                         value: totalSent,
                         icon: <SendOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "delivered",
                         label: "Delivered / Active",
                         value: delivered,
                         icon: <CheckCircleOutlined />,
-                        color: "#10b981",
+                        color: token.colorSuccess,
                     },
                     {
                         key: "failed",
                         label: "Bounced / Failed",
                         value: failed,
                         icon: <WarningOutlined />,
-                        color: failed > 0 ? "#ef4444" : "#10b981",
+                        color: failed > 0 ? token.colorError : token.colorSuccess,
                     },
                 ]}
             />
 
-            <div className="h-[calc(100vh-400px)] min-h-[500px]">
+            <div className="flex-1 min-h-0">
                 {searchText && (
                     <Alert
                         message="Local Filter Active"
@@ -187,6 +188,6 @@ export const EmailInsightsPage: React.FC = () => {
                     }}
                 />
             </div>
-        </div>
+        </PageShell>
     );
 };

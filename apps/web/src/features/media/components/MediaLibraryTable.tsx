@@ -13,7 +13,7 @@ import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilt
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
-import { Button, Drawer, Dropdown, Form, Input, Space, Tooltip, Typography } from "antd";
+import { Button, Drawer, Dropdown, Form, Input, Space, Tooltip, Typography, theme } from "antd";
 import type React from "react";
 import { useCallback, useEffect, useState } from "react";
 import { useMedia } from "../hooks/useMedia";
@@ -29,6 +29,7 @@ interface MediaLibraryTableProps {
 }
 
 export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultType = "all" }) => {
+    const { token } = theme.useToken();
     const [form] = Form.useForm();
     const [filterType, setFilterType] = useState<"all" | "video" | "audio">(defaultType);
     const [searchText, setSearchText] = useState("");
@@ -145,28 +146,27 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                         label: "Loaded Media",
                         value: totalAssets,
                         icon: <AppstoreOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "video",
                         label: "Video Files",
                         value: videoCount,
                         icon: <VideoCameraOutlined />,
-                        color: "#8b5cf6",
+                        color: token.colorInfo,
                     },
                     {
                         key: "audio",
                         label: "Audio Files",
                         value: audioCount,
                         icon: <AudioOutlined />,
-                        color: "#10b981",
+                        color: token.colorSuccess,
                     },
                     {
                         key: "recent",
                         label: "Recently Added",
                         value: recentCount,
                         icon: <ClockCircleOutlined />,
-                        color: "#f59e0b",
+                        color: token.colorWarning,
                     },
                 ]}
             />

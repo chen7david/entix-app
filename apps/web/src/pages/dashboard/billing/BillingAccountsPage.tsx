@@ -3,19 +3,21 @@ import type { WalletAccountDTO } from "@shared";
 import { FilterBar, type FilterConfig } from "@web/src/components/data/FilterBar";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { ManageAccountDrawer } from "@web/src/features/finance/components/ManageAccountDrawer";
 import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAccountCardGrid";
 import { useOrganization } from "@web/src/features/organization";
 import { CreateAccountDrawer } from "@web/src/features/wallet/components/CreateAccountDrawer";
 import type { FinancialAccountData } from "@web/src/features/wallet/components/FinancialAccountCard";
 import { useWalletBalance } from "@web/src/features/wallet/hooks/useWalletBalance";
-import { Button, Col, Flex, Row, Tag, Typography } from "antd";
+import { Button, Col, Flex, Row, Tag, Typography, theme } from "antd";
 import type React from "react";
 import { useMemo, useState } from "react";
 
 const { Title } = Typography;
 
 export const BillingAccountsPage: React.FC = () => {
+    const { token } = theme.useToken();
     const { activeOrganization } = useOrganization();
     const orgId = activeOrganization?.id;
     const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
@@ -95,10 +97,10 @@ export const BillingAccountsPage: React.FC = () => {
     };
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Billing Accounts"
-                subtitle="Centralized treasury management and currency activation for organizational billing."
+                subtitle="Treasury management and currency activation for organizational billing."
                 actions={
                     <Button
                         type="primary"
@@ -111,71 +113,68 @@ export const BillingAccountsPage: React.FC = () => {
                 }
             />
 
-            <div className="flex flex-col gap-8">
-                <SummaryCardsRow
-                    loading={isLoadingBalance}
-                    items={[
-                        {
-                            key: "total",
-                            label: "Total Accounts",
-                            value: accounts.length,
-                            icon: <WalletOutlined />,
-                            color: "#2563eb",
-                        },
-                        {
-                            key: "active",
-                            label: "Active Accounts",
-                            value:
-                                accounts.filter((a: any) => a.status === "active").length ||
-                                accounts.length,
-                            icon: <CheckCircleOutlined />,
-                            color: "#10b981",
-                        },
-                        {
-                            key: "currencies",
-                            label: "Currencies In Use",
-                            value: currencyCount,
-                            icon: <GlobalOutlined />,
-                            color: "#8b5cf6",
-                        },
-                    ]}
-                />
+            <SummaryCardsRow
+                loading={isLoadingBalance}
+                items={[
+                    {
+                        key: "total",
+                        label: "Total Accounts",
+                        value: accounts.length,
+                        icon: <WalletOutlined />,
+                        color: token.colorPrimary,
+                    },
+                    {
+                        key: "active",
+                        label: "Active Accounts",
+                        value: accounts.filter((a) => a.isActive).length,
+                        icon: <CheckCircleOutlined />,
+                        color: token.colorSuccess,
+                    },
+                    {
+                        key: "currencies",
+                        label: "Currencies In Use",
+                        value: currencyCount,
+                        icon: <GlobalOutlined />,
+                        color: token.colorInfo,
+                    },
+                ]}
+            />
 
-                <Row gutter={[24, 24]}>
-                    <Col span={24}>
-                        <FilterBar
-                            filters={filterConfig}
-                            values={filters}
-                            initialValues={{ search: "", status: "all", accountType: "all" }}
-                            onChange={(next) => setFilters((prev) => ({ ...prev, ...next }))}
-                            onReset={() =>
-                                setFilters({
-                                    search: "",
-                                    status: "all",
-                                    accountType: "all",
-                                })
-                            }
-                        />
-                        <Flex align="center" gap={12} style={{ marginBottom: 16 }}>
-                            <Title level={4} style={{ margin: 0 }}>
-                                Active Treasury Accounts
-                            </Title>
-                            <Tag
-                                color="blue"
-                                variant="filled"
-                                style={{ borderRadius: 6, fontWeight: 600 }}
-                            >
-                                {filteredAccounts.length}
-                            </Tag>
-                        </Flex>
-                        <OrgAccountCardGrid
-                            accounts={filteredAccounts}
-                            loading={isLoadingBalance}
-                            onAccountClick={handleAccountClick}
-                        />
-                    </Col>
-                </Row>
-            </div>
+            <Row gutter={[24, 24]}>
+                <Col span={24}>
+                    <FilterBar
+                        filters={filterConfig}
+                        values={filters}
+                        initialValues={{ search: "", status: "all", accountType: "all" }}
+                        onChange={(next) => setFilters((prev) => ({ ...prev, ...next }))}
+                        onReset={() =>
+                            setFilters({
+                                search: "",
+                                status: "all",
+                                accountType: "all",
+                            })
+                        }
+                    />
+                    <Flex align="center" gap={12} className="mb-4">
+                        <Title level={4} style={{ margin: 0 }}>
+                            Accounts
+                        </Title>
+                        <Tag color="blue" style={{ borderRadius: 6, fontWeight: 600 }}>
+                            {filteredAccounts.length}
+                        </Tag>
+                    </Flex>
+                    <OrgAccountCardGrid
+                        accounts={filteredAccounts}
+                        loading={isLoadingBalance}
+                        onAccountClick={handleAccountClick}
+                        emptyAction={
+                            <Button type="primary" onClick={() => setIsCreateDrawerOpen(true)}>
+                                Create custom account
+                            </Button>
+                        }
+                    />
+                </Col>
+            </Row>
 
             <ManageAccountDrawer
                 open={isManageDrawerOpen}
@@ -191,6 +190,6 @@ export const BillingAccountsPage: React.FC = () => {
                 onClose={() => setIsCreateDrawerOpen(false)}
                 orgId={orgId}
             />
-        </div>
+        </PageShell>
     );
 };
