@@ -7,7 +7,6 @@ import {
 } from "@ant-design/icons";
 import { getAssetUrl } from "@shared";
 import { CEFR_LEVELS } from "@shared/constants/cefr";
-import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { TableEmptyState } from "@web/src/components/data/TableEmptyState";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
@@ -21,6 +20,7 @@ import {
 } from "@web/src/features/lessons/hooks/useLessons";
 import { CoverArtUploader } from "@web/src/features/media";
 import { useOrganization, useOrgRole } from "@web/src/features/organization";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
 import {
@@ -56,16 +56,23 @@ export const LessonsPage: React.FC = () => {
     const { myEnrollments, isLoadingMyEnrollments } = useLessons();
     const createLesson = useCreateLesson();
     const deleteLesson = useDeleteLesson();
-    const [filters, setFilters] = useState<{ search?: string }>({});
-    const [cursor, setCursor] = useState<string | undefined>(undefined);
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [pageSize, setPageSize] = useState(10);
-    const [direction, setDirection] = useState<"next" | "prev">("next");
+
+    const {
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>({ initialPageSize: 10 });
+
     const { lessons, nextCursor, isLoadingLessons } = useLessonLibrary({
-        search: filters.search,
-        cursor,
+        search: debouncedSearch || undefined,
+        cursor: currentCursor,
         limit: pageSize,
-        direction,
+        direction: "next",
     });
 
     const [createForm] = Form.useForm();
@@ -82,34 +89,6 @@ export const LessonsPage: React.FC = () => {
         });
         createForm.resetFields();
         setIsCreateDrawerOpen(false);
-    };
-
-    const tablePagination: CursorPaginationConfig = {
-        hasNextPage: !!nextCursor,
-        hasPrevPage: cursorStack.length > 0,
-        pageSize,
-        onNext: () => {
-            if (nextCursor) {
-                setCursorStack((prev) => [...prev, cursor || ""]);
-                setCursor(nextCursor);
-                setDirection("next");
-            }
-        },
-        onPrev: () => {
-            if (cursorStack.length > 0) {
-                const previousStack = [...cursorStack];
-                const prevCursor = previousStack.pop();
-                setCursorStack(previousStack);
-                setCursor(prevCursor || undefined);
-                setDirection("prev");
-            }
-        },
-        onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCursor(undefined);
-            setCursorStack([]);
-            setDirection("next");
-        },
     };
 
     return (
@@ -197,7 +176,7 @@ export const LessonsPage: React.FC = () => {
                             filters: [
                                 {
                                     type: "search",
-                                    key: "q",
+                                    key: "search",
                                     placeholder: "Search lessons...",
                                 },
                             ],
@@ -232,15 +211,15 @@ export const LessonsPage: React.FC = () => {
                                     </Space>
                                 );
                             },
-                            onFiltersChange: (newFilters) => {
-                                setFilters({
-                                    search: newFilters.q || undefined,
-                                });
-                                setCursor(undefined);
-                                setCursorStack([]);
-                                setDirection("next");
+                            onFiltersChange,
+                            pagination: {
+                                hasNextPage: !!nextCursor,
+                                hasPrevPage: cursorStack.length > 0,
+                                pageSize,
+                                onNext: () => onNext(nextCursor),
+                                onPrev,
+                                onPageSizeChange,
                             },
-                            pagination: tablePagination,
                             initialFilters: initialTableFilters,
                         }}
                     />

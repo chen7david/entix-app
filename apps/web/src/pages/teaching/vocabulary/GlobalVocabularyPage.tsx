@@ -1,5 +1,4 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
-import type { CursorPaginationConfig } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { PageShell } from "@web/src/components/layout/PageShell";
@@ -13,6 +12,7 @@ import {
     useVocabularyBankLibrary,
     type VocabularyItemDTO,
 } from "@web/src/features/vocabulary/hooks/useVocabulary";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { Button, Popconfirm, Space, Tooltip, Typography } from "antd";
 import { useState } from "react";
 
@@ -22,21 +22,26 @@ export default function GlobalVocabularyPage() {
     const { activeOrganization } = useOrganization();
     const organizationId = activeOrganization?.id;
 
-    const [filters, setFilters] = useState<{ search?: string }>({});
-    const [cursor, setCursor] = useState<string | undefined>(undefined);
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [pageSize, setPageSize] = useState(10);
-    const [direction, setDirection] = useState<"next" | "prev">("next");
+    const {
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>({ initialPageSize: 10 });
 
     const [editingItem, setEditingItem] = useState<VocabularyItemDTO | null>(null);
     const [isDrawerVisible, setIsDrawerVisible] = useState(false);
 
     const { items, nextCursor, isLoading } = useVocabularyBankLibrary({
         organizationId,
-        search: filters.search,
-        cursor,
+        search: debouncedSearch || undefined,
+        cursor: currentCursor,
         limit: pageSize,
-        direction,
+        direction: "next",
     });
 
     const { updateVocabularyBankMutation, deleteVocabularyBankMutation } =
@@ -61,34 +66,6 @@ export default function GlobalVocabularyPage() {
         }
         setIsDrawerVisible(false);
         setEditingItem(null);
-    };
-
-    const tablePagination: CursorPaginationConfig = {
-        hasNextPage: !!nextCursor,
-        hasPrevPage: cursorStack.length > 0,
-        pageSize,
-        onNext: () => {
-            if (nextCursor) {
-                setCursorStack((prev) => [...prev, cursor || ""]);
-                setCursor(nextCursor);
-                setDirection("next");
-            }
-        },
-        onPrev: () => {
-            if (cursorStack.length > 0) {
-                const previousStack = [...cursorStack];
-                const prevCursor = previousStack.pop();
-                setCursorStack(previousStack);
-                setCursor(prevCursor || undefined);
-                setDirection("prev");
-            }
-        },
-        onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCursor(undefined);
-            setCursorStack([]);
-            setDirection("next");
-        },
     };
 
     const columns = [
@@ -166,7 +143,7 @@ export default function GlobalVocabularyPage() {
                         filters: [
                             {
                                 type: "search",
-                                key: "q",
+                                key: "search",
                                 placeholder: "Search vocabulary...",
                             },
                         ],
@@ -192,13 +169,15 @@ export default function GlobalVocabularyPage() {
                                 </Popconfirm>
                             </Space>
                         ),
-                        onFiltersChange: (newFilters) => {
-                            setFilters({ search: newFilters.q || undefined });
-                            setCursor(undefined);
-                            setCursorStack([]);
-                            setDirection("next");
+                        onFiltersChange,
+                        pagination: {
+                            hasNextPage: !!nextCursor,
+                            hasPrevPage: cursorStack.length > 0,
+                            pageSize,
+                            onNext: () => onNext(nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         },
-                        pagination: tablePagination,
                     }}
                 />
             </div>

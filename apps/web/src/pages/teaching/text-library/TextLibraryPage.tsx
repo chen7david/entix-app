@@ -3,6 +3,7 @@ import { AppRoutes } from "@shared";
 import { CEFR_LEVELS } from "@shared/constants/cefr";
 import { PASSAGE_TYPES, TEXT_COLLECTION_TYPES } from "@shared/constants/passage";
 import { defaultPassageDocJson, plainTextFromPassageContent } from "@shared/utils/passage-content";
+import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { PageShell } from "@web/src/components/layout/PageShell";
 import { useOrgNavigate } from "@web/src/features/organization";
@@ -21,19 +22,7 @@ import {
     useUpdatePassage,
     useUpdateTextCollection,
 } from "@web/src/features/passages";
-import {
-    Button,
-    Drawer,
-    Form,
-    Input,
-    Modal,
-    Popconfirm,
-    Select,
-    Space,
-    Table,
-    Tabs,
-    Tag,
-} from "antd";
+import { Button, Drawer, Form, Input, Modal, Popconfirm, Select, Space, Tabs, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useEffect, useMemo, useState } from "react";
 
@@ -53,10 +42,16 @@ type PassageFormValues = {
     content: string;
 };
 
+type PassageFilters = {
+    collectionId?: string;
+};
+
+const noopFiltersChange = () => {};
+
 export function TextLibraryPage() {
     const navigateOrg = useOrgNavigate();
     const [activeTab, setActiveTab] = useState("collections");
-    const [passageCollectionFilter, setPassageCollectionFilter] = useState<string | undefined>();
+    const [passageFilters, setPassageFilters] = useState<PassageFilters>({});
     const [collectionModalOpen, setCollectionModalOpen] = useState(false);
     const [passageModalOpen, setPassageModalOpen] = useState(false);
     const [editingCollectionId, setEditingCollectionId] = useState<string | null>(null);
@@ -65,7 +60,7 @@ export function TextLibraryPage() {
     const { collections, isLoading: collectionsLoading } = useTextCollectionLibrary({ limit: 100 });
     const { passages, isLoading: passagesLoading } = usePassageLibrary({
         limit: 100,
-        collectionId: passageCollectionFilter,
+        collectionId: passageFilters.collectionId,
     });
 
     const createCollection = useCreateTextCollection();
@@ -125,34 +120,8 @@ export function TextLibraryPage() {
                 render: (type: string) => <Tag>{type}</Tag>,
             },
             { title: "Author", dataIndex: "author", key: "author", render: (v) => v ?? "—" },
-            {
-                title: "",
-                key: "actions",
-                width: 120,
-                render: (_, row) => (
-                    <Space>
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            aria-label="Edit collection"
-                            onClick={() => setEditingCollectionId(row.id)}
-                        />
-                        <Popconfirm
-                            title="Delete this collection?"
-                            onConfirm={() => deleteCollection.mutate(row.id)}
-                        >
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                aria-label="Delete"
-                            />
-                        </Popconfirm>
-                    </Space>
-                ),
-            },
         ],
-        [deleteCollection]
+        []
     );
 
     const passageColumns: ColumnsType<PassageDto> = useMemo(
@@ -190,34 +159,8 @@ export function TextLibraryPage() {
                 key: "wordCount",
                 render: (n) => n ?? "—",
             },
-            {
-                title: "",
-                key: "actions",
-                width: 120,
-                render: (_, row) => (
-                    <Space>
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            aria-label="Edit passage"
-                            onClick={() => setEditingPassageId(row.id)}
-                        />
-                        <Popconfirm
-                            title="Delete this passage?"
-                            onConfirm={() => deletePassage.mutate(row.id)}
-                        >
-                            <Button
-                                type="text"
-                                danger
-                                icon={<DeleteOutlined />}
-                                aria-label="Delete"
-                            />
-                        </Popconfirm>
-                    </Space>
-                ),
-            },
         ],
-        [collectionTitleById, deletePassage]
+        [collectionTitleById]
     );
 
     const collectionSelectOptions = collections.map((c) => ({
@@ -255,12 +198,39 @@ export function TextLibraryPage() {
                                 >
                                     New collection
                                 </Button>
-                                <Table
-                                    rowKey="id"
-                                    loading={collectionsLoading}
-                                    dataSource={collections}
-                                    columns={collectionColumns}
-                                    pagination={false}
+                                <DataTableWithFilters<TextCollectionDto>
+                                    config={{
+                                        columns: collectionColumns,
+                                        data: collections,
+                                        loading: collectionsLoading,
+                                        rowKey: "id",
+                                        filters: [],
+                                        onFiltersChange: noopFiltersChange,
+                                        pagination: null,
+                                        actions: (row) => (
+                                            <Space>
+                                                <Button
+                                                    type="text"
+                                                    icon={<EditOutlined />}
+                                                    aria-label="Edit collection"
+                                                    onClick={() => setEditingCollectionId(row.id)}
+                                                />
+                                                <Popconfirm
+                                                    title="Delete this collection?"
+                                                    onConfirm={() =>
+                                                        deleteCollection.mutate(row.id)
+                                                    }
+                                                >
+                                                    <Button
+                                                        type="text"
+                                                        danger
+                                                        icon={<DeleteOutlined />}
+                                                        aria-label="Delete"
+                                                    />
+                                                </Popconfirm>
+                                            </Space>
+                                        ),
+                                    }}
                                 />
                             </Space>
                         ),
@@ -270,38 +240,63 @@ export function TextLibraryPage() {
                         label: "Passages",
                         children: (
                             <Space direction="vertical" className="w-full" size="middle">
-                                <Space wrap>
-                                    <Button
-                                        type="primary"
-                                        icon={<PlusOutlined />}
-                                        onClick={() => {
-                                            passageForm.setFieldsValue({
-                                                type: "reading",
-                                                content: defaultPassageDocJson(),
-                                            });
-                                            setPassageModalOpen(true);
-                                        }}
-                                    >
-                                        New passage
-                                    </Button>
-                                    <Select
-                                        allowClear
-                                        placeholder="Filter by collection"
-                                        style={{ minWidth: 220 }}
-                                        value={passageCollectionFilter}
-                                        onChange={(v) => setPassageCollectionFilter(v)}
-                                        options={collections.map((c) => ({
-                                            value: c.id,
-                                            label: c.title,
-                                        }))}
-                                    />
-                                </Space>
-                                <Table
-                                    rowKey="id"
-                                    loading={passagesLoading}
-                                    dataSource={passages}
-                                    columns={passageColumns}
-                                    pagination={false}
+                                <Button
+                                    type="primary"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => {
+                                        passageForm.setFieldsValue({
+                                            type: "reading",
+                                            content: defaultPassageDocJson(),
+                                        });
+                                        setPassageModalOpen(true);
+                                    }}
+                                >
+                                    New passage
+                                </Button>
+                                <DataTableWithFilters<PassageDto>
+                                    config={{
+                                        columns: passageColumns,
+                                        data: passages,
+                                        loading: passagesLoading,
+                                        rowKey: "id",
+                                        filters: [
+                                            {
+                                                type: "select",
+                                                key: "collectionId",
+                                                placeholder: "Filter by collection",
+                                                options: collections.map((c) => ({
+                                                    value: c.id,
+                                                    label: c.title,
+                                                })),
+                                            },
+                                        ],
+                                        onFiltersChange: (f) =>
+                                            setPassageFilters({
+                                                collectionId: f.collectionId || undefined,
+                                            }),
+                                        pagination: null,
+                                        actions: (row) => (
+                                            <Space>
+                                                <Button
+                                                    type="text"
+                                                    icon={<EditOutlined />}
+                                                    aria-label="Edit passage"
+                                                    onClick={() => setEditingPassageId(row.id)}
+                                                />
+                                                <Popconfirm
+                                                    title="Delete this passage?"
+                                                    onConfirm={() => deletePassage.mutate(row.id)}
+                                                >
+                                                    <Button
+                                                        type="text"
+                                                        danger
+                                                        icon={<DeleteOutlined />}
+                                                        aria-label="Delete"
+                                                    />
+                                                </Popconfirm>
+                                            </Space>
+                                        ),
+                                    }}
                                 />
                             </Space>
                         ),

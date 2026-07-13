@@ -1,7 +1,8 @@
 import { UploadOutlined } from "@ant-design/icons";
 import { AppRoutes, IMPORT_PARAGRAPH_INSERT_CHUNK_SIZE } from "@shared";
+import { PageBreadcrumb } from "@web/src/components/layout/PageBreadcrumb";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { useOrgNavigate } from "@web/src/features/organization";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import {
     useBulkInsertImportParagraphs,
     useCreateImportJob,
@@ -12,7 +13,7 @@ import {
     parsePdfToParagraphs,
     splitIntoParagraphs,
 } from "@web/src/features/passages/lib/pdf-import-parser";
-import { Alert, Input, Modal, Spin, Upload, type UploadProps } from "antd";
+import { Alert, Input, Modal, Spin, Steps, Upload, type UploadProps } from "antd";
 import { useState } from "react";
 
 async function parseImage(file: File): Promise<ParsedParagraph[]> {
@@ -27,8 +28,12 @@ async function parseImage(file: File): Promise<ParsedParagraph[]> {
 
 const BATCH_SIZE = IMPORT_PARAGRAPH_INSERT_CHUNK_SIZE;
 
+const IMPORT_STEPS = [{ title: "Upload" }, { title: "Review" }, { title: "Finalize" }] as const;
+
 export function BookImportPage() {
     const navigateOrg = useOrgNavigate();
+    const { activeOrganization } = useOrganization();
+    const orgPrefix = activeOrganization?.slug ? `/org/${activeOrganization.slug}` : "";
     const [progress, setProgress] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
@@ -119,6 +124,16 @@ export function BookImportPage() {
 
     return (
         <div className="flex flex-col h-full max-w-2xl">
+            <PageBreadcrumb
+                items={[
+                    {
+                        title: "Text library",
+                        path: `${orgPrefix}${AppRoutes.org.teaching.textLibrary}`,
+                    },
+                    { title: "Import" },
+                ]}
+            />
+            <Steps size="small" current={0} items={[...IMPORT_STEPS]} className="mb-6" />
             <PageHeader
                 title="Import a book"
                 subtitle="Upload a PDF or image. Text is extracted locally (including OCR for scanned or copy-protected pages), then you can review before saving."

@@ -21,12 +21,22 @@ import { TransactionLedgerTable } from "@web/src/features/finance/components/Tra
 import { useReverseTransaction } from "@web/src/features/finance/hooks/useReverseTransaction";
 import { useTransactions } from "@web/src/features/finance/hooks/useTransactions";
 import { useOrganization } from "@web/src/features/organization";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { DateUtils } from "@web/src/utils/date";
 import { theme } from "antd";
 import type React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 const CUSTOM_RANGE_PRESET = "__custom";
+
+type BillingTxFilters = {
+    search?: string;
+    txId?: string;
+    preset?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    status?: string;
+};
 
 function areBillingTransactionFiltersEqual(
     a: Record<string, any>,
@@ -91,18 +101,26 @@ export const BillingTransactionsPage: React.FC = () => {
     }, [datePresetOptions]);
 
     // Cursor stack: navigate forward/back by pushing/popping cursors
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [filters, setFilters] = useState<Record<string, any>>(billingTransactionInitialFilters);
-    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-
-    const currentCursor = cursorStack[cursorStack.length - 1];
+    const {
+        filters,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<BillingTxFilters>({
+        initialFilters: billingTransactionInitialFilters,
+        initialPageSize: DEFAULT_PAGE_SIZE,
+    });
 
     const { data, isLoading, isFetching, refetch, dataUpdatedAt } = useTransactions(orgId, {
         cursor: currentCursor,
         limit: pageSize,
-        startDate: filters.startDate,
-        endDate: filters.endDate,
-        status: filters.status,
+        startDate: filters.startDate ?? undefined,
+        endDate: filters.endDate ?? undefined,
+        status: filters.status as "pending" | "completed" | "reversed" | undefined,
         txId: filters.txId || undefined,
     });
 
@@ -165,18 +183,7 @@ export const BillingTransactionsPage: React.FC = () => {
             return;
         }
 
-        setFilters(nextFilters);
-        setCursorStack([]); // Reset to first page on filter change
-    };
-
-    const handleNext = () => {
-        if (data?.nextCursor) {
-            setCursorStack((prev) => [...prev, data.nextCursor as string]);
-        }
-    };
-
-    const handlePrev = () => {
-        setCursorStack((prev) => prev.slice(0, -1));
+        onFiltersChange(nextFilters);
     };
 
     return (
@@ -239,12 +246,9 @@ export const BillingTransactionsPage: React.FC = () => {
                         pageSize,
                         hasNextPage: !!data?.nextCursor,
                         hasPrevPage: cursorStack.length > 0,
-                        onNext: handleNext,
-                        onPrev: handlePrev,
-                        onPageSizeChange: (size: number) => {
-                            setPageSize(size);
-                            setCursorStack([]);
-                        },
+                        onNext: () => onNext(data?.nextCursor),
+                        onPrev,
+                        onPageSizeChange,
                     }}
                     filters={filterConfig}
                     initialFilters={billingTransactionInitialFilters}

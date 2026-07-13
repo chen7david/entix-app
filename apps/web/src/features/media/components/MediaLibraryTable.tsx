@@ -8,14 +8,14 @@ import {
     VideoCameraOutlined,
 } from "@ant-design/icons";
 import type { Media } from "@shared";
-import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Space, Tooltip, Typography, theme } from "antd";
 import type React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMedia } from "../hooks/useMedia";
 import { useRecordMediaPlay } from "../hooks/useRecordMediaPlay";
 import { CoverArtUploader } from "./CoverArtUploader";
@@ -24,6 +24,11 @@ import { MediaPlayer } from "./MediaPlayer";
 
 const { Title, Text } = Typography;
 
+type MediaFilters = {
+    search?: string;
+    type?: "all" | "video" | "audio";
+};
+
 interface MediaLibraryTableProps {
     defaultType?: "all" | "video" | "audio";
 }
@@ -31,12 +36,22 @@ interface MediaLibraryTableProps {
 export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultType = "all" }) => {
     const { token } = theme.useToken();
     const [form] = Form.useForm();
-    const [filterType, setFilterType] = useState<"all" | "video" | "audio">(defaultType);
-    const [searchText, setSearchText] = useState("");
 
-    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+    const {
+        filters,
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<MediaFilters>({
+        initialFilters: { type: defaultType },
+    });
+
+    const filterType = filters.type ?? "all";
 
     const {
         media,
@@ -46,26 +61,10 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         isUpdating,
         nextCursor,
         hasNextPage,
-    } = useMedia(filterType === "all" ? undefined : filterType, searchText, {
+    } = useMedia(filterType === "all" ? undefined : filterType, debouncedSearch, {
         cursor: currentCursor,
         limit: pageSize,
     });
-
-    const handleNext = useCallback(() => {
-        if (nextCursor) {
-            setCursorStack((prev) => [...prev, currentCursor || ""]);
-            setCurrentCursor(nextCursor);
-        }
-    }, [nextCursor, currentCursor]);
-
-    const handlePrev = useCallback(() => {
-        if (cursorStack.length > 0) {
-            const newStack = [...cursorStack];
-            const prev = newStack.pop();
-            setCursorStack(newStack);
-            setCurrentCursor(prev || undefined);
-        }
-    }, [cursorStack]);
 
     const [activeMedia, setActiveMedia] = useState<Media | null>(null);
 
@@ -179,10 +178,11 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                         data: media,
                         loading,
                         onRowClick: handlePlayMedia,
+                        initialFilters: { type: defaultType },
                         filters: [
                             {
                                 type: "search",
-                                key: "q",
+                                key: "search",
                                 placeholder: "Search media...",
                             },
                             {
@@ -196,23 +196,14 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                                 ],
                             },
                         ],
-                        onFiltersChange: (f: Record<string, any>) => {
-                            setSearchText(f.q || "");
-                            setFilterType(f.type || "all");
-                            setCurrentCursor(undefined);
-                            setCursorStack([]);
-                        },
+                        onFiltersChange,
                         pagination: {
                             hasNextPage,
                             hasPrevPage: cursorStack.length > 0,
-                            pageSize: pageSize,
-                            onNext: handleNext,
-                            onPrev: handlePrev,
-                            onPageSizeChange: (s) => {
-                                setPageSize(s);
-                                setCurrentCursor(undefined);
-                                setCursorStack([]);
-                            },
+                            pageSize,
+                            onNext: () => onNext(nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         },
                         actions: (record: Media) => {
                             const items: MenuProps["items"] = [

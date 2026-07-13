@@ -18,6 +18,7 @@ import {
     Collapse,
     Divider,
     Modal,
+    Progress,
     Radio,
     Select,
     Space,
@@ -300,6 +301,9 @@ export const MemberImportExportPage: React.FC = () => {
                         Upload a JSON file to bulk-add or update members.{" "}
                         <Text strong>No automated emails will be sent.</Text>
                     </Paragraph>
+                    {isImporting && (
+                        <Progress percent={100} status="active" showInfo={false} className="mb-3" />
+                    )}
                     <Spin spinning={isLoadingBillingPlans || isImporting}>
                         <Dragger
                             accept=".json,application/json"

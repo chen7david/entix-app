@@ -16,6 +16,7 @@ import { OrgAccountCardGrid } from "@web/src/features/finance/components/OrgAcco
 import { TransactionLedgerTable } from "@web/src/features/finance/components/TransactionLedgerTable";
 import { useOrganization } from "@web/src/features/organization";
 import { TransferDrawer, useTransactionHistory, useWalletBalance } from "@web/src/features/wallet";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { useSession } from "@web/src/lib/auth-client";
 import { DateUtils } from "@web/src/utils/date";
 import { Button, Card, Col, Row, Typography } from "antd";
@@ -23,6 +24,15 @@ import { useCallback, useMemo, useState } from "react";
 
 const { Title, Text } = Typography;
 const CUSTOM_RANGE_PRESET = "__custom";
+
+type WalletTableFilters = {
+    search?: string;
+    txId?: string;
+    preset?: string;
+    startDate?: string | null;
+    endDate?: string | null;
+    status?: string;
+};
 
 function areWalletFiltersEqual(a: Record<string, any>, b: Record<string, any>): boolean {
     return (
@@ -80,12 +90,20 @@ export const WalletPage = () => {
         };
     }, [datePresetOptions]);
 
-    // Cursor stack for pagination
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [filters, setFilters] = useState<Record<string, any>>(walletInitialFilters);
+    const {
+        filters,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<WalletTableFilters>({
+        initialFilters: walletInitialFilters,
+        initialPageSize: DEFAULT_PAGE_SIZE,
+    });
     const [isTransferOpen, setIsTransferOpen] = useState(false);
-
-    const currentCursor = cursorStack[cursorStack.length - 1];
 
     const {
         data: summary,
@@ -100,9 +118,9 @@ export const WalletPage = () => {
         isFetching: isFetchingHistory,
         dataUpdatedAt: historyUpdatedAt,
         refetch: refetchHistory,
-    } = useTransactionHistory(userId, "user", currentCursor, DEFAULT_PAGE_SIZE, orgId, {
-        startDate: filters.startDate,
-        endDate: filters.endDate,
+    } = useTransactionHistory(userId, "user", currentCursor, pageSize, orgId, {
+        startDate: filters.startDate ?? undefined,
+        endDate: filters.endDate ?? undefined,
         status: filters.status,
         txId: filters.txId,
     });
@@ -178,18 +196,7 @@ export const WalletPage = () => {
 
         if (areWalletFiltersEqual(nextFilters, filters)) return;
 
-        setFilters(nextFilters);
-        setCursorStack([]); // Reset to first page on filter change
-    };
-
-    const handleNext = () => {
-        if (history?.nextCursor) {
-            setCursorStack((prev) => [...prev, history.nextCursor as string]);
-        }
-    };
-
-    const handlePrev = () => {
-        setCursorStack((prev) => prev.slice(0, -1));
+        onFiltersChange(nextFilters);
     };
 
     return (
@@ -243,11 +250,12 @@ export const WalletPage = () => {
                         transactions={history?.data || []}
                         loading={isFetchingHistory}
                         pagination={{
-                            pageSize: DEFAULT_PAGE_SIZE,
+                            pageSize,
                             hasNextPage: !!history?.nextCursor,
                             hasPrevPage: cursorStack.length > 0,
-                            onNext: handleNext,
-                            onPrev: handlePrev,
+                            onNext: () => onNext(history?.nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         }}
                         filters={filterConfig}
                         initialFilters={walletInitialFilters}

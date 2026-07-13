@@ -7,6 +7,18 @@ import { DataTablePagination } from "./DataTablePagination";
 import { FilterBar, type FilterConfig } from "./FilterBar";
 import { TableEmptyState } from "./TableEmptyState";
 
+export type DataTableEmptyState = {
+    icon?: React.ReactNode;
+    title?: string;
+    subtitle?: string;
+    action?: React.ReactNode;
+};
+
+export type DataTableTableProps = Pick<
+    TableProps,
+    "size" | "scroll" | "sticky" | "bordered" | "showHeader" | "expandable"
+>;
+
 export interface DataTableConfig<T> {
     columns: TableProps<T>["columns"];
     data: T[];
@@ -26,6 +38,10 @@ export interface DataTableConfig<T> {
         compact?: boolean;
         resetIconOnly?: boolean;
     };
+    /** Customize empty state (defaults to inbox icon). */
+    emptyState?: DataTableEmptyState;
+    /** Escape hatch for Ant Table props; defaults stay middle + sticky + max-content scroll. */
+    tableProps?: DataTableTableProps;
 }
 
 function DataTableWithFiltersInternal<T extends object>({
@@ -47,6 +63,8 @@ function DataTableWithFiltersInternal<T extends object>({
         selectedRowKey,
         initialFilters,
         filterBar,
+        emptyState,
+        tableProps,
     } = config;
 
     const [localFilters, setLocalFilters] = useState<Record<string, any>>(initialFilters ?? {});
@@ -76,8 +94,6 @@ function DataTableWithFiltersInternal<T extends object>({
                 fixed: "right" as const,
                 width: 80,
                 align: "center",
-                // Wrap in a data-row-action sentinel so the onRow guard below
-                // can swallow clicks that originate here before they fire onRowClick.
                 render: (_: any, record: T) => (
                     <div
                         data-row-action="true"
@@ -126,9 +142,12 @@ function DataTableWithFiltersInternal<T extends object>({
                         pagination={false}
                         loading={loading}
                         rowKey={rowKey || "id"}
-                        size="middle"
-                        sticky={true}
-                        scroll={{ x: "max-content" }}
+                        size={tableProps?.size ?? "middle"}
+                        sticky={tableProps?.sticky ?? true}
+                        bordered={tableProps?.bordered}
+                        showHeader={tableProps?.showHeader}
+                        expandable={tableProps?.expandable as TableProps<T>["expandable"]}
+                        scroll={tableProps?.scroll ?? { x: "max-content" }}
                         className="data-table-pro-content"
                         onRow={(record) => {
                             const key =
@@ -140,8 +159,6 @@ function DataTableWithFiltersInternal<T extends object>({
 
                             return {
                                 onClick: (e) => {
-                                    // Double-fence: ignore clicks that originate from the
-                                    // actions column sentinel, regardless of stopPropagation.
                                     const target = e.target as HTMLElement;
                                     if (target.closest("[data-row-action]")) return;
                                     onRowClick?.(record);
@@ -151,7 +168,14 @@ function DataTableWithFiltersInternal<T extends object>({
                             };
                         }}
                         locale={{
-                            emptyText: <TableEmptyState icon={<InboxOutlined />} />,
+                            emptyText: (
+                                <TableEmptyState
+                                    icon={emptyState?.icon ?? <InboxOutlined />}
+                                    title={emptyState?.title}
+                                    subtitle={emptyState?.subtitle}
+                                    action={emptyState?.action}
+                                />
+                            ),
                         }}
                     />
                 </div>
