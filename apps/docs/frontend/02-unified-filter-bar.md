@@ -63,7 +63,10 @@ When built-in filter types are not enough, use `customRender` in `FilterConfig`:
 - For URL-backed filters:
   - Compare next params against current params and return early if unchanged.
   - Use deterministic serialization (`toISOString` for date values).
+  - Prefer `setSearchParams(prev => …)` and do **not** list `searchParams` as an effect dependency (feedback loops).
+  - Seed search from the URL **once on mount**. Never pass a fresh `initialFilters={{ search: urlValue }}` object every render into `DataTableWithFilters` — that used to reset the input mid-typing.
 - Keep `useEffect` dependencies explicit and value-based (not unstable object/function references).
+- `DataTableWithFilters` uses `initialFilters` only as the mount seed and Reset target; it does not re-apply them on every parent render.
 
 ## Migration Checklist
 

@@ -15,7 +15,7 @@ import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
 import { Button, Drawer, Dropdown, Form, Input, Space, Tooltip, Typography, theme } from "antd";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMedia } from "../hooks/useMedia";
 import { useRecordMediaPlay } from "../hooks/useRecordMediaPlay";
 import { CoverArtUploader } from "./CoverArtUploader";
@@ -35,6 +35,7 @@ interface MediaLibraryTableProps {
 export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultType = "all" }) => {
     const { token } = theme.useToken();
     const [form] = Form.useForm();
+    const mediaInitialFilters = useMemo(() => ({ type: defaultType }), [defaultType]);
 
     const {
         filters,
@@ -47,7 +48,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
         onNext,
         onPrev,
     } = useCursorTableState<MediaFilters>({
-        initialFilters: { type: defaultType },
+        initialFilters: mediaInitialFilters,
     });
 
     const filterType = filters.type ?? "all";
@@ -176,7 +177,7 @@ export const MediaLibraryTable: React.FC<MediaLibraryTableProps> = ({ defaultTyp
                         data: media,
                         loading,
                         onRowClick: handlePlayMedia,
-                        initialFilters: { type: defaultType },
+                        initialFilters: mediaInitialFilters,
                         filters: [
                             {
                                 type: "search",

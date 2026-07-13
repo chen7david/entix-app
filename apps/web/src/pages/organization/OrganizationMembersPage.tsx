@@ -72,9 +72,13 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     const { notification } = App.useApp();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    // Bind search state generically to url string matching native architecture persistence
+    // Seed search from URL once (mount). Do not re-bind to URL on every param change —
+    // that fought the live input and dropped keystrokes after debounce wrote to the URL.
     const [searchParams, setSearchParams] = useSearchParams();
-    const initialSearch = searchParams.get("search") || searchParams.get("q") || "";
+    const [membersInitialFilters] = useState(() => {
+        const fromUrl = searchParams.get("search") || searchParams.get("q") || "";
+        return { search: fromUrl || undefined };
+    });
 
     const {
         debouncedSearch,
@@ -86,20 +90,27 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
         onNext,
         onPrev,
     } = useCursorTableState<{ search?: string }>({
-        initialFilters: { search: initialSearch || undefined },
+        initialFilters: membersInitialFilters,
     });
 
-    // Sync to URL safely automatically reliably neatly explicitly
+    // Sync debounced search → URL without depending on searchParams (avoids feedback loops).
     useEffect(() => {
-        const newParams = new URLSearchParams(searchParams);
-        if (debouncedSearch) {
-            newParams.set("search", debouncedSearch);
-        } else {
-            newParams.delete("search");
-        }
-        newParams.delete("q");
-        setSearchParams(newParams, { replace: true });
-    }, [debouncedSearch, setSearchParams, searchParams]);
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                const current = prev.get("search") ?? "";
+                const desired = debouncedSearch || "";
+                if (current === desired && !prev.has("q")) {
+                    return prev;
+                }
+                if (desired) next.set("search", desired);
+                else next.delete("search");
+                next.delete("q");
+                return next;
+            },
+            { replace: true }
+        );
+    }, [debouncedSearch, setSearchParams]);
 
     const [createForm] = Form.useForm();
     // Store only the ID — the drawer derives live data from the members cache
@@ -393,7 +404,7 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                             },
                         ],
                         onFiltersChange,
-                        initialFilters: { search: initialSearch || undefined },
+                        initialFilters: membersInitialFilters,
                         pagination: {
                             hasNextPage,
                             hasPrevPage: cursorStack.length > 0,
