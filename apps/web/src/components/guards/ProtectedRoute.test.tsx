@@ -27,9 +27,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: false,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: false,
             isStudent: false,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: false,
         });
         vi.mocked(useAuth).mockReturnValue({
@@ -57,9 +59,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: false,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: false,
             isStudent: false,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: false,
         });
         vi.mocked(useAuth).mockReturnValue({
@@ -92,9 +96,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: false,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: false,
             isStudent: false,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: false,
         });
         vi.mocked(useAuth).mockReturnValue({
@@ -135,9 +141,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: false,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: false,
             isStudent: false,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: false,
         });
         vi.mocked(useAuth).mockReturnValue({
@@ -179,9 +187,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: false,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: false,
             isStudent: true,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: false,
         });
         vi.mocked(useAuth).mockReturnValue({
@@ -223,9 +233,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: true,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: false,
             isStudent: false,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: false,
         });
         vi.mocked(useAuth).mockReturnValue({
@@ -267,9 +279,11 @@ describe("ProtectedRoute", () => {
             needsRoleSelection: false,
             isOwner: false,
             isAdmin: false,
+            isFinance: false,
             isTeacher: true,
             isStudent: false,
             isAdminOrOwner: false,
+            isFinanceStaff: false,
             isStaff: true,
         });
         vi.mocked(useAuth).mockReturnValue({

@@ -6,7 +6,8 @@ const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 export default defineWorkersConfig({
     test: {
-        /** Integration hooks (D1 + auth) occasionally exceed Vitest’s default 10s under load. */
+        /** Integration/API tests occasionally exceed Vitest’s default 5s under full-suite load. */
+        testTimeout: 15_000,
         hookTimeout: 30_000,
         root: rootDir,
         setupFiles: [resolve(rootDir, "tests/setup.ts")],

@@ -1,5 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { PlaylistManager } from "@web/src/features/media/components/PlaylistManager";
 import { Button } from "antd";
 import type React from "react";
@@ -9,7 +10,7 @@ export const OrganizationPlaylistsPage: React.FC = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Curated Playlists"
                 subtitle="Organize your media assets into sequential delivery tracks."
@@ -19,7 +20,6 @@ export const OrganizationPlaylistsPage: React.FC = () => {
                         icon={<PlusOutlined />}
                         onClick={() => setIsCreateModalOpen(true)}
                         size="large"
-                        className="h-11 font-semibold transition-all duration-200"
                     >
                         New Playlist
                     </Button>
@@ -31,6 +31,6 @@ export const OrganizationPlaylistsPage: React.FC = () => {
                     onCloseCreateModal={() => setIsCreateModalOpen(false)}
                 />
             </div>
-        </div>
+        </PageShell>
     );
 };

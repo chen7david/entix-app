@@ -1,7 +1,10 @@
 import { getUserFinancialService } from "@api/factories/service.factory";
 import { HttpStatusCodes } from "@api/helpers/http.helpers";
 import type { AppHandler } from "@api/helpers/types.helpers";
-import { canAccessMemberWallet } from "@api/services/financial/wallet-access.service";
+import {
+    canAccessMemberWallet,
+    canManageMemberWallet,
+} from "@api/services/financial/wallet-access.service";
 import type { MemberWalletRoutes } from "./member-wallet.routes";
 
 export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = async (c) => {
@@ -9,7 +12,10 @@ export const getSummary: AppHandler<typeof MemberWalletRoutes.getSummary> = asyn
 
     if (!canAccessMemberWallet(c, userId, organizationId)) {
         return c.json(
-            { message: "Access denied: You can only view your own wallet or have admin access." },
+            {
+                message:
+                    "Access denied: You can only view your own wallet or have finance staff access.",
+            },
             HttpStatusCodes.FORBIDDEN
         );
     }
@@ -48,9 +54,9 @@ export const initializeWallet: AppHandler<typeof MemberWalletRoutes.initializeWa
 ) => {
     const { organizationId, userId } = c.req.valid("param");
 
-    if (!canAccessMemberWallet(c, userId, organizationId)) {
+    if (!canManageMemberWallet(c, userId, organizationId)) {
         return c.json(
-            { message: "Access denied: Only members or admins can initialize wallets." },
+            { message: "Access denied: Only finance staff can initialize wallets." },
             HttpStatusCodes.FORBIDDEN
         );
     }

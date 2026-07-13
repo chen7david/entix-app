@@ -9,8 +9,6 @@ import {
     UserSwitchOutlined,
 } from "@ant-design/icons";
 import { getAvatarUrl } from "@shared";
-import { useDebouncedValue } from "@tanstack/react-pacer";
-import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import {
     useAdminUsers,
@@ -21,6 +19,7 @@ import {
     useUnbanUser,
 } from "@web/src/features/admin";
 import { UserContactList, UserProfileForm } from "@web/src/features/user-profiles";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { requestPasswordReset } from "@web/src/lib/auth-client";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import type { MenuProps } from "antd";
@@ -39,22 +38,24 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import type React from "react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 export const UserTable: React.FC = () => {
     const { notification } = App.useApp();
-    const [searchText, setSearchText] = useState("");
-    const [currentCursor, setCurrentCursor] = useState<string | undefined>();
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
-
-    const [debouncedSearch] = useDebouncedValue(searchText, {
-        wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE,
-    });
+    const {
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>();
 
     const { data: userData, isPending: isLoading } = useAdminUsers(debouncedSearch || undefined, {
         cursor: currentCursor,
-        limit,
+        limit: pageSize,
     });
 
     const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -63,20 +64,6 @@ export const UserTable: React.FC = () => {
     const { mutate: banUser } = useBanUser();
     const { mutate: unbanUser } = useUnbanUser();
     const { mutate: setRole } = useSetUserRole();
-
-    const handleNext = useCallback(() => {
-        if (userData?.nextCursor) {
-            setCursorStack((prev) => [...prev, currentCursor || ""]);
-            setCurrentCursor(userData.nextCursor);
-        }
-    }, [userData?.nextCursor, currentCursor]);
-
-    const handlePrev = useCallback(() => {
-        const prevStack = [...cursorStack];
-        const prevCursor = prevStack.pop();
-        setCursorStack(prevStack);
-        setCurrentCursor(prevCursor);
-    }, [cursorStack]);
 
     const handleImpersonate = (userId: string) => {
         impersonate(userId, {
@@ -246,22 +233,14 @@ export const UserTable: React.FC = () => {
                             placeholder: "Search users...",
                         },
                     ],
-                    onFiltersChange: (f: Record<string, any>) => {
-                        setSearchText(f.search || "");
-                        setCurrentCursor(undefined);
-                        setCursorStack([]);
-                    },
+                    onFiltersChange,
                     pagination: {
-                        pageSize: limit,
+                        pageSize,
                         hasNextPage: !!userData?.nextCursor,
                         hasPrevPage: cursorStack.length > 0,
-                        onNext: handleNext,
-                        onPrev: handlePrev,
-                        onPageSizeChange: (s) => {
-                            setLimit(s);
-                            setCurrentCursor(undefined);
-                            setCursorStack([]);
-                        },
+                        onNext: () => onNext(userData?.nextCursor),
+                        onPrev,
+                        onPageSizeChange,
                     },
                     actions: (record: any) => {
                         const items: MenuProps["items"] = [

@@ -1,7 +1,8 @@
 import { ArrowLeftOutlined, QuestionCircleOutlined, UserOutlined } from "@ant-design/icons";
 import type { WalletSummaryDTO } from "@shared";
-import { FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
+import { AppRoutes, FINANCIAL_CATEGORIES, FINANCIAL_CURRENCIES, getAvatarUrl } from "@shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { PageBreadcrumb } from "@web/src/components/layout/PageBreadcrumb";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
 import { useLessonById } from "@web/src/features/lessons/hooks/useLessons";
 import { useOrganization, useOrgRole } from "@web/src/features/organization";
@@ -451,6 +452,17 @@ export function SessionVocabularyPage() {
 
     return (
         <div className="flex flex-col h-full gap-4">
+            <PageBreadcrumb
+                items={[
+                    {
+                        title: "Sessions",
+                        path: slug
+                            ? `/org/${slug}${AppRoutes.org.teaching.sessions}`
+                            : AppRoutes.org.teaching.sessions,
+                    },
+                    { title: "Session vocab" },
+                ]}
+            />
             <PageHeader
                 title="Session Vocabulary"
                 subtitle="Create vocabulary and track assignments for this session."

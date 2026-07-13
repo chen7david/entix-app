@@ -1,3 +1,4 @@
+import { theme } from "antd";
 import type React from "react";
 
 interface EntityAvatarProps {
@@ -19,14 +20,16 @@ export const EntityAvatar: React.FC<EntityAvatarProps> = ({
     fontSize = 14,
     alt = "Avatar",
 }) => {
+    const { token } = theme.useToken();
+
     return (
         <div
             style={{
                 width: size,
                 height: size,
                 borderRadius: 8,
-                background: active ? "#646cff" : "#e8e8e8",
-                color: active ? "#fff" : "#666",
+                background: active ? token.colorPrimary : token.colorFillSecondary,
+                color: active ? token.colorTextLightSolid : token.colorTextSecondary,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

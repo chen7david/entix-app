@@ -1,5 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import {
     BillingPlanManagement,
     type BillingPlanManagementRef,
@@ -15,7 +16,7 @@ export const BillingPlansPage: React.FC = () => {
     const managementRef = useRef<BillingPlanManagementRef>(null);
 
     return (
-        <div>
+        <PageShell>
             <PageHeader
                 title="Billing Plans"
                 subtitle="Manage tiered billing rates, student limits, and overdraft protections for automated charging."
@@ -24,7 +25,6 @@ export const BillingPlansPage: React.FC = () => {
                         type="primary"
                         icon={<PlusOutlined />}
                         size="large"
-                        className="h-11 font-semibold"
                         onClick={() => managementRef.current?.handleCreate()}
                     >
                         Create Plan
@@ -32,7 +32,9 @@ export const BillingPlansPage: React.FC = () => {
                 }
             />
 
-            <div>{orgId ? <BillingPlanManagement ref={managementRef} orgId={orgId} /> : null}</div>
-        </div>
+            <div className="flex-1 min-h-0">
+                {orgId ? <BillingPlanManagement ref={managementRef} orgId={orgId} /> : null}
+            </div>
+        </PageShell>
     );
 };

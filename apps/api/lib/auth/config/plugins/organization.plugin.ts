@@ -1,6 +1,6 @@
 import type { AppContext } from "@api/helpers/types.helpers";
 import type { MailService } from "@api/services/infra/mailer.service";
-import { ac, admin, owner, student, teacher } from "@shared/auth/permissions";
+import { ac, admin, finance, owner, student, teacher } from "@shared/auth/permissions";
 import { AppRoutes } from "@shared/constants/routes";
 import { organization } from "better-auth/plugins";
 
@@ -10,6 +10,7 @@ export const getOrganizationPluginConfig = (ctx?: AppContext, mailer?: MailServi
         roles: {
             student,
             teacher,
+            finance,
             admin,
             owner,
         },

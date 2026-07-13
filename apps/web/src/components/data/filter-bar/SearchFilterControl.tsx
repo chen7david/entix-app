@@ -71,7 +71,7 @@ export function SearchFilterControl({
                 }
             }}
             variant="outlined"
-            className="rounded-lg h-[40px] transition-colors"
+            className="rounded-lg transition-colors"
             allowClear={allowClear}
             suffix={suffix}
             disabled={disabled}

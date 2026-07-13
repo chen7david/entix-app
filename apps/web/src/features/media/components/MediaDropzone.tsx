@@ -7,7 +7,12 @@ import { App, Typography, Upload } from "antd";
 import { useSetAtom } from "jotai";
 import type React from "react";
 import { useMedia } from "../hooks/useMedia";
-import { isUploadWindowVisibleAtom, type UploadTask, uploadQueueAtom } from "../store/upload.store";
+import {
+    isUploadModalOpenAtom,
+    isUploadWindowVisibleAtom,
+    type UploadTask,
+    uploadQueueAtom,
+} from "../store/upload.store";
 
 const { Dragger } = Upload;
 const { Paragraph } = Typography;
@@ -18,6 +23,7 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
     const { createMedia } = useMedia();
     const setQueue = useSetAtom(uploadQueueAtom);
     const setIsUploadWindowVisible = useSetAtom(isUploadWindowVisibleAtom);
+    const setIsUploadModalOpen = useSetAtom(isUploadModalOpenAtom);
 
     const organizationId = activeOrganization?.id;
 
@@ -87,6 +93,7 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
                 },
             ]);
             setIsUploadWindowVisible(true);
+            setIsUploadModalOpen(true);
 
             const updateTask = (updates: Partial<UploadTask>) => {
                 setQueue((q) => q.map((t) => (t.id === taskId ? { ...t, ...updates } : t)));
@@ -182,7 +189,7 @@ export const MediaDropzone: React.FC<{ type: "video" | "audio" | "all" }> = ({ t
     };
 
     return (
-        <div className="w-full mb-8">
+        <div className="w-full">
             <Dragger {...props}>
                 <Paragraph className="ant-upload-drag-icon">
                     <InboxOutlined />

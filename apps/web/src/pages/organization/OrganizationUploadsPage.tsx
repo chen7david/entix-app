@@ -1,11 +1,12 @@
 import { CloudUploadOutlined, DatabaseOutlined, FileOutlined } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { Uploader, useDeleteUpload, useOrganizationUploads } from "@web/src/features/media";
 import { UploadsTable } from "@web/src/features/media/components/UploadsTable";
 import { useOrganization } from "@web/src/features/organization";
 import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
-import { Button, Modal, Skeleton } from "antd";
+import { Button, Modal, Skeleton, theme } from "antd";
 import { useState } from "react";
 
 export type UploadFilters = {
@@ -14,6 +15,7 @@ export type UploadFilters = {
 };
 
 export const OrganizationUploadsPage = () => {
+    const { token } = theme.useToken();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const { activeOrganization } = useOrganization();
 
@@ -73,7 +75,7 @@ export const OrganizationUploadsPage = () => {
     );
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Files and Uploads"
                 subtitle="Manage your organization's storage securely via Direct-to-R2 architecture."
@@ -83,7 +85,6 @@ export const OrganizationUploadsPage = () => {
                         icon={<CloudUploadOutlined />}
                         onClick={() => setIsUploadModalOpen(true)}
                         size="large"
-                        className="h-11 font-semibold transition-all duration-200"
                     >
                         Upload Files
                     </Button>
@@ -98,14 +99,13 @@ export const OrganizationUploadsPage = () => {
                         label: "Uploads on This Page",
                         value: totalFiles,
                         icon: <FileOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "storage",
                         label: "Storage Used",
                         value: formatBytes(totalStorage),
                         icon: <DatabaseOutlined />,
-                        color: "#8b5cf6",
+                        color: token.colorInfo,
                     },
                 ]}
             />
@@ -148,6 +148,6 @@ export const OrganizationUploadsPage = () => {
                     />
                 </div>
             </Modal>
-        </div>
+        </PageShell>
     );
 };

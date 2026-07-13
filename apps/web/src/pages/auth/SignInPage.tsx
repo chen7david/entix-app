@@ -18,13 +18,13 @@ export const SignInPage: React.FC = () => {
             {
                 onSuccess: async () => {
                     notification.success({
-                        message: "Sign In Successful",
-                        description: "You have been signed in successfully.",
+                        message: "Signed in",
+                        description: "Welcome back.",
                     });
                 },
                 onError: (error: any) => {
                     notification.error({
-                        message: "Sign In Failed",
+                        message: "Sign in failed",
                         description: error.message || "Failed to sign in",
                     });
                 },
@@ -33,10 +33,12 @@ export const SignInPage: React.FC = () => {
     };
 
     return (
-        <Card style={{ width: 400, margin: "0 auto" }}>
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-                <Title level={2}>Welcome Back</Title>
-                <Text type="secondary">Please sign in to continue</Text>
+        <Card className="w-full border-0 shadow-md" styles={{ body: { padding: 32 } }}>
+            <div className="text-center mb-7">
+                <Title level={2} className="!mb-2 font-display tracking-tight">
+                    Sign in
+                </Title>
+                <Text type="secondary">Access your academy workspace</Text>
             </div>
             <SignInForm onSubmit={handleSignIn} isLoading={isPending} />
         </Card>

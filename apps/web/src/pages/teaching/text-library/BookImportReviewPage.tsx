@@ -1,22 +1,27 @@
 import { AppRoutes } from "@shared";
 import { CEFR_LEVELS } from "@shared/constants/cefr";
+import { PageBreadcrumb } from "@web/src/components/layout/PageBreadcrumb";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
-import { useOrgNavigate } from "@web/src/features/organization";
+import { useOrganization, useOrgNavigate } from "@web/src/features/organization";
 import {
     useDeleteImportParagraph,
     useFinalizeImportJob,
     useImportJob,
     useUpdateImportParagraph,
 } from "@web/src/features/passages/hooks/useBookImport";
-import { Alert, Button, Form, Input, Modal, Result, Select, Spin, Typography } from "antd";
+import { Alert, Button, Form, Input, Modal, Result, Select, Spin, Steps, Typography } from "antd";
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router";
 
 const { Text } = Typography;
 
+const IMPORT_STEPS = [{ title: "Upload" }, { title: "Review" }, { title: "Finalize" }] as const;
+
 export function BookImportReviewPage() {
     const { jobId } = useParams<{ jobId: string }>();
     const navigateOrg = useOrgNavigate();
+    const { activeOrganization } = useOrganization();
+    const orgPrefix = activeOrganization?.slug ? `/org/${activeOrganization.slug}` : "";
     const { data, isLoading, isError, error } = useImportJob(jobId);
     const job = data?.data;
 
@@ -70,7 +75,7 @@ export function BookImportReviewPage() {
 
     if (isLoading) {
         return (
-            <div className="p-8">
+            <div className="py-8">
                 <Spin />
             </div>
         );
@@ -93,13 +98,29 @@ export function BookImportReviewPage() {
 
     const canEdit = job.status === "uploading" || job.status === "review";
     const canFinalize = job.status === "review" && active.length > 0;
+    const stepsCurrent = canEdit ? 1 : 2;
 
     return (
-        <div className="flex flex-col h-full">
-            <div className="p-4 md:p-6 border-b">
+        <div className="flex flex-col h-full min-h-0">
+            <PageBreadcrumb
+                items={[
+                    {
+                        title: "Text library",
+                        path: `${orgPrefix}${AppRoutes.org.teaching.textLibrary}`,
+                    },
+                    {
+                        title: "Import",
+                        path: `${orgPrefix}${AppRoutes.org.teaching.textLibraryImport}`,
+                    },
+                    { title: "Review" },
+                ]}
+            />
+            <Steps size="small" current={stepsCurrent} items={[...IMPORT_STEPS]} className="mb-4" />
+            <div className="border-b pb-4 mb-4">
                 <PageHeader
                     title="Review import"
                     subtitle={job?.fileName ?? ""}
+                    className="mb-0"
                     actions={
                         <Button
                             type="primary"
@@ -113,7 +134,7 @@ export function BookImportReviewPage() {
             </div>
 
             {!canEdit && (
-                <div className="px-4 md:px-6 pt-4">
+                <div className="pb-4">
                     <Alert
                         type="info"
                         showIcon
@@ -169,7 +190,7 @@ export function BookImportReviewPage() {
                     </div>
                 </div>
 
-                <div className="flex-1 p-6 flex flex-col gap-4 min-w-0">
+                <div className="flex-1 pl-4 md:pl-6 flex flex-col gap-4 min-w-0">
                     {selected ? (
                         <>
                             <Text type="secondary">

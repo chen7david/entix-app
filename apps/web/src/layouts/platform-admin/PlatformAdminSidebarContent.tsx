@@ -6,14 +6,16 @@ import {
     HistoryOutlined,
     LogoutOutlined,
     MailOutlined,
-    MoreOutlined,
+    MoonOutlined,
     SafetyOutlined,
+    SunOutlined,
     TeamOutlined,
     UserOutlined,
 } from "@ant-design/icons";
 import { AppRoutes, getAvatarUrl } from "@shared";
 import { useAuth, useSignOut } from "@web/src/features/auth";
-import { Avatar, Button, Dropdown, Menu, type MenuProps, Typography, theme } from "antd";
+import { useTheme } from "@web/src/hooks/useTheme";
+import { Avatar, Dropdown, Menu, type MenuProps, Typography, theme } from "antd";
 import type React from "react";
 import { useLocation, useNavigate } from "react-router";
 
@@ -23,39 +25,47 @@ const { useToken } = theme;
 export const PlatformAdminSidebarContent: React.FC = () => {
     const { user } = useAuth();
     const { mutate: signOut } = useSignOut();
+    const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
     const { token } = useToken();
 
-    // 1. User Profile Dropdown
     const handleMenuClick: MenuProps["onClick"] = async (e) => {
         if (e.key === "logout") {
             signOut(undefined, {
                 onSuccess: () => navigate(AppRoutes.auth.signIn),
             });
-        } else if (e.key === "exit") {
+            return;
+        }
+        if (e.key === "exit") {
             navigate("/", { replace: true });
+            return;
+        }
+        if (e.key === "theme") {
+            toggleTheme();
         }
     };
 
     const userMenuItems: MenuProps["items"] = [
         {
             key: "exit",
-            label: "Exit Admin Portal",
+            label: "Exit admin portal",
             icon: <ArrowLeftOutlined />,
         },
         {
-            type: "divider",
+            key: "theme",
+            label: isDark ? "Light mode" : "Dark mode",
+            icon: isDark ? <SunOutlined /> : <MoonOutlined />,
         },
+        { type: "divider" },
         {
             key: "logout",
-            label: "Sign Out",
+            label: "Sign out",
             icon: <LogoutOutlined />,
             danger: true,
         },
     ];
 
-    // 2. Navigation Main Menu
     const navItems: MenuProps["items"] = [
         {
             label: "System Dashboard",
@@ -95,19 +105,34 @@ export const PlatformAdminSidebarContent: React.FC = () => {
 
     return (
         <div className="flex flex-col h-full">
-            {/* Header Badge */}
-            <div className="p-4 flex items-center gap-3 border-b border-gray-100">
-                <SafetyOutlined className="text-yellow-600 text-2xl" />
-                <div className="flex flex-col">
-                    <Text className="text-gray-900 text-sm font-bold uppercase tracking-wider">
-                        Super Admin
+            <div
+                className="px-3.5 pt-4 pb-3 flex items-center gap-3 shrink-0"
+                style={{ borderBottom: `1px solid ${token.colorSplit}` }}
+            >
+                <div
+                    className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{
+                        background: token.colorWarningBg,
+                        color: token.colorWarning,
+                    }}
+                >
+                    <SafetyOutlined style={{ fontSize: 16 }} />
+                </div>
+                <div className="flex flex-col min-w-0">
+                    <Text
+                        strong
+                        className="font-display truncate"
+                        style={{ fontSize: 13.5, letterSpacing: "-0.01em" }}
+                    >
+                        Platform
                     </Text>
-                    <Text className="text-gray-500 text-xs">Entix Platform Control</Text>
+                    <Text type="secondary" style={{ fontSize: 11.5 }}>
+                        Super admin
+                    </Text>
                 </div>
             </div>
 
-            {/* Menu */}
-            <div className="flex-1 overflow-y-auto py-2">
+            <div className="flex-1 overflow-y-auto py-2 min-h-0">
                 <Menu
                     mode="inline"
                     theme="light"
@@ -115,46 +140,55 @@ export const PlatformAdminSidebarContent: React.FC = () => {
                     style={{ height: "100%", background: "transparent", borderRight: 0 }}
                     onClick={handleNavClick}
                     items={navItems}
-                    defaultOpenKeys={["system-submenu"]}
                 />
             </div>
 
-            {/* Footer Profile */}
             <div
-                className="p-4 mt-auto border-t"
-                style={{ borderColor: token.colorBorderSecondary }}
+                className="px-2.5 py-2 shrink-0"
+                style={{ borderTop: `1px solid ${token.colorSplit}` }}
             >
-                <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 overflow-hidden">
+                <Dropdown
+                    menu={{ items: userMenuItems, onClick: handleMenuClick }}
+                    trigger={["click"]}
+                    placement="topLeft"
+                >
+                    <button
+                        type="button"
+                        aria-label="Account menu"
+                        className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-[10px] text-left transition-colors"
+                        style={{ background: "transparent", border: "none" }}
+                        onMouseEnter={(e) => {
+                            e.currentTarget.style.background = token.colorFillTertiary;
+                        }}
+                        onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "transparent";
+                        }}
+                    >
                         <Avatar
-                            size={32}
+                            size={34}
                             src={getAvatarUrl(user?.image, "sm") || undefined}
                             icon={<UserOutlined />}
-                            className="flex-shrink-0"
-                            style={{
-                                backgroundColor: token.colorPrimary,
-                                flexShrink: 0,
-                            }}
+                            className="shrink-0"
+                            style={{ backgroundColor: token.colorPrimary }}
                         />
-                        <div className="flex flex-col min-w-0">
-                            <Text strong className="truncate text-xs text-gray-900">
-                                {user?.name}
+                        <div className="min-w-0 flex-1">
+                            <Text
+                                strong
+                                ellipsis
+                                style={{ fontSize: 13, lineHeight: "17px", display: "block" }}
+                            >
+                                {user?.name || "Account"}
+                            </Text>
+                            <Text
+                                type="secondary"
+                                ellipsis
+                                style={{ fontSize: 11, lineHeight: "14px", display: "block" }}
+                            >
+                                {user?.email || "Platform control"}
                             </Text>
                         </div>
-                    </div>
-                    <Dropdown
-                        menu={{ items: userMenuItems, onClick: handleMenuClick }}
-                        trigger={["click"]}
-                        placement="topRight"
-                    >
-                        <Button
-                            type="text"
-                            icon={<MoreOutlined className="text-gray-500" />}
-                            className="flex-shrink-0"
-                            style={{ backgroundColor: "transparent" }}
-                        />
-                    </Dropdown>
-                </div>
+                    </button>
+                </Dropdown>
             </div>
         </div>
     );

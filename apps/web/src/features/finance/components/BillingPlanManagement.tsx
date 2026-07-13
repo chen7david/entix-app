@@ -1,6 +1,5 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
 import type { BillingPlanDTO, UpdateBillingPlanInput } from "@shared/schemas/dto/billing-plan.dto";
-import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { POSInput } from "@web/src/components/ui/POSInput";
 import {
@@ -9,6 +8,7 @@ import {
 } from "@web/src/features/finance/hooks/useBillingPlans";
 import type { CurrencyWithStatus } from "@web/src/features/finance/hooks/useOrgCurrencies";
 import { useOrgCurrencies } from "@web/src/features/finance/hooks/useOrgCurrencies";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { DateUtils } from "@web/src/utils/date";
 import {
     App,
@@ -212,14 +212,24 @@ export interface BillingPlanManagementRef {
 export const BillingPlanManagement = React.forwardRef<BillingPlanManagementRef, { orgId: string }>(
     ({ orgId }, ref) => {
         const { modal } = App.useApp();
-        const [search, setSearch] = useState("");
-        const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
         const [drawerVisible, setDrawerVisible] = useState(false);
         const [editingPlan, setEditingPlan] = useState<BillingPlanDTO | null>(null);
 
+        const {
+            debouncedSearch,
+            cursorStack,
+            pageSize,
+            currentCursor,
+            onFiltersChange,
+            onPageSizeChange,
+            onNext,
+            onPrev,
+        } = useCursorTableState<{ search?: string }>();
+
         const { data, isLoading: loadingPlans } = useBillingPlans(orgId, {
-            search,
-            limit,
+            search: debouncedSearch || undefined,
+            limit: pageSize,
+            cursor: currentCursor,
         });
         const { createPlan, updatePlan, deletePlan } = useBillingPlanActions(orgId);
         const { data: currencies } = useOrgCurrencies(orgId);
@@ -306,26 +316,6 @@ export const BillingPlanManagement = React.forwardRef<BillingPlanManagementRef, 
                 width: 150,
                 render: (date) => DateUtils.fromNow(date),
             },
-            {
-                title: "Actions",
-                key: "actions",
-                width: 100,
-                render: (_, record) => (
-                    <Space>
-                        <Button
-                            type="text"
-                            icon={<EditOutlined />}
-                            onClick={() => handleEdit(record)}
-                        />
-                        <Button
-                            type="text"
-                            danger
-                            icon={<DeleteOutlined />}
-                            onClick={() => handleDelete(record)}
-                        />
-                    </Space>
-                ),
-            },
         ];
 
         return (
@@ -344,13 +334,30 @@ export const BillingPlanManagement = React.forwardRef<BillingPlanManagementRef, 
                                     placeholder: "Search plans...",
                                 },
                             ],
-                            onFiltersChange: (f) => setSearch(f.search || ""),
+                            onFiltersChange,
                             pagination: {
                                 hasNextPage: !!data?.nextCursor,
-                                hasPrevPage: false,
-                                pageSize: limit,
-                                onPageSizeChange: setLimit,
+                                hasPrevPage: cursorStack.length > 0,
+                                pageSize,
+                                onNext: () => onNext(data?.nextCursor),
+                                onPrev,
+                                onPageSizeChange,
                             },
+                            actions: (record) => (
+                                <Space>
+                                    <Button
+                                        type="text"
+                                        icon={<EditOutlined />}
+                                        onClick={() => handleEdit(record)}
+                                    />
+                                    <Button
+                                        type="text"
+                                        danger
+                                        icon={<DeleteOutlined />}
+                                        onClick={() => handleDelete(record)}
+                                    />
+                                </Space>
+                            ),
                         }}
                     />
                 </div>

@@ -160,6 +160,59 @@ describe("Bulk Member Integration Tests", () => {
         expect(imported?.role).toBe("student");
     });
 
+    it("should import legacy export shapes (phoneNumbers, socialMedia, role member)", async () => {
+        const payload = [
+            {
+                email: "legacy-export@example.com",
+                name: "Legacy Export User",
+                role: "member",
+                avatarUrl: "https://example.com/legacy.jpg",
+                profile: {
+                    firstName: "Legacy",
+                    lastName: "Export",
+                    sex: "female",
+                    birthDate: "2012-08-16T00:00:00.000Z",
+                },
+                phoneNumbers: [
+                    {
+                        countryCode: "+86",
+                        number: "13800000000",
+                        extension: "",
+                        label: "Mobile",
+                        isPrimary: true,
+                    },
+                ],
+                addresses: [],
+                socialMedia: [{ type: "GitHub", urlOrHandle: "legacyuser" }],
+            },
+        ];
+
+        const res = await client.orgs.members.import(orgId, payload as any);
+        expect(res.status).toBe(200);
+
+        const body = (await res.json()) as any;
+        expect(body.failed).toBe(0);
+        expect(body.created).toBe(1);
+
+        const user = await db.query.authUsers.findFirst({
+            where: (u, { eq }) => eq(u.email, "legacy-export@example.com"),
+            with: {
+                phoneNumbers: true,
+                socialMedias: { with: { socialMediaType: true } },
+            },
+        });
+        expect(user).toBeDefined();
+        expect(user?.phoneNumbers.length).toBe(1);
+        expect(user?.phoneNumbers[0].number).toBe("13800000000");
+        expect(user?.socialMedias.length).toBe(1);
+
+        const member = await db.query.authMembers.findFirst({
+            where: (m, { and, eq }) =>
+                and(eq(m.userId, user?.id ?? ""), eq(m.organizationId, orgId)),
+        });
+        expect(member?.role).toBe("student");
+    });
+
     it("should fail when user lacks permission", async () => {
         const res = await client.orgs.members.getMetrics("fake-org");
         expect(res.status).toBe(403);

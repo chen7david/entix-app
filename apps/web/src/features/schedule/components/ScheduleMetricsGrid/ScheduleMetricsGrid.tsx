@@ -1,5 +1,6 @@
 import { CheckCircleOutlined, ClockCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
+import { theme } from "antd";
 import type React from "react";
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
 };
 
 export const ScheduleMetricsGrid: React.FC<Props> = ({ metrics, loading }) => {
+    const { token } = theme.useToken();
+
     return (
         <SummaryCardsRow
             loading={loading}
@@ -21,21 +24,20 @@ export const ScheduleMetricsGrid: React.FC<Props> = ({ metrics, loading }) => {
                     label: "Total Sessions",
                     value: metrics?.total || 0,
                     icon: <ClockCircleOutlined />,
-                    color: "#2563eb",
                 },
                 {
                     key: "completed",
                     label: "Completed",
                     value: metrics?.completed || 0,
                     icon: <CheckCircleOutlined />,
-                    color: "#10b981",
+                    color: token.colorSuccess,
                 },
                 {
                     key: "cancelled",
                     label: "Cancelled",
                     value: metrics?.cancelled || 0,
                     icon: <CloseCircleOutlined />,
-                    color: "#ef4444",
+                    color: token.colorError,
                 },
             ]}
         />

@@ -7,13 +7,14 @@ import { createTestClient, type TestClient } from "../lib/test-client";
 import { createTestDb } from "../lib/utils";
 
 /**
- * Guards org finance RBAC: students must not mutate org ledger / billing;
- * teachers may read but not mutate; owners retain full access.
+ * Guards org finance RBAC: only admin, owner, and finance may access the ledger;
+ * students and teachers are denied; platform treasury remains super-admin only.
  */
 describe("Finance authorization", () => {
     let ownerClient: TestClient;
     let studentClient: TestClient;
     let teacherClient: TestClient;
+    let financeClient: TestClient;
     let orgId: string;
     let fundingAccountId: string;
 
@@ -40,6 +41,15 @@ describe("Finance authorization", () => {
             email: `teacher.finance.${Date.now()}@example.com`,
         });
         teacherClient = createTestClient(app, env, teacher.cookie);
+
+        const finance = await createOrgMemberWithRole({
+            app,
+            env,
+            orgId,
+            role: "finance",
+            email: `finance.role.${Date.now()}@example.com`,
+        });
+        financeClient = createTestClient(app, env, finance.cookie);
 
         const activateRes = await ownerClient.orgs.finance.activateCurrency(orgId, {
             currencyId: FINANCIAL_CURRENCIES.USD,
@@ -95,14 +105,27 @@ describe("Finance authorization", () => {
         expect(res.status).toBe(403);
     });
 
-    it("teacher can read org finance summary but cannot activate currency", async () => {
+    it("teacher cannot read or mutate org finance", async () => {
         const readRes = await teacherClient.orgs.finance.getBalance(orgId);
-        expect(readRes.status).toBe(200);
+        expect(readRes.status).toBe(403);
 
         const writeRes = await teacherClient.orgs.finance.activateCurrency(orgId, {
             currencyId: FINANCIAL_CURRENCIES.EUR,
         });
         expect(writeRes.status).toBe(403);
+    });
+
+    it("finance role can read and mutate org finance", async () => {
+        const readRes = await financeClient.orgs.finance.getBalance(orgId);
+        expect(readRes.status).toBe(200);
+
+        const createRes = await financeClient.orgs.finance.createAccount(orgId, {
+            name: `Finance Ops ${Date.now()}`,
+            currencyId: FINANCIAL_CURRENCIES.USD,
+            ownerType: "org",
+            ownerId: orgId,
+        });
+        expect(createRes.status).toBe(201);
     });
 
     it("owner can still read and mutate org finance", async () => {

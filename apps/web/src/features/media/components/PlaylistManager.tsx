@@ -50,6 +50,7 @@ import {
     Space,
     Tooltip,
     Typography,
+    theme,
 } from "antd";
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
@@ -84,7 +85,7 @@ const SortableItem = ({
             style={style}
             className={`flex items-center justify-between px-4 py-3 mb-3 rounded-xl border ${
                 isDragging
-                    ? "border-[#646cff] bg-indigo-50 dark:bg-[#646cff]/10 shadow-xl ring-2 ring-[#646cff]/20"
+                    ? "border-primary bg-primary/5 dark:bg-primary/10 shadow-xl ring-2 ring-primary/20"
                     : "border-transparent hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             } transition-all group`}
         >
@@ -98,7 +99,7 @@ const SortableItem = ({
                 </div>
                 <div className="flex flex-col flex-1 min-w-0 max-w-[280px]">
                     <Tooltip title={mediaItem.title} placement="topLeft" mouseEnterDelay={0.5}>
-                        <span className="font-semibold text-sm truncate block text-[#646cff] dark:text-[#747bff] transition-colors">
+                        <span className="font-semibold text-sm truncate block text-primary dark:text-primary transition-colors">
                             {mediaItem.title}
                         </span>
                     </Tooltip>
@@ -130,6 +131,7 @@ export const PlaylistManager: React.FC<{
     externalIsCreateModalOpen?: boolean;
     onCloseCreateModal?: () => void;
 }> = ({ externalIsCreateModalOpen, onCloseCreateModal }) => {
+    const { token } = theme.useToken();
     const {
         debouncedSearch,
         cursorStack,
@@ -304,7 +306,7 @@ export const PlaylistManager: React.FC<{
                     <OrderedListOutlined className="text-blue-500 flex-shrink-0 group-hover:text-blue-600 transition-colors" />
                     <div className="flex flex-col flex-1 min-w-0 max-w-[300px]">
                         <Tooltip title={record.title} placement="topLeft" mouseEnterDelay={0.5}>
-                            <span className="text-[#646cff] hover:text-[#747bff] transition-colors font-semibold truncate block">
+                            <span className="text-primary hover:text-primary transition-colors font-semibold truncate block">
                                 {record.title}
                             </span>
                         </Tooltip>
@@ -333,14 +335,13 @@ export const PlaylistManager: React.FC<{
                         label: "Playlists on This Page",
                         value: totalPlaylists,
                         icon: <OrderedListOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "media",
                         label: "Media Available",
                         value: media?.length || 0,
                         icon: <AppstoreOutlined />,
-                        color: "#8b5cf6",
+                        color: token.colorInfo,
                     },
                 ]}
             />

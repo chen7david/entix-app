@@ -12,11 +12,10 @@ import {
 } from "@ant-design/icons";
 import { getAvatarUrl, getRoleColor, type MemberDTO, ORG_ROLE_OPTIONS } from "@shared";
 import { createMemberSchema } from "@shared/schemas/dto/member.dto";
-import { useDebouncedValue } from "@tanstack/react-pacer";
-import { DEFAULT_PAGE_SIZE } from "@web/src/components/data/DataTable.types";
 import { DataTableWithFilters } from "@web/src/components/data/DataTableWithFilters";
 import { SummaryCardsRow } from "@web/src/components/data/SummaryCardsRow";
 import { PageHeader } from "@web/src/components/layout/PageHeader";
+import { PageShell } from "@web/src/components/layout/PageShell";
 import { useAuth } from "@web/src/features/auth";
 import { MemberAccountAdminPanel } from "@web/src/features/finance/components/MemberAccountAdminPanel";
 import { MemberBillingSection } from "@web/src/features/finance/components/MemberBillingSection";
@@ -36,6 +35,7 @@ import {
     useRemoveAvatar,
 } from "@web/src/features/user-profiles";
 import { useInitializeWallet } from "@web/src/features/wallet/hooks/useInitializeWallet";
+import { useCursorTableState } from "@web/src/hooks/useCursorTableState";
 import { requestPasswordReset, sendVerificationEmail } from "@web/src/lib/auth-client";
 import { UI_CONSTANTS } from "@web/src/utils/constants";
 import { DateUtils } from "@web/src/utils/date";
@@ -44,6 +44,7 @@ import {
     App,
     Avatar,
     Button,
+    Descriptions,
     Drawer,
     Dropdown,
     Form,
@@ -63,8 +64,6 @@ import { createSchemaFieldRule } from "antd-zod";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 
-const { Title, Text } = Typography;
-
 export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     canManage: propCanManage,
 }) => {
@@ -74,28 +73,32 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
 
     // Bind search state generically to url string matching native architecture persistence
     const [searchParams, setSearchParams] = useSearchParams();
-    const [searchText, setSearchText] = useState(searchParams.get("q") || "");
+    const initialSearch = searchParams.get("search") || searchParams.get("q") || "";
 
-    // Defer pushing expensive re-renders and network bounds rapidly on keystroke loops
-    const [debouncedSearch] = useDebouncedValue(
-        searchText,
-        { wait: UI_CONSTANTS.DEBOUNCE.SEARCH_TABLE },
-        (state) => ({ isPending: state.isPending })
-    );
+    const {
+        debouncedSearch,
+        cursorStack,
+        pageSize,
+        currentCursor,
+        onFiltersChange,
+        onPageSizeChange,
+        onNext,
+        onPrev,
+    } = useCursorTableState<{ search?: string }>({
+        initialFilters: { search: initialSearch || undefined },
+    });
 
     // Sync to URL safely automatically reliably neatly explicitly
     useEffect(() => {
         const newParams = new URLSearchParams(searchParams);
         if (debouncedSearch) {
-            newParams.set("q", debouncedSearch);
+            newParams.set("search", debouncedSearch);
         } else {
-            newParams.delete("q");
+            newParams.delete("search");
         }
+        newParams.delete("q");
         setSearchParams(newParams, { replace: true });
     }, [debouncedSearch, setSearchParams, searchParams]);
-    const [currentCursor, setCurrentCursor] = useState<string | undefined>(undefined);
-    const [cursorStack, setCursorStack] = useState<string[]>([]);
-    const [limit, setLimit] = useState(DEFAULT_PAGE_SIZE);
 
     const [createForm] = Form.useForm();
     // Store only the ID — the drawer derives live data from the members cache
@@ -112,27 +115,10 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
         checkPermission,
         nextCursor,
         hasNextPage,
-    } = useMembers(debouncedSearch, {
+    } = useMembers(debouncedSearch || undefined, {
         cursor: currentCursor,
-        limit: limit,
+        limit: pageSize,
     });
-
-    const handleNext = useCallback(() => {
-        if (nextCursor) {
-            setCursorStack((prev) => [...prev, currentCursor || ""]);
-            setCurrentCursor(nextCursor);
-        }
-    }, [nextCursor, currentCursor]);
-
-    const handlePrev = useCallback(() => {
-        if (cursorStack.length > 0) {
-            const newStack = [...cursorStack];
-            const prev = newStack.pop();
-            setCursorStack(newStack);
-            setCurrentCursor(prev || undefined);
-        }
-    }, [cursorStack]);
-
     const { user } = useAuth();
     const { isAdminOrOwner } = useOrgRole();
     const currentUserId = user?.id;
@@ -345,7 +331,7 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
     }
 
     return (
-        <div className="flex flex-col h-full">
+        <PageShell>
             <PageHeader
                 title="Members"
                 subtitle="Manage organization members and roles."
@@ -356,7 +342,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                             icon={<PlusOutlined />}
                             onClick={() => setIsCreateModalOpen(true)}
                             size="large"
-                            className="h-11 font-semibold transition-all duration-200"
                         >
                             Create New Member
                         </Button>
@@ -373,21 +358,20 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         label: "Total Members",
                         value: totalMembers,
                         icon: <TeamOutlined />,
-                        color: "#2563eb",
                     },
                     {
                         key: "admins",
                         label: "Admins",
                         value: adminCount,
                         icon: <SafetyOutlined />,
-                        color: "#10b981",
+                        color: token.colorSuccess,
                     },
                     {
                         key: "owners",
                         label: "Owners",
                         value: ownerCount,
                         icon: <CrownOutlined />,
-                        color: "#f59e0b",
+                        color: token.colorWarning,
                     },
                 ]}
             />
@@ -403,26 +387,19 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         filters: [
                             {
                                 type: "search",
-                                key: "q",
+                                key: "search",
                                 placeholder: "Search members by name or email...",
                             },
                         ],
-                        onFiltersChange: (f: Record<string, any>) => {
-                            setSearchText(f.q || "");
-                            setCurrentCursor(undefined);
-                            setCursorStack([]);
-                        },
+                        onFiltersChange,
+                        initialFilters: { search: initialSearch || undefined },
                         pagination: {
                             hasNextPage,
                             hasPrevPage: cursorStack.length > 0,
-                            pageSize: limit,
-                            onNext: handleNext,
-                            onPrev: handlePrev,
-                            onPageSizeChange: (s) => {
-                                setLimit(s);
-                                setCurrentCursor(undefined);
-                                setCursorStack([]);
-                            },
+                            pageSize,
+                            onNext: () => onNext(nextCursor),
+                            onPrev,
+                            onPageSizeChange,
                         },
                         actions: (record: MemberDTO) => {
                             const items: MenuProps["items"] = [
@@ -588,42 +565,65 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         if (!activeMember) return null;
                         return (
                             <div className="flex flex-col gap-6 pt-2 pb-6">
-                                <div className="text-center mb-6">
-                                    {activeOrganization ? (
-                                        <AvatarUpload
-                                            organizationId={activeOrganization.id}
-                                            userId={activeMember.userId}
-                                            currentImageUrl={getAvatarUrl(
-                                                activeMember.avatarUrl || null,
-                                                "xl"
-                                            )}
-                                            size={100}
-                                            className="mx-auto"
-                                        />
-                                    ) : (
-                                        <Avatar
-                                            size={96}
-                                            icon={<UserOutlined />}
-                                            src={getAvatarUrl(activeMember.avatarUrl || null, "xl")}
-                                            className="mx-auto"
-                                        />
-                                    )}
-                                    <Title
-                                        level={4}
-                                        style={{ marginTop: "16px", marginBottom: "4px" }}
-                                    >
-                                        {activeMember.name}
-                                    </Title>
-                                    <Text type="secondary">{activeMember.email}</Text>
-                                    <div className="mt-2">
-                                        <Tag
-                                            color={
-                                                activeMember.emailVerified ? "success" : "warning"
-                                            }
-                                        >
-                                            {activeMember.emailVerified ? "Verified" : "Unverified"}
-                                        </Tag>
+                                <div className="mb-6">
+                                    <div className="text-center mb-4">
+                                        {activeOrganization ? (
+                                            <AvatarUpload
+                                                organizationId={activeOrganization.id}
+                                                userId={activeMember.userId}
+                                                currentImageUrl={getAvatarUrl(
+                                                    activeMember.avatarUrl || null,
+                                                    "xl"
+                                                )}
+                                                size={100}
+                                                className="mx-auto"
+                                            />
+                                        ) : (
+                                            <Avatar
+                                                size={96}
+                                                icon={<UserOutlined />}
+                                                src={getAvatarUrl(
+                                                    activeMember.avatarUrl || null,
+                                                    "xl"
+                                                )}
+                                                className="mx-auto"
+                                            />
+                                        )}
                                     </div>
+                                    <Descriptions size="small" column={1}>
+                                        <Descriptions.Item label="Name">
+                                            {activeMember.name}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Email">
+                                            {activeMember.email}
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Status">
+                                            <Tag
+                                                color={
+                                                    activeMember.emailVerified
+                                                        ? "success"
+                                                        : "warning"
+                                                }
+                                            >
+                                                {activeMember.emailVerified
+                                                    ? "Verified"
+                                                    : "Unverified"}
+                                            </Tag>
+                                        </Descriptions.Item>
+                                        <Descriptions.Item label="Role">
+                                            <Space wrap size={[4, 4]}>
+                                                {String(activeMember.role || "")
+                                                    .split(",")
+                                                    .map((r) => r.trim())
+                                                    .filter(Boolean)
+                                                    .map((r) => (
+                                                        <Tag key={r} color={getRoleColor(r)}>
+                                                            {r.toUpperCase()}
+                                                        </Tag>
+                                                    ))}
+                                            </Space>
+                                        </Descriptions.Item>
+                                    </Descriptions>
                                 </div>
 
                                 <Tabs
@@ -688,6 +688,6 @@ export const OrganizationMembersPage: React.FC<{ canManage?: boolean }> = ({
                         );
                     })()}
             </Drawer>
-        </div>
+        </PageShell>
     );
 };
